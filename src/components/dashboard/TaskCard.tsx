@@ -44,7 +44,6 @@ export function TaskCard({ task, isMobile = false }: TaskCardProps) {
 
       if (error) throw error;
 
-      // Invalidate and refetch tasks
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       
       toast({
@@ -63,12 +62,10 @@ export function TaskCard({ task, isMobile = false }: TaskCardProps) {
 
   if (isMobile) {
     return (
-      <div
-        className={cn(
-          "p-4 rounded-xl flex items-center justify-between text-white w-full",
-          task.status === 'unscheduled' ? 'bg-blue-500' : getUrgencyColor(task.time)
-        )}
-      >
+      <div className={cn(
+        "p-4 rounded-xl flex items-center justify-between text-white w-full",
+        task.status === 'unscheduled' ? 'bg-blue-500' : 'bg-[#9b87f5]'
+      )}>
         <div className="flex items-center space-x-3">
           <div className="grid grid-cols-2 gap-0.5">
             <div className="w-1 h-1 bg-white/50 rounded-full" />
@@ -101,12 +98,10 @@ export function TaskCard({ task, isMobile = false }: TaskCardProps) {
   }
 
   return (
-    <div
-      className={cn(
-        "p-4 rounded-lg flex items-center justify-between text-white",
-        task.status === 'unscheduled' ? 'bg-blue-500' : getUrgencyColor(task.time)
-      )}
-    >
+    <div className={cn(
+      "p-4 rounded-lg flex items-center justify-between text-white",
+      task.status === 'unscheduled' ? 'bg-blue-500' : 'bg-[#9b87f5]'
+    )}>
       <div className="flex-1">
         <div className="flex justify-between items-center">
           <h3 className="font-medium">{task.title}</h3>
@@ -123,9 +118,7 @@ export function TaskCard({ task, isMobile = false }: TaskCardProps) {
         size="sm" 
         className={cn(
           "ml-2 rounded-full w-8 h-8 p-0 shadow-lg",
-          task.status === 'unscheduled' 
-            ? "hover:bg-white/20" 
-            : getUrgencyColor(task.time)
+          task.status === 'unscheduled' ? 'bg-white/20' : getUrgencyColor(task.time)
         )}
         onClick={task.status === 'unscheduled' ? handleComplete : undefined}
       >
