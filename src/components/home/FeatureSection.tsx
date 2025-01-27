@@ -1,11 +1,11 @@
 import React from 'react';
 import FeatureCard from './FeatureCard';
-import { IconProps } from 'lucide-react';
+import { LucideIcon } from 'lucide-react';
 
 interface FeatureSectionProps {
   title: string;
   features: {
-    icon: React.ComponentType<IconProps>;
+    icon: LucideIcon;
     title: string;
     description: string;
     iconColor: string;
