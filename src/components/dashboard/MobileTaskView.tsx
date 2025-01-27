@@ -28,7 +28,6 @@ export function MobileTaskView({ tasks }: MobileTaskViewProps) {
     try {
       const updates = updatedTasks.map((task, index) => {
         const baseUpdate = {
-          id: task.id,
           position: index + 1,
           title: task.title,
           status: task.status,
@@ -46,7 +45,9 @@ export function MobileTaskView({ tasks }: MobileTaskViewProps) {
 
       const { error } = await supabase
         .from('tasks')
-        .upsert(updates);
+        .upsert(updates, { 
+          onConflict: 'id',
+        });
 
       if (error) throw error;
 
