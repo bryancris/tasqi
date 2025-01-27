@@ -8,21 +8,12 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { X } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { TaskForm } from "./TaskForm";
+import { createTask } from "@/utils/taskUtils";
+import { TaskPriority } from "./TaskBoard";
 
 export function AddTaskDrawer() {
   const [title, setTitle] = useState("");
@@ -31,7 +22,7 @@ export function AddTaskDrawer() {
   const [date, setDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
-  const [priority, setPriority] = useState<"low" | "medium" | "high">("low");
+  const [priority, setPriority] = useState<TaskPriority>("low");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -40,25 +31,15 @@ export function AddTaskDrawer() {
     try {
       setIsLoading(true);
       
-      // Get the current user
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error("No user logged in");
-      }
-
-      const { error } = await supabase.from("tasks").insert({
+      await createTask({
         title,
         description,
-        date: isScheduled ? date : null,
-        status: isScheduled ? "scheduled" : "unscheduled",
-        start_time: isScheduled ? startTime : null,
-        end_time: isScheduled ? endTime : null,
+        isScheduled,
+        date,
+        startTime,
+        endTime,
         priority,
-        user_id: user.id, // Add the user_id here
       });
-
-      if (error) throw error;
 
       toast({
         title: "Success",
@@ -107,98 +88,24 @@ export function AddTaskDrawer() {
               </DrawerClose>
             </div>
           </DrawerHeader>
-          <div className="p-4 space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Title</Label>
-              <Input 
-                id="title" 
-                placeholder="Enter task title" 
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-              />
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <Label htmlFor="date">Schedule Task</Label>
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-500">
-                  {isScheduled ? "Scheduled" : "Unscheduled"}
-                </span>
-                <Switch 
-                  id="date" 
-                  checked={isScheduled}
-                  onCheckedChange={setIsScheduled}
-                />
-              </div>
-            </div>
-            
-            {isScheduled && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="date-input">Date</Label>
-                  <Input 
-                    id="date-input" 
-                    type="date" 
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                  />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="start-time">Start Time</Label>
-                    <Input 
-                      id="start-time" 
-                      type="time" 
-                      value={startTime}
-                      onChange={(e) => setStartTime(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="end-time">End Time</Label>
-                    <Input 
-                      id="end-time" 
-                      type="time" 
-                      value={endTime}
-                      onChange={(e) => setEndTime(e.target.value)}
-                    />
-                  </div>
-                </div>
-              </>
-            )}
-            
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea 
-                id="description" 
-                placeholder="Add description" 
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="priority">Priority</Label>
-              <Select value={priority} onValueChange={(value: "low" | "medium" | "high") => setPriority(value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <Button 
-              className="w-full bg-black text-white hover:bg-gray-800"
-              onClick={handleSubmit}
-              disabled={!title || isLoading}
-            >
-              {isLoading ? "Creating..." : "Add Task"}
-            </Button>
-          </div>
+          <TaskForm
+            title={title}
+            description={description}
+            isScheduled={isScheduled}
+            date={date}
+            startTime={startTime}
+            endTime={endTime}
+            priority={priority}
+            isLoading={isLoading}
+            onTitleChange={setTitle}
+            onDescriptionChange={setDescription}
+            onIsScheduledChange={setIsScheduled}
+            onDateChange={setDate}
+            onStartTimeChange={setStartTime}
+            onEndTimeChange={setEndTime}
+            onPriorityChange={setPriority}
+            onSubmit={handleSubmit}
+          />
         </div>
       </DrawerContent>
     </Drawer>
