@@ -9,7 +9,48 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      tasks: {
+        Row: {
+          created_at: string | null
+          date: string | null
+          description: string | null
+          end_time: string | null
+          id: number
+          priority: Database["public"]["Enums"]["task_priority"] | null
+          start_time: string | null
+          status: Database["public"]["Enums"]["task_status"]
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          date?: string | null
+          description?: string | null
+          end_time?: string | null
+          id?: never
+          priority?: Database["public"]["Enums"]["task_priority"] | null
+          start_time?: string | null
+          status?: Database["public"]["Enums"]["task_status"]
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string | null
+          description?: string | null
+          end_time?: string | null
+          id?: never
+          priority?: Database["public"]["Enums"]["task_priority"] | null
+          start_time?: string | null
+          status?: Database["public"]["Enums"]["task_status"]
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +59,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      task_priority: "low" | "medium" | "high"
+      task_status: "scheduled" | "unscheduled"
     }
     CompositeTypes: {
       [_ in never]: never

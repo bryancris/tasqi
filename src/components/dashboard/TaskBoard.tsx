@@ -1,6 +1,8 @@
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileTaskView } from "./MobileTaskView";
 import { DesktopTaskView } from "./DesktopTaskView";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export type TaskPriority = 'low' | 'medium' | 'high';
 
@@ -13,42 +15,39 @@ export interface Task {
   priority?: TaskPriority;
 }
 
+const fetchTasks = async () => {
+  const { data, error } = await supabase
+    .from('tasks')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+
+  return data.map((task) => ({
+    id: task.id,
+    title: task.title,
+    date: task.date || '',
+    status: task.status,
+    time: task.start_time ? `${task.start_time} - ${task.end_time}` : '',
+    priority: task.priority,
+  }));
+};
+
 export function TaskBoard() {
   const isMobile = useIsMobile();
   
-  const tasks: Task[] = [
-    {
-      id: 1,
-      title: "Do the billing report",
-      date: "2024-01-27",
-      status: "scheduled",
-      time: "09:00 - 10:00",
-      priority: "low",
-    },
-    {
-      id: 2,
-      title: "Test Unscheduled Tasks",
-      date: "2024-01-27",
-      status: "unscheduled",
-      time: "",
-    },
-    {
-      id: 3,
-      title: "Work on the speeds",
-      date: "2024-01-27",
-      status: "scheduled",
-      time: "18:00 - 19:00",
-      priority: "high",
-    },
-    {
-      id: 4,
-      title: "Pick up daughter from school",
-      date: "2024-01-27",
-      status: "scheduled",
-      time: "15:00 - 16:00",
-      priority: "medium",
-    },
-  ];
+  const { data: tasks = [], isLoading, error } = useQuery({
+    queryKey: ['tasks'],
+    queryFn: fetchTasks,
+  });
+
+  if (isLoading) {
+    return <div>Loading tasks...</div>;
+  }
+
+  if (error) {
+    return <div>Error loading tasks</div>;
+  }
 
   if (isMobile) {
     return <MobileTaskView tasks={tasks} />;
