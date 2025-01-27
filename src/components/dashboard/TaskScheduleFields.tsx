@@ -27,6 +27,8 @@ export function TaskScheduleFields({
           type="date" 
           value={date}
           onChange={(e) => onDateChange(e.target.value)}
+          className="cursor-pointer"
+          min={new Date().toISOString().split('T')[0]} // Prevent past dates
         />
       </div>
       
@@ -38,6 +40,7 @@ export function TaskScheduleFields({
             type="time" 
             value={startTime}
             onChange={(e) => onStartTimeChange(e.target.value)}
+            className="cursor-pointer"
           />
         </div>
         <div className="space-y-2">
@@ -47,6 +50,7 @@ export function TaskScheduleFields({
             type="time" 
             value={endTime}
             onChange={(e) => onEndTimeChange(e.target.value)}
+            className="cursor-pointer"
           />
         </div>
       </div>
