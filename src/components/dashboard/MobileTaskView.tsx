@@ -26,14 +26,22 @@ export function MobileTaskView({ tasks }: MobileTaskViewProps) {
     updatedTasks.splice(destinationIndex, 0, removed);
 
     try {
-      const updates = updatedTasks.map((task, index) => ({
-        position: index + 1,
-        title: task.title,
-        status: task.status,
-        user_id: task.user_id,
-        priority: task.priority,
-        date: task.date,
-      }));
+      const updates = updatedTasks.map((task, index) => {
+        const baseUpdate = {
+          position: index + 1,
+          title: task.title,
+          status: task.status,
+          user_id: task.user_id,
+          priority: task.priority,
+        };
+
+        // Only include date if it has a value
+        if (task.date) {
+          return { ...baseUpdate, date: task.date };
+        }
+
+        return baseUpdate;
+      });
 
       const { error } = await supabase
         .from('tasks')
