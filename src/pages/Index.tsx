@@ -8,7 +8,6 @@ import {
   Wand2, 
   ListTodo,
   Clock4,
-  Bell2,
   Smartphone,
   BarChart3,
   Shield
@@ -86,7 +85,7 @@ const Index = () => {
 
           <Card className="bg-[#1e1f4d] border-gray-700 hover:border-purple-500 transition-colors">
             <CardContent className="p-6">
-              <Bell2 className="w-10 h-10 text-purple-400 mb-4" />
+              <Bell className="w-10 h-10 text-purple-400 mb-4" />
               <h3 className="text-xl font-semibold mb-2">Priority Assistant</h3>
               <p className="text-gray-400">Smart agent that analyzes task importance, adjusts priorities based on deadlines, and helps maintain optimal workflow.</p>
             </CardContent>
