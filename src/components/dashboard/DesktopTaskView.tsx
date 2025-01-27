@@ -36,11 +36,12 @@ export function DesktopTaskView({ tasks }: DesktopTaskViewProps) {
 
     try {
       const updates = updatedTasks.map((task, index) => ({
-        id: task.id,
         position: index + 1,
         title: task.title,
         status: task.status,
         user_id: task.user_id,
+        priority: task.priority,
+        date: task.date,
       }));
 
       const { error } = await supabase

@@ -14,6 +14,7 @@ export interface Task {
   time: string;
   priority?: TaskPriority;
   position: number;
+  user_id: string;
 }
 
 const fetchTasks = async () => {
@@ -32,6 +33,7 @@ const fetchTasks = async () => {
     time: task.start_time ? `${task.start_time} - ${task.end_time}` : '',
     priority: task.priority,
     position: task.position,
+    user_id: task.user_id,
   }));
 };
 
