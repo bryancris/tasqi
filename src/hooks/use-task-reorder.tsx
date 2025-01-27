@@ -21,27 +21,29 @@ export const useTaskReorder = (tasks: Task[]) => {
     updatedTasks.splice(destinationIndex, 0, removed);
 
     try {
-      const updates = updatedTasks.map((task, index) => ({
-        id: task.id,
-        position: index + 1,
-        title: task.title,
-        user_id: task.user_id,
-        status: task.status,
-        priority: task.priority || 'low',
-        date: task.date || null,
-        description: task.description || null,
-        start_time: task.start_time || null,
-        end_time: task.end_time || null
-      }));
-
       const { error } = await supabase
         .from('tasks')
-        .upsert(updates, { 
-          onConflict: 'id',
-          ignoreDuplicates: false,
-        });
+        .update({ position: destinationIndex + 1 })
+        .eq('id', removed.id);
 
       if (error) throw error;
+
+      // Update positions for other affected tasks
+      const tasksToUpdate = updatedTasks
+        .filter(task => task.id !== removed.id)
+        .map((task, index) => ({
+          position: index + 1,
+          id: task.id
+        }));
+
+      for (const task of tasksToUpdate) {
+        const { error: updateError } = await supabase
+          .from('tasks')
+          .update({ position: task.position })
+          .eq('id', task.id);
+
+        if (updateError) throw updateError;
+      }
 
       // Optimistically update the cache
       queryClient.setQueryData(['tasks'], updatedTasks);
