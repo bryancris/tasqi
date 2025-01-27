@@ -53,8 +53,8 @@ export function TaskCard({ task, isMobile = false, index }: TaskCardProps) {
     setIsEditDrawerOpen(true);
   };
 
-  const handleStatusClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  // Create a wrapper function that ignores the event parameter
+  const handleStatusClick = () => {
     handleComplete();
   };
 
@@ -118,7 +118,10 @@ export function TaskCard({ task, isMobile = false, index }: TaskCardProps) {
           variant="ghost" 
           size="sm" 
           className="ml-2 p-0"
-          onClick={handleStatusClick}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleStatusClick();
+          }}
         >
           <TaskStatusIndicator
             status={task.status}
