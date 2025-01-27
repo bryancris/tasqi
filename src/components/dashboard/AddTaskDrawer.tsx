@@ -22,13 +22,13 @@ import { X } from "lucide-react";
 
 export function AddTaskDrawer() {
   return (
-    <Drawer direction="left">
+    <Drawer>
       <DrawerTrigger asChild>
         <Button className="w-full bg-[#22C55E] hover:bg-[#16A34A] text-white">
           + Add a task
         </Button>
       </DrawerTrigger>
-      <DrawerContent side="left" className="w-[400px]">
+      <DrawerContent className="w-[400px] left-0 right-auto">
         <div className="mx-auto w-full max-w-sm">
           <DrawerHeader>
             <div className="flex items-center justify-between">
