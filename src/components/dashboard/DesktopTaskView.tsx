@@ -1,6 +1,4 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 import { TaskCard } from "./TaskCard";
 import { TimelineSlot } from "./TimelineSlot";
 import { Task } from "./TaskBoard";
@@ -22,12 +20,8 @@ export function DesktopTaskView({ tasks }: DesktopTaskViewProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader>
           <CardTitle>Task Board</CardTitle>
-          <Button size="sm" className="bg-[#9b87f5] hover:bg-[#7E69AB]">
-            <Plus className="h-4 w-4 mr-1" />
-            Add Task
-          </Button>
         </CardHeader>
         <CardContent>
           <DragDropContext onDragEnd={handleDragEnd}>
