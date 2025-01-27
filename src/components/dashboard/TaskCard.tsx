@@ -66,7 +66,7 @@ export function TaskCard({ task, isMobile = false }: TaskCardProps) {
       <div
         className={cn(
           "p-4 rounded-xl flex items-center justify-between text-white w-full",
-          getPriorityColor(task.status, task.priority)
+          task.status === 'unscheduled' ? 'bg-blue-500' : getUrgencyColor(task.time)
         )}
       >
         <div className="flex items-center space-x-3">
@@ -104,7 +104,7 @@ export function TaskCard({ task, isMobile = false }: TaskCardProps) {
     <div
       className={cn(
         "p-4 rounded-lg flex items-center justify-between text-white",
-        getPriorityColor(task.status, task.priority)
+        task.status === 'unscheduled' ? 'bg-blue-500' : getUrgencyColor(task.time)
       )}
     >
       <div className="flex-1">
