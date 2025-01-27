@@ -9,11 +9,25 @@ interface TaskStatusIndicatorProps {
 }
 
 export function TaskStatusIndicator({ status, time, onClick }: TaskStatusIndicatorProps) {
+  const isOverdue = () => {
+    if (!time || status === 'unscheduled') return false;
+    
+    const [, endTime] = time.split(' - ');
+    if (!endTime) return false;
+    
+    const [hours, minutes] = endTime.split(':').map(Number);
+    const taskEndTime = new Date();
+    taskEndTime.setHours(hours, minutes, 0, 0);
+    
+    return new Date() > taskEndTime;
+  };
+
   return (
     <div 
       className={cn(
-        "flex items-center justify-center w-8 h-8 rounded-full cursor-pointer shadow-lg",
-        status === 'unscheduled' ? 'bg-white/20' : getUrgencyColor(time)
+        "flex items-center justify-center w-8 h-8 rounded-full cursor-pointer shadow-lg transition-colors",
+        status === 'unscheduled' ? 'bg-white/20' : getUrgencyColor(time),
+        isOverdue() && "animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite]"
       )}
       onClick={status === 'unscheduled' ? onClick : undefined}
     >
