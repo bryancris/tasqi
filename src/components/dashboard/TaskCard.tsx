@@ -32,13 +32,13 @@ const getUrgencyColor = (time: string) => {
 const getPriorityColor = (priority: TaskPriority | undefined) => {
   switch (priority) {
     case 'high':
-      return 'bg-[#9b87f5]';
+      return 'bg-red-500';
     case 'medium':
-      return 'bg-[#9b87f5] opacity-80';
+      return 'bg-orange-500';
     case 'low':
-      return 'bg-[#9b87f5] opacity-60';
+      return 'bg-green-500';
     default:
-      return 'bg-[#9b87f5]';
+      return 'bg-blue-500';
   }
 };
 
