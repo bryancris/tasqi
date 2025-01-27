@@ -37,6 +37,7 @@ export function DesktopTaskView({ tasks }: DesktopTaskViewProps) {
     try {
       const updates = updatedTasks.map((task, index) => {
         const baseUpdate = {
+          id: task.id,
           position: index + 1,
           title: task.title,
           status: task.status,
@@ -54,7 +55,7 @@ export function DesktopTaskView({ tasks }: DesktopTaskViewProps) {
 
       const { error } = await supabase
         .from('tasks')
-        .upsert(updates, { onConflict: 'id' });
+        .upsert(updates);
 
       if (error) throw error;
 
