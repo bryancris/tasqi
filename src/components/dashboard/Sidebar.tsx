@@ -97,12 +97,12 @@ export function Sidebar() {
         </div>
 
         {/* Calendar Widget */}
-        <div className="mt-4">
+        <div className="mt-4 -mx-2">
           <Calendar
             mode="single"
             selected={date}
             onSelect={setDate}
-            className="rounded-md border-[1.5px] border-gray-300 scale-90 origin-top"
+            className="rounded-md border-[1.5px] border-gray-300 scale-75 origin-top"
           />
         </div>
       </div>
