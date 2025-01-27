@@ -34,11 +34,13 @@ export function DesktopTaskView({ tasks }: DesktopTaskViewProps) {
     const [removed] = updatedTasks.splice(sourceIndex, 1);
     updatedTasks.splice(destinationIndex, 0, removed);
 
-    // Update positions in the database
     try {
       const updates = updatedTasks.map((task, index) => ({
         id: task.id,
         position: index + 1,
+        title: task.title,
+        status: task.status,
+        user_id: task.user_id,
       }));
 
       const { error } = await supabase
@@ -52,7 +54,6 @@ export function DesktopTaskView({ tasks }: DesktopTaskViewProps) {
         description: "Task order has been updated",
       });
 
-      // Invalidate the tasks query to refresh the list
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
     } catch (error) {
       console.error('Error reordering task:', error);
