@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { MoreVertical } from "lucide-react";
+import { Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Task, TaskPriority } from "./TaskBoard";
 
@@ -49,7 +49,7 @@ export function TaskCard({ task, isMobile = false }: TaskCardProps) {
           </div>
         </div>
         <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/20">
-          <MoreVertical className="h-4 w-4" />
+          <Clock className="h-4 w-4" />
         </div>
       </div>
     );
@@ -78,7 +78,7 @@ export function TaskCard({ task, isMobile = false }: TaskCardProps) {
         size="sm" 
         className="ml-2 hover:bg-white/20"
       >
-        <MoreVertical className="h-4 w-4" />
+        <Clock className="h-4 w-4" />
       </Button>
     </div>
   );
