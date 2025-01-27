@@ -1,13 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Clock } from "lucide-react";
+import { Plus } from "lucide-react";
 import { TaskCard } from "./TaskCard";
 import { TimelineSlot } from "./TimelineSlot";
 import { Task } from "./TaskBoard";
-import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd";
-import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import { useTaskReorder } from "@/hooks/use-task-reorder";
 
 interface DesktopTaskViewProps {
   tasks: Task[];
@@ -19,62 +17,7 @@ export function DesktopTaskView({ tasks }: DesktopTaskViewProps) {
     return `${hour}:00`;
   });
 
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-
-  const handleDragEnd = async (result: DropResult) => {
-    if (!result.destination) return;
-
-    const sourceIndex = result.source.index;
-    const destinationIndex = result.destination.index;
-
-    if (sourceIndex === destinationIndex) return;
-
-    const updatedTasks = Array.from(tasks);
-    const [removed] = updatedTasks.splice(sourceIndex, 1);
-    updatedTasks.splice(destinationIndex, 0, removed);
-
-    try {
-      const updates = updatedTasks.map((task, index) => {
-        const baseUpdate = {
-          position: index + 1,
-          title: task.title,
-          status: task.status,
-          user_id: task.user_id,
-          priority: task.priority,
-        };
-
-        // Only include date if it has a value
-        if (task.date) {
-          return { ...baseUpdate, date: task.date };
-        }
-
-        return baseUpdate;
-      });
-
-      const { error } = await supabase
-        .from('tasks')
-        .upsert(updates, { 
-          onConflict: 'id',
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Task reordered",
-        description: "Task order has been updated",
-      });
-
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-    } catch (error) {
-      console.error('Error reordering task:', error);
-      toast({
-        title: "Error",
-        description: "Failed to reorder task. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
+  const { handleDragEnd } = useTaskReorder(tasks);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
