@@ -7,12 +7,23 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import { X } from "lucide-react";
+import { X, Trash2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { TaskForm } from "./TaskForm";
 import { supabase } from "@/integrations/supabase/client";
 import { Task, TaskPriority } from "./TaskBoard";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface EditTaskDrawerProps {
   task: Task;
@@ -56,7 +67,6 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
         description: "Task updated successfully",
       });
 
-      // Refresh tasks list
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       onOpenChange(false);
     } catch (error) {
@@ -64,6 +74,36 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
       toast({
         title: "Error",
         description: "Failed to update task. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      setIsLoading(true);
+      
+      const { error } = await supabase
+        .from("tasks")
+        .delete()
+        .eq("id", task.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Task deleted successfully",
+      });
+
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete task. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -85,24 +125,56 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
               </DrawerClose>
             </div>
           </DrawerHeader>
-          <TaskForm
-            title={title}
-            description={description}
-            isScheduled={isScheduled}
-            date={date}
-            startTime={startTime}
-            endTime={endTime}
-            priority={priority}
-            isLoading={isLoading}
-            onTitleChange={setTitle}
-            onDescriptionChange={setDescription}
-            onIsScheduledChange={setIsScheduled}
-            onDateChange={setDate}
-            onStartTimeChange={setStartTime}
-            onEndTimeChange={setEndTime}
-            onPriorityChange={setPriority}
-            onSubmit={handleSubmit}
-          />
+          <div className="p-4 space-y-4">
+            <TaskForm
+              title={title}
+              description={description}
+              isScheduled={isScheduled}
+              date={date}
+              startTime={startTime}
+              endTime={endTime}
+              priority={priority}
+              isLoading={isLoading}
+              onTitleChange={setTitle}
+              onDescriptionChange={setDescription}
+              onIsScheduledChange={setIsScheduled}
+              onDateChange={setDate}
+              onStartTimeChange={setStartTime}
+              onEndTimeChange={setEndTime}
+              onPriorityChange={setPriority}
+              onSubmit={handleSubmit}
+            />
+            
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button 
+                  variant="destructive" 
+                  className="w-full"
+                  disabled={isLoading}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Task
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the task.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction 
+                    onClick={handleDelete}
+                    className="bg-red-500 hover:bg-red-600"
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </div>
       </DrawerContent>
     </Drawer>

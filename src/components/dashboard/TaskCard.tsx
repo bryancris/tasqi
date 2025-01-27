@@ -74,7 +74,7 @@ export function TaskCard({ task, isMobile = false, index }: TaskCardProps) {
           <TaskStatusIndicator
             status={task.status}
             time={task.time}
-            onClick={(e) => {
+            onClick={(e: React.MouseEvent) => {
               e.stopPropagation();
               handleComplete();
             }}
@@ -116,7 +116,7 @@ export function TaskCard({ task, isMobile = false, index }: TaskCardProps) {
           variant="ghost" 
           size="sm" 
           className="ml-2 p-0"
-          onClick={(e) => {
+          onClick={(e: React.MouseEvent) => {
             e.stopPropagation();
             handleComplete();
           }}
@@ -124,7 +124,7 @@ export function TaskCard({ task, isMobile = false, index }: TaskCardProps) {
           <TaskStatusIndicator
             status={task.status}
             time={task.time}
-            onClick={(e) => {
+            onClick={(e: React.MouseEvent) => {
               e.stopPropagation();
               handleComplete();
             }}
