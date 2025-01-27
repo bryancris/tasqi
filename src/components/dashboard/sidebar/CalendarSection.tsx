@@ -5,9 +5,20 @@ import { useState } from "react";
 
 type ViewType = 'daily' | 'weekly' | 'monthly' | 'yearly';
 
-export function CalendarSection() {
+interface CalendarSectionProps {
+  onViewChange?: (view: 'tasks' | 'calendar') => void;
+}
+
+export function CalendarSection({ onViewChange }: CalendarSectionProps) {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [view, setView] = useState<ViewType>('daily');
+
+  const handleViewChange = (newView: ViewType) => {
+    setView(newView);
+    if (onViewChange) {
+      onViewChange(newView === 'monthly' || newView === 'yearly' ? 'calendar' : 'tasks');
+    }
+  };
 
   const getCalendarView = () => {
     switch (view) {
@@ -75,7 +86,7 @@ export function CalendarSection() {
               ? 'bg-[#D1FAE5] text-[#059669] hover:bg-[#A7F3D0]' 
               : 'text-[#6B7280] hover:bg-[#E5E7EB]'
           }`}
-          onClick={() => setView('daily')}
+          onClick={() => handleViewChange('daily')}
         >
           Daily
         </Button>
@@ -86,7 +97,7 @@ export function CalendarSection() {
               ? 'bg-[#D1FAE5] text-[#059669] hover:bg-[#A7F3D0]' 
               : 'text-[#6B7280] hover:bg-[#E5E7EB]'
           }`}
-          onClick={() => setView('weekly')}
+          onClick={() => handleViewChange('weekly')}
         >
           Weekly
         </Button>
@@ -97,7 +108,7 @@ export function CalendarSection() {
               ? 'bg-[#D1FAE5] text-[#059669] hover:bg-[#A7F3D0]' 
               : 'text-[#6B7280] hover:bg-[#E5E7EB]'
           }`}
-          onClick={() => setView('monthly')}
+          onClick={() => handleViewChange('monthly')}
         >
           Monthly
         </Button>
@@ -108,7 +119,7 @@ export function CalendarSection() {
               ? 'bg-[#D1FAE5] text-[#059669] hover:bg-[#A7F3D0]' 
               : 'text-[#6B7280] hover:bg-[#E5E7EB]'
           }`}
-          onClick={() => setView('yearly')}
+          onClick={() => handleViewChange('yearly')}
         >
           Yearly
         </Button>
