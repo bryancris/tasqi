@@ -23,6 +23,13 @@ export function TaskScheduleFields({
   const startTimeInputRef = useRef<HTMLInputElement>(null);
   const endTimeInputRef = useRef<HTMLInputElement>(null);
 
+  const handleIconClick = (inputRef: React.RefObject<HTMLInputElement>) => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.click();
+    }
+  };
+
   return (
     <>
       <div className="space-y-2">
@@ -39,7 +46,7 @@ export function TaskScheduleFields({
           />
           <div 
             className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer"
-            onClick={() => dateInputRef.current?.showPicker()}
+            onClick={() => handleIconClick(dateInputRef)}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
@@ -65,7 +72,7 @@ export function TaskScheduleFields({
             />
             <div 
               className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer"
-              onClick={() => startTimeInputRef.current?.showPicker()}
+              onClick={() => handleIconClick(startTimeInputRef)}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10"/>
@@ -87,7 +94,7 @@ export function TaskScheduleFields({
             />
             <div 
               className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer"
-              onClick={() => endTimeInputRef.current?.showPicker()}
+              onClick={() => handleIconClick(startTimeInputRef)}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10"/>
