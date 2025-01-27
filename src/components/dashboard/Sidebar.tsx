@@ -10,6 +10,7 @@ import {
   Settings
 } from "lucide-react";
 import { useState } from "react";
+import { AddTaskDrawer } from "./AddTaskDrawer";
 
 export function Sidebar() {
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -18,9 +19,7 @@ export function Sidebar() {
     <div className="border-r bg-[#F8F9FC] w-[240px] h-screen p-4 flex flex-col">
       <div className="space-y-4">
         {/* Add Task Button */}
-        <Button className="w-full bg-[#22C55E] hover:bg-[#16A34A] text-white">
-          + Add a task
-        </Button>
+        <AddTaskDrawer />
 
         {/* Calendar View Section */}
         <div className="space-y-2">
