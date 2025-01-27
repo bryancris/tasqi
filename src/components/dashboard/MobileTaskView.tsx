@@ -1,16 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Plus, Calendar, Home, FileText, MessageSquare, Settings } from "lucide-react";
 import { TaskCard } from "./TaskCard";
+import { Task } from "./TaskBoard";
 
 interface MobileTaskViewProps {
-  tasks: Array<{
-    id: number;
-    title: string;
-    date: string;
-    status: string;
-    time: string;
-    color: string;
-  }>;
+  tasks: Task[];
 }
 
 export function MobileTaskView({ tasks }: MobileTaskViewProps) {

@@ -3,16 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Plus, Clock } from "lucide-react";
 import { TaskCard } from "./TaskCard";
 import { TimelineSlot } from "./TimelineSlot";
+import { Task } from "./TaskBoard";
 
 interface DesktopTaskViewProps {
-  tasks: Array<{
-    id: number;
-    title: string;
-    date: string;
-    status: string;
-    time: string;
-    color: string;
-  }>;
+  tasks: Task[];
 }
 
 export function DesktopTaskView({ tasks }: DesktopTaskViewProps) {
