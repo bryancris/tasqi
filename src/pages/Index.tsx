@@ -8,15 +8,37 @@ import {
   Smartphone,
   BarChart3,
   Shield,
-  LogIn
+  LogIn,
+  LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 import HeroSection from "@/components/home/HeroSection";
 import FeatureSection from "@/components/home/FeatureSection";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { session } = useAuth();
+  const { toast } = useToast();
+
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast({
+        title: "Success",
+        description: "You have been logged out successfully",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message,
+      });
+    }
+  };
 
   const aiProductivityFeatures = [
     {
@@ -83,15 +105,35 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-[#1a1b3b] text-white py-12 px-4 md:px-8">
-      <div className="absolute top-4 right-4">
-        <Button 
-          onClick={() => navigate('/auth')} 
-          variant="outline" 
-          className="text-white border-white hover:bg-white hover:text-[#1a1b3b]"
-        >
-          <LogIn className="mr-2 h-4 w-4" />
-          Login
-        </Button>
+      <div className="absolute top-4 right-4 flex gap-2">
+        {session ? (
+          <>
+            <Button 
+              onClick={() => navigate('/dashboard')} 
+              variant="outline" 
+              className="text-white border-white hover:bg-white hover:text-[#1a1b3b]"
+            >
+              Dashboard
+            </Button>
+            <Button 
+              onClick={handleLogout} 
+              variant="outline" 
+              className="text-white border-white hover:bg-white hover:text-[#1a1b3b]"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
+            </Button>
+          </>
+        ) : (
+          <Button 
+            onClick={() => navigate('/auth')} 
+            variant="outline" 
+            className="text-white border-white hover:bg-white hover:text-[#1a1b3b]"
+          >
+            <LogIn className="mr-2 h-4 w-4" />
+            Login
+          </Button>
+        )}
       </div>
       <HeroSection />
       <FeatureSection title="AI-Powered Productivity" features={aiProductivityFeatures} />
