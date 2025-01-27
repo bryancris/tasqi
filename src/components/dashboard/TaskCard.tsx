@@ -11,23 +11,25 @@ interface TaskCardProps {
   isMobile?: boolean;
 }
 
-const getPriorityColor = (status: string, priority?: TaskPriority) => {
-  if (status === 'unscheduled') return 'bg-blue-500';
+const getUrgencyColor = (time: string) => {
+  if (!time) return 'bg-white/20'; // For unscheduled tasks
   
-  switch (priority) {
-    case 'low':
-      return 'bg-emerald-400';
-    case 'medium':
-      return 'bg-orange-400';
-    case 'high':
-      return 'bg-red-500';
-    default:
-      return 'bg-emerald-400';
-  }
+  const [startTime] = time.split(' - ');
+  const [hours, minutes] = startTime.split(':').map(Number);
+  
+  const taskTime = new Date();
+  taskTime.setHours(hours, minutes, 0, 0);
+  
+  const now = new Date();
+  const diffInHours = (taskTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+  
+  if (diffInHours > 6) return 'bg-white';
+  if (diffInHours > 4) return 'bg-yellow-500';
+  if (diffInHours > 2) return 'bg-orange-500';
+  return 'bg-red-500';
 };
 
 export function TaskCard({ task, isMobile = false }: TaskCardProps) {
-  const bgColor = getPriorityColor(task.status, task.priority);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -64,7 +66,7 @@ export function TaskCard({ task, isMobile = false }: TaskCardProps) {
       <div
         className={cn(
           "p-4 rounded-xl flex items-center justify-between text-white w-full",
-          bgColor
+          getPriorityColor(task.status, task.priority)
         )}
       >
         <div className="flex items-center space-x-3">
@@ -83,8 +85,8 @@ export function TaskCard({ task, isMobile = false }: TaskCardProps) {
         </div>
         <div 
           className={cn(
-            "flex items-center justify-center w-8 h-8 rounded-full cursor-pointer",
-            task.status === 'unscheduled' ? 'bg-white/20' : 'bg-emerald-500 shadow-lg'
+            "flex items-center justify-center w-8 h-8 rounded-full cursor-pointer shadow-lg",
+            task.status === 'unscheduled' ? 'bg-white/20' : getUrgencyColor(task.time)
           )}
           onClick={task.status === 'unscheduled' ? handleComplete : undefined}
         >
@@ -102,7 +104,7 @@ export function TaskCard({ task, isMobile = false }: TaskCardProps) {
     <div
       className={cn(
         "p-4 rounded-lg flex items-center justify-between text-white",
-        bgColor
+        getPriorityColor(task.status, task.priority)
       )}
     >
       <div className="flex-1">
@@ -120,17 +122,17 @@ export function TaskCard({ task, isMobile = false }: TaskCardProps) {
         variant="ghost" 
         size="sm" 
         className={cn(
-          "ml-2 rounded-full w-8 h-8 p-0",
+          "ml-2 rounded-full w-8 h-8 p-0 shadow-lg",
           task.status === 'unscheduled' 
             ? "hover:bg-white/20" 
-            : "bg-emerald-500 hover:bg-emerald-600"
+            : getUrgencyColor(task.time)
         )}
         onClick={task.status === 'unscheduled' ? handleComplete : undefined}
       >
         {task.status === 'unscheduled' ? (
           <Check className="h-4 w-4" />
         ) : (
-          <Clock className="h-4 w-4" />
+          <Clock className="h-4 w-4 text-white" />
         )}
       </Button>
     </div>
