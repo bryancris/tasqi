@@ -7,13 +7,15 @@ import { useToast } from "@/hooks/use-toast";
 import { getPriorityColor } from "@/utils/taskColors";
 import { TaskStatusIndicator } from "./TaskStatusIndicator";
 import { MobileTaskContent } from "./MobileTaskContent";
+import { GripVertical } from "lucide-react";
 
 interface TaskCardProps {
   task: Task;
   isMobile?: boolean;
+  index: number;
 }
 
-export function TaskCard({ task, isMobile = false }: TaskCardProps) {
+export function TaskCard({ task, isMobile = false, index }: TaskCardProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -50,11 +52,14 @@ export function TaskCard({ task, isMobile = false }: TaskCardProps) {
         "p-4 rounded-xl flex items-center justify-between text-white w-full",
         task.status === 'unscheduled' ? 'bg-blue-500' : getPriorityColor(task.priority)
       )}>
-        <MobileTaskContent 
-          title={task.title}
-          time={task.time}
-          status={task.status}
-        />
+        <div className="flex items-center gap-3">
+          <GripVertical className="h-5 w-5 text-white/50 cursor-grab" />
+          <MobileTaskContent 
+            title={task.title}
+            time={task.time}
+            status={task.status}
+          />
+        </div>
         <TaskStatusIndicator
           status={task.status}
           time={task.time}
@@ -69,16 +74,19 @@ export function TaskCard({ task, isMobile = false }: TaskCardProps) {
       "p-4 rounded-lg flex items-center justify-between text-white",
       task.status === 'unscheduled' ? 'bg-blue-500' : getPriorityColor(task.priority)
     )}>
-      <div className="flex-1">
-        <div className="flex justify-between items-center">
-          <h3 className="font-medium">{task.title}</h3>
-          {task.status === 'scheduled' && (
-            <span className="text-sm">{task.time}</span>
-          )}
+      <div className="flex items-center gap-3 flex-1">
+        <GripVertical className="h-5 w-5 text-white/50 cursor-grab" />
+        <div className="flex-1">
+          <div className="flex justify-between items-center">
+            <h3 className="font-medium">{task.title}</h3>
+            {task.status === 'scheduled' && (
+              <span className="text-sm">{task.time}</span>
+            )}
+          </div>
+          <p className="text-sm mt-1 capitalize">
+            Status: {task.status}
+          </p>
         </div>
-        <p className="text-sm mt-1 capitalize">
-          Status: {task.status}
-        </p>
       </div>
       <Button 
         variant="ghost" 
