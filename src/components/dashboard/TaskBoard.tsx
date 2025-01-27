@@ -1,9 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Check } from "lucide-react";
+import { Plus, Clock, Home, MessageSquare, Settings, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function TaskBoard() {
+  const isMobile = useIsMobile();
+  
   const tasks = [
     {
       id: 1,
@@ -11,15 +14,15 @@ export function TaskBoard() {
       date: "2024-01-27",
       status: "scheduled",
       time: "09:00 - 10:00",
-      color: "bg-green-100 text-green-700",
+      color: "bg-emerald-400",
     },
     {
       id: 2,
-      title: "Pick up daughter from school",
+      title: "Test Unscheduled Tasks",
       date: "2024-01-27",
-      status: "scheduled",
-      time: "15:00 - 16:00",
-      color: "bg-orange-100 text-orange-700",
+      status: "unscheduled",
+      time: "",
+      color: "bg-blue-500",
     },
     {
       id: 3,
@@ -27,9 +30,82 @@ export function TaskBoard() {
       date: "2024-01-27",
       status: "scheduled",
       time: "18:00 - 19:00",
-      color: "bg-red-100 text-red-700",
+      color: "bg-red-500",
+    },
+    {
+      id: 4,
+      title: "Pick up daughter from school",
+      date: "2024-01-27",
+      status: "scheduled",
+      time: "15:00 - 16:00",
+      color: "bg-orange-400",
     },
   ];
+
+  if (isMobile) {
+    return (
+      <div className="flex flex-col h-screen bg-[#F8F9FC]">
+        {/* Header */}
+        <div className="flex justify-between items-center p-4 bg-white">
+          <div>
+            <h1 className="text-xl font-semibold text-purple-500">TasqiAI</h1>
+            <p className="text-sm text-gray-500">15:38 Mon, Jan 27</p>
+          </div>
+          <Button variant="ghost" size="icon" className="rounded-full bg-gray-100">
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Tasks List */}
+        <div className="flex-1 p-4 space-y-3 overflow-auto">
+          {tasks.map((task) => (
+            <div
+              key={task.id}
+              className={cn(
+                "p-4 rounded-xl flex items-center justify-between text-white",
+                task.color
+              )}
+            >
+              <div className="flex items-center space-x-3">
+                <div className="grid grid-cols-2 gap-0.5">
+                  <div className="w-1 h-1 bg-white/50 rounded-full" />
+                  <div className="w-1 h-1 bg-white/50 rounded-full" />
+                  <div className="w-1 h-1 bg-white/50 rounded-full" />
+                  <div className="w-1 h-1 bg-white/50 rounded-full" />
+                </div>
+                <div>
+                  <h3 className="font-medium">{task.title}</h3>
+                  <p className="text-sm opacity-90">{task.date}</p>
+                </div>
+              </div>
+              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/20">
+                <Clock className="h-4 w-4" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Bottom Navigation */}
+        <div className="flex justify-around items-center p-4 bg-white border-t">
+          <Button variant="ghost" size="icon" className="text-blue-500">
+            <Home className="h-5 w-5" />
+          </Button>
+          <Button variant="ghost" size="icon" className="text-gray-400">
+            <Clock className="h-5 w-5" />
+          </Button>
+          <Button variant="ghost" size="icon" className="text-emerald-500">
+            <FileText className="h-5 w-5" />
+          </Button>
+          <Button variant="ghost" size="icon" className="text-gray-400">
+            <MessageSquare className="h-5 w-5" />
+          </Button>
+          <Button variant="ghost" size="icon" className="text-gray-400">
+            <Settings className="h-5 w-5" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const timeSlots = Array.from({ length: 12 }, (_, i) => {
     const hour = i + 9; // Start from 9 AM
@@ -70,7 +146,7 @@ export function TaskBoard() {
                   size="sm" 
                   className="ml-2 hover:bg-white/20"
                 >
-                  <Check className="h-4 w-4" />
+                  <Clock className="h-4 w-4" />
                 </Button>
               </div>
             ))}
