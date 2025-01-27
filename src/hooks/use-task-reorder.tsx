@@ -21,10 +21,17 @@ export const useTaskReorder = (tasks: Task[]) => {
     updatedTasks.splice(destinationIndex, 0, removed);
 
     try {
-      // Create an array of updates with only the necessary fields
       const updates = updatedTasks.map((task, index) => ({
-        id: task.id, // Include the id for the upsert operation
+        id: task.id,
         position: index + 1,
+        title: task.title,
+        user_id: task.user_id,
+        status: task.status,
+        priority: task.priority || 'low',
+        date: task.date || null,
+        description: task.description || null,
+        start_time: task.start_time || null,
+        end_time: task.end_time || null
       }));
 
       const { error } = await supabase
