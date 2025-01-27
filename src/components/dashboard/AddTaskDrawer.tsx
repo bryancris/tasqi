@@ -40,6 +40,13 @@ export function AddTaskDrawer() {
     try {
       setIsLoading(true);
       
+      // Get the current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("No user logged in");
+      }
+
       const { error } = await supabase.from("tasks").insert({
         title,
         description,
@@ -48,6 +55,7 @@ export function AddTaskDrawer() {
         start_time: isScheduled ? startTime : null,
         end_time: isScheduled ? endTime : null,
         priority,
+        user_id: user.id, // Add the user_id here
       });
 
       if (error) throw error;
