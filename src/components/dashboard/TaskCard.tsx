@@ -53,6 +53,11 @@ export function TaskCard({ task, isMobile = false, index }: TaskCardProps) {
     setIsEditDrawerOpen(true);
   };
 
+  const handleStatusClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    handleComplete();
+  };
+
   if (isMobile) {
     return (
       <>
@@ -74,10 +79,7 @@ export function TaskCard({ task, isMobile = false, index }: TaskCardProps) {
           <TaskStatusIndicator
             status={task.status}
             time={task.time}
-            onClick={(e: React.MouseEvent) => {
-              e.stopPropagation();
-              handleComplete();
-            }}
+            onClick={handleStatusClick}
           />
         </div>
         <EditTaskDrawer 
@@ -116,18 +118,12 @@ export function TaskCard({ task, isMobile = false, index }: TaskCardProps) {
           variant="ghost" 
           size="sm" 
           className="ml-2 p-0"
-          onClick={(e: React.MouseEvent) => {
-            e.stopPropagation();
-            handleComplete();
-          }}
+          onClick={handleStatusClick}
         >
           <TaskStatusIndicator
             status={task.status}
             time={task.time}
-            onClick={(e: React.MouseEvent) => {
-              e.stopPropagation();
-              handleComplete();
-            }}
+            onClick={handleStatusClick}
           />
         </Button>
       </div>

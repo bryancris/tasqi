@@ -9,9 +9,12 @@ export type TaskPriority = 'low' | 'medium' | 'high';
 export interface Task {
   id: number;
   title: string;
+  description?: string;
   date: string;
   status: 'scheduled' | 'unscheduled';
   time: string;
+  start_time?: string;
+  end_time?: string;
   priority?: TaskPriority;
   position: number;
   user_id: string;
@@ -28,9 +31,12 @@ const fetchTasks = async () => {
   return data.map((task) => ({
     id: task.id,
     title: task.title,
+    description: task.description,
     date: task.date || '',
     status: task.status,
     time: task.start_time ? `${task.start_time} - ${task.end_time}` : '',
+    start_time: task.start_time,
+    end_time: task.end_time,
     priority: task.priority,
     position: task.position,
     user_id: task.user_id,
