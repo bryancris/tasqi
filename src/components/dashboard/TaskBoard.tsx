@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Calendar, List, MessageSquare, Settings, Clock } from "lucide-react";
+import { Plus, Calendar, Home, FileText, MessageSquare, Settings, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -92,16 +92,24 @@ export function TaskBoard() {
         {/* Bottom Navigation */}
         <div className="flex justify-around items-center p-4 border-t">
           <Button variant="ghost" size="icon" className="text-[#6366F1]">
-            <List className="h-5 w-5" />
+            <Home className="h-5 w-5" />
+            <span className="text-xs mt-1">Daily</span>
           </Button>
           <Button variant="ghost" size="icon" className="text-gray-400">
             <Calendar className="h-5 w-5" />
+            <span className="text-xs mt-1">Week</span>
+          </Button>
+          <Button variant="ghost" size="icon" className="text-gray-400">
+            <FileText className="h-5 w-5" />
+            <span className="text-xs mt-1">Notes</span>
           </Button>
           <Button variant="ghost" size="icon" className="text-gray-400">
             <MessageSquare className="h-5 w-5" />
+            <span className="text-xs mt-1">Chat</span>
           </Button>
           <Button variant="ghost" size="icon" className="text-gray-400">
             <Settings className="h-5 w-5" />
+            <span className="text-xs mt-1">Settings</span>
           </Button>
         </div>
       </div>
