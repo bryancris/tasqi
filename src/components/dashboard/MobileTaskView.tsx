@@ -2,19 +2,23 @@ import { Button } from "@/components/ui/button";
 import { Plus, Calendar, Home, FileText, MessageSquare, Settings } from "lucide-react";
 import { TaskCard } from "./TaskCard";
 import { Task } from "./TaskBoard";
+import { format } from "date-fns";
 
 interface MobileTaskViewProps {
   tasks: Task[];
 }
 
 export function MobileTaskView({ tasks }: MobileTaskViewProps) {
+  const currentTime = format(new Date(), 'HH:mm');
+  const currentDate = format(new Date(), 'EEE, MMM d');
+
   return (
     <div className="flex flex-col h-screen bg-white">
       {/* Header */}
       <div className="flex justify-between items-center p-4">
         <div>
           <h1 className="text-xl font-semibold text-[#6366F1]">TasqiAI</h1>
-          <p className="text-sm text-gray-500">15:38 Mon, Jan 27</p>
+          <p className="text-sm text-gray-500">{currentTime} {currentDate}</p>
         </div>
         <Button 
           variant="ghost" 
