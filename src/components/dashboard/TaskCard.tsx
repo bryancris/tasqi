@@ -1,7 +1,10 @@
 import { Button } from "@/components/ui/button";
-import { Clock } from "lucide-react";
+import { Clock, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Task, TaskPriority } from "./TaskBoard";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 
 interface TaskCardProps {
   task: Task;
@@ -25,6 +28,36 @@ const getPriorityColor = (status: string, priority?: TaskPriority) => {
 
 export function TaskCard({ task, isMobile = false }: TaskCardProps) {
   const bgColor = getPriorityColor(task.status, task.priority);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const handleComplete = async () => {
+    if (task.status !== 'unscheduled') return;
+
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', task.id);
+
+      if (error) throw error;
+
+      // Invalidate and refetch tasks
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      
+      toast({
+        title: "Task completed!",
+        description: `${task.title} has been marked as complete`,
+      });
+    } catch (error) {
+      console.error('Error completing task:', error);
+      toast({
+        title: "Error",
+        description: "Failed to complete task. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   if (isMobile) {
     return (
@@ -48,8 +81,15 @@ export function TaskCard({ task, isMobile = false }: TaskCardProps) {
             )}
           </div>
         </div>
-        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/20">
-          <Clock className="h-4 w-4" />
+        <div 
+          className="flex items-center justify-center w-8 h-8 rounded-full bg-white/20 cursor-pointer"
+          onClick={task.status === 'unscheduled' ? handleComplete : undefined}
+        >
+          {task.status === 'unscheduled' ? (
+            <Check className="h-4 w-4" />
+          ) : (
+            <Clock className="h-4 w-4" />
+          )}
         </div>
       </div>
     );
@@ -77,8 +117,13 @@ export function TaskCard({ task, isMobile = false }: TaskCardProps) {
         variant="ghost" 
         size="sm" 
         className="ml-2 hover:bg-white/20"
+        onClick={task.status === 'unscheduled' ? handleComplete : undefined}
       >
-        <Clock className="h-4 w-4" />
+        {task.status === 'unscheduled' ? (
+          <Check className="h-4 w-4" />
+        ) : (
+          <Clock className="h-4 w-4" />
+        )}
       </Button>
     </div>
   );
