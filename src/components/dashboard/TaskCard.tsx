@@ -82,13 +82,16 @@ export function TaskCard({ task, isMobile = false }: TaskCardProps) {
           </div>
         </div>
         <div 
-          className="flex items-center justify-center w-8 h-8 rounded-full bg-white/20 cursor-pointer"
+          className={cn(
+            "flex items-center justify-center w-8 h-8 rounded-full cursor-pointer",
+            task.status === 'unscheduled' ? 'bg-white/20' : 'bg-emerald-500 shadow-lg'
+          )}
           onClick={task.status === 'unscheduled' ? handleComplete : undefined}
         >
           {task.status === 'unscheduled' ? (
             <Check className="h-4 w-4" />
           ) : (
-            <Clock className="h-4 w-4" />
+            <Clock className="h-4 w-4 text-white" />
           )}
         </div>
       </div>
@@ -116,7 +119,12 @@ export function TaskCard({ task, isMobile = false }: TaskCardProps) {
       <Button 
         variant="ghost" 
         size="sm" 
-        className="ml-2 hover:bg-white/20"
+        className={cn(
+          "ml-2 rounded-full w-8 h-8 p-0",
+          task.status === 'unscheduled' 
+            ? "hover:bg-white/20" 
+            : "bg-emerald-500 hover:bg-emerald-600"
+        )}
         onClick={task.status === 'unscheduled' ? handleComplete : undefined}
       >
         {task.status === 'unscheduled' ? (
