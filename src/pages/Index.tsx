@@ -7,12 +7,17 @@ import {
   Bell,
   Smartphone,
   BarChart3,
-  Shield
+  Shield,
+  LogIn
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import HeroSection from "@/components/home/HeroSection";
 import FeatureSection from "@/components/home/FeatureSection";
 
 const Index = () => {
+  const navigate = useNavigate();
+
   const aiProductivityFeatures = [
     {
       icon: MessageSquare,
@@ -78,6 +83,16 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-[#1a1b3b] text-white py-12 px-4 md:px-8">
+      <div className="absolute top-4 right-4">
+        <Button 
+          onClick={() => navigate('/auth')} 
+          variant="outline" 
+          className="text-white border-white hover:bg-white hover:text-[#1a1b3b]"
+        >
+          <LogIn className="mr-2 h-4 w-4" />
+          Login
+        </Button>
+      </div>
       <HeroSection />
       <FeatureSection title="AI-Powered Productivity" features={aiProductivityFeatures} />
       <FeatureSection title="Specialized AI Agents" features={specializedAgentsFeatures} />
