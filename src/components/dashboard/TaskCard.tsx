@@ -29,6 +29,19 @@ const getUrgencyColor = (time: string) => {
   return 'bg-red-500';
 };
 
+const getPriorityColor = (priority: TaskPriority | undefined) => {
+  switch (priority) {
+    case 'high':
+      return 'bg-[#9b87f5]';
+    case 'medium':
+      return 'bg-[#9b87f5] opacity-80';
+    case 'low':
+      return 'bg-[#9b87f5] opacity-60';
+    default:
+      return 'bg-[#9b87f5]';
+  }
+};
+
 export function TaskCard({ task, isMobile = false }: TaskCardProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -64,7 +77,7 @@ export function TaskCard({ task, isMobile = false }: TaskCardProps) {
     return (
       <div className={cn(
         "p-4 rounded-xl flex items-center justify-between text-white w-full",
-        task.status === 'unscheduled' ? 'bg-blue-500' : 'bg-[#9b87f5]'
+        task.status === 'unscheduled' ? 'bg-blue-500' : getPriorityColor(task.priority)
       )}>
         <div className="flex items-center space-x-3">
           <div className="grid grid-cols-2 gap-0.5">
@@ -100,7 +113,7 @@ export function TaskCard({ task, isMobile = false }: TaskCardProps) {
   return (
     <div className={cn(
       "p-4 rounded-lg flex items-center justify-between text-white",
-      task.status === 'unscheduled' ? 'bg-blue-500' : 'bg-[#9b87f5]'
+      task.status === 'unscheduled' ? 'bg-blue-500' : getPriorityColor(task.priority)
     )}>
       <div className="flex-1">
         <div className="flex justify-between items-center">
