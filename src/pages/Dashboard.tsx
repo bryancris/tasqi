@@ -1,6 +1,6 @@
 import { Calendar } from "@/components/dashboard/Calendar";
 import { TaskBoard } from "@/components/dashboard/TaskBoard";
-import { Sidebar } from "@/components/dashboard/Sidebar";
+import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -17,14 +17,9 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="flex h-screen bg-[#F8F9FC]">
-      <Sidebar onViewChange={(newView) => setView(newView)} />
-      <div className="flex-1 overflow-auto">
-        <div className="container py-6">
-          {view === 'tasks' ? <TaskBoard /> : <Calendar />}
-        </div>
-      </div>
-    </div>
+    <DashboardLayout>
+      {view === 'tasks' ? <TaskBoard /> : <Calendar />}
+    </DashboardLayout>
   );
 }
 
