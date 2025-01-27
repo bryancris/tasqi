@@ -30,9 +30,23 @@ export function DesktopTaskView({ tasks }: DesktopTaskViewProps) {
 
     if (sourceIndex === destinationIndex) return;
 
+    const updatedTasks = Array.from(tasks);
+    const [removed] = updatedTasks.splice(sourceIndex, 1);
+    updatedTasks.splice(destinationIndex, 0, removed);
+
+    // Update positions in the database
     try {
-      // In a real app, you'd want to update the order in the database
-      // For now, we'll just show a toast to indicate the drag was successful
+      const updates = updatedTasks.map((task, index) => ({
+        id: task.id,
+        position: index + 1,
+      }));
+
+      const { error } = await supabase
+        .from('tasks')
+        .upsert(updates, { onConflict: 'id' });
+
+      if (error) throw error;
+
       toast({
         title: "Task reordered",
         description: "Task order has been updated",

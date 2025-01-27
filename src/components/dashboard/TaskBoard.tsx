@@ -13,13 +13,14 @@ export interface Task {
   status: 'scheduled' | 'unscheduled';
   time: string;
   priority?: TaskPriority;
+  position: number;
 }
 
 const fetchTasks = async () => {
   const { data, error } = await supabase
     .from('tasks')
     .select('*')
-    .order('created_at', { ascending: false });
+    .order('position', { ascending: true });
 
   if (error) throw error;
 
@@ -30,6 +31,7 @@ const fetchTasks = async () => {
     status: task.status,
     time: task.start_time ? `${task.start_time} - ${task.end_time}` : '',
     priority: task.priority,
+    position: task.position,
   }));
 };
 
