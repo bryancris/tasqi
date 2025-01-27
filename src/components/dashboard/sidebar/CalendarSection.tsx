@@ -3,8 +3,59 @@ import { Calendar } from "@/components/ui/calendar";
 import { CalendarDays } from "lucide-react";
 import { useState } from "react";
 
+type ViewType = 'daily' | 'weekly' | 'monthly' | 'yearly';
+
 export function CalendarSection() {
   const [date, setDate] = useState<Date | undefined>(new Date());
+  const [view, setView] = useState<ViewType>('daily');
+
+  const getCalendarView = () => {
+    switch (view) {
+      case 'monthly':
+        return (
+          <div className="mt-4 -mx-2">
+            <Calendar
+              mode="single"
+              selected={date}
+              onSelect={setDate}
+              numberOfMonths={1}
+              className="rounded-md border-[1.5px] border-gray-300 scale-75 origin-top"
+            />
+          </div>
+        );
+      case 'yearly':
+        return (
+          <div className="mt-4 -mx-2 grid grid-cols-3 gap-1">
+            {Array.from({ length: 12 }, (_, i) => {
+              const monthDate = new Date(date?.getFullYear() || new Date().getFullYear(), i, 1);
+              return (
+                <Calendar
+                  key={i}
+                  mode="single"
+                  selected={date}
+                  onSelect={setDate}
+                  defaultMonth={monthDate}
+                  numberOfMonths={1}
+                  className="rounded-md border-[1.5px] border-gray-300 scale-[0.4] origin-top"
+                  showOutsideDays={false}
+                />
+              );
+            })}
+          </div>
+        );
+      default:
+        return (
+          <div className="mt-4 -mx-2">
+            <Calendar
+              mode="single"
+              selected={date}
+              onSelect={setDate}
+              className="rounded-md border-[1.5px] border-gray-300 scale-75 origin-top"
+            />
+          </div>
+        );
+    }
+  };
 
   return (
     <div className="space-y-2">
@@ -19,38 +70,51 @@ export function CalendarSection() {
       <div className="pl-8 space-y-1">
         <Button 
           variant="ghost" 
-          className="w-full justify-start text-sm bg-[#D1FAE5] text-[#059669] hover:bg-[#A7F3D0]"
+          className={`w-full justify-start text-sm ${
+            view === 'daily' 
+              ? 'bg-[#D1FAE5] text-[#059669] hover:bg-[#A7F3D0]' 
+              : 'text-[#6B7280] hover:bg-[#E5E7EB]'
+          }`}
+          onClick={() => setView('daily')}
         >
           Daily
         </Button>
         <Button 
           variant="ghost" 
-          className="w-full justify-start text-sm text-[#6B7280] hover:bg-[#E5E7EB]"
+          className={`w-full justify-start text-sm ${
+            view === 'weekly' 
+              ? 'bg-[#D1FAE5] text-[#059669] hover:bg-[#A7F3D0]' 
+              : 'text-[#6B7280] hover:bg-[#E5E7EB]'
+          }`}
+          onClick={() => setView('weekly')}
         >
           Weekly
         </Button>
         <Button 
           variant="ghost" 
-          className="w-full justify-start text-sm text-[#6B7280] hover:bg-[#E5E7EB]"
+          className={`w-full justify-start text-sm ${
+            view === 'monthly' 
+              ? 'bg-[#D1FAE5] text-[#059669] hover:bg-[#A7F3D0]' 
+              : 'text-[#6B7280] hover:bg-[#E5E7EB]'
+          }`}
+          onClick={() => setView('monthly')}
         >
           Monthly
         </Button>
         <Button 
           variant="ghost" 
-          className="w-full justify-start text-sm text-[#6B7280] hover:bg-[#E5E7EB]"
+          className={`w-full justify-start text-sm ${
+            view === 'yearly' 
+              ? 'bg-[#D1FAE5] text-[#059669] hover:bg-[#A7F3D0]' 
+              : 'text-[#6B7280] hover:bg-[#E5E7EB]'
+          }`}
+          onClick={() => setView('yearly')}
         >
           Yearly
         </Button>
       </div>
 
-      <div className="mt-4 -mx-2">
-        <Calendar
-          mode="single"
-          selected={date}
-          onSelect={setDate}
-          className="rounded-md border-[1.5px] border-gray-300 scale-75 origin-top"
-        />
-      </div>
+      {getCalendarView()}
     </div>
   );
 }
