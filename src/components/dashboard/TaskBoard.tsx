@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Clock, Home, MessageSquare, Settings, FileText } from "lucide-react";
+import { Plus, Calendar, List, MessageSquare, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -44,25 +44,29 @@ export function TaskBoard() {
 
   if (isMobile) {
     return (
-      <div className="flex flex-col h-screen bg-[#F8F9FC]">
+      <div className="flex flex-col h-screen bg-white">
         {/* Header */}
-        <div className="flex justify-between items-center p-4 bg-white">
+        <div className="flex justify-between items-center p-4">
           <div>
-            <h1 className="text-xl font-semibold text-purple-500">TasqiAI</h1>
+            <h1 className="text-xl font-semibold text-[#6366F1]">TasqiAI</h1>
             <p className="text-sm text-gray-500">15:38 Mon, Jan 27</p>
           </div>
-          <Button variant="ghost" size="icon" className="rounded-full bg-gray-100">
-            <Plus className="h-4 w-4" />
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="rounded-full bg-[#F1F5F9] hover:bg-gray-200"
+          >
+            <Plus className="h-4 w-4 text-gray-600" />
           </Button>
         </div>
 
         {/* Tasks List */}
-        <div className="flex-1 p-4 space-y-3 overflow-auto">
+        <div className="flex-1 px-4 space-y-3 overflow-auto">
           {tasks.map((task) => (
             <div
               key={task.id}
               className={cn(
-                "p-4 rounded-xl flex items-center justify-between text-white",
+                "p-4 rounded-xl flex items-center justify-between text-white w-full",
                 task.color
               )}
             >
@@ -75,26 +79,23 @@ export function TaskBoard() {
                 </div>
                 <div>
                   <h3 className="font-medium">{task.title}</h3>
-                  <p className="text-sm opacity-90">{task.date}</p>
+                  <p className="text-sm opacity-90">{task.time || task.date}</p>
                 </div>
               </div>
               <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/20">
-                <Clock className="h-4 w-4" />
+                <List className="h-4 w-4" />
               </div>
             </div>
           ))}
         </div>
 
         {/* Bottom Navigation */}
-        <div className="flex justify-around items-center p-4 bg-white border-t">
-          <Button variant="ghost" size="icon" className="text-blue-500">
-            <Home className="h-5 w-5" />
+        <div className="flex justify-around items-center p-4 border-t">
+          <Button variant="ghost" size="icon" className="text-[#6366F1]">
+            <List className="h-5 w-5" />
           </Button>
           <Button variant="ghost" size="icon" className="text-gray-400">
-            <Clock className="h-5 w-5" />
-          </Button>
-          <Button variant="ghost" size="icon" className="text-emerald-500">
-            <FileText className="h-5 w-5" />
+            <Calendar className="h-5 w-5" />
           </Button>
           <Button variant="ghost" size="icon" className="text-gray-400">
             <MessageSquare className="h-5 w-5" />
