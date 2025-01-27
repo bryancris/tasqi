@@ -102,7 +102,7 @@ export function Sidebar() {
             mode="single"
             selected={date}
             onSelect={setDate}
-            className="rounded-md border"
+            className="rounded-md border-[1.5px] border-gray-300 scale-90 origin-top"
           />
         </div>
       </div>
