@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Calendar, Home, FileText, MessageSquare, Settings, Clock } from "lucide-react";
+import { Plus, Calendar, Home, FileText, MessageSquare, Settings, Clock, MoreVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -83,7 +83,7 @@ export function TaskBoard() {
                 </div>
               </div>
               <div className="flex items-center justify-center w-8 h-8 rounded-full bg-white/20">
-                <List className="h-4 w-4" />
+                <MoreVertical className="h-4 w-4" />
               </div>
             </div>
           ))}
