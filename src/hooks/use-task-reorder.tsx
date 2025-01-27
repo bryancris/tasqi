@@ -21,36 +21,31 @@ export const useTaskReorder = (tasks: Task[]) => {
     updatedTasks.splice(destinationIndex, 0, removed);
 
     try {
-      const updates = updatedTasks.map((task, index) => {
-        const baseUpdate = {
-          position: index + 1,
-          title: task.title,
-          status: task.status,
-          user_id: task.user_id,
-          priority: task.priority,
-        };
-
-        if (task.date) {
-          return { ...baseUpdate, date: task.date };
-        }
-
-        return baseUpdate;
-      });
+      // Create an array of updates with only the necessary fields
+      const updates = updatedTasks.map((task, index) => ({
+        id: task.id, // Include the id for the upsert operation
+        position: index + 1,
+      }));
 
       const { error } = await supabase
         .from('tasks')
         .upsert(updates, { 
           onConflict: 'id',
+          ignoreDuplicates: false,
         });
 
       if (error) throw error;
+
+      // Optimistically update the cache
+      queryClient.setQueryData(['tasks'], updatedTasks);
 
       toast({
         title: "Task reordered",
         description: "Task order has been updated",
       });
 
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      // Invalidate to ensure we have the latest data
+      await queryClient.invalidateQueries({ queryKey: ['tasks'] });
     } catch (error) {
       console.error('Error reordering task:', error);
       toast({
@@ -58,6 +53,9 @@ export const useTaskReorder = (tasks: Task[]) => {
         description: "Failed to reorder task. Please try again.",
         variant: "destructive",
       });
+      
+      // Invalidate to ensure we have the latest data in case of error
+      await queryClient.invalidateQueries({ queryKey: ['tasks'] });
     }
   };
 
