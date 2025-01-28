@@ -24,11 +24,8 @@ const Auth = () => {
       });
 
       if (error) throw error;
-
-      toast({
-        title: "Success!",
-        description: "You have been logged in successfully.",
-      });
+      
+      // Success toast removed from here as it's handled in AuthContext
       navigate("/dashboard");
     } catch (error: any) {
       toast({
