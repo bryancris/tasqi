@@ -9,6 +9,7 @@ interface TaskScheduleFieldsProps {
   startTime: string;
   endTime: string;
   priority: TaskPriority;
+  onIsScheduledChange: (value: boolean) => void;
   onDateChange: (value: string) => void;
   onStartTimeChange: (value: string) => void;
   onEndTimeChange: (value: string) => void;
