@@ -73,7 +73,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
@@ -85,7 +85,6 @@ serve(async (req) => {
           },
           { role: 'user', content: message }
         ],
-        temperature: 0.7,
         functions: [
           {
             name: "create_unscheduled_task",
@@ -114,10 +113,17 @@ serve(async (req) => {
       }),
     });
 
+    if (!aiResponse.ok) {
+      const errorData = await aiResponse.json();
+      console.error('OpenAI API Error:', errorData);
+      throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
+    }
+
     const aiData = await aiResponse.json();
     console.log('OpenAI API Response:', aiData);
 
     if (!aiData.choices || !aiData.choices[0]) {
+      console.error('Invalid OpenAI response structure:', aiData);
       throw new Error('Invalid response from OpenAI API');
     }
 
@@ -126,34 +132,45 @@ serve(async (req) => {
 
     // Handle task creation if the AI detected one
     if (aiMessage.function_call?.name === "create_unscheduled_task") {
-      const functionArgs = JSON.parse(aiMessage.function_call.arguments);
-      
-      if (functionArgs.should_create) {
-        // Get the highest position number for the current user
-        const { data: existingTasks } = await supabase
-          .from("tasks")
-          .select("position")
-          .eq("user_id", userId)
-          .order("position", { ascending: false })
-          .limit(1);
+      try {
+        const functionArgs = JSON.parse(aiMessage.function_call.arguments);
+        console.log('Function arguments:', functionArgs);
+        
+        if (functionArgs.should_create) {
+          // Get the highest position number for the current user
+          const { data: existingTasks } = await supabase
+            .from("tasks")
+            .select("position")
+            .eq("user_id", userId)
+            .order("position", { ascending: false })
+            .limit(1);
 
-        const nextPosition = existingTasks && existingTasks.length > 0 
-          ? existingTasks[0].position + 1 
-          : 1;
+          const nextPosition = existingTasks && existingTasks.length > 0 
+            ? existingTasks[0].position + 1 
+            : 1;
 
-        // Create the unscheduled task
-        const { error: taskError } = await supabase
-          .from("tasks")
-          .insert({
-            title: functionArgs.title,
-            description: functionArgs.description || null,
-            status: "unscheduled",
-            user_id: userId,
-            position: nextPosition,
-            priority: "low"
-          });
+          // Create the unscheduled task
+          const { error: taskError } = await supabase
+            .from("tasks")
+            .insert({
+              title: functionArgs.title,
+              description: functionArgs.description || null,
+              status: "unscheduled",
+              user_id: userId,
+              position: nextPosition,
+              priority: "low"
+            });
 
-        if (taskError) throw taskError;
+          if (taskError) {
+            console.error('Error creating task:', taskError);
+            throw taskError;
+          }
+
+          responseText = `I've added "${functionArgs.title}" to your unscheduled tasks. ${responseText}`;
+        }
+      } catch (error) {
+        console.error('Error processing function call:', error);
+        throw new Error('Failed to process task creation');
       }
     }
 
