@@ -18,6 +18,14 @@ export function Calendar() {
 
   const monthYear = currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' });
 
+  // Mock events data - in a real app this would come from your backend
+  const events = [
+    { id: 1, title: "Monday Morning Meeting", time: "09:00", date: new Date(2024, 11, 2) },
+    { id: 2, title: "Call Deb", time: "08:00", date: new Date(2024, 11, 10) },
+    { id: 3, title: "Montpelier hill", time: "16:00", date: new Date(2024, 11, 27) },
+    { id: 4, title: "Cleaners In", time: "13:30", date: new Date(2024, 11, 29) },
+  ];
+
   return (
     <div className="w-full max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
@@ -26,56 +34,74 @@ export function Calendar() {
           <span className="text-sm">{currentTime}</span>
           <span className="text-sm">{currentDate}</span>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-4">
           <Button
             variant="outline"
             size="icon"
             onClick={previousMonth}
+            className="h-8 w-8"
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <h2 className="text-lg font-semibold min-w-[200px] text-center">
+          <h2 className="text-2xl font-bold min-w-[200px] text-center">
             {monthYear}
           </h2>
           <Button
             variant="outline"
             size="icon"
             onClick={nextMonth}
+            className="h-8 w-8"
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
       </div>
-      <div className="border rounded-lg p-4 bg-white shadow-sm">
-        <CalendarComponent
-          mode="single"
-          selected={currentMonth}
-          onSelect={(date) => date && setCurrentMonth(date)}
-          className="rounded-md"
-          classNames={{
-            months: "space-y-4",
-            month: "space-y-4",
-            caption: "flex justify-center pt-1 relative items-center",
-            caption_label: "text-lg font-semibold text-gray-900",
-            nav: "space-x-1 flex items-center",
-            nav_button: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
-            nav_button_previous: "absolute left-1",
-            nav_button_next: "absolute right-1",
-            table: "w-full border-collapse space-y-1",
-            head_row: "flex",
-            head_cell: "text-gray-500 rounded-md w-10 font-medium text-[0.9rem]",
-            row: "flex w-full mt-2",
-            cell: "relative p-0 text-center text-sm focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-accent",
-            day: "h-10 w-10 p-0 font-normal hover:bg-gray-50 rounded-full aria-selected:opacity-100",
-            day_range_end: "day-range-end",
-            day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-full",
-            day_today: "bg-accent text-accent-foreground rounded-full",
-            day_outside: "text-gray-400 opacity-50",
-            day_disabled: "text-gray-400",
-            day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
-            day_hidden: "invisible",
-          }}
-        />
+
+      <div className="border rounded-lg bg-white shadow-sm overflow-hidden">
+        <div className="grid grid-cols-7 gap-px bg-gray-200 border-b">
+          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
+            <div key={day} className="bg-white p-2 text-sm font-medium text-gray-500 text-center">
+              {day}
+            </div>
+          ))}
+        </div>
+        
+        <div className="grid grid-cols-7 gap-px bg-gray-200">
+          {Array.from({ length: 42 }, (_, i) => {
+            const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), i - currentMonth.getDay() + 2);
+            const isCurrentMonth = date.getMonth() === currentMonth.getMonth();
+            const isToday = new Date().toDateString() === date.toDateString();
+            const dayEvents = events.filter(event => event.date.toDateString() === date.toDateString());
+
+            return (
+              <div
+                key={i}
+                className={`min-h-[120px] bg-white p-2 ${
+                  !isCurrentMonth ? 'text-gray-400' : ''
+                } ${isToday ? 'bg-blue-50' : ''}`}
+              >
+                <div className="flex justify-between items-start">
+                  <span className={`text-sm font-medium ${
+                    isToday ? 'h-6 w-6 bg-blue-600 text-white rounded-full flex items-center justify-center' : ''
+                  }`}>
+                    {date.getDate()}
+                  </span>
+                </div>
+                <div className="mt-1 space-y-1">
+                  {dayEvents.map((event) => (
+                    <div
+                      key={event.id}
+                      className="px-2 py-1 text-xs rounded bg-blue-100 text-blue-700"
+                    >
+                      <div className="font-medium">{event.time}</div>
+                      <div className="truncate">{event.title}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
