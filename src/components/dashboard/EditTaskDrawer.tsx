@@ -54,8 +54,8 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
           description,
           date: isScheduled ? date : null,
           status: isScheduled ? "scheduled" : "unscheduled",
-          start_time: isScheduled ? startTime : null,
-          end_time: isScheduled ? endTime : null,
+          start_time: isScheduled && startTime ? startTime : null,
+          end_time: isScheduled && endTime ? endTime : null,
           priority,
         })
         .eq("id", task.id);
