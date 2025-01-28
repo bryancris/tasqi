@@ -3,7 +3,7 @@ import { CalendarDays } from "lucide-react";
 import { useState } from "react";
 
 interface CalendarSectionProps {
-  onViewChange?: (view: 'tasks' | 'calendar') => void;
+  onViewChange?: (view: 'tasks' | 'calendar' | 'yearly') => void;
 }
 
 export function CalendarSection({ onViewChange }: CalendarSectionProps) {
@@ -12,7 +12,13 @@ export function CalendarSection({ onViewChange }: CalendarSectionProps) {
   const handleViewChange = (newView: 'daily' | 'weekly' | 'monthly' | 'yearly') => {
     setView(newView);
     if (onViewChange) {
-      onViewChange(newView === 'monthly' || newView === 'yearly' ? 'calendar' : 'tasks');
+      if (newView === 'yearly') {
+        onViewChange('yearly');
+      } else if (newView === 'monthly') {
+        onViewChange('calendar');
+      } else {
+        onViewChange('tasks');
+      }
     }
   };
 
