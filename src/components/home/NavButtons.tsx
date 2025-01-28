@@ -33,14 +33,14 @@ const NavButtons = () => {
           <Button 
             onClick={() => navigate('/dashboard')} 
             variant="outline" 
-            className="text-white border-white hover:bg-white hover:text-[#1a1b3b]"
+            className="bg-white/10 text-white border-white hover:bg-white hover:text-[#1a1b3b]"
           >
             Dashboard
           </Button>
           <Button 
             onClick={handleLogout} 
             variant="outline" 
-            className="text-white border-white hover:bg-white hover:text-[#1a1b3b]"
+            className="bg-white/10 text-white border-white hover:bg-white hover:text-[#1a1b3b]"
           >
             <LogOut className="mr-2 h-4 w-4" />
             Logout
@@ -50,7 +50,7 @@ const NavButtons = () => {
         <Button 
           onClick={() => navigate('/auth')} 
           variant="outline" 
-          className="text-white border-white hover:bg-white hover:text-[#1a1b3b]"
+          className="bg-white/10 text-white border-white hover:bg-white hover:text-[#1a1b3b]"
         >
           <LogIn className="mr-2 h-4 w-4" />
           Login
