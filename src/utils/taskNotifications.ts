@@ -1,9 +1,9 @@
 import { supabase } from "@/integrations/supabase/client";
-import { Task } from "@/components/dashboard/TaskBoard";
 import { format, parseISO, addMinutes } from "date-fns";
 
 export const checkAndNotifyUpcomingTasks = async () => {
   try {
+    // Get tasks that are scheduled and have reminders enabled
     const { data: tasks, error } = await supabase
       .from("tasks")
       .select("*")
@@ -12,20 +12,31 @@ export const checkAndNotifyUpcomingTasks = async () => {
 
     if (error) throw error;
 
-    tasks?.forEach((task: Task) => {
+    const now = new Date();
+    tasks?.forEach(task => {
       if (!task.date || !task.start_time) return;
 
       const taskDateTime = parseISO(`${task.date}T${task.start_time}`);
-      const now = new Date();
       const notificationTime = addMinutes(now, 15);
 
       if (taskDateTime > now && taskDateTime <= notificationTime) {
         const timeString = format(taskDateTime, "h:mm a");
         
         if ("Notification" in window && Notification.permission === "granted") {
-          new Notification("Upcoming Task", {
-            body: `${task.title} starts at ${timeString}`,
-            icon: "/pwa-192x192.png",
+          const registration = navigator.serviceWorker?.ready;
+          registration.then(reg => {
+            reg.showNotification("Upcoming Task", {
+              body: `${task.title} starts at ${timeString}`,
+              icon: "/pwa-192x192.png",
+              badge: "/pwa-192x192.png",
+              vibrate: [100, 50, 100],
+              data: {
+                taskId: task.id,
+                url: window.location.origin + '/dashboard'
+              },
+              tag: `task-${task.id}`,
+              renotify: true
+            });
           });
         }
       }
