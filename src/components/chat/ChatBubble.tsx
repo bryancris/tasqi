@@ -9,16 +9,52 @@ import {
 } from "@/components/ui/dialog";
 import { useState } from "react";
 import { ChatInput } from "./ChatInput";
+import { supabase } from "@/integrations/supabase/client";
+
+interface Message {
+  content: string;
+  isUser: boolean;
+}
 
 export function ChatBubble() {
   const [message, setMessage] = useState("");
+  const [messages, setMessages] = useState<Message[]>([
+    { content: "Hello! How can I help you today?", isUser: false }
+  ]);
   const [open, setOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim()) return;
-    // TODO: Handle message submission
+
+    // Add user message to chat
+    const userMessage = { content: message, isUser: true };
+    setMessages(prev => [...prev, userMessage]);
     setMessage("");
+    setIsLoading(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('process-task', {
+        body: { message }
+      });
+
+      if (error) throw error;
+
+      // Add AI response to chat
+      const aiMessage = { content: data.response || "I'm sorry, I couldn't process that request.", isUser: false };
+      setMessages(prev => [...prev, aiMessage]);
+    } catch (error) {
+      console.error('Error processing message:', error);
+      // Add error message to chat
+      const errorMessage = { 
+        content: "I'm sorry, I encountered an error processing your request. Please try again.", 
+        isUser: false 
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -55,17 +91,31 @@ export function ChatBubble() {
 
           {/* Chat Area */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
-            <div className="flex justify-start">
-              <div className="rounded-lg bg-white p-3 max-w-[80%] shadow-sm">
-                <p className="text-sm">Hello! How can I help you today?</p>
+            {messages.map((msg, index) => (
+              <div key={index} className={`flex ${msg.isUser ? 'justify-end' : 'justify-start'}`}>
+                <div className={`rounded-lg p-3 max-w-[80%] ${
+                  msg.isUser 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-white shadow-sm'
+                }`}>
+                  <p className="text-sm">{msg.content}</p>
+                </div>
               </div>
-            </div>
+            ))}
+            {isLoading && (
+              <div className="flex justify-start">
+                <div className="rounded-lg bg-white p-3 shadow-sm">
+                  <p className="text-sm">Thinking...</p>
+                </div>
+              </div>
+            )}
           </div>
 
           <ChatInput 
             message={message}
             onMessageChange={setMessage}
             onSubmit={handleSubmit}
+            isLoading={isLoading}
           />
         </div>
       </DialogContent>
