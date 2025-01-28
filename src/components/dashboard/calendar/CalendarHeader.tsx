@@ -14,7 +14,7 @@ export function CalendarHeader({ monthYear, onPreviousMonth, onNextMonth }: Cale
         <div className="flex items-center space-x-4">
           <h2 className="text-2xl font-bold">{monthYear}</h2>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-4 ml-4">
           <Button
             variant="outline"
             size="icon"
@@ -23,6 +23,7 @@ export function CalendarHeader({ monthYear, onPreviousMonth, onNextMonth }: Cale
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
+          <span className="text-sm font-medium text-gray-600">Weekly</span>
           <Button
             variant="outline"
             size="icon"
