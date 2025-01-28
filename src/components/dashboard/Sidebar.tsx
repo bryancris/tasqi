@@ -24,12 +24,12 @@ export function Sidebar({ onViewChange }: SidebarProps) {
         <div className="flex-1" />
         
         <div className="space-y-4">
-          <div className="px-2">
+          <div className="border rounded-lg">
             <Calendar
               mode="single"
               selected={date}
               onSelect={setDate}
-              className="rounded-md border-[1.5px] border-gray-300 scale-75 origin-top"
+              className="w-full"
             />
           </div>
           <BottomControls />
