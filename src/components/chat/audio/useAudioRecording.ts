@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useMicrophoneAccess } from "./useMicrophoneAccess";
@@ -6,14 +6,54 @@ import { useMicrophoneAccess } from "./useMicrophoneAccess";
 export function useAudioRecording(onTranscriptionComplete: (text: string) => void) {
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
   const { toast } = useToast();
   const { requestMicrophoneAccess } = useMicrophoneAccess();
+
+  const checkForSilence = () => {
+    if (!analyserRef.current) return;
+
+    const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+    analyserRef.current.getByteFrequencyData(dataArray);
+
+    // Calculate average volume
+    const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+
+    // If volume is below threshold (silence), start timeout
+    if (average < 5) { // Adjust this threshold as needed
+      if (!silenceTimeoutRef.current) {
+        silenceTimeoutRef.current = setTimeout(() => {
+          stopRecording();
+        }, 1500); // Stop after 1.5 seconds of silence
+      }
+    } else {
+      // Reset timeout if sound is detected
+      if (silenceTimeoutRef.current) {
+        clearTimeout(silenceTimeoutRef.current);
+        silenceTimeoutRef.current = null;
+      }
+    }
+
+    // Continue checking while recording
+    if (isRecording) {
+      requestAnimationFrame(checkForSilence);
+    }
+  };
 
   const startRecording = async () => {
     const stream = await requestMicrophoneAccess();
     if (!stream) return;
 
     try {
+      // Set up audio context and analyser
+      audioContextRef.current = new AudioContext();
+      analyserRef.current = audioContextRef.current.createAnalyser();
+      const source = audioContextRef.current.createMediaStreamSource(stream);
+      source.connect(analyserRef.current);
+      analyserRef.current.fftSize = 256;
+
       const recorder = new MediaRecorder(stream);
       const audioChunks: Blob[] = [];
 
@@ -22,6 +62,13 @@ export function useAudioRecording(onTranscriptionComplete: (text: string) => voi
       };
 
       recorder.onstop = async () => {
+        // Clean up audio context
+        if (audioContextRef.current) {
+          audioContextRef.current.close();
+          audioContextRef.current = null;
+        }
+        analyserRef.current = null;
+
         const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
         const reader = new FileReader();
         
@@ -56,9 +103,12 @@ export function useAudioRecording(onTranscriptionComplete: (text: string) => voi
       recorder.start();
       setIsRecording(true);
       
+      // Start checking for silence
+      requestAnimationFrame(checkForSilence);
+      
       toast({
         title: "Recording Started",
-        description: "Click the microphone button again to stop recording.",
+        description: "Recording will automatically stop after silence is detected.",
       });
     } catch (error) {
       console.error('Error starting recording:', error);
@@ -72,6 +122,12 @@ export function useAudioRecording(onTranscriptionComplete: (text: string) => voi
 
   const stopRecording = () => {
     if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      // Clear any existing silence timeout
+      if (silenceTimeoutRef.current) {
+        clearTimeout(silenceTimeoutRef.current);
+        silenceTimeoutRef.current = null;
+      }
+
       mediaRecorder.stop();
       mediaRecorder.stream.getTracks().forEach(track => track.stop());
       setIsRecording(false);
