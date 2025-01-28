@@ -22,6 +22,7 @@ interface TaskFormProps {
   endTime: string;
   priority: TaskPriority;
   isLoading: boolean;
+  isEditing?: boolean;
   onTitleChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
   onIsScheduledChange: (value: boolean) => void;
@@ -41,6 +42,7 @@ export function TaskForm({
   endTime,
   priority,
   isLoading,
+  isEditing = false,
   onTitleChange,
   onDescriptionChange,
   onIsScheduledChange,
@@ -116,7 +118,7 @@ export function TaskForm({
         onClick={onSubmit}
         disabled={!title || isLoading}
       >
-        {isLoading ? "Creating..." : "Add Task"}
+        {isLoading ? "Creating..." : isEditing ? "Update Task" : "Add Task"}
       </Button>
     </div>
   );

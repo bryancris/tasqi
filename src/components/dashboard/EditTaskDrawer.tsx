@@ -135,6 +135,7 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
               endTime={endTime}
               priority={priority}
               isLoading={isLoading}
+              isEditing={true}
               onTitleChange={setTitle}
               onDescriptionChange={setDescription}
               onIsScheduledChange={setIsScheduled}
