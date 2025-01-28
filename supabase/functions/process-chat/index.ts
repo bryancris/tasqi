@@ -78,8 +78,9 @@ serve(async (req) => {
           {
             role: 'system',
             content: `You are a helpful AI assistant that helps users manage their tasks and schedule. 
-            When a user mentions something that sounds like a task but doesn't provide a date or time, 
-            create it as an unscheduled task. Respond naturally to the user and let them know what actions you've taken.
+            When a user mentions something that sounds like a task, analyze if it has a specific time/date.
+            If it has a specific time/date, create it as a scheduled task. If not, create it as an unscheduled task.
+            Respond naturally to the user and let them know what actions you've taken.
             Previous conversation context:
             ${context}`
           },
@@ -87,8 +88,8 @@ serve(async (req) => {
         ],
         functions: [
           {
-            name: "create_unscheduled_task",
-            description: "Create an unscheduled task when user mentions something that sounds like a task without specific timing",
+            name: "create_task",
+            description: "Create a task when user mentions something that sounds like a task",
             parameters: {
               type: "object",
               properties: {
@@ -103,6 +104,22 @@ serve(async (req) => {
                 description: {
                   type: "string",
                   description: "Optional description of the task"
+                },
+                is_scheduled: {
+                  type: "boolean",
+                  description: "Whether the task has a specific date/time"
+                },
+                date: {
+                  type: "string",
+                  description: "The date in YYYY-MM-DD format if specified"
+                },
+                start_time: {
+                  type: "string",
+                  description: "The start time in HH:mm format if specified"
+                },
+                end_time: {
+                  type: "string",
+                  description: "The end time in HH:mm format if specified"
                 }
               },
               required: ["should_create"]
@@ -131,7 +148,7 @@ serve(async (req) => {
     let responseText = aiMessage.content || "I'm sorry, I couldn't process that request.";
 
     // Handle task creation if the AI detected one
-    if (aiMessage.function_call?.name === "create_unscheduled_task") {
+    if (aiMessage.function_call?.name === "create_task") {
       try {
         const functionArgs = JSON.parse(aiMessage.function_call.arguments);
         console.log('Function arguments:', functionArgs);
@@ -149,13 +166,16 @@ serve(async (req) => {
             ? existingTasks[0].position + 1 
             : 1;
 
-          // Create the unscheduled task
+          // Create the task
           const { error: taskError } = await supabase
             .from("tasks")
             .insert({
               title: functionArgs.title,
               description: functionArgs.description || null,
-              status: "unscheduled",
+              date: functionArgs.is_scheduled ? functionArgs.date : null,
+              status: functionArgs.is_scheduled ? "scheduled" : "unscheduled",
+              start_time: functionArgs.is_scheduled ? functionArgs.start_time : null,
+              end_time: functionArgs.is_scheduled ? functionArgs.end_time : null,
               user_id: userId,
               position: nextPosition,
               priority: "low"
@@ -166,7 +186,8 @@ serve(async (req) => {
             throw taskError;
           }
 
-          responseText = `I've added "${functionArgs.title}" to your unscheduled tasks. ${responseText}`;
+          const taskType = functionArgs.is_scheduled ? "scheduled" : "unscheduled";
+          responseText = `I've added "${functionArgs.title}" to your ${taskType} tasks. ${responseText}`;
         }
       } catch (error) {
         console.error('Error processing function call:', error);
