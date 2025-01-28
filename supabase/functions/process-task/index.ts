@@ -1,6 +1,5 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,9 +7,8 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
@@ -24,14 +22,39 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4',
+        temperature: 0.7,
         messages: [
           {
             role: 'system',
-            content: `You are a task management AI assistant. Help users manage their tasks and schedule by providing helpful responses. Keep responses concise and focused on task management.`
+            content: `You are a task scheduling assistant. Extract task information from user input and return it in JSON format with these fields:
+              - title (string)
+              - description (string, optional)
+              - date (YYYY-MM-DD format if specified, null if not)
+              - startTime (HH:mm format if specified, null if not)
+              - endTime (HH:mm format if specified, null if not)
+              - priority (either "low", "medium", or "high")
+              
+              Convert relative dates (today, tomorrow, next week, etc) to actual dates.
+              If no priority is specified, default to "low".
+              If you cannot extract task information, return null.
+              
+              Example response format:
+              {
+                "task": {
+                  "title": "Walk the dog",
+                  "description": null,
+                  "date": "2024-01-27",
+                  "startTime": "09:00",
+                  "endTime": null,
+                  "priority": "low"
+                },
+                "response": "I've scheduled a task to walk the dog today at 9 AM. Would you like me to help you with anything else?"
+              }`
           },
           { role: 'user', content: message }
         ],
+        response_format: { type: "json_object" }
       }),
     });
 
@@ -42,9 +65,45 @@ serve(async (req) => {
       throw new Error('Invalid response from OpenAI');
     }
 
+    const result = JSON.parse(data.choices[0].message.content);
+    
+    // If task information was extracted, create the task
+    if (result.task) {
+      const supabase = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      );
+
+      // Get highest position for user's tasks
+      const { data: existingTasks } = await supabase
+        .from("tasks")
+        .select("position")
+        .order("position", { ascending: false })
+        .limit(1);
+
+      const nextPosition = existingTasks && existingTasks.length > 0 
+        ? existingTasks[0].position + 1 
+        : 1;
+
+      const { error: taskError } = await supabase
+        .from('tasks')
+        .insert({
+          title: result.task.title,
+          description: result.task.description,
+          date: result.task.date,
+          status: result.task.date ? 'scheduled' : 'unscheduled',
+          start_time: result.task.startTime,
+          end_time: result.task.endTime,
+          priority: result.task.priority,
+          position: nextPosition
+        });
+
+      if (taskError) throw taskError;
+    }
+
     return new Response(
       JSON.stringify({
-        response: data.choices[0].message.content
+        response: result.response
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
