@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Task } from "./TaskBoard";
 import { CalendarHeader } from "./calendar/CalendarHeader";
 import { CalendarDay } from "./calendar/CalendarDay";
+import { startOfMonth, eachDayOfInterval, endOfMonth, startOfWeek, endOfWeek } from "date-fns";
 
 export function Calendar() {
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
@@ -32,6 +33,15 @@ export function Calendar() {
     },
   });
 
+  // Get all dates for the current month view
+  const monthStart = startOfMonth(currentMonth);
+  const monthEnd = endOfMonth(monthStart);
+  const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 }); // Start on Monday
+  const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
+
+  // Generate array of dates for the calendar
+  const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+
   return (
     <div className="w-full max-w-7xl mx-auto">
       <CalendarHeader 
@@ -50,8 +60,7 @@ export function Calendar() {
         </div>
         
         <div className="grid grid-cols-7 gap-px bg-gray-200">
-          {Array.from({ length: 42 }, (_, i) => {
-            const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), i - currentMonth.getDay() + 2);
+          {calendarDays.map((date, i) => {
             const isCurrentMonth = date.getMonth() === currentMonth.getMonth();
             const isToday = new Date().toDateString() === date.toDateString();
             
