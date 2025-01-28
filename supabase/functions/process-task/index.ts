@@ -13,6 +13,7 @@ serve(async (req) => {
 
   try {
     const { message } = await req.json();
+    console.log('Received message:', message);
 
     // Process with OpenAI
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -22,7 +23,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4o-mini',
         temperature: 0.7,
         messages: [
           {
@@ -58,14 +59,22 @@ serve(async (req) => {
       }),
     });
 
+    if (!openAIResponse.ok) {
+      const errorData = await openAIResponse.json();
+      console.error('OpenAI API Error:', errorData);
+      throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
+    }
+
     const data = await openAIResponse.json();
     console.log('OpenAI Response:', data);
 
-    if (!data.choices || !data.choices[0]) {
-      throw new Error('Invalid response from OpenAI');
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      console.error('Invalid OpenAI response structure:', data);
+      throw new Error('Invalid response structure from OpenAI');
     }
 
     const result = JSON.parse(data.choices[0].message.content);
+    console.log('Parsed result:', result);
     
     // If task information was extracted, create the task
     if (result.task) {
@@ -98,7 +107,10 @@ serve(async (req) => {
           position: nextPosition
         });
 
-      if (taskError) throw taskError;
+      if (taskError) {
+        console.error('Error creating task:', taskError);
+        throw taskError;
+      }
     }
 
     return new Response(
