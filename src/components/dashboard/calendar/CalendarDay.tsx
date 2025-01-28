@@ -1,4 +1,5 @@
 import { Task } from "../TaskBoard";
+import { format } from "date-fns";
 
 interface CalendarDayProps {
   date: Date;
@@ -8,6 +9,15 @@ interface CalendarDayProps {
 }
 
 export function CalendarDay({ date, isCurrentMonth, isToday, tasks }: CalendarDayProps) {
+  const formattedDate = format(date, 'yyyy-MM-dd');
+  
+  // Filter tasks for this specific day using the formatted date string
+  const dayTasks = tasks.filter(task => {
+    if (!task.date) return false;
+    const taskDate = format(new Date(task.date), 'yyyy-MM-dd');
+    return taskDate === formattedDate;
+  });
+
   return (
     <div
       className={`min-h-[120px] bg-white p-2 ${
@@ -22,7 +32,7 @@ export function CalendarDay({ date, isCurrentMonth, isToday, tasks }: CalendarDa
         </span>
       </div>
       <div className="mt-1 space-y-1">
-        {tasks.slice(0, 3).map((task) => (
+        {dayTasks.slice(0, 3).map((task) => (
           <div
             key={task.id}
             className="px-2 py-1 text-xs rounded bg-blue-100 text-blue-700 truncate"
@@ -39,9 +49,9 @@ export function CalendarDay({ date, isCurrentMonth, isToday, tasks }: CalendarDa
             <span className="ml-1">{task.title}</span>
           </div>
         ))}
-        {tasks.length > 3 && (
+        {dayTasks.length > 3 && (
           <div className="text-xs text-gray-500">
-            +{tasks.length - 3} more
+            +{dayTasks.length - 3} more
           </div>
         )}
       </div>
