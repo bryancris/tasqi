@@ -78,8 +78,9 @@ export default {
 					to: { height: '0' }
 				},
 				'flash': {
-					'0%, 100%': { backgroundColor: '#ea384c' },
-					'50%': { backgroundColor: '#FFFFFF' }
+					'0%': { backgroundColor: '#ea384c' },
+					'50%': { backgroundColor: '#FFFFFF' },
+					'100%': { backgroundColor: '#ea384c' }
 				}
 			},
 			animation: {
