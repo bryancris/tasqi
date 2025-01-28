@@ -26,7 +26,7 @@ export function TaskStatusIndicator({ status, time, onClick }: TaskStatusIndicat
     <div 
       className={cn(
         "flex items-center justify-center w-8 h-8 rounded-full cursor-pointer shadow-lg transition-colors",
-        status === 'unscheduled' ? 'bg-white/20' : getUrgencyColor(time),
+        status === 'unscheduled' ? 'bg-[#1EAEDB]' : getUrgencyColor(time),
         isOverdue() && "animate-flash"
       )}
       onClick={status === 'unscheduled' ? onClick : undefined}
