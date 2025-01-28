@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
 import { checkAndNotifyUpcomingTasks } from "@/utils/taskNotifications";
+import { Button } from "@/components/ui/button";
 
 export type TaskPriority = 'low' | 'medium' | 'high';
 
@@ -32,6 +33,26 @@ const fetchTasks = async () => {
   if (error) throw error;
 
   return data as Task[];
+};
+
+const sendTestNotification = () => {
+  if ('Notification' in window) {
+    Notification.requestPermission().then((permission) => {
+      if (permission === "granted" && 'serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then((registration) => {
+          registration.showNotification("Test Notification", {
+            body: "This is a test notification from TasqiAI",
+            icon: '/pwa-192x192.png',
+            badge: '/pwa-192x192.png',
+            tag: 'test-notification',
+            data: {
+              url: window.location.origin + '/dashboard'
+            }
+          });
+        });
+      }
+    });
+  }
 };
 
 export function TaskBoard() {
@@ -67,6 +88,15 @@ export function TaskBoard() {
 
   return (
     <div className="space-y-4">
+      <div className="flex justify-end mb-4">
+        <Button 
+          variant="outline"
+          onClick={sendTestNotification}
+          className="text-sm"
+        >
+          Test Notification
+        </Button>
+      </div>
       {isMobile ? (
         <MobileTaskView tasks={tasks} />
       ) : (
