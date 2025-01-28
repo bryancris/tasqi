@@ -16,6 +16,10 @@ serve(async (req) => {
     const { message, userId } = await req.json();
     console.log('Received message:', message, 'userId:', userId);
 
+    if (!userId) {
+      throw new Error('No user ID provided');
+    }
+
     // Process with OpenAI
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -24,7 +28,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4',
         temperature: 0.7,
         messages: [
           {
@@ -55,8 +59,7 @@ serve(async (req) => {
               }`
           },
           { role: 'user', content: message }
-        ],
-        response_format: { type: "json_object" }
+        ]
       }),
     });
 
