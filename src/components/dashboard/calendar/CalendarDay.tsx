@@ -1,5 +1,5 @@
 import { Task } from "../TaskBoard";
-import { format } from "date-fns";
+import { format, startOfDay } from "date-fns";
 
 interface CalendarDayProps {
   date: Date;
@@ -9,13 +9,15 @@ interface CalendarDayProps {
 }
 
 export function CalendarDay({ date, isCurrentMonth, isToday, tasks }: CalendarDayProps) {
-  const formattedDate = format(date, 'yyyy-MM-dd');
+  // Format the calendar day date, ensuring it's at the start of the day
+  const calendarDate = startOfDay(date);
+  const formattedDate = format(calendarDate, 'yyyy-MM-dd');
   
-  // Filter tasks for this specific day using the formatted date string
+  // Filter tasks for this specific day, ensuring we compare dates at the start of the day
   const dayTasks = tasks.filter(task => {
     if (!task.date) return false;
-    const taskDate = format(new Date(task.date), 'yyyy-MM-dd');
-    return taskDate === formattedDate;
+    const taskDate = startOfDay(new Date(task.date));
+    return format(taskDate, 'yyyy-MM-dd') === formattedDate;
   });
 
   return (
