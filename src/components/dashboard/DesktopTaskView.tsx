@@ -10,10 +10,17 @@ interface DesktopTaskViewProps {
 }
 
 export function DesktopTaskView({ tasks }: DesktopTaskViewProps) {
-  const timeSlots = Array.from({ length: 12 }, (_, i) => {
-    const hour = i + 9; // Start from 9 AM
-    return `${hour}:00`;
-  });
+  // For now, hardcode the range. Later this will come from user settings
+  const startHour = 9;
+  const endHour = 20;
+
+  const timeSlots = Array.from(
+    { length: endHour - startHour + 1 },
+    (_, i) => {
+      const hour = startHour + i;
+      return hour.toString().padStart(2, '0') + ':00';
+    }
+  );
 
   const { handleDragEnd } = useTaskReorder(tasks);
 
@@ -63,10 +70,16 @@ export function DesktopTaskView({ tasks }: DesktopTaskViewProps) {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {timeSlots.map((time) => {
-              const task = tasks.find(t => t.time.startsWith(time));
+            {timeSlots.map((timeSlot) => {
+              const tasksInSlot = tasks.filter(task => 
+                task.start_time === timeSlot && task.status === 'scheduled'
+              );
               return (
-                <TimelineSlot key={time} time={time} task={task} />
+                <TimelineSlot 
+                  key={timeSlot} 
+                  time={timeSlot} 
+                  tasks={tasksInSlot} 
+                />
               );
             })}
           </div>
