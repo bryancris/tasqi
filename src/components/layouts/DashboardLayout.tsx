@@ -1,4 +1,4 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { Bell, Search, Settings, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -25,8 +25,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { session } = useAuth();
   const navigate = useNavigate();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const currentTime = format(new Date(), 'HH:mm');
-  const currentDate = format(new Date(), 'EEE, MMM d');
+  const [currentTime, setCurrentTime] = useState(format(new Date(), 'HH:mm'));
+  const [currentDate] = useState(format(new Date(), 'EEE, MMM d'));
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(format(new Date(), 'HH:mm'));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -101,7 +109,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <SheetTitle>Settings</SheetTitle>
             </SheetHeader>
             <div className="py-6">
-              {/* Settings content will be implemented in the next iteration */}
               <p className="text-sm text-muted-foreground">Settings panel coming soon...</p>
             </div>
           </SheetContent>

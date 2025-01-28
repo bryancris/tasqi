@@ -1,10 +1,21 @@
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { format } from "date-fns";
 
 export function Calendar() {
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+  const [currentTime, setCurrentTime] = useState(format(new Date(), 'HH:mm'));
+  const currentDate = format(new Date(), 'EEE, MMM d');
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(format(new Date(), 'HH:mm'));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   const nextMonth = () => {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
@@ -15,11 +26,6 @@ export function Calendar() {
   };
 
   const monthYear = currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' });
-  const currentTime = new Date().toLocaleTimeString('en-US', { 
-    hour: '2-digit', 
-    minute: '2-digit',
-    hour12: false 
-  });
 
   return (
     <div className="w-full max-w-7xl mx-auto">
@@ -27,7 +33,7 @@ export function Calendar() {
         <div className="flex items-center space-x-2">
           <h1 className="text-xl font-semibold">TasqiAI</h1>
           <span className="text-sm">{currentTime}</span>
-          <span className="text-sm">Mon, Jan 27</span>
+          <span className="text-sm">{currentDate}</span>
         </div>
         <div className="flex items-center space-x-2">
           <Button
