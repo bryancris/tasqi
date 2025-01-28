@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import { CalendarDays } from "lucide-react";
 import { useState } from "react";
 
@@ -8,7 +7,6 @@ interface CalendarSectionProps {
 }
 
 export function CalendarSection({ onViewChange }: CalendarSectionProps) {
-  const [date, setDate] = useState<Date | undefined>(new Date());
   const [view, setView] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('daily');
 
   const handleViewChange = (newView: 'daily' | 'weekly' | 'monthly' | 'yearly') => {
@@ -21,7 +19,7 @@ export function CalendarSection({ onViewChange }: CalendarSectionProps) {
   return (
     <div className="space-y-2">
       <div className="flex items-center space-x-2 px-2 py-1">
-        <CalendarDays className="h-4 w-4 text-gray-500" />
+        <CalendarDays className="h-4 w-4 text-[#6366F1]" />
         <span className="text-sm font-medium text-gray-700">Calendar View</span>
       </div>
 
@@ -70,15 +68,6 @@ export function CalendarSection({ onViewChange }: CalendarSectionProps) {
         >
           Yearly
         </Button>
-      </div>
-
-      <div className="mt-4 px-2">
-        <Calendar
-          mode="single"
-          selected={date}
-          onSelect={setDate}
-          className="rounded-md border-[1.5px] border-gray-300 scale-75 origin-top"
-        />
       </div>
     </div>
   );
