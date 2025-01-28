@@ -57,7 +57,7 @@ export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
       </DialogTrigger>
       <DialogContent 
         className={`p-0 ${isMobile 
-          ? 'fixed inset-y-[60px] bottom-[64px] w-full h-[calc(100vh-124px)] rounded-none' 
+          ? 'fixed top-[72px] bottom-[80px] w-full rounded-none' 
           : 'fixed bottom-[4.5rem] right-4 mb-0 sm:max-w-[440px] rounded-xl'} 
           data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 
           data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 
