@@ -10,75 +10,20 @@ const corsHeaders = {
 // Types
 interface TaskArgs {
   should_create: boolean;
-  title?: string;
+  title: string;
   description?: string;
-  is_scheduled?: boolean;
+  is_scheduled: boolean;
   date?: string;
   start_time?: string;
   end_time?: string;
 }
 
-// OpenAI Configuration
-const SYSTEM_PROMPT = `You are a helpful AI assistant that helps users manage their tasks and schedule. 
-When a user mentions something that sounds like a task, analyze if it has a specific time/date.
-If it has a specific time/date, create it as a scheduled task. If not, create it as an unscheduled task.
-Respond naturally to the user and let them know what actions you've taken.`;
-
-const TASK_FUNCTION = {
-  name: "create_task",
-  description: "Create a task when user mentions something that sounds like a task",
-  parameters: {
-    type: "object",
-    properties: {
-      should_create: {
-        type: "boolean",
-        description: "Whether a task should be created from this message"
-      },
-      title: {
-        type: "string",
-        description: "Title of the task"
-      },
-      description: {
-        type: "string",
-        description: "Optional description of the task"
-      },
-      is_scheduled: {
-        type: "boolean",
-        description: "Whether the task has a specific date/time"
-      },
-      date: {
-        type: "string",
-        description: "The date in YYYY-MM-DD format if specified"
-      },
-      start_time: {
-        type: "string",
-        description: "The start time in HH:mm format if specified"
-      },
-      end_time: {
-        type: "string",
-        description: "The end time in HH:mm format if specified"
-      }
-    },
-    required: ["should_create"]
-  }
-};
-
-// Helper Functions
-async function fetchChatContext(supabase: any, userId: string): Promise<string> {
-  const { data: messages } = await supabase
-    .from('chat_messages')
-    .select('content, is_ai')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-    .limit(5);
-
-  return messages
-    ? messages.reverse().map((msg: any) => 
-        `${msg.is_ai ? 'Assistant' : 'User'}: ${msg.content}`
-      ).join('\n')
-    : '';
+interface OpenAIResponse {
+  task?: TaskArgs;
+  response: string;
 }
 
+// Helper Functions
 async function getNextPosition(supabase: any, userId: string): Promise<number> {
   const { data: existingTasks } = await supabase
     .from("tasks")
@@ -92,50 +37,79 @@ async function getNextPosition(supabase: any, userId: string): Promise<number> {
     : 1;
 }
 
-async function createTask(supabase: any, userId: string, args: TaskArgs): Promise<void> {
+async function createTask(supabase: any, userId: string, taskData: TaskArgs): Promise<void> {
   const nextPosition = await getNextPosition(supabase, userId);
-
+  
   const { error: taskError } = await supabase
     .from("tasks")
     .insert({
-      title: args.title,
-      description: args.description || null,
-      date: args.is_scheduled ? args.date : null,
-      status: args.is_scheduled ? "scheduled" : "unscheduled",
-      start_time: args.is_scheduled ? args.start_time : null,
-      end_time: args.is_scheduled ? args.end_time : null,
+      title: taskData.title,
+      description: taskData.description || null,
+      date: taskData.is_scheduled ? taskData.date : null,
+      status: taskData.is_scheduled ? "scheduled" : "unscheduled",
+      start_time: taskData.is_scheduled ? taskData.start_time : null,
+      end_time: taskData.is_scheduled ? taskData.end_time : null,
+      priority: "low", // Default to low priority as requested
       user_id: userId,
       position: nextPosition,
-      priority: "low"
     });
 
   if (taskError) throw taskError;
 }
 
-async function processOpenAIResponse(
-  supabase: any, 
-  userId: string, 
-  aiMessage: any
-): Promise<string> {
-  let responseText = aiMessage.content || "I'm sorry, I couldn't process that request.";
+async function processWithOpenAI(message: string): Promise<OpenAIResponse> {
+  const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: `You are a task scheduling assistant. When a user mentions something that sounds like a task:
+          1. If it has a specific time/date, create it as a scheduled task
+          2. If no specific time/date is mentioned, create it as an unscheduled task
+          3. Always extract as much detail as possible
+          4. Default to low priority unless specifically mentioned
+          
+          Return JSON in this format:
+          {
+            "task": {
+              "should_create": true,
+              "title": "Task title",
+              "description": "Optional description",
+              "is_scheduled": true/false,
+              "date": "YYYY-MM-DD" (if scheduled),
+              "start_time": "HH:mm" (if scheduled),
+              "end_time": "HH:mm" (if has duration)
+            },
+            "response": "Your friendly response to the user"
+          }`
+        },
+        { role: 'user', content: message }
+      ],
+      temperature: 0.7,
+    }),
+  });
 
-  if (aiMessage.function_call?.name === "create_task") {
-    try {
-      const functionArgs = JSON.parse(aiMessage.function_call.arguments);
-      console.log('Function arguments:', functionArgs);
-
-      if (functionArgs.should_create && functionArgs.title) {
-        await createTask(supabase, userId, functionArgs);
-        const taskType = functionArgs.is_scheduled ? "scheduled" : "unscheduled";
-        responseText = `I've added "${functionArgs.title}" to your ${taskType} tasks. ${responseText}`;
-      }
-    } catch (error) {
-      console.error('Error processing function call:', error);
-      throw error;
-    }
+  if (!openAIResponse.ok) {
+    const errorData = await openAIResponse.json();
+    console.error('OpenAI API Error:', errorData);
+    throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
   }
 
-  return responseText;
+  const data = await openAIResponse.json();
+  console.log('OpenAI Response:', data);
+
+  try {
+    return JSON.parse(data.choices[0].message.content);
+  } catch (error) {
+    console.error('Error parsing OpenAI response:', error);
+    throw new Error('Failed to parse OpenAI response');
+  }
 }
 
 // Main serve function
@@ -157,63 +131,27 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get recent chat context
-    const context = await fetchChatContext(supabase, userId);
-
     // Process with OpenAI
-    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4',
-        messages: [
-          {
-            role: 'system',
-            content: `${SYSTEM_PROMPT}\nPrevious conversation context:\n${context}`
-          },
-          { role: 'user', content: message }
-        ],
-        functions: [TASK_FUNCTION],
-        function_call: 'auto',
-      }),
-    });
+    const result = await processWithOpenAI(message);
+    console.log('Processed result:', result);
 
-    if (!openAIResponse.ok) {
-      const errorData = await openAIResponse.json();
-      console.error('OpenAI API Error:', errorData);
-      throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
+    // Create task if needed
+    if (result.task?.should_create) {
+      await createTask(supabase, userId, result.task);
     }
-
-    const data = await openAIResponse.json();
-    console.log('OpenAI Response:', data);
-
-    if (!data.choices?.[0]?.message) {
-      console.error('Invalid OpenAI response structure:', data);
-      throw new Error('Invalid response structure from OpenAI');
-    }
-
-    // Process the AI response and handle task creation
-    const responseText = await processOpenAIResponse(
-      supabase, 
-      userId, 
-      data.choices[0].message
-    );
 
     // Save the conversation
     const { error: chatError } = await supabase
       .from('chat_messages')
       .insert([
         { content: message, is_ai: false, user_id: userId },
-        { content: responseText, is_ai: true, user_id: userId }
+        { content: result.response, is_ai: true, user_id: userId }
       ]);
 
     if (chatError) throw chatError;
 
     return new Response(
-      JSON.stringify({ response: responseText }),
+      JSON.stringify({ response: result.response }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
