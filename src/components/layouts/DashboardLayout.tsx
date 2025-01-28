@@ -28,7 +28,7 @@ export function DashboardLayout({ children, onViewChange }: DashboardLayoutProps
             </div>
             <div className="flex items-center gap-4">
               <HeaderNotifications />
-              <HeaderUserMenu setIsSettingsOpen={setIsSettingsOpen} />
+              <HeaderUserMenu />
             </div>
           </div>
         </header>

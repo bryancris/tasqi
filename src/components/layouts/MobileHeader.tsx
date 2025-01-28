@@ -12,7 +12,7 @@ export function MobileHeader() {
           <h1 className="text-[#6366F1] font-medium">TasqiAI</h1>
           <p className="text-sm text-gray-500">{currentTime} {currentDate}</p>
         </div>
-        <HeaderUserMenu setIsSettingsOpen={() => {}} />
+        <HeaderUserMenu />
       </div>
     </div>
   );
