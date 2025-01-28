@@ -49,9 +49,9 @@ export function YearlyCalendar() {
   const getDateColorClass = (date: Date) => {
     const taskCount = getTasksForDate(date).length;
     if (taskCount === 0) return '';
-    if (taskCount >= 7) return 'ring-[#ea384c] ring-2';
-    if (taskCount >= 4) return 'ring-[#F97316] ring-2';
-    return 'ring-[#0FA0CE] ring-2';
+    if (taskCount >= 7) return 'ring-[#ea384c]';
+    if (taskCount >= 4) return 'ring-[#F97316]';
+    return 'ring-[#0FA0CE]';
   };
 
   // Array of gradient backgrounds for variety
@@ -104,10 +104,11 @@ export function YearlyCalendar() {
                       taskDay: (date) => getTasksForDate(date).length > 0
                     }}
                     modifiersStyles={{
-                      taskDay: (date) => ({
+                      taskDay: {
                         borderRadius: '50%',
-                        ...getDateColorClass(date)
-                      })
+                        ring: '2px',
+                        ringColor: (date: Date) => getDateColorClass(date)
+                      }
                     }}
                     classNames={{
                       months: "space-y-4",
