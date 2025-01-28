@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Task } from "./TaskBoard";
 import { CalendarHeader } from "./calendar/CalendarHeader";
 import { CalendarDay } from "./calendar/CalendarDay";
-import { startOfMonth, eachDayOfInterval, endOfMonth, startOfWeek, endOfWeek } from "date-fns";
+import { startOfMonth, eachDayOfInterval, endOfMonth, startOfWeek, endOfWeek, parseISO } from "date-fns";
 
 export function Calendar() {
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
@@ -67,7 +67,7 @@ export function Calendar() {
             // Filter tasks for this day
             const dayTasks = tasks.filter(task => {
               if (!task.date) return false;
-              const taskDate = new Date(task.date);
+              const taskDate = parseISO(task.date);
               return taskDate.toDateString() === date.toDateString();
             });
 

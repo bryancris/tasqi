@@ -1,5 +1,5 @@
 import { Task } from "../TaskBoard";
-import { format, startOfDay } from "date-fns";
+import { format, parseISO } from "date-fns";
 
 interface CalendarDayProps {
   date: Date;
@@ -9,17 +9,6 @@ interface CalendarDayProps {
 }
 
 export function CalendarDay({ date, isCurrentMonth, isToday, tasks }: CalendarDayProps) {
-  // Format the calendar day date, ensuring it's at the start of the day
-  const calendarDate = startOfDay(date);
-  const formattedDate = format(calendarDate, 'yyyy-MM-dd');
-  
-  // Filter tasks for this specific day, ensuring we compare dates at the start of the day
-  const dayTasks = tasks.filter(task => {
-    if (!task.date) return false;
-    const taskDate = startOfDay(new Date(task.date));
-    return format(taskDate, 'yyyy-MM-dd') === formattedDate;
-  });
-
   return (
     <div
       className={`min-h-[120px] bg-white p-2 ${
@@ -34,7 +23,7 @@ export function CalendarDay({ date, isCurrentMonth, isToday, tasks }: CalendarDa
         </span>
       </div>
       <div className="mt-1 space-y-1">
-        {dayTasks.slice(0, 3).map((task) => (
+        {tasks.slice(0, 3).map((task) => (
           <div
             key={task.id}
             className="px-2 py-1 text-xs rounded bg-blue-100 text-blue-700 truncate"
@@ -51,9 +40,9 @@ export function CalendarDay({ date, isCurrentMonth, isToday, tasks }: CalendarDa
             <span className="ml-1">{task.title}</span>
           </div>
         ))}
-        {dayTasks.length > 3 && (
+        {tasks.length > 3 && (
           <div className="text-xs text-gray-500">
-            +{dayTasks.length - 3} more
+            +{tasks.length - 3} more
           </div>
         )}
       </div>
