@@ -10,11 +10,12 @@ export function TimelineSlot({ time, task }: TimelineSlotProps) {
   const isTaskInTimeSlot = (task?: Task) => {
     if (!task || !task.start_time) return false;
     
-    // Convert time strings to comparable format (HH:mm)
-    const slotTime = time.padStart(5, '0'); // e.g., "9:00" -> "09:00"
-    const taskTime = task.start_time;
+    // Format the time slot to match the task time format (HH:00)
+    const hour = time.split(':')[0].padStart(2, '0');
+    const formattedSlotTime = `${hour}:00`;
     
-    return slotTime === taskTime;
+    // Compare with task start time
+    return task.start_time === formattedSlotTime;
   };
 
   if (!isTaskInTimeSlot(task) || task?.status !== 'scheduled') {
