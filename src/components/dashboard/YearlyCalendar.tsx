@@ -5,7 +5,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Task } from "./TaskBoard";
 import { MonthCard } from "./calendar/MonthCard";
 
-export function YearlyCalendar() {
+interface YearlyCalendarProps {
+  onDateSelect?: (date: Date) => void;
+}
+
+export function YearlyCalendar({ onDateSelect }: YearlyCalendarProps) {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const currentYear = new Date().getFullYear();
   
@@ -36,6 +40,13 @@ export function YearlyCalendar() {
       return data as Task[];
     },
   });
+
+  const handleDateSelect = (date: Date) => {
+    setSelectedDate(date);
+    if (onDateSelect) {
+      onDateSelect(date);
+    }
+  };
 
   // Array of gradient backgrounds for variety
   const gradients = [
@@ -72,7 +83,7 @@ export function YearlyCalendar() {
                 month={month}
                 date={date}
                 selectedDate={selectedDate}
-                onSelect={setSelectedDate}
+                onSelect={handleDateSelect}
                 gradientClass={gradients[index]}
                 tasks={tasks}
               />

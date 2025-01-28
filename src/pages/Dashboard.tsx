@@ -9,16 +9,22 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 const Dashboard = () => {
   const [view, setView] = useState<'tasks' | 'calendar' | 'yearly'>('tasks');
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const isMobile = useIsMobile();
+
+  const handleYearlyDateSelect = (date: Date) => {
+    setSelectedDate(date);
+    setView('calendar');
+  };
 
   const renderContent = () => {
     switch (view) {
       case 'tasks':
         return <TaskBoard />;
       case 'calendar':
-        return <Calendar />;
+        return <Calendar initialDate={selectedDate} />;
       case 'yearly':
-        return <YearlyCalendar />;
+        return <YearlyCalendar onDateSelect={handleYearlyDateSelect} />;
       default:
         return <TaskBoard />;
     }

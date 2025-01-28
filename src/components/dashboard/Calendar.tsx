@@ -6,8 +6,12 @@ import { CalendarHeader } from "./calendar/CalendarHeader";
 import { CalendarDay } from "./calendar/CalendarDay";
 import { startOfMonth, eachDayOfInterval, endOfMonth, startOfWeek, endOfWeek, parseISO } from "date-fns";
 
-export function Calendar() {
-  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+interface CalendarProps {
+  initialDate?: Date;
+}
+
+export function Calendar({ initialDate }: CalendarProps) {
+  const [currentMonth, setCurrentMonth] = useState<Date>(initialDate || new Date());
 
   const nextMonth = () => {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
