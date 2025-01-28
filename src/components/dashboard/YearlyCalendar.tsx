@@ -1,11 +1,33 @@
 import { Calendar } from "@/components/ui/calendar";
 import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Task } from "./TaskBoard";
+import { format } from "date-fns";
 
 export function YearlyCalendar() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const currentYear = new Date().getFullYear();
   
+  // Fetch all tasks for the year
+  const { data: tasks = [] } = useQuery({
+    queryKey: ['tasks', currentYear],
+    queryFn: async () => {
+      const startDate = `${currentYear}-01-01`;
+      const endDate = `${currentYear}-12-31`;
+      
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .gte('date', startDate)
+        .lte('date', endDate);
+      
+      if (error) throw error;
+      return data as Task[];
+    },
+  });
+
   const months = Array.from({ length: 12 }, (_, i) => {
     const date = new Date(currentYear, i);
     return {
@@ -14,6 +36,23 @@ export function YearlyCalendar() {
       date: date
     };
   });
+
+  // Function to get tasks for a specific date
+  const getTasksForDate = (date: Date) => {
+    return tasks.filter(task => {
+      if (!task.date) return false;
+      return task.date === format(date, 'yyyy-MM-dd');
+    });
+  };
+
+  // Function to get the color class based on task count
+  const getDateColorClass = (date: Date) => {
+    const taskCount = getTasksForDate(date).length;
+    if (taskCount === 0) return '';
+    if (taskCount >= 7) return 'ring-[#ea384c] ring-2';
+    if (taskCount >= 4) return 'ring-[#F97316] ring-2';
+    return 'ring-[#0FA0CE] ring-2';
+  };
 
   // Array of gradient backgrounds for variety
   const gradients = [
@@ -61,6 +100,15 @@ export function YearlyCalendar() {
                     className="w-full"
                     disabled
                     showOutsideDays={false}
+                    modifiers={{
+                      taskDay: (date) => getTasksForDate(date).length > 0
+                    }}
+                    modifiersStyles={{
+                      taskDay: (date) => ({
+                        borderRadius: '50%',
+                        ...getDateColorClass(date)
+                      })
+                    }}
                     classNames={{
                       months: "space-y-4",
                       month: "space-y-4",
