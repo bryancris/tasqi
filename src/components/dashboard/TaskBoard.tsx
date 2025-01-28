@@ -40,20 +40,32 @@ const sendTestNotification = async () => {
   try {
     // First, request notification permission if not granted
     if (!('Notification' in window)) {
-      toast.error("This browser does not support notifications");
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "This browser does not support notifications"
+      });
       return;
     }
 
     const permission = await Notification.requestPermission();
     
     if (permission !== "granted") {
-      toast.error("Notification permission denied");
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Notification permission denied"
+      });
       return;
     }
 
     // Check if service worker is registered
     if (!('serviceWorker' in navigator)) {
-      toast.error("Service Worker is not supported");
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Service Worker is not supported"
+      });
       return;
     }
 
@@ -64,16 +76,22 @@ const sendTestNotification = async () => {
       icon: '/pwa-192x192.png',
       badge: '/pwa-192x192.png',
       tag: 'test-notification',
-      vibrate: [100, 50, 100],
       data: {
         url: window.location.origin + '/dashboard'
       }
     });
 
-    toast.success("Test notification sent!");
+    toast({
+      title: "Success",
+      description: "Test notification sent!"
+    });
   } catch (error) {
     console.error('Error sending notification:', error);
-    toast.error("Failed to send test notification");
+    toast({
+      variant: "destructive",
+      title: "Error",
+      description: "Failed to send test notification"
+    });
   }
 };
 
