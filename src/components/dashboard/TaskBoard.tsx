@@ -3,7 +3,6 @@ import { MobileTaskView } from "./MobileTaskView";
 import { DesktopTaskView } from "./DesktopTaskView";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { AITaskInput } from "./AITaskInput";
 
 export type TaskPriority = 'low' | 'medium' | 'high';
 
@@ -62,7 +61,6 @@ export function TaskBoard() {
 
   return (
     <div className="space-y-4">
-      <AITaskInput />
       {isMobile ? (
         <MobileTaskView tasks={tasks} />
       ) : (
