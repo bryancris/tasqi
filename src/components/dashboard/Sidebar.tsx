@@ -24,7 +24,7 @@ export function Sidebar({ onViewChange }: SidebarProps) {
         <div className="flex-1" />
         
         <div className="space-y-4">
-          <div className="border rounded-lg p-2 mx-[-0.5rem]">
+          <div className="w-full">
             <Calendar
               mode="single"
               selected={date}
