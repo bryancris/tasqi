@@ -1,0 +1,3 @@
+interface NotificationOptions {
+  vibrate?: number[];
+}
