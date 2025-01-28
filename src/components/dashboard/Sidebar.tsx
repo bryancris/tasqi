@@ -13,7 +13,7 @@ export function Sidebar({ onViewChange }: SidebarProps) {
   const [date, setDate] = useState<Date | undefined>(new Date());
 
   return (
-    <div className="border-r bg-white w-[240px] h-screen flex flex-col">
+    <div className="border-r bg-white w-[280px] h-screen flex flex-col">
       <div className="p-4 flex flex-col h-full">
         <div className="space-y-4">
           <AddTaskDrawer />
