@@ -29,7 +29,7 @@ export function TaskStatusIndicator({ status, time, onClick }: TaskStatusIndicat
         status === 'unscheduled' ? 'bg-[#1EAEDB]' : getUrgencyColor(time),
         isOverdue() && "animate-flash"
       )}
-      onClick={status === 'unscheduled' ? onClick : undefined}
+      onClick={onClick}
     >
       {status === 'unscheduled' ? (
         <Check className="h-4 w-4 text-white" />

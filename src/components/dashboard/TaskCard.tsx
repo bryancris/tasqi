@@ -23,8 +23,6 @@ export function TaskCard({ task, isMobile = false, index }: TaskCardProps) {
   const { toast } = useToast();
 
   const handleComplete = async () => {
-    if (task.status !== 'unscheduled') return;
-
     try {
       const { error } = await supabase
         .from('tasks')
@@ -51,11 +49,6 @@ export function TaskCard({ task, isMobile = false, index }: TaskCardProps) {
 
   const handleCardClick = () => {
     setIsEditDrawerOpen(true);
-  };
-
-  // Create a wrapper function that ignores the event parameter
-  const handleStatusClick = () => {
-    handleComplete();
   };
 
   const getTimeDisplay = (task: Task) => {
@@ -86,7 +79,10 @@ export function TaskCard({ task, isMobile = false, index }: TaskCardProps) {
           <TaskStatusIndicator
             status={task.status}
             time={getTimeDisplay(task)}
-            onClick={handleStatusClick}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleComplete();
+            }}
           />
         </div>
         <EditTaskDrawer 
@@ -127,13 +123,16 @@ export function TaskCard({ task, isMobile = false, index }: TaskCardProps) {
           className="ml-2 p-0"
           onClick={(e) => {
             e.stopPropagation();
-            handleStatusClick();
+            handleComplete();
           }}
         >
           <TaskStatusIndicator
             status={task.status}
             time={getTimeDisplay(task)}
-            onClick={handleStatusClick}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleComplete();
+            }}
           />
         </Button>
       </div>
