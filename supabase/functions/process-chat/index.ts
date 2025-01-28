@@ -65,7 +65,7 @@ serve(async (req) => {
       ?.map(msg => `${msg.is_ai ? 'Assistant' : 'User'}: ${msg.content}`)
       .join('\n') || '';
 
-    // Get AI response
+    // Get AI response and task analysis
     const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -78,18 +78,78 @@ serve(async (req) => {
           {
             role: 'system',
             content: `You are a helpful AI assistant that helps users manage their tasks and schedule. 
-            You can understand and create tasks, and engage in natural conversation.
+            When a user mentions something that sounds like a task but doesn't provide a date or time, 
+            create it as an unscheduled task. Respond naturally to the user and let them know what actions you've taken.
             Previous conversation context:
             ${context}`
           },
           { role: 'user', content: message }
         ],
         temperature: 0.7,
+        functions: [
+          {
+            name: "create_unscheduled_task",
+            description: "Create an unscheduled task when user mentions something that sounds like a task without specific timing",
+            parameters: {
+              type: "object",
+              properties: {
+                should_create: {
+                  type: "boolean",
+                  description: "Whether this message contains a task that should be created"
+                },
+                title: {
+                  type: "string",
+                  description: "The title of the task"
+                },
+                description: {
+                  type: "string",
+                  description: "Optional description of the task"
+                }
+              },
+              required: ["should_create"]
+            }
+          }
+        ],
+        function_call: "auto"
       }),
     });
 
     const aiData = await aiResponse.json();
-    const aiMessage = aiData.choices[0].message.content;
+    const aiMessage = aiData.choices[0].message;
+    let responseText = aiMessage.content;
+
+    // Handle task creation if the AI detected one
+    if (aiMessage.function_call?.name === "create_unscheduled_task") {
+      const functionArgs = JSON.parse(aiMessage.function_call.arguments);
+      
+      if (functionArgs.should_create) {
+        // Get the highest position number for the current user
+        const { data: existingTasks } = await supabase
+          .from("tasks")
+          .select("position")
+          .eq("user_id", userId)
+          .order("position", { ascending: false })
+          .limit(1);
+
+        const nextPosition = existingTasks && existingTasks.length > 0 
+          ? existingTasks[0].position + 1 
+          : 1;
+
+        // Create the unscheduled task
+        const { error: taskError } = await supabase
+          .from("tasks")
+          .insert({
+            title: functionArgs.title,
+            description: functionArgs.description || null,
+            status: "unscheduled",
+            user_id: userId,
+            position: nextPosition,
+            priority: "low"
+          });
+
+        if (taskError) throw taskError;
+      }
+    }
 
     // Generate embedding for AI response
     const aiEmbeddingResponse = await fetch('https://api.openai.com/v1/embeddings', {
@@ -99,7 +159,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        input: aiMessage,
+        input: responseText,
         model: 'text-embedding-ada-002',
       }),
     });
@@ -111,7 +171,7 @@ serve(async (req) => {
     const { error: aiInsertError } = await supabase
       .from('chat_messages')
       .insert({
-        content: aiMessage,
+        content: responseText,
         user_id: userId,
         embedding: aiEmbedding,
         is_ai: true,
@@ -120,7 +180,7 @@ serve(async (req) => {
     if (aiInsertError) throw aiInsertError;
 
     return new Response(
-      JSON.stringify({ response: aiMessage }),
+      JSON.stringify({ response: responseText }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
