@@ -6,7 +6,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Settings, LogOut } from "lucide-react";
+import { Settings, LogOut, Download } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -22,6 +22,12 @@ export function HeaderUserMenu({ setIsSettingsOpen }: HeaderUserMenuProps) {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate('/auth');
+  };
+
+  const handleInstall = () => {
+    if (typeof window.showInstallPrompt === 'function') {
+      window.showInstallPrompt();
+    }
   };
 
   return (
@@ -43,6 +49,10 @@ export function HeaderUserMenu({ setIsSettingsOpen }: HeaderUserMenuProps) {
         <DropdownMenuItem onClick={() => setIsSettingsOpen(true)}>
           <Settings className="mr-2 h-4 w-4" />
           Settings
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleInstall}>
+          <Download className="mr-2 h-4 w-4" />
+          Install App
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />
