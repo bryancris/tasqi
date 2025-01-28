@@ -5,7 +5,7 @@ import { getUrgencyColor } from "@/utils/taskColors";
 interface TaskStatusIndicatorProps {
   status: 'scheduled' | 'unscheduled';
   time: string;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
 }
 
 export function TaskStatusIndicator({ status, time, onClick }: TaskStatusIndicatorProps) {
