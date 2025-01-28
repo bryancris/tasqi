@@ -9,16 +9,101 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 export function ChatBubble() {
   const [message, setMessage] = useState("");
   const [open, setOpen] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim()) return;
     // TODO: Handle message submission
     setMessage("");
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const audioChunks: Blob[] = [];
+
+      recorder.ondataavailable = (event) => {
+        audioChunks.push(event.data);
+      };
+
+      recorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        const reader = new FileReader();
+        
+        reader.onload = async () => {
+          if (typeof reader.result === 'string') {
+            const base64Audio = reader.result.split(',')[1];
+            
+            try {
+              const { data, error } = await supabase.functions.invoke('voice-to-text', {
+                body: { audio: base64Audio }
+              });
+
+              if (error) throw error;
+              if (data.text) {
+                setMessage(data.text);
+              }
+            } catch (error) {
+              console.error('Error transcribing audio:', error);
+              toast({
+                title: "Error",
+                description: "Failed to transcribe audio. Please try again.",
+                variant: "destructive",
+              });
+            }
+          }
+        };
+
+        reader.readAsDataURL(audioBlob);
+      };
+
+      setMediaRecorder(recorder);
+      recorder.start();
+      setIsRecording(true);
+      
+      toast({
+        title: "Recording started",
+        description: "Click the microphone button again to stop recording.",
+      });
+    } catch (error) {
+      console.error('Error accessing microphone:', error);
+      toast({
+        title: "Error",
+        description: "Could not access microphone. Please check your permissions.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
+      mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      setIsRecording(false);
+      
+      toast({
+        title: "Recording stopped",
+        description: "Processing your audio...",
+      });
+    }
+  };
+
+  const handleMicClick = () => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
   };
 
   return (
@@ -73,7 +158,13 @@ export function ChatBubble() {
                 <Button type="button" size="icon" variant="ghost" className="h-8 w-8">
                   <Image className="h-4 w-4" />
                 </Button>
-                <Button type="button" size="icon" variant="ghost" className="h-8 w-8">
+                <Button 
+                  type="button" 
+                  size="icon" 
+                  variant="ghost" 
+                  className={`h-8 w-8 ${isRecording ? 'text-red-500' : ''}`}
+                  onClick={handleMicClick}
+                >
                   <Mic className="h-4 w-4" />
                 </Button>
                 <Button type="submit" size="icon" className="h-8 w-8">
