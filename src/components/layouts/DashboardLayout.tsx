@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format } from "date-fns";
+import { ChatBubble } from "@/components/chat/ChatBubble";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -53,6 +54,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <main className="container py-6">
           {children}
         </main>
+        <ChatBubble />
       </div>
     </div>
   );
