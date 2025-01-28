@@ -1,4 +1,5 @@
 import { format } from "date-fns";
+import { HeaderUserMenu } from "@/components/dashboard/header/HeaderUserMenu";
 
 export function MobileHeader() {
   const currentTime = format(new Date(), 'HH:mm');
@@ -11,6 +12,7 @@ export function MobileHeader() {
           <h1 className="text-[#6366F1] font-medium">TasqiAI</h1>
           <p className="text-sm text-gray-500">{currentTime} {currentDate}</p>
         </div>
+        <HeaderUserMenu setIsSettingsOpen={() => {}} />
       </div>
     </div>
   );
