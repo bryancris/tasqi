@@ -7,11 +7,22 @@ interface TimelineSlotProps {
 }
 
 export function TimelineSlot({ time, task }: TimelineSlotProps) {
-  if (!task || task.status !== 'scheduled') return (
-    <div className="flex items-start gap-4">
-      <div className="w-16 text-sm text-gray-500">{time}</div>
-    </div>
-  );
+  // Convert time string to 24-hour format for comparison
+  const timeSlotHour = parseInt(time.split(':')[0]);
+  
+  const isTaskInTimeSlot = (task?: Task) => {
+    if (!task || !task.start_time) return false;
+    const taskStartHour = parseInt(task.start_time.split(':')[0]);
+    return taskStartHour === timeSlotHour;
+  };
+
+  if (!isTaskInTimeSlot(task) || task?.status !== 'scheduled') {
+    return (
+      <div className="flex items-start gap-4">
+        <div className="w-16 text-sm text-gray-500">{time}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-start gap-4">
