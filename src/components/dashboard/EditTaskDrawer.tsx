@@ -7,23 +7,13 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import { X, Trash2 } from "lucide-react";
+import { X } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { TaskForm } from "./TaskForm";
 import { supabase } from "@/integrations/supabase/client";
 import { Task, TaskPriority } from "./TaskBoard";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { DeleteTaskAlert } from "./DeleteTaskAlert";
 
 interface EditTaskDrawerProps {
   task: Task;
@@ -146,35 +136,10 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
               onSubmit={handleSubmit}
             />
             
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button 
-                  variant="destructive" 
-                  className="w-full"
-                  disabled={isLoading}
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete Task
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete the task.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction 
-                    onClick={handleDelete}
-                    className="bg-red-500 hover:bg-red-600"
-                  >
-                    Delete
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <DeleteTaskAlert 
+              isLoading={isLoading}
+              onDelete={handleDelete}
+            />
           </div>
         </div>
       </DrawerContent>
