@@ -7,7 +7,12 @@ import { ChatMessages } from "./ChatMessages";
 import { useChat } from "@/hooks/use-chat";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-export function ChatBubble() {
+interface ChatBubbleProps {
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
   const [open, setOpen] = useState(false);
   const isMobile = useIsMobile();
   const { 
@@ -25,8 +30,19 @@ export function ChatBubble() {
     }
   }, [open]);
 
+  // Handle both controlled and uncontrolled states
+  const isControlled = isOpen !== undefined;
+  const isDialogOpen = isControlled ? isOpen : open;
+  
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!isControlled) {
+      setOpen(newOpen);
+    }
+    onOpenChange?.(newOpen);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {!isMobile && (
           <Button
@@ -48,7 +64,7 @@ export function ChatBubble() {
           ${!isMobile ? 'origin-bottom-right' : ''}`}
       >
         <div className={`flex flex-col ${isMobile ? 'h-full' : 'h-[600px]'}`}>
-          <ChatHeader onClose={() => setOpen(false)} />
+          <ChatHeader onClose={() => handleOpenChange(false)} />
           <ChatMessages messages={messages} isLoading={isLoading} />
           <ChatInput 
             message={message}

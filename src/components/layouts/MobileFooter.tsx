@@ -31,7 +31,10 @@ export function MobileFooter() {
             <span className="text-xs mt-1">Notes</span>
           </button>
           <button 
-            className="flex flex-col items-center p-2 text-gray-500"
+            className={cn(
+              "flex flex-col items-center p-2",
+              isChatOpen ? "text-[#6366F1]" : "text-gray-500"
+            )}
             onClick={() => setIsChatOpen(true)}
           >
             <MessageSquare className="h-6 w-6" />
@@ -43,7 +46,7 @@ export function MobileFooter() {
           </button>
         </div>
       </div>
-      {isChatOpen && <ChatBubble />}
+      <ChatBubble isOpen={isChatOpen} onOpenChange={setIsChatOpen} />
     </>
   );
 }
