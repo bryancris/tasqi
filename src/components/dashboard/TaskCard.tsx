@@ -58,6 +58,13 @@ export function TaskCard({ task, isMobile = false, index }: TaskCardProps) {
     handleComplete();
   };
 
+  const getTimeDisplay = (task: Task) => {
+    if (task.start_time && task.end_time) {
+      return `${task.start_time} - ${task.end_time}`;
+    }
+    return '';
+  };
+
   if (isMobile) {
     return (
       <>
@@ -72,13 +79,13 @@ export function TaskCard({ task, isMobile = false, index }: TaskCardProps) {
             <GripVertical className="h-5 w-5 text-white/50 cursor-grab" />
             <MobileTaskContent 
               title={task.title}
-              time={task.time}
+              time={getTimeDisplay(task)}
               status={task.status}
             />
           </div>
           <TaskStatusIndicator
             status={task.status}
-            time={task.time}
+            time={getTimeDisplay(task)}
             onClick={handleStatusClick}
           />
         </div>
@@ -106,7 +113,7 @@ export function TaskCard({ task, isMobile = false, index }: TaskCardProps) {
             <div className="flex justify-between items-center">
               <h3 className="font-medium">{task.title}</h3>
               {task.status === 'scheduled' && (
-                <span className="text-sm">{task.time}</span>
+                <span className="text-sm">{getTimeDisplay(task)}</span>
               )}
             </div>
             <p className="text-sm mt-1 capitalize">
@@ -125,7 +132,7 @@ export function TaskCard({ task, isMobile = false, index }: TaskCardProps) {
         >
           <TaskStatusIndicator
             status={task.status}
-            time={task.time}
+            time={getTimeDisplay(task)}
             onClick={handleStatusClick}
           />
         </Button>
