@@ -1,22 +1,23 @@
 {
-  "name": "Lovable PWA",
-  "short_name": "Lovable",
-  "description": "A Progressive Web App built with Lovable",
+  "name": "TASQI-AI Assistant",
+  "short_name": "TASQI-AI",
+  "description": "AI-powered task management assistant",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#ffffff",
+  "background_color": "#1a1a2e",
+  "theme_color": "#1a1a2e",
   "icons": [
     {
-      "src": "/pwa-192x192.png",
+      "src": "/lovable-uploads/98b0b439-cc30-41da-8912-7786e473fb9a.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/pwa-512x512.png", 
+      "src": "/lovable-uploads/98b0b439-cc30-41da-8912-7786e473fb9a.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
