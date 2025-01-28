@@ -1,5 +1,6 @@
+// @deno-types="npm:@types/web-push@3.6.3"
+import webPush from "npm:web-push@3.6.3"
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import * as webPush from 'https://esm.sh/web-push@3.6.7'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,7 +18,7 @@ serve(async (req) => {
     if (req.method === 'GET') {
       console.log('Generating VAPID keys...')
       const vapidKeys = webPush.generateVAPIDKeys()
-      console.log('VAPID keys generated successfully')
+      console.log('VAPID keys generated:', vapidKeys)
       return new Response(JSON.stringify(vapidKeys), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
