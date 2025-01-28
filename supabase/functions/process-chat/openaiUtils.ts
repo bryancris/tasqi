@@ -1,5 +1,3 @@
-import { OpenAIResponse } from './types.ts';
-
 const SYSTEM_PROMPT = `You are a task scheduling assistant. When a user mentions something that sounds like a task:
 1. If it has a specific time/date, create it as a scheduled task
 2. If no specific time/date is mentioned, create it as an unscheduled task
@@ -8,11 +6,11 @@ const SYSTEM_PROMPT = `You are a task scheduling assistant. When a user mentions
 5. For scheduled tasks, ALWAYS return time in HH:mm format (24-hour)
 6. Only include time fields if they are explicitly mentioned
 7. For dates, understand and convert relative terms:
-   - "today" → current date in YYYY-MM-DD
-   - "tomorrow" → next day in YYYY-MM-DD
-   - "next week" → 7 days from now in YYYY-MM-DD
-   - "next month" → same day next month in YYYY-MM-DD
-   Always convert these to actual dates in YYYY-MM-DD format
+   - "today" → return literal string "today"
+   - "tomorrow" → return literal string "tomorrow"
+   - "next week" → return literal string "next week"
+   - "next month" → return literal string "next month"
+   DO NOT return placeholders like <YYYY-MM-DD>. The date conversion will happen in the code.
 
 Return JSON in this format:
 {
@@ -21,7 +19,7 @@ Return JSON in this format:
     "title": "Task title",
     "description": "Optional description",
     "is_scheduled": true/false,
-    "date": "YYYY-MM-DD" (if scheduled),
+    "date": "today/tomorrow/next week/next month",
     "start_time": "HH:mm" (if time specified),
     "end_time": "HH:mm" (if duration specified)
   },

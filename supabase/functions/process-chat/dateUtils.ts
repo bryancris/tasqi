@@ -1,6 +1,13 @@
 export function convertRelativeDate(dateStr: string): string {
   const today = new Date();
   
+  // First check if the date is already in YYYY-MM-DD format
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (dateRegex.test(dateStr)) {
+    return dateStr;
+  }
+
+  // Handle relative date terms
   switch (dateStr.toLowerCase()) {
     case 'today':
       return today.toISOString().split('T')[0];
@@ -20,7 +27,8 @@ export function convertRelativeDate(dateStr: string): string {
       return nextMonth.toISOString().split('T')[0];
     }
     default:
-      return dateStr;
+      console.error('Invalid date format received:', dateStr);
+      return today.toISOString().split('T')[0]; // Default to today if format is invalid
   }
 }
 
