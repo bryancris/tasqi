@@ -32,12 +32,7 @@ export async function checkAndNotifyUpcomingTasks() {
               body: task.title,
               icon: '/pwa-192x192.png',
               badge: '/pwa-192x192.png',
-              actions: [
-                {
-                  action: 'view',
-                  title: 'View Task'
-                }
-              ],
+              tag: `task-${task.id}`,
               data: {
                 taskId: task.id,
                 url: window.location.origin + '/dashboard'
