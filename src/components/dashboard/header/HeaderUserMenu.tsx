@@ -11,7 +11,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 
-export function HeaderUserMenu() {
+interface HeaderUserMenuProps {
+  setIsSettingsOpen: (open: boolean) => void;
+}
+
+export function HeaderUserMenu({ setIsSettingsOpen }: HeaderUserMenuProps) {
   const { session } = useAuth();
   const navigate = useNavigate();
 

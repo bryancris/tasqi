@@ -27,7 +27,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
             <div className="flex items-center gap-4">
               <HeaderNotifications />
-              <HeaderUserMenu />
+              <HeaderUserMenu setIsSettingsOpen={setIsSettingsOpen} />
             </div>
           </div>
         </header>
