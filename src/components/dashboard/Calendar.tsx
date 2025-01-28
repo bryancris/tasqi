@@ -46,12 +46,35 @@ export function Calendar() {
           </Button>
         </div>
       </div>
-      <div className="border rounded-lg p-4">
+      <div className="border rounded-lg p-4 bg-white shadow-sm">
         <CalendarComponent
           mode="single"
           selected={currentMonth}
           onSelect={(date) => date && setCurrentMonth(date)}
           className="rounded-md"
+          classNames={{
+            months: "space-y-4",
+            month: "space-y-4",
+            caption: "flex justify-center pt-1 relative items-center",
+            caption_label: "text-lg font-semibold text-gray-900",
+            nav: "space-x-1 flex items-center",
+            nav_button: "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100",
+            nav_button_previous: "absolute left-1",
+            nav_button_next: "absolute right-1",
+            table: "w-full border-collapse space-y-1",
+            head_row: "flex",
+            head_cell: "text-gray-500 rounded-md w-10 font-medium text-[0.9rem]",
+            row: "flex w-full mt-2",
+            cell: "relative p-0 text-center text-sm focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-accent",
+            day: "h-10 w-10 p-0 font-normal hover:bg-gray-50 rounded-full aria-selected:opacity-100",
+            day_range_end: "day-range-end",
+            day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-full",
+            day_today: "bg-accent text-accent-foreground rounded-full",
+            day_outside: "text-gray-400 opacity-50",
+            day_disabled: "text-gray-400",
+            day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
+            day_hidden: "invisible",
+          }}
         />
       </div>
     </div>
