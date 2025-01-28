@@ -14,7 +14,7 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, userId } = await req.json();
+    const { message } = await req.json();
 
     // Process with OpenAI
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -28,70 +28,38 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a task scheduling assistant. Extract task information from user input and return it in JSON format with these fields:
-              - title (string)
-              - description (string, optional)
-              - date (YYYY-MM-DD format if specified, null if not)
-              - startTime (HH:mm format if specified, null if not)
-              - endTime (HH:mm format if specified, null if not)
-              - priority (either "low", "medium", or "high")
-              
-              Convert relative dates (tomorrow, next week, etc) to actual dates.
-              If no priority is specified, default to "low".`
+            content: `You are a task management AI assistant. Help users manage their tasks and schedule by providing helpful responses. Keep responses concise and focused on task management.`
           },
-          { role: 'user', content: prompt }
+          { role: 'user', content: message }
         ],
-        response_format: { type: "json_object" }
       }),
     });
 
-    const aiData = await openAIResponse.json();
-    const taskInfo = JSON.parse(aiData.choices[0].message.content);
+    const data = await openAIResponse.json();
+    console.log('OpenAI Response:', data);
 
-    // Create task in database
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    if (!data.choices || !data.choices[0]) {
+      throw new Error('Invalid response from OpenAI');
+    }
+
+    return new Response(
+      JSON.stringify({
+        response: data.choices[0].message.content
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
     );
-
-    // Get highest position for user's tasks
-    const { data: existingTasks } = await supabase
-      .from("tasks")
-      .select("position")
-      .eq("user_id", userId)
-      .order("position", { ascending: false })
-      .limit(1);
-
-    const nextPosition = existingTasks && existingTasks.length > 0 
-      ? existingTasks[0].position + 1 
-      : 1;
-
-    const { data: task, error } = await supabase
-      .from('tasks')
-      .insert({
-        title: taskInfo.title,
-        description: taskInfo.description || null,
-        date: taskInfo.date,
-        status: taskInfo.date ? 'scheduled' : 'unscheduled',
-        start_time: taskInfo.startTime,
-        end_time: taskInfo.endTime,
-        priority: taskInfo.priority,
-        user_id: userId,
-        position: nextPosition
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    return new Response(JSON.stringify({ task }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
   } catch (error) {
-    console.error('Error processing task:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    console.error('Error processing message:', error);
+    return new Response(
+      JSON.stringify({ 
+        error: error.message || 'An error occurred while processing your request' 
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
   }
 });
