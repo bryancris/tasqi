@@ -43,6 +43,12 @@ const SYSTEM_PROMPT = `You are a task scheduling assistant. When a user mentions
 4. Always set priority to "low" unless specifically mentioned
 5. For scheduled tasks, ALWAYS return time in HH:mm format (24-hour)
 6. Only include time fields if they are explicitly mentioned
+7. For dates, understand and convert relative terms:
+   - "today" → current date in YYYY-MM-DD
+   - "tomorrow" → next day in YYYY-MM-DD
+   - "next week" → 7 days from now in YYYY-MM-DD
+   - "next month" → same day next month in YYYY-MM-DD
+   Always convert these to actual dates in YYYY-MM-DD format
 
 Return JSON in this format:
 {
