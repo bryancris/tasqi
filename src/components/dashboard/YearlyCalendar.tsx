@@ -10,6 +10,16 @@ export function YearlyCalendar() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const currentYear = new Date().getFullYear();
   
+  // Generate months array for the calendar grid
+  const months = Array.from({ length: 12 }, (_, i) => {
+    const date = new Date(currentYear, i);
+    return {
+      month: date.toLocaleString('default', { month: 'long' }),
+      year: date.getFullYear(),
+      date: date
+    };
+  });
+  
   // Fetch all tasks for the year
   const { data: tasks = [] } = useQuery({
     queryKey: ['tasks', currentYear],
@@ -95,11 +105,11 @@ export function YearlyCalendar() {
                       taskDay: (date) => getTasksForDate(date).length > 0
                     }}
                     modifiersStyles={{
-                      taskDay: (date) => ({
+                      taskDay: {
                         borderRadius: '50%',
                         border: '2px solid',
-                        borderColor: getDateColorClass(date)
-                      })
+                        borderColor: getDateColorClass(selectedDate)
+                      }
                     }}
                     classNames={{
                       months: "space-y-4",
