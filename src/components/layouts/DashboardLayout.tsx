@@ -1,11 +1,11 @@
-import { ReactNode, useState, useEffect } from "react";
+import { ReactNode, useState } from "react";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { Bell, Search, Settings, LogOut } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { format } from "date-fns";
 import { ChatBubble } from "@/components/chat/ChatBubble";
+import { useClock } from "@/hooks/use-clock";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,16 +25,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { session } = useAuth();
   const navigate = useNavigate();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [currentTime, setCurrentTime] = useState(format(new Date(), 'HH:mm'));
-  const [currentDate] = useState(format(new Date(), 'EEE, MMM d'));
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(format(new Date(), 'HH:mm'));
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
+  const { currentTime, currentDate } = useClock();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
