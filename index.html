@@ -2,19 +2,25 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>TASQI-AI Assistant</title>
     <meta name="description" content="AI-powered task management assistant" />
     <meta name="author" content="TASQI-AI" />
     <meta property="og:image" content="/lovable-uploads/98b0b439-cc30-41da-8912-7786e473fb9a.png" />
     
     <!-- PWA meta tags -->
-    <link rel="manifest" href="/manifest.json" />
+    <link rel="manifest" href="/manifest.json" crossorigin="use-credentials" />
     <meta name="theme-color" content="#1a1a2e" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <link rel="apple-touch-icon" href="/lovable-uploads/98b0b439-cc30-41da-8912-7786e473fb9a.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="TASQI-AI" />
     <link rel="icon" type="image/png" href="/lovable-uploads/98b0b439-cc30-41da-8912-7786e473fb9a.png" />
+    
+    <!-- PWA related tags for iOS -->
+    <link rel="apple-touch-startup-image" href="/lovable-uploads/98b0b439-cc30-41da-8912-7786e473fb9a.png" />
+    <meta name="apple-touch-fullscreen" content="yes" />
   </head>
 
   <body>
@@ -68,6 +74,27 @@
             console.log('ServiceWorker registration or push subscription failed: ', err);
           }
         });
+
+        // Add beforeinstallprompt event handler
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+          // Prevent Chrome 67 and earlier from automatically showing the prompt
+          e.preventDefault();
+          // Stash the event so it can be triggered later
+          deferredPrompt = e;
+          console.log('Install prompt ready to be shown');
+        });
+
+        // You can trigger the install prompt later when appropriate
+        // For example, you could add a custom install button:
+        // installButton.addEventListener('click', async () => {
+        //   if (deferredPrompt) {
+        //     deferredPrompt.prompt();
+        //     const { outcome } = await deferredPrompt.userChoice;
+        //     console.log(`User response to the install prompt: ${outcome}`);
+        //     deferredPrompt = null;
+        //   }
+        // });
       }
     </script>
   </body>
