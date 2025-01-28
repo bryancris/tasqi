@@ -9,7 +9,7 @@ const HeroSection = () => {
         className="w-24 h-24 mx-auto mb-8"
       />
       <h1 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text">
-        Your AI Task Assistant
+        TASQI-AI Assistant
       </h1>
       <p className="text-gray-300 text-lg md:text-xl max-w-2xl mx-auto">
         Transform your productivity with AI-powered task management. From voice
