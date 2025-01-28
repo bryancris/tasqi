@@ -43,21 +43,22 @@ export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
 
   if (isMobile) {
     return (
-      <div 
-        className={`fixed inset-0 bg-background z-50 ${isDialogOpen ? 'block' : 'hidden'}`}
-        style={{ top: '72px', bottom: '80px' }}
-      >
-        <div className="flex flex-col h-full">
-          <ChatHeader onClose={() => handleOpenChange(false)} />
-          <ChatMessages messages={messages} isLoading={isLoading} />
-          <ChatInput 
-            message={message}
-            onMessageChange={setMessage}
-            onSubmit={handleSubmit}
-            isLoading={isLoading}
-          />
-        </div>
-      </div>
+      <>
+        {isDialogOpen && (
+          <div className="fixed inset-0 bg-background" style={{ top: '72px', bottom: '80px', zIndex: 50 }}>
+            <div className="flex flex-col h-full">
+              <ChatHeader onClose={() => handleOpenChange(false)} />
+              <ChatMessages messages={messages} isLoading={isLoading} />
+              <ChatInput 
+                message={message}
+                onMessageChange={setMessage}
+                onSubmit={handleSubmit}
+                isLoading={isLoading}
+              />
+            </div>
+          </div>
+        )}
+      </>
     );
   }
 
