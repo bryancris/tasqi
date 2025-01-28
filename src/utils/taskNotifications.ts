@@ -29,7 +29,7 @@ export const checkAndNotifyUpcomingTasks = async () => {
               body: `${task.title} starts at ${timeString}`,
               icon: "/pwa-192x192.png",
               badge: "/pwa-192x192.png",
-              vibrationPattern: [100, 50, 100], // Changed from vibrate to vibrationPattern
+              vibrate: [100, 50, 100],
               data: {
                 taskId: task.id,
                 url: window.location.origin + '/dashboard'

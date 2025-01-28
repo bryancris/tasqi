@@ -27,7 +27,7 @@ self.addEventListener('push', event => {
     body: data.message || 'New notification',
     icon: '/pwa-192x192.png',
     badge: '/pwa-192x192.png',
-    vibrationPattern: [100, 50, 100], // Changed from vibrate to vibrationPattern
+    vibrate: [100, 50, 100],
     data: {
       dateOfArrival: Date.now(),
       primaryKey: '1',
@@ -109,7 +109,7 @@ async function checkScheduledTasks() {
           body: `${task.title} is starting in a minute`,
           icon: '/pwa-192x192.png',
           badge: '/pwa-192x192.png',
-          vibrationPattern: [100, 50, 100], // Changed from vibrate to vibrationPattern
+          vibrate: [100, 50, 100],
           data: {
             taskId: task.id,
             url: '/'
