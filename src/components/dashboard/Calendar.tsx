@@ -32,10 +32,6 @@ export function Calendar() {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <h2 className="text-2xl font-bold">{monthYear}</h2>
-            <div className="flex items-center space-x-2">
-              <span className="text-sm">{currentTime}</span>
-              <span className="text-sm">{currentDate}</span>
-            </div>
           </div>
           <div className="flex items-center space-x-2">
             <Button
