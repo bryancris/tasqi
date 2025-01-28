@@ -29,31 +29,32 @@ export function Calendar() {
   return (
     <div className="w-full max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-2">
-          <h1 className="text-xl font-semibold">TasqiAI</h1>
-          <span className="text-sm">{currentTime}</span>
-          <span className="text-sm">{currentDate}</span>
-        </div>
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={previousMonth}
-            className="h-8 w-8"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <h2 className="text-2xl font-bold min-w-[200px] text-center">
-            {monthYear}
-          </h2>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={nextMonth}
-            className="h-8 w-8"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <h2 className="text-2xl font-bold">{monthYear}</h2>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm">{currentTime}</span>
+              <span className="text-sm">{currentDate}</span>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={previousMonth}
+              className="h-8 w-8"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={nextMonth}
+              className="h-8 w-8"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
