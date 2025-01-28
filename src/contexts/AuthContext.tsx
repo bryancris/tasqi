@@ -39,9 +39,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         toast.success("Successfully signed in!");
       } else if (event === 'TOKEN_REFRESHED') {
         console.log("Token refreshed successfully");
-      } else if (event === 'USER_DELETED') {
-        navigate('/auth');
-        toast.error("User account has been deleted");
+      } else if (event === 'USER_UPDATED') {
+        console.log("User profile updated");
       }
     });
 
