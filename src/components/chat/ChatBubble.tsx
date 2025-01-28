@@ -31,7 +31,7 @@ export function ChatBubble() {
           <MessageCircle className="h-6 w-6" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[440px] p-0">
+      <DialogContent className="fixed bottom-20 right-4 mb-0 p-0 sm:max-w-[440px]">
         <div className="flex h-[600px] flex-col">
           {/* Header */}
           <div className="flex items-start justify-between p-4 border-b">
