@@ -1,22 +1,10 @@
 import { Task } from "./TaskBoard";
+import { getPriorityColor } from "@/utils/taskColors";
 
 interface TimelineSlotProps {
   time: string;
   task?: Task;
 }
-
-const getPriorityColor = (priority?: string) => {
-  switch (priority) {
-    case 'low':
-      return 'bg-emerald-400';
-    case 'medium':
-      return 'bg-orange-400';
-    case 'high':
-      return 'bg-red-500';
-    default:
-      return 'bg-emerald-400';
-  }
-};
 
 export function TimelineSlot({ time, task }: TimelineSlotProps) {
   if (!task || task.status !== 'scheduled') return (
