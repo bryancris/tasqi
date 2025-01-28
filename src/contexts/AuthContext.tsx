@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 type AuthContextType = {
   session: Session | null;
@@ -16,7 +17,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Get initial session
+    // Get initial session and set up storage listener
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setLoading(false);
@@ -25,13 +26,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state changed:", event);
       setSession(session);
       setLoading(false);
+
+      if (event === 'SIGNED_OUT') {
+        navigate('/auth');
+        toast.success("You have been logged out");
+      } else if (event === 'SIGNED_IN') {
+        navigate('/dashboard');
+        toast.success("Successfully signed in!");
+      } else if (event === 'TOKEN_REFRESHED') {
+        console.log("Token refreshed successfully");
+      } else if (event === 'USER_DELETED') {
+        navigate('/auth');
+        toast.error("User account has been deleted");
+      }
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    // Cleanup subscription
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   return (
     <AuthContext.Provider value={{ session, loading }}>
