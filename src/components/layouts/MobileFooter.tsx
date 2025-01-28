@@ -1,13 +1,20 @@
 import { Home, Calendar, FileText, MessageSquare, Settings } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 export function MobileFooter() {
-  const navigate = useNavigate();
+  const location = useLocation();
+  const isDaily = location.pathname === "/dashboard";
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t py-2 px-4 z-50">
       <div className="flex justify-between items-center">
-        <button className="flex flex-col items-center p-2 text-gray-500">
+        <button 
+          className={cn(
+            "flex flex-col items-center p-2",
+            isDaily ? "text-[#6366F1]" : "text-gray-500"
+          )}
+        >
           <Home className="h-6 w-6" />
           <span className="text-xs mt-1">Daily</span>
         </button>
