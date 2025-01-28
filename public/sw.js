@@ -30,12 +30,13 @@ self.addEventListener('push', event => {
     vibrate: [100, 50, 100],
     data: {
       dateOfArrival: Date.now(),
-      primaryKey: '1'
+      primaryKey: '1',
+      url: data.url || '/'
     },
     actions: [
       {
-        action: 'explore',
-        title: 'View',
+        action: 'view',
+        title: 'View Task',
       }
     ]
   };
@@ -48,7 +49,24 @@ self.addEventListener('push', event => {
 // Handle notification clicks
 self.addEventListener('notificationclick', event => {
   event.notification.close();
+
+  // Get the notification data
+  const data = event.notification.data;
+  const url = data?.url || '/';
+
+  // Open or focus the appropriate window/tab
   event.waitUntil(
-    clients.openWindow('/')
+    clients.matchAll({ type: 'window' }).then(windowClients => {
+      // Check if there is already a window/tab open with the target URL
+      for (let client of windowClients) {
+        if (client.url === url && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      // If no window/tab is open, open a new one
+      if (clients.openWindow) {
+        return clients.openWindow(url);
+      }
+    })
   );
 });

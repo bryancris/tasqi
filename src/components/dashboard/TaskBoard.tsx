@@ -3,6 +3,8 @@ import { MobileTaskView } from "./MobileTaskView";
 import { DesktopTaskView } from "./DesktopTaskView";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
+import { checkAndNotifyUpcomingTasks } from "@/utils/taskNotifications";
 
 export type TaskPriority = 'low' | 'medium' | 'high';
 
@@ -50,6 +52,21 @@ export function TaskBoard() {
     queryKey: ['tasks'],
     queryFn: fetchTasks,
   });
+
+  useEffect(() => {
+    // Request notification permission when component mounts
+    if ('Notification' in window) {
+      Notification.requestPermission();
+    }
+
+    // Check for tasks every minute
+    const interval = setInterval(checkAndNotifyUpcomingTasks, 60000);
+
+    // Initial check
+    checkAndNotifyUpcomingTasks();
+
+    return () => clearInterval(interval);
+  }, []);
 
   if (isLoading) {
     return <div>Loading tasks...</div>;
