@@ -41,29 +41,45 @@ export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
     onOpenChange?.(newOpen);
   };
 
+  if (isMobile) {
+    return (
+      <div 
+        className={`fixed inset-0 bg-background z-50 ${isDialogOpen ? 'block' : 'hidden'}`}
+        style={{ top: '72px', bottom: '80px' }}
+      >
+        <div className="flex flex-col h-full">
+          <ChatHeader onClose={() => handleOpenChange(false)} />
+          <ChatMessages messages={messages} isLoading={isLoading} />
+          <ChatInput 
+            message={message}
+            onMessageChange={setMessage}
+            onSubmit={handleSubmit}
+            isLoading={isLoading}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        {!isMobile && (
-          <Button
-            size="icon"
-            className="fixed bottom-4 right-4 h-12 w-12 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700"
-          >
-            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-              <span className="text-blue-600 text-xl">AI</span>
-            </div>
-          </Button>
-        )}
+        <Button
+          size="icon"
+          className="fixed bottom-4 right-4 h-12 w-12 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700"
+        >
+          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+            <span className="text-blue-600 text-xl">AI</span>
+          </div>
+        </Button>
       </DialogTrigger>
       <DialogContent 
-        className={`p-0 ${isMobile 
-          ? 'absolute top-0 bottom-0 left-0 right-0 mt-[72px] mb-[80px] w-full rounded-none' 
-          : 'fixed bottom-[4.5rem] right-4 mb-0 sm:max-w-[440px] rounded-xl'} 
+        className="p-0 fixed bottom-[4.5rem] right-4 mb-0 sm:max-w-[440px] rounded-xl
           data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 
           data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 
-          ${!isMobile ? 'origin-bottom-right' : ''}`}
+          origin-bottom-right"
       >
-        <div className={`flex flex-col ${isMobile ? 'h-full' : 'h-[600px]'}`}>
+        <div className="flex flex-col h-[600px]">
           <ChatHeader onClose={() => handleOpenChange(false)} />
           <ChatMessages messages={messages} isLoading={isLoading} />
           <ChatInput 
