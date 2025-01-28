@@ -13,32 +13,36 @@ serve(async (req) => {
   }
 
   try {
-    if (req.method === 'POST') {
-      // Get the subscription object from the request
-      const { subscription, title, message } = await req.json()
+    // Generate VAPID keys if GET request
+    if (req.method === 'GET') {
+      console.log('Generating VAPID keys...')
+      const vapidKeys = webPush.generateVAPIDKeys()
+      console.log('VAPID keys generated successfully')
+      return new Response(JSON.stringify(vapidKeys), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
 
-      // Configure web-push with your VAPID keys
+    // Handle push notification if POST request
+    if (req.method === 'POST') {
+      const { subscription, title, message } = await req.json()
+      
+      if (!Deno.env.get('VAPID_PUBLIC_KEY') || !Deno.env.get('VAPID_PRIVATE_KEY')) {
+        throw new Error('VAPID keys not configured')
+      }
+
       webPush.setVapidDetails(
-        'mailto:brymcafee@gmail.com', // your email
+        'mailto:brymcafee@gmail.com',
         Deno.env.get('VAPID_PUBLIC_KEY') || '',
         Deno.env.get('VAPID_PRIVATE_KEY') || ''
       )
 
-      // Send the notification
       await webPush.sendNotification(subscription, JSON.stringify({
         title,
         body: message,
       }))
 
       return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-
-    // Generate VAPID keys if GET request
-    if (req.method === 'GET') {
-      const vapidKeys = webPush.generateVAPIDKeys()
-      return new Response(JSON.stringify(vapidKeys), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
