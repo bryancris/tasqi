@@ -55,7 +55,11 @@ export function AITaskInput() {
         className="flex-1"
         disabled={isLoading}
       />
-      <Button type="submit" disabled={isLoading}>
+      <Button 
+        type="submit" 
+        disabled={isLoading}
+        className="bg-black hover:bg-gray-800 text-white"
+      >
         {isLoading ? "Creating..." : "Create Task"}
       </Button>
     </form>
