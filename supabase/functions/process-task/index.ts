@@ -1,3 +1,4 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -8,12 +9,12 @@ const corsHeaders = {
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { message } = await req.json();
-    console.log('Received message:', message);
+    const { message, userId } = await req.json();
+    console.log('Received message:', message, 'userId:', userId);
 
     // Process with OpenAI
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -68,16 +69,22 @@ serve(async (req) => {
     const data = await openAIResponse.json();
     console.log('OpenAI Response:', data);
 
-    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+    if (!data.choices?.[0]?.message?.content) {
       console.error('Invalid OpenAI response structure:', data);
       throw new Error('Invalid response structure from OpenAI');
     }
 
-    const result = JSON.parse(data.choices[0].message.content);
-    console.log('Parsed result:', result);
+    let result;
+    try {
+      result = JSON.parse(data.choices[0].message.content);
+      console.log('Parsed result:', result);
+    } catch (error) {
+      console.error('Error parsing OpenAI response:', error);
+      throw new Error('Failed to parse OpenAI response');
+    }
     
     // If task information was extracted, create the task
-    if (result.task) {
+    if (result.task && userId) {
       const supabase = createClient(
         Deno.env.get('SUPABASE_URL') ?? '',
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -87,6 +94,7 @@ serve(async (req) => {
       const { data: existingTasks } = await supabase
         .from("tasks")
         .select("position")
+        .eq("user_id", userId)
         .order("position", { ascending: false })
         .limit(1);
 
@@ -104,7 +112,8 @@ serve(async (req) => {
           start_time: result.task.startTime,
           end_time: result.task.endTime,
           priority: result.task.priority,
-          position: nextPosition
+          position: nextPosition,
+          user_id: userId
         });
 
       if (taskError) {
@@ -115,7 +124,7 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({
-        response: result.response
+        response: result.response || "I'm sorry, I couldn't process that request."
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

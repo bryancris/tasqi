@@ -35,8 +35,11 @@ export function ChatBubble() {
     setIsLoading(true);
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user logged in");
+
       const { data, error } = await supabase.functions.invoke('process-task', {
-        body: { message }
+        body: { message, userId: user.id }
       });
 
       if (error) throw error;
