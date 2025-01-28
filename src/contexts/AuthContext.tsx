@@ -17,31 +17,41 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Get initial session and set up storage listener
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
+    // Initialize session from local storage if available
+    supabase.auth.getSession().then(({ data: { session: initialSession }, error }) => {
+      if (error) {
+        console.error("Error getting session:", error);
+        setLoading(false);
+        return;
+      }
+      setSession(initialSession);
       setLoading(false);
     });
 
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
       console.log("Auth state changed:", event);
-      setSession(session);
-      setLoading(false);
-
+      
+      if (event === 'TOKEN_REFRESHED') {
+        console.log("Token refreshed successfully");
+      }
+      
       if (event === 'SIGNED_OUT') {
         navigate('/auth');
         toast.success("You have been logged out");
       } else if (event === 'SIGNED_IN') {
+        setSession(currentSession);
         navigate('/dashboard');
         toast.success("Successfully signed in!");
-      } else if (event === 'TOKEN_REFRESHED') {
-        console.log("Token refreshed successfully");
       } else if (event === 'USER_UPDATED') {
         console.log("User profile updated");
+        setSession(currentSession);
       }
+
+      setSession(currentSession);
+      setLoading(false);
     });
 
     // Cleanup subscription
