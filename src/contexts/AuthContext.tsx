@@ -44,7 +44,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } else if (event === 'SIGNED_IN') {
         setSession(currentSession);
         navigate('/dashboard');
-        toast.success("Successfully signed in!");
       } else if (event === 'USER_UPDATED') {
         console.log("User profile updated");
         setSession(currentSession);
