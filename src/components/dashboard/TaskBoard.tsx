@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
 import { checkAndNotifyUpcomingTasks } from "@/utils/taskNotifications";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/hooks/use-toast";
 
 export type TaskPriority = 'low' | 'medium' | 'high';
 
@@ -35,23 +36,44 @@ const fetchTasks = async () => {
   return data as Task[];
 };
 
-const sendTestNotification = () => {
-  if ('Notification' in window) {
-    Notification.requestPermission().then((permission) => {
-      if (permission === "granted" && 'serviceWorker' in navigator) {
-        navigator.serviceWorker.ready.then((registration) => {
-          registration.showNotification("Test Notification", {
-            body: "This is a test notification from TasqiAI",
-            icon: '/pwa-192x192.png',
-            badge: '/pwa-192x192.png',
-            tag: 'test-notification',
-            data: {
-              url: window.location.origin + '/dashboard'
-            }
-          });
-        });
+const sendTestNotification = async () => {
+  try {
+    // First, request notification permission if not granted
+    if (!('Notification' in window)) {
+      toast.error("This browser does not support notifications");
+      return;
+    }
+
+    const permission = await Notification.requestPermission();
+    
+    if (permission !== "granted") {
+      toast.error("Notification permission denied");
+      return;
+    }
+
+    // Check if service worker is registered
+    if (!('serviceWorker' in navigator)) {
+      toast.error("Service Worker is not supported");
+      return;
+    }
+
+    const registration = await navigator.serviceWorker.ready;
+    
+    await registration.showNotification("Test Notification", {
+      body: "This is a test notification from TasqiAI",
+      icon: '/pwa-192x192.png',
+      badge: '/pwa-192x192.png',
+      tag: 'test-notification',
+      vibrate: [100, 50, 100],
+      data: {
+        url: window.location.origin + '/dashboard'
       }
     });
+
+    toast.success("Test notification sent!");
+  } catch (error) {
+    console.error('Error sending notification:', error);
+    toast.error("Failed to send test notification");
   }
 };
 
