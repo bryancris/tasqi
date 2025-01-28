@@ -1,6 +1,9 @@
 import { supabase } from "@/integrations/supabase/client";
 import { format, parseISO, addMinutes } from "date-fns";
 
+// Keep track of notifications we've already sent
+const notifiedTasks = new Set<number>();
+
 export const checkAndNotifyUpcomingTasks = async () => {
   try {
     console.log("Checking for upcoming tasks...");
@@ -23,6 +26,12 @@ export const checkAndNotifyUpcomingTasks = async () => {
     tasks?.forEach(task => {
       if (!task.date || !task.start_time) {
         console.log("Task missing date or start_time:", task);
+        return;
+      }
+
+      // Skip if we've already notified about this task
+      if (notifiedTasks.has(task.id)) {
+        console.log("Already notified about task:", task.id);
         return;
       }
 
@@ -53,6 +62,8 @@ export const checkAndNotifyUpcomingTasks = async () => {
               tag: `task-${task.id}`,
               renotify: true
             }).then(() => {
+              // Add to notified tasks after successful notification
+              notifiedTasks.add(task.id);
               console.log("Notification sent successfully");
             }).catch(error => {
               console.error("Error showing notification:", error);
