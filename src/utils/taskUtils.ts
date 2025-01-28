@@ -22,6 +22,9 @@ export const createTask = async ({
   priority,
   reminderEnabled,
 }: CreateTaskParams) => {
+  const { data: user } = await supabase.auth.getUser();
+  if (!user.user) throw new Error("User not authenticated");
+
   const { data: existingTasks } = await supabase
     .from("tasks")
     .select("position")
@@ -30,19 +33,18 @@ export const createTask = async ({
 
   const nextPosition = existingTasks && existingTasks[0] ? existingTasks[0].position + 1 : 0;
 
-  const { data, error } = await supabase.from("tasks").insert([
-    {
-      title,
-      description,
-      date: isScheduled ? date : null,
-      status: isScheduled ? "scheduled" : "unscheduled",
-      start_time: isScheduled && startTime ? startTime : null,
-      end_time: isScheduled && endTime ? endTime : null,
-      priority,
-      position: nextPosition,
-      reminder_enabled: reminderEnabled,
-    },
-  ]);
+  const { data, error } = await supabase.from("tasks").insert({
+    title,
+    description,
+    date: isScheduled ? date : null,
+    status: isScheduled ? "scheduled" : "unscheduled",
+    start_time: isScheduled && startTime ? startTime : null,
+    end_time: isScheduled && endTime ? endTime : null,
+    priority,
+    position: nextPosition,
+    reminder_enabled: reminderEnabled,
+    user_id: user.user.id
+  });
 
   if (error) throw error;
   return data;

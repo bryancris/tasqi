@@ -1,17 +1,22 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useRef } from "react";
+import { TaskPriority } from "./TaskBoard";
 
 interface TaskScheduleFieldsProps {
+  isScheduled: boolean;
   date: string;
   startTime: string;
   endTime: string;
+  priority: TaskPriority;
   onDateChange: (value: string) => void;
   onStartTimeChange: (value: string) => void;
   onEndTimeChange: (value: string) => void;
+  onPriorityChange: (value: TaskPriority) => void;
 }
 
 export function TaskScheduleFields({
+  isScheduled,
   date,
   startTime,
   endTime,
@@ -29,6 +34,8 @@ export function TaskScheduleFields({
       inputRef.current.click();
     }
   };
+
+  if (!isScheduled) return null;
 
   return (
     <>
@@ -94,7 +101,7 @@ export function TaskScheduleFields({
             />
             <div 
               className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer"
-              onClick={() => handleIconClick(startTimeInputRef)}
+              onClick={() => handleIconClick(endTimeInputRef)}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10"/>
