@@ -7,6 +7,7 @@ import { ChatInput } from "./ChatInput";
 import { ChatHeader } from "./ChatHeader";
 import { ChatMessages } from "./ChatMessages";
 import { Message } from "./types";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function ChatBubble() {
   const [message, setMessage] = useState("");
@@ -14,6 +15,7 @@ export function ChatBubble() {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (open) {
@@ -74,6 +76,10 @@ export function ChatBubble() {
         isUser: false 
       };
       setMessages(prev => [...prev, aiMessage]);
+      
+      // Refresh the tasks list after AI processes the message
+      await queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      
     } catch (error) {
       console.error('Error processing message:', error);
       toast({
