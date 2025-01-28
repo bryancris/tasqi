@@ -1,6 +1,6 @@
 import { Mic } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -16,35 +16,64 @@ export function AudioRecorder({ onTranscriptionComplete }: AudioRecorderProps) {
   const checkMicrophoneAvailability = async () => {
     try {
       const devices = await navigator.mediaDevices.enumerateDevices();
-      const hasMicrophone = devices.some(device => device.kind === 'audioinput');
+      const audioDevices = devices.filter(device => device.kind === 'audioinput');
       
-      if (!hasMicrophone) {
-        throw new Error("No microphone found on this device");
+      if (audioDevices.length === 0) {
+        toast({
+          title: "No Microphone Found",
+          description: "Please connect a microphone to use voice input.",
+          variant: "destructive",
+        });
+        return false;
       }
+      
+      // Test microphone access
+      await navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          // Clean up the test stream immediately
+          stream.getTracks().forEach(track => track.stop());
+        });
       
       return true;
     } catch (error) {
       console.error('Error checking microphone:', error);
+      let errorMessage = "Could not access microphone. ";
+      
+      if (error instanceof DOMException) {
+        switch (error.name) {
+          case 'NotAllowedError':
+            errorMessage = "Please grant microphone permissions in your browser settings.";
+            break;
+          case 'NotFoundError':
+            errorMessage = "No microphone found. Please check your device connections.";
+            break;
+          case 'NotReadableError':
+            errorMessage = "Microphone is in use by another application.";
+            break;
+          default:
+            errorMessage = "Please check your microphone permissions and connections.";
+        }
+      }
+      
+      toast({
+        title: "Microphone Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
       return false;
     }
   };
 
   const startRecording = async () => {
-    try {
-      const micAvailable = await checkMicrophoneAvailability();
-      if (!micAvailable) {
-        toast({
-          title: "No Microphone Found",
-          description: "Please ensure your device has a microphone and it's properly connected.",
-          variant: "destructive",
-        });
-        return;
-      }
+    const micAvailable = await checkMicrophoneAvailability();
+    if (!micAvailable) return;
 
+    try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
+          autoGainControl: true,
         } 
       });
       
@@ -91,29 +120,14 @@ export function AudioRecorder({ onTranscriptionComplete }: AudioRecorderProps) {
       setIsRecording(true);
       
       toast({
-        title: "Recording started",
+        title: "Recording Started",
         description: "Click the microphone button again to stop recording.",
       });
     } catch (error) {
-      console.error('Error accessing microphone:', error);
-      let errorMessage = "Could not access microphone. ";
-      
-      if (error instanceof DOMException) {
-        switch (error.name) {
-          case 'NotAllowedError':
-            errorMessage += "Please grant microphone permissions in your browser settings.";
-            break;
-          case 'NotFoundError':
-            errorMessage += "No microphone found. Please check your device connections.";
-            break;
-          default:
-            errorMessage += "Please check your permissions and device connections.";
-        }
-      }
-      
+      console.error('Error starting recording:', error);
       toast({
-        title: "Microphone Error",
-        description: errorMessage,
+        title: "Recording Error",
+        description: "Failed to start recording. Please try again.",
         variant: "destructive",
       });
     }
@@ -126,7 +140,7 @@ export function AudioRecorder({ onTranscriptionComplete }: AudioRecorderProps) {
       setIsRecording(false);
       
       toast({
-        title: "Recording stopped",
+        title: "Recording Stopped",
         description: "Processing your audio...",
       });
     }
