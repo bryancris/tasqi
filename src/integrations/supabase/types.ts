@@ -48,6 +48,7 @@ export type Database = {
           id: number
           position: number
           priority: Database["public"]["Enums"]["task_priority"] | null
+          reminder_enabled: boolean | null
           start_time: string | null
           status: Database["public"]["Enums"]["task_status"]
           title: string
@@ -62,6 +63,7 @@ export type Database = {
           id?: never
           position: number
           priority?: Database["public"]["Enums"]["task_priority"] | null
+          reminder_enabled?: boolean | null
           start_time?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           title: string
@@ -76,6 +78,7 @@ export type Database = {
           id?: never
           position?: number
           priority?: Database["public"]["Enums"]["task_priority"] | null
+          reminder_enabled?: boolean | null
           start_time?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           title?: string

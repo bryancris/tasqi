@@ -1,17 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { TaskScheduleFields } from "./TaskScheduleFields";
+import { Switch } from "@/components/ui/switch";
 import { TaskPriority } from "./TaskBoard";
+import { TaskScheduleFields } from "./TaskScheduleFields";
 
 interface TaskFormProps {
   title: string;
@@ -21,7 +14,7 @@ interface TaskFormProps {
   startTime: string;
   endTime: string;
   priority: TaskPriority;
-  reminderEnabled?: boolean;
+  reminderEnabled: boolean;
   isLoading: boolean;
   isEditing?: boolean;
   onTitleChange: (value: string) => void;
@@ -31,7 +24,7 @@ interface TaskFormProps {
   onStartTimeChange: (value: string) => void;
   onEndTimeChange: (value: string) => void;
   onPriorityChange: (value: TaskPriority) => void;
-  onReminderEnabledChange?: (value: boolean) => void;
+  onReminderEnabledChange: (value: boolean) => void;
   onSubmit: () => void;
 }
 
@@ -43,7 +36,7 @@ export function TaskForm({
   startTime,
   endTime,
   priority,
-  reminderEnabled = false,
+  reminderEnabled,
   isLoading,
   isEditing = false,
   onTitleChange,
@@ -57,89 +50,65 @@ export function TaskForm({
   onSubmit,
 }: TaskFormProps) {
   return (
-    <div className="p-4 space-y-4">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSubmit();
+      }}
+      className="p-4 space-y-4"
+    >
       <div className="space-y-2">
         <Label htmlFor="title">Title</Label>
-        <Input 
-          id="title" 
-          placeholder="Enter task title" 
+        <Input
+          id="title"
           value={title}
           onChange={(e) => onTitleChange(e.target.value)}
+          placeholder="Task title"
+          required
         />
       </div>
-      
-      <div className="flex items-center justify-between">
-        <Label htmlFor="date">Schedule Task</Label>
-        <div className="flex items-center space-x-2">
-          <span className="text-sm text-gray-500">
-            {isScheduled ? "Scheduled" : "Unscheduled"}
-          </span>
-          <Switch 
-            id="date" 
-            checked={isScheduled}
-            onCheckedChange={onIsScheduledChange}
-          />
-        </div>
-      </div>
-      
-      {isScheduled && (
-        <>
-          <TaskScheduleFields
-            date={date}
-            startTime={startTime}
-            endTime={endTime}
-            onDateChange={onDateChange}
-            onStartTimeChange={onStartTimeChange}
-            onEndTimeChange={onEndTimeChange}
-          />
-          
-          <div className="flex items-center justify-between">
-            <Label htmlFor="reminder">Enable Reminder</Label>
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-500">
-                {reminderEnabled ? "On" : "Off"}
-              </span>
-              <Switch 
-                id="reminder" 
-                checked={reminderEnabled}
-                onCheckedChange={onReminderEnabledChange}
-              />
-            </div>
-          </div>
-        </>
-      )}
-      
+
       <div className="space-y-2">
         <Label htmlFor="description">Description</Label>
-        <Textarea 
-          id="description" 
-          placeholder="Add description" 
+        <Textarea
+          id="description"
           value={description}
           onChange={(e) => onDescriptionChange(e.target.value)}
+          placeholder="Task description"
         />
       </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="priority">Priority</Label>
-        <Select value={priority} onValueChange={onPriorityChange}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select priority" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="low">Low</SelectItem>
-            <SelectItem value="medium">Medium</SelectItem>
-            <SelectItem value="high">High</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      
-      <Button 
-        className="w-full bg-black text-white hover:bg-gray-800"
-        onClick={onSubmit}
-        disabled={!title || isLoading}
+
+      <TaskScheduleFields
+        isScheduled={isScheduled}
+        date={date}
+        startTime={startTime}
+        endTime={endTime}
+        priority={priority}
+        onIsScheduledChange={onIsScheduledChange}
+        onDateChange={onDateChange}
+        onStartTimeChange={onStartTimeChange}
+        onEndTimeChange={onEndTimeChange}
+        onPriorityChange={onPriorityChange}
+      />
+
+      {isScheduled && (
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="reminder"
+            checked={reminderEnabled}
+            onCheckedChange={onReminderEnabledChange}
+          />
+          <Label htmlFor="reminder">Enable notifications</Label>
+        </div>
+      )}
+
+      <Button
+        type="submit"
+        className="w-full"
+        disabled={isLoading}
       >
-        {isLoading ? "Creating..." : isEditing ? "Update Task" : "Add Task"}
+        {isLoading ? "Loading..." : isEditing ? "Update Task" : "Create Task"}
       </Button>
-    </div>
+    </form>
   );
 }

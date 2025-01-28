@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { TaskPriority } from "@/components/dashboard/TaskBoard";
 
-interface CreateTaskData {
+interface CreateTaskParams {
   title: string;
   description: string;
   isScheduled: boolean;
@@ -21,37 +21,29 @@ export const createTask = async ({
   endTime,
   priority,
   reminderEnabled,
-}: CreateTaskData) => {
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    throw new Error("No user logged in");
-  }
-
-  // Get the highest position number for the current user
+}: CreateTaskParams) => {
   const { data: existingTasks } = await supabase
     .from("tasks")
     .select("position")
-    .eq("user_id", user.id)
     .order("position", { ascending: false })
     .limit(1);
 
-  const nextPosition = existingTasks && existingTasks.length > 0 
-    ? existingTasks[0].position + 1 
-    : 1;
+  const nextPosition = existingTasks && existingTasks[0] ? existingTasks[0].position + 1 : 0;
 
-  const { error } = await supabase.from("tasks").insert({
-    title,
-    description,
-    date: isScheduled ? date : null,
-    status: isScheduled ? "scheduled" : "unscheduled",
-    start_time: isScheduled ? startTime : null,
-    end_time: isScheduled ? endTime : null,
-    priority,
-    reminder_enabled: reminderEnabled,
-    user_id: user.id,
-    position: nextPosition,
-  });
+  const { data, error } = await supabase.from("tasks").insert([
+    {
+      title,
+      description,
+      date: isScheduled ? date : null,
+      status: isScheduled ? "scheduled" : "unscheduled",
+      start_time: isScheduled && startTime ? startTime : null,
+      end_time: isScheduled && endTime ? endTime : null,
+      priority,
+      position: nextPosition,
+      reminder_enabled: reminderEnabled,
+    },
+  ]);
 
   if (error) throw error;
+  return data;
 };
