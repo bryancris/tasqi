@@ -28,15 +28,6 @@ export function YearlyCalendar() {
     },
   });
 
-  const months = Array.from({ length: 12 }, (_, i) => {
-    const date = new Date(currentYear, i);
-    return {
-      month: date.toLocaleString('default', { month: 'long' }),
-      year: date.getFullYear(),
-      date: date
-    };
-  });
-
   // Function to get tasks for a specific date
   const getTasksForDate = (date: Date) => {
     return tasks.filter(task => {
@@ -104,11 +95,11 @@ export function YearlyCalendar() {
                       taskDay: (date) => getTasksForDate(date).length > 0
                     }}
                     modifiersStyles={{
-                      taskDay: {
+                      taskDay: (date) => ({
                         borderRadius: '50%',
                         border: '2px solid',
-                        borderColor: (date: Date) => getDateColorClass(date)
-                      }
+                        borderColor: getDateColorClass(date)
+                      })
                     }}
                     classNames={{
                       months: "space-y-4",
