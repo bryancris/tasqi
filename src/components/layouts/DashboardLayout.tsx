@@ -9,14 +9,15 @@ import { HeaderUserMenu } from "@/components/dashboard/header/HeaderUserMenu";
 
 interface DashboardLayoutProps {
   children: ReactNode;
+  onViewChange?: (view: 'tasks' | 'calendar' | 'yearly') => void;
 }
 
-export function DashboardLayout({ children }: DashboardLayoutProps) {
+export function DashboardLayout({ children, onViewChange }: DashboardLayoutProps) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   return (
     <div className="flex h-screen bg-[#F8F9FC]">
-      <Sidebar />
+      <Sidebar onViewChange={onViewChange} />
       <div className="flex-1 overflow-auto">
         <header className="sticky top-0 z-10 border-b bg-white px-6 py-4">
           <div className="flex items-center justify-between">

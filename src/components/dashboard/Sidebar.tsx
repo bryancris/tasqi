@@ -6,7 +6,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { useState } from "react";
 
 interface SidebarProps {
-  onViewChange?: (view: 'tasks' | 'calendar') => void;
+  onViewChange?: (view: 'tasks' | 'calendar' | 'yearly') => void;
 }
 
 export function Sidebar({ onViewChange }: SidebarProps) {

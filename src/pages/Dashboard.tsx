@@ -37,10 +37,10 @@ const Dashboard = () => {
   }
 
   return (
-    <DashboardLayout>
+    <DashboardLayout onViewChange={setView}>
       {renderContent()}
     </DashboardLayout>
   );
-}
+};
 
 export default Dashboard;
