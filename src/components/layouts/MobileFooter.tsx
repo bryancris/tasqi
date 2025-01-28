@@ -1,13 +1,26 @@
 import { Home, Calendar, FileText, MessageSquare, Settings } from "lucide-react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { ChatBubble } from "@/components/chat/ChatBubble";
 
 export function MobileFooter() {
   const location = useLocation();
+  const navigate = useNavigate();
   const isDaily = location.pathname === "/dashboard";
   const [isChatOpen, setIsChatOpen] = useState(false);
+
+  const handleNavigation = (path: string) => {
+    // Close chat if open when navigating
+    if (isChatOpen) {
+      setIsChatOpen(false);
+    }
+    navigate(path);
+  };
+
+  const handleChatToggle = () => {
+    setIsChatOpen(!isChatOpen);
+  };
 
   return (
     <>
@@ -18,15 +31,22 @@ export function MobileFooter() {
               "flex flex-col items-center p-2",
               isDaily ? "text-[#6366F1]" : "text-gray-500"
             )}
+            onClick={() => handleNavigation("/dashboard")}
           >
             <Home className="h-6 w-6" />
             <span className="text-xs mt-1">Daily</span>
           </button>
-          <button className="flex flex-col items-center p-2 text-gray-500">
+          <button 
+            className="flex flex-col items-center p-2 text-gray-500"
+            onClick={() => handleNavigation("/calendar")}
+          >
             <Calendar className="h-6 w-6" />
             <span className="text-xs mt-1">Week</span>
           </button>
-          <button className="flex flex-col items-center p-2 text-gray-500">
+          <button 
+            className="flex flex-col items-center p-2 text-gray-500"
+            onClick={() => handleNavigation("/notes")}
+          >
             <FileText className="h-6 w-6" />
             <span className="text-xs mt-1">Notes</span>
           </button>
@@ -35,12 +55,15 @@ export function MobileFooter() {
               "flex flex-col items-center p-2",
               isChatOpen ? "text-[#6366F1]" : "text-gray-500"
             )}
-            onClick={() => setIsChatOpen(true)}
+            onClick={handleChatToggle}
           >
             <MessageSquare className="h-6 w-6" />
             <span className="text-xs mt-1">Chat</span>
           </button>
-          <button className="flex flex-col items-center p-2 text-gray-500">
+          <button 
+            className="flex flex-col items-center p-2 text-gray-500"
+            onClick={() => handleNavigation("/settings")}
+          >
             <Settings className="h-6 w-6" />
             <span className="text-xs mt-1">Settings</span>
           </button>
