@@ -26,9 +26,41 @@ export function ChatBubble() {
     setMessage("");
   };
 
+  const checkMicrophoneAvailability = async () => {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const hasMicrophone = devices.some(device => device.kind === 'audioinput');
+      
+      if (!hasMicrophone) {
+        throw new Error("No microphone found on this device");
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error checking microphone:', error);
+      return false;
+    }
+  };
+
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const micAvailable = await checkMicrophoneAvailability();
+      if (!micAvailable) {
+        toast({
+          title: "No Microphone Found",
+          description: "Please ensure your device has a microphone and it's properly connected.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+        } 
+      });
+      
       const recorder = new MediaRecorder(stream);
       const audioChunks: Blob[] = [];
 
@@ -56,8 +88,8 @@ export function ChatBubble() {
             } catch (error) {
               console.error('Error transcribing audio:', error);
               toast({
-                title: "Error",
-                description: "Failed to transcribe audio. Please try again.",
+                title: "Transcription Failed",
+                description: "Could not convert your speech to text. Please try again.",
                 variant: "destructive",
               });
             }
@@ -77,9 +109,24 @@ export function ChatBubble() {
       });
     } catch (error) {
       console.error('Error accessing microphone:', error);
+      let errorMessage = "Could not access microphone. ";
+      
+      if (error instanceof DOMException) {
+        switch (error.name) {
+          case 'NotAllowedError':
+            errorMessage += "Please grant microphone permissions in your browser settings.";
+            break;
+          case 'NotFoundError':
+            errorMessage += "No microphone found. Please check your device connections.";
+            break;
+          default:
+            errorMessage += "Please check your permissions and device connections.";
+        }
+      }
+      
       toast({
-        title: "Error",
-        description: "Could not access microphone. Please check your permissions.",
+        title: "Microphone Error",
+        description: errorMessage,
         variant: "destructive",
       });
     }
