@@ -73,7 +73,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4',
         messages: [
           {
             role: 'system',
@@ -115,8 +115,14 @@ serve(async (req) => {
     });
 
     const aiData = await aiResponse.json();
+    console.log('OpenAI API Response:', aiData);
+
+    if (!aiData.choices || !aiData.choices[0]) {
+      throw new Error('Invalid response from OpenAI API');
+    }
+
     const aiMessage = aiData.choices[0].message;
-    let responseText = aiMessage.content;
+    let responseText = aiMessage.content || "I'm sorry, I couldn't process that request.";
 
     // Handle task creation if the AI detected one
     if (aiMessage.function_call?.name === "create_unscheduled_task") {
