@@ -7,13 +7,14 @@ interface TimelineSlotProps {
 }
 
 export function TimelineSlot({ time, task }: TimelineSlotProps) {
-  // Convert time string to 24-hour format for comparison
-  const timeSlotHour = parseInt(time.split(':')[0]);
-  
   const isTaskInTimeSlot = (task?: Task) => {
     if (!task || !task.start_time) return false;
-    const taskStartHour = parseInt(task.start_time.split(':')[0]);
-    return taskStartHour === timeSlotHour;
+    
+    // Convert time strings to comparable format (HH:mm)
+    const slotTime = time.padStart(5, '0'); // e.g., "9:00" -> "09:00"
+    const taskTime = task.start_time;
+    
+    return slotTime === taskTime;
   };
 
   if (!isTaskInTimeSlot(task) || task?.status !== 'scheduled') {
