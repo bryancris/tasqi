@@ -23,6 +23,7 @@ export function AddTaskDrawer() {
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [priority, setPriority] = useState<TaskPriority>("low");
+  const [reminderEnabled, setReminderEnabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -39,6 +40,7 @@ export function AddTaskDrawer() {
         startTime,
         endTime,
         priority,
+        reminderEnabled,
       });
 
       toast({
@@ -54,6 +56,7 @@ export function AddTaskDrawer() {
       setStartTime("");
       setEndTime("");
       setPriority("low");
+      setReminderEnabled(false);
 
       // Refresh tasks list
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
@@ -96,6 +99,7 @@ export function AddTaskDrawer() {
             startTime={startTime}
             endTime={endTime}
             priority={priority}
+            reminderEnabled={reminderEnabled}
             isLoading={isLoading}
             onTitleChange={setTitle}
             onDescriptionChange={setDescription}
@@ -104,6 +108,7 @@ export function AddTaskDrawer() {
             onStartTimeChange={setStartTime}
             onEndTimeChange={setEndTime}
             onPriorityChange={setPriority}
+            onReminderEnabledChange={setReminderEnabled}
             onSubmit={handleSubmit}
           />
         </div>

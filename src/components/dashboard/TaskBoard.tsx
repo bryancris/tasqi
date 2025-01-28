@@ -23,6 +23,7 @@ export interface Task {
   user_id: string;
   created_at?: string;
   updated_at?: string;
+  reminder_enabled?: boolean;
 }
 
 const fetchTasks = async () => {

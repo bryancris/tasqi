@@ -9,6 +9,7 @@ interface CreateTaskData {
   startTime: string;
   endTime: string;
   priority: TaskPriority;
+  reminderEnabled: boolean;
 }
 
 export const createTask = async ({
@@ -19,6 +20,7 @@ export const createTask = async ({
   startTime,
   endTime,
   priority,
+  reminderEnabled,
 }: CreateTaskData) => {
   const { data: { user } } = await supabase.auth.getUser();
   
@@ -46,6 +48,7 @@ export const createTask = async ({
     start_time: isScheduled ? startTime : null,
     end_time: isScheduled ? endTime : null,
     priority,
+    reminder_enabled: reminderEnabled,
     user_id: user.id,
     position: nextPosition,
   });

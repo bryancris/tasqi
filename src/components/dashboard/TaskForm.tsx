@@ -21,6 +21,7 @@ interface TaskFormProps {
   startTime: string;
   endTime: string;
   priority: TaskPriority;
+  reminderEnabled?: boolean;
   isLoading: boolean;
   isEditing?: boolean;
   onTitleChange: (value: string) => void;
@@ -30,6 +31,7 @@ interface TaskFormProps {
   onStartTimeChange: (value: string) => void;
   onEndTimeChange: (value: string) => void;
   onPriorityChange: (value: TaskPriority) => void;
+  onReminderEnabledChange?: (value: boolean) => void;
   onSubmit: () => void;
 }
 
@@ -41,6 +43,7 @@ export function TaskForm({
   startTime,
   endTime,
   priority,
+  reminderEnabled = false,
   isLoading,
   isEditing = false,
   onTitleChange,
@@ -50,6 +53,7 @@ export function TaskForm({
   onStartTimeChange,
   onEndTimeChange,
   onPriorityChange,
+  onReminderEnabledChange,
   onSubmit,
 }: TaskFormProps) {
   return (
@@ -79,14 +83,30 @@ export function TaskForm({
       </div>
       
       {isScheduled && (
-        <TaskScheduleFields
-          date={date}
-          startTime={startTime}
-          endTime={endTime}
-          onDateChange={onDateChange}
-          onStartTimeChange={onStartTimeChange}
-          onEndTimeChange={onEndTimeChange}
-        />
+        <>
+          <TaskScheduleFields
+            date={date}
+            startTime={startTime}
+            endTime={endTime}
+            onDateChange={onDateChange}
+            onStartTimeChange={onStartTimeChange}
+            onEndTimeChange={onEndTimeChange}
+          />
+          
+          <div className="flex items-center justify-between">
+            <Label htmlFor="reminder">Enable Reminder</Label>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-500">
+                {reminderEnabled ? "On" : "Off"}
+              </span>
+              <Switch 
+                id="reminder" 
+                checked={reminderEnabled}
+                onCheckedChange={onReminderEnabledChange}
+              />
+            </div>
+          </div>
+        </>
       )}
       
       <div className="space-y-2">

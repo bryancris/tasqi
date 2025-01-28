@@ -29,6 +29,7 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
   const [startTime, setStartTime] = useState(task.start_time || "");
   const [endTime, setEndTime] = useState(task.end_time || "");
   const [priority, setPriority] = useState<TaskPriority>(task.priority || "low");
+  const [reminderEnabled, setReminderEnabled] = useState(task.reminder_enabled || false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -47,6 +48,7 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
           start_time: isScheduled && startTime ? startTime : null,
           end_time: isScheduled && endTime ? endTime : null,
           priority,
+          reminder_enabled: reminderEnabled,
         })
         .eq("id", task.id);
 
@@ -124,6 +126,7 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
               startTime={startTime}
               endTime={endTime}
               priority={priority}
+              reminderEnabled={reminderEnabled}
               isLoading={isLoading}
               isEditing={true}
               onTitleChange={setTitle}
@@ -133,6 +136,7 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
               onStartTimeChange={setStartTime}
               onEndTimeChange={setEndTime}
               onPriorityChange={setPriority}
+              onReminderEnabledChange={setReminderEnabled}
               onSubmit={handleSubmit}
             />
             
