@@ -7,9 +7,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ChatInput } from "./ChatInput";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 interface Message {
   content: string;
@@ -18,11 +19,46 @@ interface Message {
 
 export function ChatBubble() {
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState<Message[]>([
-    { content: "Hello! How can I help you today?", isUser: false }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+
+  // Fetch chat history when dialog opens
+  useEffect(() => {
+    if (open) {
+      fetchChatHistory();
+    }
+  }, [open]);
+
+  const fetchChatHistory = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user logged in");
+
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .select('content, is_ai')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      if (data) {
+        setMessages(data.map(msg => ({
+          content: msg.content,
+          isUser: !msg.is_ai
+        })));
+      }
+    } catch (error) {
+      console.error('Error fetching chat history:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load chat history",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,7 +74,7 @@ export function ChatBubble() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user logged in");
 
-      const { data, error } = await supabase.functions.invoke('process-task', {
+      const { data, error } = await supabase.functions.invoke('process-chat', {
         body: { message, userId: user.id }
       });
 
@@ -49,12 +85,11 @@ export function ChatBubble() {
       setMessages(prev => [...prev, aiMessage]);
     } catch (error) {
       console.error('Error processing message:', error);
-      // Add error message to chat
-      const errorMessage = { 
-        content: "I'm sorry, I encountered an error processing your request. Please try again.", 
-        isUser: false 
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      toast({
+        title: "Error",
+        description: "Failed to process message. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
