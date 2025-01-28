@@ -3,6 +3,9 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useClock } from "@/hooks/use-clock";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Task } from "./TaskBoard";
 
 export function Calendar() {
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
@@ -18,13 +21,19 @@ export function Calendar() {
 
   const monthYear = currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' });
 
-  // Mock events data - in a real app this would come from your backend
-  const events = [
-    { id: 1, title: "Monday Morning Meeting", time: "09:00", date: new Date(2024, 11, 2) },
-    { id: 2, title: "Call Deb", time: "08:00", date: new Date(2024, 11, 10) },
-    { id: 3, title: "Montpelier hill", time: "16:00", date: new Date(2024, 11, 27) },
-    { id: 4, title: "Cleaners In", time: "13:30", date: new Date(2024, 11, 29) },
-  ];
+  // Fetch tasks from Supabase
+  const { data: tasks = [] } = useQuery({
+    queryKey: ['tasks'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('status', 'scheduled');
+      
+      if (error) throw error;
+      return data as Task[];
+    },
+  });
 
   return (
     <div className="w-full max-w-7xl mx-auto">
@@ -68,7 +77,13 @@ export function Calendar() {
             const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), i - currentMonth.getDay() + 2);
             const isCurrentMonth = date.getMonth() === currentMonth.getMonth();
             const isToday = new Date().toDateString() === date.toDateString();
-            const dayEvents = events.filter(event => event.date.toDateString() === date.toDateString());
+            
+            // Filter tasks for this day
+            const dayTasks = tasks.filter(task => {
+              if (!task.date) return false;
+              const taskDate = new Date(task.date);
+              return taskDate.toDateString() === date.toDateString();
+            });
 
             return (
               <div
@@ -85,15 +100,28 @@ export function Calendar() {
                   </span>
                 </div>
                 <div className="mt-1 space-y-1">
-                  {dayEvents.map((event) => (
+                  {dayTasks.slice(0, 3).map((task) => (
                     <div
-                      key={event.id}
-                      className="px-2 py-1 text-xs rounded bg-blue-100 text-blue-700"
+                      key={task.id}
+                      className="px-2 py-1 text-xs rounded bg-blue-100 text-blue-700 truncate"
                     >
-                      <div className="font-medium">{event.time}</div>
-                      <div className="truncate">{event.title}</div>
+                      {task.start_time && (
+                        <span className="font-medium">
+                          {new Date(`2000-01-01T${task.start_time}`).toLocaleTimeString([], { 
+                            hour: '2-digit', 
+                            minute: '2-digit',
+                            hour12: true 
+                          })}
+                        </span>
+                      )}
+                      <span className="ml-1">{task.title}</span>
                     </div>
                   ))}
+                  {dayTasks.length > 3 && (
+                    <div className="text-xs text-gray-500">
+                      +{dayTasks.length - 3} more
+                    </div>
+                  )}
                 </div>
               </div>
             );
