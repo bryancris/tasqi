@@ -72,7 +72,9 @@ export function DesktopTaskView({ tasks }: DesktopTaskViewProps) {
           <div className="space-y-4">
             {timeSlots.map((timeSlot) => {
               const tasksInSlot = tasks.filter(task => 
-                task.start_time === timeSlot && task.status === 'scheduled'
+                task.status === 'scheduled' && 
+                task.start_time && 
+                task.start_time.startsWith(timeSlot.split(':')[0])
               );
               return (
                 <TimelineSlot 
