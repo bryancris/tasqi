@@ -1,4 +1,4 @@
-import { Image, Send, Mic } from "lucide-react";
+import { Send, Mic } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AudioRecorder } from "./AudioRecorder";
@@ -22,9 +22,6 @@ export function ChatInput({ message, onMessageChange, onSubmit, isLoading }: Cha
           disabled={isLoading}
         />
         <div className="absolute right-2 flex items-center gap-1">
-          <Button type="button" size="icon" variant="ghost" className="h-8 w-8 hover:bg-gray-100" disabled={isLoading}>
-            <Image className="h-4 w-4" />
-          </Button>
           <AudioRecorder onTranscriptionComplete={onMessageChange} />
           <Button 
             type="submit" 
