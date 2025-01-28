@@ -22,8 +22,9 @@ self.addEventListener('fetch', event => {
 
 // Handle push notifications
 self.addEventListener('push', event => {
+  const data = event.data.json();
   const options = {
-    body: event.data.text(),
+    body: data.message || 'New notification',
     icon: '/pwa-192x192.png',
     badge: '/pwa-192x192.png',
     vibrate: [100, 50, 100],
@@ -40,7 +41,7 @@ self.addEventListener('push', event => {
   };
 
   event.waitUntil(
-    self.registration.showNotification('TasqiAI', options)
+    self.registration.showNotification(data.title || 'TasqiAI', options)
   );
 });
 

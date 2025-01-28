@@ -32,14 +32,36 @@
             if (permission === 'granted') {
               console.log('Notification permission granted');
               
-              // Subscribe to push notifications
+              // Subscribe to push notifications with the correct VAPID key
               const subscription = await registration.pushManager.subscribe({
                 userVisibleOnly: true,
-                applicationServerKey: 'YOUR_VAPID_PUBLIC_KEY' // You'll need to replace this with your VAPID key
+                applicationServerKey: 'BO-drbRIS7EgZn3R9oahsptcWfCrMoFgrU3ixeJOIjTDYZOOhIxjb30k6Z45WX6juG4TbGD4_d3IpPmQHkLr9Jk'
               });
               
               console.log('Push notification subscription:', subscription);
-              // Here you would typically send the subscription to your backend
+              
+              // Send the subscription to our Supabase Edge Function
+              try {
+                const response = await fetch('https://mcwlzrikidzgxexnccju.supabase.co/functions/v1/push-notification', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    subscription,
+                    title: 'Welcome to TasqiAI',
+                    message: 'You will now receive notifications for important updates!'
+                  }),
+                });
+                
+                if (!response.ok) {
+                  throw new Error('Failed to send subscription to server');
+                }
+                
+                console.log('Subscription sent to server successfully');
+              } catch (error) {
+                console.error('Error sending subscription to server:', error);
+              }
             }
           } catch (err) {
             console.log('ServiceWorker registration or push subscription failed: ', err);
