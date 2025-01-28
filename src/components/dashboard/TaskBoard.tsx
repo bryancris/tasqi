@@ -36,30 +36,56 @@ const fetchTasks = async () => {
   return data as Task[];
 };
 
-const sendTestNotification = async () => {
+const requestNotificationPermission = async () => {
   try {
-    // First, request notification permission if not granted
     if (!('Notification' in window)) {
       toast({
         variant: "destructive",
         title: "Error",
         description: "This browser does not support notifications"
       });
-      return;
+      return false;
     }
 
-    const permission = await Notification.requestPermission();
-    
-    if (permission !== "granted") {
+    // First check if permission is already granted
+    if (Notification.permission === "granted") {
+      return true;
+    }
+
+    // If permission is denied, we can't request it again
+    if (Notification.permission === "denied") {
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Notification permission denied"
+        title: "Notifications Blocked",
+        description: "Please enable notifications in your browser settings to receive alerts"
       });
-      return;
+      return false;
     }
 
-    // Check if service worker is registered
+    // Request permission
+    const permission = await Notification.requestPermission();
+    if (permission === "granted") {
+      return true;
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Permission Denied",
+        description: "You need to allow notifications to receive alerts"
+      });
+      return false;
+    }
+  } catch (error) {
+    console.error('Error requesting notification permission:', error);
+    return false;
+  }
+};
+
+const sendTestNotification = async () => {
+  try {
+    const hasPermission = await requestNotificationPermission();
+    if (!hasPermission) return;
+
+    // Check if service worker is supported
     if (!('serviceWorker' in navigator)) {
       toast({
         variant: "destructive",
@@ -104,10 +130,8 @@ export function TaskBoard() {
   });
 
   useEffect(() => {
-    // Request notification permission when component mounts
-    if ('Notification' in window) {
-      Notification.requestPermission();
-    }
+    // Initial permission request when component mounts
+    requestNotificationPermission();
 
     // Check for tasks every minute
     const interval = setInterval(checkAndNotifyUpcomingTasks, 60000);
