@@ -41,6 +41,8 @@ const SYSTEM_PROMPT = `You are a task scheduling assistant. When a user mentions
 2. If no specific time/date is mentioned, create it as an unscheduled task
 3. Always extract as much detail as possible
 4. Always set priority to "low" unless specifically mentioned
+5. For scheduled tasks, ALWAYS return time in HH:mm format (24-hour)
+6. Only include time fields if they are explicitly mentioned
 
 Return JSON in this format:
 {
@@ -50,8 +52,8 @@ Return JSON in this format:
     "description": "Optional description",
     "is_scheduled": true/false,
     "date": "YYYY-MM-DD" (if scheduled),
-    "start_time": "HH:mm" (if scheduled),
-    "end_time": "HH:mm" (if has duration)
+    "start_time": "HH:mm" (if time specified),
+    "end_time": "HH:mm" (if duration specified)
   },
   "response": "Your friendly response to the user"
 }`;
@@ -68,6 +70,14 @@ async function getNextPosition(supabase: any, userId: string): Promise<number> {
   return existingTasks && existingTasks.length > 0 
     ? existingTasks[0].position + 1 
     : 1;
+}
+
+function validateTimeFormat(time: string | undefined): string | null {
+  if (!time) return null;
+  
+  // Check if time matches HH:mm format
+  const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+  return timeRegex.test(time) ? time : null;
 }
 
 async function processWithOpenAI(message: string): Promise<OpenAIResponse> {
@@ -107,9 +117,13 @@ async function processWithOpenAI(message: string): Promise<OpenAIResponse> {
 }
 
 async function createTask(supabase: any, userId: string, taskDetails: TaskDetails): Promise<void> {
-  console.log('Creating task:', taskDetails);
+  console.log('Creating task with details:', taskDetails);
   
   const nextPosition = await getNextPosition(supabase, userId);
+  
+  // Validate time fields
+  const startTime = validateTimeFormat(taskDetails.startTime);
+  const endTime = validateTimeFormat(taskDetails.endTime);
   
   const { error: taskError } = await supabase
     .from("tasks")
@@ -118,8 +132,8 @@ async function createTask(supabase: any, userId: string, taskDetails: TaskDetail
       description: taskDetails.description || null,
       date: taskDetails.isScheduled ? taskDetails.date : null,
       status: taskDetails.isScheduled ? "scheduled" : "unscheduled",
-      start_time: taskDetails.isScheduled ? taskDetails.startTime : null,
-      end_time: taskDetails.isScheduled ? taskDetails.endTime : null,
+      start_time: startTime,
+      end_time: endTime,
       priority: "low",
       user_id: userId,
       position: nextPosition,
