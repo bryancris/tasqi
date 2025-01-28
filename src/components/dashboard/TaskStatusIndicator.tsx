@@ -34,7 +34,7 @@ export function TaskStatusIndicator({ status, time, onClick }: TaskStatusIndicat
       {status === 'unscheduled' ? (
         <Check className="h-4 w-4 text-white" />
       ) : (
-        <Clock className="h-4 w-4 text-[#1EAEDB]" />
+        <Clock className="h-4 w-4 text-[#0FA0CE]" />
       )}
     </div>
   );
