@@ -1,6 +1,9 @@
-import { format, startOfWeek, endOfWeek, eachDayOfInterval } from "date-fns";
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, parseISO } from "date-fns";
 import { CalendarHeader } from "./calendar/CalendarHeader";
 import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Task } from "./TaskBoard";
 
 interface WeeklyCalendarProps {
   initialDate?: Date;
@@ -20,35 +23,29 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
     return `${hour}:00`;
   });
 
-  // Mock data for visits (you can replace this with real data later)
-  const mockVisits = {
-    0: "1 Visit",
-    1: "7 Visits",
-    2: "6 Visits",
-    3: "4 Visits",
-    4: "7 Visits",
-    5: "8 Visits",
-    6: "1 Visit"
-  };
+  // Fetch tasks from Supabase
+  const { data: tasks = [] } = useQuery({
+    queryKey: ['tasks', format(weekStart, 'yyyy-MM-dd'), format(weekEnd, 'yyyy-MM-dd')],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('status', 'scheduled')
+        .gte('date', format(weekStart, 'yyyy-MM-dd'))
+        .lte('date', format(weekEnd, 'yyyy-MM-dd'));
+      
+      if (error) throw error;
+      return data as Task[];
+    },
+  });
 
-  // Mock tasks (you can replace this with real data later)
-  const mockTasks = [
-    { 
-      time: "10:00", 
-      day: 0, 
-      title: "Pick up materials",
-      type: "material",
-      completed: false
-    },
-    {
-      time: "8:00",
-      day: 1,
-      title: "Robin Schneider - Edmonton",
-      type: "appointment",
-      completed: false
-    },
-    // Add more mock tasks as needed
-  ];
+  // Calculate visits per day
+  const visitsPerDay = weekDays.map(day => {
+    const dayTasks = tasks.filter(task => 
+      task.date && isSameDay(parseISO(task.date), day)
+    );
+    return `${dayTasks.length} ${dayTasks.length === 1 ? 'Visit' : 'Visits'}`;
+  });
 
   const monthYear = format(currentDate, 'MMMM yyyy');
 
@@ -79,7 +76,7 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
                 {format(day, 'd')}
               </div>
               <div className="text-xs text-gray-500">
-                {mockVisits[index as keyof typeof mockVisits]}
+                {visitsPerDay[index]}
               </div>
             </div>
           ))}
@@ -95,7 +92,7 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
               </div>
               
               {/* Day columns */}
-              {Array.from({ length: 7 }, (_, dayIndex) => (
+              {weekDays.map((day, dayIndex) => (
                 <div 
                   key={dayIndex}
                   className={cn(
@@ -103,22 +100,32 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
                     "hover:bg-gray-50 transition-colors"
                   )}
                 >
-                  {/* Task blocks would go here */}
-                  {mockTasks
-                    .filter(task => task.time === time && task.day === dayIndex)
+                  {tasks
+                    .filter(task => 
+                      task.date && 
+                      isSameDay(parseISO(task.date), day) && 
+                      task.start_time && 
+                      task.start_time.startsWith(time.split(':')[0])
+                    )
                     .map((task, taskIndex) => (
                       <div
                         key={taskIndex}
                         className={cn(
                           "p-2 rounded-md mb-1 text-sm",
-                          task.type === "appointment" && "bg-green-100 border border-green-200",
-                          task.type === "material" && "bg-blue-100 border border-blue-200",
-                          task.completed && "line-through opacity-50"
+                          task.priority === 'high' && "bg-red-100 border border-red-200",
+                          task.priority === 'medium' && "bg-yellow-100 border border-yellow-200",
+                          task.priority === 'low' && "bg-green-100 border border-green-200",
+                          !task.priority && "bg-blue-100 border border-blue-200"
                         )}
                       >
                         <div className="font-medium">
                           {task.title}
                         </div>
+                        {task.description && (
+                          <div className="text-xs text-gray-600 mt-1">
+                            {task.description}
+                          </div>
+                        )}
                       </div>
                     ))}
                 </div>
