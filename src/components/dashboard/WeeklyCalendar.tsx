@@ -3,9 +3,11 @@ import { CalendarHeader } from "./calendar/CalendarHeader";
 import { WeeklyDayHeader } from "./calendar/WeeklyDayHeader";
 import { WeeklyCalendarGrid } from "./calendar/WeeklyCalendarGrid";
 import { UnscheduledTasks } from "./calendar/UnscheduledTasks";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "./TaskBoard";
+import { DragDropContext, DropResult } from "react-beautiful-dnd";
+import { useToast } from "@/hooks/use-toast";
 
 interface WeeklyCalendarProps {
   initialDate?: Date;
@@ -13,19 +15,18 @@ interface WeeklyCalendarProps {
 
 export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
   const currentDate = initialDate || new Date();
-  const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 }); // Start on Sunday
+  const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
   const weekEnd = endOfWeek(currentDate, { weekStartsOn: 0 });
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
   
-  // Get all days in the week
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
-  // Generate time slots from 8:00 to 17:00 (5 PM)
   const timeSlots = Array.from({ length: 12 }, (_, i) => {
     const hour = 8 + i;
     return `${hour}:00`;
   });
 
-  // Fetch all tasks
   const { data: tasks = [] } = useQuery({
     queryKey: ['tasks', format(weekStart, 'yyyy-MM-dd'), format(weekEnd, 'yyyy-MM-dd')],
     queryFn: async () => {
@@ -39,11 +40,9 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
     },
   });
 
-  // Split tasks into scheduled and unscheduled
   const scheduledTasks = tasks.filter(task => task.status === 'scheduled');
   const unscheduledTasks = tasks.filter(task => task.status === 'unscheduled');
 
-  // Calculate visits per day
   const visitsPerDay = weekDays.map(day => {
     const dayTasks = scheduledTasks.filter(task => 
       task.date && isSameDay(parseISO(task.date), day)
@@ -51,31 +50,90 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
     return `${dayTasks.length} ${dayTasks.length === 1 ? 'Visit' : 'Visits'}`;
   });
 
+  const handleDragEnd = async (result: DropResult) => {
+    const { source, destination, draggableId } = result;
+    
+    if (!destination) return;
+
+    const taskId = parseInt(draggableId);
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    try {
+      if (destination.droppableId === 'unscheduled') {
+        // Moving to unscheduled
+        const { error } = await supabase
+          .from('tasks')
+          .update({
+            status: 'unscheduled',
+            date: null,
+            start_time: null,
+            end_time: null
+          })
+          .eq('id', taskId);
+
+        if (error) throw error;
+      } else {
+        // Moving to a time slot
+        const [day, time] = destination.droppableId.split('-');
+        const newDate = weekDays[parseInt(day)];
+        const hour = parseInt(time) + 8; // Convert index to hour (8:00 is index 0)
+        
+        const { error } = await supabase
+          .from('tasks')
+          .update({
+            status: 'scheduled',
+            date: format(newDate, 'yyyy-MM-dd'),
+            start_time: `${hour}:00`,
+            end_time: `${hour + 1}:00`
+          })
+          .eq('id', taskId);
+
+        if (error) throw error;
+      }
+
+      // Optimistically update the UI
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      
+      toast({
+        title: "Task updated",
+        description: "The task has been successfully moved.",
+      });
+    } catch (error) {
+      console.error('Error updating task:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update task. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const monthYear = format(currentDate, 'MMMM yyyy');
 
   return (
-    <div className="flex gap-4 w-full max-w-[95%] mx-auto">
-      {/* Main Calendar Section */}
-      <div className="flex-1">
-        <CalendarHeader 
-          monthYear={monthYear}
-          onNextMonth={() => {}}
-          onPreviousMonth={() => {}}
-          showWeekly={true}
-        />
-
-        <div className="border rounded-lg bg-white shadow-sm overflow-hidden mt-4">
-          <WeeklyDayHeader weekDays={weekDays} visitsPerDay={visitsPerDay} />
-          <WeeklyCalendarGrid 
-            weekDays={weekDays}
-            timeSlots={timeSlots}
-            scheduledTasks={scheduledTasks}
+    <DragDropContext onDragEnd={handleDragEnd}>
+      <div className="flex gap-4 w-full max-w-[95%] mx-auto">
+        <div className="flex-1">
+          <CalendarHeader 
+            monthYear={monthYear}
+            onNextMonth={() => {}}
+            onPreviousMonth={() => {}}
+            showWeekly={true}
           />
-        </div>
-      </div>
 
-      {/* Unscheduled Tasks Section */}
-      <UnscheduledTasks tasks={unscheduledTasks} />
-    </div>
+          <div className="border rounded-lg bg-white shadow-sm overflow-hidden mt-4">
+            <WeeklyDayHeader weekDays={weekDays} visitsPerDay={visitsPerDay} />
+            <WeeklyCalendarGrid 
+              weekDays={weekDays}
+              timeSlots={timeSlots}
+              scheduledTasks={scheduledTasks}
+            />
+          </div>
+        </div>
+
+        <UnscheduledTasks tasks={unscheduledTasks} />
+      </div>
+    </DragDropContext>
   );
 }

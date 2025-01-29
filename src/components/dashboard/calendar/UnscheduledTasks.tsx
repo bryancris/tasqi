@@ -2,6 +2,7 @@ import { Task } from "../TaskBoard";
 import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
 import { getPriorityColor } from "@/utils/taskColors";
+import { Draggable, Droppable } from "react-beautiful-dnd";
 
 interface UnscheduledTasksProps {
   tasks: Task[];
@@ -17,27 +18,46 @@ export function UnscheduledTasks({ tasks }: UnscheduledTasksProps) {
             {tasks.length}
           </span>
         </div>
-        <div className="space-y-2">
-          {tasks.map((task) => (
-            <div
-              key={task.id}
-              className={cn(
-                "p-3 rounded-md text-sm text-white",
-                getPriorityColor(task.priority)
-              )}
+        <Droppable droppableId="unscheduled">
+          {(provided) => (
+            <div 
+              ref={provided.innerRef}
+              {...provided.droppableProps}
+              className="space-y-2"
             >
-              <div className="flex items-start justify-between gap-2">
-                <span className="font-medium">{task.title}</span>
-                {task.reminder_enabled && (
-                  <X className="w-4 h-4 text-white/90 flex-shrink-0" />
-                )}
-              </div>
-              {task.description && (
-                <p className="text-white/90 text-xs mt-1">{task.description}</p>
-              )}
+              {tasks.map((task, index) => (
+                <Draggable
+                  key={task.id}
+                  draggableId={task.id.toString()}
+                  index={index}
+                >
+                  {(provided) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      {...provided.dragHandleProps}
+                      className={cn(
+                        "p-3 rounded-md text-sm text-white",
+                        getPriorityColor(task.priority)
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="font-medium">{task.title}</span>
+                        {task.reminder_enabled && (
+                          <X className="w-4 h-4 text-white/90 flex-shrink-0" />
+                        )}
+                      </div>
+                      {task.description && (
+                        <p className="text-white/90 text-xs mt-1">{task.description}</p>
+                      )}
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+              {provided.placeholder}
             </div>
-          ))}
-        </div>
+          )}
+        </Droppable>
       </div>
     </div>
   );
