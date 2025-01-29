@@ -1,6 +1,7 @@
 import { format, isSameDay, parseISO } from "date-fns";
 import { Task } from "../TaskBoard";
 import { cn } from "@/lib/utils";
+import { getPriorityColor } from "@/utils/taskColors";
 
 interface WeeklyCalendarGridProps {
   weekDays: Date[];
@@ -9,19 +10,6 @@ interface WeeklyCalendarGridProps {
 }
 
 export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks }: WeeklyCalendarGridProps) {
-  const getTaskColor = (task: Task) => {
-    switch (task.priority) {
-      case 'high':
-        return 'bg-red-100 border-red-200 text-red-900';
-      case 'medium':
-        return 'bg-green-100 border-green-200 text-green-900';
-      case 'low':
-        return 'bg-blue-100 border-blue-200 text-blue-900';
-      default:
-        return 'bg-gray-50 border-gray-200 text-gray-900';
-    }
-  };
-
   return (
     <div className="divide-y">
       {timeSlots.map((time, timeIndex) => (
@@ -51,15 +39,15 @@ export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks }: Week
                   <div
                     key={taskIndex}
                     className={cn(
-                      "p-2 rounded-md mb-1 text-sm border",
-                      getTaskColor(task)
+                      "p-2 rounded-md mb-1 text-sm text-white",
+                      getPriorityColor(task.priority)
                     )}
                   >
                     <div className="font-medium">
                       {task.title}
                     </div>
                     {task.description && (
-                      <div className="text-xs opacity-75 mt-1">
+                      <div className="text-xs text-white/90 mt-1">
                         {task.description}
                       </div>
                     )}
