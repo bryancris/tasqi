@@ -27,7 +27,7 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
     return `${hour}:00`;
   });
 
-  const { data: tasks = [] } = useQuery({
+  const { data: tasks = [], refetch } = useQuery({
     queryKey: ['tasks', format(weekStart, 'yyyy-MM-dd'), format(weekEnd, 'yyyy-MM-dd')],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -60,8 +60,21 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
     if (!task) return;
 
     try {
+      // Optimistically update the UI
+      const updatedTasks = [...tasks];
+      const taskIndex = updatedTasks.findIndex(t => t.id === taskId);
+      
       if (destination.droppableId === 'unscheduled') {
         // Moving to unscheduled
+        updatedTasks[taskIndex] = {
+          ...task,
+          status: 'unscheduled',
+          date: null,
+          start_time: null,
+          end_time: null
+        };
+
+        // Update in database
         const { error } = await supabase
           .from('tasks')
           .update({
@@ -79,6 +92,15 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
         const newDate = weekDays[parseInt(day)];
         const hour = parseInt(time) + 8; // Convert index to hour (8:00 is index 0)
         
+        updatedTasks[taskIndex] = {
+          ...task,
+          status: 'scheduled',
+          date: format(newDate, 'yyyy-MM-dd'),
+          start_time: `${hour}:00`,
+          end_time: `${hour + 1}:00`
+        };
+
+        // Update in database
         const { error } = await supabase
           .from('tasks')
           .update({
@@ -92,8 +114,11 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
         if (error) throw error;
       }
 
-      // Optimistically update the UI
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      // Update the cache immediately
+      queryClient.setQueryData(['tasks'], updatedTasks);
+      
+      // Refetch to ensure we have the latest data
+      await refetch();
       
       toast({
         title: "Task updated",
@@ -106,6 +131,8 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
         description: "Failed to update task. Please try again.",
         variant: "destructive",
       });
+      // Refetch to ensure UI is in sync with database
+      await refetch();
     }
   };
 
