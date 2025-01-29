@@ -9,7 +9,7 @@ import { HeaderUserMenu } from "@/components/dashboard/header/HeaderUserMenu";
 
 interface DashboardLayoutProps {
   children: ReactNode;
-  onViewChange?: (view: 'tasks' | 'calendar' | 'yearly') => void;
+  onViewChange?: (view: 'tasks' | 'calendar' | 'yearly' | 'weekly') => void;
 }
 
 export function DashboardLayout({ children, onViewChange }: DashboardLayoutProps) {
