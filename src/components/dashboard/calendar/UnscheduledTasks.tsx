@@ -7,6 +7,19 @@ interface UnscheduledTasksProps {
 }
 
 export function UnscheduledTasks({ tasks }: UnscheduledTasksProps) {
+  const getTaskColor = (task: Task) => {
+    switch (task.priority) {
+      case 'high':
+        return 'bg-red-100 border-red-200 text-red-900';
+      case 'medium':
+        return 'bg-green-100 border-green-200 text-green-900';
+      case 'low':
+        return 'bg-blue-100 border-blue-200 text-blue-900';
+      default:
+        return 'bg-gray-50 border-gray-200 text-gray-900';
+    }
+  };
+
   return (
     <div className="w-[300px]">
       <div className="bg-white rounded-lg shadow-sm border p-4 mt-[72px]">
@@ -22,10 +35,7 @@ export function UnscheduledTasks({ tasks }: UnscheduledTasksProps) {
               key={task.id}
               className={cn(
                 "p-3 rounded-md text-sm border",
-                task.priority === 'high' && "bg-red-50 border-red-200",
-                task.priority === 'medium' && "bg-yellow-50 border-yellow-200",
-                task.priority === 'low' && "bg-green-50 border-green-200",
-                !task.priority && "bg-blue-50 border-blue-200"
+                getTaskColor(task)
               )}
             >
               <div className="flex items-start justify-between gap-2">
