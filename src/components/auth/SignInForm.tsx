@@ -24,7 +24,6 @@ export function SignInForm() {
 
       if (error) throw error;
       
-      // Success toast removed from here as it's handled in AuthContext
       navigate("/dashboard");
     } catch (error: any) {
       toast({
