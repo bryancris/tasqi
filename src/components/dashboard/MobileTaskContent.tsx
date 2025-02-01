@@ -1,7 +1,7 @@
 interface MobileTaskContentProps {
   title: string;
   time?: string;
-  status: 'scheduled' | 'unscheduled';
+  status: 'scheduled' | 'unscheduled' | 'completed';
 }
 
 export function MobileTaskContent({ title, time, status }: MobileTaskContentProps) {
