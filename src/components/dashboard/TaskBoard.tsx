@@ -16,7 +16,7 @@ export interface Task {
   title: string;
   description?: string;
   date: string;
-  status: 'scheduled' | 'unscheduled';
+  status: 'scheduled' | 'unscheduled' | 'completed';
   start_time?: string;
   end_time?: string;
   priority?: TaskPriority;
