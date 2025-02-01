@@ -1,13 +1,16 @@
 import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
 
 interface WeeklyDayHeaderProps {
   weekDays: Date[];
   visitsPerDay: string[];
+  showFullWeek: boolean;
+  onToggleView: () => void;
 }
 
-export function WeeklyDayHeader({ weekDays, visitsPerDay }: WeeklyDayHeaderProps) {
+export function WeeklyDayHeader({ weekDays, visitsPerDay, showFullWeek, onToggleView }: WeeklyDayHeaderProps) {
   return (
-    <div className="grid grid-cols-8 border-b">
+    <div className="grid grid-cols-8 border-b relative">
       {/* Empty cell for time column */}
       <div className="p-4 border-r bg-gray-50"></div>
       
@@ -27,6 +30,16 @@ export function WeeklyDayHeader({ weekDays, visitsPerDay }: WeeklyDayHeaderProps
           </div>
         </div>
       ))}
+
+      {/* Toggle button positioned absolutely in the top-right corner */}
+      <Button
+        variant="outline"
+        onClick={onToggleView}
+        className="absolute top-2 right-2 text-sm"
+        size="sm"
+      >
+        {showFullWeek ? '5 Day' : '7 Day'}
+      </Button>
     </div>
   );
 }
