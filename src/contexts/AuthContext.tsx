@@ -9,24 +9,35 @@ type AuthContextType = {
   loading: boolean;
 };
 
-const AuthContext = createContext<AuthContextType>({ session: null, loading: true });
+const AuthContext = createContext<AuthContextType>({
+  session: null,
+  loading: true,
+});
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     // Initialize session from local storage if available
-    supabase.auth.getSession().then(({ data: { session: initialSession }, error }) => {
-      if (error) {
-        console.error("Error getting session:", error);
+    const initializeAuth = async () => {
+      try {
+        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error("Error getting session:", error);
+          setLoading(false);
+          return;
+        }
+        setSession(initialSession);
         setLoading(false);
-        return;
+      } catch (error) {
+        console.error("Error in auth initialization:", error);
+        setLoading(false);
       }
-      setSession(initialSession);
-      setLoading(false);
-    });
+    };
+
+    initializeAuth();
 
     // Listen for auth changes
     const {
