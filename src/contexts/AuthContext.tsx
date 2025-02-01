@@ -11,7 +11,7 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType>({ session: null, loading: true });
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
