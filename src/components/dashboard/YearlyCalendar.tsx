@@ -48,20 +48,20 @@ export function YearlyCalendar({ onDateSelect }: YearlyCalendarProps) {
     }
   };
 
-  // Array of darker gradient backgrounds with border colors
+  // Array of soft gradient backgrounds with border colors
   const gradients = [
-    'bg-gradient-to-br from-[#1A1F2C] to-[#2A2F3C] border-[#C8C8C9]',
-    'bg-gradient-to-br from-[#222222] to-[#333333] border-[#9F9EA1]',
-    'bg-gradient-to-br from-[#403E43] to-[#504E53] border-[#C8C8C9]',
-    'bg-gradient-to-br from-[#1A1F2C] to-[#2A2F3C] border-[#aaadb0]',
-    'bg-gradient-to-br from-[#222222] to-[#333333] border-[#C8C8C9]',
-    'bg-gradient-to-br from-[#403E43] to-[#504E53] border-[#9F9EA1]',
-    'bg-gradient-to-br from-[#1A1F2C] to-[#2A2F3C] border-[#aaadb0]',
-    'bg-gradient-to-br from-[#222222] to-[#333333] border-[#C8C8C9]',
-    'bg-gradient-to-br from-[#403E43] to-[#504E53] border-[#9F9EA1]',
-    'bg-gradient-to-br from-[#1A1F2C] to-[#2A2F3C] border-[#aaadb0]',
-    'bg-gradient-to-br from-[#222222] to-[#333333] border-[#C8C8C9]',
-    'bg-gradient-to-br from-[#403E43] to-[#504E53] border-[#9F9EA1]'
+    'bg-gradient-to-br from-[#F2FCE2] to-[#E5F7D3] border-[#C8C8C9]',
+    'bg-gradient-to-br from-[#FEF7CD] to-[#FDF2B8] border-[#9F9EA1]',
+    'bg-gradient-to-br from-[#FEC6A1] to-[#FDB892] border-[#C8C8C9]',
+    'bg-gradient-to-br from-[#E5DEFF] to-[#D3CCFA] border-[#aaadb0]',
+    'bg-gradient-to-br from-[#FFDEE2] to-[#FFD0D6] border-[#C8C8C9]',
+    'bg-gradient-to-br from-[#FDE1D3] to-[#FCD3C4] border-[#9F9EA1]',
+    'bg-gradient-to-br from-[#D3E4FD] to-[#C4D9FA] border-[#aaadb0]',
+    'bg-gradient-to-br from-[#F1F0FB] to-[#E5E4F5] border-[#C8C8C9]',
+    'bg-gradient-to-br from-[#F2FCE2] to-[#E5F7D3] border-[#9F9EA1]',
+    'bg-gradient-to-br from-[#FEF7CD] to-[#FDF2B8] border-[#aaadb0]',
+    'bg-gradient-to-br from-[#E5DEFF] to-[#D3CCFA] border-[#C8C8C9]',
+    'bg-gradient-to-br from-[#D3E4FD] to-[#C4D9FA] border-[#9F9EA1]'
   ];
 
   return (
