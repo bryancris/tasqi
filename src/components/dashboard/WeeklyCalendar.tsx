@@ -15,10 +15,11 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
   const currentDate = initialDate || new Date();
   const [showFullWeek, setShowFullWeek] = useState(true);
   
-  const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
+  // Start from Sunday if showing full week, Monday if showing 5 days
+  const weekStart = startOfWeek(currentDate, { weekStartsOn: showFullWeek ? 0 : 1 });
   const weekEnd = showFullWeek 
     ? endOfWeek(currentDate, { weekStartsOn: 0 })
-    : addDays(weekStart, 4); // Friday if showing 5 days
+    : addDays(weekStart, 4); // Friday
   
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
