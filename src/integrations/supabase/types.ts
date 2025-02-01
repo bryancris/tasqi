@@ -39,6 +39,156 @@ export type Database = {
         }
         Relationships: []
       }
+      notes: {
+        Row: {
+          content: string
+          created_at: string
+          id: number
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: number
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: number
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      organization_members: {
+        Row: {
+          id: string
+          joined_at: string
+          organization_id: string
+          role: Database["public"]["Enums"]["org_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          joined_at?: string
+          organization_id: string
+          role?: Database["public"]["Enums"]["org_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          joined_at?: string
+          organization_id?: string
+          role?: Database["public"]["Enums"]["org_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_members_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_members_user_id_fkey_profiles"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: number
+          message_type: Database["public"]["Enums"]["message_type"] | null
+          metadata: Json | null
+          organization_id: string
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: number
+          message_type?: Database["public"]["Enums"]["message_type"] | null
+          metadata?: Json | null
+          organization_id: string
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: number
+          message_type?: Database["public"]["Enums"]["message_type"] | null
+          metadata?: Json | null
+          organization_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_organization"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_messages_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           created_at: string | null
@@ -46,11 +196,13 @@ export type Database = {
           description: string | null
           end_time: string | null
           id: number
+          is_tracking: boolean | null
           position: number
           priority: Database["public"]["Enums"]["task_priority"] | null
           reminder_enabled: boolean | null
           start_time: string | null
           status: Database["public"]["Enums"]["task_status"]
+          time_spent: number | null
           title: string
           updated_at: string | null
           user_id: string
@@ -61,11 +213,13 @@ export type Database = {
           description?: string | null
           end_time?: string | null
           id?: never
+          is_tracking?: boolean | null
           position: number
           priority?: Database["public"]["Enums"]["task_priority"] | null
           reminder_enabled?: boolean | null
           start_time?: string | null
           status?: Database["public"]["Enums"]["task_status"]
+          time_spent?: number | null
           title: string
           updated_at?: string | null
           user_id: string
@@ -76,13 +230,45 @@ export type Database = {
           description?: string | null
           end_time?: string | null
           id?: never
+          is_tracking?: boolean | null
           position?: number
           priority?: Database["public"]["Enums"]["task_priority"] | null
           reminder_enabled?: boolean | null
           start_time?: string | null
           status?: Database["public"]["Enums"]["task_status"]
+          time_spent?: number | null
           title?: string
           updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_settings: {
+        Row: {
+          created_at: string
+          end_hour: number
+          start_hour: number
+          text_to_speech_enabled: boolean | null
+          time_format: Database["public"]["Enums"]["time_format"] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_hour?: number
+          start_hour?: number
+          text_to_speech_enabled?: boolean | null
+          time_format?: Database["public"]["Enums"]["time_format"] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          end_hour?: number
+          start_hour?: number
+          text_to_speech_enabled?: boolean | null
+          time_format?: Database["public"]["Enums"]["time_format"] | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -217,6 +403,12 @@ export type Database = {
           similarity: number
         }[]
       }
+      reorder_tasks: {
+        Args: {
+          task_positions: Database["public"]["CompositeTypes"]["task_position"][]
+        }
+        Returns: undefined
+      }
       sparsevec_out: {
         Args: {
           "": unknown
@@ -280,11 +472,22 @@ export type Database = {
       }
     }
     Enums: {
+      message_type: "text" | "file"
+      org_role: "admin" | "member"
       task_priority: "low" | "medium" | "high"
-      task_status: "scheduled" | "unscheduled"
+      task_status:
+        | "scheduled"
+        | "unscheduled"
+        | "completed"
+        | "in_progress"
+        | "stuck"
+      time_format: "12h" | "24h"
     }
     CompositeTypes: {
-      [_ in never]: never
+      task_position: {
+        task_id: number | null
+        new_position: number | null
+      }
     }
   }
 }
