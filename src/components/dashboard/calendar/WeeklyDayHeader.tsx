@@ -11,8 +11,17 @@ interface WeeklyDayHeaderProps {
 export function WeeklyDayHeader({ weekDays, visitsPerDay, showFullWeek, onToggleView }: WeeklyDayHeaderProps) {
   return (
     <div className="grid grid-cols-8 border-b relative">
-      {/* Empty cell for time column */}
-      <div className="p-4 border-r bg-gray-50"></div>
+      {/* Empty cell for time column with toggle button */}
+      <div className="p-4 border-r bg-gray-50 relative">
+        <Button
+          variant="outline"
+          onClick={onToggleView}
+          className="absolute top-2 left-2 text-sm"
+          size="sm"
+        >
+          {showFullWeek ? '5 Day' : '7 Day'}
+        </Button>
+      </div>
       
       {weekDays.map((day, index) => (
         <div 
@@ -30,16 +39,6 @@ export function WeeklyDayHeader({ weekDays, visitsPerDay, showFullWeek, onToggle
           </div>
         </div>
       ))}
-
-      {/* Toggle button positioned absolutely in the top-right corner */}
-      <Button
-        variant="outline"
-        onClick={onToggleView}
-        className="absolute top-2 right-2 text-sm"
-        size="sm"
-      >
-        {showFullWeek ? '5 Day' : '7 Day'}
-      </Button>
     </div>
   );
 }
