@@ -1,4 +1,5 @@
 import { Task } from "../TaskBoard";
+import { getPriorityColor } from "@/utils/taskColors";
 
 interface CalendarDayProps {
   date: Date;
@@ -21,7 +22,7 @@ export function CalendarDay({ date, isCurrentMonth, isToday, tasks }: CalendarDa
         {tasks.map((task) => (
           <div
             key={task.id}
-            className="text-xs px-2 py-1 rounded-md bg-blue-500 text-white truncate"
+            className={`text-xs px-2 py-1 rounded-md text-white ${getPriorityColor(task.priority)}`}
           >
             {task.title}
           </div>
