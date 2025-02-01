@@ -10,7 +10,11 @@ interface WeeklyDayHeaderProps {
 
 export function WeeklyDayHeader({ weekDays, visitsPerDay, showFullWeek, onToggleView }: WeeklyDayHeaderProps) {
   return (
-    <div className="grid grid-cols-8 border-b relative">
+    <div className={cn(
+      "grid border-b relative",
+      showFullWeek ? "grid-cols-8" : "grid-cols-6",
+      "w-full"
+    )}>
       {/* Empty cell for time column with toggle button */}
       <div className="p-4 border-r bg-gray-50 relative">
         <Button

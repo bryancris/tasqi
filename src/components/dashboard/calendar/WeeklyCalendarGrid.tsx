@@ -14,7 +14,14 @@ export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks }: Week
   return (
     <div className="divide-y">
       {timeSlots.map((time, timeIndex) => (
-        <div key={timeIndex} className="grid grid-cols-8">
+        <div 
+          key={timeIndex} 
+          className={cn(
+            "grid",
+            weekDays.length === 7 ? "grid-cols-8" : "grid-cols-6",
+            "w-full"
+          )}
+        >
           <div className="p-4 border-r text-sm font-medium text-gray-500">
             {time}
           </div>
