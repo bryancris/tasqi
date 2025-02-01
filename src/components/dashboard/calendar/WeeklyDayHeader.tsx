@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface WeeklyDayHeaderProps {
   weekDays: Date[];
