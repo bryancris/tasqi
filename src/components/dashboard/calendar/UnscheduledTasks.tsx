@@ -37,8 +37,7 @@ export function UnscheduledTasks({ tasks }: UnscheduledTasksProps) {
                       {...provided.draggableProps}
                       {...provided.dragHandleProps}
                       className={cn(
-                        "p-3 rounded-md text-sm text-white",
-                        getPriorityColor(task.priority)
+                        "p-3 rounded-md text-sm text-white bg-[#0EA5E9] hover:bg-[#0284C7] transition-colors"
                       )}
                     >
                       <div className="flex items-start justify-between gap-2">
