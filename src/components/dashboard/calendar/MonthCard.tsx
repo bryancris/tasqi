@@ -40,6 +40,12 @@ export function MonthCard({ month, date, selectedDate, onSelect, gradientClass, 
     onSelect(date);
   };
 
+  // Create an array of weekday labels with unique keys
+  const weekDayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, index) => ({
+    key: `${month}-${day}-${index}`,
+    label: day
+  }));
+
   return (
     <Card className={`overflow-hidden ${gradientClass}`}>
       <CardHeader className="p-4">
@@ -47,15 +53,15 @@ export function MonthCard({ month, date, selectedDate, onSelect, gradientClass, 
       </CardHeader>
       <CardContent className="p-2">
         <div className="grid grid-cols-7 gap-1 text-xs">
-          {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day) => (
-            <div key={day} className="text-center text-gray-500 font-medium">
-              {day}
+          {weekDayLabels.map(({ key, label }) => (
+            <div key={key} className="text-center text-gray-500 font-medium">
+              {label}
             </div>
           ))}
         </div>
         <div className="mt-1">
           {weeks.map((week, weekIndex) => (
-            <div key={weekIndex} className="grid grid-cols-7 gap-1">
+            <div key={`${month}-week-${weekIndex}`} className="grid grid-cols-7 gap-1">
               {week.map((day, dayIndex) => {
                 const dayTasks = tasks.filter(task => {
                   if (!task.date) return false;
@@ -67,7 +73,7 @@ export function MonthCard({ month, date, selectedDate, onSelect, gradientClass, 
                 
                 return (
                   <button
-                    key={dayIndex}
+                    key={`${month}-day-${format(day, 'yyyy-MM-dd')}`}
                     onClick={() => handleDateClick(day)}
                     onMouseEnter={() => setHoveredDate(day)}
                     onMouseLeave={() => setHoveredDate(null)}
