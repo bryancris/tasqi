@@ -48,20 +48,20 @@ export function YearlyCalendar({ onDateSelect }: YearlyCalendarProps) {
     }
   };
 
-  // Array of gradient backgrounds for variety
+  // Array of darker gradient backgrounds with border colors
   const gradients = [
-    'bg-gradient-to-br from-rose-50 to-teal-50',
-    'bg-gradient-to-br from-purple-50 to-pink-50',
-    'bg-gradient-to-br from-blue-50 to-indigo-50',
-    'bg-gradient-to-br from-green-50 to-emerald-50',
-    'bg-gradient-to-br from-amber-50 to-yellow-50',
-    'bg-gradient-to-br from-sky-50 to-cyan-50',
-    'bg-gradient-to-br from-violet-50 to-purple-50',
-    'bg-gradient-to-br from-pink-50 to-rose-50',
-    'bg-gradient-to-br from-teal-50 to-emerald-50',
-    'bg-gradient-to-br from-indigo-50 to-violet-50',
-    'bg-gradient-to-br from-cyan-50 to-blue-50',
-    'bg-gradient-to-br from-emerald-50 to-green-50'
+    'bg-gradient-to-br from-[#1A1F2C] to-[#2A2F3C] border-[#C8C8C9]',
+    'bg-gradient-to-br from-[#222222] to-[#333333] border-[#9F9EA1]',
+    'bg-gradient-to-br from-[#403E43] to-[#504E53] border-[#C8C8C9]',
+    'bg-gradient-to-br from-[#1A1F2C] to-[#2A2F3C] border-[#aaadb0]',
+    'bg-gradient-to-br from-[#222222] to-[#333333] border-[#C8C8C9]',
+    'bg-gradient-to-br from-[#403E43] to-[#504E53] border-[#9F9EA1]',
+    'bg-gradient-to-br from-[#1A1F2C] to-[#2A2F3C] border-[#aaadb0]',
+    'bg-gradient-to-br from-[#222222] to-[#333333] border-[#C8C8C9]',
+    'bg-gradient-to-br from-[#403E43] to-[#504E53] border-[#9F9EA1]',
+    'bg-gradient-to-br from-[#1A1F2C] to-[#2A2F3C] border-[#aaadb0]',
+    'bg-gradient-to-br from-[#222222] to-[#333333] border-[#C8C8C9]',
+    'bg-gradient-to-br from-[#403E43] to-[#504E53] border-[#9F9EA1]'
   ];
 
   return (
@@ -84,7 +84,7 @@ export function YearlyCalendar({ onDateSelect }: YearlyCalendarProps) {
                 date={date}
                 selectedDate={selectedDate}
                 onSelect={handleDateSelect}
-                gradientClass={gradients[index]}
+                gradientClass={`${gradients[index]} border-2`}
                 tasks={tasks}
               />
             ))}
