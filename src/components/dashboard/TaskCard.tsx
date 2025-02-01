@@ -26,7 +26,7 @@ export function TaskCard({ task, isMobile = false, index }: TaskCardProps) {
     try {
       const { error } = await supabase
         .from('tasks')
-        .delete()
+        .update({ status: 'completed', updated_at: new Date().toISOString() })
         .eq('id', task.id);
 
       if (error) throw error;
@@ -64,7 +64,9 @@ export function TaskCard({ task, isMobile = false, index }: TaskCardProps) {
         <div 
           className={cn(
             "p-4 rounded-xl flex items-center justify-between text-white w-full cursor-pointer",
-            task.status === 'unscheduled' ? 'bg-blue-500' : getPriorityColor(task.priority)
+            task.status === 'unscheduled' ? 'bg-blue-500' : 
+            task.status === 'completed' ? 'bg-gray-500' :
+            getPriorityColor(task.priority)
           )}
           onClick={handleCardClick}
         >
@@ -81,7 +83,9 @@ export function TaskCard({ task, isMobile = false, index }: TaskCardProps) {
             time={getTimeDisplay(task)}
             onClick={(e) => {
               e.stopPropagation();
-              handleComplete();
+              if (task.status !== 'completed') {
+                handleComplete();
+              }
             }}
           />
         </div>
@@ -99,7 +103,9 @@ export function TaskCard({ task, isMobile = false, index }: TaskCardProps) {
       <div 
         className={cn(
           "p-4 rounded-lg flex items-center justify-between text-white cursor-pointer",
-          task.status === 'unscheduled' ? 'bg-blue-500' : getPriorityColor(task.priority)
+          task.status === 'unscheduled' ? 'bg-blue-500' : 
+          task.status === 'completed' ? 'bg-gray-500' :
+          getPriorityColor(task.priority)
         )}
         onClick={handleCardClick}
       >
@@ -117,24 +123,26 @@ export function TaskCard({ task, isMobile = false, index }: TaskCardProps) {
             </p>
           </div>
         </div>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="ml-2 p-0"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleComplete();
-          }}
-        >
-          <TaskStatusIndicator
-            status={task.status}
-            time={getTimeDisplay(task)}
+        {task.status !== 'completed' && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="ml-2 p-0"
             onClick={(e) => {
               e.stopPropagation();
               handleComplete();
             }}
-          />
-        </Button>
+          >
+            <TaskStatusIndicator
+              status={task.status}
+              time={getTimeDisplay(task)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleComplete();
+              }}
+            />
+          </Button>
+        )}
       </div>
       <EditTaskDrawer 
         task={task} 
