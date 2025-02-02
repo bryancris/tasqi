@@ -27,6 +27,10 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
     (task.status === 'completed' && shouldShowCompletedTask(task))
   );
 
+  // Separate active and completed tasks while maintaining their relative order
+  const activeTasks = displayTasks.filter(task => task.status !== 'completed');
+  const completedTasks = displayTasks.filter(task => task.status === 'completed');
+
   return (
     <Card>
       <CardHeader>
@@ -42,50 +46,46 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
                 className="space-y-4"
               >
                 {/* Active Tasks */}
-                {displayTasks.map((task, index) => (
-                  task.status !== 'completed' && (
-                    <Draggable 
-                      key={task.id} 
-                      draggableId={task.id.toString()} 
-                      index={index}
-                    >
-                      {(provided) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                        >
-                          <TaskCard task={task} index={index} />
-                        </div>
-                      )}
-                    </Draggable>
-                  )
+                {activeTasks.map((task, index) => (
+                  <Draggable 
+                    key={task.id} 
+                    draggableId={task.id.toString()} 
+                    index={index}
+                  >
+                    {(provided) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                      >
+                        <TaskCard task={task} index={index} />
+                      </div>
+                    )}
+                  </Draggable>
                 ))}
 
                 {/* Completed Tasks Section */}
-                {displayTasks.some(task => task.status === 'completed') && (
+                {completedTasks.length > 0 && (
                   <>
                     <h3 className="text-lg font-semibold text-gray-700 mt-8 mb-4">
                       Today's Completed Tasks
                     </h3>
-                    {displayTasks.map((task, index) => (
-                      task.status === 'completed' && (
-                        <Draggable 
-                          key={task.id} 
-                          draggableId={task.id.toString()} 
-                          index={index}
-                        >
-                          {(provided) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                            >
-                              <TaskCard task={task} index={index} />
-                            </div>
-                          )}
-                        </Draggable>
-                      )
+                    {completedTasks.map((task, index) => (
+                      <Draggable 
+                        key={task.id} 
+                        draggableId={task.id.toString()} 
+                        index={activeTasks.length + index}
+                      >
+                        {(provided) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                          >
+                            <TaskCard task={task} index={activeTasks.length + index} />
+                          </div>
+                        )}
+                      </Draggable>
                     ))}
                   </>
                 )}

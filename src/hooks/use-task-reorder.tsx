@@ -16,45 +16,37 @@ export const useTaskReorder = (tasks: Task[]) => {
 
     if (sourceIndex === destinationIndex) return;
 
-    const updatedTasks = Array.from(tasks);
-    const [removed] = updatedTasks.splice(sourceIndex, 1);
-    updatedTasks.splice(destinationIndex, 0, removed);
+    // Get all tasks sorted by position
+    const sortedTasks = [...tasks].sort((a, b) => a.position - b.position);
+
+    // Move the task in the array
+    const [movedTask] = sortedTasks.splice(sourceIndex, 1);
+    sortedTasks.splice(destinationIndex, 0, movedTask);
+
+    // Update positions for all affected tasks
+    const updatedTasks = sortedTasks.map((task, index) => ({
+      ...task,
+      position: index + 1
+    }));
 
     try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ position: destinationIndex + 1 })
-        .eq('id', removed.id);
+      // Optimistically update the cache
+      queryClient.setQueryData(['tasks'], updatedTasks);
 
-      if (error) throw error;
-
-      // Update positions for other affected tasks
-      const tasksToUpdate = updatedTasks
-        .filter(task => task.id !== removed.id)
-        .map((task, index) => ({
-          position: index + 1,
-          id: task.id
-        }));
-
-      for (const task of tasksToUpdate) {
-        const { error: updateError } = await supabase
+      // Update the positions in the database
+      for (const task of updatedTasks) {
+        const { error } = await supabase
           .from('tasks')
           .update({ position: task.position })
           .eq('id', task.id);
 
-        if (updateError) throw updateError;
+        if (error) throw error;
       }
-
-      // Optimistically update the cache
-      queryClient.setQueryData(['tasks'], updatedTasks);
 
       toast({
         title: "Task reordered",
         description: "Task order has been updated",
       });
-
-      // Invalidate to ensure we have the latest data
-      await queryClient.invalidateQueries({ queryKey: ['tasks'] });
     } catch (error) {
       console.error('Error reordering task:', error);
       toast({
