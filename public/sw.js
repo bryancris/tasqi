@@ -44,8 +44,8 @@ self.addEventListener('push', event => {
         title: 'Mark Complete',
       }
     ],
-    tag: data.taskId || 'default', // Ensure unique notifications per task
-    renotify: true // Allow multiple notifications for same task
+    tag: data.taskId || 'default',
+    renotify: true
   };
 
   event.waitUntil(
@@ -56,28 +56,21 @@ self.addEventListener('push', event => {
 // Handle notification clicks
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-
-  // Get the notification data
   const data = event.notification.data;
   const url = data?.url || '/';
   const taskId = data?.taskId;
 
   if (event.action === 'complete' && taskId) {
-    // Handle completing the task
-    // Note: This would need to be implemented in the frontend
     console.log('Task marked as complete:', taskId);
   }
 
-  // Open or focus the appropriate window/tab
   event.waitUntil(
     clients.matchAll({ type: 'window' }).then(windowClients => {
-      // Check if there is already a window/tab open with the target URL
       for (let client of windowClients) {
         if (client.url === url && 'focus' in client) {
           return client.focus();
         }
       }
-      // If no window/tab is open, open a new one
       if (clients.openWindow) {
         return clients.openWindow(url);
       }
@@ -85,14 +78,7 @@ self.addEventListener('notificationclick', event => {
   );
 });
 
-// Check for scheduled tasks every minute
-self.addEventListener('periodicsync', event => {
-  if (event.tag === 'check-scheduled-tasks') {
-    event.waitUntil(checkScheduledTasks());
-  }
-});
-
-// Function to check for tasks that need notifications
+// Check for scheduled tasks
 async function checkScheduledTasks() {
   try {
     const now = new Date();
@@ -103,7 +89,6 @@ async function checkScheduledTasks() {
       const taskTime = new Date(`${task.date}T${task.start_time}`);
       const timeDiff = taskTime.getTime() - now.getTime();
 
-      // If task is due within the next minute
       if (timeDiff > 0 && timeDiff <= 60000) {
         self.registration.showNotification('Task Due Soon', {
           body: `${task.title} is starting in a minute`,
@@ -124,9 +109,22 @@ async function checkScheduledTasks() {
   }
 }
 
-// Register periodic sync if supported
+// Register periodic sync with a shorter tag
 if ('periodicSync' in self.registration) {
-  self.registration.periodicSync.register('check-scheduled-tasks', {
-    minInterval: 60000 // Check every minute
-  });
+  try {
+    self.registration.periodicSync.register('task-check', {
+      minInterval: 60000 // Check every minute
+    }).catch(error => {
+      console.error('Periodic sync registration failed:', error);
+    });
+  } catch (error) {
+    console.error('Periodic sync registration error:', error);
+  }
 }
+
+// Handle periodic sync events
+self.addEventListener('periodicsync', event => {
+  if (event.tag === 'task-check') {
+    event.waitUntil(checkScheduledTasks());
+  }
+});
