@@ -56,14 +56,16 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
           </Button>
         </PopoverTrigger>
         <PopoverContent 
-          className="w-[300px] p-0 bg-background border shadow-lg" 
+          className="w-[300px] p-0 bg-background border shadow-lg relative z-[100]" 
           align="start"
           onInteractOutside={(e) => {
             e.preventDefault();
           }}
           sideOffset={5}
+          style={{ pointerEvents: 'auto' }}
         >
-          <div className="p-4 relative z-50">
+          <div className="fixed inset-0 bg-black/50 z-50" onClick={() => setOpen(false)} />
+          <div className="p-4 relative z-[101] bg-background rounded-md">
             <div className="grid grid-cols-3 gap-4 h-[300px] mb-4">
               {/* Months Column */}
               <div className="flex flex-col space-y-2 overflow-hidden">
@@ -145,9 +147,7 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
                 type="button"
                 variant="default"
                 className="flex-1 bg-[#1e1b4b] hover:bg-[#1e1b4b]/90"
-                onClick={() => {
-                  handleSetDate();
-                }}
+                onClick={handleSetDate}
               >
                 Set
               </Button>
