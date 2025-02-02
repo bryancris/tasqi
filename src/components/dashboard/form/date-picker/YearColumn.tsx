@@ -23,7 +23,7 @@ export function YearColumn({ currentDate, tempDate, onYearSelect }: YearColumnPr
             key={year}
             type="button"
             className={cn(
-              "w-full px-3 py-2 text-sm text-center hover:bg-accent rounded-md transition-colors",
+              "w-full px-3 py-2 text-sm font-medium text-center hover:bg-accent rounded-md transition-colors",
               tempDate && format(tempDate, 'yyyy') === year && "bg-[#1e1b4b] text-white"
             )}
             onClick={() => onYearSelect(parseInt(year))}

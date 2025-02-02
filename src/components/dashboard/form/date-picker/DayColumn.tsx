@@ -22,7 +22,7 @@ export function DayColumn({ tempDate, onDaySelect }: DayColumnProps) {
             key={day}
             type="button"
             className={cn(
-              "w-full px-3 py-2 text-sm text-center hover:bg-accent rounded-md transition-colors",
+              "w-full px-3 py-2 text-sm font-medium text-center hover:bg-accent rounded-md transition-colors",
               tempDate && format(tempDate, 'dd') === day && "bg-[#1e1b4b] text-white"
             )}
             onClick={() => onDaySelect(parseInt(day))}
