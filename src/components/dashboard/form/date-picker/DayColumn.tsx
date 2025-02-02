@@ -7,16 +7,16 @@ interface DayColumnProps {
 }
 
 export function DayColumn({ tempDate, onDaySelect }: DayColumnProps) {
-  const selectedDay = parseInt(format(tempDate, 'dd'));
+  const daysInMonth = new Date(tempDate.getFullYear(), tempDate.getMonth() + 1, 0).getDate();
   const days = Array.from(
-    { length: 5 }, 
-    (_, i) => String(Math.max(1, Math.min(31, selectedDay - 2 + i))).padStart(2, '0')
+    { length: daysInMonth }, 
+    (_, i) => String(i + 1).padStart(2, '0')
   );
 
   return (
     <div className="flex flex-col space-y-2 overflow-hidden">
       <div className="text-sm font-medium text-center sticky top-0 bg-background z-10 py-1">Day</div>
-      <div className="space-y-1 px-1 overflow-y-auto">
+      <div className="space-y-1 px-1 overflow-y-auto scrollbar-hide">
         {days.map((day) => (
           <button
             key={day}
