@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { TaskStatusIndicator } from "../TaskStatusIndicator";
 import { GripVertical } from "lucide-react";
 import { getCompletionDate, getTimeDisplay } from "@/utils/dateUtils";
+import { getPriorityColor } from "@/utils/taskColors";
 
 interface DesktopTaskCardProps {
   task: Task;
