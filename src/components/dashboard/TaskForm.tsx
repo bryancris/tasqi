@@ -3,6 +3,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Calendar } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 import { TaskPriority } from "./TaskBoard";
 import { TaskScheduleFields } from "./TaskScheduleFields";
 
@@ -78,27 +83,93 @@ export function TaskForm({
         />
       </div>
 
-      <TaskScheduleFields
-        isScheduled={isScheduled}
-        date={date}
-        startTime={startTime}
-        endTime={endTime}
-        priority={priority}
-        onIsScheduledChange={onIsScheduledChange}
-        onDateChange={onDateChange}
-        onStartTimeChange={onStartTimeChange}
-        onEndTimeChange={onEndTimeChange}
-        onPriorityChange={onPriorityChange}
-      />
+      <div className="flex items-center space-x-2">
+        <Switch
+          id="scheduled"
+          checked={isScheduled}
+          onCheckedChange={onIsScheduledChange}
+        />
+        <Label htmlFor="scheduled">Schedule this task</Label>
+      </div>
 
       {isScheduled && (
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="reminder"
-            checked={reminderEnabled}
-            onCheckedChange={onReminderEnabledChange}
-          />
-          <Label htmlFor="reminder">Enable notifications</Label>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>Date</Label>
+            <div className="flex">
+              <Input
+                value={date}
+                onChange={(e) => onDateChange(e.target.value)}
+                placeholder="mm/dd/yyyy"
+                className="rounded-r-none"
+              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "rounded-l-none border-l-0",
+                      !date && "text-muted-foreground"
+                    )}
+                  >
+                    <Calendar className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <CalendarComponent
+                    mode="single"
+                    selected={date ? new Date(date) : undefined}
+                    onSelect={(date) => onDateChange(date ? format(date, 'yyyy-MM-dd') : '')}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="startTime">Start Time</Label>
+              <Input
+                id="startTime"
+                type="time"
+                value={startTime}
+                onChange={(e) => onStartTimeChange(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="endTime">End Time</Label>
+              <Input
+                id="endTime"
+                type="time"
+                value={endTime}
+                onChange={(e) => onEndTimeChange(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="priority">Priority</Label>
+            <select
+              id="priority"
+              value={priority}
+              onChange={(e) => onPriorityChange(e.target.value as TaskPriority)}
+              className="w-full rounded-md border border-input bg-background px-3 py-2"
+            >
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="reminder"
+              checked={reminderEnabled}
+              onCheckedChange={onReminderEnabledChange}
+            />
+            <Label htmlFor="reminder">Enable notifications</Label>
+          </div>
         </div>
       )}
 
