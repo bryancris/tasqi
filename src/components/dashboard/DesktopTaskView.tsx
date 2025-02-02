@@ -28,9 +28,18 @@ export function DesktopTaskView({ tasks }: DesktopTaskViewProps) {
 
   const { handleDragEnd } = useTaskReorder(tasks);
 
-  // Get all scheduled tasks
-  const scheduledTasks = tasks.filter(task => 
-    task.status === 'scheduled'
+  // Get today's scheduled tasks for the task board
+  const todayScheduledTasks = tasks.filter(task => 
+    task.status === 'scheduled' && 
+    task.date && 
+    isToday(parseISO(task.date))
+  );
+
+  // Get today's completed tasks
+  const todayCompletedTasks = tasks.filter(task => 
+    task.status === 'completed' &&
+    task.updated_at &&
+    isToday(parseISO(task.updated_at))
   );
 
   // Get unscheduled tasks
@@ -38,9 +47,9 @@ export function DesktopTaskView({ tasks }: DesktopTaskViewProps) {
     task.status === 'unscheduled'
   );
 
-  // Get completed tasks
-  const completedTasks = tasks.filter(task => 
-    task.status === 'completed'
+  // Get all scheduled tasks for the timeline (not filtered by date)
+  const allScheduledTasks = tasks.filter(task => 
+    task.status === 'scheduled'
   );
 
   return (
@@ -58,11 +67,11 @@ export function DesktopTaskView({ tasks }: DesktopTaskViewProps) {
                   ref={provided.innerRef}
                   className="space-y-6"
                 >
-                  {/* Scheduled Tasks */}
-                  {scheduledTasks.length > 0 && (
+                  {/* Today's Scheduled Tasks */}
+                  {todayScheduledTasks.length > 0 && (
                     <div className="space-y-4">
-                      <h3 className="font-semibold text-sm text-gray-500">Scheduled Tasks</h3>
-                      {scheduledTasks.map((task, index) => (
+                      <h3 className="font-semibold text-sm text-gray-500">Today's Scheduled Tasks</h3>
+                      {todayScheduledTasks.map((task, index) => (
                         <Draggable 
                           key={task.id} 
                           draggableId={task.id.toString()} 
@@ -82,15 +91,15 @@ export function DesktopTaskView({ tasks }: DesktopTaskViewProps) {
                     </div>
                   )}
 
-                  {/* Completed Tasks */}
-                  {completedTasks.length > 0 && (
+                  {/* Today's Completed Tasks */}
+                  {todayCompletedTasks.length > 0 && (
                     <div className="space-y-4">
-                      <h3 className="font-semibold text-sm text-gray-500">Completed Tasks</h3>
-                      {completedTasks.map((task, index) => (
+                      <h3 className="font-semibold text-sm text-gray-500">Today's Completed Tasks</h3>
+                      {todayCompletedTasks.map((task, index) => (
                         <Draggable 
                           key={task.id} 
                           draggableId={task.id.toString()} 
-                          index={scheduledTasks.length + index}
+                          index={todayScheduledTasks.length + index}
                         >
                           {(provided) => (
                             <div
@@ -114,7 +123,7 @@ export function DesktopTaskView({ tasks }: DesktopTaskViewProps) {
                         <Draggable 
                           key={task.id} 
                           draggableId={task.id.toString()} 
-                          index={scheduledTasks.length + completedTasks.length + index}
+                          index={todayScheduledTasks.length + todayCompletedTasks.length + index}
                         >
                           {(provided) => (
                             <div
@@ -147,7 +156,7 @@ export function DesktopTaskView({ tasks }: DesktopTaskViewProps) {
               <TimelineSlot 
                 key={timeSlot} 
                 time={timeSlot} 
-                tasks={scheduledTasks}
+                tasks={allScheduledTasks}
                 selectedDate={selectedDate}
                 onDateChange={setSelectedDate}
               />

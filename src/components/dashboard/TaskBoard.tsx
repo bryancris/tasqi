@@ -7,7 +7,6 @@ import { useEffect } from "react";
 import { checkAndNotifyUpcomingTasks } from "@/utils/taskNotifications";
 import { NotificationTest } from "./notifications/NotificationTest";
 import { useNotifications } from "@/hooks/use-notifications";
-import { isToday, parseISO } from "date-fns";
 
 export type TaskPriority = 'low' | 'medium' | 'high';
 
@@ -50,32 +49,6 @@ export function TaskBoard() {
     queryFn: fetchTasks,
   });
 
-  // Filter tasks for today's scheduled tasks
-  const todayScheduledTasks = tasks.filter(task => {
-    const isScheduledForToday = task.status === 'scheduled' && 
-      task.date && 
-      isToday(parseISO(task.date));
-    return isScheduledForToday;
-  });
-
-  // Filter for unscheduled tasks
-  const unscheduledTasks = tasks.filter(task => 
-    task.status === 'unscheduled'
-  );
-
-  // Filter for tasks completed today
-  const todayCompletedTasks = tasks.filter(task => {
-    if (!task.updated_at) return false;
-    return isToday(parseISO(task.updated_at)) && task.status === 'completed';
-  });
-
-  // Combine the filtered tasks in the desired order
-  const visibleTasks = [
-    ...todayScheduledTasks,
-    ...todayCompletedTasks,
-    ...unscheduledTasks
-  ];
-
   useEffect(() => {
     requestPermission();
     const interval = setInterval(checkAndNotifyUpcomingTasks, 60000);
@@ -97,7 +70,7 @@ export function TaskBoard() {
         <NotificationTest />
       </div>
       {isMobile ? (
-        <MobileTaskView tasks={visibleTasks} />
+        <MobileTaskView tasks={tasks} />
       ) : (
         <DesktopTaskView tasks={tasks} />
       )}
