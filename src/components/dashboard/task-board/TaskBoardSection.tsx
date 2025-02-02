@@ -17,14 +17,13 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
     return task.completed_at && isAfter(new Date(task.completed_at), todayStart);
   };
 
-  // Sort tasks by position before displaying
   const displayTasks = tasks
     .filter(task => task.status !== 'completed' || shouldShowCompletedTask(task))
-    .sort((a, b) => {
-      const posA = a.position || 0;
-      const posB = b.position || 0;
-      return posA - posB;
-    });
+    .map(task => ({
+      ...task,
+      position: task.position ?? 0
+    }))
+    .sort((a, b) => a.position - b.position);
 
   return (
     <Card>

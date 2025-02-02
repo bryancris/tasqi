@@ -11,16 +11,18 @@ export function useTaskReorder(tasks: Task[]) {
   const handleDragEnd = async (result: DropResult) => {
     const { destination, source } = result;
 
-    if (!destination || destination.index === source.index) {
+    if (!destination) {
       return;
     }
 
     try {
       // Create a copy of tasks array and ensure all tasks have valid positions
-      const sortedTasks = [...tasks].map(task => ({
-        ...task,
-        position: task.position || 0
-      })).sort((a, b) => a.position - b.position);
+      const sortedTasks = [...tasks]
+        .map(task => ({
+          ...task,
+          position: task.position ?? 0
+        }))
+        .sort((a, b) => a.position - b.position);
 
       // Remove task from source and insert at destination
       const [movedTask] = sortedTasks.splice(source.index, 1);
