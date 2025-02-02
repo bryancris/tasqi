@@ -56,16 +56,17 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
             {date ? format(selectedDate!, 'PPP') : <span>Pick a date</span>}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
+        <PopoverContent className="w-[300px] p-0" align="start">
           <div className="p-4">
-            <div className="grid grid-cols-3 gap-4 mb-4">
+            <div className="grid grid-cols-3 gap-4 max-h-[300px] overflow-y-auto mb-4">
               {/* Months Column */}
               <div className="flex flex-col space-y-2">
+                <div className="text-sm font-medium mb-2 text-center">Month</div>
                 {months.map((month) => (
                   <button
                     key={month}
                     className={cn(
-                      "px-4 py-2 text-left hover:bg-accent rounded-md transition-colors",
+                      "px-4 py-2 text-sm text-center hover:bg-accent rounded-md transition-colors",
                       tempDate && format(tempDate, 'MMM') === month && "bg-[#1e1b4b] text-white"
                     )}
                     onClick={() => {
@@ -82,11 +83,12 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
 
               {/* Days Column */}
               <div className="flex flex-col space-y-2">
+                <div className="text-sm font-medium mb-2 text-center">Day</div>
                 {days.map((day) => (
                   <button
                     key={day}
                     className={cn(
-                      "px-4 py-2 text-left hover:bg-accent rounded-md transition-colors",
+                      "px-4 py-2 text-sm text-center hover:bg-accent rounded-md transition-colors",
                       tempDate && format(tempDate, 'dd') === day && "bg-[#1e1b4b] text-white"
                     )}
                     onClick={() => {
@@ -102,11 +104,12 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
 
               {/* Years Column */}
               <div className="flex flex-col space-y-2">
+                <div className="text-sm font-medium mb-2 text-center">Year</div>
                 {years.map((year) => (
                   <button
                     key={year}
                     className={cn(
-                      "px-4 py-2 text-left hover:bg-accent rounded-md transition-colors",
+                      "px-4 py-2 text-sm text-center hover:bg-accent rounded-md transition-colors",
                       tempDate && format(tempDate, 'yyyy') === year && "bg-[#1e1b4b] text-white"
                     )}
                     onClick={() => {
