@@ -14,7 +14,6 @@ interface ChatBubbleProps {
 }
 
 export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
-  const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
   const isMobile = useIsMobile();
   const { 
@@ -25,11 +24,6 @@ export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
     handleSubmit,
     fetchChatHistory 
   } = useChat();
-
-  useEffect(() => {
-    setMounted(true);
-    return () => setMounted(false);
-  }, []);
 
   useEffect(() => {
     if (open) {
@@ -47,8 +41,6 @@ export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
     }
     onOpenChange?.(newOpen);
   };
-
-  if (!mounted) return null;
 
   const renderChatButton = () => (
     <Button
