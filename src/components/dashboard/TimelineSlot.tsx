@@ -26,17 +26,20 @@ export function TimelineSlot({ time, tasks, selectedDate, onDateChange }: Timeli
 
   // Filter tasks for the selected date AND time slot
   const filteredTasks = tasks.filter(task => {
-    const taskDate = task.date ? parseISO(task.date) : null;
-    return taskDate && 
-      isSameDay(taskDate, selectedDate) &&
-      task.start_time && 
-      task.start_time.startsWith(time.split(':')[0]);
+    if (!task.date || !task.start_time) return false;
+    
+    const taskDate = parseISO(task.date);
+    const isMatchingDate = isSameDay(taskDate, selectedDate);
+    const isMatchingTime = task.start_time.startsWith(time.split(':')[0]);
+    
+    console.log('Task:', task.title);
+    console.log('Task date:', taskDate);
+    console.log('Selected date:', selectedDate);
+    console.log('Is matching date:', isMatchingDate);
+    console.log('Is matching time:', isMatchingTime);
+    
+    return isMatchingDate && isMatchingTime;
   });
-
-  console.log('Selected date:', selectedDate);
-  console.log('Time slot:', time);
-  console.log('All tasks:', tasks);
-  console.log('Filtered tasks:', filteredTasks);
 
   // Only render the date navigation for the first time slot
   if (time === "09:00") {
