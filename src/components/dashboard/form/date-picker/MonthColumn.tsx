@@ -35,9 +35,9 @@ export function MonthColumn({ currentDate, tempDate, onMonthSelect }: MonthColum
     }
   };
 
-  // Calculate visible range (5 items)
+  // Calculate visible range (6 items)
   const itemHeight = 40; // Height of each button
-  const visibleCount = 5;
+  const visibleCount = 6;
   const containerHeight = visibleCount * itemHeight;
 
   return (
