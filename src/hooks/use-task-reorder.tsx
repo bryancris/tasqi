@@ -11,18 +11,16 @@ export function useTaskReorder(tasks: Task[]) {
   const handleDragEnd = async (result: DropResult) => {
     const { destination, source } = result;
 
-    // If dropped outside the list or no change in position
     if (!destination || destination.index === source.index) {
       return;
     }
 
     try {
-      // Create a copy of tasks array and sort by position
-      const sortedTasks = [...tasks].sort((a, b) => {
-        const posA = typeof a.position === 'number' ? a.position : 0;
-        const posB = typeof b.position === 'number' ? b.position : 0;
-        return posA - posB;
-      });
+      // Create a copy of tasks array and ensure all tasks have valid positions
+      const sortedTasks = [...tasks].map(task => ({
+        ...task,
+        position: task.position || 0
+      })).sort((a, b) => a.position - b.position);
 
       // Remove task from source and insert at destination
       const [movedTask] = sortedTasks.splice(source.index, 1);
@@ -31,7 +29,7 @@ export function useTaskReorder(tasks: Task[]) {
       // Calculate new positions with larger intervals
       const updatedTasks = sortedTasks.map((task, index) => ({
         ...task,
-        position: (index + 1) * 1000, // Start from 1000 to ensure no zero positions
+        position: (index + 1) * 1000
       }));
 
       // Prepare positions array for database update
