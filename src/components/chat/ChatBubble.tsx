@@ -45,7 +45,7 @@ export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
   const renderChatButton = () => (
     <Button
       size="icon"
-      className="fixed bottom-4 right-4 h-12 w-12 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 z-50"
+      className="h-12 w-12 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700"
       onClick={() => handleOpenChange(true)}
     >
       <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
@@ -56,10 +56,10 @@ export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
 
   if (isMobile) {
     return (
-      <div className="fixed bottom-0 right-0">
+      <div className="fixed bottom-4 right-4 z-50">
         {renderChatButton()}
         {isDialogOpen && (
-          <div className="fixed inset-0 bg-background z-50" style={{ top: '72px', bottom: '80px' }}>
+          <div className="fixed inset-0 bg-background" style={{ top: '72px', bottom: '80px' }}>
             <div className="flex flex-col h-full">
               <MobileChatHeader onClose={() => handleOpenChange(false)} />
               <ChatMessages messages={messages} isLoading={isLoading} />
@@ -77,14 +77,14 @@ export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
   }
 
   return (
-    <div className="fixed bottom-0 right-0">
+    <div className="fixed bottom-4 right-4 z-50">
       <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
         <DialogTrigger asChild>
           {renderChatButton()}
         </DialogTrigger>
         <DialogContent 
           hideCloseButton
-          className="p-0 fixed bottom-20 right-4 mb-0 sm:max-w-[440px] rounded-xl z-50"
+          className="p-0 fixed bottom-20 right-4 mb-0 sm:max-w-[440px] rounded-xl"
         >
           <div className="flex flex-col h-[600px]">
             <ChatHeader onClose={() => handleOpenChange(false)} />
