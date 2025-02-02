@@ -27,11 +27,14 @@ export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
   } = useChat();
 
   useEffect(() => {
-    console.log("ChatBubble mounting...");
-    setMounted(true);
+    const timer = setTimeout(() => {
+      console.log("ChatBubble mounting with delay...");
+      setMounted(true);
+    }, 100);
+
     return () => {
-      console.log("ChatBubble unmounting...");
-      setMounted(false);
+      console.log("ChatBubble cleanup...");
+      clearTimeout(timer);
     };
   }, []);
 
@@ -60,19 +63,23 @@ export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
     return null;
   }
 
+  const renderChatButton = () => (
+    <Button
+      size="icon"
+      className="fixed bottom-4 right-4 h-12 w-12 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 z-[9999]"
+      onClick={() => !isControlled && handleOpenChange(true)}
+    >
+      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+        <span className="text-blue-600 text-xl">AI</span>
+      </div>
+    </Button>
+  );
+
   if (isMobile) {
     console.log("Rendering mobile chat bubble");
     return (
       <>
-        <Button
-          size="icon"
-          className="fixed bottom-20 right-4 h-12 w-12 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 z-[9999]"
-          onClick={() => handleOpenChange(true)}
-        >
-          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-            <span className="text-blue-600 text-xl">AI</span>
-          </div>
-        </Button>
+        {renderChatButton()}
         {isDialogOpen && (
           <div className="fixed inset-0 bg-background z-[9999]" style={{ top: '72px', bottom: '80px' }}>
             <div className="flex flex-col h-full">
@@ -95,14 +102,7 @@ export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
   return (
     <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button
-          size="icon"
-          className="fixed bottom-4 right-4 h-12 w-12 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 z-[9999]"
-        >
-          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-            <span className="text-blue-600 text-xl">AI</span>
-          </div>
-        </Button>
+        {renderChatButton()}
       </DialogTrigger>
       <DialogContent 
         hideCloseButton
