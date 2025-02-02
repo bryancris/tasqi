@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ChatInput } from "./ChatInput";
 import { ChatHeader } from "./ChatHeader";
@@ -81,36 +81,35 @@ export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
   }
 
   return (
-    <>
-      <Button
-        size="icon"
-        className="fixed bottom-4 right-4 h-12 w-12 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 z-[9999]"
-        onClick={() => handleOpenChange(true)}
-      >
-        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-          <span className="text-blue-600 text-xl">AI</span>
-        </div>
-      </Button>
-      <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
-        <DialogContent 
-          hideCloseButton
-          className="p-0 fixed bottom-[4.5rem] right-4 mb-0 sm:max-w-[440px] rounded-xl z-[9999]
-            data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 
-            data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 
-            origin-bottom-right"
+    <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
+        <Button
+          size="icon"
+          className="fixed bottom-4 right-4 h-12 w-12 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 z-[9999]"
         >
-          <div className="flex flex-col h-[600px]">
-            <ChatHeader onClose={() => handleOpenChange(false)} />
-            <ChatMessages messages={messages} isLoading={isLoading} />
-            <ChatInput 
-              message={message}
-              onMessageChange={setMessage}
-              onSubmit={handleSubmit}
-              isLoading={isLoading}
-            />
+          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+            <span className="text-blue-600 text-xl">AI</span>
           </div>
-        </DialogContent>
-      </Dialog>
-    </>
+        </Button>
+      </DialogTrigger>
+      <DialogContent 
+        hideCloseButton
+        className="p-0 fixed bottom-[4.5rem] right-4 mb-0 sm:max-w-[440px] rounded-xl z-[9999]
+          data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 
+          data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 
+          origin-bottom-right"
+      >
+        <div className="flex flex-col h-[600px]">
+          <ChatHeader onClose={() => handleOpenChange(false)} />
+          <ChatMessages messages={messages} isLoading={isLoading} />
+          <ChatInput 
+            message={message}
+            onMessageChange={setMessage}
+            onSubmit={handleSubmit}
+            isLoading={isLoading}
+          />
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
