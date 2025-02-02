@@ -43,11 +43,12 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
                     draggableId={task.id.toString()} 
                     index={index}
                   >
-                    {(provided) => (
+                    {(provided, snapshot) => (
                       <div
                         ref={provided.innerRef}
                         {...provided.draggableProps}
                         {...provided.dragHandleProps}
+                        className={snapshot.isDragging ? "opacity-50" : ""}
                       >
                         <TaskCard task={task} index={index} />
                       </div>

@@ -11,7 +11,11 @@ export function useTaskReorder(tasks: Task[]) {
   const handleDragEnd = async (result: DropResult) => {
     const { destination, source } = result;
 
-    if (!destination) return;
+    // If dropped outside the list or no change in position
+    if (!destination || 
+        (destination.index === source.index)) {
+      return;
+    }
 
     try {
       // Create a new array with the reordered tasks
@@ -20,35 +24,44 @@ export function useTaskReorder(tasks: Task[]) {
       reorderedTasks.splice(destination.index, 0, removed);
 
       // Update positions to be sequential
-      const updatedPositions = reorderedTasks.map((task, index) => ({
-        task_id: task.id,
-        new_position: index
+      const updatedTasks = reorderedTasks.map((task, index) => ({
+        ...task,
+        position: index
       }));
 
       // Optimistically update the cache
-      queryClient.setQueryData(['tasks'], reorderedTasks.map((task, index) => ({
-        ...task,
-        position: index
-      })));
+      queryClient.setQueryData(['tasks'], updatedTasks);
 
-      // Call the reorder_tasks function
+      // Prepare the positions update
+      const positions = updatedTasks.map(task => ({
+        task_id: task.id,
+        new_position: task.position
+      }));
+
+      // Call the database function to update positions
       const { error } = await supabase.rpc('reorder_tasks', {
-        task_positions: updatedPositions
+        task_positions: positions
       });
 
       if (error) throw error;
 
-      // Refetch to ensure we have the latest data
+      // Refetch to ensure consistency
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+
+      toast({
+        title: "Task reordered",
+        description: "The task has been moved to its new position.",
+      });
 
     } catch (error) {
       console.error('Error reordering tasks:', error);
+      
       // Revert the cache to the original state
       queryClient.setQueryData(['tasks'], tasks);
       
       toast({
         title: "Error",
-        description: "Failed to reorder tasks. Please try again.",
+        description: "Failed to reorder task. Please try again.",
         variant: "destructive",
       });
     }
