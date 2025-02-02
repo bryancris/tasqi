@@ -53,7 +53,7 @@ export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
 
   if (isMobile) {
     return (
-      <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 100 }}>
+      <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 9999 }}>
         <Button
           size="icon"
           className="fixed bottom-20 right-4 h-12 w-12 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 pointer-events-auto"
@@ -64,7 +64,7 @@ export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
           </div>
         </Button>
         {isDialogOpen && (
-          <div className="fixed inset-0 bg-background pointer-events-auto" style={{ top: '72px', bottom: '80px' }}>
+          <div className="fixed inset-0 bg-background pointer-events-auto" style={{ top: '72px', bottom: '80px', zIndex: 9999 }}>
             <div className="flex flex-col h-full">
               <MobileChatHeader onClose={() => handleOpenChange(false)} />
               <ChatMessages messages={messages} isLoading={isLoading} />
@@ -83,7 +83,7 @@ export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
-      <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 100 }}>
+      <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 9999 }}>
         <Button
           size="icon"
           className="fixed bottom-4 right-4 h-12 w-12 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 pointer-events-auto"
@@ -100,7 +100,7 @@ export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
           data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 
           data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 
           origin-bottom-right"
-        style={{ zIndex: 100 }}
+        style={{ zIndex: 9999 }}
       >
         <div className="flex flex-col h-[600px]">
           <ChatHeader onClose={() => handleOpenChange(false)} />
