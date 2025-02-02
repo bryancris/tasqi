@@ -2,7 +2,7 @@ import { Task } from "./TaskBoard";
 import { getPriorityColor } from "@/utils/taskColors";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { format, isSameDay, parseISO } from "date-fns";
+import { format, isSameDay, parseISO, startOfDay } from "date-fns";
 import { useState } from "react";
 
 interface TimelineSlotProps {
@@ -11,13 +11,13 @@ interface TimelineSlotProps {
 }
 
 export function TimelineSlot({ time, tasks }: TimelineSlotProps) {
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(startOfDay(new Date()));
 
   const handlePreviousDay = () => {
     setSelectedDate(prev => {
       const newDate = new Date(prev);
       newDate.setDate(prev.getDate() - 1);
-      return newDate;
+      return startOfDay(newDate);
     });
   };
 
@@ -25,17 +25,18 @@ export function TimelineSlot({ time, tasks }: TimelineSlotProps) {
     setSelectedDate(prev => {
       const newDate = new Date(prev);
       newDate.setDate(prev.getDate() + 1);
-      return newDate;
+      return startOfDay(newDate);
     });
   };
 
   // Filter tasks for the selected date AND time slot
-  const filteredTasks = tasks.filter(task => 
-    task.date && 
-    isSameDay(parseISO(task.date), selectedDate) &&
-    task.start_time && 
-    task.start_time.startsWith(time.split(':')[0])
-  );
+  const filteredTasks = tasks.filter(task => {
+    const taskDate = task.date ? parseISO(task.date) : null;
+    return taskDate && 
+      isSameDay(taskDate, selectedDate) &&
+      task.start_time && 
+      task.start_time.startsWith(time.split(':')[0]);
+  });
 
   console.log('Selected date:', selectedDate);
   console.log('Time slot:', time);
