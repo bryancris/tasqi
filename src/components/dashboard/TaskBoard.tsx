@@ -28,13 +28,18 @@ export interface Task {
 }
 
 const fetchTasks = async () => {
+  console.log('Fetching tasks...');
   const { data, error } = await supabase
     .from('tasks')
     .select('*')
     .order('position', { ascending: true });
 
-  if (error) throw error;
+  if (error) {
+    console.error('Error fetching tasks:', error);
+    throw error;
+  }
 
+  console.log('Fetched tasks:', data);
   return data as Task[];
 };
 
@@ -48,11 +53,13 @@ export function TaskBoard() {
   });
 
   // Filter tasks for today's scheduled tasks
-  const todayScheduledTasks = tasks.filter(task => 
-    task.status === 'scheduled' && 
-    task.date && 
-    isToday(parseISO(task.date))
-  );
+  const todayScheduledTasks = tasks.filter(task => {
+    const isScheduledForToday = task.status === 'scheduled' && 
+      task.date && 
+      isToday(parseISO(task.date));
+    console.log('Task:', task.title, 'date:', task.date, 'isScheduledForToday:', isScheduledForToday);
+    return isScheduledForToday;
+  });
 
   // Filter for unscheduled tasks
   const unscheduledTasks = tasks.filter(task => 
@@ -71,6 +78,9 @@ export function TaskBoard() {
     ...todayCompletedTasks,
     ...unscheduledTasks
   ];
+
+  console.log('All tasks:', tasks);
+  console.log('Visible tasks:', visibleTasks);
 
   useEffect(() => {
     // Initial permission request when component mounts
