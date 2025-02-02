@@ -112,8 +112,8 @@ async function checkScheduledTasks() {
 // Only register periodic sync if the API is available
 if ('periodicSync' in self.registration) {
   try {
-    // Use a shorter tag name to avoid the "tag too long" error
-    self.registration.periodicSync.register('task-sync', {
+    // Use a shorter tag name
+    self.registration.periodicSync.register('sync', {
       minInterval: 60000 // Check every minute
     }).catch(error => {
       console.error('Periodic sync registration error:', error);
@@ -125,7 +125,7 @@ if ('periodicSync' in self.registration) {
 
 // Handle periodic sync events
 self.addEventListener('periodicsync', event => {
-  if (event.tag === 'task-sync') {
+  if (event.tag === 'sync') {
     event.waitUntil(checkScheduledTasks());
   }
 });
