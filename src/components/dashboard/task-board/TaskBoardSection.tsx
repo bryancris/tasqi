@@ -21,7 +21,7 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
   // Filter and sort tasks for display
   const displayTasks = tasks
     .filter(task => task.status !== 'completed' || shouldShowCompletedTask(task))
-    .sort((a, b) => a.position - b.position);
+    .sort((a, b) => (a.position || 0) - (b.position || 0));
 
   return (
     <Card>
