@@ -14,21 +14,22 @@ export function useTaskReorder(tasks: Task[]) {
     if (!destination) return;
 
     try {
-      // Create an array of task positions to update
-      const taskPositions = tasks.map((task, index) => ({
+      // Create a new array with the reordered tasks
+      const reorderedTasks = Array.from(tasks);
+      const [removed] = reorderedTasks.splice(source.index, 1);
+      reorderedTasks.splice(destination.index, 0, removed);
+
+      // Update positions to be sequential
+      const updatedPositions = reorderedTasks.map((task, index) => ({
         task_id: task.id,
         new_position: index
       }));
 
-      // Move the dragged task to its new position
-      const [movedTask] = taskPositions.splice(source.index, 1);
-      taskPositions.splice(destination.index, 0, movedTask);
-
-      // Update positions to reflect new order
-      const updatedPositions = taskPositions.map((task, index) => ({
+      // Optimistically update the cache
+      queryClient.setQueryData(['tasks'], reorderedTasks.map((task, index) => ({
         ...task,
-        new_position: index
-      }));
+        position: index
+      })));
 
       // Call the reorder_tasks function
       const { error } = await supabase.rpc('reorder_tasks', {
@@ -37,25 +38,14 @@ export function useTaskReorder(tasks: Task[]) {
 
       if (error) throw error;
 
-      // Update the cache with the new order
-      queryClient.setQueryData(['tasks'], (oldData: Task[] | undefined) => {
-        if (!oldData) return oldData;
-        
-        const newData = [...oldData];
-        const [movedItem] = newData.splice(source.index, 1);
-        newData.splice(destination.index, 0, movedItem);
-        
-        return newData.map((task, index) => ({
-          ...task,
-          position: index
-        }));
-      });
-
       // Refetch to ensure we have the latest data
-      await queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
 
     } catch (error) {
       console.error('Error reordering tasks:', error);
+      // Revert the cache to the original state
+      queryClient.setQueryData(['tasks'], tasks);
+      
       toast({
         title: "Error",
         description: "Failed to reorder tasks. Please try again.",
