@@ -58,85 +58,108 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
         </PopoverTrigger>
         <PopoverContent className="w-[300px] p-0" align="start">
           <div className="p-4">
-            <div className="grid grid-cols-3 gap-4 max-h-[300px] overflow-y-auto mb-4">
+            <div className="grid grid-cols-3 gap-4 h-[300px] mb-4">
               {/* Months Column */}
-              <div className="flex flex-col space-y-2">
-                <div className="text-sm font-medium mb-2 text-center">Month</div>
-                {months.map((month) => (
-                  <button
-                    key={month}
-                    className={cn(
-                      "px-4 py-2 text-sm text-center hover:bg-accent rounded-md transition-colors",
-                      tempDate && format(tempDate, 'MMM') === month && "bg-[#1e1b4b] text-white"
-                    )}
-                    onClick={() => {
-                      const newDate = tempDate || new Date();
-                      const monthIndex = months.indexOf(month);
-                      const targetDate = addMonths(new Date(currentDate.getFullYear(), currentDate.getMonth() - 2), monthIndex);
-                      newDate.setMonth(targetDate.getMonth());
-                      setTempDate(new Date(newDate));
-                    }}
-                  >
-                    {month}
-                  </button>
-                ))}
+              <div className="flex flex-col space-y-2 overflow-y-auto">
+                <div className="text-sm font-medium text-center sticky top-0 bg-background z-10 py-1">Month</div>
+                <div className="space-y-1 px-1">
+                  {months.map((month) => (
+                    <button
+                      key={month}
+                      type="button"
+                      className={cn(
+                        "w-full px-3 py-2 text-sm text-center hover:bg-accent rounded-md transition-colors",
+                        tempDate && format(tempDate, 'MMM') === month && "bg-[#1e1b4b] text-white"
+                      )}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const newDate = tempDate || new Date();
+                        const monthIndex = months.indexOf(month);
+                        const targetDate = addMonths(new Date(currentDate.getFullYear(), currentDate.getMonth() - 2), monthIndex);
+                        newDate.setMonth(targetDate.getMonth());
+                        setTempDate(new Date(newDate));
+                      }}
+                    >
+                      {month}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Days Column */}
-              <div className="flex flex-col space-y-2">
-                <div className="text-sm font-medium mb-2 text-center">Day</div>
-                {days.map((day) => (
-                  <button
-                    key={day}
-                    className={cn(
-                      "px-4 py-2 text-sm text-center hover:bg-accent rounded-md transition-colors",
-                      tempDate && format(tempDate, 'dd') === day && "bg-[#1e1b4b] text-white"
-                    )}
-                    onClick={() => {
-                      const newDate = tempDate || new Date();
-                      newDate.setDate(parseInt(day));
-                      setTempDate(new Date(newDate));
-                    }}
-                  >
-                    {day}
-                  </button>
-                ))}
+              <div className="flex flex-col space-y-2 overflow-y-auto">
+                <div className="text-sm font-medium text-center sticky top-0 bg-background z-10 py-1">Day</div>
+                <div className="space-y-1 px-1">
+                  {days.map((day) => (
+                    <button
+                      key={day}
+                      type="button"
+                      className={cn(
+                        "w-full px-3 py-2 text-sm text-center hover:bg-accent rounded-md transition-colors",
+                        tempDate && format(tempDate, 'dd') === day && "bg-[#1e1b4b] text-white"
+                      )}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const newDate = tempDate || new Date();
+                        newDate.setDate(parseInt(day));
+                        setTempDate(new Date(newDate));
+                      }}
+                    >
+                      {day}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Years Column */}
-              <div className="flex flex-col space-y-2">
-                <div className="text-sm font-medium mb-2 text-center">Year</div>
-                {years.map((year) => (
-                  <button
-                    key={year}
-                    className={cn(
-                      "px-4 py-2 text-sm text-center hover:bg-accent rounded-md transition-colors",
-                      tempDate && format(tempDate, 'yyyy') === year && "bg-[#1e1b4b] text-white"
-                    )}
-                    onClick={() => {
-                      const newDate = tempDate || new Date();
-                      newDate.setFullYear(parseInt(year));
-                      setTempDate(new Date(newDate));
-                    }}
-                  >
-                    {year}
-                  </button>
-                ))}
+              <div className="flex flex-col space-y-2 overflow-y-auto">
+                <div className="text-sm font-medium text-center sticky top-0 bg-background z-10 py-1">Year</div>
+                <div className="space-y-1 px-1">
+                  {years.map((year) => (
+                    <button
+                      key={year}
+                      type="button"
+                      className={cn(
+                        "w-full px-3 py-2 text-sm text-center hover:bg-accent rounded-md transition-colors",
+                        tempDate && format(tempDate, 'yyyy') === year && "bg-[#1e1b4b] text-white"
+                      )}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const newDate = tempDate || new Date();
+                        newDate.setFullYear(parseInt(year));
+                        setTempDate(new Date(newDate));
+                      }}
+                    >
+                      {year}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
             <div className="flex justify-between mt-4 gap-4">
               <Button
+                type="button"
                 variant="default"
                 className="flex-1 bg-[#1e1b4b] hover:bg-[#1e1b4b]/90"
-                onClick={handleSetDate}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleSetDate();
+                }}
               >
                 Set
               </Button>
               <Button
+                type="button"
                 variant="default"
                 className="flex-1 bg-[#1e1b4b] hover:bg-[#1e1b4b]/90"
-                onClick={() => {
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
                   setTempDate(selectedDate);
                   setOpen(false);
                 }}
