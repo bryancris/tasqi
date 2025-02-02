@@ -39,34 +39,29 @@ export function MonthColumn({ currentDate, tempDate, onMonthSelect }: MonthColum
   // Calculate visible range (5 items)
   const itemHeight = 40; // Height of each button
   const visibleCount = 5;
-  const totalHeight = months.length * itemHeight;
   const containerHeight = visibleCount * itemHeight;
 
   return (
-    <div className="flex flex-col space-y-2 overflow-hidden" style={{ height: containerHeight }}>
-      <div className="text-sm font-medium text-center sticky top-0 bg-background z-10">Month</div>
+    <div className="flex flex-col space-y-2" style={{ height: containerHeight }}>
+      <div className="text-sm font-medium text-center bg-background z-10">Month</div>
       <div 
         ref={scrollContainerRef}
         onWheel={handleWheel}
-        className="space-y-1 px-1 overflow-y-auto scrollbar-hide"
-        style={{ 
-          height: containerHeight - 24, // Subtract header height
-          scrollBehavior: 'smooth'
-        }}
+        className="relative flex-1 overflow-y-auto scrollbar-hide"
+        style={{ height: `${containerHeight - 24}px` }}
       >
-        <div style={{ height: totalHeight }}>
+        <div className="absolute inset-0">
           {months.map((month, index) => (
             <button
               key={month}
               type="button"
+              onClick={() => onMonthSelect(index)}
               className={cn(
-                "w-full px-3 py-2 text-sm font-semibold text-center hover:bg-accent rounded-md transition-colors absolute",
+                "absolute w-full h-[40px] px-3 text-sm font-semibold text-center hover:bg-accent rounded-md transition-colors",
                 tempDate && format(tempDate, 'MMM') === month && "bg-[#1e1b4b] text-white"
               )}
-              onClick={() => onMonthSelect(index)}
               style={{
                 top: `${index * itemHeight}px`,
-                height: `${itemHeight}px`
               }}
             >
               {month}
