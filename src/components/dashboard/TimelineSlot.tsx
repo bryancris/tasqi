@@ -34,6 +34,10 @@ export function TimelineSlot({ time, tasks }: TimelineSlotProps) {
     task.date && isSameDay(parseISO(task.date), selectedDate)
   );
 
+  console.log('Selected date:', selectedDate);
+  console.log('All tasks:', tasks);
+  console.log('Filtered tasks:', filteredTasks);
+
   // Only render the date navigation for the first time slot
   if (time === "09:00") {
     return (
@@ -75,7 +79,6 @@ export function TimelineSlot({ time, tasks }: TimelineSlotProps) {
   return <TimeSlotContent time={time} tasks={filteredTasks} />;
 }
 
-// Extracted the original timeline slot content into a separate component
 function TimeSlotContent({ time, tasks }: TimelineSlotProps) {
   if (tasks.length === 0) {
     return (

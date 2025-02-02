@@ -41,10 +41,13 @@ export function DesktopTaskView({ tasks }: DesktopTaskViewProps) {
     task.status === 'unscheduled'
   );
 
-  // Get all scheduled tasks for the timeline, not just today's
+  // Get all scheduled tasks for the timeline
   const scheduledTasks = tasks.filter(task => 
     task.status === 'scheduled'
   );
+
+  console.log('All tasks:', tasks);
+  console.log('Scheduled tasks:', scheduledTasks);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -146,20 +149,13 @@ export function DesktopTaskView({ tasks }: DesktopTaskViewProps) {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {timeSlots.map((timeSlot) => {
-              // Pass all scheduled tasks to TimelineSlot, not just today's
-              const tasksInSlot = scheduledTasks.filter(task => 
-                task.start_time && 
-                task.start_time.startsWith(timeSlot.split(':')[0])
-              );
-              return (
-                <TimelineSlot 
-                  key={timeSlot} 
-                  time={timeSlot} 
-                  tasks={tasksInSlot} 
-                />
-              );
-            })}
+            {timeSlots.map((timeSlot) => (
+              <TimelineSlot 
+                key={timeSlot} 
+                time={timeSlot} 
+                tasks={scheduledTasks} 
+              />
+            ))}
           </div>
         </CardContent>
       </Card>
