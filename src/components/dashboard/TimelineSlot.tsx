@@ -2,7 +2,7 @@ import { Task } from "./TaskBoard";
 import { getPriorityColor } from "@/utils/taskColors";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { format } from "date-fns";
+import { format, isSameDay, parseISO } from "date-fns";
 import { useState } from "react";
 
 interface TimelineSlotProps {
@@ -28,6 +28,11 @@ export function TimelineSlot({ time, tasks }: TimelineSlotProps) {
       return newDate;
     });
   };
+
+  // Filter tasks for the selected date
+  const filteredTasks = tasks.filter(task => 
+    task.date && isSameDay(parseISO(task.date), selectedDate)
+  );
 
   // Only render the date navigation for the first time slot
   if (time === "09:00") {
@@ -62,12 +67,12 @@ export function TimelineSlot({ time, tasks }: TimelineSlotProps) {
           </Button>
         </div>
 
-        <TimeSlotContent time={time} tasks={tasks} />
+        <TimeSlotContent time={time} tasks={filteredTasks} />
       </div>
     );
   }
 
-  return <TimeSlotContent time={time} tasks={tasks} />;
+  return <TimeSlotContent time={time} tasks={filteredTasks} />;
 }
 
 // Extracted the original timeline slot content into a separate component
