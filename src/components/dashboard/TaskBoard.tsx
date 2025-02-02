@@ -26,6 +26,10 @@ export interface Task {
   reminder_enabled?: boolean;
 }
 
+interface TaskBoardProps {
+  selectedDate: Date;
+}
+
 const fetchTasks = async () => {
   const { data, error } = await supabase
     .from('tasks')
@@ -40,7 +44,7 @@ const fetchTasks = async () => {
   return data as Task[];
 };
 
-export function TaskBoard() {
+export function TaskBoard({ selectedDate }: TaskBoardProps) {
   const isMobile = useIsMobile();
   const { requestPermission } = useNotifications();
   
@@ -72,7 +76,7 @@ export function TaskBoard() {
       {isMobile ? (
         <MobileTaskView tasks={tasks} />
       ) : (
-        <DesktopTaskView tasks={tasks} />
+        <DesktopTaskView tasks={tasks} selectedDate={selectedDate} />
       )}
     </div>
   );

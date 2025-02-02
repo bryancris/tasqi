@@ -18,10 +18,14 @@ const Dashboard = () => {
     setView('calendar');
   };
 
+  const handleDateChange = (date: Date) => {
+    setSelectedDate(date);
+  };
+
   const renderContent = () => {
     switch (view) {
       case 'tasks':
-        return <TaskBoard />;
+        return <TaskBoard selectedDate={selectedDate} />;
       case 'calendar':
         return <Calendar initialDate={selectedDate} />;
       case 'yearly':
@@ -29,7 +33,7 @@ const Dashboard = () => {
       case 'weekly':
         return <WeeklyCalendar initialDate={selectedDate} />;
       default:
-        return <TaskBoard />;
+        return <TaskBoard selectedDate={selectedDate} />;
     }
   };
 
@@ -38,7 +42,7 @@ const Dashboard = () => {
       <div className="h-screen bg-white">
         <MobileHeader />
         <div className="pt-[72px] pb-[80px]">
-          <TaskBoard />
+          <TaskBoard selectedDate={selectedDate} />
         </div>
         <MobileFooter />
       </div>
@@ -46,7 +50,7 @@ const Dashboard = () => {
   }
 
   return (
-    <DashboardLayout onViewChange={setView}>
+    <DashboardLayout onViewChange={setView} selectedDate={selectedDate} onDateChange={handleDateChange}>
       {renderContent()}
     </DashboardLayout>
   );
