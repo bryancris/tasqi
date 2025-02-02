@@ -46,7 +46,7 @@ export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
     <Button
       size="icon"
       className="fixed bottom-4 right-4 h-12 w-12 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 z-[9999]"
-      onClick={() => !isControlled && handleOpenChange(true)}
+      onClick={() => handleOpenChange(true)}
     >
       <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
         <span className="text-blue-600 text-xl">AI</span>
@@ -56,7 +56,7 @@ export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
 
   if (isMobile) {
     return (
-      <>
+      <div className="relative">
         {renderChatButton()}
         {isDialogOpen && (
           <div className="fixed inset-0 bg-background z-[9999]" style={{ top: '72px', bottom: '80px' }}>
@@ -72,30 +72,32 @@ export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
             </div>
           </div>
         )}
-      </>
+      </div>
     );
   }
 
   return (
-    <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        {renderChatButton()}
-      </DialogTrigger>
-      <DialogContent 
-        hideCloseButton
-        className="p-0 fixed bottom-[4.5rem] right-4 mb-0 sm:max-w-[440px] rounded-xl z-[9999]"
-      >
-        <div className="flex flex-col h-[600px]">
-          <ChatHeader onClose={() => handleOpenChange(false)} />
-          <ChatMessages messages={messages} isLoading={isLoading} />
-          <ChatInput 
-            message={message}
-            onMessageChange={setMessage}
-            onSubmit={handleSubmit}
-            isLoading={isLoading}
-          />
-        </div>
-      </DialogContent>
-    </Dialog>
+    <div className="relative">
+      <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
+        <DialogTrigger asChild>
+          {renderChatButton()}
+        </DialogTrigger>
+        <DialogContent 
+          hideCloseButton
+          className="p-0 fixed bottom-[4.5rem] right-4 mb-0 sm:max-w-[440px] rounded-xl z-[9999]"
+        >
+          <div className="flex flex-col h-[600px]">
+            <ChatHeader onClose={() => handleOpenChange(false)} />
+            <ChatMessages messages={messages} isLoading={isLoading} />
+            <ChatInput 
+              message={message}
+              onMessageChange={setMessage}
+              onSubmit={handleSubmit}
+              isLoading={isLoading}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
