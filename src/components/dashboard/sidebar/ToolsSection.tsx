@@ -31,7 +31,7 @@ export function ToolsSection() {
       </Button>
       <Button 
         variant="ghost" 
-        className="w-full justify-start text-blue-600 bg-[#D1FAE5] hover:bg-[#A7F3D0]"
+        className="w-full justify-start text-blue-600 bg-[#E5DEFF] hover:bg-[#9b87f5] hover:text-white"
         onClick={() => setIsChatOpen(true)}
       >
         <MessageSquare className="mr-2 h-4 w-4" />
