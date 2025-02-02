@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarIcon } from "lucide-react";
@@ -22,6 +21,7 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
       <Popover>
         <PopoverTrigger asChild>
           <Button
+            type="button"
             variant="outline"
             className={cn(
               "w-full justify-start text-left font-normal",
@@ -32,7 +32,11 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
             {date ? format(selectedDate!, 'PPP') : <span>Pick a date</span>}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
+        <PopoverContent 
+          className="w-auto p-0" 
+          align="start"
+          sideOffset={4}
+        >
           <Calendar
             mode="single"
             selected={selectedDate}
@@ -41,6 +45,7 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
                 onDateChange(format(newDate, 'yyyy-MM-dd'));
               }
             }}
+            defaultMonth={selectedDate}
             initialFocus
           />
         </PopoverContent>
