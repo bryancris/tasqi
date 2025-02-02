@@ -11,8 +11,8 @@ export function useTaskReorder(tasks: Task[]) {
   const handleDragEnd = async (result: DropResult) => {
     const { destination, source } = result;
 
-    // If dropped outside the list
-    if (!destination) {
+    // If dropped outside the list or no change in position
+    if (!destination || destination.index === source.index) {
       return;
     }
 
@@ -22,21 +22,22 @@ export function useTaskReorder(tasks: Task[]) {
       const [movedTask] = reorderedTasks.splice(source.index, 1);
       reorderedTasks.splice(destination.index, 0, movedTask);
 
-      // Update positions for all tasks sequentially
+      // Update positions for all tasks
       const updatedTasks = reorderedTasks.map((task, index) => ({
         ...task,
-        position: index + 1, // Start positions from 1 to ensure proper ordering
+        position: index + 1, // Start positions from 1
       }));
 
       // Optimistically update the cache
       queryClient.setQueryData(['tasks'], updatedTasks);
 
-      // Update all task positions in the database
+      // Prepare positions array for database update
       const positions = updatedTasks.map(task => ({
         task_id: task.id,
         new_position: task.position
       }));
 
+      // Update database
       const { error } = await supabase.rpc('reorder_tasks', {
         task_positions: positions
       });
