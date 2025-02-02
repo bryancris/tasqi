@@ -14,6 +14,7 @@ interface ChatBubbleProps {
 }
 
 export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
+  const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
   const isMobile = useIsMobile();
   const { 
@@ -26,10 +27,18 @@ export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
   } = useChat();
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
     if (open) {
       fetchChatHistory();
     }
   }, [open]);
+
+  if (!mounted) {
+    return null;
+  }
 
   // Handle both controlled and uncontrolled states
   const isControlled = isOpen !== undefined;
