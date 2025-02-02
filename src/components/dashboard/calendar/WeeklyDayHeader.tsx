@@ -17,11 +17,11 @@ export function WeeklyDayHeader({ weekDays, visitsPerDay, showFullWeek, onToggle
       "w-full"
     )}>
       {/* Empty cell for time column with toggle button */}
-      <div className="p-4 border-r bg-gray-50 relative">
+      <div className="p-4 border-r bg-gray-50 flex items-center justify-center">
         <Button
           variant="outline"
           onClick={onToggleView}
-          className="absolute top-2 left-2 text-sm"
+          className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white border-none text-sm"
           size="sm"
         >
           {showFullWeek ? '5 Day' : '7 Day'}
