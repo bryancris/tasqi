@@ -46,16 +46,7 @@ export function ChatBubble({ isOpen, onOpenChange, variant = 'floating' }: ChatB
 
   const renderChatButton = () => {
     if (variant === 'sidebar') {
-      return (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-muted-foreground"
-          onClick={() => handleOpenChange(true)}
-        >
-          <MessageSquare className="h-5 w-5" />
-        </Button>
-      );
+      return null; // Don't render a button in sidebar mode
     }
 
     return (
@@ -114,9 +105,6 @@ export function ChatBubble({ isOpen, onOpenChange, variant = 'floating' }: ChatB
   if (variant === 'sidebar') {
     return (
       <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
-        <DialogTrigger asChild>
-          {renderChatButton()}
-        </DialogTrigger>
         {dialogContent}
       </Dialog>
     );
