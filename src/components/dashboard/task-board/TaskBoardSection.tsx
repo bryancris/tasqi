@@ -3,6 +3,7 @@ import { TaskCard } from "../TaskCard";
 import { Task } from "../TaskBoard";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { useTaskReorder } from "@/hooks/use-task-reorder";
+import { startOfDay, isAfter } from "date-fns";
 
 interface TaskBoardSectionProps {
   tasks: Task[];
@@ -13,7 +14,14 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
 
   // Separate active and completed tasks
   const activeTasks = tasks.filter(task => task.status !== 'completed');
-  const completedTasks = tasks.filter(task => task.status === 'completed');
+  
+  // Filter completed tasks to only show those completed today
+  const todayStart = startOfDay(new Date());
+  const completedTasks = tasks.filter(task => 
+    task.status === 'completed' && 
+    task.completed_at && 
+    isAfter(new Date(task.completed_at), todayStart)
+  );
 
   return (
     <Card>
@@ -48,11 +56,11 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
                   </Draggable>
                 ))}
 
-                {/* Completed Tasks Section */}
+                {/* Completed Tasks Section - Only show if there are completed tasks from today */}
                 {completedTasks.length > 0 && (
                   <>
                     <h3 className="text-lg font-semibold text-gray-700 mt-8 mb-4">
-                      Completed Tasks
+                      Today's Completed Tasks
                     </h3>
                     {completedTasks.map((task, index) => (
                       <Draggable 
