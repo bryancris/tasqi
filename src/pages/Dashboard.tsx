@@ -19,13 +19,14 @@ const Dashboard = () => {
   };
 
   const handleDateChange = (date: Date) => {
+    console.log('Date changed in Dashboard:', date);
     setSelectedDate(date);
   };
 
   const renderContent = () => {
     switch (view) {
       case 'tasks':
-        return <TaskBoard selectedDate={selectedDate} />;
+        return <TaskBoard selectedDate={selectedDate} onDateChange={handleDateChange} />;
       case 'calendar':
         return <Calendar initialDate={selectedDate} />;
       case 'yearly':
@@ -33,7 +34,7 @@ const Dashboard = () => {
       case 'weekly':
         return <WeeklyCalendar initialDate={selectedDate} />;
       default:
-        return <TaskBoard selectedDate={selectedDate} />;
+        return <TaskBoard selectedDate={selectedDate} onDateChange={handleDateChange} />;
     }
   };
 
@@ -42,7 +43,7 @@ const Dashboard = () => {
       <div className="h-screen bg-white">
         <MobileHeader />
         <div className="pt-[72px] pb-[80px]">
-          <TaskBoard selectedDate={selectedDate} />
+          <TaskBoard selectedDate={selectedDate} onDateChange={handleDateChange} />
         </div>
         <MobileFooter />
       </div>
