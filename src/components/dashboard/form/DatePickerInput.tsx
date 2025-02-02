@@ -14,8 +14,8 @@ interface DatePickerInputProps {
 
 export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePickerInputProps) {
   const [open, setOpen] = useState(false);
-  const [tempDate, setTempDate] = useState<Date | undefined>(
-    date ? parse(date, 'yyyy-MM-dd', new Date()) : undefined
+  const [tempDate, setTempDate] = useState<Date>(
+    date ? parse(date, 'yyyy-MM-dd', new Date()) : new Date()
   );
   
   const selectedDate = date ? parse(date, 'yyyy-MM-dd', new Date()) : undefined;
@@ -156,7 +156,7 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
                 variant="default"
                 className="flex-1 bg-[#1e1b4b] hover:bg-[#1e1b4b]/90"
                 onClick={() => {
-                  setTempDate(selectedDate);
+                  setTempDate(selectedDate || new Date());
                   setOpen(false);
                 }}
               >
