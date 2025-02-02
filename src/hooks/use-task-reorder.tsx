@@ -23,7 +23,7 @@ export function useTaskReorder(tasks: Task[]) {
       const [removed] = reorderedTasks.splice(source.index, 1);
       reorderedTasks.splice(destination.index, 0, removed);
 
-      // Update positions to be sequential
+      // Update positions to be sequential starting from 0
       const updatedTasks = reorderedTasks.map((task, index) => ({
         ...task,
         position: index
@@ -32,7 +32,7 @@ export function useTaskReorder(tasks: Task[]) {
       // Optimistically update the cache
       queryClient.setQueryData(['tasks'], updatedTasks);
 
-      // Prepare the positions update
+      // Prepare the positions update for ALL tasks to ensure consistency
       const positions = updatedTasks.map(task => ({
         task_id: task.id,
         new_position: task.position
