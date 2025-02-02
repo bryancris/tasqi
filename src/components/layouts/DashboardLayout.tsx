@@ -4,7 +4,6 @@ import { ChatBubble } from "@/components/chat/ChatBubble";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { HeaderTime } from "@/components/dashboard/header/HeaderTime";
 import { HeaderSearch } from "@/components/dashboard/header/HeaderSearch";
-import { HeaderNotifications } from "@/components/dashboard/header/HeaderNotifications";
 import { HeaderUserMenu } from "@/components/dashboard/header/HeaderUserMenu";
 
 interface DashboardLayoutProps {
@@ -27,7 +26,6 @@ export function DashboardLayout({ children, onViewChange }: DashboardLayoutProps
               <HeaderSearch />
             </div>
             <div className="flex items-center gap-4">
-              <HeaderNotifications />
               <HeaderUserMenu />
             </div>
           </div>
