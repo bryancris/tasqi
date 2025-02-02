@@ -23,7 +23,7 @@ export const getPriorityColor = (priority: TaskPriority | undefined) => {
     case 'high':
       return 'bg-red-500';
     case 'medium':
-      return 'bg-orange-400';
+      return 'bg-orange-500';
     case 'low':
       return 'bg-green-500';
     default:
