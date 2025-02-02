@@ -3,12 +3,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Calendar } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { cn } from "@/lib/utils";
-import { format, parse } from "date-fns";
 import { TaskPriority } from "./TaskBoard";
+import { DatePickerInput } from "./form/DatePickerInput";
 
 interface TaskFormProps {
   title: string;
@@ -53,8 +49,6 @@ export function TaskForm({
   onReminderEnabledChange,
   onSubmit,
 }: TaskFormProps) {
-  const selectedDate = date ? parse(date, 'yyyy-MM-dd', new Date()) : undefined;
-
   return (
     <form
       onSubmit={(e) => {
@@ -95,49 +89,10 @@ export function TaskForm({
 
       {isScheduled && (
         <div className="space-y-4">
-          <div className="space-y-2">
-            <Label>Date</Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <div className="flex">
-                  <Input
-                    value={date}
-                    onChange={(e) => onDateChange(e.target.value)}
-                    placeholder="YYYY-MM-DD"
-                    className="rounded-r-none"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className={cn(
-                      "rounded-l-none border-l-0",
-                      !date && "text-muted-foreground"
-                    )}
-                  >
-                    <Calendar className="h-4 w-4" />
-                  </Button>
-                </div>
-              </PopoverTrigger>
-              <PopoverContent 
-                className="w-auto p-0" 
-                align="start" 
-                side="bottom"
-                sideOffset={5}
-              >
-                <CalendarComponent
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={(newDate) => {
-                    if (newDate) {
-                      onDateChange(format(newDate, 'yyyy-MM-dd'));
-                    }
-                  }}
-                  initialFocus
-                  className="rounded-md border"
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
+          <DatePickerInput
+            date={date}
+            onDateChange={onDateChange}
+          />
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
