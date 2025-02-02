@@ -22,10 +22,10 @@ export function useTaskReorder(tasks: Task[]) {
       const [movedTask] = reorderedTasks.splice(source.index, 1);
       reorderedTasks.splice(destination.index, 0, movedTask);
 
-      // Update positions for all tasks
+      // Update positions for all tasks, ensuring no gaps and starting from 1
       const updatedTasks = reorderedTasks.map((task, index) => ({
         ...task,
-        position: index + 1, // Start positions from 1
+        position: index + 1,
       }));
 
       // Optimistically update the cache

@@ -22,9 +22,8 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
   const displayTasks = tasks
     .filter(task => task.status !== 'completed' || shouldShowCompletedTask(task))
     .sort((a, b) => {
-      // Ensure both positions exist and are numbers
-      const posA = typeof a.position === 'number' ? a.position : Number.MAX_SAFE_INTEGER;
-      const posB = typeof b.position === 'number' ? b.position : Number.MAX_SAFE_INTEGER;
+      const posA = a.position ?? Number.MAX_SAFE_INTEGER;
+      const posB = b.position ?? Number.MAX_SAFE_INTEGER;
       return posA - posB;
     });
 
