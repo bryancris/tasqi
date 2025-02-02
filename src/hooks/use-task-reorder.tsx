@@ -44,10 +44,6 @@ export const useTaskReorder = (tasks: Task[]) => {
       // Refetch to ensure we have the latest data
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
 
-      toast({
-        title: "Tasks reordered",
-        description: "Task order has been updated",
-      });
     } catch (error) {
       console.error('Error reordering tasks:', error);
       toast({
