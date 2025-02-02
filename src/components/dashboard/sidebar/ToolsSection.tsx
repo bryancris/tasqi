@@ -1,8 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { PenLine, BarChart2, Zap, MessageSquare } from "lucide-react";
 import { ChatBubble } from "@/components/chat/ChatBubble";
+import { useState } from "react";
 
 export function ToolsSection() {
+  const [isChatOpen, setIsChatOpen] = useState(false);
+
   return (
     <div className="space-y-2">
       <Button 
@@ -26,19 +29,21 @@ export function ToolsSection() {
         <Zap className="mr-2 h-4 w-4" />
         Habit Tracking
       </Button>
-      <Button 
-        variant="ghost" 
-        className="w-full justify-start text-blue-600 hover:bg-[#E5E7EB]"
-        onClick={() => {
-          const chatBubble = document.querySelector('[data-testid="chat-bubble"]');
-          if (chatBubble) {
-            (chatBubble as HTMLElement).click();
-          }
-        }}
-      >
-        <MessageSquare className="mr-2 h-4 w-4" />
-        Tasqi AI Assistant
-      </Button>
+      <div>
+        <Button 
+          variant="ghost" 
+          className="w-full justify-start text-blue-600 hover:bg-[#E5E7EB]"
+          onClick={() => setIsChatOpen(true)}
+        >
+          <MessageSquare className="mr-2 h-4 w-4" />
+          Tasqi AI Assistant
+        </Button>
+        <ChatBubble 
+          variant="sidebar" 
+          isOpen={isChatOpen} 
+          onOpenChange={setIsChatOpen}
+        />
+      </div>
     </div>
   );
 }
