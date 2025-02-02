@@ -75,7 +75,7 @@ export function AddTaskDrawer() {
   return (
     <Drawer>
       <DrawerTrigger asChild>
-        <Button className="w-full bg-[#22C55E] hover:bg-[#16A34A] text-white">
+        <Button className="w-full bg-[#22C55E] hover:bg-[#16A34A] text-white text-base font-semibold py-6">
           + Add a task
         </Button>
       </DrawerTrigger>
