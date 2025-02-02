@@ -48,7 +48,10 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
                         ref={provided.innerRef}
                         {...provided.draggableProps}
                         {...provided.dragHandleProps}
-                        className={snapshot.isDragging ? "opacity-50" : ""}
+                        style={{
+                          ...provided.draggableProps.style,
+                          opacity: snapshot.isDragging ? 0.5 : 1
+                        }}
                       >
                         <TaskCard task={task} index={index} />
                       </div>
