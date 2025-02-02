@@ -10,6 +10,7 @@ import { MobileTaskContent } from "./MobileTaskContent";
 import { GripVertical } from "lucide-react";
 import { useState } from "react";
 import { EditTaskDrawer } from "./EditTaskDrawer";
+import { format } from "date-fns";
 
 interface TaskCardProps {
   task: Task;
@@ -62,6 +63,13 @@ export function TaskCard({ task, isMobile = false, index }: TaskCardProps) {
     return '';
   };
 
+  const getCompletionDate = (task: Task) => {
+    if (task.completed_at) {
+      return format(new Date(task.completed_at), 'MMM d, yyyy');
+    }
+    return '';
+  };
+
   if (isMobile) {
     return (
       <>
@@ -82,16 +90,23 @@ export function TaskCard({ task, isMobile = false, index }: TaskCardProps) {
               status={task.status}
             />
           </div>
-          <TaskStatusIndicator
-            status={task.status}
-            time={getTimeDisplay(task)}
-            onClick={(e) => {
-              e.stopPropagation();
-              if (task.status !== 'completed') {
-                handleComplete();
-              }
-            }}
-          />
+          <div className="flex flex-col items-end">
+            {task.status === 'completed' && task.completed_at && (
+              <span className="text-xs text-white/80">
+                Completed {getCompletionDate(task)}
+              </span>
+            )}
+            <TaskStatusIndicator
+              status={task.status}
+              time={getTimeDisplay(task)}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (task.status !== 'completed') {
+                  handleComplete();
+                }
+              }}
+            />
+          </div>
         </div>
         <EditTaskDrawer 
           task={task} 
@@ -122,9 +137,16 @@ export function TaskCard({ task, isMobile = false, index }: TaskCardProps) {
                 <span className="text-sm">{getTimeDisplay(task)}</span>
               )}
             </div>
-            <p className={cn("text-sm mt-1 capitalize", task.status === 'completed' && "line-through")}>
-              Status: {task.status}
-            </p>
+            <div className="flex justify-between items-center">
+              <p className={cn("text-sm mt-1 capitalize", task.status === 'completed' && "line-through")}>
+                Status: {task.status}
+              </p>
+              {task.status === 'completed' && task.completed_at && (
+                <span className="text-sm text-white/80">
+                  Completed {getCompletionDate(task)}
+                </span>
+              )}
+            </div>
           </div>
         </div>
         {task.status !== 'completed' && (
