@@ -5,9 +5,9 @@ interface CreateTaskParams {
   title: string;
   description: string;
   isScheduled: boolean;
-  date: string;
-  startTime: string;
-  endTime: string;
+  date: string | null;
+  startTime: string | null;
+  endTime: string | null;
   priority: TaskPriority;
   reminderEnabled: boolean;
 }
@@ -36,10 +36,10 @@ export const createTask = async ({
   const { data, error } = await supabase.from("tasks").insert({
     title,
     description,
-    date: isScheduled ? date : null,
+    date: date || null,
     status: isScheduled ? "scheduled" : "unscheduled",
-    start_time: isScheduled && startTime ? startTime : null,
-    end_time: isScheduled && endTime ? endTime : null,
+    start_time: startTime || null,
+    end_time: endTime || null,
     priority,
     position: nextPosition,
     reminder_enabled: reminderEnabled,

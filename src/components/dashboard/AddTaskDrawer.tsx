@@ -32,16 +32,19 @@ export function AddTaskDrawer() {
     try {
       setIsLoading(true);
       
-      await createTask({
+      // Only include date and times if the task is scheduled and has values
+      const taskData = {
         title,
         description,
         isScheduled,
-        date,
-        startTime,
-        endTime,
+        date: isScheduled && date ? date : null,
+        startTime: isScheduled && startTime ? startTime : null,
+        endTime: isScheduled && endTime ? endTime : null,
         priority,
         reminderEnabled,
-      });
+      };
+
+      await createTask(taskData);
 
       toast({
         title: "Success",
