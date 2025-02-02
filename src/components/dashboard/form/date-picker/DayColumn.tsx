@@ -31,7 +31,6 @@ export function DayColumn({ tempDate, onDaySelect }: DayColumnProps) {
   }, [selectedDay]);
 
   const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollTop += e.deltaY;
     }
@@ -40,34 +39,29 @@ export function DayColumn({ tempDate, onDaySelect }: DayColumnProps) {
   // Calculate visible range (5 items)
   const itemHeight = 40; // Height of each button
   const visibleCount = 5;
-  const totalHeight = days.length * itemHeight;
   const containerHeight = visibleCount * itemHeight;
 
   return (
-    <div className="flex flex-col space-y-2 overflow-hidden" style={{ height: containerHeight }}>
-      <div className="text-sm font-medium text-center sticky top-0 bg-background z-10">Day</div>
+    <div className="flex flex-col space-y-2" style={{ height: containerHeight }}>
+      <div className="text-sm font-medium text-center bg-background z-10">Day</div>
       <div 
         ref={scrollContainerRef}
         onWheel={handleWheel}
-        className="space-y-1 px-1 overflow-y-auto scrollbar-hide"
-        style={{ 
-          height: containerHeight - 24, // Subtract header height
-          scrollBehavior: 'smooth'
-        }}
+        className="relative flex-1 overflow-y-auto scrollbar-hide"
+        style={{ height: `${containerHeight - 24}px` }}
       >
-        <div style={{ height: totalHeight }}>
+        <div className="absolute inset-0">
           {days.map((day) => (
             <button
               key={day}
               type="button"
+              onClick={() => onDaySelect(parseInt(day))}
               className={cn(
-                "w-full px-3 py-2 text-sm font-semibold text-center hover:bg-accent rounded-md transition-colors absolute",
+                "absolute w-full h-[40px] px-3 text-sm font-semibold text-center hover:bg-accent rounded-md transition-colors",
                 tempDate && format(tempDate, 'dd') === day && "bg-[#1e1b4b] text-white"
               )}
-              onClick={() => onDaySelect(parseInt(day))}
               style={{
-                top: `${parseInt(day) - 1}px * ${itemHeight}`,
-                height: `${itemHeight}px`
+                top: `${(parseInt(day) - 1) * itemHeight}px`,
               }}
             >
               {day}

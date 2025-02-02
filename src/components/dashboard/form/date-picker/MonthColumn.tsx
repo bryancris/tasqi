@@ -30,7 +30,6 @@ export function MonthColumn({ currentDate, tempDate, onMonthSelect }: MonthColum
   }, [selectedMonthIndex]);
 
   const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollTop += e.deltaY;
     }
