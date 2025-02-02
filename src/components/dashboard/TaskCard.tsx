@@ -26,7 +26,11 @@ export function TaskCard({ task, isMobile = false, index }: TaskCardProps) {
     try {
       const { error } = await supabase
         .from('tasks')
-        .update({ status: 'completed', updated_at: new Date().toISOString() })
+        .update({ 
+          status: 'completed', 
+          updated_at: new Date().toISOString(),
+          completed_at: new Date().toISOString()
+        })
         .eq('id', task.id);
 
       if (error) throw error;

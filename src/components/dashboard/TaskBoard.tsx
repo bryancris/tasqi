@@ -18,6 +18,7 @@ export interface Task {
   user_id: string;
   created_at?: string;
   updated_at?: string;
+  completed_at?: string;
   position: number;
   reminder_enabled?: boolean;
 }
