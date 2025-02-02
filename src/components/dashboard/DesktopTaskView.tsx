@@ -4,13 +4,16 @@ import { TimelineSlot } from "./TimelineSlot";
 import { Task } from "./TaskBoard";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { useTaskReorder } from "@/hooks/use-task-reorder";
-import { isToday, parseISO } from "date-fns";
+import { isToday, parseISO, startOfDay } from "date-fns";
+import { useState } from "react";
 
 interface DesktopTaskViewProps {
   tasks: Task[];
 }
 
 export function DesktopTaskView({ tasks }: DesktopTaskViewProps) {
+  const [selectedDate, setSelectedDate] = useState(startOfDay(new Date()));
+  
   // For now, hardcode the range. Later this will come from user settings
   const startHour = 9;
   const endHour = 20;
@@ -153,7 +156,9 @@ export function DesktopTaskView({ tasks }: DesktopTaskViewProps) {
               <TimelineSlot 
                 key={timeSlot} 
                 time={timeSlot} 
-                tasks={scheduledTasks} 
+                tasks={scheduledTasks}
+                selectedDate={selectedDate}
+                onDateChange={setSelectedDate}
               />
             ))}
           </div>

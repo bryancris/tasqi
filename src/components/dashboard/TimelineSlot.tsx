@@ -3,30 +3,25 @@ import { getPriorityColor } from "@/utils/taskColors";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { format, isSameDay, parseISO, startOfDay } from "date-fns";
-import { useState } from "react";
 
 interface TimelineSlotProps {
   time: string;
   tasks: Task[];
+  selectedDate: Date;
+  onDateChange: (date: Date) => void;
 }
 
-export function TimelineSlot({ time, tasks }: TimelineSlotProps) {
-  const [selectedDate, setSelectedDate] = useState(startOfDay(new Date()));
-
+export function TimelineSlot({ time, tasks, selectedDate, onDateChange }: TimelineSlotProps) {
   const handlePreviousDay = () => {
-    setSelectedDate(prev => {
-      const newDate = new Date(prev);
-      newDate.setDate(prev.getDate() - 1);
-      return startOfDay(newDate);
-    });
+    const newDate = new Date(selectedDate);
+    newDate.setDate(selectedDate.getDate() - 1);
+    onDateChange(startOfDay(newDate));
   };
 
   const handleNextDay = () => {
-    setSelectedDate(prev => {
-      const newDate = new Date(prev);
-      newDate.setDate(prev.getDate() + 1);
-      return startOfDay(newDate);
-    });
+    const newDate = new Date(selectedDate);
+    newDate.setDate(selectedDate.getDate() + 1);
+    onDateChange(startOfDay(newDate));
   };
 
   // Filter tasks for the selected date AND time slot
@@ -84,7 +79,7 @@ export function TimelineSlot({ time, tasks }: TimelineSlotProps) {
   return <TimeSlotContent time={time} tasks={filteredTasks} />;
 }
 
-function TimeSlotContent({ time, tasks }: TimelineSlotProps) {
+function TimeSlotContent({ time, tasks }: { time: string; tasks: Task[] }) {
   if (tasks.length === 0) {
     return (
       <div className="flex items-start gap-4">
