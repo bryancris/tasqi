@@ -12,7 +12,7 @@ interface WeeklyCalendarGridProps {
 
 export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks }: WeeklyCalendarGridProps) {
   return (
-    <div className="divide-y divide-gray-200">
+    <div className="divide-y divide-gray-300 border-b border-gray-300">
       {timeSlots.map((time, timeIndex) => (
         <div 
           key={timeIndex} 
@@ -22,7 +22,7 @@ export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks }: Week
             "w-full"
           )}
         >
-          <div className="p-4 border-r border-gray-200 text-sm font-medium text-gray-600 bg-gray-50">
+          <div className="p-4 border-r border-gray-300 text-sm font-medium text-gray-600 bg-gray-50">
             {time}
           </div>
           
@@ -37,7 +37,7 @@ export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks }: Week
                   ref={provided.innerRef}
                   {...provided.droppableProps}
                   className={cn(
-                    "p-2 border-r border-gray-200 last:border-r-0 min-h-[80px] relative",
+                    "p-2 border-r border-gray-300 last:border-r-0 min-h-[80px] relative",
                     "hover:bg-gray-50/80 transition-colors",
                     timeIndex % 2 === 0 ? "bg-white" : "bg-gray-50/30"
                   )}
