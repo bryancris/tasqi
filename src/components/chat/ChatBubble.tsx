@@ -1,13 +1,9 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { ChatInput } from "./ChatInput";
-import { ChatHeader } from "./ChatHeader";
-import { MobileChatHeader } from "./MobileChatHeader";
-import { ChatMessages } from "./ChatMessages";
 import { useChat } from "@/hooks/use-chat";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { MessageSquare } from "lucide-react";
+import { ChatDialog } from "./components/ChatDialog";
+import { ChatButton } from "./components/ChatButton";
+import { MobileChatView } from "./components/MobileChatView";
 
 interface ChatBubbleProps {
   isOpen?: boolean;
@@ -44,80 +40,50 @@ export function ChatBubble({ isOpen, onOpenChange, variant = 'floating' }: ChatB
     onOpenChange?.(newOpen);
   };
 
-  const renderChatButton = () => {
-    if (variant === 'sidebar') {
-      return null; // Don't render a button in sidebar mode
-    }
-
-    return (
-      <Button
-        size="icon"
-        className="h-12 w-12 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700"
-        onClick={() => handleOpenChange(true)}
-      >
-        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-          <span className="text-blue-600 text-xl">AI</span>
-        </div>
-      </Button>
-    );
-  };
-
   if (isMobile) {
     return (
       <div className="fixed bottom-4 right-4 z-50">
-        {renderChatButton()}
+        {variant === 'floating' && <ChatButton onClick={() => handleOpenChange(true)} />}
         {isDialogOpen && (
-          <div className="fixed inset-0 bg-background" style={{ top: '72px', bottom: '80px' }}>
-            <div className="flex flex-col h-full">
-              <MobileChatHeader onClose={() => handleOpenChange(false)} />
-              <ChatMessages messages={messages} isLoading={isLoading} />
-              <ChatInput 
-                message={message}
-                onMessageChange={setMessage}
-                onSubmit={handleSubmit}
-                isLoading={isLoading}
-              />
-            </div>
-          </div>
+          <MobileChatView
+            onClose={() => handleOpenChange(false)}
+            message={message}
+            messages={messages}
+            isLoading={isLoading}
+            onMessageChange={setMessage}
+            onSubmit={handleSubmit}
+          />
         )}
       </div>
     );
   }
 
-  const dialogContent = (
-    <DialogContent 
-      hideCloseButton
-      className="p-0 fixed bottom-20 right-4 mb-0 sm:max-w-[440px] rounded-xl"
-    >
-      <div className="flex flex-col h-[600px]">
-        <ChatHeader onClose={() => handleOpenChange(false)} />
-        <ChatMessages messages={messages} isLoading={isLoading} />
-        <ChatInput 
-          message={message}
-          onMessageChange={setMessage}
-          onSubmit={handleSubmit}
-          isLoading={isLoading}
-        />
-      </div>
-    </DialogContent>
-  );
-
   if (variant === 'sidebar') {
     return (
-      <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
-        {dialogContent}
-      </Dialog>
+      <ChatDialog
+        isOpen={isDialogOpen}
+        onOpenChange={handleOpenChange}
+        message={message}
+        messages={messages}
+        isLoading={isLoading}
+        onMessageChange={setMessage}
+        onSubmit={handleSubmit}
+      />
     );
   }
 
   return (
     <div className="fixed bottom-4 right-4 z-50">
-      <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
-        <DialogTrigger asChild>
-          {renderChatButton()}
-        </DialogTrigger>
-        {dialogContent}
-      </Dialog>
+      <ChatDialog
+        isOpen={isDialogOpen}
+        onOpenChange={handleOpenChange}
+        message={message}
+        messages={messages}
+        isLoading={isLoading}
+        onMessageChange={setMessage}
+        onSubmit={handleSubmit}
+      />
+      <ChatButton onClick={() => handleOpenChange(true)} />
     </div>
   );
 }
