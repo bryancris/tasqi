@@ -11,6 +11,10 @@ interface TaskBoardSectionProps {
 export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
   const { handleDragEnd } = useTaskReorder(tasks);
 
+  // Separate active and completed tasks
+  const activeTasks = tasks.filter(task => task.status !== 'completed');
+  const completedTasks = tasks.filter(task => task.status === 'completed');
+
   return (
     <Card>
       <CardHeader>
@@ -25,7 +29,8 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
                 ref={provided.innerRef}
                 className="space-y-4"
               >
-                {tasks.map((task, index) => (
+                {/* Active Tasks */}
+                {activeTasks.map((task, index) => (
                   <Draggable 
                     key={task.id} 
                     draggableId={task.id.toString()} 
@@ -42,6 +47,32 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
                     )}
                   </Draggable>
                 ))}
+
+                {/* Completed Tasks Section */}
+                {completedTasks.length > 0 && (
+                  <>
+                    <h3 className="text-lg font-semibold text-gray-700 mt-8 mb-4">
+                      Completed Tasks
+                    </h3>
+                    {completedTasks.map((task, index) => (
+                      <Draggable 
+                        key={task.id} 
+                        draggableId={task.id.toString()} 
+                        index={activeTasks.length + index}
+                      >
+                        {(provided) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                          >
+                            <TaskCard task={task} index={activeTasks.length + index} />
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                  </>
+                )}
                 {provided.placeholder}
               </div>
             )}
