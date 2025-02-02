@@ -8,8 +8,10 @@ interface YearColumnProps {
 }
 
 export function YearColumn({ currentDate, tempDate, onYearSelect }: YearColumnProps) {
-  const years = Array.from({ length: 10 }, (_, i) => 
-    String(currentDate.getFullYear() - 5 + i)
+  const selectedYear = tempDate.getFullYear();
+  const years = Array.from(
+    { length: 5 }, 
+    (_, i) => String(selectedYear - 2 + i)
   );
 
   return (

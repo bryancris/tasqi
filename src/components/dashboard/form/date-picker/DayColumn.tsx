@@ -7,7 +7,11 @@ interface DayColumnProps {
 }
 
 export function DayColumn({ tempDate, onDaySelect }: DayColumnProps) {
-  const days = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'));
+  const selectedDay = parseInt(format(tempDate, 'dd'));
+  const days = Array.from(
+    { length: 5 }, 
+    (_, i) => String(Math.max(1, Math.min(31, selectedDay - 2 + i))).padStart(2, '0')
+  );
 
   return (
     <div className="flex flex-col space-y-2 overflow-hidden">
