@@ -4,6 +4,8 @@ import { DesktopTaskView } from "./DesktopTaskView";
 import { MobileTaskView } from "./MobileTaskView";
 import { useIsMobile } from "@/hooks/use-mobile";
 
+export type TaskPriority = 'low' | 'medium' | 'high';
+
 export interface Task {
   id: number;
   title: string;
@@ -12,11 +14,12 @@ export interface Task {
   status: 'unscheduled' | 'scheduled' | 'completed';
   start_time?: string;
   end_time?: string;
-  priority?: 'low' | 'medium' | 'high';
+  priority?: TaskPriority;
   user_id: string;
   created_at?: string;
   updated_at?: string;
   position: number;
+  reminder_enabled?: boolean;
 }
 
 interface TaskBoardProps {
@@ -42,7 +45,7 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
   });
 
   if (isMobile) {
-    return <MobileTaskView tasks={tasks} selectedDate={selectedDate} />;
+    return <MobileTaskView tasks={tasks} selectedDate={selectedDate} onDateChange={onDateChange} />;
   }
 
   return <DesktopTaskView tasks={tasks} selectedDate={selectedDate} onDateChange={onDateChange} />;
