@@ -22,8 +22,7 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
     .map(task => ({
       ...task,
       position: task.position ?? 0
-    }))
-    .sort((a, b) => a.position - b.position);
+    }));
 
   return (
     <Card>
