@@ -63,12 +63,12 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
             e.preventDefault();
           }}
         >
-          <div className="p-4" onClick={(e) => e.stopPropagation()}>
+          <div className="p-4">
             <div className="grid grid-cols-3 gap-4 h-[300px] mb-4">
               {/* Months Column */}
-              <div className="flex flex-col space-y-2 overflow-y-auto">
+              <div className="flex flex-col space-y-2 overflow-hidden">
                 <div className="text-sm font-medium text-center sticky top-0 bg-background z-10 py-1">Month</div>
-                <div className="space-y-1 px-1">
+                <div className="space-y-1 px-1 overflow-y-auto">
                   {months.map((month) => (
                     <button
                       key={month}
@@ -77,8 +77,7 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
                         "w-full px-3 py-2 text-sm text-center hover:bg-accent rounded-md transition-colors",
                         tempDate && format(tempDate, 'MMM') === month && "bg-[#1e1b4b] text-white"
                       )}
-                      onClick={(e) => {
-                        e.preventDefault();
+                      onClick={() => {
                         const newDate = tempDate || new Date();
                         const monthIndex = months.indexOf(month);
                         const targetDate = addMonths(new Date(currentDate.getFullYear(), currentDate.getMonth() - 2), monthIndex);
@@ -93,9 +92,9 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
               </div>
 
               {/* Days Column */}
-              <div className="flex flex-col space-y-2 overflow-y-auto">
+              <div className="flex flex-col space-y-2 overflow-hidden">
                 <div className="text-sm font-medium text-center sticky top-0 bg-background z-10 py-1">Day</div>
-                <div className="space-y-1 px-1">
+                <div className="space-y-1 px-1 overflow-y-auto">
                   {days.map((day) => (
                     <button
                       key={day}
@@ -104,8 +103,7 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
                         "w-full px-3 py-2 text-sm text-center hover:bg-accent rounded-md transition-colors",
                         tempDate && format(tempDate, 'dd') === day && "bg-[#1e1b4b] text-white"
                       )}
-                      onClick={(e) => {
-                        e.preventDefault();
+                      onClick={() => {
                         const newDate = tempDate || new Date();
                         newDate.setDate(parseInt(day));
                         setTempDate(new Date(newDate));
@@ -118,9 +116,9 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
               </div>
 
               {/* Years Column */}
-              <div className="flex flex-col space-y-2 overflow-y-auto">
+              <div className="flex flex-col space-y-2 overflow-hidden">
                 <div className="text-sm font-medium text-center sticky top-0 bg-background z-10 py-1">Year</div>
-                <div className="space-y-1 px-1">
+                <div className="space-y-1 px-1 overflow-y-auto">
                   {years.map((year) => (
                     <button
                       key={year}
@@ -129,8 +127,7 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
                         "w-full px-3 py-2 text-sm text-center hover:bg-accent rounded-md transition-colors",
                         tempDate && format(tempDate, 'yyyy') === year && "bg-[#1e1b4b] text-white"
                       )}
-                      onClick={(e) => {
-                        e.preventDefault();
+                      onClick={() => {
                         const newDate = tempDate || new Date();
                         newDate.setFullYear(parseInt(year));
                         setTempDate(new Date(newDate));
@@ -148,8 +145,7 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
                 type="button"
                 variant="default"
                 className="flex-1 bg-[#1e1b4b] hover:bg-[#1e1b4b]/90"
-                onClick={(e) => {
-                  e.preventDefault();
+                onClick={() => {
                   handleSetDate();
                 }}
               >
@@ -159,8 +155,7 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
                 type="button"
                 variant="default"
                 className="flex-1 bg-[#1e1b4b] hover:bg-[#1e1b4b]/90"
-                onClick={(e) => {
-                  e.preventDefault();
+                onClick={() => {
                   setTempDate(selectedDate);
                   setOpen(false);
                 }}
