@@ -97,15 +97,15 @@ export function TaskForm({
         <div className="space-y-4">
           <div className="space-y-2">
             <Label>Date</Label>
-            <div className="flex">
-              <Input
-                value={date}
-                onChange={(e) => onDateChange(e.target.value)}
-                placeholder="YYYY-MM-DD"
-                className="rounded-r-none"
-              />
-              <Popover>
-                <PopoverTrigger asChild>
+            <Popover>
+              <PopoverTrigger asChild>
+                <div className="flex">
+                  <Input
+                    value={date}
+                    onChange={(e) => onDateChange(e.target.value)}
+                    placeholder="YYYY-MM-DD"
+                    className="rounded-r-none"
+                  />
                   <Button
                     type="button"
                     variant="outline"
@@ -116,21 +116,27 @@ export function TaskForm({
                   >
                     <Calendar className="h-4 w-4" />
                   </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start" side="bottom">
-                  <CalendarComponent
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={(newDate) => {
-                      if (newDate) {
-                        onDateChange(format(newDate, 'yyyy-MM-dd'));
-                      }
-                    }}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
+                </div>
+              </PopoverTrigger>
+              <PopoverContent 
+                className="w-auto p-0" 
+                align="start" 
+                side="bottom"
+                sideOffset={5}
+              >
+                <CalendarComponent
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(newDate) => {
+                    if (newDate) {
+                      onDateChange(format(newDate, 'yyyy-MM-dd'));
+                    }
+                  }}
+                  initialFocus
+                  className="rounded-md border"
+                />
+              </PopoverContent>
+            </Popover>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
