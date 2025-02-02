@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { PenLine, BarChart2, Zap } from "lucide-react";
+import { PenLine, BarChart2, Zap, MessageSquare } from "lucide-react";
+import { ChatBubble } from "@/components/chat/ChatBubble";
 
 export function ToolsSection() {
   return (
@@ -25,6 +26,15 @@ export function ToolsSection() {
         <Zap className="mr-2 h-4 w-4" />
         Habit Tracking
       </Button>
+      <ChatBubble variant="sidebar">
+        <Button 
+          variant="ghost" 
+          className="w-full justify-start text-blue-600 hover:bg-[#E5E7EB]"
+        >
+          <MessageSquare className="mr-2 h-4 w-4" />
+          Tasqi AI Assistant
+        </Button>
+      </ChatBubble>
     </div>
   );
 }
