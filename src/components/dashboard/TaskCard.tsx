@@ -113,12 +113,12 @@ export function TaskCard({ task, isMobile = false, index }: TaskCardProps) {
           <GripVertical className="h-5 w-5 text-white/50 cursor-grab" />
           <div className="flex-1">
             <div className="flex justify-between items-center">
-              <h3 className="font-medium">{task.title}</h3>
+              <h3 className={cn("font-medium", task.status === 'completed' && "line-through")}>{task.title}</h3>
               {task.status === 'scheduled' && (
                 <span className="text-sm">{getTimeDisplay(task)}</span>
               )}
             </div>
-            <p className="text-sm mt-1 capitalize">
+            <p className={cn("text-sm mt-1 capitalize", task.status === 'completed' && "line-through")}>
               Status: {task.status}
             </p>
           </div>
