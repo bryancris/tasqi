@@ -16,47 +16,48 @@ export const useTaskReorder = (tasks: Task[]) => {
 
     if (sourceIndex === destinationIndex) return;
 
-    // Get all tasks sorted by position
-    const sortedTasks = [...tasks].sort((a, b) => a.position - b.position);
-
-    // Move the task in the array
-    const [movedTask] = sortedTasks.splice(sourceIndex, 1);
-    sortedTasks.splice(destinationIndex, 0, movedTask);
-
-    // Update positions for all affected tasks
-    const updatedTasks = sortedTasks.map((task, index) => ({
-      ...task,
-      position: index + 1
-    }));
-
     try {
+      // Create a new array with the updated order
+      const updatedTasks = Array.from(tasks);
+      const [movedTask] = updatedTasks.splice(sourceIndex, 1);
+      updatedTasks.splice(destinationIndex, 0, movedTask);
+
+      // Update positions for all tasks
+      const tasksWithNewPositions = updatedTasks.map((task, index) => ({
+        ...task,
+        position: index
+      }));
+
       // Optimistically update the cache
-      queryClient.setQueryData(['tasks'], updatedTasks);
+      queryClient.setQueryData(['tasks'], tasksWithNewPositions);
 
-      // Update the positions in the database
-      for (const task of updatedTasks) {
-        const { error } = await supabase
-          .from('tasks')
-          .update({ position: task.position })
-          .eq('id', task.id);
+      // Update the database
+      const { error } = await supabase.rpc('reorder_tasks', {
+        task_positions: tasksWithNewPositions.map(task => ({
+          task_id: task.id,
+          new_position: task.position
+        }))
+      });
 
-        if (error) throw error;
-      }
+      if (error) throw error;
+
+      // Refetch to ensure we have the latest data
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
 
       toast({
-        title: "Task reordered",
+        title: "Tasks reordered",
         description: "Task order has been updated",
       });
     } catch (error) {
-      console.error('Error reordering task:', error);
+      console.error('Error reordering tasks:', error);
       toast({
         title: "Error",
-        description: "Failed to reorder task. Please try again.",
+        description: "Failed to reorder tasks. Please try again.",
         variant: "destructive",
       });
       
-      // Invalidate to ensure we have the latest data in case of error
-      await queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      // Invalidate to ensure we have the latest data
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
     }
   };
 

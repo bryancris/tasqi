@@ -13,7 +13,7 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
   const { handleDragEnd } = useTaskReorder(tasks);
   const todayStart = startOfDay(new Date());
 
-  // Sort tasks by position while maintaining the original array
+  // Sort tasks by position
   const sortedTasks = [...tasks].sort((a, b) => a.position - b.position);
 
   // Function to check if a completed task should be shown
@@ -21,15 +21,10 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
     return task.completed_at && isAfter(new Date(task.completed_at), todayStart);
   };
 
-  // Filter tasks for display while maintaining their order
+  // Filter tasks for display
   const displayTasks = sortedTasks.filter(task => 
-    task.status !== 'completed' || 
-    (task.status === 'completed' && shouldShowCompletedTask(task))
+    task.status !== 'completed' || shouldShowCompletedTask(task)
   );
-
-  // Separate active and completed tasks while maintaining their relative order
-  const activeTasks = displayTasks.filter(task => task.status !== 'completed');
-  const completedTasks = displayTasks.filter(task => task.status === 'completed');
 
   return (
     <Card>
@@ -45,8 +40,7 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
                 ref={provided.innerRef}
                 className="space-y-4"
               >
-                {/* Active Tasks */}
-                {activeTasks.map((task, index) => (
+                {displayTasks.map((task, index) => (
                   <Draggable 
                     key={task.id} 
                     draggableId={task.id.toString()} 
@@ -63,32 +57,6 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
                     )}
                   </Draggable>
                 ))}
-
-                {/* Completed Tasks Section */}
-                {completedTasks.length > 0 && (
-                  <>
-                    <h3 className="text-lg font-semibold text-gray-700 mt-8 mb-4">
-                      Today's Completed Tasks
-                    </h3>
-                    {completedTasks.map((task, index) => (
-                      <Draggable 
-                        key={task.id} 
-                        draggableId={task.id.toString()} 
-                        index={activeTasks.length + index}
-                      >
-                        {(provided) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                          >
-                            <TaskCard task={task} index={activeTasks.length + index} />
-                          </div>
-                        )}
-                      </Draggable>
-                    ))}
-                  </>
-                )}
                 {provided.placeholder}
               </div>
             )}
