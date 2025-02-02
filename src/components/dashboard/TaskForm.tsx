@@ -117,7 +117,7 @@ export function TaskForm({
                     <Calendar className="h-4 w-4" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto p-0" align="start" side="bottom">
                   <CalendarComponent
                     mode="single"
                     selected={selectedDate}
