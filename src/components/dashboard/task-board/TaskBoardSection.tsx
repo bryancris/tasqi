@@ -13,17 +13,15 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
   const { handleDragEnd } = useTaskReorder(tasks);
   const todayStart = startOfDay(new Date());
 
-  // Function to check if a completed task should be shown
   const shouldShowCompletedTask = (task: Task) => {
     return task.completed_at && isAfter(new Date(task.completed_at), todayStart);
   };
 
-  // Filter and sort tasks for display
   const displayTasks = tasks
     .filter(task => task.status !== 'completed' || shouldShowCompletedTask(task))
     .sort((a, b) => {
-      const posA = a.position ?? Number.MAX_SAFE_INTEGER;
-      const posB = b.position ?? Number.MAX_SAFE_INTEGER;
+      const posA = a.position || 0;  // Use 0 as default for undefined positions
+      const posB = b.position || 0;
       return posA - posB;
     });
 
@@ -44,7 +42,7 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
                 {displayTasks.map((task, index) => (
                   <Draggable 
                     key={task.id} 
-                    draggableId={task.id.toString()} 
+                    draggableId={String(task.id)}
                     index={index}
                   >
                     {(provided, snapshot) => (

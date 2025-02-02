@@ -22,10 +22,10 @@ export function useTaskReorder(tasks: Task[]) {
       const [movedTask] = reorderedTasks.splice(source.index, 1);
       reorderedTasks.splice(destination.index, 0, movedTask);
 
-      // Update positions for all tasks, ensuring no gaps and starting from 1
+      // Update positions for all tasks
       const updatedTasks = reorderedTasks.map((task, index) => ({
         ...task,
-        position: index + 1,
+        position: index,  // Use zero-based indexing for positions
       }));
 
       // Optimistically update the cache
@@ -36,6 +36,8 @@ export function useTaskReorder(tasks: Task[]) {
         task_id: task.id,
         new_position: task.position
       }));
+
+      console.log('Updating task positions:', positions);
 
       // Update database
       const { error } = await supabase.rpc('reorder_tasks', {
