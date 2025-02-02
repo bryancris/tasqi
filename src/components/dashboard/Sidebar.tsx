@@ -13,16 +13,19 @@ interface SidebarProps {
 export function Sidebar({ onViewChange, selectedDate, onDateChange }: SidebarProps) {
   return (
     <div className="border-r bg-white w-[280px] h-screen flex flex-col">
-      <div className="p-4 flex flex-col h-full">
-        <AddTaskDrawer />
-        <div className="space-y-4 mt-4">
+      <div className="pt-2 px-4 flex flex-col h-full">
+        <div className="mb-4">
+          <AddTaskDrawer />
+        </div>
+        
+        <div className="space-y-4">
           <CalendarSection onViewChange={onViewChange} />
           <ToolsSection />
         </div>
         
         <div className="flex-1" />
         
-        <div className="space-y-4">
+        <div className="space-y-4 pb-4">
           <div className="w-[200px]">
             <Calendar
               mode="single"
