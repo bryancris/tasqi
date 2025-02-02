@@ -21,7 +21,6 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
   const selectedDate = date ? parse(date, 'yyyy-MM-dd', new Date()) : undefined;
   const currentDate = new Date();
 
-  // Generate arrays for months, days, and years
   const months = Array.from({ length: 5 }, (_, i) => 
     format(addMonths(new Date(currentDate.getFullYear(), currentDate.getMonth() - 2), i), 'MMM')
   );
@@ -57,13 +56,14 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
           </Button>
         </PopoverTrigger>
         <PopoverContent 
-          className="w-[300px] p-0" 
+          className="w-[300px] p-0 bg-background border shadow-lg" 
           align="start"
           onInteractOutside={(e) => {
             e.preventDefault();
           }}
+          sideOffset={5}
         >
-          <div className="p-4">
+          <div className="p-4 relative z-50">
             <div className="grid grid-cols-3 gap-4 h-[300px] mb-4">
               {/* Months Column */}
               <div className="flex flex-col space-y-2 overflow-hidden">
