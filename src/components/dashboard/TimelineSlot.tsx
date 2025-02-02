@@ -2,7 +2,7 @@ import { Task } from "./TaskBoard";
 import { getPriorityColor } from "@/utils/taskColors";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { format, isSameDay, parseISO, startOfDay } from "date-fns";
+import { format, isSameDay, parseISO, startOfDay, addDays, subDays } from "date-fns";
 
 interface TimelineSlotProps {
   time: string;
@@ -13,14 +13,12 @@ interface TimelineSlotProps {
 
 export function TimelineSlot({ time, tasks, selectedDate, onDateChange }: TimelineSlotProps) {
   const handlePreviousDay = () => {
-    const newDate = new Date(selectedDate);
-    newDate.setDate(selectedDate.getDate() - 1);
+    const newDate = subDays(selectedDate, 1);
     onDateChange(startOfDay(newDate));
   };
 
   const handleNextDay = () => {
-    const newDate = new Date(selectedDate);
-    newDate.setDate(selectedDate.getDate() + 1);
+    const newDate = addDays(selectedDate, 1);
     onDateChange(startOfDay(newDate));
   };
 
