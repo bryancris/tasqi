@@ -55,9 +55,7 @@ export function TaskCard({ task, isMobile = false, index }: TaskCardProps) {
 
   return (
     <>
-      <div onClick={handleCardClick}>
-        <CardComponent task={task} onComplete={handleComplete} />
-      </div>
+      <CardComponent task={task} onComplete={handleComplete} onClick={handleCardClick} />
       <EditTaskDrawer 
         task={task} 
         open={isEditDrawerOpen} 

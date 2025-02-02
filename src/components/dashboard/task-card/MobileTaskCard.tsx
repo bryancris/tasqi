@@ -9,17 +9,19 @@ import { getPriorityColor } from "@/utils/taskColors";
 interface MobileTaskCardProps {
   task: Task;
   onComplete: () => void;
+  onClick: () => void;
 }
 
-export function MobileTaskCard({ task, onComplete }: MobileTaskCardProps) {
+export function MobileTaskCard({ task, onComplete, onClick }: MobileTaskCardProps) {
   return (
     <div 
       className={cn(
-        "p-4 rounded-xl flex items-center justify-between text-white w-full",
+        "p-4 rounded-xl flex items-center justify-between text-white w-full cursor-pointer",
         task.status === 'unscheduled' ? 'bg-blue-500' : 
         task.status === 'completed' ? 'bg-gray-500' :
         getPriorityColor(task.priority)
       )}
+      onClick={onClick}
     >
       <div className="flex items-center gap-3">
         <GripVertical className="h-5 w-5 text-white/50 cursor-grab" />
