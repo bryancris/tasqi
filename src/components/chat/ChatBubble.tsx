@@ -27,15 +27,8 @@ export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
   } = useChat();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      console.log("ChatBubble mounting with delay...");
-      setMounted(true);
-    }, 100);
-
-    return () => {
-      console.log("ChatBubble cleanup...");
-      clearTimeout(timer);
-    };
+    setMounted(true);
+    return () => setMounted(false);
   }, []);
 
   useEffect(() => {
@@ -44,24 +37,18 @@ export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
     }
   }, [open, fetchChatHistory]);
 
-  console.log("ChatBubble render - mounted:", mounted, "isMobile:", isMobile);
-
   // Handle both controlled and uncontrolled states
   const isControlled = isOpen !== undefined;
   const isDialogOpen = isControlled ? isOpen : open;
   
   const handleOpenChange = (newOpen: boolean) => {
-    console.log("Dialog open state changing to:", newOpen);
     if (!isControlled) {
       setOpen(newOpen);
     }
     onOpenChange?.(newOpen);
   };
 
-  if (!mounted) {
-    console.log("ChatBubble not mounted yet, returning null");
-    return null;
-  }
+  if (!mounted) return null;
 
   const renderChatButton = () => (
     <Button
@@ -76,7 +63,6 @@ export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
   );
 
   if (isMobile) {
-    console.log("Rendering mobile chat bubble");
     return (
       <>
         {renderChatButton()}
@@ -98,7 +84,6 @@ export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
     );
   }
 
-  console.log("Rendering desktop chat bubble");
   return (
     <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>

@@ -112,10 +112,8 @@ async function checkScheduledTasks() {
 // Register periodic sync with a shorter tag
 if ('periodicSync' in self.registration) {
   try {
-    self.registration.periodicSync.register('task-check', {
+    self.registration.periodicSync.register('sync', {
       minInterval: 60000 // Check every minute
-    }).catch(error => {
-      console.error('Periodic sync registration failed:', error);
     });
   } catch (error) {
     console.error('Periodic sync registration error:', error);
@@ -124,7 +122,7 @@ if ('periodicSync' in self.registration) {
 
 // Handle periodic sync events
 self.addEventListener('periodicsync', event => {
-  if (event.tag === 'task-check') {
+  if (event.tag === 'sync') {
     event.waitUntil(checkScheduledTasks());
   }
 });
