@@ -2,12 +2,14 @@ import { Button } from "@/components/ui/button";
 import { PenLine, BarChart2, Zap, MessageSquare } from "lucide-react";
 import { ChatBubble } from "@/components/chat/ChatBubble";
 import { useState } from "react";
+import { AddTaskDrawer } from "../AddTaskDrawer";
 
 export function ToolsSection() {
   const [isChatOpen, setIsChatOpen] = useState(false);
 
   return (
     <div className="space-y-2">
+      <AddTaskDrawer />
       <Button 
         variant="ghost" 
         className="w-full justify-start text-[#9333EA] hover:bg-[#E5E7EB]"
