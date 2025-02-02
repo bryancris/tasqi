@@ -7,13 +7,15 @@ import { MobileChatHeader } from "./MobileChatHeader";
 import { ChatMessages } from "./ChatMessages";
 import { useChat } from "@/hooks/use-chat";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { MessageSquare } from "lucide-react";
 
 interface ChatBubbleProps {
   isOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
+  variant?: 'floating' | 'sidebar';
 }
 
-export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
+export function ChatBubble({ isOpen, onOpenChange, variant = 'floating' }: ChatBubbleProps) {
   const [open, setOpen] = useState(false);
   const isMobile = useIsMobile();
   const { 
@@ -42,17 +44,32 @@ export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
     onOpenChange?.(newOpen);
   };
 
-  const renderChatButton = () => (
-    <Button
-      size="icon"
-      className="h-12 w-12 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700"
-      onClick={() => handleOpenChange(true)}
-    >
-      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-        <span className="text-blue-600 text-xl">AI</span>
-      </div>
-    </Button>
-  );
+  const renderChatButton = () => {
+    if (variant === 'sidebar') {
+      return (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-muted-foreground"
+          onClick={() => handleOpenChange(true)}
+        >
+          <MessageSquare className="h-5 w-5" />
+        </Button>
+      );
+    }
+
+    return (
+      <Button
+        size="icon"
+        className="h-12 w-12 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700"
+        onClick={() => handleOpenChange(true)}
+      >
+        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+          <span className="text-blue-600 text-xl">AI</span>
+        </div>
+      </Button>
+    );
+  };
 
   if (isMobile) {
     return (
@@ -76,27 +93,42 @@ export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
     );
   }
 
+  const dialogContent = (
+    <DialogContent 
+      hideCloseButton
+      className="p-0 fixed bottom-20 right-4 mb-0 sm:max-w-[440px] rounded-xl"
+    >
+      <div className="flex flex-col h-[600px]">
+        <ChatHeader onClose={() => handleOpenChange(false)} />
+        <ChatMessages messages={messages} isLoading={isLoading} />
+        <ChatInput 
+          message={message}
+          onMessageChange={setMessage}
+          onSubmit={handleSubmit}
+          isLoading={isLoading}
+        />
+      </div>
+    </DialogContent>
+  );
+
+  if (variant === 'sidebar') {
+    return (
+      <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
+        <DialogTrigger asChild>
+          {renderChatButton()}
+        </DialogTrigger>
+        {dialogContent}
+      </Dialog>
+    );
+  }
+
   return (
     <div className="fixed bottom-4 right-4 z-50">
       <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
         <DialogTrigger asChild>
           {renderChatButton()}
         </DialogTrigger>
-        <DialogContent 
-          hideCloseButton
-          className="p-0 fixed bottom-20 right-4 mb-0 sm:max-w-[440px] rounded-xl"
-        >
-          <div className="flex flex-col h-[600px]">
-            <ChatHeader onClose={() => handleOpenChange(false)} />
-            <ChatMessages messages={messages} isLoading={isLoading} />
-            <ChatInput 
-              message={message}
-              onMessageChange={setMessage}
-              onSubmit={handleSubmit}
-              isLoading={isLoading}
-            />
-          </div>
-        </DialogContent>
+        {dialogContent}
       </Dialog>
     </div>
   );
