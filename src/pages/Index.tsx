@@ -78,6 +78,8 @@ const Index = () => {
     }
   ];
 
+  console.log("Index page rendering");
+
   return (
     <div className="min-h-screen bg-[#1a1b3b] text-white py-12 px-4 md:px-8">
       <NavButtons />

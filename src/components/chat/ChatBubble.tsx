@@ -27,8 +27,12 @@ export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
   } = useChat();
 
   useEffect(() => {
+    console.log("ChatBubble mounting...");
     setMounted(true);
-    return () => setMounted(false);
+    return () => {
+      console.log("ChatBubble unmounting...");
+      setMounted(false);
+    };
   }, []);
 
   useEffect(() => {
@@ -37,20 +41,27 @@ export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
     }
   }, [open, fetchChatHistory]);
 
+  console.log("ChatBubble render - mounted:", mounted, "isMobile:", isMobile);
+
   // Handle both controlled and uncontrolled states
   const isControlled = isOpen !== undefined;
   const isDialogOpen = isControlled ? isOpen : open;
   
   const handleOpenChange = (newOpen: boolean) => {
+    console.log("Dialog open state changing to:", newOpen);
     if (!isControlled) {
       setOpen(newOpen);
     }
     onOpenChange?.(newOpen);
   };
 
-  if (!mounted) return null;
+  if (!mounted) {
+    console.log("ChatBubble not mounted yet, returning null");
+    return null;
+  }
 
   if (isMobile) {
+    console.log("Rendering mobile chat bubble");
     return (
       <>
         <Button
@@ -80,6 +91,7 @@ export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
     );
   }
 
+  console.log("Rendering desktop chat bubble");
   return (
     <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
