@@ -1,15 +1,7 @@
 import { MobileChatHeader } from "../MobileChatHeader";
 import { ChatMessages } from "../ChatMessages";
 import { ChatInput } from "../ChatInput";
-
-interface MobileChatViewProps {
-  onClose: () => void;
-  message: string;
-  messages: any[];
-  isLoading: boolean;
-  onMessageChange: (message: string) => void;
-  onSubmit: () => void;
-}
+import { MobileChatViewProps } from "../types";
 
 export function MobileChatView({
   onClose,

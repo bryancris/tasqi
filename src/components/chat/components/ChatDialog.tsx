@@ -2,16 +2,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ChatHeader } from "../ChatHeader";
 import { ChatMessages } from "../ChatMessages";
 import { ChatInput } from "../ChatInput";
-
-interface ChatDialogProps {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  message: string;
-  messages: any[];
-  isLoading: boolean;
-  onMessageChange: (message: string) => void;
-  onSubmit: () => void;
-}
+import { ChatDialogProps } from "../types";
 
 export function ChatDialog({
   isOpen,

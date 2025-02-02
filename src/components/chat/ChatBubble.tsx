@@ -83,7 +83,7 @@ export function ChatBubble({ isOpen, onOpenChange, variant = 'floating' }: ChatB
         onMessageChange={setMessage}
         onSubmit={handleSubmit}
       />
-      <ChatButton onClick={() => handleOpenChange(true)} />
+      {!isDialogOpen && <ChatButton onClick={() => handleOpenChange(true)} />}
     </div>
   );
 }
