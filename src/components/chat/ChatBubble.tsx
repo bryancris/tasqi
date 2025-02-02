@@ -81,7 +81,7 @@ export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
   }
 
   return (
-    <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
+    <>
       <Button
         size="icon"
         className="fixed bottom-4 right-4 h-12 w-12 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 z-[9999]"
@@ -91,24 +91,26 @@ export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
           <span className="text-blue-600 text-xl">AI</span>
         </div>
       </Button>
-      <DialogContent 
-        hideCloseButton
-        className="p-0 fixed bottom-[4.5rem] right-4 mb-0 sm:max-w-[440px] rounded-xl z-[9999]
-          data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 
-          data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 
-          origin-bottom-right"
-      >
-        <div className="flex flex-col h-[600px]">
-          <ChatHeader onClose={() => handleOpenChange(false)} />
-          <ChatMessages messages={messages} isLoading={isLoading} />
-          <ChatInput 
-            message={message}
-            onMessageChange={setMessage}
-            onSubmit={handleSubmit}
-            isLoading={isLoading}
-          />
-        </div>
-      </DialogContent>
-    </Dialog>
+      <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
+        <DialogContent 
+          hideCloseButton
+          className="p-0 fixed bottom-[4.5rem] right-4 mb-0 sm:max-w-[440px] rounded-xl z-[9999]
+            data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 
+            data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 
+            origin-bottom-right"
+        >
+          <div className="flex flex-col h-[600px]">
+            <ChatHeader onClose={() => handleOpenChange(false)} />
+            <ChatMessages messages={messages} isLoading={isLoading} />
+            <ChatInput 
+              message={message}
+              onMessageChange={setMessage}
+              onSubmit={handleSubmit}
+              isLoading={isLoading}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
