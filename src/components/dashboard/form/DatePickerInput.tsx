@@ -56,7 +56,13 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
             {date ? format(selectedDate!, 'PPP') : <span>Pick a date</span>}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[300px] p-0" align="start">
+        <PopoverContent 
+          className="w-[300px] p-0" 
+          align="start"
+          onInteractOutside={(e) => {
+            e.preventDefault();
+          }}
+        >
           <div className="p-4" onClick={(e) => e.stopPropagation()}>
             <div className="grid grid-cols-3 gap-4 h-[300px] mb-4">
               {/* Months Column */}
@@ -79,7 +85,6 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
                         newDate.setMonth(targetDate.getMonth());
                         setTempDate(new Date(newDate));
                       }}
-                      onMouseDown={(e) => e.preventDefault()}
                     >
                       {month}
                     </button>
@@ -105,7 +110,6 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
                         newDate.setDate(parseInt(day));
                         setTempDate(new Date(newDate));
                       }}
-                      onMouseDown={(e) => e.preventDefault()}
                     >
                       {day}
                     </button>
@@ -131,7 +135,6 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
                         newDate.setFullYear(parseInt(year));
                         setTempDate(new Date(newDate));
                       }}
-                      onMouseDown={(e) => e.preventDefault()}
                     >
                       {year}
                     </button>
@@ -149,7 +152,6 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
                   e.preventDefault();
                   handleSetDate();
                 }}
-                onMouseDown={(e) => e.preventDefault()}
               >
                 Set
               </Button>
@@ -162,7 +164,6 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
                   setTempDate(selectedDate);
                   setOpen(false);
                 }}
-                onMouseDown={(e) => e.preventDefault()}
               >
                 Cancel
               </Button>
