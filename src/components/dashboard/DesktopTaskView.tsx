@@ -5,15 +5,13 @@ import { Task } from "./TaskBoard";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { useTaskReorder } from "@/hooks/use-task-reorder";
 import { isToday, parseISO, startOfDay } from "date-fns";
-import { useState } from "react";
 
 interface DesktopTaskViewProps {
   tasks: Task[];
+  selectedDate: Date;
 }
 
-export function DesktopTaskView({ tasks }: DesktopTaskViewProps) {
-  const [selectedDate, setSelectedDate] = useState(startOfDay(new Date()));
-  
+export function DesktopTaskView({ tasks, selectedDate }: DesktopTaskViewProps) {
   // For now, hardcode the range. Later this will come from user settings
   const startHour = 9;
   const endHour = 20;
@@ -158,7 +156,7 @@ export function DesktopTaskView({ tasks }: DesktopTaskViewProps) {
                 time={timeSlot} 
                 tasks={allScheduledTasks}
                 selectedDate={selectedDate}
-                onDateChange={setSelectedDate}
+                onDateChange={() => {}} // We'll implement this later
               />
             ))}
           </div>
