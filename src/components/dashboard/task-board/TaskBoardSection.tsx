@@ -12,16 +12,21 @@ interface TaskBoardSectionProps {
 export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
   const { handleDragEnd } = useTaskReorder(tasks);
 
-  // Separate active and completed tasks
-  const activeTasks = tasks.filter(task => task.status !== 'completed');
-  
-  // Filter completed tasks to only show those completed today
+  // Get today's start for filtering completed tasks
   const todayStart = startOfDay(new Date());
-  const completedTasks = tasks.filter(task => 
+
+  // Create arrays for active and completed tasks while preserving original order
+  const sortedTasks = [...tasks].sort((a, b) => a.position - b.position);
+  
+  const activeTasks = sortedTasks.filter(task => task.status !== 'completed');
+  const completedTasks = sortedTasks.filter(task => 
     task.status === 'completed' && 
     task.completed_at && 
     isAfter(new Date(task.completed_at), todayStart)
   );
+
+  // Combine tasks in the correct order for drag and drop
+  const orderedTasks = [...activeTasks, ...completedTasks];
 
   return (
     <Card>
