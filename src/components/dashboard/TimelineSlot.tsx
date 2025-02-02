@@ -32,12 +32,6 @@ export function TimelineSlot({ time, tasks, selectedDate, onDateChange }: Timeli
     const isMatchingDate = isSameDay(taskDate, selectedDate);
     const isMatchingTime = task.start_time.startsWith(time.split(':')[0]);
     
-    console.log('Task:', task.title);
-    console.log('Task date:', taskDate);
-    console.log('Selected date:', selectedDate);
-    console.log('Is matching date:', isMatchingDate);
-    console.log('Is matching time:', isMatchingTime);
-    
     return isMatchingDate && isMatchingTime;
   });
 

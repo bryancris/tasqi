@@ -28,7 +28,6 @@ export interface Task {
 }
 
 const fetchTasks = async () => {
-  console.log('Fetching tasks...');
   const { data, error } = await supabase
     .from('tasks')
     .select('*')
@@ -39,7 +38,6 @@ const fetchTasks = async () => {
     throw error;
   }
 
-  console.log('Fetched tasks:', data);
   return data as Task[];
 };
 
@@ -57,7 +55,6 @@ export function TaskBoard() {
     const isScheduledForToday = task.status === 'scheduled' && 
       task.date && 
       isToday(parseISO(task.date));
-    console.log('Task:', task.title, 'date:', task.date, 'isScheduledForToday:', isScheduledForToday);
     return isScheduledForToday;
   });
 
@@ -79,19 +76,10 @@ export function TaskBoard() {
     ...unscheduledTasks
   ];
 
-  console.log('All tasks:', tasks);
-  console.log('Visible tasks:', visibleTasks);
-
   useEffect(() => {
-    // Initial permission request when component mounts
     requestPermission();
-
-    // Check for tasks every minute
     const interval = setInterval(checkAndNotifyUpcomingTasks, 60000);
-
-    // Initial check
     checkAndNotifyUpcomingTasks();
-
     return () => clearInterval(interval);
   }, []);
 
@@ -111,7 +99,7 @@ export function TaskBoard() {
       {isMobile ? (
         <MobileTaskView tasks={visibleTasks} />
       ) : (
-        <DesktopTaskView tasks={visibleTasks} />
+        <DesktopTaskView tasks={tasks} />
       )}
     </div>
   );

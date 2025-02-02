@@ -28,29 +28,20 @@ export function DesktopTaskView({ tasks }: DesktopTaskViewProps) {
 
   const { handleDragEnd } = useTaskReorder(tasks);
 
-  // Separate tasks into categories
-  const todayScheduledTasks = tasks.filter(task => 
-    task.status === 'scheduled' && 
-    task.date && 
-    isToday(parseISO(task.date))
-  );
-
-  const todayCompletedTasks = tasks.filter(task => {
-    if (!task.updated_at) return false;
-    return isToday(parseISO(task.updated_at)) && task.status === 'completed';
-  });
-
-  const unscheduledTasks = tasks.filter(task => 
-    task.status === 'unscheduled'
-  );
-
-  // Get all scheduled tasks for the timeline
+  // Get all scheduled tasks
   const scheduledTasks = tasks.filter(task => 
     task.status === 'scheduled'
   );
 
-  console.log('All tasks:', tasks);
-  console.log('Scheduled tasks:', scheduledTasks);
+  // Get unscheduled tasks
+  const unscheduledTasks = tasks.filter(task => 
+    task.status === 'unscheduled'
+  );
+
+  // Get completed tasks
+  const completedTasks = tasks.filter(task => 
+    task.status === 'completed'
+  );
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -67,11 +58,11 @@ export function DesktopTaskView({ tasks }: DesktopTaskViewProps) {
                   ref={provided.innerRef}
                   className="space-y-6"
                 >
-                  {/* Today's Scheduled Tasks */}
-                  {todayScheduledTasks.length > 0 && (
+                  {/* Scheduled Tasks */}
+                  {scheduledTasks.length > 0 && (
                     <div className="space-y-4">
-                      <h3 className="font-semibold text-sm text-gray-500">Today's Scheduled Tasks</h3>
-                      {todayScheduledTasks.map((task, index) => (
+                      <h3 className="font-semibold text-sm text-gray-500">Scheduled Tasks</h3>
+                      {scheduledTasks.map((task, index) => (
                         <Draggable 
                           key={task.id} 
                           draggableId={task.id.toString()} 
@@ -91,15 +82,15 @@ export function DesktopTaskView({ tasks }: DesktopTaskViewProps) {
                     </div>
                   )}
 
-                  {/* Today's Completed Tasks */}
-                  {todayCompletedTasks.length > 0 && (
+                  {/* Completed Tasks */}
+                  {completedTasks.length > 0 && (
                     <div className="space-y-4">
-                      <h3 className="font-semibold text-sm text-gray-500">Completed Today</h3>
-                      {todayCompletedTasks.map((task, index) => (
+                      <h3 className="font-semibold text-sm text-gray-500">Completed Tasks</h3>
+                      {completedTasks.map((task, index) => (
                         <Draggable 
                           key={task.id} 
                           draggableId={task.id.toString()} 
-                          index={todayScheduledTasks.length + index}
+                          index={scheduledTasks.length + index}
                         >
                           {(provided) => (
                             <div
@@ -123,7 +114,7 @@ export function DesktopTaskView({ tasks }: DesktopTaskViewProps) {
                         <Draggable 
                           key={task.id} 
                           draggableId={task.id.toString()} 
-                          index={todayScheduledTasks.length + todayCompletedTasks.length + index}
+                          index={scheduledTasks.length + completedTasks.length + index}
                         >
                           {(provided) => (
                             <div
