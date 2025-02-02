@@ -21,9 +21,10 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
     return task.completed_at && isAfter(new Date(task.completed_at), todayStart);
   };
 
-  // Check if we have any completed tasks from today to show the section
-  const hasCompletedTasksToday = sortedTasks.some(
-    task => task.status === 'completed' && shouldShowCompletedTask(task)
+  // Filter tasks for display while maintaining their order
+  const displayTasks = sortedTasks.filter(task => 
+    task.status !== 'completed' || 
+    (task.status === 'completed' && shouldShowCompletedTask(task))
   );
 
   return (
@@ -41,7 +42,7 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
                 className="space-y-4"
               >
                 {/* Active Tasks */}
-                {sortedTasks.map((task, index) => (
+                {displayTasks.map((task, index) => (
                   task.status !== 'completed' && (
                     <Draggable 
                       key={task.id} 
@@ -61,15 +62,14 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
                   )
                 ))}
 
-                {/* Completed Tasks Section - Only show if there are completed tasks from today */}
-                {hasCompletedTasksToday && (
+                {/* Completed Tasks Section */}
+                {displayTasks.some(task => task.status === 'completed') && (
                   <>
                     <h3 className="text-lg font-semibold text-gray-700 mt-8 mb-4">
                       Today's Completed Tasks
                     </h3>
-                    {sortedTasks.map((task, index) => (
-                      task.status === 'completed' && 
-                      shouldShowCompletedTask(task) && (
+                    {displayTasks.map((task, index) => (
+                      task.status === 'completed' && (
                         <Draggable 
                           key={task.id} 
                           draggableId={task.id.toString()} 
