@@ -27,8 +27,12 @@ export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
   } = useChat();
 
   useEffect(() => {
+    console.log("ChatBubble mounting...");
     setMounted(true);
-    return () => setMounted(false);
+    return () => {
+      console.log("ChatBubble unmounting...");
+      setMounted(false);
+    };
   }, []);
 
   useEffect(() => {
@@ -36,8 +40,6 @@ export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
       fetchChatHistory();
     }
   }, [open, fetchChatHistory]);
-
-  if (!mounted) return null;
 
   // Handle both controlled and uncontrolled states
   const isControlled = isOpen !== undefined;
@@ -50,66 +52,73 @@ export function ChatBubble({ isOpen, onOpenChange }: ChatBubbleProps) {
     onOpenChange?.(newOpen);
   };
 
-  if (isMobile) {
-    return (
-      <>
-        <Button
-          size="icon"
-          className="fixed bottom-20 right-4 h-12 w-12 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 z-[9999]"
-          onClick={() => handleOpenChange(true)}
-        >
-          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-            <span className="text-blue-600 text-xl">AI</span>
-          </div>
-        </Button>
-        {isDialogOpen && (
-          <div className="fixed inset-0 bg-background z-[9999]" style={{ top: '72px', bottom: '80px' }}>
-            <div className="flex flex-col h-full">
-              <MobileChatHeader onClose={() => handleOpenChange(false)} />
-              <ChatMessages messages={messages} isLoading={isLoading} />
-              <ChatInput 
-                message={message}
-                onMessageChange={setMessage}
-                onSubmit={handleSubmit}
-                isLoading={isLoading}
-              />
-            </div>
-          </div>
-        )}
-      </>
-    );
-  }
+  console.log("ChatBubble render - mounted:", mounted, "isMobile:", isMobile);
 
+  // Remove the early return and wrap the content in a conditional render
   return (
-    <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button
-          size="icon"
-          className="fixed bottom-4 right-4 h-12 w-12 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 z-[9999]"
-        >
-          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-            <span className="text-blue-600 text-xl">AI</span>
-          </div>
-        </Button>
-      </DialogTrigger>
-      <DialogContent 
-        hideCloseButton
-        className="p-0 fixed bottom-[4.5rem] right-4 mb-0 sm:max-w-[440px] rounded-xl z-[9999]
-          data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 
-          data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 
-          origin-bottom-right"
-      >
-        <div className="flex flex-col h-[600px]">
-          <ChatHeader onClose={() => handleOpenChange(false)} />
-          <ChatMessages messages={messages} isLoading={isLoading} />
-          <ChatInput 
-            message={message}
-            onMessageChange={setMessage}
-            onSubmit={handleSubmit}
-            isLoading={isLoading}
-          />
-        </div>
-      </DialogContent>
-    </Dialog>
+    <>
+      {mounted && (
+        <>
+          {isMobile ? (
+            <>
+              <Button
+                size="icon"
+                className="fixed bottom-20 right-4 h-12 w-12 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 z-[9999]"
+                onClick={() => handleOpenChange(true)}
+              >
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  <span className="text-blue-600 text-xl">AI</span>
+                </div>
+              </Button>
+              {isDialogOpen && (
+                <div className="fixed inset-0 bg-background z-[9999]" style={{ top: '72px', bottom: '80px' }}>
+                  <div className="flex flex-col h-full">
+                    <MobileChatHeader onClose={() => handleOpenChange(false)} />
+                    <ChatMessages messages={messages} isLoading={isLoading} />
+                    <ChatInput 
+                      message={message}
+                      onMessageChange={setMessage}
+                      onSubmit={handleSubmit}
+                      isLoading={isLoading}
+                    />
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <Dialog open={isDialogOpen} onOpenChange={handleOpenChange}>
+              <DialogTrigger asChild>
+                <Button
+                  size="icon"
+                  className="fixed bottom-4 right-4 h-12 w-12 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 z-[9999]"
+                >
+                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                    <span className="text-blue-600 text-xl">AI</span>
+                  </div>
+                </Button>
+              </DialogTrigger>
+              <DialogContent 
+                hideCloseButton
+                className="p-0 fixed bottom-[4.5rem] right-4 mb-0 sm:max-w-[440px] rounded-xl z-[9999]
+                  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 
+                  data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 
+                  origin-bottom-right"
+              >
+                <div className="flex flex-col h-[600px]">
+                  <ChatHeader onClose={() => handleOpenChange(false)} />
+                  <ChatMessages messages={messages} isLoading={isLoading} />
+                  <ChatInput 
+                    message={message}
+                    onMessageChange={setMessage}
+                    onSubmit={handleSubmit}
+                    isLoading={isLoading}
+                  />
+                </div>
+              </DialogContent>
+            </Dialog>
+          )}
+        </>
+      )}
+    </>
   );
 }
