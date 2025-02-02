@@ -1,4 +1,6 @@
 import { Task } from "../TaskBoard";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import { getPriorityColor } from "@/utils/taskColors";
 
 interface CalendarDayProps {
@@ -6,26 +8,40 @@ interface CalendarDayProps {
   isCurrentMonth: boolean;
   isToday: boolean;
   tasks: Task[];
+  onTaskClick?: (task: Task) => void;
 }
 
-export function CalendarDay({ date, isCurrentMonth, isToday, tasks }: CalendarDayProps) {
+export function CalendarDay({ date, isCurrentMonth, isToday, tasks, onTaskClick }: CalendarDayProps) {
   return (
-    <div className={`min-h-[100px] bg-white p-2 relative ${!isCurrentMonth && 'bg-gray-50'}`}>
-      <div className={`
-        text-sm font-medium 
-        ${isToday ? 'h-6 w-6 bg-blue-600 text-white rounded-full flex items-center justify-center' : 'text-gray-900'}
-        ${!isCurrentMonth && 'text-gray-400'}
-      `}>
-        {date.getDate()}
-      </div>
-      <div className="mt-1 space-y-1">
+    <div
+      className={cn(
+        "min-h-[120px] bg-white p-2",
+        !isCurrentMonth && "bg-gray-50",
+        "flex flex-col gap-1"
+      )}
+    >
+      <span
+        className={cn(
+          "inline-flex h-6 w-6 items-center justify-center rounded-full text-sm",
+          !isCurrentMonth && "text-gray-400",
+          isToday && "bg-primary text-primary-foreground font-semibold"
+        )}
+      >
+        {format(date, "d")}
+      </span>
+      <div className="flex flex-col gap-1 mt-1">
         {tasks.map((task) => (
-          <div
+          <button
             key={task.id}
-            className={`text-xs px-2 py-1 rounded-md text-white ${getPriorityColor(task.priority)}`}
+            onClick={() => onTaskClick?.(task)}
+            className={cn(
+              "text-left px-2 py-1 rounded text-xs text-white truncate cursor-pointer transition-colors",
+              task.status === 'completed' ? 'bg-gray-500' : getPriorityColor(task.priority),
+              "hover:opacity-90"
+            )}
           >
             {task.title}
-          </div>
+          </button>
         ))}
       </div>
     </div>

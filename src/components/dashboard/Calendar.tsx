@@ -5,6 +5,7 @@ import { Task } from "./TaskBoard";
 import { CalendarHeader } from "./calendar/CalendarHeader";
 import { CalendarDay } from "./calendar/CalendarDay";
 import { startOfMonth, eachDayOfInterval, endOfMonth, startOfWeek, endOfWeek, parseISO } from "date-fns";
+import { EditTaskDrawer } from "./EditTaskDrawer";
 
 interface CalendarProps {
   initialDate?: Date;
@@ -12,6 +13,8 @@ interface CalendarProps {
 
 export function Calendar({ initialDate }: CalendarProps) {
   const [currentMonth, setCurrentMonth] = useState<Date>(initialDate || new Date());
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
 
   const nextMonth = () => {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
@@ -36,6 +39,11 @@ export function Calendar({ initialDate }: CalendarProps) {
       return data as Task[];
     },
   });
+
+  const handleTaskClick = (task: Task) => {
+    setSelectedTask(task);
+    setIsEditDrawerOpen(true);
+  };
 
   // Get all dates for the current month view
   const monthStart = startOfMonth(currentMonth);
@@ -82,11 +90,20 @@ export function Calendar({ initialDate }: CalendarProps) {
                 isCurrentMonth={isCurrentMonth}
                 isToday={isToday}
                 tasks={dayTasks}
+                onTaskClick={handleTaskClick}
               />
             );
           })}
         </div>
       </div>
+
+      {selectedTask && (
+        <EditTaskDrawer
+          task={selectedTask}
+          open={isEditDrawerOpen}
+          onOpenChange={setIsEditDrawerOpen}
+        />
+      )}
     </div>
   );
 }
