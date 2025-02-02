@@ -14,12 +14,11 @@ export function Sidebar({ onViewChange, selectedDate, onDateChange }: SidebarPro
   return (
     <div className="border-r bg-white w-[280px] h-screen flex flex-col">
       <div className="flex flex-col h-full">
-        <div className="pt-6 px-4">
+        <div className="px-4 pt-20">
           <AddTaskDrawer />
-        </div>
-        
-        <div className="px-4 mt-6 space-y-4 flex-1">
-          <CalendarSection onViewChange={onViewChange} />
+          <div className="mt-6">
+            <CalendarSection onViewChange={onViewChange} />
+          </div>
           <ToolsSection />
           
           <div className="mt-auto pt-4">
