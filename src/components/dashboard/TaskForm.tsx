@@ -7,9 +7,8 @@ import { Calendar } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 import { TaskPriority } from "./TaskBoard";
-import { TaskScheduleFields } from "./TaskScheduleFields";
 
 interface TaskFormProps {
   title: string;
@@ -54,6 +53,8 @@ export function TaskForm({
   onReminderEnabledChange,
   onSubmit,
 }: TaskFormProps) {
+  const selectedDate = date ? parse(date, 'yyyy-MM-dd', new Date()) : undefined;
+
   return (
     <form
       onSubmit={(e) => {
@@ -100,7 +101,7 @@ export function TaskForm({
               <Input
                 value={date}
                 onChange={(e) => onDateChange(e.target.value)}
-                placeholder="mm/dd/yyyy"
+                placeholder="YYYY-MM-DD"
                 className="rounded-r-none"
               />
               <Popover>
@@ -118,8 +119,12 @@ export function TaskForm({
                 <PopoverContent className="w-auto p-0" align="end">
                   <CalendarComponent
                     mode="single"
-                    selected={date ? new Date(date) : undefined}
-                    onSelect={(date) => onDateChange(date ? format(date, 'yyyy-MM-dd') : '')}
+                    selected={selectedDate}
+                    onSelect={(newDate) => {
+                      if (newDate) {
+                        onDateChange(format(newDate, 'yyyy-MM-dd'));
+                      }
+                    }}
                     initialFocus
                   />
                 </PopoverContent>
