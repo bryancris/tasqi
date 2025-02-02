@@ -29,12 +29,16 @@ export function TimelineSlot({ time, tasks }: TimelineSlotProps) {
     });
   };
 
-  // Filter tasks for the selected date
+  // Filter tasks for the selected date AND time slot
   const filteredTasks = tasks.filter(task => 
-    task.date && isSameDay(parseISO(task.date), selectedDate)
+    task.date && 
+    isSameDay(parseISO(task.date), selectedDate) &&
+    task.start_time && 
+    task.start_time.startsWith(time.split(':')[0])
   );
 
   console.log('Selected date:', selectedDate);
+  console.log('Time slot:', time);
   console.log('All tasks:', tasks);
   console.log('Filtered tasks:', filteredTasks);
 
