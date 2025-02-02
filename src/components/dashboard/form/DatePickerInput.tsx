@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, parse, addMonths } from "date-fns";
 import { useState } from "react";
@@ -57,7 +57,7 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[300px] p-0" align="start">
-          <div className="p-4">
+          <div className="p-4" onClick={(e) => e.stopPropagation()}>
             <div className="grid grid-cols-3 gap-4 h-[300px] mb-4">
               {/* Months Column */}
               <div className="flex flex-col space-y-2 overflow-y-auto">
@@ -73,13 +73,13 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
                       )}
                       onClick={(e) => {
                         e.preventDefault();
-                        e.stopPropagation();
                         const newDate = tempDate || new Date();
                         const monthIndex = months.indexOf(month);
                         const targetDate = addMonths(new Date(currentDate.getFullYear(), currentDate.getMonth() - 2), monthIndex);
                         newDate.setMonth(targetDate.getMonth());
                         setTempDate(new Date(newDate));
                       }}
+                      onMouseDown={(e) => e.preventDefault()}
                     >
                       {month}
                     </button>
@@ -101,11 +101,11 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
                       )}
                       onClick={(e) => {
                         e.preventDefault();
-                        e.stopPropagation();
                         const newDate = tempDate || new Date();
                         newDate.setDate(parseInt(day));
                         setTempDate(new Date(newDate));
                       }}
+                      onMouseDown={(e) => e.preventDefault()}
                     >
                       {day}
                     </button>
@@ -127,11 +127,11 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
                       )}
                       onClick={(e) => {
                         e.preventDefault();
-                        e.stopPropagation();
                         const newDate = tempDate || new Date();
                         newDate.setFullYear(parseInt(year));
                         setTempDate(new Date(newDate));
                       }}
+                      onMouseDown={(e) => e.preventDefault()}
                     >
                       {year}
                     </button>
@@ -147,9 +147,9 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
                 className="flex-1 bg-[#1e1b4b] hover:bg-[#1e1b4b]/90"
                 onClick={(e) => {
                   e.preventDefault();
-                  e.stopPropagation();
                   handleSetDate();
                 }}
+                onMouseDown={(e) => e.preventDefault()}
               >
                 Set
               </Button>
@@ -159,10 +159,10 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
                 className="flex-1 bg-[#1e1b4b] hover:bg-[#1e1b4b]/90"
                 onClick={(e) => {
                   e.preventDefault();
-                  e.stopPropagation();
                   setTempDate(selectedDate);
                   setOpen(false);
                 }}
+                onMouseDown={(e) => e.preventDefault()}
               >
                 Cancel
               </Button>
