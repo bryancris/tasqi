@@ -116,13 +116,14 @@ export function TaskForm({
                     <Calendar className="h-4 w-4" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="end">
+                <PopoverContent className="w-auto p-0" align="start">
                   <CalendarComponent
                     mode="single"
                     selected={selectedDate}
                     onSelect={(newDate) => {
                       if (newDate) {
-                        onDateChange(format(newDate, 'yyyy-MM-dd'));
+                        const formattedDate = format(newDate, 'yyyy-MM-dd');
+                        onDateChange(formattedDate);
                       }
                     }}
                     initialFocus
