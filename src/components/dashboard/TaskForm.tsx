@@ -97,14 +97,14 @@ export function TaskForm({
         <div className="space-y-4">
           <div className="space-y-2">
             <Label>Date</Label>
-            <Popover>
-              <div className="flex">
-                <Input
-                  value={date}
-                  onChange={(e) => onDateChange(e.target.value)}
-                  placeholder="YYYY-MM-DD"
-                  className="rounded-r-none"
-                />
+            <div className="flex">
+              <Input
+                value={date}
+                onChange={(e) => onDateChange(e.target.value)}
+                placeholder="YYYY-MM-DD"
+                className="rounded-r-none"
+              />
+              <Popover>
                 <PopoverTrigger asChild>
                   <Button
                     type="button"
@@ -113,29 +113,24 @@ export function TaskForm({
                       "rounded-l-none border-l-0",
                       !date && "text-muted-foreground"
                     )}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                    }}
                   >
                     <Calendar className="h-4 w-4" />
                   </Button>
                 </PopoverTrigger>
-              </div>
-              <PopoverContent className="w-auto p-0" align="start">
-                <CalendarComponent
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={(newDate) => {
-                    if (newDate) {
-                      const formattedDate = format(newDate, 'yyyy-MM-dd');
-                      onDateChange(formattedDate);
-                    }
-                  }}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={(newDate) => {
+                      if (newDate) {
+                        onDateChange(format(newDate, 'yyyy-MM-dd'));
+                      }
+                    }}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
