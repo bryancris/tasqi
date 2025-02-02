@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format, parse, addMonths, addYears } from "date-fns";
+import { format, parse, addMonths } from "date-fns";
 import { useState } from "react";
 
 interface DatePickerInputProps {
@@ -22,8 +22,8 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
   const currentDate = new Date();
 
   // Generate arrays for months, days, and years
-  const months = Array.from({ length: 12 }, (_, i) => 
-    format(addMonths(new Date(currentDate.getFullYear(), 0, 1), i), 'MMM')
+  const months = Array.from({ length: 5 }, (_, i) => 
+    format(addMonths(new Date(currentDate.getFullYear(), currentDate.getMonth() - 2), i), 'MMM')
   );
   
   const days = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'));
@@ -72,7 +72,8 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
                     onClick={() => {
                       const newDate = tempDate || new Date();
                       const monthIndex = months.indexOf(month);
-                      newDate.setMonth(monthIndex);
+                      const targetDate = addMonths(new Date(currentDate.getFullYear(), currentDate.getMonth() - 2), monthIndex);
+                      newDate.setMonth(targetDate.getMonth());
                       setTempDate(new Date(newDate));
                     }}
                   >
