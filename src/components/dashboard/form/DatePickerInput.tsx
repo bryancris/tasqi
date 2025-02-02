@@ -5,6 +5,7 @@ import { Calendar as CalendarIcon } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { format, parse } from "date-fns";
+import { useState } from "react";
 
 interface DatePickerInputProps {
   date: string;
@@ -13,12 +14,13 @@ interface DatePickerInputProps {
 }
 
 export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePickerInputProps) {
+  const [open, setOpen] = useState(false);
   const selectedDate = date ? parse(date, 'yyyy-MM-dd', new Date()) : undefined;
 
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
-      <Popover>
+      <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             type="button"
@@ -43,6 +45,7 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
             onSelect={(newDate) => {
               if (newDate) {
                 onDateChange(format(newDate, 'yyyy-MM-dd'));
+                setOpen(false); // Only close after a date is selected
               }
             }}
             defaultMonth={selectedDate}
