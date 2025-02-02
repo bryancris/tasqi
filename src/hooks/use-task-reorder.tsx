@@ -17,15 +17,19 @@ export function useTaskReorder(tasks: Task[]) {
     }
 
     try {
-      // Create a new array with the reordered tasks
+      // Create a new array of tasks
       const reorderedTasks = Array.from(tasks);
+      
+      // Remove the task from its original position
       const [movedTask] = reorderedTasks.splice(source.index, 1);
+      
+      // Insert the task at its new position
       reorderedTasks.splice(destination.index, 0, movedTask);
 
-      // Update positions for all tasks, maintaining their relative order
+      // Calculate new positions while maintaining order
       const updatedTasks = reorderedTasks.map((task, index) => ({
         ...task,
-        position: index,
+        position: index * 1000, // Use larger intervals to allow for future insertions
       }));
 
       // Prepare positions array for database update
@@ -34,7 +38,7 @@ export function useTaskReorder(tasks: Task[]) {
         new_position: task.position
       }));
 
-      // Optimistically update the cache with the new order
+      // Optimistically update the cache
       queryClient.setQueryData(['tasks'], updatedTasks);
 
       // Update database
@@ -46,11 +50,6 @@ export function useTaskReorder(tasks: Task[]) {
 
       // Refetch to ensure consistency
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
-
-      toast({
-        title: "Task reordered",
-        description: "The task has been moved to its new position.",
-      });
 
     } catch (error) {
       console.error('Error reordering tasks:', error);
