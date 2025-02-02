@@ -1,4 +1,4 @@
-import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays } from "date-fns";
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, addWeeks, subWeeks } from "date-fns";
 import { CalendarHeader } from "./calendar/CalendarHeader";
 import { WeeklyDayHeader } from "./calendar/WeeklyDayHeader";
 import { WeeklyCalendarGrid } from "./calendar/WeeklyCalendarGrid";
@@ -12,7 +12,7 @@ interface WeeklyCalendarProps {
 }
 
 export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
-  const currentDate = initialDate || new Date();
+  const [currentDate, setCurrentDate] = useState(initialDate || new Date());
   const [showFullWeek, setShowFullWeek] = useState(true);
   
   // Start from Sunday if showing full week, Monday if showing 5 days
@@ -37,14 +37,22 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
 
   const monthYear = format(currentDate, 'MMMM yyyy');
 
+  const handleNextWeek = () => {
+    setCurrentDate(addWeeks(currentDate, 1));
+  };
+
+  const handlePreviousWeek = () => {
+    setCurrentDate(subWeeks(currentDate, 1));
+  };
+
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
       <div className="flex gap-4 w-full max-w-[95%] mx-auto">
         <div className="flex-1">
           <CalendarHeader 
             monthYear={monthYear}
-            onNextMonth={() => {}}
-            onPreviousMonth={() => {}}
+            onNextMonth={handleNextWeek}
+            onPreviousMonth={handlePreviousWeek}
             showWeekly={true}
           />
 
