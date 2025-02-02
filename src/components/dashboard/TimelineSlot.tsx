@@ -14,12 +14,12 @@ interface TimelineSlotProps {
 export function TimelineSlot({ time, tasks, selectedDate, onDateChange }: TimelineSlotProps) {
   const handlePreviousDay = () => {
     const newDate = subDays(selectedDate, 1);
-    onDateChange(startOfDay(newDate));
+    onDateChange(newDate);
   };
 
   const handleNextDay = () => {
     const newDate = addDays(selectedDate, 1);
-    onDateChange(startOfDay(newDate));
+    onDateChange(newDate);
   };
 
   // Filter tasks for the selected date AND time slot
