@@ -19,10 +19,7 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
 
   const displayTasks = tasks
     .filter(task => task.status !== 'completed' || shouldShowCompletedTask(task))
-    .map((task, index) => ({
-      ...task,
-      position: task.position || (index + 1) * 1000
-    }));
+    .sort((a, b) => (a.position || 0) - (b.position || 0));
 
   return (
     <Card>
@@ -48,14 +45,13 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
                       <div
                         ref={provided.innerRef}
                         {...provided.draggableProps}
+                        {...provided.dragHandleProps}
                         style={{
                           ...provided.draggableProps.style,
                           opacity: snapshot.isDragging ? 0.5 : 1
                         }}
                       >
-                        <div {...provided.dragHandleProps}>
-                          <TaskCard task={task} index={index} />
-                        </div>
+                        <TaskCard task={task} index={index} />
                       </div>
                     )}
                   </Draggable>
