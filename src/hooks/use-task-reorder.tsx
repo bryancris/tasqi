@@ -17,19 +17,21 @@ export function useTaskReorder(tasks: Task[]) {
     }
 
     try {
-      // Create a new array of tasks
-      const reorderedTasks = Array.from(tasks);
-      
-      // Remove the task from its original position
-      const [movedTask] = reorderedTasks.splice(source.index, 1);
-      
-      // Insert the task at its new position
-      reorderedTasks.splice(destination.index, 0, movedTask);
+      // Create a copy of tasks array and sort by position
+      const sortedTasks = [...tasks].sort((a, b) => {
+        const posA = typeof a.position === 'number' ? a.position : 0;
+        const posB = typeof b.position === 'number' ? b.position : 0;
+        return posA - posB;
+      });
 
-      // Calculate new positions while maintaining order
-      const updatedTasks = reorderedTasks.map((task, index) => ({
+      // Remove task from source and insert at destination
+      const [movedTask] = sortedTasks.splice(source.index, 1);
+      sortedTasks.splice(destination.index, 0, movedTask);
+
+      // Calculate new positions with larger intervals
+      const updatedTasks = sortedTasks.map((task, index) => ({
         ...task,
-        position: index * 1000, // Use larger intervals to allow for future insertions
+        position: (index + 1) * 1000, // Start from 1000 to ensure no zero positions
       }));
 
       // Prepare positions array for database update
