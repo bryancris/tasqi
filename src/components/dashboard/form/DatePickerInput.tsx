@@ -3,8 +3,12 @@ import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format, parse, addMonths } from "date-fns";
+import { format, parse } from "date-fns";
 import { useState } from "react";
+import { MonthColumn } from "./date-picker/MonthColumn";
+import { DayColumn } from "./date-picker/DayColumn";
+import { YearColumn } from "./date-picker/YearColumn";
+import { DatePickerControls } from "./date-picker/DatePickerControls";
 
 interface DatePickerInputProps {
   date: string;
@@ -21,21 +25,29 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
   const selectedDate = date ? parse(date, 'yyyy-MM-dd', new Date()) : undefined;
   const currentDate = new Date();
 
-  const months = Array.from({ length: 5 }, (_, i) => 
-    format(addMonths(new Date(currentDate.getFullYear(), currentDate.getMonth() - 2), i), 'MMM')
-  );
-  
-  const days = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'));
-  
-  const years = Array.from({ length: 10 }, (_, i) => 
-    String(currentDate.getFullYear() - 5 + i)
-  );
-
   const handleSetDate = () => {
     if (tempDate) {
       onDateChange(format(tempDate, 'yyyy-MM-dd'));
     }
     setOpen(false);
+  };
+
+  const handleMonthSelect = (month: number) => {
+    const newDate = new Date(tempDate);
+    newDate.setMonth(month);
+    setTempDate(new Date(newDate));
+  };
+
+  const handleDaySelect = (day: number) => {
+    const newDate = new Date(tempDate);
+    newDate.setDate(day);
+    setTempDate(new Date(newDate));
+  };
+
+  const handleYearSelect = (year: number) => {
+    const newDate = new Date(tempDate);
+    newDate.setFullYear(year);
+    setTempDate(new Date(newDate));
   };
 
   return (
@@ -67,102 +79,29 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
           <div className="fixed inset-0 bg-black/50 z-50" onClick={() => setOpen(false)} />
           <div className="p-4 relative z-[101] bg-background rounded-md">
             <div className="grid grid-cols-3 gap-4 h-[300px] mb-4">
-              {/* Months Column */}
-              <div className="flex flex-col space-y-2 overflow-hidden">
-                <div className="text-sm font-medium text-center sticky top-0 bg-background z-10 py-1">Month</div>
-                <div className="space-y-1 px-1 overflow-y-auto">
-                  {months.map((month) => (
-                    <button
-                      key={month}
-                      type="button"
-                      className={cn(
-                        "w-full px-3 py-2 text-sm text-center hover:bg-accent rounded-md transition-colors",
-                        tempDate && format(tempDate, 'MMM') === month && "bg-[#1e1b4b] text-white"
-                      )}
-                      onClick={() => {
-                        const newDate = tempDate || new Date();
-                        const monthIndex = months.indexOf(month);
-                        const targetDate = addMonths(new Date(currentDate.getFullYear(), currentDate.getMonth() - 2), monthIndex);
-                        newDate.setMonth(targetDate.getMonth());
-                        setTempDate(new Date(newDate));
-                      }}
-                    >
-                      {month}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Days Column */}
-              <div className="flex flex-col space-y-2 overflow-hidden">
-                <div className="text-sm font-medium text-center sticky top-0 bg-background z-10 py-1">Day</div>
-                <div className="space-y-1 px-1 overflow-y-auto">
-                  {days.map((day) => (
-                    <button
-                      key={day}
-                      type="button"
-                      className={cn(
-                        "w-full px-3 py-2 text-sm text-center hover:bg-accent rounded-md transition-colors",
-                        tempDate && format(tempDate, 'dd') === day && "bg-[#1e1b4b] text-white"
-                      )}
-                      onClick={() => {
-                        const newDate = tempDate || new Date();
-                        newDate.setDate(parseInt(day));
-                        setTempDate(new Date(newDate));
-                      }}
-                    >
-                      {day}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Years Column */}
-              <div className="flex flex-col space-y-2 overflow-hidden">
-                <div className="text-sm font-medium text-center sticky top-0 bg-background z-10 py-1">Year</div>
-                <div className="space-y-1 px-1 overflow-y-auto">
-                  {years.map((year) => (
-                    <button
-                      key={year}
-                      type="button"
-                      className={cn(
-                        "w-full px-3 py-2 text-sm text-center hover:bg-accent rounded-md transition-colors",
-                        tempDate && format(tempDate, 'yyyy') === year && "bg-[#1e1b4b] text-white"
-                      )}
-                      onClick={() => {
-                        const newDate = tempDate || new Date();
-                        newDate.setFullYear(parseInt(year));
-                        setTempDate(new Date(newDate));
-                      }}
-                    >
-                      {year}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <MonthColumn
+                currentDate={currentDate}
+                tempDate={tempDate}
+                onMonthSelect={handleMonthSelect}
+              />
+              <DayColumn
+                tempDate={tempDate}
+                onDaySelect={handleDaySelect}
+              />
+              <YearColumn
+                currentDate={currentDate}
+                tempDate={tempDate}
+                onYearSelect={handleYearSelect}
+              />
             </div>
 
-            <div className="flex justify-between mt-4 gap-4">
-              <Button
-                type="button"
-                variant="default"
-                className="flex-1 bg-[#1e1b4b] hover:bg-[#1e1b4b]/90"
-                onClick={handleSetDate}
-              >
-                Set
-              </Button>
-              <Button
-                type="button"
-                variant="default"
-                className="flex-1 bg-[#1e1b4b] hover:bg-[#1e1b4b]/90"
-                onClick={() => {
-                  setTempDate(selectedDate || new Date());
-                  setOpen(false);
-                }}
-              >
-                Cancel
-              </Button>
-            </div>
+            <DatePickerControls
+              onSet={handleSetDate}
+              onCancel={() => {
+                setTempDate(selectedDate || new Date());
+                setOpen(false);
+              }}
+            />
           </div>
         </PopoverContent>
       </Popover>
