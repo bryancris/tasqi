@@ -11,17 +11,11 @@ export function useTaskReorder(tasks: Task[]) {
   const handleDragEnd = async (result: DropResult) => {
     const { destination, source } = result;
 
-    if (!destination) {
-      return;
-    }
+    if (!destination) return;
+    if (destination.index === source.index) return;
 
     try {
-      const orderedTasks = [...tasks].map(task => ({
-        ...task,
-        position: task.position ?? 0
-      }));
-
-      // Remove task from source and insert at destination
+      const orderedTasks = [...tasks];
       const [movedTask] = orderedTasks.splice(source.index, 1);
       orderedTasks.splice(destination.index, 0, movedTask);
 
@@ -52,8 +46,6 @@ export function useTaskReorder(tasks: Task[]) {
 
     } catch (error) {
       console.error('Error reordering tasks:', error);
-      
-      // Revert the cache to the original state
       queryClient.setQueryData(['tasks'], tasks);
       
       toast({
