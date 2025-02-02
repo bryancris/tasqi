@@ -98,25 +98,30 @@ export function TaskForm({
           <div className="space-y-2">
             <Label>Date</Label>
             <Popover>
-              <PopoverTrigger asChild>
-                <div className="flex">
-                  <Input
-                    value={date}
-                    onChange={(e) => onDateChange(e.target.value)}
-                    placeholder="YYYY-MM-DD"
-                    className="rounded-r-none"
-                  />
+              <div className="flex">
+                <Input
+                  value={date}
+                  onChange={(e) => onDateChange(e.target.value)}
+                  placeholder="YYYY-MM-DD"
+                  className="rounded-r-none"
+                />
+                <PopoverTrigger asChild>
                   <Button
+                    type="button"
                     variant="outline"
                     className={cn(
                       "rounded-l-none border-l-0",
                       !date && "text-muted-foreground"
                     )}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
                   >
                     <Calendar className="h-4 w-4" />
                   </Button>
-                </div>
-              </PopoverTrigger>
+                </PopoverTrigger>
+              </div>
               <PopoverContent className="w-auto p-0" align="start">
                 <CalendarComponent
                   mode="single"
