@@ -11,7 +11,7 @@ export function useTaskReorder(tasks: Task[]) {
   const handleDragEnd = async (result: DropResult) => {
     const { destination, source } = result;
 
-    // If dropped outside the list or no change in position
+    // If dropped outside the list
     if (!destination) {
       return;
     }
@@ -25,7 +25,7 @@ export function useTaskReorder(tasks: Task[]) {
       // Update positions for all tasks sequentially
       const updatedTasks = reorderedTasks.map((task, index) => ({
         ...task,
-        position: index,
+        position: index + 1, // Start positions from 1 to ensure proper ordering
       }));
 
       // Optimistically update the cache
