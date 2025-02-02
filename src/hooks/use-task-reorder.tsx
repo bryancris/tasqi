@@ -25,14 +25,14 @@ export function useTaskReorder(tasks: Task[]) {
         position: (index + 1) * 1000
       }));
 
-      // Optimistically update the cache
-      queryClient.setQueryData(['tasks'], updatedTasks);
-
       // Prepare positions array for database update
       const positions = updatedTasks.map(task => ({
         task_id: task.id,
         new_position: task.position
       }));
+
+      // Optimistically update the cache
+      queryClient.setQueryData(['tasks'], updatedTasks);
 
       // Update database
       const { error } = await supabase.rpc('reorder_tasks', {
