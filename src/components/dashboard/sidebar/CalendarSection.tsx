@@ -14,25 +14,27 @@ export function CalendarSection({ onViewChange }: CalendarSectionProps) {
 
   const handleViewChange = (newView: 'daily' | 'weekly' | 'monthly' | 'yearly') => {
     setView(newView);
-    if (onViewChange) {
-      switch (newView) {
-        case 'yearly':
-          navigate('/dashboard');
-          onViewChange('yearly');
-          break;
-        case 'monthly':
-          navigate('/dashboard');
-          onViewChange('calendar');
-          break;
-        case 'weekly':
-          navigate('/dashboard');
-          onViewChange('weekly');
-          break;
-        default:
-          navigate('/dashboard');
-          onViewChange('tasks');
+    // Always navigate to dashboard first
+    navigate('/dashboard');
+    
+    // Then update the view after a short delay to ensure navigation has completed
+    setTimeout(() => {
+      if (onViewChange) {
+        switch (newView) {
+          case 'yearly':
+            onViewChange('yearly');
+            break;
+          case 'monthly':
+            onViewChange('calendar');
+            break;
+          case 'weekly':
+            onViewChange('weekly');
+            break;
+          default:
+            onViewChange('tasks');
+        }
       }
-    }
+    }, 0);
   };
 
   return (
