@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
-import { PlusCircle, Trash2, Robot } from "lucide-react";
+import { PlusCircle, Trash2, Bot } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -105,7 +105,7 @@ export function NotesContent() {
           variant="secondary"
           className="w-full flex items-center justify-center gap-2"
         >
-          <Robot className="w-4 h-4" />
+          <Bot className="w-4 h-4" />
           Tasqi AI Assisted Note
         </Button>
         <Button 
