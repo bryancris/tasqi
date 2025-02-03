@@ -32,26 +32,21 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
     return task.completed_at && isAfter(new Date(task.completed_at), todayStart);
   };
 
-  // Sort tasks: incomplete tasks first, then completed tasks
   const sortedTasks = [...tasks]
     .filter(task => task.status !== 'completed' || shouldShowCompletedTask(task))
     .sort((a, b) => {
-      // If one is completed and the other isn't, put completed at the bottom
       if (a.status === 'completed' && b.status !== 'completed') return 1;
       if (a.status !== 'completed' && b.status === 'completed') return -1;
-      
-      // If both are completed or both are not completed, maintain their relative positions
       return (a.position || 0) - (b.position || 0);
     });
 
-  // Only allow dragging of non-completed tasks
   const draggableTaskIds = sortedTasks
     .filter(task => task.status !== 'completed')
     .map(task => task.id);
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="h-full">
+      <CardHeader className="pb-4">
         <CardTitle className="text-2xl font-semibold">Task Board</CardTitle>
       </CardHeader>
       <CardContent>
