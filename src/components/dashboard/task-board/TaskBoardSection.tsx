@@ -60,9 +60,9 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
       destination: { index: newIndex },
       draggableId: String(active.id),
       mode: 'SNAP',
-      reason: 'DROP',
+      reason: 'DROP' as const, // Use a const assertion to match the DropReason type
       type: 'task',
-      combine: null // Add the combine property as null since we're not using combine functionality
+      combine: null
     };
 
     handleReorder(reorderEvent);
