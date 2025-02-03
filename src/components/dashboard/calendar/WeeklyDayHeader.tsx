@@ -40,7 +40,7 @@ export function WeeklyDayHeader({ weekDays, visitsPerDay, showFullWeek, onToggle
             {format(day, 'd')}
           </div>
           <div className="text-xs text-gray-500">
-            {visitsPerDay[index]}
+            {visitsPerDay[index].replace('Visit', 'Task').replace('Visits', 'Tasks')}
           </div>
         </div>
       ))}
