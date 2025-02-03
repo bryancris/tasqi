@@ -21,11 +21,11 @@ export function getUrgencyColor(time: string) {
 export function getPriorityColor(priority?: TaskPriority) {
   switch (priority) {
     case 'high':
-      return 'bg-red-500';
+      return 'bg-[#ea384c]';
     case 'medium':
-      return 'bg-orange-400';
+      return 'bg-[#F97316]';
     case 'low':
-      return 'bg-green-500';
+      return 'bg-[#8B5CF6]';
     default:
       return 'bg-blue-500';
   }

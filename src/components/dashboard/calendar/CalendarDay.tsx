@@ -1,4 +1,6 @@
 import { Task } from "../TaskBoard";
+import { format } from "date-fns";
+import { getPriorityColor } from "@/utils/taskColors";
 
 interface CalendarDayProps {
   date: Date;
@@ -12,14 +14,14 @@ interface CalendarDayProps {
 export function CalendarDay({ 
   date, 
   isCurrentMonth, 
-  isToday, 
-  tasks, 
+  isToday,
+  tasks,
   onTaskClick,
   onDateClick 
 }: CalendarDayProps) {
-  const dayNumber = date.getDate();
+  const dayNumber = format(date, 'd');
   
-  const handleDayClick = () => {
+  const handleDateClick = () => {
     if (onDateClick) {
       onDateClick(date);
     }
@@ -27,15 +29,17 @@ export function CalendarDay({
 
   return (
     <div 
-      onClick={handleDayClick}
-      className={`
-        min-h-[120px] p-2 bg-white cursor-pointer
-        ${!isCurrentMonth && 'text-gray-400'}
-        ${isToday && 'bg-blue-50'}
-        hover:bg-gray-50 transition-colors
-      `}
+      className={`min-h-[100px] p-2 bg-white ${
+        !isCurrentMonth ? 'text-gray-400' : ''
+      }`}
+      onClick={handleDateClick}
     >
-      <div className="text-sm font-medium mb-1">{dayNumber}</div>
+      <div className={`
+        text-sm font-medium mb-1
+        ${isToday ? 'text-blue-600 font-bold' : ''}
+      `}>
+        {dayNumber}
+      </div>
       <div className="space-y-1">
         {tasks.map((task) => (
           <div
@@ -44,7 +48,12 @@ export function CalendarDay({
               e.stopPropagation();
               onTaskClick(task);
             }}
-            className="text-xs p-1 bg-blue-100 rounded cursor-pointer hover:bg-blue-200 transition-colors truncate"
+            className={`
+              text-xs p-1 rounded cursor-pointer
+              hover:opacity-80 transition-opacity
+              ${getPriorityColor(task.priority)}
+              text-white truncate
+            `}
           >
             {task.title}
           </div>
