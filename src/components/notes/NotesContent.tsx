@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { PlusCircle, Trash2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Note {
   id: number;
@@ -21,6 +22,7 @@ export function NotesContent() {
   const [content, setContent] = useState("");
   const { session } = useAuth();
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
 
   const { data: notes, isLoading } = useQuery({
     queryKey: ["notes"],
@@ -84,8 +86,8 @@ export function NotesContent() {
   };
 
   return (
-    <div className="container mx-auto p-4 max-w-4xl">
-      <form onSubmit={handleSubmit} className="mb-8 space-y-4">
+    <div className={`container mx-auto ${isMobile ? 'p-2' : 'p-4'} max-w-4xl h-[calc(100vh-144px)] overflow-y-auto`}>
+      <form onSubmit={handleSubmit} className="mb-4 space-y-3">
         <Input
           placeholder="Note title"
           value={title}
@@ -96,7 +98,7 @@ export function NotesContent() {
           placeholder="Write your note here..."
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          className="w-full min-h-[150px]"
+          className={`w-full ${isMobile ? 'min-h-[100px]' : 'min-h-[150px]'}`}
         />
         <Button 
           type="submit" 
@@ -108,18 +110,18 @@ export function NotesContent() {
         </Button>
       </form>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {isLoading ? (
-          <div>Loading notes...</div>
+          <div className="text-center py-4">Loading notes...</div>
         ) : notes?.length === 0 ? (
-          <div className="text-center text-gray-500">No notes yet</div>
+          <div className="text-center text-gray-500 py-4">No notes yet</div>
         ) : (
           notes?.map((note) => (
-            <Card key={note.id} className="p-4">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="text-lg font-semibold">{note.title}</h3>
-                  <p className="text-gray-600 whitespace-pre-wrap mt-2">
+            <Card key={note.id} className={`${isMobile ? 'p-3' : 'p-4'}`}>
+              <div className="flex justify-between items-start gap-2">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-semibold truncate">{note.title}</h3>
+                  <p className="text-gray-600 whitespace-pre-wrap mt-2 break-words">
                     {note.content}
                   </p>
                   <p className="text-sm text-gray-400 mt-2">
@@ -130,7 +132,7 @@ export function NotesContent() {
                   variant="ghost"
                   size="icon"
                   onClick={() => deleteNoteMutation.mutate(note.id)}
-                  className="text-red-500 hover:text-red-700"
+                  className="text-red-500 hover:text-red-700 shrink-0"
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
