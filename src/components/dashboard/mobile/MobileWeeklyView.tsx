@@ -35,15 +35,9 @@ export function MobileWeeklyView() {
     <div className="flex flex-col h-[calc(100vh-144px)] bg-white">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b bg-[#E5DEFF]">
-        <div className="flex items-center gap-2">
-          <div className="bg-[#2563eb] text-white rounded-lg p-2 text-sm">
-            <div className="text-xs font-medium">Day</div>
-            <div className="text-lg font-bold">7</div>
-          </div>
-          <h2 className="text-lg font-semibold text-gray-700">
-            {format(currentDate, 'MMMM yyyy')}
-          </h2>
-        </div>
+        <h2 className="text-lg font-semibold text-gray-700">
+          {format(currentDate, 'MMMM yyyy')}
+        </h2>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -74,8 +68,16 @@ export function MobileWeeklyView() {
       {/* Days header */}
       <div className={cn(
         "grid border-b sticky top-0 bg-[#E5DEFF]",
-        showFullWeek ? "grid-cols-7" : "grid-cols-5"
+        showFullWeek ? "grid-cols-8" : "grid-cols-6"
       )}>
+        {/* Time column header */}
+        <div className="p-2 text-center border-r">
+          <div className="bg-[#2563eb] text-white rounded-lg p-2 text-sm">
+            <div className="text-xs font-medium">Day</div>
+            <div className="text-lg font-bold">7</div>
+          </div>
+        </div>
+        {/* Days */}
         {weekDays.map((day, index) => (
           <div 
             key={index}
@@ -102,23 +104,30 @@ export function MobileWeeklyView() {
               key={timeIndex} 
               className={cn(
                 "grid",
-                showFullWeek ? "grid-cols-7" : "grid-cols-5",
+                showFullWeek ? "grid-cols-8" : "grid-cols-6",
                 "min-h-[80px]"
               )}
             >
-              {weekDays.map((day, dayIndex) => (
+              {/* Time column */}
+              <div className={cn(
+                "p-2 border-r relative",
+                "transition-colors",
+                timeIndex % 2 === 0 ? "bg-[#F1F0FB]" : "bg-white"
+              )}>
+                <div className="text-xs text-[#6B7280] whitespace-pre-line">
+                  {time.display}
+                </div>
+              </div>
+              {/* Day columns */}
+              {weekDays.map((_, dayIndex) => (
                 <div 
                   key={dayIndex}
                   className={cn(
-                    "p-2 border-r last:border-r-0 relative",
+                    "p-2 border-r last:border-r-0",
                     "transition-colors",
                     timeIndex % 2 === 0 ? "bg-[#F1F0FB]" : "bg-white"
                   )}
-                >
-                  <div className="absolute top-1 left-2 text-xs text-[#6B7280] whitespace-pre-line">
-                    {dayIndex === 0 && time.display}
-                  </div>
-                </div>
+                />
               ))}
             </div>
           ))}
