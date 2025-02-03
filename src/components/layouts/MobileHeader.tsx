@@ -20,9 +20,9 @@ export function MobileHeader() {
             <Button 
               variant="ghost" 
               size="icon"
-              className="h-10 w-10 bg-[#6366F1]/10 hover:bg-[#6366F1]/20 transition-colors rounded-full"
+              className="h-10 w-10 bg-[#8B5CF6] hover:bg-[#7C3AED] transition-colors rounded-full"
             >
-              <Plus className="h-5 w-5 text-[#6366F1]" />
+              <Plus className="h-5 w-5 text-white" />
             </Button>
           </AddTaskDrawer>
           <HeaderUserMenu />
