@@ -22,7 +22,7 @@ export function useAudioRecording(onTranscriptionComplete: (text: string) => voi
     const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
 
     // If volume is below threshold (silence), start timeout
-    if (average < 5) { // Adjust this threshold as needed
+    if (average < 5) {
       if (!silenceTimeoutRef.current) {
         silenceTimeoutRef.current = setTimeout(() => {
           stopRecording();
@@ -54,7 +54,14 @@ export function useAudioRecording(onTranscriptionComplete: (text: string) => voi
       source.connect(analyserRef.current);
       analyserRef.current.fftSize = 256;
 
-      const recorder = new MediaRecorder(stream);
+      // Use different MIME types based on platform
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const mimeType = isIOS ? 'audio/mp4' : 'audio/webm';
+      
+      const recorder = new MediaRecorder(stream, {
+        mimeType: isIOS ? 'audio/mp4' : 'audio/webm;codecs=opus'
+      });
+      
       const audioChunks: Blob[] = [];
 
       recorder.ondataavailable = (event) => {
@@ -69,7 +76,7 @@ export function useAudioRecording(onTranscriptionComplete: (text: string) => voi
         }
         analyserRef.current = null;
 
-        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        const audioBlob = new Blob(audioChunks, { type: mimeType });
         const reader = new FileReader();
         
         reader.onload = async () => {

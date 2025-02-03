@@ -48,14 +48,19 @@ serve(async (req) => {
       throw new Error('No audio data provided')
     }
 
+    console.log('Processing audio transcription request...');
+
     // Process audio in chunks
     const binaryAudio = processBase64Chunks(audio)
     
-    // Prepare form data
+    // Prepare form data with more flexible MIME type
     const formData = new FormData()
-    const blob = new Blob([binaryAudio], { type: 'audio/webm' })
-    formData.append('file', blob, 'audio.webm')
+    // Use audio/mp4 for iOS recordings
+    const blob = new Blob([binaryAudio], { type: 'audio/mp4' })
+    formData.append('file', blob, 'audio.m4a')
     formData.append('model', 'whisper-1')
+
+    console.log('Sending request to OpenAI...');
 
     // Send to OpenAI
     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
@@ -67,10 +72,13 @@ serve(async (req) => {
     })
 
     if (!response.ok) {
-      throw new Error(`OpenAI API error: ${await response.text()}`)
+      const errorText = await response.text();
+      console.error('OpenAI API error:', errorText);
+      throw new Error(`OpenAI API error: ${errorText}`)
     }
 
     const result = await response.json()
+    console.log('Transcription successful:', result.text);
 
     return new Response(
       JSON.stringify({ text: result.text }),
@@ -78,6 +86,7 @@ serve(async (req) => {
     )
 
   } catch (error) {
+    console.error('Transcription error:', error.message);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
