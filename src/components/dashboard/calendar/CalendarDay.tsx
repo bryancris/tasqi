@@ -1,47 +1,53 @@
 import { Task } from "../TaskBoard";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
-import { getPriorityColor } from "@/utils/taskColors";
 
 interface CalendarDayProps {
   date: Date;
   isCurrentMonth: boolean;
   isToday: boolean;
   tasks: Task[];
-  onTaskClick?: (task: Task) => void;
+  onTaskClick: (task: Task) => void;
+  onDateClick?: (date: Date) => void;
 }
 
-export function CalendarDay({ date, isCurrentMonth, isToday, tasks, onTaskClick }: CalendarDayProps) {
+export function CalendarDay({ 
+  date, 
+  isCurrentMonth, 
+  isToday, 
+  tasks, 
+  onTaskClick,
+  onDateClick 
+}: CalendarDayProps) {
+  const dayNumber = date.getDate();
+  
+  const handleDayClick = () => {
+    if (onDateClick) {
+      onDateClick(date);
+    }
+  };
+
   return (
-    <div
-      className={cn(
-        "min-h-[120px] bg-white p-2",
-        !isCurrentMonth && "bg-gray-50",
-        "flex flex-col gap-1"
-      )}
+    <div 
+      onClick={handleDayClick}
+      className={`
+        min-h-[120px] p-2 bg-white cursor-pointer
+        ${!isCurrentMonth && 'text-gray-400'}
+        ${isToday && 'bg-blue-50'}
+        hover:bg-gray-50 transition-colors
+      `}
     >
-      <span
-        className={cn(
-          "inline-flex h-6 w-6 items-center justify-center rounded-full text-sm",
-          !isCurrentMonth && "text-gray-400",
-          isToday && "bg-primary text-primary-foreground font-semibold"
-        )}
-      >
-        {format(date, "d")}
-      </span>
-      <div className="flex flex-col gap-1 mt-1">
+      <div className="text-sm font-medium mb-1">{dayNumber}</div>
+      <div className="space-y-1">
         {tasks.map((task) => (
-          <button
+          <div
             key={task.id}
-            onClick={() => onTaskClick?.(task)}
-            className={cn(
-              "text-left px-2 py-1 rounded text-xs text-white truncate cursor-pointer transition-colors",
-              task.status === 'completed' ? 'bg-gray-500' : getPriorityColor(task.priority),
-              "hover:opacity-90"
-            )}
+            onClick={(e) => {
+              e.stopPropagation();
+              onTaskClick(task);
+            }}
+            className="text-xs p-1 bg-blue-100 rounded cursor-pointer hover:bg-blue-200 transition-colors truncate"
           >
             {task.title}
-          </button>
+          </div>
         ))}
       </div>
     </div>

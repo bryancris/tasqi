@@ -9,9 +9,10 @@ import { EditTaskDrawer } from "./EditTaskDrawer";
 
 interface CalendarProps {
   initialDate?: Date;
+  onDateSelect?: (date: Date) => void;
 }
 
-export function Calendar({ initialDate }: CalendarProps) {
+export function Calendar({ initialDate, onDateSelect }: CalendarProps) {
   const [currentMonth, setCurrentMonth] = useState<Date>(initialDate || new Date());
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
@@ -91,6 +92,7 @@ export function Calendar({ initialDate }: CalendarProps) {
                 isToday={isToday}
                 tasks={dayTasks}
                 onTaskClick={handleTaskClick}
+                onDateClick={onDateSelect}
               />
             );
           })}
