@@ -48,14 +48,14 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange }: MobileTask
 
   return (
     <div className="h-[calc(100vh-144px)] overflow-hidden">
-      <Card className="h-full">
-        <CardHeader className="pb-4 border-b">
+      <Card className="h-full border-none shadow-none bg-transparent">
+        <CardHeader className="pb-3 px-1">
           <CardTitle className="text-2xl font-semibold">Task Board</CardTitle>
         </CardHeader>
-        <CardContent className="overflow-y-auto h-[calc(100%-5rem)]">
+        <CardContent className="overflow-y-auto h-[calc(100%-5rem)] p-1">
           <DndContext sensors={sensors} onDragEnd={handleReorder}>
             <SortableContext items={draggableTaskIds} strategy={verticalListSortingStrategy}>
-              <div className="flex flex-col gap-4 pb-20">
+              <div className="flex flex-col gap-3 pb-20">
                 {sortedTasks.map((task, index) => (
                   <TaskCard
                     key={task.id}

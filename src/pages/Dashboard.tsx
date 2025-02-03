@@ -42,7 +42,7 @@ const Dashboard = () => {
     return (
       <div className="h-screen bg-gray-50">
         <MobileHeader />
-        <main className="pt-[72px] pb-[76px] px-4">
+        <main className="pt-[72px] pb-[76px] px-2">
           {renderContent()}
         </main>
         <MobileFooter />
