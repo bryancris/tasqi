@@ -45,11 +45,11 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
     .map(task => task.id);
 
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-4">
+    <Card className="flex flex-col h-full overflow-hidden">
+      <CardHeader className="flex-none pb-4 border-b">
         <CardTitle className="text-2xl font-semibold">Task Board</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1 overflow-y-auto">
         <DndContext sensors={sensors} onDragEnd={handleReorder}>
           <SortableContext items={draggableTaskIds} strategy={verticalListSortingStrategy}>
             <div className="flex flex-col gap-4 min-h-[600px] pb-40 relative">

@@ -10,8 +10,10 @@ interface DesktopTaskViewProps {
 
 export function DesktopTaskView({ tasks, selectedDate, onDateChange }: DesktopTaskViewProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <TaskBoardSection tasks={tasks} />
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
+      <div className="flex flex-col min-h-0">
+        <TaskBoardSection tasks={tasks} />
+      </div>
       <TimelineSection 
         tasks={tasks} 
         selectedDate={selectedDate} 
