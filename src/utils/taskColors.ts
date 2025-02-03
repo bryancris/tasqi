@@ -25,7 +25,7 @@ export function getPriorityColor(priority?: TaskPriority) {
     case 'medium':
       return 'bg-[#F97316]';
     case 'low':
-      return 'bg-[#8B5CF6]';
+      return 'bg-[#22C55E]'; // Changed to green
     default:
       return 'bg-blue-500';
   }
