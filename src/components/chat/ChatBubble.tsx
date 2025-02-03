@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useChat } from "@/hooks/use-chat";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ChatDialog } from "./components/ChatDialog";
-import { ChatButton } from "./components/ChatButton";
 import { MobileChatView } from "./components/MobileChatView";
 
 interface ChatBubbleProps {
@@ -43,7 +42,6 @@ export function ChatBubble({ isOpen, onOpenChange, variant = 'floating' }: ChatB
   if (isMobile) {
     return (
       <div className="fixed bottom-4 right-4 z-50">
-        {variant === 'floating' && <ChatButton onClick={() => handleOpenChange(true)} />}
         {isDialogOpen && (
           <MobileChatView
             onClose={() => handleOpenChange(false)}
@@ -83,7 +81,6 @@ export function ChatBubble({ isOpen, onOpenChange, variant = 'floating' }: ChatB
         onMessageChange={setMessage}
         onSubmit={handleSubmit}
       />
-      {!isDialogOpen && <ChatButton onClick={() => handleOpenChange(true)} />}
     </div>
   );
 }
