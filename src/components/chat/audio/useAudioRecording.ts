@@ -2,13 +2,22 @@ import { useState, useRef, useCallback } from 'react';
 import { useMicrophoneAccess } from './useMicrophoneAccess';
 import { useSilenceDetection } from './useSilenceDetection';
 import { createAudioAnalyser, getAudioMimeType } from './audioUtils';
+import { useToast } from '@/hooks/use-toast';
 
 export function useAudioRecording(onTranscriptionComplete: (text: string) => void) {
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const { requestMicrophoneAccess } = useMicrophoneAccess();
+  const { toast } = useToast();
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   const stopRecording = useCallback(() => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      setIsRecording(false);
+      return;
+    }
+
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
@@ -17,9 +26,58 @@ export function useAudioRecording(onTranscriptionComplete: (text: string) => voi
 
   const { startSilenceDetection, stopSilenceDetection } = useSilenceDetection(stopRecording);
 
+  const startNativeRecording = useCallback(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      return false;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-US';
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        onTranscriptionComplete(transcript);
+      };
+
+      recognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        toast({
+          title: "Speech Recognition Error",
+          description: "Please try again or use the keyboard",
+          variant: "destructive",
+        });
+        setIsRecording(false);
+      };
+
+      recognition.onend = () => {
+        setIsRecording(false);
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+      setIsRecording(true);
+      return true;
+    } catch (error) {
+      console.error('Failed to start native speech recognition:', error);
+      return false;
+    }
+  }, [onTranscriptionComplete, toast]);
+
   const startRecording = useCallback(async () => {
+    // Try native speech recognition first
+    if (startNativeRecording()) {
+      return;
+    }
+
+    // Fall back to OpenAI implementation
     try {
       const stream = await requestMicrophoneAccess();
+      if (!stream) return;
+
       const { analyser } = createAudioAnalyser(stream);
       const { mimeType, codecType } = getAudioMimeType();
       
@@ -60,6 +118,11 @@ export function useAudioRecording(onTranscriptionComplete: (text: string) => voi
               onTranscriptionComplete(text);
             } catch (error) {
               console.error('Transcription error:', error);
+              toast({
+                title: "Transcription Failed",
+                description: "Please try again or use the keyboard",
+                variant: "destructive",
+              });
             }
           }
         };
@@ -73,8 +136,13 @@ export function useAudioRecording(onTranscriptionComplete: (text: string) => voi
       setIsRecording(true);
     } catch (error) {
       console.error('Failed to start recording:', error);
+      toast({
+        title: "Recording Failed",
+        description: "Please try again or use the keyboard",
+        variant: "destructive",
+      });
     }
-  }, [onTranscriptionComplete, requestMicrophoneAccess, startSilenceDetection, stopSilenceDetection]);
+  }, [onTranscriptionComplete, requestMicrophoneAccess, startSilenceDetection, stopSilenceDetection, toast]);
 
   return {
     isRecording,

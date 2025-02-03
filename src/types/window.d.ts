@@ -1,3 +1,4 @@
 interface Window {
-  showInstallPrompt: () => Promise<void>;
+  SpeechRecognition: typeof SpeechRecognition;
+  webkitSpeechRecognition: typeof SpeechRecognition;
 }
