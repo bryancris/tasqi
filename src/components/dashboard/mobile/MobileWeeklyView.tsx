@@ -63,7 +63,8 @@ export function MobileWeeklyView() {
     
     if (!over) return;
 
-    const taskId = active.id;
+    // Convert the taskId from UniqueIdentifier (string | number) to number
+    const taskId = typeof active.id === 'string' ? parseInt(active.id, 10) : active.id;
     const [dayIndex, timeIndex] = over.id.toString().split('-').map(Number);
     const newDate = weekDays[dayIndex];
     const newHour = timeSlots[timeIndex].hour;
