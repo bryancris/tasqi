@@ -29,6 +29,7 @@ export function ToolsSection() {
       <Button 
         variant="ghost" 
         className="w-full justify-start text-[#EA580C] hover:bg-[#E5E7EB]"
+        onClick={() => navigate("/self-care")}
       >
         <Zap className="mr-2 h-4 w-4" />
         Self-Care

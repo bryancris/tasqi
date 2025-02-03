@@ -12,6 +12,7 @@ import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import Notes from "./pages/Notes";
 import Analytics from "./pages/Analytics";
+import SelfCare from "./pages/SelfCare";
 
 const queryClient = new QueryClient();
 
@@ -55,6 +56,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Analytics />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/self-care"
+                element={
+                  <ProtectedRoute>
+                    <SelfCare />
                   </ProtectedRoute>
                 }
               />
