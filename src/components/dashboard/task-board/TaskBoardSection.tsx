@@ -33,7 +33,8 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
               <div 
                 {...provided.droppableProps}
                 ref={provided.innerRef}
-                className="space-y-4 min-h-[500px] pb-20 relative"
+                className="space-y-4 min-h-[500px]"
+                style={{ paddingBottom: '160px' }}
               >
                 {displayTasks.map((task, index) => (
                   <Draggable 
