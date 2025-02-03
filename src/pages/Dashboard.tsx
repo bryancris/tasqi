@@ -8,6 +8,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { MobileHeader } from "@/components/layouts/MobileHeader";
+import { MobileFooter } from "@/components/layouts/MobileFooter";
 
 const Dashboard = () => {
   const [view, setView] = useState<'tasks' | 'calendar' | 'yearly' | 'weekly'>('tasks');
@@ -19,9 +21,7 @@ const Dashboard = () => {
   useEffect(() => {
     const initializeDashboard = async () => {
       try {
-        // Add a small delay to prevent ResizeObserver issues
         await new Promise(resolve => setTimeout(resolve, 100));
-        
         if (session) {
           console.log("Session found, initializing dashboard");
           setIsLoading(false);
@@ -52,6 +52,37 @@ const Dashboard = () => {
             <Skeleton className="h-[150px]" />
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (isMobile) {
+    return (
+      <div className="flex flex-col h-screen bg-background">
+        <MobileHeader />
+        <main className="flex-1 overflow-y-auto p-4 mt-[72px] mb-[64px]">
+          {view === 'tasks' && (
+            <TaskBoard 
+              selectedDate={selectedDate} 
+              onDateChange={handleDateChange} 
+            />
+          )}
+          {view === 'weekly' && (
+            <WeeklyCalendar initialDate={selectedDate} />
+          )}
+          {view === 'calendar' && (
+            <Calendar 
+              initialDate={selectedDate}
+              onDateSelect={handleDateChange}
+            />
+          )}
+          {view === 'yearly' && (
+            <YearlyCalendar 
+              onDateSelect={handleDateChange}
+            />
+          )}
+        </main>
+        <MobileFooter />
       </div>
     );
   }
