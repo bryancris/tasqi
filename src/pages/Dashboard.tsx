@@ -71,7 +71,7 @@ const Dashboard = () => {
       )}
       {view === 'calendar' && (
         <Calendar 
-          selectedDate={selectedDate}
+          initialDate={selectedDate}
           onDateSelect={handleDateChange}
         />
       )}
