@@ -15,7 +15,6 @@ export function CalendarSection({ onViewChange }: CalendarSectionProps) {
   const handleViewChange = (newView: 'daily' | 'weekly' | 'monthly' | 'yearly') => {
     setView(newView);
     
-    // Map the view directly without setTimeout
     if (onViewChange) {
       const mappedView = (() => {
         switch (newView) {
@@ -30,23 +29,13 @@ export function CalendarSection({ onViewChange }: CalendarSectionProps) {
         }
       })();
 
-      // Only navigate if we're not already on the dashboard
-      if (location.pathname !== '/dashboard') {
-        navigate('/dashboard', { 
-          state: { targetView: mappedView }
-        });
-      }
+      // First navigate to dashboard
+      navigate('/dashboard');
       
+      // Then immediately set the view
       onViewChange(mappedView);
     }
   };
-
-  // Effect to handle view restoration when navigating back to dashboard
-  useEffect(() => {
-    if (location.pathname === '/dashboard' && location.state?.targetView) {
-      onViewChange?.(location.state.targetView);
-    }
-  }, [location.pathname, location.state, onViewChange]);
 
   return (
     <div className="space-y-2">
