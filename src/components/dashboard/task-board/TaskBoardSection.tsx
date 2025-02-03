@@ -33,7 +33,7 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
               <div
                 {...provided.droppableProps}
                 ref={provided.innerRef}
-                className="min-h-[500px] pb-40"
+                className="flex flex-col gap-4 min-h-[500px] pb-40"
               >
                 {displayTasks.map((task, index) => (
                   <Draggable
@@ -48,7 +48,6 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
                         style={{
                           ...provided.draggableProps.style,
                           opacity: snapshot.isDragging ? 0.5 : 1,
-                          marginBottom: '1rem'
                         }}
                       >
                         <TaskCard

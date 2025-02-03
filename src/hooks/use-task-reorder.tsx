@@ -15,7 +15,7 @@ export function useTaskReorder(tasks: Task[]) {
     if (destination.index === source.index) return;
 
     try {
-      const orderedTasks = [...tasks];
+      const orderedTasks = Array.from(tasks);
       const [movedTask] = orderedTasks.splice(source.index, 1);
       orderedTasks.splice(destination.index, 0, movedTask);
 
@@ -25,14 +25,14 @@ export function useTaskReorder(tasks: Task[]) {
         position: (index + 1) * 1000
       }));
 
+      // Optimistically update the cache
+      queryClient.setQueryData(['tasks'], updatedTasks);
+
       // Prepare positions array for database update
       const positions = updatedTasks.map(task => ({
         task_id: task.id,
         new_position: task.position
       }));
-
-      // Optimistically update the cache
-      queryClient.setQueryData(['tasks'], updatedTasks);
 
       // Update database
       const { error } = await supabase.rpc('reorder_tasks', {
@@ -46,6 +46,7 @@ export function useTaskReorder(tasks: Task[]) {
 
     } catch (error) {
       console.error('Error reordering tasks:', error);
+      // Revert to original order on error
       queryClient.setQueryData(['tasks'], tasks);
       
       toast({
