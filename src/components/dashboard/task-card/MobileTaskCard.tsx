@@ -5,13 +5,12 @@ import { MobileTaskContent } from "../MobileTaskContent";
 import { GripVertical } from "lucide-react";
 import { getTimeDisplay } from "@/utils/dateUtils";
 import { getPriorityColor } from "@/utils/taskColors";
-import { DraggableProvidedDragHandleProps } from "react-beautiful-dnd";
 
 interface MobileTaskCardProps {
   task: Task;
   onComplete: () => void;
   onClick: () => void;
-  dragHandleProps?: DraggableProvidedDragHandleProps;
+  dragHandleProps: any;
 }
 
 export function MobileTaskCard({ task, onComplete, onClick, dragHandleProps }: MobileTaskCardProps) {
@@ -26,7 +25,7 @@ export function MobileTaskCard({ task, onComplete, onClick, dragHandleProps }: M
       onClick={onClick}
     >
       <div className="flex items-center gap-3">
-        <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing">
+        <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing touch-none">
           <GripVertical className="h-5 w-5 text-white/50 hover:text-white/75 transition-colors" />
         </div>
         <MobileTaskContent 

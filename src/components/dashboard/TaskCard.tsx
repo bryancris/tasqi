@@ -6,19 +6,36 @@ import { useState } from "react";
 import { EditTaskDrawer } from "./EditTaskDrawer";
 import { MobileTaskCard } from "./task-card/MobileTaskCard";
 import { DesktopTaskCard } from "./task-card/DesktopTaskCard";
-import { DraggableProvidedDragHandleProps } from "react-beautiful-dnd";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface TaskCardProps {
   task: Task;
   isMobile?: boolean;
   index: number;
-  dragHandleProps?: DraggableProvidedDragHandleProps;
 }
 
-export function TaskCard({ task, isMobile = false, index, dragHandleProps }: TaskCardProps) {
+export function TaskCard({ task, isMobile = false, index }: TaskCardProps) {
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({
+    id: task.id,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
 
   const handleComplete = async () => {
     try {
@@ -57,12 +74,14 @@ export function TaskCard({ task, isMobile = false, index, dragHandleProps }: Tas
 
   return (
     <>
-      <CardComponent 
-        task={task} 
-        onComplete={handleComplete} 
-        onClick={handleCardClick} 
-        dragHandleProps={dragHandleProps}
-      />
+      <div ref={setNodeRef} style={style} {...attributes}>
+        <CardComponent 
+          task={task} 
+          onComplete={handleComplete} 
+          onClick={handleCardClick} 
+          dragHandleProps={listeners}
+        />
+      </div>
       <EditTaskDrawer 
         task={task} 
         open={isEditDrawerOpen} 
