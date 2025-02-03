@@ -32,6 +32,14 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/dashboard/weekly"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AuthProvider>
