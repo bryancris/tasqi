@@ -52,7 +52,13 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
       new_position: (index + 1) * 1000
     }));
 
-    handleReorder({ destination: { index: newIndex }, source: { index: oldIndex } }, positions);
+    // Create the event object expected by handleReorder
+    const reorderEvent = {
+      source: { index: oldIndex },
+      destination: { index: newIndex }
+    };
+
+    handleReorder(reorderEvent);
   };
 
   return (
