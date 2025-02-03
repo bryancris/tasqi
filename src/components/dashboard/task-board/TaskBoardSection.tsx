@@ -52,7 +52,7 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-2xl font-semibold text-red-500">Task Board</CardTitle>
+        <CardTitle className="text-2xl font-semibold">Task Board</CardTitle>
       </CardHeader>
       <CardContent>
         <DndContext sensors={sensors} onDragEnd={handleReorder}>
