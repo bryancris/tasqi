@@ -40,11 +40,11 @@ const Dashboard = () => {
 
   if (isMobile) {
     return (
-      <div className="h-screen bg-white">
+      <div className="h-screen bg-gray-50">
         <MobileHeader />
-        <div className="pt-[72px] pb-[80px]">
-          <TaskBoard selectedDate={selectedDate} onDateChange={handleDateChange} />
-        </div>
+        <main className="pt-[72px] pb-[76px] px-4">
+          {renderContent()}
+        </main>
         <MobileFooter />
       </div>
     );

@@ -1,4 +1,10 @@
 import { Task } from "./TaskBoard";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TaskCard } from "./TaskCard";
+import { DndContext, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { useTaskReorder } from "@/hooks/use-task-reorder";
+import { startOfDay, isAfter } from "date-fns";
 
 export interface MobileTaskViewProps {
   tasks: Task[];
@@ -7,19 +13,63 @@ export interface MobileTaskViewProps {
 }
 
 export function MobileTaskView({ tasks, selectedDate, onDateChange }: MobileTaskViewProps) {
+  const { handleDragEnd: handleReorder } = useTaskReorder(tasks);
+  const todayStart = startOfDay(new Date());
+
+  const sensors = useSensors(
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 10,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5,
+      },
+    })
+  );
+
+  const shouldShowCompletedTask = (task: Task) => {
+    return task.completed_at && isAfter(new Date(task.completed_at), todayStart);
+  };
+
+  const sortedTasks = [...tasks]
+    .filter(task => task.status !== 'completed' || shouldShowCompletedTask(task))
+    .sort((a, b) => {
+      if (a.status === 'completed' && b.status !== 'completed') return 1;
+      if (a.status !== 'completed' && b.status === 'completed') return -1;
+      return (a.position || 0) - (b.position || 0);
+    });
+
+  const draggableTaskIds = sortedTasks
+    .filter(task => task.status !== 'completed')
+    .map(task => task.id);
+
   return (
-    <div>
-      <h2 className="text-lg font-semibold">Tasks for {selectedDate.toDateString()}</h2>
-      <ul className="space-y-4">
-        {tasks.map((task) => (
-          <li key={task.id} className="p-4 border rounded-md">
-            <h3 className="font-medium">{task.title}</h3>
-            <p>{task.description}</p>
-            <p className="text-sm text-gray-500">Priority: {task.priority}</p>
-            <p className="text-sm text-gray-500">Status: {task.status}</p>
-          </li>
-        ))}
-      </ul>
+    <div className="h-[calc(100vh-144px)] overflow-hidden">
+      <Card className="h-full">
+        <CardHeader className="pb-4 border-b">
+          <CardTitle className="text-2xl font-semibold">Task Board</CardTitle>
+        </CardHeader>
+        <CardContent className="overflow-y-auto h-[calc(100%-5rem)]">
+          <DndContext sensors={sensors} onDragEnd={handleReorder}>
+            <SortableContext items={draggableTaskIds} strategy={verticalListSortingStrategy}>
+              <div className="flex flex-col gap-4 pb-20">
+                {sortedTasks.map((task, index) => (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    index={index}
+                    isMobile={true}
+                    isDraggable={task.status !== 'completed'}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        </CardContent>
+      </Card>
     </div>
   );
 }
