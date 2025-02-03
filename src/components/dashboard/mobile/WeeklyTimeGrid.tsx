@@ -1,4 +1,7 @@
 import { cn } from "@/lib/utils";
+import { Task } from "../TaskBoard";
+import { isSameDay, parseISO } from "date-fns";
+import { getPriorityColor } from "@/utils/taskColors";
 
 interface TimeSlot {
   hour: number;
@@ -9,9 +12,10 @@ interface WeeklyTimeGridProps {
   timeSlots: TimeSlot[];
   weekDays: Date[];
   showFullWeek: boolean;
+  tasks: Task[];
 }
 
-export function WeeklyTimeGrid({ timeSlots, weekDays, showFullWeek }: WeeklyTimeGridProps) {
+export function WeeklyTimeGrid({ timeSlots, weekDays, showFullWeek, tasks }: WeeklyTimeGridProps) {
   return (
     <div className="flex-1 overflow-y-auto scrollbar-hide">
       <div className="divide-y divide-gray-300">
@@ -35,18 +39,44 @@ export function WeeklyTimeGrid({ timeSlots, weekDays, showFullWeek }: WeeklyTime
               </div>
             </div>
             {/* Day columns */}
-            {weekDays.map((_, dayIndex) => (
-              <div 
-                key={dayIndex}
-                className={cn(
-                  "p-2 relative",
-                  "transition-colors",
-                  timeIndex % 2 === 0 ? "bg-[#F8F8FC]" : "bg-white",
-                  "border-r border-gray-300 last:border-r-0",
-                  "hover:bg-gray-50/50"
-                )}
-              />
-            ))}
+            {weekDays.map((day, dayIndex) => {
+              const dayTasks = tasks.filter(task => {
+                if (!task.date || !task.start_time) return false;
+                const taskDate = parseISO(task.date);
+                const taskHour = parseInt(task.start_time.split(':')[0]);
+                return isSameDay(taskDate, day) && taskHour === time.hour;
+              });
+
+              return (
+                <div 
+                  key={dayIndex}
+                  className={cn(
+                    "p-2 relative",
+                    "transition-colors",
+                    timeIndex % 2 === 0 ? "bg-[#F8F8FC]" : "bg-white",
+                    "border-r border-gray-300 last:border-r-0",
+                    "hover:bg-gray-50/50"
+                  )}
+                >
+                  {dayTasks.map((task) => (
+                    <div
+                      key={task.id}
+                      className={cn(
+                        "p-2 rounded-md mb-1 text-sm text-white",
+                        getPriorityColor(task.priority)
+                      )}
+                    >
+                      <div className="font-medium">{task.title}</div>
+                      {task.start_time && task.end_time && (
+                        <div className="text-xs opacity-90">
+                          {`${task.start_time} - ${task.end_time}`}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
           </div>
         ))}
       </div>

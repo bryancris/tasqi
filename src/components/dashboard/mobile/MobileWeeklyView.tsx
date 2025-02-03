@@ -3,6 +3,9 @@ import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, addWeeks, s
 import { WeeklyViewHeader } from "./WeeklyViewHeader";
 import { WeeklyDaysHeader } from "./WeeklyDaysHeader";
 import { WeeklyTimeGrid } from "./WeeklyTimeGrid";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Task } from "../TaskBoard";
 
 export function MobileWeeklyView() {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -21,6 +24,20 @@ export function MobileWeeklyView() {
       hour,
       display: `${hour}\nAM`
     };
+  });
+
+  const { data: tasks = [] } = useQuery({
+    queryKey: ['tasks'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('status', 'scheduled')
+        .order('position', { ascending: true });
+      
+      if (error) throw error;
+      return data as Task[];
+    },
   });
 
   const handlePreviousWeek = () => {
@@ -48,6 +65,7 @@ export function MobileWeeklyView() {
         timeSlots={timeSlots}
         weekDays={weekDays}
         showFullWeek={showFullWeek}
+        tasks={tasks}
       />
     </div>
   );
