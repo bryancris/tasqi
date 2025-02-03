@@ -52,7 +52,7 @@ export function WeeklyTimeGrid({ timeSlots, weekDays, showFullWeek, tasks }: Wee
                 <div 
                   key={dayIndex}
                   className={cn(
-                    "p-1", // Reduced padding to maximize space
+                    "pl-0.5 pr-1 py-1", // Reduced left padding significantly
                     "relative",
                     "transition-colors",
                     timeIndex % 2 === 0 ? "bg-[#F8F8FC]" : "bg-white",
@@ -64,10 +64,10 @@ export function WeeklyTimeGrid({ timeSlots, weekDays, showFullWeek, tasks }: Wee
                     <div
                       key={task.id}
                       className={cn(
-                        "px-1.5 py-1 rounded-md mb-0.5", // Reduced padding
-                        "text-[11px] leading-tight", // Smaller font size and tighter line height
-                        "text-white break-words", // Allow text to break and wrap
-                        "h-full", // Fill available height
+                        "px-1 py-1 rounded-md mb-0.5", // Reduced horizontal padding
+                        "text-[11px] leading-tight",
+                        "text-white break-words",
+                        "h-full",
                         getPriorityColor(task.priority)
                       )}
                     >
