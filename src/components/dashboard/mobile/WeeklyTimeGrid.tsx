@@ -14,7 +14,7 @@ interface WeeklyTimeGridProps {
 export function WeeklyTimeGrid({ timeSlots, weekDays, showFullWeek }: WeeklyTimeGridProps) {
   return (
     <div className="flex-1 overflow-y-auto scrollbar-hide">
-      <div className="divide-y divide-gray-200">
+      <div className="divide-y divide-gray-300">
         {timeSlots.map((time, timeIndex) => (
           <div 
             key={timeIndex} 
