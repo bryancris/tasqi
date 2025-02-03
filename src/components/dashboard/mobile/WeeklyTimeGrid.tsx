@@ -67,11 +67,6 @@ export function WeeklyTimeGrid({ timeSlots, weekDays, showFullWeek, tasks }: Wee
                       )}
                     >
                       <div className="font-medium">{task.title}</div>
-                      {task.start_time && task.end_time && (
-                        <div className="text-xs opacity-90">
-                          {`${task.start_time} - ${task.end_time}`}
-                        </div>
-                      )}
                     </div>
                   ))}
                 </div>
