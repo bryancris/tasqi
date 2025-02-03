@@ -71,7 +71,7 @@ const Dashboard = () => {
               onDateChange={handleDateChange} 
             />
           )}
-          {currentPath === '/calendar' && (
+          {currentPath === '/dashboard/weekly' && (
             <MobileWeeklyView />
           )}
         </main>
