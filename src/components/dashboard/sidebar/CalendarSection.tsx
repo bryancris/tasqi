@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { CalendarDays } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 interface CalendarSectionProps {
   onViewChange?: (view: 'tasks' | 'calendar' | 'yearly' | 'weekly') => void;
@@ -8,21 +9,27 @@ interface CalendarSectionProps {
 
 export function CalendarSection({ onViewChange }: CalendarSectionProps) {
   const [view, setView] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('daily');
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const handleViewChange = (newView: 'daily' | 'weekly' | 'monthly' | 'yearly') => {
     setView(newView);
     if (onViewChange) {
       switch (newView) {
         case 'yearly':
+          navigate('/dashboard');
           onViewChange('yearly');
           break;
         case 'monthly':
+          navigate('/dashboard');
           onViewChange('calendar');
           break;
         case 'weekly':
+          navigate('/dashboard');
           onViewChange('weekly');
           break;
         default:
+          navigate('/dashboard');
           onViewChange('tasks');
       }
     }
