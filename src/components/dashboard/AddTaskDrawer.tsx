@@ -15,7 +15,11 @@ import { TaskForm } from "./TaskForm";
 import { createTask } from "@/utils/taskUtils";
 import { TaskPriority } from "./TaskBoard";
 
-export function AddTaskDrawer() {
+interface AddTaskDrawerProps {
+  children?: React.ReactNode;
+}
+
+export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [isScheduled, setIsScheduled] = useState(false);
@@ -32,7 +36,6 @@ export function AddTaskDrawer() {
     try {
       setIsLoading(true);
       
-      // Only include date and times if the task is scheduled and has values
       const taskData = {
         title,
         description,
@@ -51,7 +54,6 @@ export function AddTaskDrawer() {
         description: "Task created successfully",
       });
 
-      // Reset form
       setTitle("");
       setDescription("");
       setIsScheduled(false);
@@ -61,7 +63,6 @@ export function AddTaskDrawer() {
       setPriority("low");
       setReminderEnabled(false);
 
-      // Refresh tasks list
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
     } catch (error) {
       console.error("Error creating task:", error);
@@ -78,9 +79,11 @@ export function AddTaskDrawer() {
   return (
     <Drawer>
       <DrawerTrigger asChild>
-        <Button className="w-full bg-[#22C55E] hover:bg-[#16A34A] text-white text-base font-semibold py-6">
-          + Add a task
-        </Button>
+        {children || (
+          <Button className="w-full bg-[#22C55E] hover:bg-[#16A34A] text-white text-base font-semibold py-6">
+            + Add a task
+          </Button>
+        )}
       </DrawerTrigger>
       <DrawerContent className="w-[400px] left-0 right-auto">
         <div className="mx-auto w-full max-w-sm">

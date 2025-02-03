@@ -1,5 +1,8 @@
 import { format } from "date-fns";
 import { HeaderUserMenu } from "@/components/dashboard/header/HeaderUserMenu";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { AddTaskDrawer } from "@/components/dashboard/AddTaskDrawer";
 
 export function MobileHeader() {
   const currentTime = format(new Date(), 'HH:mm');
@@ -12,7 +15,18 @@ export function MobileHeader() {
           <h1 className="text-[#6366F1] font-medium">TasqiAI</h1>
           <p className="text-sm text-gray-500">{currentTime} {currentDate}</p>
         </div>
-        <HeaderUserMenu />
+        <div className="flex items-center gap-2">
+          <AddTaskDrawer>
+            <Button 
+              variant="ghost" 
+              size="icon"
+              className="h-10 w-10"
+            >
+              <Plus className="h-5 w-5" />
+            </Button>
+          </AddTaskDrawer>
+          <HeaderUserMenu />
+        </div>
       </div>
     </div>
   );
