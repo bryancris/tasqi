@@ -9,7 +9,7 @@ interface WeeklyDaysHeaderProps {
 export function WeeklyDaysHeader({ weekDays, showFullWeek }: WeeklyDaysHeaderProps) {
   return (
     <div className={cn(
-      "grid border-b sticky top-0 bg-[#E5DEFF]",
+      "grid border-b sticky top-0 bg-[#2A9BB5]", // Changed to a medium-dark teal color
       showFullWeek ? "grid-cols-8" : "grid-cols-6"
     )}>
       {/* Time column header */}
@@ -20,10 +20,10 @@ export function WeeklyDaysHeader({ weekDays, showFullWeek }: WeeklyDaysHeaderPro
           key={index}
           className="p-2 text-center border-r last:border-r-0"
         >
-          <div className="text-sm font-medium text-[#6B7280]">
+          <div className="text-sm font-medium text-white/80">
             {format(day, 'EEE')}
           </div>
-          <div className="text-xl font-light text-[#374151] tracking-wide">
+          <div className="text-xl font-light text-white tracking-wide">
             {format(day, 'd')}
           </div>
         </div>
