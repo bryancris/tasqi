@@ -30,18 +30,14 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
         <DragDropContext onDragEnd={handleDragEnd}>
           <Droppable droppableId="tasks">
             {(provided) => (
-              <div 
+              <div
                 {...provided.droppableProps}
                 ref={provided.innerRef}
-                className="space-y-4"
-                style={{ 
-                  minHeight: '500px',
-                  paddingBottom: '160px'
-                }}
+                className="min-h-[500px] pb-40"
               >
                 {displayTasks.map((task, index) => (
-                  <Draggable 
-                    key={task.id} 
+                  <Draggable
+                    key={task.id}
                     draggableId={String(task.id)}
                     index={index}
                   >
@@ -52,12 +48,12 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
                         style={{
                           ...provided.draggableProps.style,
                           opacity: snapshot.isDragging ? 0.5 : 1,
-                          margin: '0 0 8px 0'
+                          marginBottom: '1rem'
                         }}
                       >
-                        <TaskCard 
-                          task={task} 
-                          index={index} 
+                        <TaskCard
+                          task={task}
+                          index={index}
                           dragHandleProps={provided.dragHandleProps}
                         />
                       </div>
