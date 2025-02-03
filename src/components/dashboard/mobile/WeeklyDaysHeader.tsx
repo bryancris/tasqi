@@ -31,9 +31,6 @@ export function WeeklyDaysHeader({ weekDays, showFullWeek }: WeeklyDaysHeaderPro
           <div className="text-base font-semibold text-[#374151]">
             {format(day, 'd')}
           </div>
-          <div className="text-xs text-[#6B7280]">
-            0 Tasks
-          </div>
         </div>
       ))}
     </div>
