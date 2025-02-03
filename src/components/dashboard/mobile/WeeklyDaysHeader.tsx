@@ -13,12 +13,7 @@ export function WeeklyDaysHeader({ weekDays, showFullWeek }: WeeklyDaysHeaderPro
       showFullWeek ? "grid-cols-8" : "grid-cols-6"
     )}>
       {/* Time column header */}
-      <div className="p-2 text-center border-r">
-        <div className="bg-[#2563eb] text-white rounded-lg p-2 text-sm">
-          <div className="text-xs font-medium">Day</div>
-          <div className="text-lg font-bold">7</div>
-        </div>
-      </div>
+      <div className="p-2 text-center border-r" />
       {/* Days */}
       {weekDays.map((day, index) => (
         <div 

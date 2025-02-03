@@ -12,8 +12,10 @@ interface WeeklyViewHeaderProps {
 
 export function WeeklyViewHeader({
   currentDate,
+  showFullWeek,
   onPreviousWeek,
   onNextWeek,
+  onToggleView,
 }: WeeklyViewHeaderProps) {
   return (
     <div className="flex items-center justify-between p-4 border-b bg-[#E5DEFF]">
@@ -28,6 +30,13 @@ export function WeeklyViewHeader({
           onClick={onPreviousWeek}
         >
           <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          onClick={onToggleView}
+          className="h-8 text-xs"
+        >
+          {showFullWeek ? '5 Day' : '7 Day'}
         </Button>
         <Button
           variant="outline"
