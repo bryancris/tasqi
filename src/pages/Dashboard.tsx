@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileHeader } from "@/components/layouts/MobileHeader";
 import { MobileFooter } from "@/components/layouts/MobileFooter";
+import { MobileWeeklyView } from "@/components/dashboard/mobile/MobileWeeklyView";
 
 const Dashboard = () => {
   const [view, setView] = useState<'tasks' | 'calendar' | 'yearly' | 'weekly'>('tasks');
@@ -68,7 +69,7 @@ const Dashboard = () => {
             />
           )}
           {view === 'weekly' && (
-            <WeeklyCalendar initialDate={selectedDate} />
+            <MobileWeeklyView />
           )}
           {view === 'calendar' && (
             <Calendar 
