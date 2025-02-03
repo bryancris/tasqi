@@ -22,7 +22,7 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
     .sort((a, b) => (a.position || 0) - (b.position || 0));
 
   return (
-    <Card className="h-full">
+    <Card>
       <CardHeader>
         <CardTitle>Task Board</CardTitle>
       </CardHeader>
@@ -33,11 +33,7 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
               <div
                 {...provided.droppableProps}
                 ref={provided.innerRef}
-                className="space-y-2 min-h-[500px]"
-                style={{ 
-                  position: 'relative',
-                  paddingBottom: '40px'
-                }}
+                className="flex flex-col gap-4 min-h-[500px] pb-40"
               >
                 {displayTasks.map((task, index) => (
                   <Draggable
@@ -52,7 +48,6 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
                         style={{
                           ...provided.draggableProps.style,
                           opacity: snapshot.isDragging ? 0.5 : 1,
-                          position: snapshot.isDragging ? 'relative' : 'static',
                         }}
                       >
                         <TaskCard
