@@ -27,8 +27,8 @@ export function WeeklyTimeGrid({ timeSlots, weekDays, showFullWeek }: WeeklyTime
             {/* Time column */}
             <div className={cn(
               "p-2 border-r border-gray-300 relative",
-              "transition-colors",
-              timeIndex % 2 === 0 ? "bg-[#F8F8FC]" : "bg-white"
+              "bg-[#B2E3EA]", // Light teal background for time slots
+              "transition-colors"
             )}>
               <div className="text-xs text-[#6B7280] whitespace-pre-line">
                 {time.display}
