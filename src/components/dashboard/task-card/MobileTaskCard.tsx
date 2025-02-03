@@ -24,7 +24,7 @@ export function MobileTaskCard({ task, onComplete, onClick, dragHandleProps }: M
       )}
       onClick={onClick}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-4">
         <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing touch-none">
           <GripVertical className="h-5 w-5 text-white/50 hover:text-white/75 transition-colors" />
         </div>
