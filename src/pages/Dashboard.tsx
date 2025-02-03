@@ -60,7 +60,7 @@ const Dashboard = () => {
     return (
       <div className="flex flex-col h-screen bg-background">
         <MobileHeader />
-        <main className="flex-1 overflow-y-auto p-4 mt-[72px] mb-[64px]">
+        <main className="flex-1 overflow-y-auto scrollbar-hide p-4 mt-[72px] mb-[64px]">
           {view === 'tasks' && (
             <TaskBoard 
               selectedDate={selectedDate} 
