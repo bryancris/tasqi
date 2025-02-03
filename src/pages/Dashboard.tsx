@@ -7,12 +7,14 @@ import { Calendar } from "@/components/dashboard/Calendar";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Dashboard = () => {
   const [view, setView] = useState<'tasks' | 'calendar' | 'yearly' | 'weekly'>('tasks');
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isLoading, setIsLoading] = useState(true);
   const { session } = useAuth();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const initializeDashboard = async () => {
