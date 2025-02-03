@@ -2,15 +2,18 @@ import { Button } from "@/components/ui/button";
 import { PenLine, BarChart2, Zap, MessageSquare } from "lucide-react";
 import { ChatBubble } from "@/components/chat/ChatBubble";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export function ToolsSection() {
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <div className="space-y-2">
       <Button 
         variant="ghost" 
         className="w-full justify-start text-[#9333EA] hover:bg-[#E5E7EB]"
+        onClick={() => navigate("/notes")}
       >
         <PenLine className="mr-2 h-4 w-4" />
         Notes
