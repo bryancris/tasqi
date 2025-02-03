@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TaskCard } from "../TaskCard";
 import { Task } from "../TaskBoard";
 import { DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useTaskReorder } from "@/hooks/use-task-reorder";
 import { startOfDay, isAfter } from "date-fns";
 
@@ -36,45 +36,13 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
     .filter(task => task.status !== 'completed' || shouldShowCompletedTask(task))
     .sort((a, b) => (a.position || 0) - (b.position || 0));
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    
-    if (!over || active.id === over.id) {
-      return;
-    }
-
-    const oldIndex = displayTasks.findIndex(task => task.id === active.id);
-    const newIndex = displayTasks.findIndex(task => task.id === over.id);
-    
-    const newOrder = arrayMove(displayTasks, oldIndex, newIndex);
-    const positions = newOrder.map((task, index) => ({
-      task_id: task.id,
-      new_position: (index + 1) * 1000
-    }));
-
-    // Create a complete DropResult object
-    const reorderEvent = {
-      active: { id: active.id, data: { current: {} } },
-      over: { id: over.id, data: { current: {} } },
-      source: { index: oldIndex },
-      destination: { index: newIndex },
-      draggableId: String(active.id),
-      mode: 'SNAP',
-      reason: 'DROP' as const, // Use a const assertion to match the DropReason type
-      type: 'task',
-      combine: null
-    };
-
-    handleReorder(reorderEvent);
-  };
-
   return (
     <Card>
       <CardHeader>
         <CardTitle>Task Board</CardTitle>
       </CardHeader>
       <CardContent>
-        <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+        <DndContext sensors={sensors} onDragEnd={handleReorder}>
           <SortableContext items={displayTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
             <div className="flex flex-col gap-4 min-h-[600px] pb-40 relative">
               {displayTasks.map((task, index) => (

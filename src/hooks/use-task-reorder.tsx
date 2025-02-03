@@ -2,22 +2,24 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "@/components/dashboard/TaskBoard";
-import { DropResult } from "react-beautiful-dnd";
+import { DragEndEvent } from "@dnd-kit/core";
 
 export function useTaskReorder(tasks: Task[]) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const handleDragEnd = async (result: DropResult) => {
-    const { destination, source } = result;
-
-    if (!destination) return;
-    if (destination.index === source.index) return;
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over || active.id === over.id) return;
 
     try {
+      const oldIndex = tasks.findIndex(task => task.id === active.id);
+      const newIndex = tasks.findIndex(task => task.id === over.id);
+
       const orderedTasks = Array.from(tasks);
-      const [movedTask] = orderedTasks.splice(source.index, 1);
-      orderedTasks.splice(destination.index, 0, movedTask);
+      const [movedTask] = orderedTasks.splice(oldIndex, 1);
+      orderedTasks.splice(newIndex, 0, movedTask);
 
       // Calculate new positions with larger intervals
       const updatedTasks = orderedTasks.map((task, index) => ({
