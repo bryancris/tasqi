@@ -28,14 +28,15 @@ export function WeeklyTimeGrid({ timeSlots, weekDays, showFullWeek, tasks }: Wee
               "min-h-[80px]"
             )}
           >
-            {/* Time column */}
+            {/* Time column - Made narrower */}
             <div className={cn(
-              "p-2 border-r border-gray-300 relative",
-              "bg-[#B2E3EA]", // Light teal background for time slots
-              "transition-colors"
+              "p-1 border-r border-gray-300 relative",
+              "bg-[#B2E3EA]", // Light teal background
+              "transition-colors",
+              "w-[40px]" // Explicitly set narrow width
             )}>
-              <div className="text-xs text-[#6B7280] whitespace-pre-line">
-                {time.display}
+              <div className="text-xs text-[#6B7280] whitespace-pre-line text-center">
+                {time.hour}
               </div>
             </div>
             {/* Day columns */}
