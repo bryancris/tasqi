@@ -13,9 +13,10 @@ interface TaskCardProps {
   task: Task;
   isMobile?: boolean;
   index: number;
+  isDraggable?: boolean;
 }
 
-export function TaskCard({ task, isMobile = false, index }: TaskCardProps) {
+export function TaskCard({ task, isMobile = false, index, isDraggable = true }: TaskCardProps) {
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -29,6 +30,7 @@ export function TaskCard({ task, isMobile = false, index }: TaskCardProps) {
     isDragging
   } = useSortable({
     id: task.id,
+    disabled: !isDraggable
   });
 
   const style = {
@@ -79,7 +81,7 @@ export function TaskCard({ task, isMobile = false, index }: TaskCardProps) {
           task={task} 
           onComplete={handleComplete} 
           onClick={handleCardClick} 
-          dragHandleProps={listeners}
+          dragHandleProps={isDraggable ? listeners : undefined}
         />
       </div>
       <EditTaskDrawer 

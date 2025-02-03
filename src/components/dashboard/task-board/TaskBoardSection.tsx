@@ -32,9 +32,22 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
     return task.completed_at && isAfter(new Date(task.completed_at), todayStart);
   };
 
-  const displayTasks = tasks
+  // Sort tasks: incomplete tasks first, then completed tasks
+  const sortedTasks = [...tasks]
     .filter(task => task.status !== 'completed' || shouldShowCompletedTask(task))
-    .sort((a, b) => (a.position || 0) - (b.position || 0));
+    .sort((a, b) => {
+      // If one is completed and the other isn't, put completed at the bottom
+      if (a.status === 'completed' && b.status !== 'completed') return 1;
+      if (a.status !== 'completed' && b.status === 'completed') return -1;
+      
+      // If both are completed or both are not completed, maintain their relative positions
+      return (a.position || 0) - (b.position || 0);
+    });
+
+  // Only allow dragging of non-completed tasks
+  const draggableTaskIds = sortedTasks
+    .filter(task => task.status !== 'completed')
+    .map(task => task.id);
 
   return (
     <Card>
@@ -43,13 +56,14 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
       </CardHeader>
       <CardContent>
         <DndContext sensors={sensors} onDragEnd={handleReorder}>
-          <SortableContext items={displayTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
+          <SortableContext items={draggableTaskIds} strategy={verticalListSortingStrategy}>
             <div className="flex flex-col gap-4 min-h-[600px] pb-40 relative">
-              {displayTasks.map((task, index) => (
+              {sortedTasks.map((task, index) => (
                 <TaskCard
                   key={task.id}
                   task={task}
                   index={index}
+                  isDraggable={task.status !== 'completed'}
                 />
               ))}
             </div>
