@@ -14,7 +14,7 @@ export function DashboardLayout({ children, onViewChange, selectedDate, onDateCh
       <Sidebar onViewChange={onViewChange} selectedDate={selectedDate} onDateChange={onDateChange} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <MobileHeader />
-        <main className="flex-1 overflow-y-auto p-6 bg-gray-50">
+        <main className="flex-1 overflow-y-auto p-6 bg-gray-50 mt-[72px]">
           {children}
         </main>
       </div>
