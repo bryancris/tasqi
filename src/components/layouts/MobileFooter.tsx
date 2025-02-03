@@ -8,6 +8,7 @@ export function MobileFooter() {
   const location = useLocation();
   const navigate = useNavigate();
   const isDaily = location.pathname === "/dashboard";
+  const isWeekly = location.pathname === "/calendar";
   const [isChatOpen, setIsChatOpen] = useState(false);
 
   const handleNavigation = (path: string) => {
@@ -37,7 +38,10 @@ export function MobileFooter() {
             <span className="text-xs mt-1">Daily</span>
           </button>
           <button 
-            className="flex flex-col items-center p-2 text-gray-500"
+            className={cn(
+              "flex flex-col items-center p-2",
+              isWeekly ? "text-[#6366F1]" : "text-gray-500"
+            )}
             onClick={() => handleNavigation("/calendar")}
           >
             <Calendar className="h-6 w-6" />
