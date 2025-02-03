@@ -11,6 +11,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileHeader } from "@/components/layouts/MobileHeader";
 import { MobileFooter } from "@/components/layouts/MobileFooter";
 import { MobileWeeklyView } from "@/components/dashboard/mobile/MobileWeeklyView";
+import { useLocation } from "react-router-dom";
 
 const Dashboard = () => {
   const [view, setView] = useState<'tasks' | 'calendar' | 'yearly' | 'weekly'>('tasks');
@@ -18,6 +19,7 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { session } = useAuth();
   const isMobile = useIsMobile();
+  const location = useLocation();
 
   useEffect(() => {
     const initializeDashboard = async () => {
@@ -58,29 +60,19 @@ const Dashboard = () => {
   }
 
   if (isMobile) {
+    const currentPath = location.pathname;
     return (
       <div className="flex flex-col h-screen bg-background">
         <MobileHeader />
         <main className="flex-1 overflow-y-auto scrollbar-hide p-4 mt-[72px] mb-[64px]">
-          {view === 'tasks' && (
+          {currentPath === '/dashboard' && (
             <TaskBoard 
               selectedDate={selectedDate} 
               onDateChange={handleDateChange} 
             />
           )}
-          {view === 'weekly' && (
+          {currentPath === '/calendar' && (
             <MobileWeeklyView />
-          )}
-          {view === 'calendar' && (
-            <Calendar 
-              initialDate={selectedDate}
-              onDateSelect={handleDateChange}
-            />
-          )}
-          {view === 'yearly' && (
-            <YearlyCalendar 
-              onDateSelect={handleDateChange}
-            />
           )}
         </main>
         <MobileFooter />
