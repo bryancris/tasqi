@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { TaskBoard } from "@/components/dashboard/TaskBoard";
 import { WeeklyCalendar } from "@/components/dashboard/WeeklyCalendar";
+import { YearlyCalendar } from "@/components/dashboard/YearlyCalendar";
+import { Calendar } from "@/components/dashboard/Calendar";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
@@ -66,6 +68,17 @@ const Dashboard = () => {
       )}
       {view === 'weekly' && (
         <WeeklyCalendar initialDate={selectedDate} />
+      )}
+      {view === 'calendar' && (
+        <Calendar 
+          selectedDate={selectedDate}
+          onDateSelect={handleDateChange}
+        />
+      )}
+      {view === 'yearly' && (
+        <YearlyCalendar 
+          onDateSelect={handleDateChange}
+        />
       )}
     </DashboardLayout>
   );
