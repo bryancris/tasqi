@@ -17,13 +17,16 @@ export function MobileHeader() {
         </div>
         <div className="flex items-center gap-2">
           <AddTaskDrawer>
-            <Button 
-              variant="ghost" 
-              size="icon"
-              className="h-10 w-10 bg-[#8B5CF6] hover:bg-[#7C3AED] transition-all duration-300 rounded-full transform hover:scale-110 animate-[pulse_3s_ease-in-out_infinite]"
-            >
-              <Plus className="h-5 w-5 text-white" />
-            </Button>
+            <div className="relative group">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 rounded-full opacity-75 group-hover:opacity-100 animate-spin"></div>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="relative h-10 w-10 bg-[#8B5CF6] hover:bg-[#7C3AED] transition-all duration-300 rounded-full transform hover:scale-110"
+              >
+                <Plus className="h-5 w-5 text-white" />
+              </Button>
+            </div>
           </AddTaskDrawer>
           <HeaderUserMenu />
         </div>
