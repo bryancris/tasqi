@@ -6,14 +6,16 @@ import { useState } from "react";
 import { EditTaskDrawer } from "./EditTaskDrawer";
 import { MobileTaskCard } from "./task-card/MobileTaskCard";
 import { DesktopTaskCard } from "./task-card/DesktopTaskCard";
+import { DraggableProvidedDragHandleProps } from "react-beautiful-dnd";
 
 interface TaskCardProps {
   task: Task;
   isMobile?: boolean;
   index: number;
+  dragHandleProps?: DraggableProvidedDragHandleProps;
 }
 
-export function TaskCard({ task, isMobile = false, index }: TaskCardProps) {
+export function TaskCard({ task, isMobile = false, index, dragHandleProps }: TaskCardProps) {
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -55,7 +57,12 @@ export function TaskCard({ task, isMobile = false, index }: TaskCardProps) {
 
   return (
     <>
-      <CardComponent task={task} onComplete={handleComplete} onClick={handleCardClick} />
+      <CardComponent 
+        task={task} 
+        onComplete={handleComplete} 
+        onClick={handleCardClick} 
+        dragHandleProps={dragHandleProps}
+      />
       <EditTaskDrawer 
         task={task} 
         open={isEditDrawerOpen} 

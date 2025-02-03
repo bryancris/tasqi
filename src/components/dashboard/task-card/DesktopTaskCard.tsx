@@ -5,14 +5,16 @@ import { TaskStatusIndicator } from "../TaskStatusIndicator";
 import { GripVertical } from "lucide-react";
 import { getCompletionDate, getTimeDisplay } from "@/utils/dateUtils";
 import { getPriorityColor } from "@/utils/taskColors";
+import { DraggableProvidedDragHandleProps } from "react-beautiful-dnd";
 
 interface DesktopTaskCardProps {
   task: Task;
   onComplete: () => void;
   onClick: () => void;
+  dragHandleProps?: DraggableProvidedDragHandleProps;
 }
 
-export function DesktopTaskCard({ task, onComplete, onClick }: DesktopTaskCardProps) {
+export function DesktopTaskCard({ task, onComplete, onClick, dragHandleProps }: DesktopTaskCardProps) {
   return (
     <div 
       className={cn(
@@ -24,7 +26,9 @@ export function DesktopTaskCard({ task, onComplete, onClick }: DesktopTaskCardPr
       onClick={onClick}
     >
       <div className="flex items-center gap-3 flex-1">
-        <GripVertical className="h-5 w-5 text-white/50 cursor-grab" />
+        <div {...dragHandleProps}>
+          <GripVertical className="h-5 w-5 text-white/50 cursor-grab" />
+        </div>
         <div className="flex-1">
           <div className="flex justify-between items-center">
             <h3 className={cn("font-medium", task.status === 'completed' && "line-through")}>
