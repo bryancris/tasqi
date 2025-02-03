@@ -7,9 +7,9 @@ interface MobileTaskContentProps {
 export function MobileTaskContent({ title, time, status }: MobileTaskContentProps) {
   return (
     <div>
-      <h3 className="font-medium">{title}</h3>
+      <h3 className={`font-medium ${status === 'completed' ? 'line-through' : ''}`}>{title}</h3>
       {status === 'scheduled' && time && (
-        <p className="text-sm opacity-90">{time}</p>
+        <p className={`text-sm opacity-90 ${status === 'completed' ? 'line-through' : ''}`}>{time}</p>
       )}
     </div>
   );
