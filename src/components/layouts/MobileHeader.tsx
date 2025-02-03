@@ -22,7 +22,7 @@ export function MobileHeader() {
               <Button 
                 variant="ghost" 
                 size="icon"
-                className="relative h-10 w-10 bg-[#8B5CF6] hover:bg-[#7C3AED] transition-all duration-300 rounded-full transform hover:scale-110"
+                className="relative h-10 w-10 bg-[#9B87F5] hover:bg-[#8B5CF6] transition-all duration-300 rounded-full transform hover:scale-110"
               >
                 <Plus className="h-5 w-5 text-white" />
               </Button>
