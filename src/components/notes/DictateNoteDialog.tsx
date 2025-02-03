@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Mic } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface DictateNoteDialogProps {
   open: boolean;
@@ -15,6 +16,7 @@ interface DictateNoteDialogProps {
 export function DictateNoteDialog({ open, onOpenChange, onNoteCreated }: DictateNoteDialogProps) {
   const [content, setContent] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const { session } = useAuth();
 
   const handleTranscriptionComplete = (text: string) => {
     setContent(text);
@@ -36,12 +38,11 @@ export function DictateNoteDialog({ open, onOpenChange, onNoteCreated }: Dictate
       if (titleError) throw titleError;
 
       // Create the note
-      const { error: noteError } = await supabase.from("notes").insert([
-        {
-          title: data.title,
-          content: content,
-        },
-      ]);
+      const { error: noteError } = await supabase.from("notes").insert({
+        title: data.title,
+        content: content,
+        user_id: session?.user.id
+      });
 
       if (noteError) throw noteError;
 
