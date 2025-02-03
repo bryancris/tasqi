@@ -61,7 +61,8 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
       draggableId: String(active.id),
       mode: 'SNAP',
       reason: 'DROP',
-      type: 'task'
+      type: 'task',
+      combine: null // Add the combine property as null since we're not using combine functionality
     };
 
     handleReorder(reorderEvent);
