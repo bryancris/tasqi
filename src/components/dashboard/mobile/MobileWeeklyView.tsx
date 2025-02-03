@@ -1,16 +1,34 @@
 import { useState } from "react";
-import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, addWeeks, subWeeks } from "date-fns";
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, addWeeks, subWeeks, parseISO } from "date-fns";
 import { WeeklyViewHeader } from "./WeeklyViewHeader";
 import { WeeklyDaysHeader } from "./WeeklyDaysHeader";
 import { WeeklyTimeGrid } from "./WeeklyTimeGrid";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "../TaskBoard";
+import { DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { useToast } from "@/hooks/use-toast";
 
 export function MobileWeeklyView() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showFullWeek, setShowFullWeek] = useState(true);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
   
+  const sensors = useSensors(
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 10,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5,
+      },
+    })
+  );
+
   const weekStart = startOfWeek(currentDate, { weekStartsOn: showFullWeek ? 0 : 1 });
   const weekEnd = showFullWeek 
     ? endOfWeek(currentDate, { weekStartsOn: 0 })
@@ -40,12 +58,43 @@ export function MobileWeeklyView() {
     },
   });
 
-  const handlePreviousWeek = () => {
-    setCurrentDate(prev => subWeeks(prev, 1));
-  };
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over) return;
 
-  const handleNextWeek = () => {
-    setCurrentDate(prev => addWeeks(prev, 1));
+    const taskId = active.id;
+    const [dayIndex, timeIndex] = over.id.toString().split('-').map(Number);
+    const newDate = weekDays[dayIndex];
+    const newHour = timeSlots[timeIndex].hour;
+
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({
+          date: format(newDate, 'yyyy-MM-dd'),
+          start_time: `${newHour}:00`,
+          end_time: `${newHour + 1}:00`,
+          status: 'scheduled'
+        })
+        .eq('id', taskId);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      
+      toast({
+        title: "Task rescheduled",
+        description: "The task has been successfully moved to the new time slot.",
+      });
+    } catch (error) {
+      console.error('Error updating task:', error);
+      toast({
+        title: "Error",
+        description: "Failed to reschedule task. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -53,20 +102,22 @@ export function MobileWeeklyView() {
       <WeeklyViewHeader
         currentDate={currentDate}
         showFullWeek={showFullWeek}
-        onPreviousWeek={handlePreviousWeek}
-        onNextWeek={handleNextWeek}
+        onPreviousWeek={() => setCurrentDate(prev => subWeeks(prev, 1))}
+        onNextWeek={() => setCurrentDate(prev => addWeeks(prev, 1))}
         onToggleView={() => setShowFullWeek(!showFullWeek)}
       />
       <WeeklyDaysHeader
         weekDays={weekDays}
         showFullWeek={showFullWeek}
       />
-      <WeeklyTimeGrid
-        timeSlots={timeSlots}
-        weekDays={weekDays}
-        showFullWeek={showFullWeek}
-        tasks={tasks}
-      />
+      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+        <WeeklyTimeGrid
+          timeSlots={timeSlots}
+          weekDays={weekDays}
+          showFullWeek={showFullWeek}
+          tasks={tasks}
+        />
+      </DndContext>
     </div>
   );
 }

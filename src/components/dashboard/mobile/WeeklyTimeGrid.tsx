@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 import { Task } from "../TaskBoard";
 import { isSameDay, parseISO } from "date-fns";
 import { getPriorityColor } from "@/utils/taskColors";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
 
 interface TimeSlot {
   hour: number;
@@ -13,6 +14,35 @@ interface WeeklyTimeGridProps {
   weekDays: Date[];
   showFullWeek: boolean;
   tasks: Task[];
+}
+
+function DraggableTask({ task }: { task: Task }) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: task.id,
+  });
+
+  const style = transform ? {
+    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+    opacity: isDragging ? 0.5 : 1,
+  } : undefined;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      className={cn(
+        "px-1 py-1 rounded-md mb-0.5",
+        "text-[11px] leading-tight",
+        "text-white break-words",
+        "h-full cursor-move",
+        getPriorityColor(task.priority)
+      )}
+    >
+      <div className="font-medium line-clamp-3">{task.title}</div>
+    </div>
+  );
 }
 
 export function WeeklyTimeGrid({ timeSlots, weekDays, showFullWeek, tasks }: WeeklyTimeGridProps) {
@@ -28,19 +58,22 @@ export function WeeklyTimeGrid({ timeSlots, weekDays, showFullWeek, tasks }: Wee
               "min-h-[80px]"
             )}
           >
-            {/* Time column - Made narrower */}
             <div className={cn(
               "p-1 border-r border-gray-300 relative",
-              "bg-[#B2E3EA]", // Light teal background
+              "bg-[#B2E3EA]",
               "transition-colors",
-              "w-[40px]" // Explicitly set narrow width
+              "w-[40px]"
             )}>
               <div className="text-xs text-[#6B7280] whitespace-pre-line text-center">
                 {time.hour}
               </div>
             </div>
-            {/* Day columns */}
+            
             {weekDays.map((day, dayIndex) => {
+              const { setNodeRef } = useDroppable({
+                id: `${dayIndex}-${timeIndex}`,
+              });
+
               const dayTasks = tasks.filter(task => {
                 if (!task.date || !task.start_time) return false;
                 const taskDate = parseISO(task.date);
@@ -51,8 +84,9 @@ export function WeeklyTimeGrid({ timeSlots, weekDays, showFullWeek, tasks }: Wee
               return (
                 <div 
                   key={dayIndex}
+                  ref={setNodeRef}
                   className={cn(
-                    "pl-0.5 pr-1 py-1", // Reduced left padding significantly
+                    "pl-0.5 pr-1 py-1",
                     "relative",
                     "transition-colors",
                     timeIndex % 2 === 0 ? "bg-[#F8F8FC]" : "bg-white",
@@ -61,18 +95,7 @@ export function WeeklyTimeGrid({ timeSlots, weekDays, showFullWeek, tasks }: Wee
                   )}
                 >
                   {dayTasks.map((task) => (
-                    <div
-                      key={task.id}
-                      className={cn(
-                        "px-1 py-1 rounded-md mb-0.5", // Reduced horizontal padding
-                        "text-[11px] leading-tight",
-                        "text-white break-words",
-                        "h-full",
-                        getPriorityColor(task.priority)
-                      )}
-                    >
-                      <div className="font-medium line-clamp-3">{task.title}</div>
-                    </div>
+                    <DraggableTask key={task.id} task={task} />
                   ))}
                 </div>
               );
