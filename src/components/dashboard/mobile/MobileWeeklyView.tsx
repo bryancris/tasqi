@@ -8,7 +8,6 @@ export function MobileWeeklyView() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showFullWeek, setShowFullWeek] = useState(true);
   
-  // Start from Sunday if showing full week, Monday if showing 5 days
   const weekStart = startOfWeek(currentDate, { weekStartsOn: showFullWeek ? 0 : 1 });
   const weekEnd = showFullWeek 
     ? endOfWeek(currentDate, { weekStartsOn: 0 })
@@ -16,9 +15,12 @@ export function MobileWeeklyView() {
   
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
-  const timeSlots = Array.from({ length: 10 }, (_, i) => {
+  const timeSlots = Array.from({ length: 12 }, (_, i) => {
     const hour = 8 + i;
-    return hour < 12 ? `${hour}\nAM` : hour === 12 ? `${hour}\nPM` : `${hour - 12}\nPM`;
+    return {
+      hour,
+      display: `${hour}\nAM`
+    };
   });
 
   const handlePreviousWeek = () => {
@@ -32,10 +34,16 @@ export function MobileWeeklyView() {
   return (
     <div className="flex flex-col h-[calc(100vh-144px)] bg-white">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b bg-[#D3E4FD]">
-        <h2 className="text-lg font-semibold text-gray-700">
-          {format(currentDate, 'MMMM yyyy')}
-        </h2>
+      <div className="flex items-center justify-between p-4 border-b bg-[#E5DEFF]">
+        <div className="flex items-center gap-2">
+          <div className="bg-[#2563eb] text-white rounded-lg p-2 text-sm">
+            <div className="text-xs font-medium">Day</div>
+            <div className="text-lg font-bold">7</div>
+          </div>
+          <h2 className="text-lg font-semibold text-gray-700">
+            {format(currentDate, 'MMMM yyyy')}
+          </h2>
+        </div>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -65,7 +73,7 @@ export function MobileWeeklyView() {
 
       {/* Days header */}
       <div className={cn(
-        "grid border-b sticky top-0 bg-[#D3E4FD]",
+        "grid border-b sticky top-0 bg-[#E5DEFF]",
         showFullWeek ? "grid-cols-7" : "grid-cols-5"
       )}>
         {weekDays.map((day, index) => (
@@ -73,13 +81,13 @@ export function MobileWeeklyView() {
             key={index}
             className="p-2 text-center border-r last:border-r-0"
           >
-            <div className="text-sm font-medium text-gray-600">
+            <div className="text-sm font-medium text-[#6B7280]">
               {format(day, 'EEE')}
             </div>
-            <div className="text-base font-semibold text-gray-700">
+            <div className="text-base font-semibold text-[#374151]">
               {format(day, 'd')}
             </div>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-[#6B7280]">
               0 Tasks
             </div>
           </div>
@@ -88,7 +96,7 @@ export function MobileWeeklyView() {
 
       {/* Time grid */}
       <div className="flex-1 overflow-y-auto scrollbar-hide">
-        <div className="divide-y divide-[#D3E4FD]">
+        <div className="divide-y divide-[#E5DEFF]">
           {timeSlots.map((time, timeIndex) => (
             <div 
               key={timeIndex} 
@@ -104,11 +112,11 @@ export function MobileWeeklyView() {
                   className={cn(
                     "p-2 border-r last:border-r-0 relative",
                     "transition-colors",
-                    timeIndex % 2 === 0 ? "bg-[#D6BCFA]/10" : "bg-white"
+                    timeIndex % 2 === 0 ? "bg-[#F1F0FB]" : "bg-white"
                   )}
                 >
-                  <div className="absolute top-1 left-2 text-xs text-gray-500 whitespace-pre-line">
-                    {dayIndex === 0 && time}
+                  <div className="absolute top-1 left-2 text-xs text-[#6B7280] whitespace-pre-line">
+                    {dayIndex === 0 && time.display}
                   </div>
                 </div>
               ))}
