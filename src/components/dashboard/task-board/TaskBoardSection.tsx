@@ -52,10 +52,16 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
       new_position: (index + 1) * 1000
     }));
 
-    // Create the event object expected by handleReorder
+    // Create a complete DropResult object
     const reorderEvent = {
+      active: { id: active.id, data: { current: {} } },
+      over: { id: over.id, data: { current: {} } },
       source: { index: oldIndex },
-      destination: { index: newIndex }
+      destination: { index: newIndex },
+      draggableId: String(active.id),
+      mode: 'SNAP',
+      reason: 'DROP',
+      type: 'task'
     };
 
     handleReorder(reorderEvent);
