@@ -3,7 +3,7 @@ import { Task } from "../TaskBoard";
 import { TaskStatusIndicator } from "../TaskStatusIndicator";
 import { MobileTaskContent } from "../MobileTaskContent";
 import { GripVertical } from "lucide-react";
-import { getCompletionDate, getTimeDisplay } from "@/utils/dateUtils";
+import { getTimeDisplay } from "@/utils/dateUtils";
 import { getPriorityColor } from "@/utils/taskColors";
 import { DraggableProvidedDragHandleProps } from "react-beautiful-dnd";
 
@@ -26,8 +26,8 @@ export function MobileTaskCard({ task, onComplete, onClick, dragHandleProps }: M
       onClick={onClick}
     >
       <div className="flex items-center gap-3">
-        <div {...dragHandleProps}>
-          <GripVertical className="h-5 w-5 text-white/50 cursor-grab" />
+        <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing">
+          <GripVertical className="h-5 w-5 text-white/50 hover:text-white/75 transition-colors" />
         </div>
         <MobileTaskContent 
           title={task.title}
@@ -35,23 +35,16 @@ export function MobileTaskCard({ task, onComplete, onClick, dragHandleProps }: M
           status={task.status}
         />
       </div>
-      <div className="flex flex-col items-end">
-        {task.status === 'completed' && task.completed_at && (
-          <span className="text-xs text-white/80">
-            Completed {getCompletionDate(task)}
-          </span>
-        )}
-        <TaskStatusIndicator
-          status={task.status}
-          time={getTimeDisplay(task)}
-          onClick={(e) => {
-            e.stopPropagation();
-            if (task.status !== 'completed') {
-              onComplete();
-            }
-          }}
-        />
-      </div>
+      <TaskStatusIndicator
+        status={task.status}
+        time={getTimeDisplay(task)}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (task.status !== 'completed') {
+            onComplete();
+          }
+        }}
+      />
     </div>
   );
 }

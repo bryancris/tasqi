@@ -18,7 +18,7 @@ export function DesktopTaskCard({ task, onComplete, onClick, dragHandleProps }: 
   return (
     <div 
       className={cn(
-        "p-4 rounded-lg flex items-center justify-between text-white cursor-pointer",
+        "p-4 rounded-lg flex items-center justify-between text-white cursor-pointer group",
         task.status === 'unscheduled' ? 'bg-blue-500' : 
         task.status === 'completed' ? 'bg-gray-500' :
         getPriorityColor(task.priority)
@@ -26,8 +26,8 @@ export function DesktopTaskCard({ task, onComplete, onClick, dragHandleProps }: 
       onClick={onClick}
     >
       <div className="flex items-center gap-3 flex-1">
-        <div {...dragHandleProps}>
-          <GripVertical className="h-5 w-5 text-white/50 cursor-grab" />
+        <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing">
+          <GripVertical className="h-5 w-5 text-white/50 hover:text-white/75 transition-colors" />
         </div>
         <div className="flex-1">
           <div className="flex justify-between items-center">
