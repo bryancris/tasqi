@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { PlusCircle, Trash2, Bot } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { DictateNoteDialog } from "./DictateNoteDialog";
 
 interface Note {
   id: number;
@@ -20,6 +21,7 @@ interface Note {
 export function NotesContent() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [isDictateDialogOpen, setIsDictateDialogOpen] = useState(false);
   const { session } = useAuth();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
@@ -104,6 +106,7 @@ export function NotesContent() {
           type="button"
           variant="secondary"
           className="w-full flex items-center justify-center gap-2"
+          onClick={() => setIsDictateDialogOpen(true)}
         >
           <Bot className="w-4 h-4" />
           Tasqi AI Assisted Note
@@ -149,6 +152,12 @@ export function NotesContent() {
           ))
         )}
       </div>
+
+      <DictateNoteDialog
+        open={isDictateDialogOpen}
+        onOpenChange={setIsDictateDialogOpen}
+        onNoteCreated={() => queryClient.invalidateQueries({ queryKey: ["notes"] })}
+      />
     </div>
   );
 }
