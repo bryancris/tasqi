@@ -3,6 +3,8 @@ import { Task } from "../TaskBoard";
 import { isSameDay, parseISO } from "date-fns";
 import { getPriorityColor } from "@/utils/taskColors";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
+import { useState } from "react";
+import { EditTaskDrawer } from "../EditTaskDrawer";
 
 interface TimeSlot {
   hour: number;
@@ -17,6 +19,7 @@ interface WeeklyTimeGridProps {
 }
 
 function DraggableTask({ task }: { task: Task }) {
+  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: task.id,
   });
@@ -27,21 +30,32 @@ function DraggableTask({ task }: { task: Task }) {
   } : undefined;
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...listeners}
-      {...attributes}
-      className={cn(
-        "px-1 py-1 rounded-md mb-0.5",
-        "text-[11px] leading-tight",
-        "text-white break-words",
-        "h-full cursor-move",
-        getPriorityColor(task.priority)
-      )}
-    >
-      <div className="font-medium line-clamp-3">{task.title}</div>
-    </div>
+    <>
+      <div
+        ref={setNodeRef}
+        style={style}
+        {...listeners}
+        {...attributes}
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsEditDrawerOpen(true);
+        }}
+        className={cn(
+          "px-1 py-1 rounded-md mb-0.5",
+          "text-[11px] leading-tight",
+          "text-white break-words",
+          "h-full cursor-move",
+          getPriorityColor(task.priority)
+        )}
+      >
+        <div className="font-medium line-clamp-3">{task.title}</div>
+      </div>
+      <EditTaskDrawer 
+        task={task} 
+        open={isEditDrawerOpen} 
+        onOpenChange={setIsEditDrawerOpen} 
+      />
+    </>
   );
 }
 
