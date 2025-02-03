@@ -1,8 +1,8 @@
-import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays } from "date-fns";
 import { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, addWeeks, subWeeks } from "date-fns";
+import { WeeklyViewHeader } from "./WeeklyViewHeader";
+import { WeeklyDaysHeader } from "./WeeklyDaysHeader";
+import { WeeklyTimeGrid } from "./WeeklyTimeGrid";
 
 export function MobileWeeklyView() {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -24,115 +24,31 @@ export function MobileWeeklyView() {
   });
 
   const handlePreviousWeek = () => {
-    setCurrentDate(prev => addDays(prev, -7));
+    setCurrentDate(prev => subWeeks(prev, 1));
   };
 
   const handleNextWeek = () => {
-    setCurrentDate(prev => addDays(prev, 7));
+    setCurrentDate(prev => addWeeks(prev, 1));
   };
 
   return (
     <div className="flex flex-col h-[calc(100vh-144px)] bg-white">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b bg-[#E5DEFF]">
-        <h2 className="text-lg font-semibold text-gray-700">
-          {format(currentDate, 'MMMM yyyy')}
-        </h2>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            onClick={handlePreviousWeek}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => setShowFullWeek(!showFullWeek)}
-            className="h-8 text-xs"
-          >
-            {showFullWeek ? '5 Day' : '7 Day'}
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            onClick={handleNextWeek}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Days header */}
-      <div className={cn(
-        "grid border-b sticky top-0 bg-[#E5DEFF]",
-        showFullWeek ? "grid-cols-8" : "grid-cols-6"
-      )}>
-        {/* Time column header */}
-        <div className="p-2 text-center border-r">
-          <div className="bg-[#2563eb] text-white rounded-lg p-2 text-sm">
-            <div className="text-xs font-medium">Day</div>
-            <div className="text-lg font-bold">7</div>
-          </div>
-        </div>
-        {/* Days */}
-        {weekDays.map((day, index) => (
-          <div 
-            key={index}
-            className="p-2 text-center border-r last:border-r-0"
-          >
-            <div className="text-sm font-medium text-[#6B7280]">
-              {format(day, 'EEE')}
-            </div>
-            <div className="text-base font-semibold text-[#374151]">
-              {format(day, 'd')}
-            </div>
-            <div className="text-xs text-[#6B7280]">
-              0 Tasks
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Time grid */}
-      <div className="flex-1 overflow-y-auto scrollbar-hide">
-        <div className="divide-y divide-[#E5DEFF]">
-          {timeSlots.map((time, timeIndex) => (
-            <div 
-              key={timeIndex} 
-              className={cn(
-                "grid",
-                showFullWeek ? "grid-cols-8" : "grid-cols-6",
-                "min-h-[80px]"
-              )}
-            >
-              {/* Time column */}
-              <div className={cn(
-                "p-2 border-r relative",
-                "transition-colors",
-                timeIndex % 2 === 0 ? "bg-[#F1F0FB]" : "bg-white"
-              )}>
-                <div className="text-xs text-[#6B7280] whitespace-pre-line">
-                  {time.display}
-                </div>
-              </div>
-              {/* Day columns */}
-              {weekDays.map((_, dayIndex) => (
-                <div 
-                  key={dayIndex}
-                  className={cn(
-                    "p-2 border-r last:border-r-0",
-                    "transition-colors",
-                    timeIndex % 2 === 0 ? "bg-[#F1F0FB]" : "bg-white"
-                  )}
-                />
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
+      <WeeklyViewHeader
+        currentDate={currentDate}
+        showFullWeek={showFullWeek}
+        onPreviousWeek={handlePreviousWeek}
+        onNextWeek={handleNextWeek}
+        onToggleView={() => setShowFullWeek(!showFullWeek)}
+      />
+      <WeeklyDaysHeader
+        weekDays={weekDays}
+        showFullWeek={showFullWeek}
+      />
+      <WeeklyTimeGrid
+        timeSlots={timeSlots}
+        weekDays={weekDays}
+        showFullWeek={showFullWeek}
+      />
     </div>
   );
 }
