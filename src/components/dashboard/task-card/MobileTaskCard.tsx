@@ -17,7 +17,7 @@ export function MobileTaskCard({ task, onComplete, onClick, dragHandleProps }: M
   return (
     <div 
       className={cn(
-        "p-4 rounded-xl flex items-center justify-between text-white w-full cursor-pointer",
+        "p-4 rounded-none flex items-center justify-between text-white w-full cursor-pointer border-[0.5px] border-black/10",
         task.status === 'unscheduled' ? 'bg-blue-500' : 
         task.status === 'completed' ? 'bg-gray-500' :
         getPriorityColor(task.priority)

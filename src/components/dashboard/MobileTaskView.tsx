@@ -55,7 +55,7 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange }: MobileTask
         <CardContent className="overflow-y-auto h-[calc(100%-5rem)] p-1">
           <DndContext sensors={sensors} onDragEnd={handleReorder}>
             <SortableContext items={draggableTaskIds} strategy={verticalListSortingStrategy}>
-              <div className="flex flex-col gap-3 pb-20">
+              <div className="flex flex-col gap-[1px]">
                 {sortedTasks.map((task, index) => (
                   <TaskCard
                     key={task.id}
