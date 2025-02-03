@@ -21,6 +21,7 @@ export function ToolsSection() {
       <Button 
         variant="ghost" 
         className="w-full justify-start text-[#6B7280] hover:bg-[#E5E7EB]"
+        onClick={() => navigate("/analytics")}
       >
         <BarChart2 className="mr-2 h-4 w-4" />
         Analytics

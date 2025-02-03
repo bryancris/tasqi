@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import Notes from "./pages/Notes";
+import Analytics from "./pages/Analytics";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Notes />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/analytics"
+                element={
+                  <ProtectedRoute>
+                    <Analytics />
                   </ProtectedRoute>
                 }
               />
