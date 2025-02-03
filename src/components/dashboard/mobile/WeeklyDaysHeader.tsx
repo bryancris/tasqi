@@ -23,7 +23,7 @@ export function WeeklyDaysHeader({ weekDays, showFullWeek }: WeeklyDaysHeaderPro
           <div className="text-sm font-medium text-[#6B7280]">
             {format(day, 'EEE')}
           </div>
-          <div className="text-base font-semibold text-[#374151]">
+          <div className="text-xl font-light text-[#374151] tracking-wide">
             {format(day, 'd')}
           </div>
         </div>
