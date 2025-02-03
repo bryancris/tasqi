@@ -27,7 +27,7 @@ export function ToolsSection() {
         className="w-full justify-start text-[#EA580C] hover:bg-[#E5E7EB]"
       >
         <Zap className="mr-2 h-4 w-4" />
-        Habit Tracking
+        Self-Care
       </Button>
       <Button 
         variant="ghost" 
