@@ -62,7 +62,7 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
     
     if (!over) return;
 
-    const taskId = active.id;
+    const taskId = Number(active.id); // Convert UniqueIdentifier to number
     const task = tasks.find(t => t.id === taskId);
     if (!task) return;
 
@@ -76,7 +76,7 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
             start_time: null,
             end_time: null
           })
-          .eq('id', taskId);
+          .eq('id', taskId); // Now taskId is a number
 
         if (error) throw error;
       } else {
@@ -94,7 +94,7 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
             start_time: `${hourNum}:00`,
             end_time: `${hourNum + 1}:00`
           })
-          .eq('id', taskId);
+          .eq('id', taskId); // Now taskId is a number
 
         if (error) throw error;
       }
