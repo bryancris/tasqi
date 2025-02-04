@@ -38,7 +38,7 @@ export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks, showFu
             
             {/* Days grid */}
             <div className={cn(
-              "grid border-b border-gray-400",
+              "grid gap-0 border-b border-gray-400",
               showFullWeek ? "grid-cols-7" : "grid-cols-5"
             )}>
               {weekDays.map((day, dayIndex) => (

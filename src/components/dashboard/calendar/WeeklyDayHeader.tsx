@@ -26,8 +26,8 @@ export function WeeklyDayHeader({ weekDays, visitsPerDay, showFullWeek, onToggle
 
       {/* Days grid */}
       <div className={cn(
-        "grid",
-        showFullWeek ? "grid-cols-7" : "grid-cols-5",
+        "grid gap-0",
+        showFullWeek ? "grid-cols-7" : "grid-cols-5"
       )}>
         {weekDays.map((day, index) => (
           <div 
