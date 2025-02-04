@@ -37,8 +37,9 @@ export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks, showFu
           
           {/* Days grid */}
           <div className={cn(
-            "grid grid-cols-5 h-[60px]",
-            showFullWeek && "grid-cols-7"
+            "grid h-[60px] border-b border-gray-400",
+            showFullWeek ? "grid-cols-7" : "grid-cols-5",
+            "divide-x divide-gray-400"
           )}>
             {weekDays.map((day, dayIndex) => (
               <DayCell 
@@ -112,12 +113,7 @@ const DayCell = ({ day, timeSlot, tasks }: { day: Date, timeSlot: TimeSlot, task
   return (
     <div 
       ref={setNodeRef}
-      className={cn(
-        "h-[60px]",
-        "border-r last:border-r-0 border-gray-400",
-        "hover:bg-gray-50/50",
-        "p-0.5"
-      )}
+      className="h-[60px] p-0.5 hover:bg-gray-50/50"
     >
       {dayTasks.map((task) => (
         <DraggableTask key={task.id} task={task} />
