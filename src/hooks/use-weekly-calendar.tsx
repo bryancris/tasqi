@@ -3,7 +3,7 @@ import { format, isSameDay, parseISO } from "date-fns";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "@/components/dashboard/TaskBoard";
-import { DropResult } from "react-beautiful-dnd";
+import { DragEndEvent } from "@dnd-kit/core";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 
@@ -59,17 +59,17 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
     return `${dayTasks.length} ${dayTasks.length === 1 ? 'Visit' : 'Visits'}`;
   });
 
-  const handleDragEnd = async (result: DropResult) => {
-    const { source, destination, draggableId } = result;
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
     
-    if (!destination) return;
+    if (!over) return;
 
-    const taskId = parseInt(draggableId);
+    const taskId = parseInt(active.id as string);
     const task = tasks.find(t => t.id === taskId);
     if (!task) return;
 
     try {
-      if (destination.droppableId === 'unscheduled') {
+      if (over.id === 'unscheduled') {
         const { error } = await supabase
           .from('tasks')
           .update({
@@ -82,17 +82,16 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
 
         if (error) throw error;
       } else {
-        const [day, time] = destination.droppableId.split('-');
-        const newDate = weekDays[parseInt(day)];
-        const hour = parseInt(time) + 8;
+        const [date, hour] = (over.id as string).split('-');
+        const hourNum = parseInt(hour);
         
         const { error } = await supabase
           .from('tasks')
           .update({
             status: 'scheduled',
-            date: format(newDate, 'yyyy-MM-dd'),
-            start_time: `${hour}:00`,
-            end_time: `${hour + 1}:00`
+            date: date,
+            start_time: `${hourNum}:00`,
+            end_time: `${hourNum + 1}:00`
           })
           .eq('id', taskId);
 
