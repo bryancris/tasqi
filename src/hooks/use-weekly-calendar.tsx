@@ -19,7 +19,7 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
         .order('position', { ascending: true });
       
       if (error) throw error;
-      console.log('Fetched tasks:', data);
+      console.log('Fetched tasks from Supabase:', data);
       return data as Task[];
     },
   });
