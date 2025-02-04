@@ -10,7 +10,7 @@ interface WeeklyTimeGridProps {
   timeSlots: TimeSlot[];
   weekDays: Date[];
   scheduledTasks: Task[];
-  showFullWeek: boolean;  // Added this prop
+  showFullWeek: boolean;
 }
 
 export function WeeklyTimeGrid({ timeSlots, weekDays, scheduledTasks, showFullWeek }: WeeklyTimeGridProps) {
@@ -20,7 +20,7 @@ export function WeeklyTimeGrid({ timeSlots, weekDays, scheduledTasks, showFullWe
         {timeSlots.map((timeSlot, timeIndex) => (
           <div 
             key={timeIndex} 
-            className="grid grid-cols-8 min-h-[80px]"
+            className={`grid ${showFullWeek ? 'grid-cols-8' : 'grid-cols-6'} min-h-[80px]`}
           >
             <div className="p-1 border-r border-gray-300 relative bg-[#B2E3EA] w-[40px]">
               <div className="text-xs text-[#6B7280] whitespace-pre-line text-center">
