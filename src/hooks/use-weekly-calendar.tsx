@@ -102,17 +102,27 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
 
         if (error) throw error;
       } else {
-        const [dateStr, hourStr] = (over.id as string).split('-');
-        const hour = parseInt(hourStr);
+        // The over.id format should be 'YYYY-MM-DD-HH'
+        const [date, hour] = (over.id as string).split('-');
+        
+        // Validate the date format
+        if (!date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          throw new Error('Invalid date format in cell ID');
+        }
+        
+        const hourNum = parseInt(hour);
+        if (isNaN(hourNum) || hourNum < 0 || hourNum > 23) {
+          throw new Error('Invalid hour in cell ID');
+        }
         
         // Format times in 24-hour format with leading zeros and seconds
-        const startTime = `${hour.toString().padStart(2, '0')}:00:00`;
-        const endTime = `${(hour + 1).toString().padStart(2, '0')}:00:00`;
+        const startTime = `${hourNum.toString().padStart(2, '0')}:00:00`;
+        const endTime = `${(hourNum + 1).toString().padStart(2, '0')}:00:00`;
         
         console.log('Updating task times:', { 
           taskId,
-          dateStr,
-          hour,
+          date,
+          hourNum,
           startTime, 
           endTime 
         });
@@ -121,7 +131,7 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
           .from('tasks')
           .update({
             status: 'scheduled',
-            date: dateStr,
+            date: date,
             start_time: startTime,
             end_time: endTime
           })
