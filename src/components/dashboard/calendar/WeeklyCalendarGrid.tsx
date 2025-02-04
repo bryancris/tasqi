@@ -38,8 +38,8 @@ export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks, showFu
             
             {/* Days grid */}
             <div className={cn(
-              "grid grid-cols-5 border-b border-gray-400",
-              showFullWeek && "grid-cols-7"
+              "grid border-b border-gray-400",
+              showFullWeek ? "grid-cols-7" : "grid-cols-5",
             )}>
               {weekDays.map((day, dayIndex) => (
                 <DayCell 
@@ -115,12 +115,10 @@ const DayCell = ({ day, timeSlot, tasks }: { day: Date, timeSlot: TimeSlot, task
     <div 
       ref={setNodeRef}
       className={cn(
-        "pl-0.5 pr-1",
-        "relative",
-        "transition-colors",
-        "border-r border-gray-400 last:border-r-0",
+        "h-[60px]",
+        "border-r last:border-r-0 border-gray-400",
         "hover:bg-gray-50/50",
-        "h-[60px]"
+        "p-0.5"
       )}
     >
       {dayTasks.map((task) => (
