@@ -58,6 +58,58 @@ function DraggableTask({ task }: { task: Task }) {
   );
 }
 
+// Separate component for day cell to properly handle hooks
+function DayCell({ day, timeSlot, tasks }: { day: Date, timeSlot: TimeSlot, tasks: Task[] }) {
+  const { setNodeRef } = useDroppable({
+    id: `${format(day, 'yyyy-MM-dd')}-${timeSlot.hour}`,
+  });
+
+  const dayTasks = tasks.filter(task => {
+    if (!task.date || !task.start_time || task.status !== 'scheduled') {
+      return false;
+    }
+
+    const taskDate = startOfDay(parseISO(task.date));
+    const currentDay = startOfDay(day);
+    const taskHour = parseInt(task.start_time.split(':')[0]);
+    const isMatchingDay = isSameDay(taskDate, currentDay);
+    const isMatchingTime = taskHour === timeSlot.hour;
+
+    console.log('Task filtering:', {
+      taskId: task.id,
+      title: task.title,
+      taskDate: format(taskDate, 'yyyy-MM-dd'),
+      currentDay: format(currentDay, 'yyyy-MM-dd'),
+      taskHour,
+      timeSlotHour: timeSlot.hour,
+      isMatchingDay,
+      isMatchingTime,
+      matches: isMatchingDay && isMatchingTime
+    });
+
+    return isMatchingDay && isMatchingTime;
+  });
+
+  console.log(`Tasks for day ${format(day, 'yyyy-MM-dd')}, hour ${timeSlot.hour}:`, dayTasks);
+
+  return (
+    <div 
+      ref={setNodeRef}
+      className={cn(
+        "pl-0.5 pr-1 py-1",
+        "relative",
+        "transition-colors",
+        "border-r border-gray-300 last:border-r-0",
+        "hover:bg-gray-50/50"
+      )}
+    >
+      {dayTasks.map((task) => (
+        <DraggableTask key={task.id} task={task} />
+      ))}
+    </div>
+  );
+}
+
 export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks }: WeeklyTimeGridProps) {
   console.log('All scheduled tasks received:', scheduledTasks);
 
@@ -75,59 +127,14 @@ export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks }: Week
               </div>
             </div>
             
-            {weekDays.map((day, dayIndex) => {
-              // Move the useDroppable hook outside of any conditions
-              const dropProps = useDroppable({
-                id: `${format(day, 'yyyy-MM-dd')}-${timeSlot.hour}`,
-              });
-
-              const dayTasks = scheduledTasks.filter(task => {
-                if (!task.date || !task.start_time || task.status !== 'scheduled') {
-                  return false;
-                }
-
-                const taskDate = startOfDay(parseISO(task.date));
-                const currentDay = startOfDay(day);
-                const taskHour = parseInt(task.start_time.split(':')[0]);
-                const isMatchingDay = isSameDay(taskDate, currentDay);
-                const isMatchingTime = taskHour === timeSlot.hour;
-
-                console.log('Task filtering:', {
-                  taskId: task.id,
-                  title: task.title,
-                  taskDate: format(taskDate, 'yyyy-MM-dd'),
-                  currentDay: format(currentDay, 'yyyy-MM-dd'),
-                  taskHour,
-                  timeSlotHour: timeSlot.hour,
-                  isMatchingDay,
-                  isMatchingTime,
-                  matches: isMatchingDay && isMatchingTime
-                });
-
-                return isMatchingDay && isMatchingTime;
-              });
-
-              console.log(`Tasks for day ${dayIndex}, hour ${timeSlot.hour}:`, dayTasks);
-
-              return (
-                <div 
-                  key={dayIndex}
-                  ref={dropProps.setNodeRef}
-                  className={cn(
-                    "pl-0.5 pr-1 py-1",
-                    "relative",
-                    "transition-colors",
-                    timeIndex % 2 === 0 ? "bg-[#F8F8FC]" : "bg-white",
-                    "border-r border-gray-300 last:border-r-0",
-                    "hover:bg-gray-50/50"
-                  )}
-                >
-                  {dayTasks.map((task) => (
-                    <DraggableTask key={task.id} task={task} />
-                  ))}
-                </div>
-              );
-            })}
+            {weekDays.map((day, dayIndex) => (
+              <DayCell 
+                key={dayIndex}
+                day={day}
+                timeSlot={timeSlot}
+                tasks={scheduledTasks}
+              />
+            ))}
           </div>
         ))}
       </div>
