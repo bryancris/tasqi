@@ -72,9 +72,10 @@ const DayCell = ({ day, timeSlot, tasks }: { day: Date; timeSlot: TimeSlot; task
     const taskHour = parseInt(task.start_time.split(':')[0]);
     const isMatchingDay = isSameDay(taskDate, day);
     const isMatchingTime = taskHour === timeSlot.hour;
-    console.log(`Tasks for day ${day}, hour ${timeSlot.hour}:`, dayTasks);
     return isMatchingDay && isMatchingTime;
   });
+
+  console.log(`Tasks for day ${day}, hour ${timeSlot.hour}:`, dayTasks);
 
   return (
     <div 
