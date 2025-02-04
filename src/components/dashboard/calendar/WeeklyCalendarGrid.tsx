@@ -17,6 +17,7 @@ interface WeeklyTimeGridProps {
   scheduledTasks: Task[];
 }
 
+// Separate DraggableTask component to properly handle hooks
 function DraggableTask({ task }: { task: Task }) {
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -58,7 +59,7 @@ function DraggableTask({ task }: { task: Task }) {
   );
 }
 
-// Separate component for day cell to properly handle hooks
+// Separate DayCell component to properly handle hooks
 function DayCell({ day, timeSlot, tasks }: { day: Date, timeSlot: TimeSlot, tasks: Task[] }) {
   const { setNodeRef } = useDroppable({
     id: `${format(day, 'yyyy-MM-dd')}-${timeSlot.hour}`,
