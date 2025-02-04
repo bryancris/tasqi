@@ -41,14 +41,15 @@ const DraggableTask = ({ task }: { task: Task }) => {
           setIsEditDrawerOpen(true);
         }}
         className={cn(
-          "px-1 py-1 rounded-md mb-0.5",
+          "px-1 py-0.5",
+          "rounded-md mb-0.5",
           "text-[11px] leading-tight",
           "text-white break-words",
-          "h-full cursor-move",
+          "h-[40px] cursor-move",
           getPriorityColor(task.priority)
         )}
       >
-        <div className="font-medium line-clamp-3">{task.title}</div>
+        <div className="font-medium line-clamp-2">{task.title}</div>
       </div>
       <EditTaskDrawer 
         task={task} 
@@ -80,7 +81,7 @@ const DayCell = ({ day, timeSlot, tasks }: { day: Date, timeSlot: TimeSlot, task
         "transition-colors",
         "border-r border-gray-400 last:border-r-0",
         "hover:bg-gray-50/50",
-        "h-[60px]"
+        "h-[45px]"  // Adjusted height to match the image
       )}
     >
       {dayTasks.map((task) => (
@@ -99,7 +100,7 @@ export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks }: Week
         {timeSlots.map((timeSlot, timeIndex) => (
           <div 
             key={timeIndex} 
-            className="grid grid-cols-8 h-[60px] border-b border-gray-400 last:border-b-0"
+            className="grid grid-cols-8 h-[45px] border-b border-gray-400 last:border-b-0"
           >
             <div className="border-r border-gray-400 relative bg-[#B2E3EA] w-[60px] flex items-center justify-center">
               <div className="text-xs text-gray-600 font-medium">
