@@ -15,12 +15,16 @@ export function useTaskDrag(weekStart: Date, weekEnd: Date) {
 
     const taskId = typeof active.id === 'string' ? parseInt(active.id, 10) : active.id;
     const [dayIndex, timeIndex] = over.id.toString().split('-').map(Number);
-
+    
+    // Calculate the actual date by adding dayIndex days to weekStart
+    const targetDate = new Date(weekStart);
+    targetDate.setDate(weekStart.getDate() + dayIndex);
+    
     try {
       const { error } = await supabase
         .from('tasks')
         .update({
-          date: dayIndex,
+          date: format(targetDate, 'yyyy-MM-dd'),
           start_time: `${timeIndex}:00`,
           end_time: `${timeIndex + 1}:00`,
           status: 'scheduled'
