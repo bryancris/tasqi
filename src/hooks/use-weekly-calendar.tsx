@@ -63,8 +63,10 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
   }, [queryClient, weekStart, weekEnd]);
 
   // Filter tasks by status
-  const scheduledTasks = tasks.filter(task => task.status === 'scheduled');
-  const unscheduledTasks = tasks.filter(task => task.status === 'unscheduled');
+  const scheduledTasks = tasks?.filter(task => 
+    task.status === 'scheduled' && task.date && task.start_time
+  ) || [];
+  const unscheduledTasks = tasks?.filter(task => task.status === 'unscheduled') || [];
 
   console.log('Filtered scheduled tasks:', scheduledTasks);
 
@@ -85,7 +87,7 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
     if (!over) return;
 
     const taskId = Number(active.id);
-    const task = tasks.find(t => t.id === taskId);
+    const task = tasks?.find(t => t.id === taskId);
     if (!task) return;
 
     try {
@@ -122,7 +124,8 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
         if (error) throw error;
       }
       
-      queryClient.invalidateQueries({ 
+      // Immediately invalidate the query to refresh the data
+      await queryClient.invalidateQueries({ 
         queryKey: ['tasks', format(weekStart, 'yyyy-MM-dd'), format(weekEnd, 'yyyy-MM-dd')] 
       });
 
