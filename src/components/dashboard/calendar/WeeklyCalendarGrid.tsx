@@ -23,36 +23,34 @@ export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks, showFu
 
   return (
     <div className="flex-1 overflow-y-auto scrollbar-hide">
-      <div className="grid grid-cols-[80px_1fr]">
-        {timeSlots.map((timeSlot, timeIndex) => (
-          <div 
-            key={timeIndex} 
-            className="grid grid-cols-[80px_1fr]"
-          >
-            {/* Time column */}
-            <div className="border-r border-b border-gray-400 bg-[#B2E3EA] h-[60px] flex items-center justify-center">
-              <div className="text-xs text-gray-600 font-medium">
-                {timeSlot.hour.toString().padStart(2, '0')}:00
-              </div>
-            </div>
-            
-            {/* Days grid */}
-            <div className={cn(
-              "grid h-[60px] border-b border-gray-400",
-              showFullWeek ? "grid-cols-7" : "grid-cols-5"
-            )}>
-              {weekDays.map((day, dayIndex) => (
-                <DayCell 
-                  key={dayIndex}
-                  day={day}
-                  timeSlot={timeSlot}
-                  tasks={scheduledTasks}
-                />
-              ))}
+      {timeSlots.map((timeSlot, timeIndex) => (
+        <div 
+          key={timeIndex} 
+          className="grid grid-cols-[80px_1fr]"
+        >
+          {/* Time column */}
+          <div className="border-r border-b border-gray-400 bg-[#B2E3EA] h-[60px] flex items-center justify-center">
+            <div className="text-xs text-gray-600 font-medium">
+              {timeSlot.hour.toString().padStart(2, '0')}:00
             </div>
           </div>
-        ))}
-      </div>
+          
+          {/* Days grid */}
+          <div className={cn(
+            "grid h-[60px] border-b border-gray-400",
+            showFullWeek ? "grid-cols-7" : "grid-cols-5"
+          )}>
+            {weekDays.map((day, dayIndex) => (
+              <DayCell 
+                key={dayIndex}
+                day={day}
+                timeSlot={timeSlot}
+                tasks={scheduledTasks}
+              />
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
