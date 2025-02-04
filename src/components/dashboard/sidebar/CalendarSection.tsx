@@ -29,15 +29,13 @@ export function CalendarSection({ onViewChange }: CalendarSectionProps) {
         }
       })();
 
-      // First ensure we're on the dashboard route
-      if (location.pathname !== '/dashboard') {
-        navigate('/dashboard');
-      }
-      
-      // Use a small delay to ensure navigation completes before changing view
-      setTimeout(() => {
-        onViewChange(mappedView);
-      }, 0);
+      // Navigate to dashboard and update view
+      navigate('/dashboard', { 
+        state: { targetView: mappedView }
+      });
+
+      // Set the view after navigation
+      onViewChange(mappedView);
     }
   };
 
@@ -47,6 +45,13 @@ export function CalendarSection({ onViewChange }: CalendarSectionProps) {
       setView('daily');
     }
   }, [location.pathname]);
+
+  // Handle initial view when returning to dashboard
+  useEffect(() => {
+    if (location.pathname === '/dashboard' && location.state?.targetView && onViewChange) {
+      onViewChange(location.state.targetView);
+    }
+  }, [location.pathname, location.state, onViewChange]);
 
   return (
     <div className="space-y-2">
