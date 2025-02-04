@@ -17,7 +17,7 @@ interface WeeklyTimeGridProps {
   scheduledTasks: Task[];
 }
 
-// Separate DraggableTask component to properly handle hooks
+// Separate DraggableTask component
 const DraggableTask = ({ task }: { task: Task }) => {
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -59,7 +59,7 @@ const DraggableTask = ({ task }: { task: Task }) => {
   );
 };
 
-// Separate DayCell component to properly handle hooks
+// Separate DayCell component
 const DayCell = ({ day, timeSlot, tasks }: { day: Date, timeSlot: TimeSlot, tasks: Task[] }) => {
   const { setNodeRef } = useDroppable({
     id: `${format(day, 'yyyy-MM-dd')}-${timeSlot.hour}`,
@@ -69,23 +69,8 @@ const DayCell = ({ day, timeSlot, tasks }: { day: Date, timeSlot: TimeSlot, task
     if (!task.date || !task.start_time) return false;
     const taskDate = parseISO(task.date);
     const taskHour = parseInt(task.start_time.split(':')[0]);
-    const isMatchingDay = isSameDay(taskDate, day);
-    const isMatchingTime = taskHour === timeSlot.hour;
-
-    console.log('Task filtering:', {
-      title: task.title,
-      taskDate,
-      day,
-      taskHour,
-      timeHour: timeSlot.hour,
-      isMatchingDay,
-      isMatchingTime
-    });
-
-    return isMatchingDay && isMatchingTime;
+    return isSameDay(taskDate, day) && taskHour === timeSlot.hour;
   });
-
-  console.log(`Tasks for day ${format(day, 'yyyy-MM-dd')}, hour ${timeSlot.hour}:`, dayTasks);
 
   return (
     <div 
