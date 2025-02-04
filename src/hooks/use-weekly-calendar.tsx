@@ -47,13 +47,16 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
     };
   }, [queryClient, weekStart, weekEnd]);
 
+  // Filter tasks by status
   const scheduledTasks = tasks.filter(task => task.status === 'scheduled');
   const unscheduledTasks = tasks.filter(task => task.status === 'unscheduled');
 
+  // Calculate visits per day
   const visitsPerDay = weekDays.map(day => {
-    const dayTasks = scheduledTasks.filter(task => 
-      task.date && isSameDay(parseISO(task.date), day)
-    );
+    const dayTasks = scheduledTasks.filter(task => {
+      if (!task.date) return false;
+      return isSameDay(parseISO(task.date), day);
+    });
     return `${dayTasks.length} ${dayTasks.length === 1 ? 'Visit' : 'Visits'}`;
   });
 
