@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, addWeeks, subWeeks, parseISO } from "date-fns";
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, addWeeks, subWeeks } from "date-fns";
 import { CalendarHeader } from "./calendar/CalendarHeader";
 import { WeeklyDayHeader } from "./calendar/WeeklyDayHeader";
 import { WeeklyCalendarGrid } from "./calendar/WeeklyCalendarGrid";
 import { UnscheduledTasks } from "./calendar/UnscheduledTasks";
-import { DndContext, DragEndEvent } from "@dnd-kit/core";
+import { DndContext } from "@dnd-kit/core";
 import { useWeeklyCalendar } from "@/hooks/use-weekly-calendar";
 
 interface WeeklyCalendarProps {
@@ -37,6 +37,8 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
     visitsPerDay,
     handleDragEnd
   } = useWeeklyCalendar(weekStart, weekEnd, weekDays);
+
+  console.log('Scheduled tasks in WeeklyCalendar:', scheduledTasks);
 
   const monthYear = format(currentDate, 'MMMM yyyy');
 

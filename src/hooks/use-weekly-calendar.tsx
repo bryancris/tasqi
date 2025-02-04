@@ -1,4 +1,4 @@
-import { format, isSameDay, parseISO } from "date-fns";
+import { format, isSameDay, parseISO, startOfDay } from "date-fns";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "@/components/dashboard/TaskBoard";
@@ -13,6 +13,11 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
   const { data: tasks = [] } = useQuery({
     queryKey: ['tasks', format(weekStart, 'yyyy-MM-dd'), format(weekEnd, 'yyyy-MM-dd')],
     queryFn: async () => {
+      console.log('Fetching tasks for week:', { 
+        weekStart: format(weekStart, 'yyyy-MM-dd'), 
+        weekEnd: format(weekEnd, 'yyyy-MM-dd') 
+      });
+      
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
@@ -20,7 +25,11 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
         .lte('date', format(weekEnd, 'yyyy-MM-dd'))
         .order('position', { ascending: true });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching tasks:', error);
+        throw error;
+      }
+      
       console.log('Fetched tasks from Supabase:', data);
       return data as Task[];
     },
@@ -37,7 +46,8 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
           schema: 'public',
           table: 'tasks'
         },
-        () => {
+        (payload) => {
+          console.log('Received real-time update:', payload);
           queryClient.invalidateQueries({ 
             queryKey: ['tasks', format(weekStart, 'yyyy-MM-dd'), format(weekEnd, 'yyyy-MM-dd')] 
           });
@@ -60,7 +70,9 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
   const visitsPerDay = weekDays.map(day => {
     const dayTasks = scheduledTasks.filter(task => {
       if (!task.date) return false;
-      return isSameDay(parseISO(task.date), day);
+      const taskDate = startOfDay(parseISO(task.date));
+      const currentDay = startOfDay(day);
+      return isSameDay(taskDate, currentDay);
     });
     return `${dayTasks.length} ${dayTasks.length === 1 ? 'Visit' : 'Visits'}`;
   });

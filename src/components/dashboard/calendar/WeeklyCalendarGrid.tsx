@@ -4,7 +4,7 @@ import { getPriorityColor } from "@/utils/taskColors";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { useState } from "react";
 import { EditTaskDrawer } from "../EditTaskDrawer";
-import { format, isSameDay, parseISO } from "date-fns";
+import { format, isSameDay, parseISO, startOfDay } from "date-fns";
 
 interface TimeSlot {
   hour: number;
@@ -59,7 +59,7 @@ function DraggableTask({ task }: { task: Task }) {
 }
 
 export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks }: WeeklyTimeGridProps) {
-  console.log('All tasks received:', scheduledTasks);
+  console.log('All scheduled tasks received:', scheduledTasks);
 
   return (
     <div className="flex-1 overflow-y-auto scrollbar-hide">
@@ -85,16 +85,17 @@ export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks }: Week
                   return false;
                 }
 
-                const taskDate = parseISO(task.date);
+                const taskDate = startOfDay(parseISO(task.date));
+                const currentDay = startOfDay(day);
                 const taskHour = parseInt(task.start_time.split(':')[0]);
-                const isMatchingDay = isSameDay(taskDate, day);
+                const isMatchingDay = isSameDay(taskDate, currentDay);
                 const isMatchingTime = taskHour === timeSlot.hour;
 
                 console.log('Task filtering:', {
                   taskId: task.id,
                   title: task.title,
                   taskDate: format(taskDate, 'yyyy-MM-dd'),
-                  currentDay: format(day, 'yyyy-MM-dd'),
+                  currentDay: format(currentDay, 'yyyy-MM-dd'),
                   taskHour,
                   timeSlotHour: timeSlot.hour,
                   isMatchingDay,
@@ -104,6 +105,8 @@ export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks }: Week
 
                 return isMatchingDay && isMatchingTime;
               });
+
+              console.log(`Tasks for day ${dayIndex}, hour ${timeSlot.hour}:`, dayTasks);
 
               return (
                 <div 
