@@ -48,6 +48,10 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
     setCurrentDate(subWeeks(currentDate, 1));
   };
 
+  const handleToggleView = () => {
+    setShowFullWeek(!showFullWeek);
+  };
+
   return (
     <DndContext onDragEnd={handleDragEnd}>
       <div className="flex gap-4 w-full max-w-[95%] mx-auto">
@@ -57,6 +61,8 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
             onNextMonth={handleNextWeek}
             onPreviousMonth={handlePreviousWeek}
             showWeekly={true}
+            showFullWeek={showFullWeek}
+            onToggleView={handleToggleView}
           />
 
           <div className="border rounded-lg bg-white shadow-sm overflow-hidden mt-4">

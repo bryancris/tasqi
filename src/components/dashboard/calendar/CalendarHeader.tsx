@@ -36,9 +36,9 @@ export function CalendarHeader({
           <Button
             variant="outline"
             onClick={onToggleView}
-            className="h-8 text-xs"
+            className="h-8 px-3 text-xs"
           >
-            {showFullWeek ? '5 Day' : '7 Day'}
+            {showFullWeek ? '7 Day' : '5 Day'}
           </Button>
         )}
         <Button
