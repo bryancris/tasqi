@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, addWeeks, subWeeks, parseISO } from "date-fns";
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, addWeeks, subWeeks } from "date-fns";
 import { WeeklyViewHeader } from "./WeeklyViewHeader";
 import { WeeklyDaysHeader } from "./WeeklyDaysHeader";
 import { WeeklyTimeGrid } from "./WeeklyTimeGrid";
@@ -66,7 +65,6 @@ export function MobileWeeklyView() {
     },
   });
 
-  // Subscribe to real-time updates
   useEffect(() => {
     console.log('Setting up real-time subscription');
     const channel = supabase
@@ -152,8 +150,8 @@ export function MobileWeeklyView() {
         <WeeklyTimeGrid
           timeSlots={timeSlots}
           weekDays={weekDays}
+          scheduledTasks={tasks}
           showFullWeek={showFullWeek}
-          tasks={tasks}
         />
       </DndContext>
     </div>

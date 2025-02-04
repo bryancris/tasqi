@@ -10,9 +10,10 @@ interface WeeklyTimeGridProps {
   timeSlots: TimeSlot[];
   weekDays: Date[];
   scheduledTasks: Task[];
+  showFullWeek: boolean;  // Added this prop
 }
 
-export function WeeklyTimeGrid({ timeSlots, weekDays, scheduledTasks }: WeeklyTimeGridProps) {
+export function WeeklyTimeGrid({ timeSlots, weekDays, scheduledTasks, showFullWeek }: WeeklyTimeGridProps) {
   return (
     <div className="flex-1 overflow-y-auto scrollbar-hide">
       <div className="divide-y divide-gray-300">
