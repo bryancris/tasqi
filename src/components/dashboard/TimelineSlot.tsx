@@ -3,6 +3,8 @@ import { getPriorityColor } from "@/utils/taskColors";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { format, isSameDay, parseISO, startOfDay, addDays, subDays } from "date-fns";
+import { useState } from "react";
+import { EditTaskDrawer } from "./EditTaskDrawer";
 
 interface TimelineSlotProps {
   time: string;
@@ -11,17 +13,55 @@ interface TimelineSlotProps {
   onDateChange: (date: Date) => void;
 }
 
+// Separate TaskContent component to handle task rendering
+const TaskContent = ({ task }: { task: Task }) => {
+  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
+
+  return (
+    <>
+      <div
+        key={task.id}
+        onClick={() => setIsEditDrawerOpen(true)}
+        className={`p-2 rounded-lg text-white ${getPriorityColor(task.priority)}`}
+      >
+        <p className="font-medium">{task.title}</p>
+        {task.start_time && task.end_time && (
+          <p className="text-sm opacity-90">{`${task.start_time} - ${task.end_time}`}</p>
+        )}
+      </div>
+      <EditTaskDrawer 
+        task={task} 
+        open={isEditDrawerOpen} 
+        onOpenChange={setIsEditDrawerOpen} 
+      />
+    </>
+  );
+};
+
+// Separate TimeSlotContent component
+const TimeSlotContent = ({ time, tasks }: { time: string; tasks: Task[] }) => {
+  if (tasks.length === 0) {
+    return (
+      <div className="flex items-start gap-4">
+        <div className="w-16 text-sm text-gray-500">{time}</div>
+        <div className="flex-1 min-h-[2rem] border-l-2 border-gray-100"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-start gap-4">
+      <div className="w-16 text-sm text-gray-500">{time}</div>
+      <div className="flex-1 space-y-2">
+        {tasks.map((task) => (
+          <TaskContent key={task.id} task={task} />
+        ))}
+      </div>
+    </div>
+  );
+};
+
 export function TimelineSlot({ time, tasks, selectedDate, onDateChange }: TimelineSlotProps) {
-  const handlePreviousDay = () => {
-    const newDate = subDays(selectedDate, 1);
-    onDateChange(newDate);
-  };
-
-  const handleNextDay = () => {
-    const newDate = addDays(selectedDate, 1);
-    onDateChange(newDate);
-  };
-
   // Filter tasks for the selected date AND time slot
   const filteredTasks = tasks.filter(task => {
     if (!task.date || !task.start_time) return false;
@@ -33,7 +73,17 @@ export function TimelineSlot({ time, tasks, selectedDate, onDateChange }: Timeli
     return isMatchingDate && isMatchingTime;
   });
 
-  // Only render the date navigation for the first time slot
+  const handlePreviousDay = () => {
+    const newDate = subDays(selectedDate, 1);
+    onDateChange(newDate);
+  };
+
+  const handleNextDay = () => {
+    const newDate = addDays(selectedDate, 1);
+    onDateChange(newDate);
+  };
+
+  // Render date navigation only for the first time slot
   if (time === "09:00") {
     return (
       <div className="space-y-4">
@@ -72,34 +122,4 @@ export function TimelineSlot({ time, tasks, selectedDate, onDateChange }: Timeli
   }
 
   return <TimeSlotContent time={time} tasks={filteredTasks} />;
-}
-
-function TimeSlotContent({ time, tasks }: { time: string; tasks: Task[] }) {
-  if (tasks.length === 0) {
-    return (
-      <div className="flex items-start gap-4">
-        <div className="w-16 text-sm text-gray-500">{time}</div>
-        <div className="flex-1 min-h-[2rem] border-l-2 border-gray-100"></div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex items-start gap-4">
-      <div className="w-16 text-sm text-gray-500">{time}</div>
-      <div className="flex-1 space-y-2">
-        {tasks.map((task) => (
-          <div
-            key={task.id}
-            className={`p-2 rounded-lg text-white ${getPriorityColor(task.priority)}`}
-          >
-            <p className="font-medium">{task.title}</p>
-            {task.start_time && task.end_time && (
-              <p className="text-sm opacity-90">{`${task.start_time} - ${task.end_time}`}</p>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
 }
