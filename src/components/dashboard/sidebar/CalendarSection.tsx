@@ -29,13 +29,24 @@ export function CalendarSection({ onViewChange }: CalendarSectionProps) {
         }
       })();
 
-      // First navigate to dashboard
-      navigate('/dashboard');
+      // First ensure we're on the dashboard route
+      if (location.pathname !== '/dashboard') {
+        navigate('/dashboard');
+      }
       
-      // Then immediately set the view
-      onViewChange(mappedView);
+      // Use a small delay to ensure navigation completes before changing view
+      setTimeout(() => {
+        onViewChange(mappedView);
+      }, 0);
     }
   };
+
+  // Reset view to daily when navigating away from dashboard
+  useEffect(() => {
+    if (!location.pathname.includes('/dashboard')) {
+      setView('daily');
+    }
+  }, [location.pathname]);
 
   return (
     <div className="space-y-2">
