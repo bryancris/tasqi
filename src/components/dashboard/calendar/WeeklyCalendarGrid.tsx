@@ -59,7 +59,6 @@ const DraggableTask = ({ task }: { task: Task }) => {
   );
 };
 
-// Separate DayCell component
 const DayCell = ({ day, timeSlot, tasks }: { day: Date, timeSlot: TimeSlot, tasks: Task[] }) => {
   const { setNodeRef } = useDroppable({
     id: `${format(day, 'yyyy-MM-dd')}-${timeSlot.hour}`,
@@ -79,8 +78,9 @@ const DayCell = ({ day, timeSlot, tasks }: { day: Date, timeSlot: TimeSlot, task
         "pl-0.5 pr-1 py-1",
         "relative",
         "transition-colors",
-        "border-r border-gray-300 last:border-r-0",
-        "hover:bg-gray-50/50"
+        "border-r border-gray-400 last:border-r-0",
+        "hover:bg-gray-50/50",
+        "min-h-[60px]"
       )}
     >
       {dayTasks.map((task) => (
@@ -99,11 +99,11 @@ export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks }: Week
         {timeSlots.map((timeSlot, timeIndex) => (
           <div 
             key={timeIndex} 
-            className="grid grid-cols-8 min-h-[80px]"
+            className="grid grid-cols-8 min-h-[60px] border-b border-gray-400 last:border-b-0"
           >
-            <div className="p-1 border-r border-gray-400 relative bg-[#B2E3EA] w-[40px]">
-              <div className="text-xs text-[#6B7280] whitespace-pre-line text-center">
-                {timeSlot.hour}
+            <div className="p-1 border-r border-gray-400 relative bg-[#B2E3EA] w-[60px] flex items-center justify-center">
+              <div className="text-xs text-gray-600 font-medium">
+                {timeSlot.hour.toString().padStart(2, '0')}:00
               </div>
             </div>
             
