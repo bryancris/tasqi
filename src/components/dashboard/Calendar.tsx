@@ -37,7 +37,6 @@ export function Calendar({ initialDate, onDateSelect }: CalendarProps) {
         .order('position', { ascending: true });
       
       if (error) throw error;
-      console.log('Found tasks:', data);
       return data as Task[];
     },
   });
@@ -78,9 +77,9 @@ export function Calendar({ initialDate, onDateSelect }: CalendarProps) {
             const isCurrentMonth = date.getMonth() === currentMonth.getMonth();
             const isToday = new Date().toDateString() === date.toDateString();
             
-            // Filter tasks for this day
+            // Filter tasks for this day (only scheduled tasks)
             const dayTasks = tasks.filter(task => {
-              if (!task.date) return false;
+              if (!task.date || task.status !== 'scheduled') return false;
               const taskDate = parseISO(task.date);
               return taskDate.toDateString() === date.toDateString();
             });

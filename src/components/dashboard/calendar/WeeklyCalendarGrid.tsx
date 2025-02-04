@@ -91,22 +91,11 @@ export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks }: Week
 
               // Filter tasks for this specific day and hour
               const dayTasks = scheduledTasks.filter(task => {
-                if (!task.date || !task.start_time) return false;
+                if (!task.date || !task.start_time || task.status !== 'scheduled') return false;
                 const taskDate = parseISO(task.date);
                 const taskHour = parseInt(task.start_time.split(':')[0]);
-                console.log('Task filtering in grid:', {
-                  title: task.title,
-                  taskDate,
-                  day,
-                  taskHour,
-                  hour,
-                  isMatchingDay: isSameDay(taskDate, day),
-                  isMatchingTime: taskHour === hour
-                });
                 return isSameDay(taskDate, day) && taskHour === hour;
               });
-
-              console.log(`Tasks for day ${format(day, 'yyyy-MM-dd')}, hour ${hour}:`, dayTasks);
 
               return (
                 <div 
