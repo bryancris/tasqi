@@ -68,8 +68,6 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
   ) || [];
   const unscheduledTasks = tasks?.filter(task => task.status === 'unscheduled') || [];
 
-  console.log('Filtered scheduled tasks:', scheduledTasks);
-
   // Calculate visits per day
   const visitsPerDay = weekDays.map(day => {
     const dayTasks = scheduledTasks.filter(task => {
@@ -107,9 +105,11 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
         const [dateStr, hour] = (over.id as string).split('-');
         const hourNum = parseInt(hour);
         
-        // Format the time with leading zeros and proper AM/PM
-        const startTime = `${hourNum.toString().padStart(2, '0')}:00`;
-        const endTime = `${(hourNum + 1).toString().padStart(2, '0')}:00`;
+        // Ensure 24-hour format with leading zeros
+        const startTime = `${hourNum.toString().padStart(2, '0')}:00:00`;
+        const endTime = `${(hourNum + 1).toString().padStart(2, '0')}:00:00`;
+        
+        console.log('Updating task times:', { startTime, endTime, hourNum });
         
         // Ensure we have a valid date string in YYYY-MM-DD format
         const targetDate = new Date(dateStr);
