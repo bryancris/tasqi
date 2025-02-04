@@ -81,7 +81,7 @@ const DayCell = ({ day, timeSlot, tasks }: { day: Date, timeSlot: TimeSlot, task
         "transition-colors",
         "border-r border-gray-400 last:border-r-0",
         "hover:bg-gray-50/50",
-        "h-[60px]"
+        "h-[60px] flex-1"
       )}
     >
       {dayTasks.map((task) => (
@@ -100,22 +100,24 @@ export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks }: Week
         {timeSlots.map((timeSlot, timeIndex) => (
           <div 
             key={timeIndex} 
-            className="grid grid-cols-8 h-[60px] border-b border-gray-400 last:border-b-0"
+            className="flex h-[60px] border-b border-gray-400 last:border-b-0"
           >
-            <div className="border-r border-gray-400 relative bg-[#B2E3EA] w-[80px] flex items-center justify-center">
+            <div className="border-r border-gray-400 relative bg-[#B2E3EA] w-[80px] flex items-center justify-center shrink-0">
               <div className="text-xs text-gray-600 font-medium">
                 {timeSlot.hour.toString().padStart(2, '0')}:00
               </div>
             </div>
             
-            {weekDays.map((day, dayIndex) => (
-              <DayCell 
-                key={dayIndex}
-                day={day}
-                timeSlot={timeSlot}
-                tasks={scheduledTasks}
-              />
-            ))}
+            <div className="flex flex-1">
+              {weekDays.map((day, dayIndex) => (
+                <DayCell 
+                  key={dayIndex}
+                  day={day}
+                  timeSlot={timeSlot}
+                  tasks={scheduledTasks}
+                />
+              ))}
+            </div>
           </div>
         ))}
       </div>
