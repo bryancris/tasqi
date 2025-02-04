@@ -18,34 +18,37 @@ interface WeeklyTimeGridProps {
   showFullWeek?: boolean;
 }
 
-export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks }: WeeklyTimeGridProps) {
+export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks, showFullWeek }: WeeklyTimeGridProps) {
   console.log('All scheduled tasks received:', scheduledTasks);
 
   return (
     <div className="flex-1 overflow-y-auto scrollbar-hide">
-      <div className="grid grid-cols-[80px_1fr] divide-y divide-gray-400">
+      <div className="grid grid-cols-[80px_1fr]">
         {timeSlots.map((timeSlot, timeIndex) => (
           <div 
             key={timeIndex} 
             className="contents"
           >
-            <div className="border-r border-gray-400 relative bg-[#B2E3EA] h-[60px] flex items-center justify-center">
+            {/* Time column */}
+            <div className="border-r border-b border-gray-400 bg-[#B2E3EA] h-[60px] flex items-center justify-center">
               <div className="text-xs text-gray-600 font-medium">
                 {timeSlot.hour.toString().padStart(2, '0')}:00
               </div>
             </div>
             
-            <div className="contents">
-              <div className="grid grid-cols-[repeat(auto-fit,minmax(0,1fr))]">
-                {weekDays.map((day, dayIndex) => (
-                  <DayCell 
-                    key={dayIndex}
-                    day={day}
-                    timeSlot={timeSlot}
-                    tasks={scheduledTasks}
-                  />
-                ))}
-              </div>
+            {/* Days grid */}
+            <div className={cn(
+              "grid border-b border-gray-400",
+              showFullWeek ? "grid-cols-7" : "grid-cols-5"
+            )}>
+              {weekDays.map((day, dayIndex) => (
+                <DayCell 
+                  key={dayIndex}
+                  day={day}
+                  timeSlot={timeSlot}
+                  tasks={scheduledTasks}
+                />
+              ))}
             </div>
           </div>
         ))}
@@ -117,7 +120,7 @@ const DayCell = ({ day, timeSlot, tasks }: { day: Date, timeSlot: TimeSlot, task
         "transition-colors",
         "border-r border-gray-400 last:border-r-0",
         "hover:bg-gray-50/50",
-        "h-[60px] flex-1"
+        "h-[60px]"
       )}
     >
       {dayTasks.map((task) => (

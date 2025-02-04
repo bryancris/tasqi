@@ -11,13 +11,9 @@ interface WeeklyDayHeaderProps {
 
 export function WeeklyDayHeader({ weekDays, visitsPerDay, showFullWeek, onToggleView }: WeeklyDayHeaderProps) {
   return (
-    <div className={cn(
-      "grid",
-      showFullWeek ? "grid-cols-8" : "grid-cols-6",
-      "w-full bg-[#B2E3EA] border-b border-gray-400"
-    )}>
-      {/* Empty cell for time column with toggle button */}
-      <div className="h-[100px] border-r border-gray-400 w-[80px] flex items-center justify-center">
+    <div className="grid grid-cols-[80px_1fr] bg-[#B2E3EA] border-b border-gray-400">
+      {/* Time column header */}
+      <div className="h-[100px] border-r border-gray-400 flex items-center justify-center">
         <Button
           variant="outline"
           onClick={onToggleView}
@@ -27,23 +23,29 @@ export function WeeklyDayHeader({ weekDays, visitsPerDay, showFullWeek, onToggle
           {showFullWeek ? '5 Day' : '7 Day'}
         </Button>
       </div>
-      
-      {weekDays.map((day, index) => (
-        <div 
-          key={index}
-          className="h-[100px] py-4 text-center border-r border-gray-400 last:border-r-0"
-        >
-          <div className="font-semibold uppercase text-sm text-gray-600">
-            {format(day, 'EEE')}
+
+      {/* Days grid */}
+      <div className={cn(
+        "grid",
+        showFullWeek ? "grid-cols-7" : "grid-cols-5",
+      )}>
+        {weekDays.map((day, index) => (
+          <div 
+            key={index}
+            className="h-[100px] py-4 text-center border-r border-gray-400 last:border-r-0"
+          >
+            <div className="font-semibold uppercase text-sm text-gray-600">
+              {format(day, 'EEE')}
+            </div>
+            <div className="text-lg font-medium">
+              {format(day, 'd')}
+            </div>
+            <div className="text-xs text-gray-500">
+              {visitsPerDay[index].replace('Visit', 'Task').replace('Visits', 'Tasks')}
+            </div>
           </div>
-          <div className="text-lg font-medium">
-            {format(day, 'd')}
-          </div>
-          <div className="text-xs text-gray-500">
-            {visitsPerDay[index].replace('Visit', 'Task').replace('Visits', 'Tasks')}
-          </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
