@@ -24,9 +24,25 @@ export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks, showFu
       "grid",
       showFullWeek ? "grid-cols-8" : "grid-cols-6",
       "divide-x divide-gray-200",
+      "relative", // Added for absolute positioning context
     )}>
+      {/* Vertical grid lines */}
+      <div className="absolute inset-0 grid grid-cols-1 pointer-events-none">
+        <div className="w-full h-full border-r border-gray-200" />
+      </div>
+      {Array.from({ length: showFullWeek ? 7 : 5 }).map((_, index) => (
+        <div 
+          key={`grid-line-${index}`} 
+          className="absolute top-0 bottom-0 border-r border-gray-200 pointer-events-none"
+          style={{ 
+            left: `${((index + 1) * (100 / (showFullWeek ? 8 : 6)))}%`,
+            width: '1px'
+          }}
+        />
+      ))}
+
       {/* Time column header */}
-      <div className="h-[100px] bg-[#B2E3EA] flex items-center justify-center">
+      <div className="h-[100px] bg-[#B2E3EA] flex items-center justify-center relative z-10">
         <span className="text-gray-600 font-medium">Time</span>
       </div>
 
@@ -34,7 +50,7 @@ export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks, showFu
       {weekDays.map((day, index) => (
         <div 
           key={index}
-          className="h-[100px] bg-[#B2E3EA] p-2 text-center"
+          className="h-[100px] bg-[#B2E3EA] p-2 text-center relative z-10"
         >
           <div className="font-semibold uppercase text-sm text-gray-600">
             {format(day, 'EEE')}
@@ -49,7 +65,7 @@ export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks, showFu
       {timeSlots.map((timeSlot) => (
         <div key={timeSlot.hour} className="contents">
           {/* Time label */}
-          <div className="bg-[#B2E3EA] h-[60px] flex items-center justify-center border-t border-gray-200">
+          <div className="bg-[#B2E3EA] h-[60px] flex items-center justify-center border-t border-gray-200 relative z-10">
             <div className="text-xs text-gray-600 font-medium">
               {timeSlot.hour.toString().padStart(2, '0')}:00
             </div>
@@ -98,6 +114,7 @@ const DraggableTask = ({ task }: { task: Task }) => {
           "text-[11px] leading-tight",
           "text-white break-words",
           "h-[60px] cursor-move",
+          "relative z-20", // Ensure tasks appear above grid lines
           getPriorityColor(task.priority)
         )}
       >
@@ -127,7 +144,7 @@ const DayCell = ({ day, timeSlot, tasks }: { day: Date, timeSlot: TimeSlot, task
   return (
     <div 
       ref={setNodeRef}
-      className="h-[60px] border-t border-gray-200 p-0.5 hover:bg-gray-50/50"
+      className="h-[60px] border-t border-gray-200 p-0.5 hover:bg-gray-50/50 relative z-10"
     >
       {dayTasks.map((task) => (
         <DraggableTask key={task.id} task={task} />
