@@ -83,8 +83,12 @@ const DraggableTask = ({ task }: { task: Task }) => {
   const style = transform ? {
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
     opacity: isDragging ? 0.5 : 1,
-    position: 'relative' as const,
-    zIndex: isDragging ? 999 : 'auto',
+    position: 'absolute' as const,
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    zIndex: isDragging ? 999 : 1,
     pointerEvents: isDragging ? 'none' as const : 'auto' as const,
   } : undefined;
 
@@ -103,7 +107,7 @@ const DraggableTask = ({ task }: { task: Task }) => {
           "px-1 py-1 rounded-md mb-0.5",
           "text-[11px] leading-tight",
           "text-white break-words",
-          "h-full cursor-move",
+          "cursor-move",
           getPriorityColor(task.priority)
         )}
       >
@@ -149,7 +153,9 @@ const DayCell = ({ day, timeSlot, tasks }: { day: Date, timeSlot: TimeSlot, task
       )}
     >
       {dayTasks.map((task) => (
-        <DraggableTask key={task.id} task={task} />
+        <div key={task.id} className="relative h-full">
+          <DraggableTask task={task} />
+        </div>
       ))}
     </div>
   );
