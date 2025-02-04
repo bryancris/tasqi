@@ -26,13 +26,13 @@ export function WeeklyDayHeader({ weekDays, visitsPerDay, showFullWeek, onToggle
 
       {/* Days grid */}
       <div className={cn(
-        "grid gap-0",
+        "grid divide-x divide-gray-400",
         showFullWeek ? "grid-cols-7" : "grid-cols-5"
       )}>
         {weekDays.map((day, index) => (
           <div 
             key={index}
-            className="h-[100px] py-4 text-center border-r border-gray-400 last:border-r-0"
+            className="h-[100px] py-4 text-center"
           >
             <div className="font-semibold uppercase text-sm text-gray-600">
               {format(day, 'EEE')}
