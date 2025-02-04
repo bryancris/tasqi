@@ -89,6 +89,7 @@ export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks }: Week
                 }
               });
 
+              // Filter tasks for this specific day and hour
               const dayTasks = scheduledTasks.filter(task => {
                 if (!task.date || !task.start_time) return false;
                 const taskDate = parseISO(task.date);

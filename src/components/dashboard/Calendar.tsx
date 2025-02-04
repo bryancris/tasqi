@@ -34,7 +34,7 @@ export function Calendar({ initialDate, onDateSelect }: CalendarProps) {
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
-        .eq('status', 'scheduled');
+        .order('position', { ascending: true });
       
       if (error) throw error;
       return data as Task[];
