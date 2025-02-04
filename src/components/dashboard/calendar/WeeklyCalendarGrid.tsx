@@ -75,11 +75,17 @@ const DraggableTask = ({ task }: { task: Task }) => {
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: task.id,
+    data: {
+      task
+    }
   });
 
   const style = transform ? {
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
     opacity: isDragging ? 0.5 : 1,
+    position: 'relative',
+    zIndex: isDragging ? 999 : 'auto',
+    pointerEvents: isDragging ? 'none' : 'auto',
   } : undefined;
 
   return (
@@ -113,13 +119,15 @@ const DraggableTask = ({ task }: { task: Task }) => {
 };
 
 const DayCell = ({ day, timeSlot, tasks }: { day: Date, timeSlot: TimeSlot, tasks: Task[] }) => {
-  // Format the date as YYYY-MM-DD
   const formattedDate = format(day, 'yyyy-MM-dd');
-  // Create cell ID in the format YYYY-MM-DD-HH
   const cellId = `${formattedDate}-${timeSlot.hour.toString().padStart(2, '0')}`;
 
-  const { setNodeRef } = useDroppable({
+  const { setNodeRef, isOver } = useDroppable({
     id: cellId,
+    data: {
+      date: formattedDate,
+      hour: timeSlot.hour
+    }
   });
 
   const dayTasks = tasks.filter(task => {
@@ -133,11 +141,11 @@ const DayCell = ({ day, timeSlot, tasks }: { day: Date, timeSlot: TimeSlot, task
     <div 
       ref={setNodeRef}
       className={cn(
-        "pl-0.5 pr-1 py-1",
+        "pl-0.5 pr-1 py-1 min-h-[60px]",
         "relative",
         "transition-colors",
         "border-r border-gray-300 last:border-r-0",
-        "hover:bg-gray-50/50"
+        isOver ? "bg-gray-100" : "hover:bg-gray-50/50"
       )}
     >
       {dayTasks.map((task) => (
