@@ -84,8 +84,10 @@ const DraggableTask = ({ task }: { task: Task }) => {
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
     opacity: isDragging ? 0.5 : 1,
     position: 'absolute' as const,
-    inset: 0,
-    margin: 'auto',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     zIndex: isDragging ? 999 : 1,
     pointerEvents: isDragging ? 'none' as const : 'auto' as const,
   } : undefined;
@@ -102,8 +104,8 @@ const DraggableTask = ({ task }: { task: Task }) => {
           setIsEditDrawerOpen(true);
         }}
         className={cn(
-          "absolute inset-0",
-          "px-1 py-1 rounded-md",
+          "absolute inset-0 m-1",
+          "px-2 py-1 rounded-md",
           "text-[11px] leading-tight",
           "text-white break-words",
           "cursor-move",
@@ -151,7 +153,7 @@ const DayCell = ({ day, timeSlot, tasks }: { day: Date, timeSlot: TimeSlot, task
       )}
     >
       {dayTasks.map((task) => (
-        <div key={task.id} className="absolute inset-x-0 top-0 bottom-0 p-1">
+        <div key={task.id} className="absolute inset-0">
           <DraggableTask task={task} />
         </div>
       ))}
