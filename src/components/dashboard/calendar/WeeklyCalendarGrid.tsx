@@ -4,7 +4,7 @@ import { getPriorityColor } from "@/utils/taskColors";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { useState } from "react";
 import { EditTaskDrawer } from "../EditTaskDrawer";
-import { format, isSameDay, parseISO, startOfDay } from "date-fns";
+import { format, isSameDay, parseISO } from "date-fns";
 
 interface TimeSlot {
   hour: number;
@@ -66,26 +66,20 @@ function DayCell({ day, timeSlot, tasks }: { day: Date, timeSlot: TimeSlot, task
   });
 
   const dayTasks = tasks.filter(task => {
-    if (!task.date || !task.start_time || task.status !== 'scheduled') {
-      return false;
-    }
-
-    const taskDate = startOfDay(parseISO(task.date));
-    const currentDay = startOfDay(day);
+    if (!task.date || !task.start_time) return false;
+    const taskDate = parseISO(task.date);
     const taskHour = parseInt(task.start_time.split(':')[0]);
-    const isMatchingDay = isSameDay(taskDate, currentDay);
+    const isMatchingDay = isSameDay(taskDate, day);
     const isMatchingTime = taskHour === timeSlot.hour;
 
     console.log('Task filtering:', {
-      taskId: task.id,
       title: task.title,
-      taskDate: format(taskDate, 'yyyy-MM-dd'),
-      currentDay: format(currentDay, 'yyyy-MM-dd'),
+      taskDate,
+      day,
       taskHour,
-      timeSlotHour: timeSlot.hour,
+      timeHour: timeSlot.hour,
       isMatchingDay,
-      isMatchingTime,
-      matches: isMatchingDay && isMatchingTime
+      isMatchingTime
     });
 
     return isMatchingDay && isMatchingTime;
