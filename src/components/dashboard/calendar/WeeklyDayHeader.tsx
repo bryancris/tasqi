@@ -17,7 +17,7 @@ export function WeeklyDayHeader({ weekDays, visitsPerDay, showFullWeek, onToggle
       "w-full bg-[#B2E3EA]"
     )}>
       {/* Empty cell for time column with toggle button */}
-      <div className="p-4 border-r bg-[#B2E3EA] w-[80px] flex items-center justify-center">
+      <div className="p-4 border-r border-gray-400 w-[80px] flex items-center justify-center">
         <Button
           variant="outline"
           onClick={onToggleView}
@@ -31,7 +31,7 @@ export function WeeklyDayHeader({ weekDays, visitsPerDay, showFullWeek, onToggle
       {weekDays.map((day, index) => (
         <div 
           key={index}
-          className="p-4 text-center border-r last:border-r-0 bg-[#B2E3EA]"
+          className="p-4 text-center border-r border-gray-400 last:border-r-0"
         >
           <div className="font-semibold uppercase text-sm text-gray-600">
             {format(day, 'EEE')}
