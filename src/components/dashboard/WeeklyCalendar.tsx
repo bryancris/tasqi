@@ -25,7 +25,10 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
 
   const timeSlots = Array.from({ length: 12 }, (_, i) => {
     const hour = 8 + i;
-    return `${hour}:00`;
+    return {
+      hour,
+      display: `${hour}:00`
+    };
   });
 
   const {
