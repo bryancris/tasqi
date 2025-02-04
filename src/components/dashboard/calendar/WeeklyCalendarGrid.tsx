@@ -27,10 +27,10 @@ export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks, showFu
         {timeSlots.map((timeSlot, timeIndex) => (
           <div 
             key={timeIndex} 
-            className="contents"
+            className="grid grid-cols-[80px_1fr]"
           >
             {/* Time column */}
-            <div className="border-r border-b border-gray-400 bg-[#B2E3EA] flex items-center justify-center h-[60px]">
+            <div className="border-r border-b border-gray-400 bg-[#B2E3EA] h-[60px] flex items-center justify-center">
               <div className="text-xs text-gray-600 font-medium">
                 {timeSlot.hour.toString().padStart(2, '0')}:00
               </div>
@@ -38,7 +38,7 @@ export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks, showFu
             
             {/* Days grid */}
             <div className={cn(
-              "grid border-b border-gray-400",
+              "grid h-[60px] border-b border-gray-400",
               showFullWeek ? "grid-cols-7" : "grid-cols-5"
             )}>
               {weekDays.map((day, dayIndex) => (
