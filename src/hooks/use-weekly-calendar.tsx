@@ -10,7 +10,7 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: tasks = [], refetch } = useQuery({
+  const { data: tasks = [] } = useQuery({
     queryKey: ['tasks', format(weekStart, 'yyyy-MM-dd'), format(weekEnd, 'yyyy-MM-dd')],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -62,7 +62,7 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
     
     if (!over) return;
 
-    const taskId = parseInt(active.id as string);
+    const taskId = active.id;
     const task = tasks.find(t => t.id === taskId);
     if (!task) return;
 

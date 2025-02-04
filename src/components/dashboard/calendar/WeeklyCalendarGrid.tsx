@@ -1,4 +1,3 @@
-
 import { format, isSameDay, parseISO } from "date-fns";
 import { Task } from "../TaskBoard";
 import { cn } from "@/lib/utils";
@@ -16,15 +15,17 @@ interface WeeklyCalendarGridProps {
 function DraggableTask({ task, index }: { task: Task; index: number }) {
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: task.id.toString(),
+    id: task.id,
+    data: {
+      task,
+      type: 'task'
+    }
   });
 
   const style = transform ? {
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
     opacity: isDragging ? 0.5 : 1,
   } : undefined;
-
-  console.log('Rendering task in grid:', task.title, 'for time:', task.start_time);
 
   return (
     <>
@@ -60,8 +61,6 @@ function DraggableTask({ task, index }: { task: Task; index: number }) {
 }
 
 export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks }: WeeklyCalendarGridProps) {
-  console.log('WeeklyCalendarGrid - All scheduled tasks:', scheduledTasks);
-
   return (
     <div className="divide-y divide-gray-300 border-b border-gray-300">
       {timeSlots.map((time, timeIndex) => {
@@ -81,31 +80,21 @@ export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks }: Week
             </div>
             
             {weekDays.map((day, dayIndex) => {
-              const { setNodeRef } = useDroppable({
+              const { setNodeRef, isOver } = useDroppable({
                 id: `${format(day, 'yyyy-MM-dd')}-${hour}`,
+                data: {
+                  date: day,
+                  hour,
+                  type: 'calendar-slot'
+                }
               });
 
               const dayTasks = scheduledTasks.filter(task => {
                 if (!task.date || !task.start_time) return false;
                 const taskDate = parseISO(task.date);
                 const taskHour = parseInt(task.start_time.split(':')[0]);
-                const isMatchingDay = isSameDay(taskDate, day);
-                const isMatchingTime = taskHour === hour;
-                
-                console.log('Task filtering in grid:', {
-                  title: task.title,
-                  taskDate,
-                  day,
-                  taskHour,
-                  hour,
-                  isMatchingDay,
-                  isMatchingTime
-                });
-                
-                return isMatchingDay && isMatchingTime;
+                return isSameDay(taskDate, day) && taskHour === hour;
               });
-
-              console.log(`Tasks for day ${format(day, 'yyyy-MM-dd')}, hour ${hour}:`, dayTasks);
 
               return (
                 <div 
@@ -114,7 +103,8 @@ export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks }: Week
                   className={cn(
                     "p-2 border-r border-gray-300 last:border-r-0 min-h-[80px] relative",
                     "hover:bg-gray-50/80 transition-colors",
-                    timeIndex % 2 === 0 ? "bg-white" : "bg-gray-50/30"
+                    timeIndex % 2 === 0 ? "bg-white" : "bg-gray-50/30",
+                    isOver && "bg-blue-50"
                   )}
                 >
                   {dayTasks.map((task, taskIndex) => (
