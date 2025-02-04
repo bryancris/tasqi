@@ -6,13 +6,17 @@ interface CalendarHeaderProps {
   onPreviousMonth: () => void;
   onNextMonth: () => void;
   showWeekly?: boolean;
+  showFullWeek?: boolean;
+  onToggleView?: () => void;
 }
 
 export function CalendarHeader({ 
   monthYear, 
   onPreviousMonth, 
   onNextMonth,
-  showWeekly = false 
+  showWeekly = false,
+  showFullWeek,
+  onToggleView
 }: CalendarHeaderProps) {
   return (
     <div className="flex items-center justify-between">
@@ -28,7 +32,15 @@ export function CalendarHeader({
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
-        {showWeekly && <span className="text-sm font-medium text-gray-600">Weekly</span>}
+        {showWeekly && onToggleView && (
+          <Button
+            variant="outline"
+            onClick={onToggleView}
+            className="h-8 text-xs"
+          >
+            {showFullWeek ? '5 Day' : '7 Day'}
+          </Button>
+        )}
         <Button
           variant="outline"
           size="icon"
