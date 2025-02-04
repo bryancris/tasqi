@@ -88,15 +88,24 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
       if (over.id === 'unscheduled') {
         await updateTaskToUnscheduled(taskId);
       } else {
+        // The cell ID format should be 'YYYY-MM-DD-HH'
         const [dateStr, hour] = (over.id as string).split('-');
+        const fullDateStr = `${dateStr}`;
         
-        validateDateFormat(dateStr);
+        console.log('Processing drop:', { dateStr: fullDateStr, hour });
+        
+        validateDateFormat(fullDateStr);
         const hourNum = validateHourFormat(hour);
         
         const startTime = `${hourNum.toString().padStart(2, '0')}:00:00`;
         const endTime = `${(hourNum + 1).toString().padStart(2, '0')}:00:00`;
         
-        await updateTaskTime({ taskId, dateStr, startTime, endTime });
+        await updateTaskTime({ 
+          taskId, 
+          dateStr: fullDateStr, 
+          startTime, 
+          endTime 
+        });
       }
       
       await queryClient.invalidateQueries({ 

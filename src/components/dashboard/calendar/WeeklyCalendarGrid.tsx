@@ -4,7 +4,7 @@ import { getPriorityColor } from "@/utils/taskColors";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { useState } from "react";
 import { EditTaskDrawer } from "../EditTaskDrawer";
-import { format, isSameDay, parseISO } from "date-fns";
+import { format } from "date-fns";
 
 interface TimeSlot {
   hour: number;
@@ -94,16 +94,14 @@ const DraggableTask = ({ task }: { task: Task }) => {
           setIsEditDrawerOpen(true);
         }}
         className={cn(
-          "px-1 py-0.5",
-          "rounded-md mb-0.5",
+          "px-1 py-1 rounded-md mb-0.5",
           "text-[11px] leading-tight",
           "text-white break-words",
-          "h-[60px] cursor-move",
-          "relative z-20",
+          "h-full cursor-move",
           getPriorityColor(task.priority)
         )}
       >
-        <div className="font-medium line-clamp-2">{task.title}</div>
+        <div className="font-medium line-clamp-3">{task.title}</div>
       </div>
       <EditTaskDrawer 
         task={task} 
@@ -115,8 +113,10 @@ const DraggableTask = ({ task }: { task: Task }) => {
 };
 
 const DayCell = ({ day, timeSlot, tasks }: { day: Date, timeSlot: TimeSlot, tasks: Task[] }) => {
+  // Format the date as YYYY-MM-DD
   const formattedDate = format(day, 'yyyy-MM-dd');
-  const cellId = formattedDate + '-' + timeSlot.hour.toString().padStart(2, '0');
+  // Create cell ID in the format YYYY-MM-DD-HH
+  const cellId = `${formattedDate}-${timeSlot.hour.toString().padStart(2, '0')}`;
 
   const { setNodeRef } = useDroppable({
     id: cellId,
@@ -124,15 +124,21 @@ const DayCell = ({ day, timeSlot, tasks }: { day: Date, timeSlot: TimeSlot, task
 
   const dayTasks = tasks.filter(task => {
     if (!task.date || !task.start_time) return false;
-    const taskDate = parseISO(task.date);
+    const taskDate = format(new Date(task.date), 'yyyy-MM-dd');
     const taskHour = parseInt(task.start_time.split(':')[0]);
-    return isSameDay(taskDate, day) && taskHour === timeSlot.hour;
+    return taskDate === formattedDate && taskHour === timeSlot.hour;
   });
 
   return (
     <div 
       ref={setNodeRef}
-      className="h-[60px] border-t border-gray-200 p-0.5 hover:bg-gray-50/50 relative z-10"
+      className={cn(
+        "pl-0.5 pr-1 py-1",
+        "relative",
+        "transition-colors",
+        "border-r border-gray-300 last:border-r-0",
+        "hover:bg-gray-50/50"
+      )}
     >
       {dayTasks.map((task) => (
         <DraggableTask key={task.id} task={task} />
