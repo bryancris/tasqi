@@ -37,6 +37,7 @@ export function Calendar({ initialDate, onDateSelect }: CalendarProps) {
         .order('position', { ascending: true });
       
       if (error) throw error;
+      console.log('Found tasks:', data);
       return data as Task[];
     },
   });
