@@ -38,8 +38,6 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
     handleDragEnd
   } = useWeeklyCalendar(weekStart, weekEnd, weekDays);
 
-  console.log('Scheduled tasks in WeeklyCalendar:', scheduledTasks);
-
   const monthYear = format(currentDate, 'MMMM yyyy');
 
   const handleNextWeek = () => {
@@ -62,16 +60,11 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
           />
 
           <div className="border rounded-lg bg-white shadow-sm overflow-hidden mt-4">
-            <WeeklyDayHeader 
-              weekDays={weekDays} 
-              visitsPerDay={visitsPerDay}
-              showFullWeek={showFullWeek}
-              onToggleView={() => setShowFullWeek(!showFullWeek)}
-            />
             <WeeklyCalendarGrid 
               weekDays={weekDays}
               timeSlots={timeSlots}
               scheduledTasks={scheduledTasks}
+              showFullWeek={showFullWeek}
             />
           </div>
         </div>

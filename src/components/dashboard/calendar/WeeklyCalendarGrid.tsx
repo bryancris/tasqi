@@ -20,41 +20,35 @@ interface WeeklyTimeGridProps {
 
 export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks, showFullWeek = true }: WeeklyTimeGridProps) {
   return (
-    <div className="flex w-full flex-1 overflow-y-auto scrollbar-hide">
-      {/* Time column */}
-      <div className="w-20 min-w-[80px] flex-none">
+    <div className={cn(
+      "grid",
+      showFullWeek ? "grid-cols-8" : "grid-cols-6",
+      "grid-rows-[100px_repeat(12,60px)]", // First row 100px for header, then 12 60px rows for time slots
+      "w-full h-full"
+    )}>
+      {/* Render the header component in the first row */}
+      <div className="contents">
+        {/* Time slots */}
         {timeSlots.map((timeSlot, timeIndex) => (
-          <div 
-            key={timeIndex}
-            className="h-[60px] border-b border-r border-gray-200 bg-[#B2E3EA] flex items-center justify-center"
-          >
-            <div className="text-xs text-gray-600 font-medium">
-              {timeSlot.hour.toString().padStart(2, '0')}:00
+          <div key={timeSlot.hour} className="contents">
+            {/* Time label */}
+            <div className="bg-[#B2E3EA] border-r border-gray-200 flex items-center justify-center">
+              <div className="text-xs text-gray-600 font-medium">
+                {timeSlot.hour.toString().padStart(2, '0')}:00
+              </div>
             </div>
+
+            {/* Day cells for this time slot */}
+            {weekDays.map((day, dayIndex) => (
+              <DayCell
+                key={`${dayIndex}-${timeSlot.hour}`}
+                day={day}
+                timeSlot={timeSlot}
+                tasks={scheduledTasks}
+              />
+            ))}
           </div>
         ))}
-      </div>
-
-      {/* Days grid */}
-      <div className="flex-1">
-        <div className={cn(
-          "grid h-full",
-          showFullWeek ? "grid-cols-7" : "grid-cols-5",
-          "divide-x divide-gray-200"
-        )}>
-          {weekDays.map((day, dayIndex) => (
-            <div key={dayIndex} className="divide-y divide-gray-200">
-              {timeSlots.map((timeSlot, timeIndex) => (
-                <DayCell
-                  key={`${dayIndex}-${timeIndex}`}
-                  day={day}
-                  timeSlot={timeSlot}
-                  tasks={scheduledTasks}
-                />
-              ))}
-            </div>
-          ))}
-        </div>
       </div>
     </div>
   );
@@ -117,7 +111,7 @@ const DayCell = ({ day, timeSlot, tasks }: { day: Date, timeSlot: TimeSlot, task
   return (
     <div 
       ref={setNodeRef}
-      className="h-[60px] p-0.5 hover:bg-gray-50/50"
+      className="border-r border-gray-200 last:border-r-0 border-b p-0.5 hover:bg-gray-50/50"
     >
       {dayTasks.map((task) => (
         <DraggableTask key={task.id} task={task} />
