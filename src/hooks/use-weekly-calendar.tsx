@@ -37,6 +37,7 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
 
   // Subscribe to real-time updates
   useEffect(() => {
+    console.log('Setting up real-time subscription');
     const channel = supabase
       .channel('tasks-changes')
       .on(
@@ -56,6 +57,7 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
       .subscribe();
 
     return () => {
+      console.log('Cleaning up real-time subscription');
       supabase.removeChannel(channel);
     };
   }, [queryClient, weekStart, weekEnd]);
@@ -103,11 +105,15 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
         const [dateStr, hour] = (over.id as string).split('-');
         const hourNum = parseInt(hour);
         
+        // Ensure we have a valid date string in YYYY-MM-DD format
+        const targetDate = new Date(dateStr);
+        const formattedDate = format(targetDate, 'yyyy-MM-dd');
+        
         const { error } = await supabase
           .from('tasks')
           .update({
             status: 'scheduled',
-            date: dateStr,
+            date: formattedDate,
             start_time: `${hourNum}:00`,
             end_time: `${hourNum + 1}:00`
           })
