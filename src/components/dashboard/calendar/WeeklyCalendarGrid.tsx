@@ -18,7 +18,7 @@ interface WeeklyTimeGridProps {
 }
 
 // Separate DraggableTask component to properly handle hooks
-function DraggableTask({ task }: { task: Task }) {
+const DraggableTask = ({ task }: { task: Task }) => {
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: task.id,
@@ -57,10 +57,10 @@ function DraggableTask({ task }: { task: Task }) {
       />
     </>
   );
-}
+};
 
 // Separate DayCell component to properly handle hooks
-function DayCell({ day, timeSlot, tasks }: { day: Date, timeSlot: TimeSlot, tasks: Task[] }) {
+const DayCell = ({ day, timeSlot, tasks }: { day: Date, timeSlot: TimeSlot, tasks: Task[] }) => {
   const { setNodeRef } = useDroppable({
     id: `${format(day, 'yyyy-MM-dd')}-${timeSlot.hour}`,
   });
@@ -103,7 +103,7 @@ function DayCell({ day, timeSlot, tasks }: { day: Date, timeSlot: TimeSlot, task
       ))}
     </div>
   );
-}
+};
 
 export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks }: WeeklyTimeGridProps) {
   console.log('All scheduled tasks received:', scheduledTasks);
