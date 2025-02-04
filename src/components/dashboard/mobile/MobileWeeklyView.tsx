@@ -46,21 +46,29 @@ export function MobileWeeklyView() {
   });
 
   const { data: tasks = [] } = useQuery({
-    queryKey: ['tasks'],
+    queryKey: ['tasks', format(weekStart, 'yyyy-MM-dd'), format(weekEnd, 'yyyy-MM-dd')],
     queryFn: async () => {
+      console.log('Fetching tasks for week:', { weekStart, weekEnd });
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
+        .gte('date', format(weekStart, 'yyyy-MM-dd'))
+        .lte('date', format(weekEnd, 'yyyy-MM-dd'))
         .eq('status', 'scheduled')
         .order('position', { ascending: true });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching tasks:', error);
+        throw error;
+      }
+      console.log('Fetched tasks:', data);
       return data as Task[];
     },
   });
 
   // Subscribe to real-time updates
   useEffect(() => {
+    console.log('Setting up real-time subscription');
     const channel = supabase
       .channel('tasks-changes')
       .on(
@@ -70,17 +78,21 @@ export function MobileWeeklyView() {
           schema: 'public',
           table: 'tasks'
         },
-        () => {
+        (payload) => {
+          console.log('Received real-time update:', payload);
           // Invalidate and refetch tasks when changes occur
-          queryClient.invalidateQueries({ queryKey: ['tasks'] });
+          queryClient.invalidateQueries({ 
+            queryKey: ['tasks', format(weekStart, 'yyyy-MM-dd'), format(weekEnd, 'yyyy-MM-dd')] 
+          });
         }
       )
       .subscribe();
 
     return () => {
+      console.log('Cleaning up real-time subscription');
       supabase.removeChannel(channel);
     };
-  }, [queryClient]);
+  }, [queryClient, weekStart, weekEnd]);
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -105,7 +117,9 @@ export function MobileWeeklyView() {
 
       if (error) throw error;
 
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ 
+        queryKey: ['tasks', format(weekStart, 'yyyy-MM-dd'), format(weekEnd, 'yyyy-MM-dd')] 
+      });
       
       toast({
         title: "Task rescheduled",

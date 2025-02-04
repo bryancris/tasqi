@@ -1,3 +1,4 @@
+
 import { cn } from "@/lib/utils";
 import { Task } from "../TaskBoard";
 import { isSameDay, parseISO } from "date-fns";
@@ -28,6 +29,8 @@ function DraggableTask({ task }: { task: Task }) {
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
     opacity: isDragging ? 0.5 : 1,
   } : undefined;
+
+  console.log('Rendering task:', task.title, 'for time:', task.start_time);
 
   return (
     <>
@@ -60,6 +63,8 @@ function DraggableTask({ task }: { task: Task }) {
 }
 
 export function WeeklyTimeGrid({ timeSlots, weekDays, showFullWeek, tasks }: WeeklyTimeGridProps) {
+  console.log('All tasks:', tasks);
+
   return (
     <div className="flex-1 overflow-y-auto scrollbar-hide">
       <div className="divide-y divide-gray-300">
@@ -92,8 +97,21 @@ export function WeeklyTimeGrid({ timeSlots, weekDays, showFullWeek, tasks }: Wee
                 if (!task.date || !task.start_time) return false;
                 const taskDate = parseISO(task.date);
                 const taskHour = parseInt(task.start_time.split(':')[0]);
-                return isSameDay(taskDate, day) && taskHour === time.hour;
+                const isMatchingDay = isSameDay(taskDate, day);
+                const isMatchingTime = taskHour === time.hour;
+                console.log('Task filtering:', {
+                  title: task.title,
+                  taskDate,
+                  day,
+                  taskHour,
+                  timeHour: time.hour,
+                  isMatchingDay,
+                  isMatchingTime
+                });
+                return isMatchingDay && isMatchingTime;
               });
+
+              console.log(`Tasks for day ${dayIndex}, hour ${time.hour}:`, dayTasks);
 
               return (
                 <div 
