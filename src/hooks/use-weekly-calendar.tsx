@@ -1,9 +1,11 @@
+
 import { format, isSameDay, parseISO } from "date-fns";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "@/components/dashboard/TaskBoard";
 import { DropResult } from "react-beautiful-dnd";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect } from "react";
 
 export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date[]) {
   const queryClient = useQueryClient();
@@ -21,6 +23,31 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
       return data as Task[];
     },
   });
+
+  // Subscribe to real-time updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('tasks-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tasks'
+        },
+        () => {
+          // Invalidate and refetch tasks when changes occur
+          queryClient.invalidateQueries({ 
+            queryKey: ['tasks', format(weekStart, 'yyyy-MM-dd'), format(weekEnd, 'yyyy-MM-dd')] 
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient, weekStart, weekEnd]);
 
   const scheduledTasks = tasks.filter(task => task.status === 'scheduled');
   const unscheduledTasks = tasks.filter(task => task.status === 'unscheduled');
@@ -42,21 +69,7 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
     if (!task) return;
 
     try {
-      // Optimistically update the UI
-      const updatedTasks = [...tasks];
-      const taskIndex = updatedTasks.findIndex(t => t.id === taskId);
-      
       if (destination.droppableId === 'unscheduled') {
-        // Moving to unscheduled
-        updatedTasks[taskIndex] = {
-          ...task,
-          status: 'unscheduled',
-          date: null,
-          start_time: null,
-          end_time: null
-        };
-
-        // Update in database
         const { error } = await supabase
           .from('tasks')
           .update({
@@ -69,20 +82,10 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
 
         if (error) throw error;
       } else {
-        // Moving to a time slot
         const [day, time] = destination.droppableId.split('-');
         const newDate = weekDays[parseInt(day)];
-        const hour = parseInt(time) + 8; // Convert index to hour (8:00 is index 0)
+        const hour = parseInt(time) + 8;
         
-        updatedTasks[taskIndex] = {
-          ...task,
-          status: 'scheduled',
-          date: format(newDate, 'yyyy-MM-dd'),
-          start_time: `${hour}:00`,
-          end_time: `${hour + 1}:00`
-        };
-
-        // Update in database
         const { error } = await supabase
           .from('tasks')
           .update({
@@ -95,12 +98,6 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
 
         if (error) throw error;
       }
-
-      // Update the cache immediately
-      queryClient.setQueryData(['tasks'], updatedTasks);
-      
-      // Refetch to ensure we have the latest data
-      await refetch();
       
       toast({
         title: "Task updated",
@@ -113,8 +110,6 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
         description: "Failed to update task. Please try again.",
         variant: "destructive",
       });
-      // Refetch to ensure UI is in sync with database
-      await refetch();
     }
   };
 

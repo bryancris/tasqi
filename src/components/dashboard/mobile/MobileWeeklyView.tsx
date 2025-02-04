@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, addWeeks, subWeeks, parseISO } from "date-fns";
 import { WeeklyViewHeader } from "./WeeklyViewHeader";
 import { WeeklyDaysHeader } from "./WeeklyDaysHeader";
@@ -58,12 +59,34 @@ export function MobileWeeklyView() {
     },
   });
 
+  // Subscribe to real-time updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('tasks-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tasks'
+        },
+        () => {
+          // Invalidate and refetch tasks when changes occur
+          queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     
     if (!over) return;
 
-    // Convert the taskId from UniqueIdentifier (string | number) to number
     const taskId = typeof active.id === 'string' ? parseInt(active.id, 10) : active.id;
     const [dayIndex, timeIndex] = over.id.toString().split('-').map(Number);
     const newDate = weekDays[dayIndex];

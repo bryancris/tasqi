@@ -1,3 +1,4 @@
+
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, addWeeks, subWeeks } from "date-fns";
 import { CalendarHeader } from "./calendar/CalendarHeader";
 import { WeeklyDayHeader } from "./calendar/WeeklyDayHeader";
@@ -5,7 +6,9 @@ import { WeeklyCalendarGrid } from "./calendar/WeeklyCalendarGrid";
 import { UnscheduledTasks } from "./calendar/UnscheduledTasks";
 import { DragDropContext } from "react-beautiful-dnd";
 import { useWeeklyCalendar } from "@/hooks/use-weekly-calendar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface WeeklyCalendarProps {
   initialDate?: Date;
@@ -14,6 +17,7 @@ interface WeeklyCalendarProps {
 export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
   const [currentDate, setCurrentDate] = useState(initialDate || new Date());
   const [showFullWeek, setShowFullWeek] = useState(true);
+  const queryClient = useQueryClient();
   
   // Start from Sunday if showing full week, Monday if showing 5 days
   const weekStart = startOfWeek(currentDate, { weekStartsOn: showFullWeek ? 0 : 1 });
@@ -44,6 +48,29 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
   const handlePreviousWeek = () => {
     setCurrentDate(subWeeks(currentDate, 1));
   };
+
+  // Subscribe to real-time updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('tasks-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tasks'
+        },
+        () => {
+          // Invalidate and refetch tasks when changes occur
+          queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
