@@ -29,15 +29,10 @@ export function CalendarSection({ onViewChange }: CalendarSectionProps) {
         }
       })();
 
-      // Navigate to dashboard first
-      navigate('/dashboard');
-      
-      // Set the view in the next event loop to ensure navigation has completed
-      setTimeout(() => {
-        if (onViewChange) {
-          onViewChange(mappedView);
-        }
-      }, 100);
+      // Use search params to persist the view
+      const searchParams = new URLSearchParams();
+      searchParams.set('view', mappedView);
+      navigate(`/dashboard?${searchParams.toString()}`);
     }
   };
 
