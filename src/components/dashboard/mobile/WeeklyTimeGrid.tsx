@@ -1,11 +1,10 @@
-
 import { cn } from "@/lib/utils";
 import { Task } from "../TaskBoard";
-import { isSameDay, parseISO } from "date-fns";
 import { getPriorityColor } from "@/utils/taskColors";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { useState } from "react";
 import { EditTaskDrawer } from "../EditTaskDrawer";
+import { isSameDay, parseISO } from "date-fns";
 
 interface TimeSlot {
   hour: number;
@@ -19,7 +18,8 @@ interface WeeklyTimeGridProps {
   tasks: Task[];
 }
 
-function DraggableTask({ task }: { task: Task }) {
+// Separate DraggableTask component
+const DraggableTask = ({ task }: { task: Task }) => {
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: task.id,
@@ -29,8 +29,6 @@ function DraggableTask({ task }: { task: Task }) {
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
     opacity: isDragging ? 0.5 : 1,
   } : undefined;
-
-  console.log('Rendering task:', task.title, 'for time:', task.start_time);
 
   return (
     <>
@@ -60,78 +58,65 @@ function DraggableTask({ task }: { task: Task }) {
       />
     </>
   );
-}
+};
+
+// Separate DayCell component
+const DayCell = ({ day, timeSlot, tasks }: { day: Date; timeSlot: TimeSlot; tasks: Task[] }) => {
+  const { setNodeRef } = useDroppable({
+    id: `${day.toISOString()}-${timeSlot.hour}`,
+  });
+
+  const dayTasks = tasks.filter(task => {
+    if (!task.date || !task.start_time) return false;
+    const taskDate = parseISO(task.date);
+    const taskHour = parseInt(task.start_time.split(':')[0]);
+    const isMatchingDay = isSameDay(taskDate, day);
+    const isMatchingTime = taskHour === timeSlot.hour;
+    console.log(`Tasks for day ${day}, hour ${timeSlot.hour}:`, dayTasks);
+    return isMatchingDay && isMatchingTime;
+  });
+
+  return (
+    <div 
+      ref={setNodeRef}
+      className={cn(
+        "pl-0.5 pr-1 py-1",
+        "relative",
+        "transition-colors",
+        "border-r border-gray-300 last:border-r-0",
+        "hover:bg-gray-50/50"
+      )}
+    >
+      {dayTasks.map((task) => (
+        <DraggableTask key={task.id} task={task} />
+      ))}
+    </div>
+  );
+};
 
 export function WeeklyTimeGrid({ timeSlots, weekDays, showFullWeek, tasks }: WeeklyTimeGridProps) {
-  console.log('All tasks:', tasks);
-
   return (
     <div className="flex-1 overflow-y-auto scrollbar-hide">
       <div className="divide-y divide-gray-300">
-        {timeSlots.map((time, timeIndex) => (
+        {timeSlots.map((timeSlot, timeIndex) => (
           <div 
             key={timeIndex} 
-            className={cn(
-              "grid",
-              showFullWeek ? "grid-cols-8" : "grid-cols-6",
-              "min-h-[80px]"
-            )}
+            className="grid grid-cols-8 min-h-[80px]"
           >
-            <div className={cn(
-              "p-1 border-r border-gray-300 relative",
-              "bg-[#B2E3EA]",
-              "transition-colors",
-              "w-[40px]"
-            )}>
+            <div className="p-1 border-r border-gray-300 relative bg-[#B2E3EA] w-[40px]">
               <div className="text-xs text-[#6B7280] whitespace-pre-line text-center">
-                {time.hour}
+                {timeSlot.hour}
               </div>
             </div>
             
-            {weekDays.map((day, dayIndex) => {
-              const { setNodeRef } = useDroppable({
-                id: `${dayIndex}-${timeIndex}`,
-              });
-
-              const dayTasks = tasks.filter(task => {
-                if (!task.date || !task.start_time) return false;
-                const taskDate = parseISO(task.date);
-                const taskHour = parseInt(task.start_time.split(':')[0]);
-                const isMatchingDay = isSameDay(taskDate, day);
-                const isMatchingTime = taskHour === time.hour;
-                console.log('Task filtering:', {
-                  title: task.title,
-                  taskDate,
-                  day,
-                  taskHour,
-                  timeHour: time.hour,
-                  isMatchingDay,
-                  isMatchingTime
-                });
-                return isMatchingDay && isMatchingTime;
-              });
-
-              console.log(`Tasks for day ${dayIndex}, hour ${time.hour}:`, dayTasks);
-
-              return (
-                <div 
-                  key={dayIndex}
-                  ref={setNodeRef}
-                  className={cn(
-                    "pl-0.5 pr-1 py-1",
-                    "relative",
-                    "transition-colors",
-                    timeIndex % 2 === 0 ? "bg-[#F8F8FC]" : "bg-white",
-                    "border-r border-gray-300 last:border-r-0",
-                    "hover:bg-gray-50/50"
-                  )}
-                >
-                  {dayTasks.map((task) => (
-                    <DraggableTask key={task.id} task={task} />
-                  ))}
-                </div>
-              );
-            })}
+            {weekDays.map((day, dayIndex) => (
+              <DayCell 
+                key={dayIndex}
+                day={day}
+                timeSlot={timeSlot}
+                tasks={tasks}
+              />
+            ))}
           </div>
         ))}
       </div>
