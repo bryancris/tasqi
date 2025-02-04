@@ -89,12 +89,17 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
         await updateTaskToUnscheduled(taskId);
       } else {
         // The cell ID format should be 'YYYY-MM-DD-HH'
-        const [dateStr, hour] = (over.id as string).split('-');
-        const fullDateStr = `${dateStr}`;
+        const cellParts = (over.id as string).split('-');
+        if (cellParts.length !== 4) {
+          throw new Error('Invalid cell ID format');
+        }
         
-        console.log('Processing drop:', { dateStr: fullDateStr, hour });
+        const dateStr = `${cellParts[0]}-${cellParts[1]}-${cellParts[2]}`;
+        const hour = cellParts[3];
         
-        validateDateFormat(fullDateStr);
+        console.log('Processing drop:', { dateStr, hour });
+        
+        validateDateFormat(dateStr);
         const hourNum = validateHourFormat(hour);
         
         const startTime = `${hourNum.toString().padStart(2, '0')}:00:00`;
@@ -102,7 +107,7 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
         
         await updateTaskTime({ 
           taskId, 
-          dateStr: fullDateStr, 
+          dateStr, 
           startTime, 
           endTime 
         });

@@ -7,6 +7,13 @@ export const validateDateFormat = (dateStr: string) => {
     console.error('Invalid date format:', dateStr);
     throw new Error('Invalid date format');
   }
+  
+  // Also validate that it's a real date
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) {
+    console.error('Invalid date value:', dateStr);
+    throw new Error('Invalid date value');
+  }
 };
 
 export const validateHourFormat = (hour: string) => {
