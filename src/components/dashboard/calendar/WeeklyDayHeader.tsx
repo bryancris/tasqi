@@ -11,7 +11,7 @@ interface WeeklyDayHeaderProps {
 
 export function WeeklyDayHeader({ weekDays, visitsPerDay, showFullWeek, onToggleView }: WeeklyDayHeaderProps) {
   return (
-    <div className="grid grid-cols-[80px_1fr] bg-[#B2E3EA] border-b border-gray-400">
+    <div className="grid grid-cols-[40px_1fr] bg-[#B2E3EA] border-b border-gray-400">
       {/* Time column header */}
       <div className="h-[100px] border-r border-gray-400 flex items-center justify-center">
         <Button
@@ -26,8 +26,8 @@ export function WeeklyDayHeader({ weekDays, visitsPerDay, showFullWeek, onToggle
 
       {/* Days grid */}
       <div className={cn(
-        "grid grid-cols-5",
-        showFullWeek && "grid-cols-7"
+        "grid",
+        showFullWeek ? "grid-cols-7" : "grid-cols-5"
       )}>
         {weekDays.map((day, index) => (
           <div 

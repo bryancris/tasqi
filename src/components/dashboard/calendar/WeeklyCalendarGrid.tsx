@@ -26,7 +26,7 @@ export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks, showFu
       {timeSlots.map((timeSlot, timeIndex) => (
         <div 
           key={timeIndex} 
-          className="grid grid-cols-[80px_1fr] border-b border-gray-200"
+          className="grid grid-cols-[40px_1fr] border-b border-gray-200"
         >
           {/* Time column */}
           <div className="border-r border-gray-200 bg-[#B2E3EA] h-[60px] flex items-center justify-center">
