@@ -14,7 +14,7 @@ export function WeeklyDayHeader({ weekDays, visitsPerDay, showFullWeek, onToggle
     <div className={cn(
       "grid border-b relative",
       showFullWeek ? "grid-cols-8" : "grid-cols-6",
-      "w-full"
+      "w-full bg-[#F1F0FB]"
     )}>
       {/* Empty cell for time column with toggle button */}
       <div className="p-4 border-r bg-gray-50 w-[80px] flex items-center justify-center">
@@ -31,7 +31,7 @@ export function WeeklyDayHeader({ weekDays, visitsPerDay, showFullWeek, onToggle
       {weekDays.map((day, index) => (
         <div 
           key={index}
-          className="p-4 text-center border-r last:border-r-0 bg-gray-50"
+          className="p-4 text-center border-r last:border-r-0 bg-[#F1F0FB]"
         >
           <div className="font-semibold uppercase text-sm text-gray-600">
             {format(day, 'EEE')}
