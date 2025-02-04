@@ -116,7 +116,7 @@ const DraggableTask = ({ task }: { task: Task }) => {
 
 const DayCell = ({ day, timeSlot, tasks }: { day: Date, timeSlot: TimeSlot, tasks: Task[] }) => {
   const formattedDate = format(day, 'yyyy-MM-dd');
-  const cellId = `${formattedDate}-${timeSlot.hour.toString().padStart(2, '0')}`;
+  const cellId = formattedDate + '-' + timeSlot.hour.toString().padStart(2, '0');
 
   const { setNodeRef } = useDroppable({
     id: cellId,

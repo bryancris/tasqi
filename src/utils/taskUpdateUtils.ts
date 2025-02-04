@@ -1,19 +1,20 @@
 import { supabase } from "@/integrations/supabase/client";
-import { Task } from "@/components/dashboard/TaskBoard";
 
 export const validateDateFormat = (dateStr: string) => {
+  console.log('Validating date format:', dateStr);
   const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
   if (!dateRegex.test(dateStr)) {
     console.error('Invalid date format:', dateStr);
-    throw new Error('Invalid date format in cell ID');
+    throw new Error('Invalid date format');
   }
 };
 
 export const validateHourFormat = (hour: string) => {
-  const hourNum = parseInt(hour);
+  console.log('Validating hour format:', hour);
+  const hourNum = parseInt(hour, 10);
   if (isNaN(hourNum) || hourNum < 0 || hourNum > 23) {
     console.error('Invalid hour:', hour);
-    throw new Error('Invalid hour in cell ID');
+    throw new Error('Invalid hour format');
   }
   return hourNum;
 };
@@ -23,10 +24,10 @@ export const updateTaskToUnscheduled = async (taskId: number) => {
   const { error } = await supabase
     .from('tasks')
     .update({
-      status: 'unscheduled',
       date: null,
       start_time: null,
-      end_time: null
+      end_time: null,
+      status: 'unscheduled'
     })
     .eq('id', taskId);
 
@@ -49,10 +50,10 @@ export const updateTaskTime = async ({
   const { error } = await supabase
     .from('tasks')
     .update({
-      status: 'scheduled',
       date: dateStr,
       start_time: startTime,
-      end_time: endTime
+      end_time: endTime,
+      status: 'scheduled'
     })
     .eq('id', taskId);
 
