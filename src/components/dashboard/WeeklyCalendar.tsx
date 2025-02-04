@@ -4,7 +4,7 @@ import { CalendarHeader } from "./calendar/CalendarHeader";
 import { WeeklyDayHeader } from "./calendar/WeeklyDayHeader";
 import { WeeklyCalendarGrid } from "./calendar/WeeklyCalendarGrid";
 import { UnscheduledTasks } from "./calendar/UnscheduledTasks";
-import { DragDropContext } from "react-beautiful-dnd";
+import { DndContext, DragEndEvent } from "@dnd-kit/core";
 import { useWeeklyCalendar } from "@/hooks/use-weekly-calendar";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -51,6 +51,7 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
 
   // Subscribe to real-time updates
   useEffect(() => {
+    console.log('Setting up real-time subscription in WeeklyCalendar');
     const channel = supabase
       .channel('tasks-changes')
       .on(
@@ -60,20 +61,24 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
           schema: 'public',
           table: 'tasks'
         },
-        () => {
+        (payload) => {
+          console.log('Received real-time update in WeeklyCalendar:', payload);
           // Invalidate and refetch tasks when changes occur
-          queryClient.invalidateQueries({ queryKey: ['tasks'] });
+          queryClient.invalidateQueries({ 
+            queryKey: ['tasks', format(weekStart, 'yyyy-MM-dd'), format(weekEnd, 'yyyy-MM-dd')] 
+          });
         }
       )
       .subscribe();
 
     return () => {
+      console.log('Cleaning up real-time subscription in WeeklyCalendar');
       supabase.removeChannel(channel);
     };
-  }, [queryClient]);
+  }, [queryClient, weekStart, weekEnd]);
 
   return (
-    <DragDropContext onDragEnd={handleDragEnd}>
+    <DndContext onDragEnd={handleDragEnd}>
       <div className="flex gap-4 w-full max-w-[95%] mx-auto">
         <div className="flex-1">
           <CalendarHeader 
@@ -100,6 +105,6 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
 
         <UnscheduledTasks tasks={unscheduledTasks} />
       </div>
-    </DragDropContext>
+    </DndContext>
   );
 }
