@@ -1,10 +1,21 @@
-import { format, isSameDay, parseISO, startOfDay } from "date-fns";
+import { format } from "date-fns";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "@/components/dashboard/TaskBoard";
 import { DragEndEvent } from "@dnd-kit/core";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
+import { 
+  filterScheduledTasks, 
+  filterUnscheduledTasks, 
+  calculateVisitsPerDay 
+} from "@/utils/calendarUtils";
+import {
+  validateDateFormat,
+  validateHourFormat,
+  updateTaskToUnscheduled,
+  updateTaskTime
+} from "@/utils/taskUpdateUtils";
 
 export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date[]) {
   const queryClient = useQueryClient();
@@ -34,7 +45,6 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
     },
   });
 
-  // Subscribe to real-time updates
   useEffect(() => {
     console.log('Setting up real-time subscription');
     const channel = supabase
@@ -61,21 +71,9 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
     };
   }, [queryClient, weekStart, weekEnd]);
 
-  const scheduledTasks = tasks?.filter(task => 
-    task.status === 'scheduled' && task.date && task.start_time
-  ) || [];
-  
-  const unscheduledTasks = tasks?.filter(task => task.status === 'unscheduled') || [];
-
-  const visitsPerDay = weekDays.map(day => {
-    const dayTasks = scheduledTasks.filter(task => {
-      if (!task.date) return false;
-      const taskDate = startOfDay(parseISO(task.date));
-      const currentDay = startOfDay(day);
-      return isSameDay(taskDate, currentDay);
-    });
-    return `${dayTasks.length} ${dayTasks.length === 1 ? 'Visit' : 'Visits'}`;
-  });
+  const scheduledTasks = filterScheduledTasks(tasks);
+  const unscheduledTasks = filterUnscheduledTasks(tasks);
+  const visitsPerDay = calculateVisitsPerDay(weekDays, scheduledTasks);
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -88,56 +86,17 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
 
     try {
       if (over.id === 'unscheduled') {
-        const { error } = await supabase
-          .from('tasks')
-          .update({
-            status: 'unscheduled',
-            date: null,
-            start_time: null,
-            end_time: null
-          })
-          .eq('id', taskId);
-
-        if (error) throw error;
+        await updateTaskToUnscheduled(taskId);
       } else {
-        // The over.id format should be 'YYYY-MM-DD-HH'
         const [dateStr, hour] = (over.id as string).split('-');
         
-        // Validate date format
-        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-        if (!dateRegex.test(dateStr)) {
-          console.error('Invalid date format:', dateStr);
-          throw new Error('Invalid date format in cell ID');
-        }
+        validateDateFormat(dateStr);
+        const hourNum = validateHourFormat(hour);
         
-        const hourNum = parseInt(hour);
-        if (isNaN(hourNum) || hourNum < 0 || hourNum > 23) {
-          console.error('Invalid hour:', hour);
-          throw new Error('Invalid hour in cell ID');
-        }
-        
-        // Format times in 24-hour format with leading zeros and seconds
         const startTime = `${hourNum.toString().padStart(2, '0')}:00:00`;
         const endTime = `${(hourNum + 1).toString().padStart(2, '0')}:00:00`;
         
-        console.log('Updating task:', { 
-          taskId,
-          date: dateStr,
-          startTime,
-          endTime
-        });
-        
-        const { error } = await supabase
-          .from('tasks')
-          .update({
-            status: 'scheduled',
-            date: dateStr,
-            start_time: startTime,
-            end_time: endTime
-          })
-          .eq('id', taskId);
-
-        if (error) throw error;
+        await updateTaskTime({ taskId, dateStr, startTime, endTime });
       }
       
       await queryClient.invalidateQueries({ 
