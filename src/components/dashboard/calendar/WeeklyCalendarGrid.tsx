@@ -19,39 +19,43 @@ interface WeeklyTimeGridProps {
 }
 
 export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks, showFullWeek = true }: WeeklyTimeGridProps) {
-  console.log('All scheduled tasks received:', scheduledTasks);
-
   return (
-    <div className="flex-1 overflow-y-auto scrollbar-hide">
-      {timeSlots.map((timeSlot, timeIndex) => (
-        <div 
-          key={timeIndex} 
-          className="grid grid-cols-[60px_1fr] border-b border-gray-200"
-        >
-          {/* Time column */}
-          <div className="border-r border-gray-200 bg-[#B2E3EA] h-[60px] flex items-center justify-center">
+    <div className="flex w-full flex-1 overflow-y-auto scrollbar-hide">
+      {/* Time column */}
+      <div className="w-20 min-w-[80px] flex-none">
+        {timeSlots.map((timeSlot, timeIndex) => (
+          <div 
+            key={timeIndex}
+            className="h-[60px] border-b border-r border-gray-200 bg-[#B2E3EA] flex items-center justify-center"
+          >
             <div className="text-xs text-gray-600 font-medium">
               {timeSlot.hour.toString().padStart(2, '0')}:00
             </div>
           </div>
-          
-          {/* Days grid */}
-          <div className={cn(
-            "grid h-[60px]",
-            showFullWeek ? "grid-cols-7" : "grid-cols-5",
-            "divide-x divide-gray-200"
-          )}>
-            {weekDays.map((day, dayIndex) => (
-              <DayCell 
-                key={dayIndex}
-                day={day}
-                timeSlot={timeSlot}
-                tasks={scheduledTasks}
-              />
-            ))}
-          </div>
+        ))}
+      </div>
+
+      {/* Days grid */}
+      <div className="flex-1">
+        <div className={cn(
+          "grid h-full",
+          showFullWeek ? "grid-cols-7" : "grid-cols-5",
+          "divide-x divide-gray-200"
+        )}>
+          {weekDays.map((day, dayIndex) => (
+            <div key={dayIndex} className="divide-y divide-gray-200">
+              {timeSlots.map((timeSlot, timeIndex) => (
+                <DayCell
+                  key={`${dayIndex}-${timeIndex}`}
+                  day={day}
+                  timeSlot={timeSlot}
+                  tasks={scheduledTasks}
+                />
+              ))}
+            </div>
+          ))}
         </div>
-      ))}
+      </div>
     </div>
   );
 }
