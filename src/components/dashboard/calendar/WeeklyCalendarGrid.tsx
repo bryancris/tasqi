@@ -76,7 +76,8 @@ export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks }: Week
             </div>
             
             {weekDays.map((day, dayIndex) => {
-              const { setNodeRef } = useDroppable({
+              // Move the useDroppable hook outside of any conditions
+              const dropProps = useDroppable({
                 id: `${format(day, 'yyyy-MM-dd')}-${timeSlot.hour}`,
               });
 
@@ -111,7 +112,7 @@ export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks }: Week
               return (
                 <div 
                   key={dayIndex}
-                  ref={setNodeRef}
+                  ref={dropProps.setNodeRef}
                   className={cn(
                     "pl-0.5 pr-1 py-1",
                     "relative",
