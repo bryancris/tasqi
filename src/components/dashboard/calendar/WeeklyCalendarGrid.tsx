@@ -83,9 +83,9 @@ const DraggableTask = ({ task }: { task: Task }) => {
   const style = transform ? {
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
     opacity: isDragging ? 0.5 : 1,
-    position: 'relative',
+    position: 'relative' as const,
     zIndex: isDragging ? 999 : 'auto',
-    pointerEvents: isDragging ? 'none' : 'auto',
+    pointerEvents: isDragging ? 'none' as const : 'auto' as const,
   } : undefined;
 
   return (
