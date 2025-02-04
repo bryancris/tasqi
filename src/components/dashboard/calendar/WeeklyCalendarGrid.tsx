@@ -15,9 +15,9 @@ interface WeeklyTimeGridProps {
   timeSlots: TimeSlot[];
   weekDays: Date[];
   scheduledTasks: Task[];
+  showFullWeek?: boolean;
 }
 
-// Separate DraggableTask component
 const DraggableTask = ({ task }: { task: Task }) => {
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -95,13 +95,13 @@ export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks }: Week
 
   return (
     <div className="flex-1 overflow-y-auto scrollbar-hide">
-      <div className="divide-y divide-gray-300">
+      <div className="divide-y divide-gray-400">
         {timeSlots.map((timeSlot, timeIndex) => (
           <div 
             key={timeIndex} 
             className="grid grid-cols-8 min-h-[80px]"
           >
-            <div className="p-1 border-r border-gray-300 relative bg-[#B2E3EA] w-[40px]">
+            <div className="p-1 border-r border-gray-400 relative bg-[#B2E3EA] w-[40px]">
               <div className="text-xs text-[#6B7280] whitespace-pre-line text-center">
                 {timeSlot.hour}
               </div>
