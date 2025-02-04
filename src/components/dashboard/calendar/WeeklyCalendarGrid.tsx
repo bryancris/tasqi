@@ -58,7 +58,7 @@ function DraggableTask({ task }: { task: Task }) {
   );
 }
 
-export function WeeklyTimeGrid({ timeSlots, weekDays, scheduledTasks }: WeeklyTimeGridProps) {
+export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks }: WeeklyTimeGridProps) {
   console.log('All tasks received:', scheduledTasks);
 
   return (
@@ -142,6 +142,3 @@ export function WeeklyTimeGrid({ timeSlots, weekDays, scheduledTasks }: WeeklyTi
     </div>
   );
 }
-
-// Make sure to export the component as a named export
-export { WeeklyTimeGrid as WeeklyCalendarGrid };
