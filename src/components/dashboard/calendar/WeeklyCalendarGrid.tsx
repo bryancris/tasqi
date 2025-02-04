@@ -18,6 +18,42 @@ interface WeeklyTimeGridProps {
   showFullWeek?: boolean;
 }
 
+export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks }: WeeklyTimeGridProps) {
+  console.log('All scheduled tasks received:', scheduledTasks);
+
+  return (
+    <div className="flex-1 overflow-y-auto scrollbar-hide">
+      <div className="grid grid-cols-[80px_1fr] divide-y divide-gray-400">
+        {timeSlots.map((timeSlot, timeIndex) => (
+          <div 
+            key={timeIndex} 
+            className="contents"
+          >
+            <div className="border-r border-gray-400 relative bg-[#B2E3EA] h-[60px] flex items-center justify-center">
+              <div className="text-xs text-gray-600 font-medium">
+                {timeSlot.hour.toString().padStart(2, '0')}:00
+              </div>
+            </div>
+            
+            <div className="contents">
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(0,1fr))]">
+                {weekDays.map((day, dayIndex) => (
+                  <DayCell 
+                    key={dayIndex}
+                    day={day}
+                    timeSlot={timeSlot}
+                    tasks={scheduledTasks}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 const DraggableTask = ({ task }: { task: Task }) => {
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -90,37 +126,3 @@ const DayCell = ({ day, timeSlot, tasks }: { day: Date, timeSlot: TimeSlot, task
     </div>
   );
 };
-
-export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks }: WeeklyTimeGridProps) {
-  console.log('All scheduled tasks received:', scheduledTasks);
-
-  return (
-    <div className="flex-1 overflow-y-auto scrollbar-hide">
-      <div className="divide-y divide-gray-400">
-        {timeSlots.map((timeSlot, timeIndex) => (
-          <div 
-            key={timeIndex} 
-            className="flex h-[60px] border-b border-gray-400 last:border-b-0"
-          >
-            <div className="border-r border-gray-400 relative bg-[#B2E3EA] w-[80px] flex items-center justify-center shrink-0">
-              <div className="text-xs text-gray-600 font-medium">
-                {timeSlot.hour.toString().padStart(2, '0')}:00
-              </div>
-            </div>
-            
-            <div className="flex flex-1">
-              {weekDays.map((day, dayIndex) => (
-                <DayCell 
-                  key={dayIndex}
-                  day={day}
-                  timeSlot={timeSlot}
-                  tasks={scheduledTasks}
-                />
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
