@@ -1,13 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "@/components/dashboard/TaskBoard";
 
-interface UpdateTaskTimeParams {
-  taskId: number;
-  dateStr: string;
-  startTime: string;
-  endTime: string;
-}
-
 export const validateDateFormat = (dateStr: string) => {
   const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
   if (!dateRegex.test(dateStr)) {
@@ -26,6 +19,7 @@ export const validateHourFormat = (hour: string) => {
 };
 
 export const updateTaskToUnscheduled = async (taskId: number) => {
+  console.log('Updating task to unscheduled:', taskId);
   const { error } = await supabase
     .from('tasks')
     .update({
@@ -39,8 +33,18 @@ export const updateTaskToUnscheduled = async (taskId: number) => {
   if (error) throw error;
 };
 
-export const updateTaskTime = async ({ taskId, dateStr, startTime, endTime }: UpdateTaskTimeParams) => {
-  console.log('Updating task:', { taskId, date: dateStr, startTime, endTime });
+export const updateTaskTime = async ({ 
+  taskId, 
+  dateStr, 
+  startTime, 
+  endTime 
+}: { 
+  taskId: number;
+  dateStr: string;
+  startTime: string;
+  endTime: string;
+}) => {
+  console.log('Updating task time:', { taskId, dateStr, startTime, endTime });
   
   const { error } = await supabase
     .from('tasks')

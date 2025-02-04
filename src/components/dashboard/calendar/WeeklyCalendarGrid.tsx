@@ -24,23 +24,8 @@ export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks, showFu
       "grid",
       showFullWeek ? "grid-cols-8" : "grid-cols-6",
       "divide-x divide-gray-200",
-      "relative", // Added for absolute positioning context
+      "relative",
     )}>
-      {/* Vertical grid lines */}
-      <div className="absolute inset-0 grid grid-cols-1 pointer-events-none">
-        <div className="w-full h-full border-r border-gray-200" />
-      </div>
-      {Array.from({ length: showFullWeek ? 7 : 5 }).map((_, index) => (
-        <div 
-          key={`grid-line-${index}`} 
-          className="absolute top-0 bottom-0 border-r border-gray-200 pointer-events-none"
-          style={{ 
-            left: `${((index + 1) * (100 / (showFullWeek ? 8 : 6)))}%`,
-            width: '1px'
-          }}
-        />
-      ))}
-
       {/* Time column header */}
       <div className="h-[100px] bg-[#B2E3EA] flex items-center justify-center relative z-10">
         <span className="text-gray-600 font-medium">Time</span>
@@ -114,7 +99,7 @@ const DraggableTask = ({ task }: { task: Task }) => {
           "text-[11px] leading-tight",
           "text-white break-words",
           "h-[60px] cursor-move",
-          "relative z-20", // Ensure tasks appear above grid lines
+          "relative z-20",
           getPriorityColor(task.priority)
         )}
       >
@@ -130,9 +115,8 @@ const DraggableTask = ({ task }: { task: Task }) => {
 };
 
 const DayCell = ({ day, timeSlot, tasks }: { day: Date, timeSlot: TimeSlot, tasks: Task[] }) => {
-  // Format the date as YYYY-MM-DD for the cell ID
   const formattedDate = format(day, 'yyyy-MM-dd');
-  const cellId = `${formattedDate}-${timeSlot.hour}`;
+  const cellId = `${formattedDate}-${timeSlot.hour.toString().padStart(2, '0')}`;
 
   const { setNodeRef } = useDroppable({
     id: cellId,
