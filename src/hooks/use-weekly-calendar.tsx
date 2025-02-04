@@ -16,6 +16,8 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
+        .gte('date', format(weekStart, 'yyyy-MM-dd'))
+        .lte('date', format(weekEnd, 'yyyy-MM-dd'))
         .order('position', { ascending: true });
       
       if (error) throw error;
@@ -89,13 +91,11 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
         const [dateStr, hour] = (over.id as string).split('-');
         const hourNum = parseInt(hour);
         
-        const formattedDate = format(new Date(dateStr), 'yyyy-MM-dd');
-        
         const { error } = await supabase
           .from('tasks')
           .update({
             status: 'scheduled',
-            date: formattedDate,
+            date: dateStr,
             start_time: `${hourNum}:00`,
             end_time: `${hourNum + 1}:00`
           })
@@ -104,6 +104,10 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
         if (error) throw error;
       }
       
+      queryClient.invalidateQueries({ 
+        queryKey: ['tasks', format(weekStart, 'yyyy-MM-dd'), format(weekEnd, 'yyyy-MM-dd')] 
+      });
+
       toast({
         title: "Task updated",
         description: "The task has been successfully moved.",
