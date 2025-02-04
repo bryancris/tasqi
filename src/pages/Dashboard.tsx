@@ -11,23 +11,16 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileHeader } from "@/components/layouts/MobileHeader";
 import { MobileFooter } from "@/components/layouts/MobileFooter";
 import { MobileWeeklyView } from "@/components/dashboard/mobile/MobileWeeklyView";
-import { useLocation, useSearchParams } from "react-router-dom";
+import { useLocation } from "react-router-dom";
+import { useCalendarView, CalendarView } from "@/hooks/use-calendar-view";
 
 const Dashboard = () => {
-  const [searchParams] = useSearchParams();
-  const [view, setView] = useState<'tasks' | 'calendar' | 'yearly' | 'weekly'>('tasks');
+  const { view, changeView } = useCalendarView('tasks');
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isLoading, setIsLoading] = useState(true);
   const { session } = useAuth();
   const isMobile = useIsMobile();
   const location = useLocation();
-
-  useEffect(() => {
-    const viewParam = searchParams.get('view');
-    if (viewParam && ['tasks', 'calendar', 'yearly', 'weekly'].includes(viewParam)) {
-      setView(viewParam as 'tasks' | 'calendar' | 'yearly' | 'weekly');
-    }
-  }, [searchParams]);
 
   useEffect(() => {
     const initializeDashboard = async () => {
@@ -90,7 +83,7 @@ const Dashboard = () => {
 
   return (
     <DashboardLayout 
-      onViewChange={setView} 
+      onViewChange={changeView} 
       selectedDate={selectedDate} 
       onDateChange={handleDateChange}
     >
