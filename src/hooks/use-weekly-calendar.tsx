@@ -1,4 +1,3 @@
-
 import { format, isSameDay, parseISO } from "date-fns";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,7 +35,6 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
           table: 'tasks'
         },
         () => {
-          // Invalidate and refetch tasks when changes occur
           queryClient.invalidateQueries({ 
             queryKey: ['tasks', format(weekStart, 'yyyy-MM-dd'), format(weekEnd, 'yyyy-MM-dd')] 
           });
@@ -82,14 +80,17 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
 
         if (error) throw error;
       } else {
-        const [date, hour] = (over.id as string).split('-');
+        const [dateStr, hour] = (over.id as string).split('-');
         const hourNum = parseInt(hour);
+        
+        // Format the date properly before sending to Supabase
+        const formattedDate = format(new Date(dateStr), 'yyyy-MM-dd');
         
         const { error } = await supabase
           .from('tasks')
           .update({
             status: 'scheduled',
-            date: date,
+            date: formattedDate,
             start_time: `${hourNum}:00`,
             end_time: `${hourNum + 1}:00`
           })

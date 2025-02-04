@@ -1,14 +1,11 @@
-
-import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, addWeeks, subWeeks } from "date-fns";
+import { useState, useEffect } from "react";
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, addWeeks, subWeeks, parseISO } from "date-fns";
 import { CalendarHeader } from "./calendar/CalendarHeader";
 import { WeeklyDayHeader } from "./calendar/WeeklyDayHeader";
 import { WeeklyCalendarGrid } from "./calendar/WeeklyCalendarGrid";
 import { UnscheduledTasks } from "./calendar/UnscheduledTasks";
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
 import { useWeeklyCalendar } from "@/hooks/use-weekly-calendar";
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
 
 interface WeeklyCalendarProps {
   initialDate?: Date;
@@ -17,7 +14,6 @@ interface WeeklyCalendarProps {
 export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
   const [currentDate, setCurrentDate] = useState(initialDate || new Date());
   const [showFullWeek, setShowFullWeek] = useState(true);
-  const queryClient = useQueryClient();
   
   // Start from Sunday if showing full week, Monday if showing 5 days
   const weekStart = startOfWeek(currentDate, { weekStartsOn: showFullWeek ? 0 : 1 });
@@ -48,34 +44,6 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
   const handlePreviousWeek = () => {
     setCurrentDate(subWeeks(currentDate, 1));
   };
-
-  // Subscribe to real-time updates
-  useEffect(() => {
-    console.log('Setting up real-time subscription in WeeklyCalendar');
-    const channel = supabase
-      .channel('tasks-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'tasks'
-        },
-        (payload) => {
-          console.log('Received real-time update in WeeklyCalendar:', payload);
-          // Invalidate and refetch tasks when changes occur
-          queryClient.invalidateQueries({ 
-            queryKey: ['tasks', format(weekStart, 'yyyy-MM-dd'), format(weekEnd, 'yyyy-MM-dd')] 
-          });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      console.log('Cleaning up real-time subscription in WeeklyCalendar');
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient, weekStart, weekEnd]);
 
   return (
     <DndContext onDragEnd={handleDragEnd}>
