@@ -61,6 +61,8 @@ function DraggableTask({ task, index }: { task: Task; index: number }) {
 }
 
 export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks }: WeeklyCalendarGridProps) {
+  console.log('Scheduled tasks received:', scheduledTasks);
+  
   return (
     <div className="divide-y divide-gray-300 border-b border-gray-300">
       {timeSlots.map((time, timeIndex) => {
@@ -91,11 +93,26 @@ export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks }: Week
 
               // Filter tasks for this specific day and hour
               const dayTasks = scheduledTasks.filter(task => {
-                if (!task.date || !task.start_time || task.status !== 'scheduled') return false;
+                if (!task.date || !task.start_time || task.status !== 'scheduled') {
+                  return false;
+                }
                 const taskDate = parseISO(task.date);
                 const taskHour = parseInt(task.start_time.split(':')[0]);
-                return isSameDay(taskDate, day) && taskHour === hour;
+                const isMatch = isSameDay(taskDate, day) && taskHour === hour;
+                
+                console.log('Task filtering:', {
+                  taskId: task.id,
+                  title: task.title,
+                  date: task.date,
+                  startTime: task.start_time,
+                  status: task.status,
+                  matches: isMatch
+                });
+                
+                return isMatch;
               });
+
+              console.log(`Tasks for ${format(day, 'yyyy-MM-dd')} at ${hour}:00:`, dayTasks);
 
               return (
                 <div 

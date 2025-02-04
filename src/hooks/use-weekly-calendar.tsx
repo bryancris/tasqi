@@ -19,6 +19,7 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
         .order('position', { ascending: true });
       
       if (error) throw error;
+      console.log('Fetched tasks:', data);
       return data as Task[];
     },
   });
@@ -51,6 +52,8 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
   const scheduledTasks = tasks.filter(task => task.status === 'scheduled');
   const unscheduledTasks = tasks.filter(task => task.status === 'unscheduled');
 
+  console.log('Filtered scheduled tasks:', scheduledTasks);
+
   // Calculate visits per day
   const visitsPerDay = weekDays.map(day => {
     const dayTasks = scheduledTasks.filter(task => {
@@ -65,7 +68,7 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
     
     if (!over) return;
 
-    const taskId = Number(active.id); // Convert UniqueIdentifier to number
+    const taskId = Number(active.id);
     const task = tasks.find(t => t.id === taskId);
     if (!task) return;
 
@@ -79,14 +82,13 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
             start_time: null,
             end_time: null
           })
-          .eq('id', taskId); // Now taskId is a number
+          .eq('id', taskId);
 
         if (error) throw error;
       } else {
         const [dateStr, hour] = (over.id as string).split('-');
         const hourNum = parseInt(hour);
         
-        // Format the date properly before sending to Supabase
         const formattedDate = format(new Date(dateStr), 'yyyy-MM-dd');
         
         const { error } = await supabase
@@ -97,7 +99,7 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
             start_time: `${hourNum}:00`,
             end_time: `${hourNum + 1}:00`
           })
-          .eq('id', taskId); // Now taskId is a number
+          .eq('id', taskId);
 
         if (error) throw error;
       }
