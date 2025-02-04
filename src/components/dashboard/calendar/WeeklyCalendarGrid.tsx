@@ -45,7 +45,7 @@ const DraggableTask = ({ task }: { task: Task }) => {
           "rounded-md mb-0.5",
           "text-[11px] leading-tight",
           "text-white break-words",
-          "h-[40px] cursor-move",
+          "h-[60px] cursor-move",
           getPriorityColor(task.priority)
         )}
       >
@@ -81,7 +81,7 @@ const DayCell = ({ day, timeSlot, tasks }: { day: Date, timeSlot: TimeSlot, task
         "transition-colors",
         "border-r border-gray-400 last:border-r-0",
         "hover:bg-gray-50/50",
-        "h-[45px]"  // Adjusted height to match the image
+        "h-[60px]"
       )}
     >
       {dayTasks.map((task) => (
@@ -100,9 +100,9 @@ export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks }: Week
         {timeSlots.map((timeSlot, timeIndex) => (
           <div 
             key={timeIndex} 
-            className="grid grid-cols-8 h-[45px] border-b border-gray-400 last:border-b-0"
+            className="grid grid-cols-8 h-[60px] border-b border-gray-400 last:border-b-0"
           >
-            <div className="border-r border-gray-400 relative bg-[#B2E3EA] w-[60px] flex items-center justify-center">
+            <div className="border-r border-gray-400 relative bg-[#B2E3EA] w-[80px] flex items-center justify-center">
               <div className="text-xs text-gray-600 font-medium">
                 {timeSlot.hour.toString().padStart(2, '0')}:00
               </div>
