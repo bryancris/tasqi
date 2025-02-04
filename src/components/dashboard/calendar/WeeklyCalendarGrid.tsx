@@ -12,10 +12,9 @@ interface TimeSlot {
 }
 
 interface WeeklyTimeGridProps {
-  timeSlots: TimeSlot[];
+  timeSlots: string[];
   weekDays: Date[];
-  showFullWeek: boolean;
-  tasks: Task[];
+  scheduledTasks: Task[];
 }
 
 function DraggableTask({ task }: { task: Task }) {
@@ -59,84 +58,90 @@ function DraggableTask({ task }: { task: Task }) {
   );
 }
 
-export function WeeklyTimeGrid({ timeSlots, weekDays, showFullWeek, tasks }: WeeklyTimeGridProps) {
-  console.log('All tasks received:', tasks);
+export function WeeklyTimeGrid({ timeSlots, weekDays, scheduledTasks }: WeeklyTimeGridProps) {
+  console.log('All tasks received:', scheduledTasks);
 
   return (
     <div className="flex-1 overflow-y-auto scrollbar-hide">
       <div className="divide-y divide-gray-300">
-        {timeSlots.map((time, timeIndex) => (
-          <div 
-            key={timeIndex} 
-            className={cn(
-              "grid",
-              showFullWeek ? "grid-cols-8" : "grid-cols-6",
-              "min-h-[80px]"
-            )}
-          >
-            <div className={cn(
-              "p-1 border-r border-gray-300 relative",
-              "bg-[#B2E3EA]",
-              "transition-colors",
-              "w-[40px]"
-            )}>
-              <div className="text-xs text-[#6B7280] whitespace-pre-line text-center">
-                {time.hour}
-              </div>
-            </div>
-            
-            {weekDays.map((day, dayIndex) => {
-              const { setNodeRef } = useDroppable({
-                id: `${format(day, 'yyyy-MM-dd')}-${time.hour}`,
-              });
-
-              // Filter tasks for this specific day and hour
-              const dayTasks = tasks.filter(task => {
-                if (!task.date || !task.start_time || task.status !== 'scheduled') {
-                  return false;
-                }
-                const taskDate = parseISO(task.date);
-                const taskHour = parseInt(task.start_time.split(':')[0]);
-                const isMatch = isSameDay(taskDate, day) && taskHour === time.hour;
-                
-                console.log('Task filtering:', {
-                  taskId: task.id,
-                  title: task.title,
-                  date: task.date,
-                  startTime: task.start_time,
-                  status: task.status,
-                  matches: isMatch,
-                  currentDay: format(day, 'yyyy-MM-dd'),
-                  currentHour: time.hour
-                });
-                
-                return isMatch;
-              });
-
-              console.log(`Tasks for ${format(day, 'yyyy-MM-dd')} at ${time.hour}:00:`, dayTasks);
-
-              return (
-                <div 
-                  key={dayIndex}
-                  ref={setNodeRef}
-                  className={cn(
-                    "pl-0.5 pr-1 py-1",
-                    "relative",
-                    "transition-colors",
-                    timeIndex % 2 === 0 ? "bg-[#F8F8FC]" : "bg-white",
-                    "border-r border-gray-300 last:border-r-0",
-                    "hover:bg-gray-50/50"
-                  )}
-                >
-                  {dayTasks.map((task) => (
-                    <DraggableTask key={task.id} task={task} />
-                  ))}
+        {timeSlots.map((time, timeIndex) => {
+          const hour = parseInt(time);
+          return (
+            <div 
+              key={timeIndex} 
+              className={cn(
+                "grid",
+                weekDays.length === 7 ? "grid-cols-8" : "grid-cols-6",
+                "min-h-[80px]"
+              )}
+            >
+              <div className={cn(
+                "p-1 border-r border-gray-300 relative",
+                "bg-[#B2E3EA]",
+                "transition-colors",
+                "w-[40px]"
+              )}>
+                <div className="text-xs text-[#6B7280] whitespace-pre-line text-center">
+                  {time}
                 </div>
-              );
-            })}
-          </div>
-        ))}
+              </div>
+              
+              {weekDays.map((day, dayIndex) => {
+                const { setNodeRef } = useDroppable({
+                  id: `${format(day, 'yyyy-MM-dd')}-${hour}`,
+                });
+
+                // Filter tasks for this specific day and hour
+                const dayTasks = scheduledTasks.filter(task => {
+                  if (!task.date || !task.start_time || task.status !== 'scheduled') {
+                    return false;
+                  }
+                  const taskDate = parseISO(task.date);
+                  const taskHour = parseInt(task.start_time.split(':')[0]);
+                  const isMatch = isSameDay(taskDate, day) && taskHour === hour;
+                  
+                  console.log('Task filtering:', {
+                    taskId: task.id,
+                    title: task.title,
+                    date: task.date,
+                    startTime: task.start_time,
+                    status: task.status,
+                    matches: isMatch,
+                    currentDay: format(day, 'yyyy-MM-dd'),
+                    currentHour: hour
+                  });
+                  
+                  return isMatch;
+                });
+
+                console.log(`Tasks for ${format(day, 'yyyy-MM-dd')} at ${hour}:00:`, dayTasks);
+
+                return (
+                  <div 
+                    key={dayIndex}
+                    ref={setNodeRef}
+                    className={cn(
+                      "pl-0.5 pr-1 py-1",
+                      "relative",
+                      "transition-colors",
+                      timeIndex % 2 === 0 ? "bg-[#F8F8FC]" : "bg-white",
+                      "border-r border-gray-300 last:border-r-0",
+                      "hover:bg-gray-50/50"
+                    )}
+                  >
+                    {dayTasks.map((task) => (
+                      <DraggableTask key={task.id} task={task} />
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 }
+
+// Make sure to export the component as a named export
+export { WeeklyTimeGrid as WeeklyCalendarGrid };
