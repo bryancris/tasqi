@@ -18,7 +18,7 @@ interface WeeklyTimeGridProps {
   showFullWeek?: boolean;
 }
 
-export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks, showFullWeek }: WeeklyTimeGridProps) {
+export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks, showFullWeek = true }: WeeklyTimeGridProps) {
   console.log('All scheduled tasks received:', scheduledTasks);
 
   return (
@@ -37,8 +37,8 @@ export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks, showFu
           
           {/* Days grid */}
           <div className={cn(
-            "grid h-[60px] border-b border-gray-400",
-            showFullWeek ? "grid-cols-7" : "grid-cols-5"
+            "grid grid-cols-5 h-[60px]",
+            showFullWeek && "grid-cols-7"
           )}>
             {weekDays.map((day, dayIndex) => (
               <DayCell 
