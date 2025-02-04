@@ -107,6 +107,10 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
         const [dateStr, hour] = (over.id as string).split('-');
         const hourNum = parseInt(hour);
         
+        // Format the time with leading zeros and proper AM/PM
+        const startTime = `${hourNum.toString().padStart(2, '0')}:00`;
+        const endTime = `${(hourNum + 1).toString().padStart(2, '0')}:00`;
+        
         // Ensure we have a valid date string in YYYY-MM-DD format
         const targetDate = new Date(dateStr);
         const formattedDate = format(targetDate, 'yyyy-MM-dd');
@@ -116,8 +120,8 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
           .update({
             status: 'scheduled',
             date: formattedDate,
-            start_time: `${hourNum}:00`,
-            end_time: `${hourNum + 1}:00`
+            start_time: startTime,
+            end_time: endTime
           })
           .eq('id', taskId);
 
