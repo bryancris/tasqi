@@ -102,24 +102,26 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
 
         if (error) throw error;
       } else {
-        const [dateStr, hour] = (over.id as string).split('-');
-        const hourNum = parseInt(hour);
+        const [dateStr, hourStr] = (over.id as string).split('-');
+        const hour = parseInt(hourStr);
         
-        // Ensure 24-hour format with leading zeros
-        const startTime = `${hourNum.toString().padStart(2, '0')}:00:00`;
-        const endTime = `${(hourNum + 1).toString().padStart(2, '0')}:00:00`;
+        // Format times in 24-hour format with leading zeros and seconds
+        const startTime = `${hour.toString().padStart(2, '0')}:00:00`;
+        const endTime = `${(hour + 1).toString().padStart(2, '0')}:00:00`;
         
-        console.log('Updating task times:', { startTime, endTime, hourNum });
-        
-        // Ensure we have a valid date string in YYYY-MM-DD format
-        const targetDate = new Date(dateStr);
-        const formattedDate = format(targetDate, 'yyyy-MM-dd');
+        console.log('Updating task times:', { 
+          taskId,
+          dateStr,
+          hour,
+          startTime, 
+          endTime 
+        });
         
         const { error } = await supabase
           .from('tasks')
           .update({
             status: 'scheduled',
-            date: formattedDate,
+            date: dateStr,
             start_time: startTime,
             end_time: endTime
           })
@@ -128,7 +130,6 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
         if (error) throw error;
       }
       
-      // Immediately invalidate the query to refresh the data
       await queryClient.invalidateQueries({ 
         queryKey: ['tasks', format(weekStart, 'yyyy-MM-dd'), format(weekEnd, 'yyyy-MM-dd')] 
       });
