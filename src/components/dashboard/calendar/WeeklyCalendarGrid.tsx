@@ -23,33 +23,49 @@ export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks, showFu
     <div className={cn(
       "grid",
       showFullWeek ? "grid-cols-8" : "grid-cols-6",
-      "grid-rows-[100px_repeat(12,60px)]", // First row 100px for header, then 12 60px rows for time slots
-      "w-full h-full"
+      "divide-x divide-gray-200",
     )}>
-      {/* Render the header component in the first row */}
-      <div className="contents">
-        {/* Time slots */}
-        {timeSlots.map((timeSlot, timeIndex) => (
-          <div key={timeSlot.hour} className="contents">
-            {/* Time label */}
-            <div className="bg-[#B2E3EA] border-r border-gray-200 flex items-center justify-center">
-              <div className="text-xs text-gray-600 font-medium">
-                {timeSlot.hour.toString().padStart(2, '0')}:00
-              </div>
-            </div>
-
-            {/* Day cells for this time slot */}
-            {weekDays.map((day, dayIndex) => (
-              <DayCell
-                key={`${dayIndex}-${timeSlot.hour}`}
-                day={day}
-                timeSlot={timeSlot}
-                tasks={scheduledTasks}
-              />
-            ))}
-          </div>
-        ))}
+      {/* Time column header */}
+      <div className="h-[100px] bg-[#B2E3EA] flex items-center justify-center">
+        <span className="text-gray-600 font-medium">Time</span>
       </div>
+
+      {/* Day headers */}
+      {weekDays.map((day, index) => (
+        <div 
+          key={index}
+          className="h-[100px] bg-[#B2E3EA] p-2 text-center"
+        >
+          <div className="font-semibold uppercase text-sm text-gray-600">
+            {format(day, 'EEE')}
+          </div>
+          <div className="text-lg font-medium">
+            {format(day, 'd')}
+          </div>
+        </div>
+      ))}
+
+      {/* Time slots grid */}
+      {timeSlots.map((timeSlot) => (
+        <div key={timeSlot.hour} className="contents">
+          {/* Time label */}
+          <div className="bg-[#B2E3EA] h-[60px] flex items-center justify-center border-t border-gray-200">
+            <div className="text-xs text-gray-600 font-medium">
+              {timeSlot.hour.toString().padStart(2, '0')}:00
+            </div>
+          </div>
+
+          {/* Day cells for this time slot */}
+          {weekDays.map((day, dayIndex) => (
+            <DayCell
+              key={`${dayIndex}-${timeSlot.hour}`}
+              day={day}
+              timeSlot={timeSlot}
+              tasks={scheduledTasks}
+            />
+          ))}
+        </div>
+      ))}
     </div>
   );
 }
@@ -111,7 +127,7 @@ const DayCell = ({ day, timeSlot, tasks }: { day: Date, timeSlot: TimeSlot, task
   return (
     <div 
       ref={setNodeRef}
-      className="border-r border-gray-200 last:border-r-0 border-b p-0.5 hover:bg-gray-50/50"
+      className="h-[60px] border-t border-gray-200 p-0.5 hover:bg-gray-50/50"
     >
       {dayTasks.map((task) => (
         <DraggableTask key={task.id} task={task} />
