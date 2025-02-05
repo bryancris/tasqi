@@ -126,9 +126,7 @@ const DayCell = ({ day, timeSlot, tasks, dayIndex }: {
   tasks: Task[],
   dayIndex: number 
 }) => {
-  // Add one day to compensate for the offset
-  const adjustedDay = addDays(day, 1);
-  const formattedDate = format(adjustedDay, 'yyyy-MM-dd');
+  const formattedDate = format(day, 'yyyy-MM-dd');
   
   const { setNodeRef, isOver } = useDroppable({
     id: `${formattedDate}-${timeSlot.hour}`,
@@ -141,7 +139,8 @@ const DayCell = ({ day, timeSlot, tasks, dayIndex }: {
   // Filter tasks for this specific day and time slot
   const dayTasks = tasks.filter(task => {
     if (!task.date || !task.start_time) return false;
-    const taskDate = format(new Date(task.date), 'yyyy-MM-dd');
+    // Subtract one day from the task date to compensate for the offset
+    const taskDate = format(addDays(new Date(task.date), -1), 'yyyy-MM-dd');
     const taskHour = parseInt(task.start_time.split(':')[0]);
     return taskDate === formattedDate && taskHour === timeSlot.hour;
   });
