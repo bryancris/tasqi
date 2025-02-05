@@ -2,10 +2,25 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Trash2 } from "lucide-react";
+import { Trash2, Palette } from "lucide-react";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Note } from "./types";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
+const COLORS = [
+  '#8E9196', // Neutral Gray
+  '#9b87f5', // Primary Purple
+  '#7E69AB', // Secondary Purple
+  '#F2FCE2', // Soft Green
+  '#FEF7CD', // Soft Yellow
+  '#FEC6A1', // Soft Orange
+  '#E5DEFF', // Soft Purple
+  '#FFDEE2', // Soft Pink
+  '#FDE1D3', // Soft Peach
+  '#D3E4FD', // Soft Blue
+  '#F1F0FB', // Soft Gray (default)
+];
 
 interface NoteListProps {
   notes: Note[];
@@ -28,6 +43,24 @@ export function NoteList({ notes, isLoading }: NoteListProps) {
     onError: (error) => {
       console.error("Error deleting note:", error);
       toast.error("Failed to delete note");
+    },
+  });
+
+  const updateNoteColorMutation = useMutation({
+    mutationFn: async ({ noteId, color }: { noteId: number; color: string }) => {
+      const { error } = await supabase
+        .from("notes")
+        .update({ color })
+        .eq("id", noteId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
+      toast.success("Note color updated");
+    },
+    onError: (error) => {
+      console.error("Error updating note color:", error);
+      toast.error("Failed to update note color");
     },
   });
 
@@ -57,14 +90,41 @@ export function NoteList({ notes, isLoading }: NoteListProps) {
                 {new Date(note.created_at).toLocaleDateString()}
               </p>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => deleteNoteMutation.mutate(note.id)}
-              className="text-red-500 hover:text-red-700 shrink-0"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
+            <div className="flex gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="hover:text-primary shrink-0"
+                  >
+                    <Palette className="w-4 h-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64">
+                  <div className="grid grid-cols-5 gap-2 p-2">
+                    {COLORS.map((color) => (
+                      <button
+                        key={color}
+                        className={`w-8 h-8 rounded-full border-2 ${
+                          note.color === color ? 'border-primary' : 'border-transparent'
+                        }`}
+                        style={{ backgroundColor: color }}
+                        onClick={() => updateNoteColorMutation.mutate({ noteId: note.id, color })}
+                      />
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => deleteNoteMutation.mutate(note.id)}
+                className="text-red-500 hover:text-red-700 shrink-0"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         </Card>
       ))}
