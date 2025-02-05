@@ -1,4 +1,4 @@
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "@/components/dashboard/TaskBoard";
@@ -82,12 +82,11 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
       if (over.id === 'unscheduled') {
         await updateTaskToUnscheduled(taskId);
       } else {
-        // Extract date and hour from the cell ID
-        const [dateStr, hour] = (over.id as string).split('-HH');
+        const [dateStr, hour] = (over.id as string).split('-');
         
         console.log('Processing drop:', { dateStr, hour });
         
-        const startTime = `${hour.toString().padStart(2, '0')}:00:00`;
+        const startTime = `${hour}:00:00`;
         const endTime = `${(parseInt(hour) + 1).toString().padStart(2, '0')}:00:00`;
         
         await updateTaskTime({ 

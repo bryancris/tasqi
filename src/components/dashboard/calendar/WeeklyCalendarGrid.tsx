@@ -73,20 +73,13 @@ export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks, showFu
 
 const DraggableTask = ({ task }: { task: Task }) => {
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: task.id,
-    data: {
-      task
-    }
+    data: { task }
   });
 
   const style = transform ? {
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-    position: 'relative' as const,
-    height: '100%',
-    width: '100%',
-    opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 999 : 1,
   } : undefined;
 
   return (
@@ -121,13 +114,13 @@ const DraggableTask = ({ task }: { task: Task }) => {
 };
 
 const DayCell = ({ day, timeSlot, tasks }: { day: Date, timeSlot: TimeSlot, tasks: Task[] }) => {
-  // Create a unique ID that includes the full date information
-  const cellId = format(day, 'yyyy-MM-dd-HH').replace(/:/g, '-');
+  const formattedDate = format(day, 'yyyy-MM-dd');
+  const cellId = `${formattedDate}-${timeSlot.hour}`;
   
   const { setNodeRef, isOver } = useDroppable({
     id: cellId,
     data: {
-      date: format(day, 'yyyy-MM-dd'),
+      date: formattedDate,
       hour: timeSlot.hour
     }
   });
@@ -136,7 +129,7 @@ const DayCell = ({ day, timeSlot, tasks }: { day: Date, timeSlot: TimeSlot, task
     if (!task.date || !task.start_time) return false;
     const taskDate = format(new Date(task.date), 'yyyy-MM-dd');
     const taskHour = parseInt(task.start_time.split(':')[0]);
-    return taskDate === format(day, 'yyyy-MM-dd') && taskHour === timeSlot.hour;
+    return taskDate === formattedDate && taskHour === timeSlot.hour;
   });
 
   return (
