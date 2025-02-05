@@ -94,7 +94,7 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
 
   // Only show unscheduled tasks that are not completed
   const unscheduledTasks = tasks.filter(task => 
-    task.status === 'unscheduled' && task.status !== 'completed'
+    task.status === 'unscheduled'
   );
 
   const visitsPerDay = weekDays.map(day => {
@@ -114,3 +114,4 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
     handleDragEnd
   };
 }
+
