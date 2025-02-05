@@ -1,5 +1,6 @@
+
 import { useDroppable } from "@dnd-kit/core";
-import { format, isSameDay, parseISO } from "date-fns";
+import { format } from "date-fns";
 import { Task } from "../TaskBoard";
 import { DraggableTask } from "./DraggableTask";
 import { cn } from "@/lib/utils";
@@ -14,17 +15,22 @@ interface DayCellProps {
 }
 
 export const DayCell = ({ day, timeSlot, tasks }: DayCellProps) => {
-  const { setNodeRef } = useDroppable({
-    id: `${format(day, 'yyyy-MM-dd')}-${timeSlot.hour}`,
+  const formattedDate = format(day, 'yyyy-MM-dd');
+  
+  const { setNodeRef, isOver } = useDroppable({
+    id: `${formattedDate}-${timeSlot.hour}`,
+    data: {
+      date: formattedDate,
+      hour: timeSlot.hour
+    }
   });
 
+  // Filter tasks for this specific day and time slot
   const dayTasks = tasks.filter(task => {
     if (!task.date || !task.start_time) return false;
-    const taskDate = parseISO(task.date);
+    const taskDate = format(new Date(task.date), 'yyyy-MM-dd');
     const taskHour = parseInt(task.start_time.split(':')[0]);
-    const isMatchingDay = isSameDay(taskDate, day);
-    const isMatchingTime = taskHour === timeSlot.hour;
-    return isMatchingDay && isMatchingTime;
+    return taskDate === formattedDate && taskHour === timeSlot.hour;
   });
 
   return (
@@ -35,7 +41,7 @@ export const DayCell = ({ day, timeSlot, tasks }: DayCellProps) => {
         "relative",
         "transition-colors",
         "border-r border-gray-300 last:border-r-0",
-        "hover:bg-gray-50/50"
+        isOver ? "bg-blue-50" : "hover:bg-gray-50/50"
       )}
     >
       {dayTasks.map((task) => (

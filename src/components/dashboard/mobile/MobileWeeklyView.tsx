@@ -1,11 +1,11 @@
+
 import { useState } from "react";
 import { startOfWeek, endOfWeek, eachDayOfInterval, addDays, addWeeks, subWeeks } from "date-fns";
 import { WeeklyViewHeader } from "./WeeklyViewHeader";
 import { WeeklyDaysHeader } from "./WeeklyDaysHeader";
 import { WeeklyTimeGrid } from "./WeeklyTimeGrid";
 import { DndContext, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
-import { useWeeklyTasks } from "@/hooks/use-weekly-tasks";
-import { useTaskDrag } from "@/hooks/use-task-drag";
+import { useWeeklyCalendar } from "@/hooks/use-weekly-calendar";
 
 export function MobileWeeklyView() {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -40,8 +40,10 @@ export function MobileWeeklyView() {
     };
   });
 
-  const tasks = useWeeklyTasks(weekStart, weekEnd);
-  const { handleDragEnd } = useTaskDrag(weekStart, weekEnd);
+  const {
+    scheduledTasks,
+    handleDragEnd
+  } = useWeeklyCalendar(weekStart, weekEnd, weekDays);
 
   return (
     <div className="flex flex-col h-[calc(100vh-144px)] bg-white">
@@ -60,7 +62,7 @@ export function MobileWeeklyView() {
         <WeeklyTimeGrid
           timeSlots={timeSlots}
           weekDays={weekDays}
-          scheduledTasks={tasks}
+          scheduledTasks={scheduledTasks}
           showFullWeek={showFullWeek}
         />
       </DndContext>
