@@ -24,10 +24,11 @@ export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks, showFu
       "grid",
       showFullWeek ? "grid-cols-8" : "grid-cols-6",
       "divide-x divide-gray-200",
-      "relative",
+      "border border-gray-200 rounded-lg overflow-hidden",
+      "bg-white shadow-sm"
     )}>
       {/* Time column header */}
-      <div className="h-[100px] bg-[#B2E3EA] flex items-center justify-center relative z-10">
+      <div className="h-[100px] bg-[#E3F2F6] flex items-center justify-center relative z-10 border-b border-gray-200">
         <span className="text-gray-600 font-medium">Time</span>
       </div>
 
@@ -35,13 +36,16 @@ export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks, showFu
       {weekDays.map((day, index) => (
         <div 
           key={index}
-          className="h-[100px] bg-[#B2E3EA] p-2 text-center relative z-10"
+          className="h-[100px] bg-[#E3F2F6] p-2 text-center relative z-10 border-b border-gray-200"
         >
           <div className="font-semibold uppercase text-sm text-gray-600">
             {format(day, 'EEE')}
           </div>
-          <div className="text-lg font-medium">
+          <div className="text-lg font-medium text-gray-700 mt-1">
             {format(day, 'd')}
+          </div>
+          <div className="text-xs text-gray-500 mt-1">
+            {format(day, 'MMM yyyy')}
           </div>
         </div>
       ))}
@@ -50,8 +54,8 @@ export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks, showFu
       {timeSlots.map((timeSlot) => (
         <div key={timeSlot.hour} className="contents">
           {/* Time label */}
-          <div className="bg-[#B2E3EA] h-[60px] flex items-center justify-center border-t border-gray-200 relative z-10">
-            <div className="text-xs text-gray-600 font-medium">
+          <div className="bg-[#E3F2F6] h-[80px] flex items-center justify-center border-t border-gray-200 relative z-10">
+            <div className="text-sm text-gray-600 font-medium">
               {timeSlot.hour.toString().padStart(2, '0')}:00
             </div>
           </div>
@@ -101,7 +105,7 @@ const DraggableTask = ({ task }: { task: Task }) => {
           "px-2 py-1 rounded-md",
           "text-[11px] leading-tight",
           "text-white break-words",
-          "cursor-move",
+          "cursor-move shadow-sm hover:shadow-md transition-shadow",
           getPriorityColor(task.priority)
         )}
       >
@@ -123,7 +127,6 @@ const DayCell = ({ day, timeSlot, tasks, dayIndex }: {
   dayIndex: number 
 }) => {
   const formattedDate = format(day, 'yyyy-MM-dd');
-  console.log('DayCell formattedDate:', formattedDate, 'dayIndex:', dayIndex, 'hour:', timeSlot.hour);
   
   const { setNodeRef, isOver } = useDroppable({
     id: `${formattedDate}-${timeSlot.hour}`,
@@ -145,14 +148,15 @@ const DayCell = ({ day, timeSlot, tasks, dayIndex }: {
     <div 
       ref={setNodeRef}
       className={cn(
-        "min-h-[60px] relative",
+        "min-h-[80px] relative p-1",
         "transition-colors duration-200",
         "border-t border-gray-200",
-        isOver ? "bg-gray-100" : "hover:bg-gray-50"
+        isOver ? "bg-blue-50" : "hover:bg-gray-50",
+        dayIndex % 2 === 0 ? "bg-white" : "bg-gray-50/30"
       )}
     >
       {dayTasks.map((task) => (
-        <div key={task.id} className="relative h-full w-full p-1">
+        <div key={task.id} className="relative h-full w-full">
           <DraggableTask task={task} />
         </div>
       ))}
