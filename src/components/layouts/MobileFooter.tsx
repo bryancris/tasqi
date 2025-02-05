@@ -1,4 +1,5 @@
-import { Home, Calendar, FileText, MessageSquare, Settings } from "lucide-react";
+
+import { Home, Calendar, FileText, MessageSquare, Heart } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -66,10 +67,10 @@ export function MobileFooter() {
           </button>
           <button 
             className="flex flex-col items-center p-2 text-gray-500"
-            onClick={() => handleNavigation("/settings")}
+            onClick={() => handleNavigation("/self-care")}
           >
-            <Settings className="h-6 w-6" />
-            <span className="text-xs mt-1">Settings</span>
+            <Heart className="h-6 w-6" />
+            <span className="text-xs mt-1">Self-Care</span>
           </button>
         </div>
       </div>
