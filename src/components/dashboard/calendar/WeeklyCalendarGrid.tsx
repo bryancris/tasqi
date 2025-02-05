@@ -73,13 +73,15 @@ export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks, showFu
 
 const DraggableTask = ({ task }: { task: Task }) => {
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: task.id,
     data: { task }
   });
 
   const style = transform ? {
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 999 : 1,
   } : undefined;
 
   return (

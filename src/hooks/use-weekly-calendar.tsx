@@ -5,11 +5,6 @@ import { Task } from "@/components/dashboard/TaskBoard";
 import { DragEndEvent } from "@dnd-kit/core";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
-import { 
-  filterScheduledTasks, 
-  filterUnscheduledTasks, 
-  calculateVisitsPerDay 
-} from "@/utils/calendarUtils";
 
 export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date[]) {
   const queryClient = useQueryClient();
@@ -18,11 +13,6 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
   const { data: tasks = [] } = useQuery({
     queryKey: ['tasks', format(weekStart, 'yyyy-MM-dd'), format(weekEnd, 'yyyy-MM-dd')],
     queryFn: async () => {
-      console.log('Fetching tasks for week:', { 
-        weekStart: format(weekStart, 'yyyy-MM-dd'), 
-        weekEnd: format(weekEnd, 'yyyy-MM-dd') 
-      });
-      
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
@@ -30,17 +20,12 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
         .lte('date', format(weekEnd, 'yyyy-MM-dd'))
         .order('position', { ascending: true });
       
-      if (error) {
-        console.error('Error fetching tasks:', error);
-        throw error;
-      }
-      
+      if (error) throw error;
       return data as Task[];
     },
   });
 
   useEffect(() => {
-    console.log('Setting up real-time subscription');
     const channel = supabase
       .channel('tasks-changes')
       .on(
@@ -50,8 +35,7 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
           schema: 'public',
           table: 'tasks'
         },
-        (payload) => {
-          console.log('Received real-time update:', payload);
+        () => {
           queryClient.invalidateQueries({ 
             queryKey: ['tasks', format(weekStart, 'yyyy-MM-dd'), format(weekEnd, 'yyyy-MM-dd')] 
           });
@@ -60,18 +44,12 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
       .subscribe();
 
     return () => {
-      console.log('Cleaning up real-time subscription');
       supabase.removeChannel(channel);
     };
   }, [queryClient, weekStart, weekEnd]);
 
-  const scheduledTasks = filterScheduledTasks(tasks);
-  const unscheduledTasks = filterUnscheduledTasks(tasks);
-  const visitsPerDay = calculateVisitsPerDay(weekDays, scheduledTasks);
-
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
-    
     if (!over) return;
 
     const taskId = Number(active.id);
@@ -82,21 +60,26 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
       if (over.id === 'unscheduled') {
         await updateTaskToUnscheduled(taskId);
       } else {
-        const [dateStr, hour] = (over.id as string).split('-');
+        const dropData = (over.data?.current as { date: string; hour: number }) || null;
+        if (!dropData) {
+          console.error('Missing drop data');
+          return;
+        }
+
+        const { date, hour } = dropData;
+        console.log('Processing drop:', { date, hour });
         
-        console.log('Processing drop:', { dateStr, hour });
+        const startTime = `${hour.toString().padStart(2, '0')}:00:00`;
+        const endTime = `${(hour + 1).toString().padStart(2, '0')}:00:00`;
         
-        const startTime = `${hour}:00:00`;
-        const endTime = `${(parseInt(hour) + 1).toString().padStart(2, '0')}:00:00`;
-        
-        await updateTaskTime({ 
-          taskId, 
-          dateStr, 
-          startTime, 
-          endTime 
+        await updateTaskTime({
+          taskId,
+          dateStr: date,
+          startTime,
+          endTime
         });
       }
-      
+
       await queryClient.invalidateQueries({ 
         queryKey: ['tasks', format(weekStart, 'yyyy-MM-dd'), format(weekEnd, 'yyyy-MM-dd')] 
       });
@@ -114,6 +97,18 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
       });
     }
   };
+
+  const scheduledTasks = tasks.filter(task => task.status === 'scheduled' && task.date && task.start_time);
+  const unscheduledTasks = tasks.filter(task => task.status === 'unscheduled');
+
+  const visitsPerDay = weekDays.map(day => {
+    const dayTasks = scheduledTasks.filter(task => {
+      if (!task.date) return false;
+      const taskDate = format(new Date(task.date), 'yyyy-MM-dd');
+      return taskDate === format(day, 'yyyy-MM-dd');
+    });
+    return `${dayTasks.length} ${dayTasks.length === 1 ? 'Visit' : 'Visits'}`;
+  });
 
   return {
     tasks,
@@ -144,10 +139,10 @@ async function updateTaskTime({
   startTime, 
   endTime 
 }: { 
-  taskId: number, 
-  dateStr: string, 
-  startTime: string, 
-  endTime: string 
+  taskId: number;
+  dateStr: string;
+  startTime: string;
+  endTime: string;
 }) {
   const { error } = await supabase
     .from('tasks')
