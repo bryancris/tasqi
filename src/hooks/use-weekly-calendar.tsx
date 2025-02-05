@@ -61,7 +61,8 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
           taskId,
           date,
           startTime,
-          endTime
+          endTime,
+          dropData
         });
 
         const { error } = await supabase
