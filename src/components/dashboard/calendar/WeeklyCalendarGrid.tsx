@@ -139,8 +139,8 @@ const DayCell = ({ day, timeSlot, tasks, dayIndex }: {
   // Filter tasks for this specific day and time slot
   const dayTasks = tasks.filter(task => {
     if (!task.date || !task.start_time) return false;
-    // Subtract one day from the task date to compensate for the offset
-    const taskDate = format(addDays(new Date(task.date), -1), 'yyyy-MM-dd');
+    // Add one day to the task date to compensate for the offset
+    const taskDate = format(addDays(new Date(task.date), 1), 'yyyy-MM-dd');
     const taskHour = parseInt(task.start_time.split(':')[0]);
     return taskDate === formattedDate && taskHour === timeSlot.hour;
   });
