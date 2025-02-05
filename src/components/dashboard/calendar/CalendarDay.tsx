@@ -1,3 +1,4 @@
+
 import { Task } from "../TaskBoard";
 import { format } from "date-fns";
 import { getPriorityColor } from "@/utils/taskColors";
@@ -29,18 +30,26 @@ export function CalendarDay({
 
   return (
     <div 
-      className={`min-h-[100px] p-2 bg-white ${
-        !isCurrentMonth ? 'text-gray-400' : ''
-      }`}
       onClick={handleDateClick}
+      className={`
+        min-h-[120px] p-3 bg-white transition-all duration-300
+        hover:bg-gray-50 group cursor-pointer
+        ${!isCurrentMonth ? 'opacity-40' : ''}
+        relative overflow-hidden
+      `}
     >
       <div className={`
-        text-sm font-medium mb-1
-        ${isToday ? 'text-blue-600 font-bold' : ''}
+        text-sm font-medium mb-2 flex items-center justify-center w-8 h-8 rounded-full
+        transition-all duration-300 relative z-10
+        ${isToday 
+          ? 'bg-[#2A9BB5] text-white shadow-md' 
+          : 'group-hover:bg-[#2A9BB5]/10'
+        }
       `}>
         {dayNumber}
       </div>
-      <div className="space-y-1">
+
+      <div className="space-y-1.5">
         {tasks.map((task) => (
           <div
             key={task.id}
@@ -49,8 +58,10 @@ export function CalendarDay({
               onTaskClick(task);
             }}
             className={`
-              text-xs p-1 rounded cursor-pointer
-              hover:opacity-80 transition-opacity
+              text-xs p-2 rounded-md cursor-pointer
+              transition-all duration-200
+              transform hover:translate-x-1
+              hover:shadow-md
               ${getPriorityColor(task.priority)}
               text-white truncate
             `}
@@ -59,6 +70,13 @@ export function CalendarDay({
           </div>
         ))}
       </div>
+
+      {/* Decorative corner gradient */}
+      {isCurrentMonth && (
+        <div className="absolute top-0 right-0 w-16 h-16 opacity-10 pointer-events-none
+          bg-gradient-to-br from-[#2A9BB5] to-transparent transform -translate-x-1/2 -translate-y-1/2">
+        </div>
+      )}
     </div>
   );
 }

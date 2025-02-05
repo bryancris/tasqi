@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -56,17 +57,17 @@ export function Calendar({ initialDate, onDateSelect }: CalendarProps) {
   const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
   return (
-    <div className="w-full max-w-7xl mx-auto">
+    <div className="w-full max-w-7xl mx-auto animate-fade-in">
       <CalendarHeader 
         monthYear={monthYear}
         onNextMonth={nextMonth}
         onPreviousMonth={previousMonth}
       />
 
-      <div className="border rounded-lg bg-white shadow-sm overflow-hidden">
-        <div className="grid grid-cols-7 gap-px bg-gray-200 border-b">
+      <div className="border rounded-lg bg-gradient-to-br from-white to-gray-50 shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl">
+        <div className="grid grid-cols-7 gap-px bg-gradient-to-r from-[#2A9BB5] to-[#1C7A8C] text-white">
           {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-            <div key={day} className="bg-white p-2 text-sm font-medium text-gray-500 text-center">
+            <div key={day} className="p-3 text-sm font-medium text-center">
               {day}
             </div>
           ))}
