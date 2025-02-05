@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -88,7 +89,7 @@ export function NotesContent() {
   };
 
   return (
-    <div className={`container mx-auto ${isMobile ? 'p-2' : 'p-4'} max-w-4xl h-[calc(100vh-144px)] overflow-y-auto`}>
+    <div className={`container mx-auto ${isMobile ? 'p-4' : 'p-4'} max-w-4xl h-[calc(100vh-144px)] overflow-y-auto`}>
       <form onSubmit={handleSubmit} className="mb-4 space-y-3">
         <Input
           placeholder="Note title"
