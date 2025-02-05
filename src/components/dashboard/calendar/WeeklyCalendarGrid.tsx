@@ -121,13 +121,13 @@ const DraggableTask = ({ task }: { task: Task }) => {
 };
 
 const DayCell = ({ day, timeSlot, tasks }: { day: Date, timeSlot: TimeSlot, tasks: Task[] }) => {
-  const formattedDate = format(day, 'yyyy-MM-dd');
-  const cellId = formattedDate + '-' + timeSlot.hour;
-
+  // Create a unique ID that includes the full date information
+  const cellId = format(day, 'yyyy-MM-dd-HH').replace(/:/g, '-');
+  
   const { setNodeRef, isOver } = useDroppable({
     id: cellId,
     data: {
-      date: formattedDate,
+      date: format(day, 'yyyy-MM-dd'),
       hour: timeSlot.hour
     }
   });
@@ -136,7 +136,7 @@ const DayCell = ({ day, timeSlot, tasks }: { day: Date, timeSlot: TimeSlot, task
     if (!task.date || !task.start_time) return false;
     const taskDate = format(new Date(task.date), 'yyyy-MM-dd');
     const taskHour = parseInt(task.start_time.split(':')[0]);
-    return taskDate === formattedDate && taskHour === timeSlot.hour;
+    return taskDate === format(day, 'yyyy-MM-dd') && taskHour === timeSlot.hour;
   });
 
   return (

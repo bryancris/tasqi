@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "@/components/dashboard/TaskBoard";
@@ -10,12 +10,6 @@ import {
   filterUnscheduledTasks, 
   calculateVisitsPerDay 
 } from "@/utils/calendarUtils";
-import {
-  validateDateFormat,
-  validateHourFormat,
-  updateTaskToUnscheduled,
-  updateTaskTime
-} from "@/utils/taskUpdateUtils";
 
 export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date[]) {
   const queryClient = useQueryClient();
@@ -88,22 +82,13 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
       if (over.id === 'unscheduled') {
         await updateTaskToUnscheduled(taskId);
       } else {
-        // The cell ID format should be 'YYYY-MM-DD-HH'
-        const cellParts = (over.id as string).split('-');
-        if (cellParts.length !== 4) {
-          throw new Error('Invalid cell ID format');
-        }
-        
-        const dateStr = `${cellParts[0]}-${cellParts[1]}-${cellParts[2]}`;
-        const hour = cellParts[3];
+        // Extract date and hour from the cell ID
+        const [dateStr, hour] = (over.id as string).split('-HH');
         
         console.log('Processing drop:', { dateStr, hour });
         
-        validateDateFormat(dateStr);
-        const hourNum = validateHourFormat(hour);
-        
-        const startTime = `${hourNum.toString().padStart(2, '0')}:00:00`;
-        const endTime = `${(hourNum + 1).toString().padStart(2, '0')}:00:00`;
+        const startTime = `${hour.toString().padStart(2, '0')}:00:00`;
+        const endTime = `${(parseInt(hour) + 1).toString().padStart(2, '0')}:00:00`;
         
         await updateTaskTime({ 
           taskId, 
@@ -138,4 +123,42 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
     visitsPerDay,
     handleDragEnd
   };
+}
+
+async function updateTaskToUnscheduled(taskId: number) {
+  const { error } = await supabase
+    .from('tasks')
+    .update({
+      date: null,
+      start_time: null,
+      end_time: null,
+      status: 'unscheduled'
+    })
+    .eq('id', taskId);
+
+  if (error) throw error;
+}
+
+async function updateTaskTime({ 
+  taskId, 
+  dateStr, 
+  startTime, 
+  endTime 
+}: { 
+  taskId: number, 
+  dateStr: string, 
+  startTime: string, 
+  endTime: string 
+}) {
+  const { error } = await supabase
+    .from('tasks')
+    .update({
+      date: dateStr,
+      start_time: startTime,
+      end_time: endTime,
+      status: 'scheduled'
+    })
+    .eq('id', taskId);
+
+  if (error) throw error;
 }
