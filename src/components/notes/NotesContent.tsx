@@ -89,7 +89,7 @@ export function NotesContent() {
   };
 
   return (
-    <div className={`container mx-auto ${isMobile ? 'p-4' : 'p-4'} max-w-4xl h-[calc(100vh-144px)] overflow-y-auto`}>
+    <div className={`container mx-auto ${isMobile ? 'pt-20 px-4 pb-24' : 'p-4'} max-w-4xl h-[calc(100vh-144px)] overflow-y-auto`}>
       <form onSubmit={handleSubmit} className="mb-4 space-y-3">
         <Input
           placeholder="Note title"
