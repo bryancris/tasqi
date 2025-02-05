@@ -1,4 +1,3 @@
-
 import { Home, Calendar, FileText, MessageSquare, Heart } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -31,7 +30,7 @@ export function MobileFooter() {
           <button 
             className={cn(
               "flex flex-col items-center p-2",
-              isDaily ? "text-[#6366F1]" : "text-gray-500"
+              isDaily ? "text-[#F97316]" : "text-gray-500"
             )}
             onClick={() => handleNavigation("/dashboard")}
           >
@@ -41,7 +40,7 @@ export function MobileFooter() {
           <button 
             className={cn(
               "flex flex-col items-center p-2",
-              isWeekly ? "text-[#6366F1]" : "text-gray-500"
+              isWeekly ? "text-[#8B5CF6]" : "text-gray-500"
             )}
             onClick={() => handleNavigation("/dashboard/weekly")}
           >
@@ -49,7 +48,7 @@ export function MobileFooter() {
             <span className="text-xs mt-1">Week</span>
           </button>
           <button 
-            className="flex flex-col items-center p-2 text-gray-500"
+            className="flex flex-col items-center p-2 text-[#D946EF]"
             onClick={() => handleNavigation("/notes")}
           >
             <FileText className="h-6 w-6" />
@@ -58,7 +57,7 @@ export function MobileFooter() {
           <button 
             className={cn(
               "flex flex-col items-center p-2",
-              isChatOpen ? "text-[#6366F1]" : "text-gray-500"
+              isChatOpen ? "text-[#0FA0CE]" : "text-gray-500"
             )}
             onClick={handleChatToggle}
           >
@@ -66,7 +65,7 @@ export function MobileFooter() {
             <span className="text-xs mt-1">Chat</span>
           </button>
           <button 
-            className="flex flex-col items-center p-2 text-gray-500"
+            className="flex flex-col items-center p-2 text-[#ea384c]"
             onClick={() => handleNavigation("/self-care")}
           >
             <Heart className="h-6 w-6" />
