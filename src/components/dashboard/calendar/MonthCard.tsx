@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Task } from "../TaskBoard";
@@ -40,6 +41,13 @@ export function MonthCard({ month, date, selectedDate, onSelect, gradientClass, 
     onSelect(date);
   };
 
+  const getTaskIndicatorColor = (taskCount: number) => {
+    if (taskCount >= 7) return 'bg-[#ea384c]';
+    if (taskCount >= 4) return 'bg-[#F97316]';
+    if (taskCount >= 1) return 'bg-[#22C55E]';
+    return '';
+  };
+
   // Create an array of weekday labels with unique keys
   const weekDayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, index) => ({
     key: `${month}-${day}-${index}`,
@@ -70,27 +78,37 @@ export function MonthCard({ month, date, selectedDate, onSelect, gradientClass, 
                 
                 const isSelected = isSameDay(day, selectedDate);
                 const isHovered = hoveredDate && isSameDay(day, hoveredDate);
+                const taskCount = dayTasks.length;
+                const taskIndicatorColor = getTaskIndicatorColor(taskCount);
                 
                 return (
-                  <button
-                    key={`${month}-day-${format(day, 'yyyy-MM-dd')}`}
-                    onClick={() => handleDateClick(day)}
-                    onMouseEnter={() => setHoveredDate(day)}
-                    onMouseLeave={() => setHoveredDate(null)}
-                    className={`
-                      w-6 h-6 text-xs rounded-full flex items-center justify-center
-                      transition-colors relative
-                      ${isSelected ? 'bg-primary text-primary-foreground' : ''}
-                      ${isHovered ? 'bg-primary/10' : ''}
-                      ${dayTasks.length > 0 ? 'font-bold' : ''}
-                      hover:bg-primary/20
-                    `}
-                  >
-                    {format(day, 'd')}
-                    {dayTasks.length > 0 && (
-                      <span className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />
+                  <div className="relative">
+                    <button
+                      key={`${month}-day-${format(day, 'yyyy-MM-dd')}`}
+                      onClick={() => handleDateClick(day)}
+                      onMouseEnter={() => setHoveredDate(day)}
+                      onMouseLeave={() => setHoveredDate(null)}
+                      className={`
+                        w-6 h-6 text-xs rounded-full flex items-center justify-center
+                        transition-colors relative
+                        ${isSelected ? 'bg-primary text-primary-foreground' : ''}
+                        ${isHovered ? 'bg-primary/10' : ''}
+                        ${dayTasks.length > 0 ? 'font-bold' : ''}
+                        hover:bg-primary/20
+                      `}
+                    >
+                      {format(day, 'd')}
+                    </button>
+                    {taskCount > 0 && (
+                      <div 
+                        className={`
+                          absolute -bottom-1 left-1/2 transform -translate-x-1/2 
+                          w-4 h-0.5 rounded-full transition-all duration-200
+                          ${taskIndicatorColor}
+                        `} 
+                      />
                     )}
-                  </button>
+                  </div>
                 );
               })}
             </div>
