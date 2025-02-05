@@ -57,7 +57,7 @@ export function MobileFooter() {
           <button 
             className={cn(
               "flex flex-col items-center p-2",
-              isChatOpen ? "text-[#1EAEDB]" : "text-gray-500"
+              isChatOpen ? "text-[#33C3F0]" : "text-gray-500"
             )}
             onClick={handleChatToggle}
           >
