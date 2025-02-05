@@ -41,6 +41,7 @@ export type Database = {
       }
       notes: {
         Row: {
+          color: string | null
           content: string
           created_at: string
           id: number
@@ -49,6 +50,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          color?: string | null
           content: string
           created_at?: string
           id?: number
@@ -57,6 +59,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          color?: string | null
           content?: string
           created_at?: string
           id?: number

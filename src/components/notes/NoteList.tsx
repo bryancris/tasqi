@@ -11,6 +11,7 @@ interface Note {
   title: string;
   content: string;
   created_at: string;
+  color: string;
 }
 
 interface NoteListProps {
@@ -48,7 +49,11 @@ export function NoteList({ notes, isLoading }: NoteListProps) {
   return (
     <div className="space-y-3">
       {notes?.map((note) => (
-        <Card key={note.id} className={`${isMobile ? 'p-3' : 'p-4'}`}>
+        <Card 
+          key={note.id} 
+          className={`${isMobile ? 'p-3' : 'p-4'}`}
+          style={{ backgroundColor: note.color }}
+        >
           <div className="flex justify-between items-start gap-2">
             <div className="flex-1 min-w-0">
               <h3 className="text-lg font-semibold truncate">{note.title}</h3>
