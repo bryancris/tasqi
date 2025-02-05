@@ -25,10 +25,11 @@ export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks, showFu
       showFullWeek ? "grid-cols-8" : "grid-cols-6",
       "divide-x divide-gray-200",
       "border border-gray-200 rounded-lg overflow-hidden",
-      "bg-white shadow-sm"
+      "bg-gradient-to-b from-[#F1F0FB] to-[#E5DEFF]",
+      "shadow-sm"
     )}>
       {/* Time column header */}
-      <div className="h-[100px] bg-[#E3F2F6] flex items-center justify-center relative z-10 border-b border-gray-200">
+      <div className="h-[100px] bg-[#E3F2F6]/50 backdrop-blur-sm flex items-center justify-center relative z-10 border-b border-gray-200">
         <span className="text-gray-600 font-medium">Time</span>
       </div>
 
@@ -36,7 +37,7 @@ export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks, showFu
       {weekDays.map((day, index) => (
         <div 
           key={index}
-          className="h-[100px] bg-[#E3F2F6] p-2 text-center relative z-10 border-b border-gray-200"
+          className="h-[100px] bg-[#E3F2F6]/50 backdrop-blur-sm p-2 text-center relative z-10 border-b border-gray-200"
         >
           <div className="font-semibold uppercase text-sm text-gray-600">
             {format(day, 'EEE')}
@@ -54,7 +55,7 @@ export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks, showFu
       {timeSlots.map((timeSlot) => (
         <div key={timeSlot.hour} className="contents">
           {/* Time label */}
-          <div className="bg-[#E3F2F6] h-[80px] flex items-center justify-center border-t border-gray-200 relative z-10">
+          <div className="bg-[#E3F2F6]/50 backdrop-blur-sm h-[80px] flex items-center justify-center border-t border-gray-200 relative z-10">
             <div className="text-sm text-gray-600 font-medium">
               {timeSlot.hour.toString().padStart(2, '0')}:00
             </div>
@@ -152,8 +153,8 @@ const DayCell = ({ day, timeSlot, tasks, dayIndex }: {
         "min-h-[80px] relative p-1",
         "transition-colors duration-200",
         "border-t border-gray-200",
-        isOver ? "bg-blue-50" : "hover:bg-gray-50",
-        dayIndex % 2 === 0 ? "bg-white" : "bg-gray-50/30"
+        isOver ? "bg-blue-50/50 backdrop-blur-sm" : "hover:bg-white/10 backdrop-blur-sm",
+        dayIndex % 2 === 0 ? "bg-white/5" : "bg-white/10"
       )}
     >
       {dayTasks.map((task) => (
