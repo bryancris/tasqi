@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, addWeeks, subWeeks } from "date-fns";
 import { CalendarHeader } from "./calendar/CalendarHeader";
@@ -75,7 +76,9 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
           </div>
         </div>
 
-        <UnscheduledTasks tasks={unscheduledTasks} />
+        <div className="w-80">
+          <UnscheduledTasks tasks={unscheduledTasks} />
+        </div>
       </div>
     </DndContext>
   );
