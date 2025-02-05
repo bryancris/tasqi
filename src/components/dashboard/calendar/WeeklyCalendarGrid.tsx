@@ -57,12 +57,13 @@ export function WeeklyCalendarGrid({ timeSlots, weekDays, scheduledTasks, showFu
           </div>
 
           {/* Day cells for this time slot */}
-          {weekDays.map((day) => (
+          {weekDays.map((day, dayIndex) => (
             <DayCell
               key={`${format(day, 'yyyy-MM-dd')}-${timeSlot.hour}`}
               day={day}
               timeSlot={timeSlot}
               tasks={scheduledTasks}
+              dayIndex={dayIndex}
             />
           ))}
         </div>
@@ -115,15 +116,20 @@ const DraggableTask = ({ task }: { task: Task }) => {
   );
 };
 
-const DayCell = ({ day, timeSlot, tasks }: { day: Date, timeSlot: TimeSlot, tasks: Task[] }) => {
-  // Create a date string in UTC to avoid timezone issues
+const DayCell = ({ day, timeSlot, tasks, dayIndex }: { 
+  day: Date, 
+  timeSlot: TimeSlot, 
+  tasks: Task[],
+  dayIndex: number 
+}) => {
   const formattedDate = format(day, 'yyyy-MM-dd');
   
   const { setNodeRef, isOver } = useDroppable({
     id: `${formattedDate}-${timeSlot.hour}`,
     data: {
       date: formattedDate,
-      hour: timeSlot.hour
+      hour: timeSlot.hour,
+      columnIndex: dayIndex + 1 // Add 1 to account for time column
     }
   });
 
