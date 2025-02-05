@@ -20,9 +20,16 @@ export function HeaderTime() {
   }, []);
 
   return (
-    <div className="flex flex-col items-start">
-      <h1 className="text-[#6366F1] font-medium">TasqiAI</h1>
-      <p className="text-sm text-gray-500">
+    <div className="flex flex-col items-start space-y-1">
+      <div className="flex items-center space-x-2">
+        {isDay ? (
+          <Sun className="h-5 w-5 text-yellow-500" />
+        ) : (
+          <Moon className="h-5 w-5 text-blue-400" />
+        )}
+        <h1 className="text-[#6366F1] font-medium text-lg">TasqiAI</h1>
+      </div>
+      <p className="text-sm text-gray-500 pl-7">
         {currentTime} {currentDate}
       </p>
     </div>
