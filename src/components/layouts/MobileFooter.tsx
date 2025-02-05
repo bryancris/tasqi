@@ -26,7 +26,7 @@ export function MobileFooter() {
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t py-2 px-4 z-50">
+      <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-[#F1F0FB] via-[#E5DEFF] to-[#F1F0FB] border-t py-2 px-4 z-50 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
         <div className="flex justify-between items-center">
           <button 
             className={cn(

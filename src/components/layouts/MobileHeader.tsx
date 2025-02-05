@@ -10,7 +10,7 @@ export function MobileHeader() {
   const currentDate = format(new Date(), 'EEE, MMM d');
 
   return (
-    <div className="fixed top-0 left-0 right-0 bg-white border-b p-4 z-50">
+    <div className="fixed top-0 left-0 right-0 bg-gradient-to-r from-[#F2FCE2] via-[#E5DEFF] to-[#D3E4FD] border-b p-4 z-50 shadow-sm">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-[#6366F1] text-2xl font-semibold">TasqiAI</h1>
