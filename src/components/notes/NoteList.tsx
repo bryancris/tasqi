@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Note } from "./types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { EditNoteDialog } from "./EditNoteDialog";
+import { useState } from "react";
 
 const COLORS = [
   '#8E9196', // Neutral Gray
@@ -30,6 +32,8 @@ interface NoteListProps {
 export function NoteList({ notes, isLoading }: NoteListProps) {
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
+  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const deleteNoteMutation = useMutation({
     mutationFn: async (noteId: number) => {
@@ -64,6 +68,15 @@ export function NoteList({ notes, isLoading }: NoteListProps) {
     },
   });
 
+  const handleNoteClick = (note: Note, event: React.MouseEvent) => {
+    // Prevent opening the edit dialog when clicking color picker or delete button
+    const target = event.target as HTMLElement;
+    if (target.closest('button')) return;
+    
+    setSelectedNote(note);
+    setIsEditDialogOpen(true);
+  };
+
   if (isLoading) {
     return <div className="text-center py-4">Loading notes...</div>;
   }
@@ -77,8 +90,9 @@ export function NoteList({ notes, isLoading }: NoteListProps) {
       {notes?.map((note) => (
         <Card 
           key={note.id} 
-          className={`${isMobile ? 'p-3' : 'p-4'}`}
+          className={`${isMobile ? 'p-3' : 'p-4'} cursor-pointer`}
           style={{ backgroundColor: note.color }}
+          onClick={(e) => handleNoteClick(note, e)}
         >
           <div className="flex justify-between items-start gap-2">
             <div className="flex-1 min-w-0">
@@ -128,6 +142,11 @@ export function NoteList({ notes, isLoading }: NoteListProps) {
           </div>
         </Card>
       ))}
+      <EditNoteDialog
+        note={selectedNote}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+      />
     </div>
   );
 }
