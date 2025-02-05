@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "@/components/dashboard/TaskBoard";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 import { useToast } from "./use-toast";
 import { DragEndEvent } from "@dnd-kit/core";
 
@@ -52,12 +52,16 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
           return;
         }
 
-        console.log('Processing drop:', dropData);
-
-        // Ensure the date is in the correct format
         const { date, hour } = dropData;
         const startTime = `${hour.toString().padStart(2, '0')}:00:00`;
         const endTime = `${(hour + 1).toString().padStart(2, '0')}:00:00`;
+
+        console.log('Updating task with:', {
+          taskId,
+          date,
+          startTime,
+          endTime
+        });
 
         const { error } = await supabase
           .from('tasks')
@@ -99,7 +103,8 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
   const visitsPerDay = weekDays.map(day => {
     const dayTasks = scheduledTasks.filter(task => {
       if (!task.date) return false;
-      return format(parseISO(task.date), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd');
+      const taskDate = format(new Date(task.date), 'yyyy-MM-dd');
+      return taskDate === format(day, 'yyyy-MM-dd');
     });
     return `${dayTasks.length} ${dayTasks.length === 1 ? 'Visit' : 'Visits'}`;
   });
