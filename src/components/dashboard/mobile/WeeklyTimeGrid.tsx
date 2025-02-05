@@ -1,6 +1,7 @@
 
 import { Task } from "../TaskBoard";
 import { DayCell } from "./DayCell";
+import { cn } from "@/lib/utils";
 
 interface TimeSlot {
   hour: number;
