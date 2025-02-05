@@ -40,7 +40,7 @@ export function MobileFooter() {
           <button 
             className={cn(
               "flex flex-col items-center p-2",
-              isWeekly ? "text-[#8B5CF6]" : "text-gray-500"
+              isWeekly ? "text-[#8B5CF6]" : "text-gray-500 hover:text-[#8B5CF6]"
             )}
             onClick={() => handleNavigation("/dashboard/weekly")}
           >
@@ -57,7 +57,7 @@ export function MobileFooter() {
           <button 
             className={cn(
               "flex flex-col items-center p-2",
-              isChatOpen ? "text-[#33C3F0]" : "text-gray-500"
+              isChatOpen ? "text-[#33C3F0]" : "text-gray-500 hover:text-[#33C3F0]"
             )}
             onClick={handleChatToggle}
           >
