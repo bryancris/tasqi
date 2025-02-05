@@ -10,7 +10,7 @@ interface WeeklyDaysHeaderProps {
 export function WeeklyDaysHeader({ weekDays, showFullWeek }: WeeklyDaysHeaderProps) {
   return (
     <div className={cn(
-      "grid border-b sticky top-0 bg-[#2A9BB5]", // Changed to a medium-dark teal color
+      "grid border-b sticky top-0 bg-[#2A9BB5]",
       showFullWeek ? "grid-cols-8" : "grid-cols-6"
     )}>
       {/* Time column header */}

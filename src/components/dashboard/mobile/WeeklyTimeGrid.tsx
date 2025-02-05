@@ -23,8 +23,8 @@ export function WeeklyTimeGrid({ timeSlots, weekDays, scheduledTasks, showFullWe
             key={timeIndex} 
             className={`grid ${showFullWeek ? 'grid-cols-8' : 'grid-cols-6'} min-h-[80px]`}
           >
-            <div className="p-1 border-r border-gray-300 relative bg-[#B2E3EA] w-[40px]">
-              <div className="text-xs text-[#6B7280] whitespace-pre-line text-center">
+            <div className="p-1 border-r border-gray-300 relative bg-[#2A9BB5] w-[40px]">
+              <div className="text-xs text-white whitespace-pre-line text-center">
                 {timeSlot.hour}
               </div>
             </div>
