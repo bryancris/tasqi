@@ -63,7 +63,7 @@ const Dashboard = () => {
   if (isMobile) {
     const currentPath = location.pathname;
     return (
-      <div className="flex flex-col h-screen bg-background">
+      <div className="flex flex-col h-screen bg-gradient-to-b from-[#F1F0FB] to-[#E5DEFF]">
         <MobileHeader />
         <main className="flex-1 overflow-y-auto scrollbar-hide p-4 mt-[72px] mb-[64px]">
           {currentPath === '/dashboard' && (
@@ -82,32 +82,34 @@ const Dashboard = () => {
   }
 
   return (
-    <DashboardLayout 
-      onViewChange={changeView} 
-      selectedDate={selectedDate} 
-      onDateChange={handleDateChange}
-    >
-      {view === 'tasks' && (
-        <TaskBoard 
-          selectedDate={selectedDate} 
-          onDateChange={handleDateChange} 
-        />
-      )}
-      {view === 'weekly' && (
-        <WeeklyCalendar initialDate={selectedDate} />
-      )}
-      {view === 'calendar' && (
-        <Calendar 
-          initialDate={selectedDate}
-          onDateSelect={handleDateChange}
-        />
-      )}
-      {view === 'yearly' && (
-        <YearlyCalendar 
-          onDateSelect={handleDateChange}
-        />
-      )}
-    </DashboardLayout>
+    <div className="bg-gradient-to-b from-[#F1F0FB] to-[#E5DEFF] min-h-screen">
+      <DashboardLayout 
+        onViewChange={changeView} 
+        selectedDate={selectedDate} 
+        onDateChange={handleDateChange}
+      >
+        {view === 'tasks' && (
+          <TaskBoard 
+            selectedDate={selectedDate} 
+            onDateChange={handleDateChange} 
+          />
+        )}
+        {view === 'weekly' && (
+          <WeeklyCalendar initialDate={selectedDate} />
+        )}
+        {view === 'calendar' && (
+          <Calendar 
+            initialDate={selectedDate}
+            onDateSelect={handleDateChange}
+          />
+        )}
+        {view === 'yearly' && (
+          <YearlyCalendar 
+            onDateSelect={handleDateChange}
+          />
+        )}
+      </DashboardLayout>
+    </div>
   );
 };
 
