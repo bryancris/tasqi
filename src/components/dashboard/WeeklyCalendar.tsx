@@ -1,8 +1,7 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, addWeeks, subWeeks } from "date-fns";
 import { CalendarHeader } from "./calendar/CalendarHeader";
-import { WeeklyDayHeader } from "./calendar/WeeklyDayHeader";
 import { WeeklyCalendarGrid } from "./calendar/WeeklyCalendarGrid";
 import { UnscheduledTasks } from "./calendar/UnscheduledTasks";
 import { DndContext } from "@dnd-kit/core";
@@ -33,8 +32,8 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
   });
 
   const {
-    unscheduledTasks,
     scheduledTasks,
+    unscheduledTasks,
     visitsPerDay,
     handleDragEnd
   } = useWeeklyCalendar(weekStart, weekEnd, weekDays);

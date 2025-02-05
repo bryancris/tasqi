@@ -22,14 +22,18 @@ export function UnscheduledTasks({ tasks }: UnscheduledTasksProps) {
     >
       <h3 className="font-medium text-gray-900 mb-4">Unscheduled Tasks</h3>
       <div className="space-y-2">
-        {tasks?.map((task, index) => (
-          <TaskCard 
-            key={task.id} 
-            task={task} 
-            index={index}
-            isDraggable={true}
-          />
-        ))}
+        {tasks && tasks.length > 0 ? (
+          tasks.map((task, index) => (
+            <TaskCard 
+              key={task.id} 
+              task={task} 
+              index={index}
+              isDraggable={true}
+            />
+          ))
+        ) : (
+          <p className="text-sm text-gray-500">No unscheduled tasks</p>
+        )}
       </div>
     </div>
   );

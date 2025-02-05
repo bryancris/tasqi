@@ -1,3 +1,4 @@
+
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "@/components/dashboard/TaskBoard";
@@ -10,16 +11,15 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
   const { toast } = useToast();
 
   const { data: tasks = [] } = useQuery({
-    queryKey: ['tasks', format(weekStart, 'yyyy-MM-dd'), format(weekEnd, 'yyyy-MM-dd')],
+    queryKey: ['tasks'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
-        .gte('date', format(weekStart, 'yyyy-MM-dd'))
-        .lte('date', format(weekEnd, 'yyyy-MM-dd'))
         .order('position', { ascending: true });
       
       if (error) throw error;
+      console.log('Fetched tasks:', data);
       return data as Task[];
     },
   });
@@ -72,9 +72,7 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
         if (error) throw error;
       }
 
-      await queryClient.invalidateQueries({ 
-        queryKey: ['tasks', format(weekStart, 'yyyy-MM-dd'), format(weekEnd, 'yyyy-MM-dd')] 
-      });
+      await queryClient.invalidateQueries({ queryKey: ['tasks'] });
 
       toast({
         title: "Task updated",
@@ -90,8 +88,13 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
     }
   };
 
-  const scheduledTasks = tasks.filter(task => task.status === 'scheduled' && task.date && task.start_time);
-  const unscheduledTasks = tasks.filter(task => task.status === 'unscheduled');
+  const scheduledTasks = tasks.filter(task => 
+    task.status === 'scheduled' && task.date && task.start_time
+  );
+
+  const unscheduledTasks = tasks.filter(task => 
+    task.status === 'unscheduled' || (!task.date && !task.start_time)
+  );
 
   const visitsPerDay = weekDays.map(day => {
     const dayTasks = scheduledTasks.filter(task => {
