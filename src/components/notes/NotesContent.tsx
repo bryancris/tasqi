@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -104,6 +103,14 @@ export function NotesContent() {
           className={`w-full ${isMobile ? 'min-h-[100px]' : 'min-h-[150px]'}`}
         />
         <Button 
+          type="submit" 
+          className="w-full flex items-center justify-center gap-2"
+          disabled={createNoteMutation.isPending}
+        >
+          <PlusCircle className="w-4 h-4" />
+          Add Note
+        </Button>
+        <Button 
           type="button"
           variant="secondary"
           className="w-full flex items-center justify-center gap-2"
@@ -111,14 +118,6 @@ export function NotesContent() {
         >
           <Bot className="w-4 h-4" />
           Tasqi AI Assisted Note
-        </Button>
-        <Button 
-          type="submit" 
-          className="w-full flex items-center justify-center gap-2"
-          disabled={createNoteMutation.isPending}
-        >
-          <PlusCircle className="w-4 h-4" />
-          Add Note
         </Button>
       </form>
 
