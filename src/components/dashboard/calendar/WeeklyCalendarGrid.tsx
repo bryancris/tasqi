@@ -126,8 +126,13 @@ function DroppableTimeSlot({
         dayIndex % 2 === 0 ? "bg-white" : "bg-gray-50/30"
       )}
     >
-      {dayTasks.map((task) => (
-        <TaskCard key={task.id} task={task} />
+      {dayTasks.map((task, index) => (
+        <TaskCard 
+          key={task.id} 
+          task={task} 
+          index={index}
+          isDraggable={true}
+        />
       ))}
     </div>
   );
