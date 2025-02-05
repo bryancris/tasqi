@@ -47,7 +47,7 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
 
         if (error) throw error;
       } else {
-        const dropData = over.data?.current as { date: string; hour: number } | undefined;
+        const dropData = over.data?.current as { date: string; hour: number; columnIndex: number } | undefined;
         if (!dropData) {
           console.error('Missing drop data');
           return;
