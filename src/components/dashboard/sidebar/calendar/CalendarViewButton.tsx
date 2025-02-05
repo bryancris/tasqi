@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { CalendarView } from "@/hooks/use-calendar-view";
@@ -19,7 +20,7 @@ export function CalendarViewButton({
     <Button 
       variant="ghost" 
       className={cn(
-        "w-full justify-start text-sm pl-8",
+        "w-full justify-start text-base pl-8",
         currentView === view 
           ? 'bg-[#D1FAE5] text-[#059669] hover:bg-[#A7F3D0]' 
           : 'text-[#6B7280] hover:bg-[#E5E7EB]'
