@@ -4,7 +4,7 @@ import { getPriorityColor } from "@/utils/taskColors";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { useState } from "react";
 import { EditTaskDrawer } from "../EditTaskDrawer";
-import { format } from "date-fns";
+import { format, addDays } from "date-fns";
 
 interface TimeSlot {
   hour: number;
@@ -126,8 +126,9 @@ const DayCell = ({ day, timeSlot, tasks, dayIndex }: {
   tasks: Task[],
   dayIndex: number 
 }) => {
-  // Format the date directly from the day prop without any adjustments
-  const formattedDate = format(day, 'yyyy-MM-dd');
+  // Add one day to compensate for the offset
+  const adjustedDay = addDays(day, 1);
+  const formattedDate = format(adjustedDay, 'yyyy-MM-dd');
   
   const { setNodeRef, isOver } = useDroppable({
     id: `${formattedDate}-${timeSlot.hour}`,
