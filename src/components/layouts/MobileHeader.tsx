@@ -14,7 +14,7 @@ export function MobileHeader() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-[#6366F1] text-2xl font-semibold">TasqiAI</h1>
-          <p className="text-sm text-gray-700">{currentTime} {currentDate}</p>
+          <p className="text-sm text-[#333333]">{currentTime} {currentDate}</p>
         </div>
         <div className="flex items-center gap-2">
           <AddTaskDrawer>
