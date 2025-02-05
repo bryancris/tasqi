@@ -5,14 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
-
-interface Note {
-  id: number;
-  title: string;
-  content: string;
-  created_at: string;
-  color: string;
-}
+import { Note } from "./types";
 
 interface NoteListProps {
   notes: Note[];

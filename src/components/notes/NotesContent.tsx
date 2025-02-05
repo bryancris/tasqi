@@ -5,13 +5,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { DictateNoteDialog } from "./DictateNoteDialog";
 import { NoteForm } from "./NoteForm";
 import { NoteList } from "./NoteList";
-
-interface Note {
-  id: number;
-  title: string;
-  content: string;
-  created_at: string;
-}
+import { Note } from "./types";
 
 export function NotesContent() {
   const [isDictateDialogOpen, setIsDictateDialogOpen] = useState(false);
