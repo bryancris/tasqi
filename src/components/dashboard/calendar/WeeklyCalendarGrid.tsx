@@ -126,17 +126,18 @@ const DayCell = ({ day, timeSlot, tasks, dayIndex }: {
   tasks: Task[],
   dayIndex: number 
 }) => {
+  // Format the date directly from the day prop without any adjustments
   const formattedDate = format(day, 'yyyy-MM-dd');
   
   const { setNodeRef, isOver } = useDroppable({
     id: `${formattedDate}-${timeSlot.hour}`,
     data: {
       date: formattedDate,
-      hour: timeSlot.hour,
-      dayIndex: dayIndex
+      hour: timeSlot.hour
     }
   });
 
+  // Filter tasks for this specific day and time slot
   const dayTasks = tasks.filter(task => {
     if (!task.date || !task.start_time) return false;
     const taskDate = format(new Date(task.date), 'yyyy-MM-dd');

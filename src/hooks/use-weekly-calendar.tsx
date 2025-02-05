@@ -57,6 +57,8 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
         const startTime = `${hour.toString().padStart(2, '0')}:00:00`;
         const endTime = `${(hour + 1).toString().padStart(2, '0')}:00:00`;
 
+        console.log('Drop data:', { date, startTime, endTime });
+
         const { error } = await supabase
           .from('tasks')
           .update({
