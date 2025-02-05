@@ -27,9 +27,9 @@ export function HeaderTime() {
         ) : (
           <Moon className="h-5 w-5 text-blue-400" />
         )}
-        <h1 className="text-[#6366F1] font-medium text-lg">TasqiAI</h1>
+        <h1 className="text-[#6366F1] font-semibold text-2xl">TasqiAI</h1>
       </div>
-      <p className="text-sm text-gray-500 pl-7">
+      <p className="text-sm text-[#333333] pl-7">
         {currentTime} {currentDate}
       </p>
     </div>
