@@ -12,9 +12,11 @@ interface DayCellProps {
     display: string;
   };
   tasks: Task[];
+  isLastRow?: boolean;
+  isLastColumn?: boolean;
 }
 
-export const DayCell = ({ day, timeSlot, tasks }: DayCellProps) => {
+export const DayCell = ({ day, timeSlot, tasks, isLastRow, isLastColumn }: DayCellProps) => {
   const formattedDate = format(day, 'yyyy-MM-dd');
   
   const { setNodeRef, isOver } = useDroppable({
@@ -41,7 +43,9 @@ export const DayCell = ({ day, timeSlot, tasks }: DayCellProps) => {
         "relative",
         "transition-colors",
         "border-r border-gray-300 last:border-r-0",
-        isOver ? "bg-blue-50" : "hover:bg-gray-50/50"
+        isOver ? "bg-blue-50" : "hover:bg-gray-50/50",
+        isLastRow && isLastColumn ? "rounded-br-lg" : "",
+        isLastRow ? "border-b-0" : ""
       )}
     >
       {dayTasks.map((task) => (
@@ -49,4 +53,4 @@ export const DayCell = ({ day, timeSlot, tasks }: DayCellProps) => {
       ))}
     </div>
   );
-};
+}

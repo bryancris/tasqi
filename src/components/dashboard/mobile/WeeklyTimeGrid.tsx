@@ -21,9 +21,14 @@ export function WeeklyTimeGrid({ timeSlots, weekDays, scheduledTasks, showFullWe
         {timeSlots.map((timeSlot, timeIndex) => (
           <div 
             key={timeIndex} 
-            className={`grid ${showFullWeek ? 'grid-cols-8' : 'grid-cols-6'} min-h-[80px]`}
+            className={`grid ${showFullWeek ? 'grid-cols-8' : 'grid-cols-6'} min-h-[80px] ${
+              timeIndex === timeSlots.length - 1 ? 'rounded-b-lg overflow-hidden' : ''
+            }`}
           >
-            <div className="p-1 border-r border-gray-300 relative bg-[#2A9BB5] w-[40px]">
+            <div className={cn(
+              "p-1 border-r border-gray-300 relative bg-[#2A9BB5] w-[40px]",
+              timeIndex === timeSlots.length - 1 ? "rounded-bl-lg" : ""
+            )}>
               <div className="text-xs text-white whitespace-pre-line text-center">
                 {timeSlot.hour}
               </div>
@@ -35,6 +40,8 @@ export function WeeklyTimeGrid({ timeSlots, weekDays, scheduledTasks, showFullWe
                 day={day}
                 timeSlot={timeSlot}
                 tasks={scheduledTasks}
+                isLastRow={timeIndex === timeSlots.length - 1}
+                isLastColumn={dayIndex === weekDays.length - 1}
               />
             ))}
           </div>
