@@ -1,10 +1,9 @@
-import { format } from "date-fns";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "@/components/dashboard/TaskBoard";
+import { format, parseISO } from "date-fns";
+import { useToast } from "./use-toast";
 import { DragEndEvent } from "@dnd-kit/core";
-import { useToast } from "@/hooks/use-toast";
-import { useEffect } from "react";
 
 export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date[]) {
   const queryClient = useQueryClient();
@@ -25,29 +24,6 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
     },
   });
 
-  useEffect(() => {
-    const channel = supabase
-      .channel('tasks-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'tasks'
-        },
-        () => {
-          queryClient.invalidateQueries({ 
-            queryKey: ['tasks', format(weekStart, 'yyyy-MM-dd'), format(weekEnd, 'yyyy-MM-dd')] 
-          });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient, weekStart, weekEnd]);
-
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over) return;
@@ -58,26 +34,45 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
 
     try {
       if (over.id === 'unscheduled') {
-        await updateTaskToUnscheduled(taskId);
+        const { error } = await supabase
+          .from('tasks')
+          .update({
+            date: null,
+            start_time: null,
+            end_time: null,
+            status: 'unscheduled'
+          })
+          .eq('id', taskId);
+
+        if (error) throw error;
       } else {
-        const dropData = (over.data?.current as { date: string; hour: number }) || null;
+        const dropData = over.data?.current as { date: string; hour: number } | undefined;
         if (!dropData) {
           console.error('Missing drop data');
           return;
         }
 
+        console.log('Processing drop:', dropData);
+
+        // Ensure the date is in the correct format
         const { date, hour } = dropData;
-        console.log('Processing drop:', { date, hour });
-        
         const startTime = `${hour.toString().padStart(2, '0')}:00:00`;
         const endTime = `${(hour + 1).toString().padStart(2, '0')}:00:00`;
-        
-        await updateTaskTime({
-          taskId,
-          dateStr: date,
-          startTime,
-          endTime
-        });
+
+        const { error } = await supabase
+          .from('tasks')
+          .update({
+            date: date,
+            start_time: startTime,
+            end_time: endTime,
+            status: 'scheduled'
+          })
+          .eq('id', taskId);
+
+        if (error) {
+          console.error('Error updating task:', error);
+          throw error;
+        }
       }
 
       await queryClient.invalidateQueries({ 
@@ -104,8 +99,7 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
   const visitsPerDay = weekDays.map(day => {
     const dayTasks = scheduledTasks.filter(task => {
       if (!task.date) return false;
-      const taskDate = format(new Date(task.date), 'yyyy-MM-dd');
-      return taskDate === format(day, 'yyyy-MM-dd');
+      return format(parseISO(task.date), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd');
     });
     return `${dayTasks.length} ${dayTasks.length === 1 ? 'Visit' : 'Visits'}`;
   });
@@ -117,42 +111,4 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
     visitsPerDay,
     handleDragEnd
   };
-}
-
-async function updateTaskToUnscheduled(taskId: number) {
-  const { error } = await supabase
-    .from('tasks')
-    .update({
-      date: null,
-      start_time: null,
-      end_time: null,
-      status: 'unscheduled'
-    })
-    .eq('id', taskId);
-
-  if (error) throw error;
-}
-
-async function updateTaskTime({ 
-  taskId, 
-  dateStr, 
-  startTime, 
-  endTime 
-}: { 
-  taskId: number;
-  dateStr: string;
-  startTime: string;
-  endTime: string;
-}) {
-  const { error } = await supabase
-    .from('tasks')
-    .update({
-      date: dateStr,
-      start_time: startTime,
-      end_time: endTime,
-      status: 'scheduled'
-    })
-    .eq('id', taskId);
-
-  if (error) throw error;
 }
