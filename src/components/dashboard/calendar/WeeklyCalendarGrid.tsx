@@ -123,13 +123,14 @@ const DayCell = ({ day, timeSlot, tasks, dayIndex }: {
   dayIndex: number 
 }) => {
   const formattedDate = format(day, 'yyyy-MM-dd');
+  console.log('DayCell formattedDate:', formattedDate, 'dayIndex:', dayIndex);
   
   const { setNodeRef, isOver } = useDroppable({
     id: `${formattedDate}-${timeSlot.hour}`,
     data: {
       date: formattedDate,
       hour: timeSlot.hour,
-      columnIndex: dayIndex + 1 // Add 1 to account for time column
+      dayIndex: dayIndex
     }
   });
 

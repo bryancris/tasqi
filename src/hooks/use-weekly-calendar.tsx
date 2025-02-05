@@ -47,7 +47,7 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
 
         if (error) throw error;
       } else {
-        const dropData = over.data?.current as { date: string; hour: number; columnIndex: number } | undefined;
+        const dropData = over.data?.current as { date: string; hour: number; dayIndex: number } | undefined;
         if (!dropData) {
           console.error('Missing drop data');
           return;
@@ -57,7 +57,7 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
         const startTime = `${hour.toString().padStart(2, '0')}:00:00`;
         const endTime = `${(hour + 1).toString().padStart(2, '0')}:00:00`;
 
-        console.log('Updating task with:', {
+        console.log('Updating task:', {
           taskId,
           date,
           startTime,
