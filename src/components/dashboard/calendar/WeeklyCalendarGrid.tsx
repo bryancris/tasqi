@@ -1,8 +1,10 @@
+import React from 'react';
+import { Task } from "../TaskBoard";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useDroppable } from "@dnd-kit/core";
-import { Task } from "../TaskBoard";
-import { TaskCard } from "../TaskCard";
+import { TimeColumn } from "./grid/TimeColumn";
+import { DayCell } from "./grid/DayCell";
+import { HeaderCell } from "./grid/HeaderCell";
 
 interface WeeklyCalendarGridProps {
   weekDays: Date[];
@@ -46,93 +48,29 @@ export function WeeklyCalendarGrid({
 
       {/* Day column headers */}
       {weekDays.map((day, index) => (
-        <div 
-          key={index}
-          className="h-[100px] bg-[#E3F2F6] p-2 text-center relative z-10 border-b border-gray-200"
-        >
-          <div className="font-semibold uppercase text-sm text-gray-600">
-            {format(day, 'EEE')}
-          </div>
-          <div className="text-2xl font-bold text-gray-900">
-            {format(day, 'd')}
-          </div>
-          <div className="text-sm text-gray-500">
-            {format(day, 'MMM')}
-          </div>
-        </div>
+        <HeaderCell key={index} day={day} />
       ))}
 
       {/* Time slots */}
       {timeSlots.map((timeSlot) => (
         <div key={timeSlot.hour} className="contents">
           {/* Time label */}
-          <div className="bg-[#E3F2F6] h-[80px] flex items-center justify-center border-t border-gray-200 relative z-10">
-            <div className="text-sm text-gray-600 font-medium">
-              {timeSlot.hour.toString().padStart(2, '0')}:00
-            </div>
-          </div>
+          <TimeColumn timeSlot={timeSlot} />
 
           {/* Day cells */}
           {weekDays.map((day, dayIndex) => {
-            const cellId = `${format(day, 'yyyy-MM-dd')}-${timeSlot.hour}`;
-            const { setNodeRef, isOver } = useDroppable({
-              id: cellId,
-              data: {
-                type: 'timeSlot',
-                date: format(day, 'yyyy-MM-dd'),
-                hour: timeSlot.hour,
-              },
-            });
-
             const dayTasks = getTasksForDayAndTime(day, timeSlot.hour);
-
             return (
-              <DroppableTimeSlot
-                key={cellId}
-                ref={setNodeRef}
-                isOver={isOver}
+              <DayCell
+                key={`${day.toISOString()}-${timeSlot.hour}`}
+                day={day}
+                timeSlot={timeSlot}
+                tasks={dayTasks}
                 dayIndex={dayIndex}
-                dayTasks={dayTasks}
               />
             );
           })}
         </div>
-      ))}
-    </div>
-  );
-}
-
-interface DroppableTimeSlotProps {
-  ref: (element: HTMLDivElement | null) => void;
-  isOver: boolean;
-  dayIndex: number;
-  dayTasks: Task[];
-}
-
-function DroppableTimeSlot({
-  ref,
-  isOver,
-  dayIndex,
-  dayTasks,
-}: DroppableTimeSlotProps) {
-  return (
-    <div
-      ref={ref}
-      className={cn(
-        "min-h-[80px] relative p-1",
-        "transition-colors duration-200",
-        "border-t border-gray-200",
-        isOver ? "bg-blue-50" : "hover:bg-gray-50",
-        dayIndex % 2 === 0 ? "bg-white" : "bg-gray-50/30"
-      )}
-    >
-      {dayTasks.map((task, index) => (
-        <TaskCard 
-          key={task.id} 
-          task={task} 
-          index={index}
-          isDraggable={true}
-        />
       ))}
     </div>
   );
