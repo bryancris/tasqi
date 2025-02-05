@@ -116,11 +116,11 @@ const DraggableTask = ({ task }: { task: Task }) => {
 };
 
 const DayCell = ({ day, timeSlot, tasks }: { day: Date, timeSlot: TimeSlot, tasks: Task[] }) => {
+  // Create a date string in UTC to avoid timezone issues
   const formattedDate = format(day, 'yyyy-MM-dd');
-  const cellId = `${formattedDate}-${timeSlot.hour}`;
   
   const { setNodeRef, isOver } = useDroppable({
-    id: cellId,
+    id: `${formattedDate}-${timeSlot.hour}`,
     data: {
       date: formattedDate,
       hour: timeSlot.hour

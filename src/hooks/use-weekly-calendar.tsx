@@ -26,9 +26,10 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
+    
     if (!over) return;
 
-    const taskId = Number(active.id);
+    const taskId = typeof active.id === 'string' ? parseInt(active.id, 10) : active.id;
     const task = tasks?.find(t => t.id === taskId);
     if (!task) return;
 
@@ -73,10 +74,7 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
           })
           .eq('id', taskId);
 
-        if (error) {
-          console.error('Error updating task:', error);
-          throw error;
-        }
+        if (error) throw error;
       }
 
       await queryClient.invalidateQueries({ 
