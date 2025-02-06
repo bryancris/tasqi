@@ -47,28 +47,26 @@ export function NotificationTest() {
         return;
       }
 
-      // Get all service worker registrations
+      // Unregister any existing service workers
       const registrations = await navigator.serviceWorker.getRegistrations();
-      console.log("Current service worker registrations:", registrations);
-
-      if (registrations.length === 0) {
-        console.log("No service worker registered, attempting registration");
-        try {
-          const newRegistration = await navigator.serviceWorker.register('/sw.js');
-          console.log("New service worker registered:", newRegistration);
-        } catch (error) {
-          console.error("Service worker registration failed:", error);
-          toast.error("Failed to register service worker");
-          return;
-        }
+      for (const registration of registrations) {
+        await registration.unregister();
       }
 
-      const registration = await navigator.serviceWorker.ready;
+      // Register a new service worker
+      console.log("Registering new service worker...");
+      const registration = await navigator.serviceWorker.register('/sw.js', {
+        scope: '/'
+      });
+      console.log("Service worker registered:", registration);
+
+      // Wait for the service worker to be ready
+      await navigator.serviceWorker.ready;
       console.log("Service worker ready state:", registration.active?.state);
 
       // Create and play notification sound
       const audio = new Audio('/notification-sound.mp3');
-      audio.volume = 0.5; // Set volume to 50%
+      audio.volume = 0.5;
       await audio.play();
 
       // Show the notification
