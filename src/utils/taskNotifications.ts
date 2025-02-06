@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { format, parseISO, addMinutes, isAfter, isBefore } from "date-fns";
+import { format, parseISO, addMinutes, isAfter, isBefore, differenceInMinutes } from "date-fns";
 
 // Keep track of notifications we've already sent
 const notifiedTasks = new Set<number>();
@@ -55,18 +55,18 @@ export const checkAndNotifyUpcomingTasks = async () => {
       }
 
       const taskDateTime = parseISO(`${task.date}T${task.start_time}`);
-      const notificationTime = addMinutes(taskDateTime, -10); // Notify 10 minutes before
-
+      const minutesUntilTask = differenceInMinutes(taskDateTime, now);
+      
       console.log({
         task: task.title,
         taskDateTime: taskDateTime.toISOString(),
-        notificationTime: notificationTime.toISOString(),
         currentTime: now.toISOString(),
-        shouldNotify: isAfter(now, notificationTime) && isBefore(now, taskDateTime)
+        minutesUntilTask,
+        shouldNotify: minutesUntilTask <= 10 && minutesUntilTask > 0
       });
 
-      // Check if current time is within the 10-minute window before the task
-      if (isAfter(now, notificationTime) && isBefore(now, taskDateTime)) {
+      // Check if we're within exactly 10 minutes of the task start
+      if (minutesUntilTask <= 10 && minutesUntilTask > 0) {
         console.log("Sending notification for task:", task);
         
         if ("Notification" in window && Notification.permission === "granted") {
@@ -81,7 +81,7 @@ export const checkAndNotifyUpcomingTasks = async () => {
           navigator.serviceWorker.ready.then(registration => {
             console.log("Service worker ready, showing notification");
             registration.showNotification("Upcoming Task", {
-              body: `${task.title} starts at ${timeString}`,
+              body: `${task.title} starts at ${timeString} (in ${minutesUntilTask} minutes)`,
               icon: "/pwa-192x192.png",
               badge: "/pwa-192x192.png",
               vibrate: [200, 100, 200],
