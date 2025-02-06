@@ -42,12 +42,12 @@ const CalendarCell = ({
 
   const tasksForThisSlot = tasks.filter(task => {
     if (!task.date || !task.start_time) return false;
-    const taskDate = format(parseISO(task.date), 'yyyy-MM-dd');
+    
+    const taskDate = format(new Date(task.date), 'yyyy-MM-dd');
+    if (taskDate !== formattedDate) return false;
+
     const [taskStartHour] = task.start_time.split(':').map(Number);
-    const [taskEndHour] = task.end_time ? task.end_time.split(':').map(Number) : [taskStartHour + 1];
-    return taskDate === formattedDate && 
-           taskStartHour <= timeSlot.hour && 
-           taskEndHour > timeSlot.hour;
+    return taskStartHour === timeSlot.hour;
   });
 
   console.log(`Tasks for slot ${timeSlot.hour} on ${formattedDate}:`, tasksForThisSlot);

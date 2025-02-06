@@ -97,25 +97,27 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
     }
   };
 
-  // Update the filter to properly handle scheduled tasks and exclude completed ones
+  // Filter tasks for the weekly calendar
   const scheduledTasks = tasks.filter(task => {
-    // First check if task is completed
+    // Exclude completed tasks
     if (task.status === 'completed') return false;
     
-    // Then check if it has date and time
-    if (!task.date || !task.start_time) return false;
+    // Check if task has required scheduling data
+    if (!task.date || !task.start_time || !task.end_time) return false;
     
-    // Finally check if it falls within the week range
+    // Check if task falls within the selected week
     const taskDate = format(new Date(task.date), 'yyyy-MM-dd');
     const weekStartDate = format(weekStart, 'yyyy-MM-dd');
     const weekEndDate = format(weekEnd, 'yyyy-MM-dd');
+    
     return taskDate >= weekStartDate && taskDate <= weekEndDate;
   });
 
-  console.log('Filtered scheduled tasks (excluding completed):', scheduledTasks);
+  console.log('Week range:', { weekStartDate: format(weekStart, 'yyyy-MM-dd'), weekEndDate: format(weekEnd, 'yyyy-MM-dd') });
+  console.log('Filtered scheduled tasks:', scheduledTasks);
 
   const unscheduledTasks = tasks.filter(task => 
-    task.status !== 'completed' && // Exclude completed tasks
+    task.status !== 'completed' && 
     (task.status === 'unscheduled' || (!task.date && !task.start_time))
   );
 
