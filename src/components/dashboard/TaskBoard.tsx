@@ -5,6 +5,7 @@ import { MobileTaskView } from "./MobileTaskView";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DragEndEvent } from "@dnd-kit/core";
 import { toast } from "sonner";
+import { useEffect } from "react";
 
 export type TaskPriority = 'low' | 'medium' | 'high';
 
@@ -46,6 +47,29 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
       return data as Task[];
     },
   });
+
+  // Set up real-time subscription for task updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('tasks-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tasks'
+        },
+        () => {
+          console.log('Task change detected, refetching...');
+          refetch();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [refetch]);
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
