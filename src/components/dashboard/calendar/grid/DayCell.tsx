@@ -37,8 +37,11 @@ export function DayCell({ day, timeSlot, tasks, dayIndex }: DayCellProps) {
         dayIndex % 2 === 0 ? "bg-white" : "bg-gray-50/30"
       )}
     >
+      {/* 30-minute marker */}
+      <div className="absolute left-0 right-0 top-1/2 border-t border-gray-200" />
+      
       {tasks.map((task, index) => (
-        <div key={task.id} className="text-[10px] leading-tight">
+        <div key={task.id} className="text-[10px] leading-tight relative z-10">
           <TaskCard 
             key={task.id} 
             task={task} 
