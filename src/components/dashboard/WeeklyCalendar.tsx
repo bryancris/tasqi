@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, addWeeks, subWeeks } from "date-fns";
 import { CalendarHeader } from "./calendar/CalendarHeader";
@@ -95,7 +96,7 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
 
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-      <div className="flex gap-4 w-full max-w-[95%] mx-auto">
+      <div className="flex gap-6 w-full max-w-[98%] mx-auto">
         <div className="flex-1">
           <CalendarHeader 
             monthYear={monthYear}
@@ -116,7 +117,7 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
           </div>
         </div>
 
-        <div className="w-80">
+        <div className="flex-none">
           <UnscheduledTasks tasks={unscheduledTasks} />
         </div>
       </div>

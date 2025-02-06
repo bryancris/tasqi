@@ -1,3 +1,4 @@
+
 import { Task } from "../TaskBoard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useDroppable } from "@dnd-kit/core";
@@ -13,14 +14,14 @@ export function UnscheduledTasks({ tasks }: UnscheduledTasksProps) {
   });
 
   return (
-    <Card className="h-full">
+    <Card className="h-full w-96"> {/* Increased width from w-80 to w-96 */}
       <CardHeader>
         <CardTitle>Unscheduled Tasks</CardTitle>
       </CardHeader>
       <CardContent 
         ref={setNodeRef}
-        className={`space-y-2 min-h-[100px] transition-colors ${
-          isOver ? 'bg-blue-50' : ''
+        className={`space-y-3 min-h-[100px] rounded-md transition-colors p-4 ${
+          isOver ? 'bg-[#1EAEDB]/10' : ''
         }`}
       >
         {tasks.map((task) => (
