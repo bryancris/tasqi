@@ -31,9 +31,9 @@ export function DayCell({ day, timeSlot, tasks, dayIndex }: DayCellProps) {
       ref={setNodeRef}
       className={cn(
         "min-h-[60px] relative p-0.5",
-        "transition-colors duration-200",
+        "transition-all duration-200 ease-in-out",
         "border-t-2 border-gray-600",
-        isOver ? "bg-blue-50" : "hover:bg-gray-50",
+        isOver ? "bg-blue-100 scale-[1.02] shadow-lg" : "hover:bg-gray-50",
         dayIndex % 2 === 0 ? "bg-white" : "bg-gray-50/30"
       )}
     >

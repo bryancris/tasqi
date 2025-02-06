@@ -1,118 +1,98 @@
+import { useDraggable } from "@dnd-kit/core";
+import { CSS } from "@dnd-kit/utilities";
 import { Task } from "./TaskBoard";
-import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+import { WeeklyTaskCard } from "./task-card/WeeklyTaskCard";
+import { DailyTaskCard } from "./task-card/DailyTaskCard";
+import { MonthlyTaskCard } from "./task-card/MonthlyTaskCard";
 import { useState } from "react";
 import { EditTaskDrawer } from "./EditTaskDrawer";
-import { MobileTaskCard } from "./task-card/MobileTaskCard";
-import { DailyTaskCard } from "./task-card/DailyTaskCard";
-import { WeeklyTaskCard } from "./task-card/WeeklyTaskCard";
-import { MonthlyTaskCard } from "./task-card/MonthlyTaskCard";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import { cn } from "@/lib/utils";
 
 interface TaskCardProps {
   task: Task;
-  isMobile?: boolean;
   index: number;
   isDraggable?: boolean;
   view?: 'daily' | 'weekly' | 'monthly';
 }
 
-export function TaskCard({ task, isMobile = false, index, isDraggable = true, view = 'daily' }: TaskCardProps) {
+export function TaskCard({ task, index, isDraggable = false, view = 'daily' }: TaskCardProps) {
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-
+  
   const {
     attributes,
     listeners,
     setNodeRef,
     transform,
-    transition,
     isDragging
-  } = useSortable({
+  } = useDraggable({
     id: task.id,
-    disabled: !isDraggable
+    data: {
+      type: 'task',
+      task
+    }
   });
 
-  const style = {
+  const style = transform ? {
     transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
+    zIndex: isDragging ? 50 : undefined,
+    opacity: isDragging ? 0.8 : undefined,
+    scale: isDragging ? 1.05 : undefined,
+    boxShadow: isDragging ? '0 5px 15px rgba(0,0,0,0.2)' : undefined,
+    cursor: 'grabbing'
+  } : undefined;
 
-  const handleComplete = async () => {
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ 
-          status: 'completed', 
-          updated_at: new Date().toISOString(),
-          completed_at: new Date().toISOString()
-        })
-        .eq('id', task.id);
-
-      if (error) throw error;
-
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      
-      toast({
-        title: "Task completed!",
-        description: `${task.title} has been marked as complete`,
-      });
-    } catch (error) {
-      console.error('Error completing task:', error);
-      toast({
-        title: "Error",
-        description: "Failed to complete task. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleCardClick = () => {
+  const handleClick = () => {
     setIsEditDrawerOpen(true);
   };
 
-  const renderTaskCard = () => {
-    if (isMobile) {
-      return (
-        <MobileTaskCard 
-          task={task} 
-          onComplete={handleComplete} 
-          onClick={handleCardClick} 
-          dragHandleProps={isDraggable ? listeners : undefined}
-        />
-      );
-    }
+  const dragHandleProps = isDraggable ? {
+    ref: setNodeRef,
+    style,
+    ...attributes,
+    ...listeners,
+  } : {};
 
-    const props = {
-      task,
-      onComplete: handleComplete,
-      onClick: handleCardClick,
-      dragHandleProps: isDraggable ? listeners : undefined,
-    };
-
+  const renderCard = () => {
     switch (view) {
       case 'weekly':
-        return <WeeklyTaskCard {...props} />;
+        return (
+          <WeeklyTaskCard
+            task={task}
+            onClick={handleClick}
+            dragHandleProps={dragHandleProps}
+          />
+        );
       case 'monthly':
-        return <MonthlyTaskCard {...props} />;
+        return (
+          <MonthlyTaskCard
+            task={task}
+            onClick={handleClick}
+            dragHandleProps={dragHandleProps}
+          />
+        );
       default:
-        return <DailyTaskCard {...props} />;
+        return (
+          <DailyTaskCard
+            task={task}
+            onClick={handleClick}
+            dragHandleProps={dragHandleProps}
+          />
+        );
     }
   };
 
   return (
     <>
-      <div ref={setNodeRef} style={style} {...attributes}>
-        {renderTaskCard()}
+      <div className={cn(
+        "transition-all duration-200",
+        isDragging && "scale-105 shadow-lg"
+      )}>
+        {renderCard()}
       </div>
-      <EditTaskDrawer 
-        task={task} 
-        open={isEditDrawerOpen} 
-        onOpenChange={setIsEditDrawerOpen} 
+      <EditTaskDrawer
+        task={task}
+        open={isEditDrawerOpen}
+        onOpenChange={setIsEditDrawerOpen}
       />
     </>
   );
