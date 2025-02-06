@@ -54,7 +54,7 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   // Skip caching for DELETE requests
   if (event.request.method === 'DELETE') {
-    return;
+    return fetch(event.request);
   }
 
   event.respondWith(
@@ -63,11 +63,15 @@ self.addEventListener('fetch', event => {
         // Return cached version or fetch new
         return response || fetch(event.request)
           .then(fetchResponse => {
-            return caches.open(CACHE_NAME)
-              .then(cache => {
-                cache.put(event.request, fetchResponse.clone());
-                return fetchResponse;
-              });
+            // Only cache GET requests
+            if (event.request.method === 'GET') {
+              return caches.open(CACHE_NAME)
+                .then(cache => {
+                  cache.put(event.request, fetchResponse.clone());
+                  return fetchResponse;
+                });
+            }
+            return fetchResponse;
           });
       })
   );

@@ -26,11 +26,11 @@ export function DeleteTaskAlert({ isLoading: externalLoading, onDelete }: Delete
     try {
       setIsDeleting(true);
       await onDelete();
-      setIsOpen(false); // Close the dialog after successful deletion
     } catch (error) {
       console.error('Error deleting task:', error);
     } finally {
       setIsDeleting(false);
+      setIsOpen(false); // Close the dialog after deletion attempt (success or failure)
     }
   };
 
@@ -52,7 +52,7 @@ export function DeleteTaskAlert({ isLoading: externalLoading, onDelete }: Delete
           Delete Task
         </Button>
       </AlertDialogTrigger>
-      <AlertDialogContent>
+      <AlertDialogContent onOpenAutoFocus={(e) => e.preventDefault()}>
         <AlertDialogHeader>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
