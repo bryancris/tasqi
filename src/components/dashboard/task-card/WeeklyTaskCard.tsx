@@ -1,28 +1,48 @@
-import { Task } from "../TaskBoard";
 import { cn } from "@/lib/utils";
-import { getPriorityColor } from "@/utils/taskColors";
+import { Task } from "../TaskBoard";
+import { Badge } from "@/components/ui/badge";
 
 interface WeeklyTaskCardProps {
   task: Task;
-  onComplete: () => void;
-  onClick: () => void;
+  onClick?: () => void;
+  onComplete?: () => void;
   dragHandleProps?: any;
 }
 
-export function WeeklyTaskCard({ task, onClick, dragHandleProps }: WeeklyTaskCardProps) {
+export function WeeklyTaskCard({ task, onClick, onComplete, dragHandleProps }: WeeklyTaskCardProps) {
+  const getPriorityColor = (priority: string | null) => {
+    switch (priority) {
+      case 'high':
+        return 'bg-red-500 hover:bg-red-600';
+      case 'medium':
+        return 'bg-orange-500 hover:bg-orange-600';
+      case 'low':
+        return 'bg-green-500 hover:bg-green-600';
+      default:
+        return 'bg-blue-500 hover:bg-blue-600';
+    }
+  };
+
   return (
-    <div 
-      className={cn(
-        "px-1 py-0.5 rounded-md mb-0.5",
-        "text-[10px] leading-tight",
-        "text-white break-words",
-        "h-full cursor-move",
-        getPriorityColor(task.priority)
-      )}
-      onClick={onClick}
+    <div
       {...dragHandleProps}
+      onClick={onClick}
+      className={cn(
+        "w-full h-full px-1 py-0.5 rounded",
+        "cursor-pointer transition-colors",
+        "text-white text-xs leading-tight",
+        getPriorityColor(task.priority),
+        "flex flex-col justify-start"
+      )}
     >
-      <div className="font-medium line-clamp-2">{task.title}</div>
+      <div className="font-medium truncate">
+        {task.title}
+      </div>
+      {task.description && (
+        <p className="text-[10px] text-white/90 truncate">
+          {task.description}
+        </p>
+      )}
     </div>
   );
 }

@@ -38,8 +38,8 @@ export function DayCell({ day, timeSlot, tasks, dayIndex }: DayCellProps) {
       height: `${heightPercentage}%`,
       top: `${topPercentage}%`,
       position: 'absolute' as const,
-      left: '1px',
-      right: '1px',
+      left: '0px',
+      right: '0px',
       zIndex: 10,
     };
   };
@@ -62,7 +62,7 @@ export function DayCell({ day, timeSlot, tasks, dayIndex }: DayCellProps) {
         if (!position) return null;
 
         return (
-          <div key={task.id} style={position}>
+          <div key={task.id} style={position} className="w-full px-0.5">
             <TaskCard 
               key={task.id} 
               task={task} 
