@@ -16,7 +16,6 @@ interface WeeklyCalendarGridProps {
   showFullWeek: boolean;
 }
 
-// Separate component for the calendar cell to properly handle hooks
 const CalendarCell = ({ 
   day, 
   timeSlot, 
@@ -53,7 +52,7 @@ const CalendarCell = ({
       ref={setNodeRef}
       className={cn(
         "relative h-[60px] min-h-[60px]",
-        "border-slate-200",
+        "border-[#403E43]",
         {
           "border-l": !isFirstColumn,
           "border-r": true,
@@ -65,7 +64,7 @@ const CalendarCell = ({
       )}
     >
       {/* 30-minute marker */}
-      <div className="absolute left-0 right-0 top-1/2 border-t border-slate-200" />
+      <div className="absolute left-0 right-0 top-1/2 border-t border-[#403E43]/30" />
       
       {tasksForThisSlot.map((task) => (
         <div key={task.id} className="absolute inset-0 p-0.5">
@@ -89,17 +88,17 @@ export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks, showFu
       <div className={cn(
         "grid",
         showFullWeek ? "grid-cols-[auto_repeat(7,1fr)]" : "grid-cols-[auto_repeat(5,1fr)]",
-        "border border-slate-200"
+        "border border-[#403E43]"
       )}>
         {/* Header */}
-        <div className="bg-slate-50 p-4 border-r border-slate-200" /> {/* Time column header spacer */}
+        <div className="bg-slate-50 p-4 border-r border-[#403E43]" /> {/* Time column header spacer */}
         {displayDays.map((day, index) => (
           <div
             key={day.toISOString()}
             className={cn(
               "px-2 py-4 text-center",
               "bg-slate-50",
-              "border-r border-slate-200",
+              "border-r border-[#403E43]",
               index === displayDays.length - 1 ? "" : "border-r"
             )}
           >
@@ -111,7 +110,7 @@ export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks, showFu
         {/* Time slots and cells */}
         {timeSlots.map((timeSlot, rowIndex) => (
           <React.Fragment key={timeSlot.hour}>
-            <div className="w-20 px-4 py-3 text-right text-sm text-slate-500 bg-slate-50 border-r border-slate-200">
+            <div className="w-20 px-4 py-3 text-right text-sm text-slate-500 bg-slate-50 border-r border-[#403E43]">
               {timeSlot.display}
             </div>
             {displayDays.map((day, colIndex) => (
