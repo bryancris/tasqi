@@ -1,50 +1,42 @@
 import { Task } from "../TaskBoard";
-import { getPriorityColor } from "@/utils/taskColors";
-import { cn } from "@/lib/utils";
-import { getTimeDisplay } from "@/utils/dateUtils";
 import { TaskStatusIndicator } from "../TaskStatusIndicator";
+import { cn } from "@/lib/utils";
+import { getPriorityColor } from "@/utils/taskColors";
 
 interface DesktopTaskCardProps {
   task: Task;
-  onClick?: () => void;
-  onComplete?: () => void;
+  onComplete: () => void;
+  onClick: () => void;
   dragHandleProps?: any;
+  hideTime?: boolean;
 }
 
-export function DesktopTaskCard({ task, onClick, onComplete, dragHandleProps }: DesktopTaskCardProps) {
-  const timeDisplay = getTimeDisplay(task);
-  
+export function DesktopTaskCard({ task, onComplete, onClick, dragHandleProps, hideTime = false }: DesktopTaskCardProps) {
+  const timeString = task.start_time && task.end_time ? `${task.start_time} - ${task.end_time}` : '';
+
   return (
-    <div
-      onClick={onClick}
+    <div 
       className={cn(
-        "p-4 rounded-lg cursor-pointer mb-2 min-h-[80px]",
-        "hover:ring-2 hover:ring-offset-1 hover:ring-blue-500",
-        task.status === 'unscheduled' ? 'bg-blue-500' : 
-        task.status === 'completed' ? 'bg-gray-500' :
-        getPriorityColor(task.priority),
-        "text-white"
+        "flex items-start gap-3 p-3 bg-white rounded-lg shadow-sm border border-gray-200",
+        "hover:shadow-md transition-shadow cursor-pointer",
+        getPriorityColor(task.priority)
       )}
+      onClick={onClick}
       {...dragHandleProps}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex flex-col">
-          <h3 className="font-medium text-base">{task.title}</h3>
-          <p className="text-sm text-white/90">Status: {task.status}</p>
-          {timeDisplay && (
-            <p className="text-sm text-white/90">{timeDisplay}</p>
-          )}
-        </div>
-        <TaskStatusIndicator
-          status={task.status}
-          time={timeDisplay}
-          onClick={(e) => {
-            e.stopPropagation();
-            if (task.status !== 'completed' && onComplete) {
-              onComplete();
-            }
-          }}
-        />
+      <TaskStatusIndicator 
+        status={task.status} 
+        time={timeString}
+        onClick={(e) => {
+          e.stopPropagation();
+          onComplete();
+        }} 
+      />
+      <div className="flex-1 min-w-0">
+        <h3 className="font-medium text-gray-900 truncate">{task.title}</h3>
+        {!hideTime && timeString && (
+          <p className="text-sm text-gray-500">{timeString}</p>
+        )}
       </div>
     </div>
   );

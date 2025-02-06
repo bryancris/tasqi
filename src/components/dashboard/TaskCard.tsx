@@ -14,9 +14,10 @@ interface TaskCardProps {
   isMobile?: boolean;
   index: number;
   isDraggable?: boolean;
+  hideTime?: boolean;
 }
 
-export function TaskCard({ task, isMobile = false, index, isDraggable = true }: TaskCardProps) {
+export function TaskCard({ task, isMobile = false, index, isDraggable = true, hideTime = false }: TaskCardProps) {
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -82,6 +83,7 @@ export function TaskCard({ task, isMobile = false, index, isDraggable = true }: 
           onComplete={handleComplete} 
           onClick={handleCardClick} 
           dragHandleProps={isDraggable ? listeners : undefined}
+          hideTime={hideTime}
         />
       </div>
       <EditTaskDrawer 

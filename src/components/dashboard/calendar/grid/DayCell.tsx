@@ -44,6 +44,7 @@ export function DayCell({ day, timeSlot, tasks, dayIndex }: DayCellProps) {
             task={task} 
             index={index}
             isDraggable={true}
+            hideTime={true}
           />
         </div>
       ))}
