@@ -10,9 +10,10 @@ export interface MobileTaskViewProps {
   selectedDate: Date;
   onDateChange: (date: Date) => void;
   onDragEnd: (event: DragEndEvent) => void;
+  onComplete?: () => void;
 }
 
-export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd }: MobileTaskViewProps) {
+export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, onComplete }: MobileTaskViewProps) {
   const todayStart = startOfDay(new Date());
 
   const sensors = useSensors(
@@ -61,6 +62,7 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd }:
                     task={task}
                     index={index}
                     isDraggable={task.status !== 'completed'}
+                    onComplete={onComplete}
                   />
                 ))}
               </div>
