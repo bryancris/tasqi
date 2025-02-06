@@ -25,7 +25,6 @@ export function UnscheduledTasks({ tasks }: UnscheduledTasksProps) {
           tasks.map((task, index) => (
             <div key={task.id} className="bg-[#0EA5E9] bg-opacity-10 hover:bg-opacity-20 transition-colors rounded-lg">
               <TaskCard 
-                key={task.id} 
                 task={task} 
                 index={index}
                 isDraggable={true}
