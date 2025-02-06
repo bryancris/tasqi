@@ -1,6 +1,5 @@
 import { cn } from "@/lib/utils";
 import { Task } from "../TaskBoard";
-import { Badge } from "@/components/ui/badge";
 
 interface WeeklyTaskCardProps {
   task: Task;
@@ -31,7 +30,7 @@ export function WeeklyTaskCard({ task, onClick, onComplete, dragHandleProps }: W
         "w-full h-full",
         "cursor-pointer",
         "text-white text-xs leading-tight",
-        "flex flex-col",
+        "shadow-sm",
         getPriorityColor(task.priority),
       )}
     >
