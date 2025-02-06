@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,9 +15,7 @@ export function useWeeklyTasks(weekStart: Date, weekEnd: Date) {
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
-        .gte('date', format(weekStart, 'yyyy-MM-dd'))
-        .lte('date', format(weekEnd, 'yyyy-MM-dd'))
-        .eq('status', 'scheduled')
+        .or(`status.eq.scheduled,status.eq.unscheduled`)
         .order('position', { ascending: true });
       
       if (error) {
