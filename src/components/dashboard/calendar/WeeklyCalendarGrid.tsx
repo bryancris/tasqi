@@ -55,8 +55,8 @@ const CalendarCell = ({
         "relative h-[60px] min-h-[60px]",
         "border-slate-200",
         {
-          "border-l": isFirstColumn,
-          "border-r": isLastColumn,
+          "border-l": !isFirstColumn,
+          "border-r": true,
           "border-t": true,
           "border-b": isLastRow,
         },
@@ -64,6 +64,9 @@ const CalendarCell = ({
         "transition-colors duration-200"
       )}
     >
+      {/* 30-minute marker */}
+      <div className="absolute left-0 right-0 top-1/2 border-t border-slate-200" />
+      
       {tasksForThisSlot.map((task) => (
         <div key={task.id} className="absolute inset-0 p-0.5">
           <TaskCard
@@ -82,19 +85,22 @@ export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks, showFu
   const displayDays = showFullWeek ? weekDays : weekDays.slice(0, 5);
 
   return (
-    <div className="relative bg-white rounded-lg shadow-sm">
+    <div className="relative bg-white rounded-lg shadow-sm overflow-hidden">
       <div className={cn(
         "grid",
-        showFullWeek ? "grid-cols-[auto_repeat(7,1fr)]" : "grid-cols-[auto_repeat(5,1fr)]"
+        showFullWeek ? "grid-cols-[auto_repeat(7,1fr)]" : "grid-cols-[auto_repeat(5,1fr)]",
+        "border border-slate-200"
       )}>
         {/* Header */}
-        <div className="bg-slate-50 border-b border-slate-300 p-4" /> {/* Time column header spacer */}
+        <div className="bg-slate-50 p-4 border-r border-slate-200" /> {/* Time column header spacer */}
         {displayDays.map((day, index) => (
           <div
             key={day.toISOString()}
             className={cn(
-              "px-2 py-4 text-center border-b border-slate-300",
-              "bg-slate-50"
+              "px-2 py-4 text-center",
+              "bg-slate-50",
+              "border-r border-slate-200",
+              index === displayDays.length - 1 ? "" : "border-r"
             )}
           >
             <div className="font-medium text-slate-900">{format(day, 'EEE')}</div>
@@ -105,7 +111,7 @@ export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks, showFu
         {/* Time slots and cells */}
         {timeSlots.map((timeSlot, rowIndex) => (
           <React.Fragment key={timeSlot.hour}>
-            <div className="w-20 px-4 py-3 text-right text-sm text-slate-500 bg-slate-50 border-r border-slate-300">
+            <div className="w-20 px-4 py-3 text-right text-sm text-slate-500 bg-slate-50 border-r border-slate-200">
               {timeSlot.display}
             </div>
             {displayDays.map((day, colIndex) => (
