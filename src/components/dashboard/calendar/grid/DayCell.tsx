@@ -28,10 +28,11 @@ export function DayCell({ day, timeSlot, tasks, dayIndex }: DayCellProps) {
     // Calculate duration in minutes
     const durationMinutes = (endHour - startHour) * 60 + (endMinute - startMinute);
     
-    // Convert to grid units (1 hour = 100% height)
-    const heightPercentage = (durationMinutes / 60) * 100;
+    // For a one-hour task, heightPercentage should be 100%
+    // For a 30-minute task, heightPercentage should be 50%
+    const heightPercentage = Math.min((durationMinutes / 60) * 100, 100);
     
-    // Calculate top position based on start minutes (0-30 = top half, 31-59 = bottom half)
+    // Calculate top position (0 for start at hour, 50 for start at half hour)
     const topPercentage = (startMinute / 60) * 100;
 
     return {
