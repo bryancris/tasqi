@@ -1,3 +1,4 @@
+
 import { useEffect, useCallback, useRef } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -5,9 +6,47 @@ import { toast } from "sonner";
 // Keep track of notified tasks
 const notifiedTasks = new Set<number>();
 
+const urlBase64ToUint8Array = (base64String: string) => {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/\-/g, '+')
+    .replace(/_/g, '/');
+
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+};
+
+const savePushSubscription = async (subscription: PushSubscription) => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user) {
+    throw new Error('User must be logged in to save push subscription');
+  }
+
+  const { error } = await supabase
+    .from('push_subscriptions')
+    .upsert({
+      user_id: session.user.id,
+      endpoint: subscription.endpoint,
+      auth_keys: {
+        p256dh: subscription.toJSON().keys?.p256dh,
+        auth: subscription.toJSON().keys?.auth
+      }
+    }, {
+      onConflict: 'user_id,endpoint'
+    });
+
+  if (error) {
+    console.error('Error saving push subscription:', error);
+    throw error;
+  }
+};
+
 export const checkAndNotifyUpcomingTasks = async () => {
-  console.log('📋 Found upcoming tasks with reminders enabled');
-  
   try {
     // Get tasks for next 24 hours with reminders enabled
     const { data: tasks, error } = await supabase
@@ -87,6 +126,26 @@ const showNotification = async (task: any) => {
     const registration = await navigator.serviceWorker.ready;
     console.log('✅ Service worker ready, attempting to show notification');
 
+    // Subscribe to push notifications if not already subscribed
+    try {
+      const existingSubscription = await registration.pushManager.getSubscription();
+      
+      if (!existingSubscription) {
+        const subscribeOptions = {
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(import.meta.env.VITE_VAPID_PUBLIC_KEY)
+        };
+        
+        const subscription = await registration.pushManager.subscribe(subscribeOptions);
+        console.log('✅ Push notification subscription created:', subscription);
+        
+        // Save the subscription to our backend
+        await savePushSubscription(subscription);
+      }
+    } catch (error) {
+      console.error('Error subscribing to push notifications:', error);
+    }
+
     const title = task.title;
     const options = {
       body: `Task scheduled for ${task.start_time}`,
@@ -132,7 +191,7 @@ export const useTaskNotifications = () => {
 
   useEffect(() => {
     if ('serviceWorker' in navigator) {
-      console.log('Registering new service worker...');
+      console.log('Registering service worker...');
       navigator.serviceWorker.register('/sw.js')
         .then(registration => {
           console.log('Service worker registered:', registration);

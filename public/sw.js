@@ -1,3 +1,4 @@
+
 // Cache name
 const CACHE_NAME = 'tasqi-cache-v1';
 
@@ -50,6 +51,55 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
+// Push event handler
+self.addEventListener('push', event => {
+  console.log('Push message received:', event);
+  
+  if (event.data) {
+    const data = event.data.json();
+    
+    const options = {
+      body: data.body || 'New notification',
+      icon: '/pwa-192x192.png',
+      badge: '/pwa-192x192.png',
+      vibrate: [200, 100, 200],
+      tag: data.tag || 'default',
+      renotify: true,
+      requireInteraction: true,
+      data: {
+        url: self.registration.scope
+      }
+    };
+    
+    event.waitUntil(
+      self.registration.showNotification(data.title || 'New Task', options)
+    );
+  }
+});
+
+// Notification click event
+self.addEventListener('notificationclick', event => {
+  console.log('Notification clicked:', event);
+  
+  event.notification.close();
+  
+  event.waitUntil(
+    clients.matchAll({ type: 'window' })
+      .then(clientList => {
+        if (clientList.length > 0) {
+          let client = clientList[0];
+          for (let i = 0; i < clientList.length; i++) {
+            if (clientList[i].focused) {
+              client = clientList[i];
+            }
+          }
+          return client.focus();
+        }
+        return clients.openWindow('/');
+      })
+  );
+});
+
 // Fetch event - serve cached content when offline
 self.addEventListener('fetch', event => {
   // Skip caching for DELETE requests
@@ -73,29 +123,6 @@ self.addEventListener('fetch', event => {
             }
             return fetchResponse;
           });
-      })
-  );
-});
-
-// Notification click event
-self.addEventListener('notificationclick', event => {
-  console.log('Notification clicked:', event);
-  
-  event.notification.close();
-  
-  event.waitUntil(
-    clients.matchAll({ type: 'window' })
-      .then(clientList => {
-        if (clientList.length > 0) {
-          let client = clientList[0];
-          for (let i = 0; i < clientList.length; i++) {
-            if (clientList[i].focused) {
-              client = clientList[i];
-            }
-          }
-          return client.focus();
-        }
-        return clients.openWindow('/');
       })
   );
 });

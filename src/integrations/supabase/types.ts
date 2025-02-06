@@ -192,6 +192,33 @@ export type Database = {
         }
         Relationships: []
       }
+      push_subscriptions: {
+        Row: {
+          auth_keys: Json
+          created_at: string
+          endpoint: string
+          id: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          auth_keys: Json
+          created_at?: string
+          endpoint: string
+          id?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          auth_keys?: Json
+          created_at?: string
+          endpoint?: string
+          id?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           completed_at: string | null
