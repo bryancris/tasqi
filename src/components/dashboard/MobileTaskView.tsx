@@ -61,7 +61,6 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange }: MobileTask
                     key={task.id}
                     task={task}
                     index={index}
-                    isMobile={true}
                     isDraggable={task.status !== 'completed'}
                   />
                 ))}

@@ -13,9 +13,10 @@ interface TaskCardProps {
   index: number;
   isDraggable?: boolean;
   view?: 'daily' | 'weekly' | 'monthly';
+  onComplete?: () => void;
 }
 
-export function TaskCard({ task, index, isDraggable = false, view = 'daily' }: TaskCardProps) {
+export function TaskCard({ task, index, isDraggable = false, view = 'daily', onComplete }: TaskCardProps) {
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   
   const {
@@ -45,6 +46,12 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily' }: T
     setIsEditDrawerOpen(true);
   };
 
+  const handleComplete = () => {
+    if (onComplete) {
+      onComplete();
+    }
+  };
+
   const dragHandleProps = isDraggable ? {
     ref: setNodeRef,
     style,
@@ -59,6 +66,7 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily' }: T
           <WeeklyTaskCard
             task={task}
             onClick={handleClick}
+            onComplete={handleComplete}
             dragHandleProps={dragHandleProps}
           />
         );
@@ -67,6 +75,7 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily' }: T
           <MonthlyTaskCard
             task={task}
             onClick={handleClick}
+            onComplete={handleComplete}
             dragHandleProps={dragHandleProps}
           />
         );
@@ -75,6 +84,7 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily' }: T
           <DailyTaskCard
             task={task}
             onClick={handleClick}
+            onComplete={handleComplete}
             dragHandleProps={dragHandleProps}
           />
         );
