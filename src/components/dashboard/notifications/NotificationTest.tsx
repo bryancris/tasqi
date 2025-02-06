@@ -54,8 +54,7 @@ export function NotificationTest() {
         tag: 'test-notification',
         renotify: true,
         requireInteraction: true,
-        silent: false,
-        sound: '/notification-sound.mp3' // This is for browsers that support notification sounds
+        silent: false
       });
 
       console.log("Notification sent successfully");
