@@ -102,12 +102,12 @@ export const checkAndNotifyUpcomingTasks = async () => {
         currentTime: new Date().toLocaleString()
       });
 
-      // Check if we're within 15 minutes of the task time
+      // Check if we're within 1 minute of the task time (allowing for slight delays)
       const timeDiff = taskDate.getTime() - new Date().getTime();
       const minutesDiff = Math.floor(timeDiff / (1000 * 60));
 
-      if (minutesDiff <= 15 && minutesDiff >= -5) {
-        console.log('🎯 Within notification window! Sending notification for task:', task.title);
+      if (minutesDiff <= 1 && minutesDiff >= -1) {
+        console.log('🎯 At start time! Sending notification for task:', task.title);
         await showNotification(task);
         notifiedTasks.add(task.id);
       }
