@@ -45,46 +45,71 @@ self.addEventListener('fetch', event => {
   );
 });
 
-// Handle push notifications
-self.addEventListener('push', event => {
-  console.log('Push notification received:', event);
-  const options = {
-    body: 'This is a test notification from TasqiAI',
-    icon: '/pwa-192x192.png',
-    badge: '/pwa-192x192.png',
-    vibrate: [200, 100, 200],
-    data: {
-      url: self.location.origin + '/dashboard'
-    },
-    tag: 'test-notification',
-    renotify: true,
-    requireInteraction: true,
-    silent: false
-  };
-
-  event.waitUntil(
-    self.registration.showNotification('TasqiAI Notification', options)
-  );
-});
-
 // Handle notification clicks
 self.addEventListener('notificationclick', event => {
-  console.log('Notification clicked:', event);
+  console.log('🔔 Notification clicked:', event);
   event.notification.close();
 
+  // Focus existing window or open new one
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true })
       .then(clientList => {
-        // If a window client is available, focus it
         for (const client of clientList) {
-          if (client.url === self.location.origin + '/dashboard' && 'focus' in client) {
+          if ('focus' in client) {
             return client.focus();
           }
         }
         // If no window client is available, open a new window
-        if (clients.openWindow) {
-          return clients.openWindow('/dashboard');
-        }
+        return clients.openWindow('/dashboard');
       })
   );
 });
+
+// Play sound when showing notification
+async function playNotificationSound() {
+  try {
+    const audio = new Audio('/notification-sound.mp3');
+    audio.volume = 0.5;
+    await audio.play();
+  } catch (error) {
+    console.error('Error playing notification sound:', error);
+  }
+}
+
+// Handle showing notifications
+self.addEventListener('push', async event => {
+  console.log('📨 Push event received:', event);
+  
+  if (!event.data) {
+    console.log('No data payload in push event');
+    return;
+  }
+
+  try {
+    const data = event.data.json();
+    console.log('📦 Push data:', data);
+
+    const options = {
+      body: data.body || 'Task notification',
+      icon: '/pwa-192x192.png',
+      badge: '/pwa-192x192.png',
+      vibrate: [200, 100, 200],
+      data: {
+        url: self.location.origin + '/dashboard'
+      },
+      tag: data.tag || 'task-notification',
+      renotify: true,
+      requireInteraction: true,
+      silent: false
+    };
+
+    await playNotificationSound();
+    
+    event.waitUntil(
+      self.registration.showNotification(data.title || 'Task Notification', options)
+    );
+  } catch (error) {
+    console.error('Error handling push notification:', error);
+  }
+});
+
