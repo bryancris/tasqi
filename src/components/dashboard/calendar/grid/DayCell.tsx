@@ -60,7 +60,7 @@ export function DayCell({ day, timeSlot, tasks, dayIndex }: DayCellProps) {
     <div
       ref={setNodeRef}
       className={cn(
-        "min-h-[60px] relative p-0.5",
+        "min-h-[60px] h-full relative p-0.5",
         "transition-all duration-200 ease-in-out",
         "border-t-2 border-gray-600",
         "hover:bg-gray-50",
@@ -75,7 +75,7 @@ export function DayCell({ day, timeSlot, tasks, dayIndex }: DayCellProps) {
         if (!position) return null;
 
         return (
-          <div key={task.id} style={position}>
+          <div key={task.id} style={position} className="absolute">
             <TaskCard 
               key={task.id} 
               task={task} 
