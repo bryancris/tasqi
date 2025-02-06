@@ -49,10 +49,9 @@ export function DayCell({ day, timeSlot, tasks, dayIndex }: DayCellProps) {
     return {
       height: `${heightPercentage}%`,
       top: `${topPercentage}%`,
+      left: '0px',
+      right: '0px',
       position: 'absolute' as const,
-      left: '2px',
-      right: '2px',
-      zIndex: 10
     };
   };
 
@@ -60,7 +59,7 @@ export function DayCell({ day, timeSlot, tasks, dayIndex }: DayCellProps) {
     <div
       ref={setNodeRef}
       className={cn(
-        "min-h-[60px] h-full relative p-0.5",
+        "h-[60px] relative",
         "transition-all duration-200 ease-in-out",
         "border-t-2 border-gray-600",
         "hover:bg-gray-50",
@@ -75,7 +74,7 @@ export function DayCell({ day, timeSlot, tasks, dayIndex }: DayCellProps) {
         if (!position) return null;
 
         return (
-          <div key={task.id} style={position} className="absolute">
+          <div key={task.id} style={position} className="inset-x-0 mx-0.5">
             <TaskCard 
               key={task.id} 
               task={task} 

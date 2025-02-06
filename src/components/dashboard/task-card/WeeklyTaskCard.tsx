@@ -28,18 +28,17 @@ export function WeeklyTaskCard({ task, onClick, onComplete, dragHandleProps }: W
       {...dragHandleProps}
       onClick={onClick}
       className={cn(
-        "w-full h-full px-1 py-0.5 rounded",
+        "w-full h-full",
         "cursor-pointer transition-colors",
         "text-white text-xs leading-tight",
         getPriorityColor(task.priority),
-        "flex flex-col justify-start"
       )}
     >
-      <div className="font-medium truncate">
+      <div className="font-medium p-1">
         {task.title}
       </div>
       {task.description && (
-        <p className="text-[10px] text-white/90 truncate">
+        <p className="text-[10px] text-white/90 px-1">
           {task.description}
         </p>
       )}
