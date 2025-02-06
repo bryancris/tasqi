@@ -12,23 +12,29 @@ const registerServiceWorker = async (): Promise<ServiceWorkerRegistration> => {
       throw new Error("Service Worker not supported");
     }
 
-    // Unregister any existing service workers first
-    const registrations = await navigator.serviceWorker.getRegistrations();
-    for (const registration of registrations) {
-      await registration.unregister();
-    }
-
+    console.log("Registering new service worker...");
+    
     // Register new service worker
     const registration = await navigator.serviceWorker.register('/sw.js');
-    
-    // Wait for the service worker to be activated
+    console.log("Service worker registered:", registration);
+
+    // If the service worker is already active, return it
     if (registration.active) {
+      console.log("Service worker is already active");
       return registration;
     }
 
-    // If not active yet, wait for activation
+    // Wait for the service worker to be activated
     return new Promise((resolve) => {
-      registration.addEventListener('activate', () => resolve(registration));
+      registration.addEventListener('activate', () => {
+        console.log("Service worker activated");
+        resolve(registration);
+      });
+
+      // Force activation if needed
+      if (registration.waiting) {
+        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+      }
     });
   } catch (error) {
     console.error("Service Worker registration failed:", error);
@@ -81,7 +87,13 @@ export const checkAndNotifyUpcomingTasks = async () => {
 
     // Register service worker before processing tasks
     const registration = await registerServiceWorker();
-    console.log("✅ Service worker registered and activated");
+    console.log("✅ Service worker registration completed");
+
+    // Ensure service worker is active
+    if (!registration.active) {
+      console.error("❌ Service worker is not active");
+      return;
+    }
 
     tasks?.forEach(task => {
       console.log("\n🔍 Checking task:", task.title);

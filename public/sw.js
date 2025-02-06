@@ -16,14 +16,22 @@ self.addEventListener('install', event => {
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(urlsToCache))
   );
-  // Immediately activate the service worker
-  self.skipWaiting();
 });
 
 self.addEventListener('activate', event => {
   event.waitUntil(
-    // Take control of all pages immediately
-    clients.claim()
+    Promise.all([
+      // Clean up old caches
+      caches.keys().then(keys => Promise.all(
+        keys.map(key => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
+          }
+        })
+      )),
+      // Take control of all pages only after activation
+      self.clients.claim()
+    ])
   );
 });
 
@@ -121,6 +129,6 @@ self.addEventListener('push', async event => {
     
   } catch (error) {
     console.error('❌ Error in push event handler:', error);
-    throw error; // Re-throw to ensure the error is logged in the console
+    throw error;
   }
 });
