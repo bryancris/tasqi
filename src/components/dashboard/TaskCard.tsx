@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useDraggable } from "@dnd-kit/core";
+import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Task } from "./TaskBoard";
 import { WeeklyTaskCard } from "./task-card/WeeklyTaskCard";
@@ -24,21 +24,19 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
     listeners,
     setNodeRef,
     transform,
+    transition,
     isDragging
-  } = useDraggable({
+  } = useSortable({
     id: task.id,
-    data: {
-      type: 'task',
-      task
-    }
+    disabled: !isDraggable
   });
 
-  const style = transform ? {
+  const style = {
     transform: CSS.Transform.toString(transform),
+    transition,
     zIndex: isDragging ? 50 : undefined,
-    opacity: isDragging ? 0.9 : undefined,
-    transition: 'transform 200ms cubic-bezier(0.25, 1, 0.5, 1)'
-  } : undefined;
+    opacity: isDragging ? 0.5 : undefined,
+  };
 
   const handleClick = () => {
     setIsEditDrawerOpen(true);
@@ -93,7 +91,7 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
     <>
       <div className={cn(
         "transition-all duration-200",
-        isDragging && "opacity-90"
+        isDragging && "opacity-50"
       )}>
         {renderCard()}
       </div>
