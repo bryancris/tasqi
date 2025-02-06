@@ -5,7 +5,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { EditTaskDrawer } from "./EditTaskDrawer";
 import { MobileTaskCard } from "./task-card/MobileTaskCard";
-import { DesktopTaskCard } from "./task-card/DesktopTaskCard";
+import { DailyTaskCard } from "./task-card/DailyTaskCard";
+import { WeeklyTaskCard } from "./task-card/WeeklyTaskCard";
+import { MonthlyTaskCard } from "./task-card/MonthlyTaskCard";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
@@ -14,10 +16,10 @@ interface TaskCardProps {
   isMobile?: boolean;
   index: number;
   isDraggable?: boolean;
-  hideTime?: boolean;
+  view?: 'daily' | 'weekly' | 'monthly';
 }
 
-export function TaskCard({ task, isMobile = false, index, isDraggable = true, hideTime = false }: TaskCardProps) {
+export function TaskCard({ task, isMobile = false, index, isDraggable = true, view = 'daily' }: TaskCardProps) {
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -73,18 +75,39 @@ export function TaskCard({ task, isMobile = false, index, isDraggable = true, hi
     setIsEditDrawerOpen(true);
   };
 
-  const CardComponent = isMobile ? MobileTaskCard : DesktopTaskCard;
-
-  return (
-    <>
-      <div ref={setNodeRef} style={style} {...attributes}>
-        <CardComponent 
+  const renderTaskCard = () => {
+    if (isMobile) {
+      return (
+        <MobileTaskCard 
           task={task} 
           onComplete={handleComplete} 
           onClick={handleCardClick} 
           dragHandleProps={isDraggable ? listeners : undefined}
-          hideTime={hideTime}
         />
+      );
+    }
+
+    const props = {
+      task,
+      onComplete: handleComplete,
+      onClick: handleCardClick,
+      dragHandleProps: isDraggable ? listeners : undefined,
+    };
+
+    switch (view) {
+      case 'weekly':
+        return <WeeklyTaskCard {...props} />;
+      case 'monthly':
+        return <MonthlyTaskCard {...props} />;
+      default:
+        return <DailyTaskCard {...props} />;
+    }
+  };
+
+  return (
+    <>
+      <div ref={setNodeRef} style={style} {...attributes}>
+        {renderTaskCard()}
       </div>
       <EditTaskDrawer 
         task={task} 
