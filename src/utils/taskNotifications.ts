@@ -55,13 +55,15 @@ export const checkAndNotifyUpcomingTasks = async () => {
               body: `${task.title} starts at ${timeString}`,
               icon: "/pwa-192x192.png",
               badge: "/pwa-192x192.png",
-              vibrate: [100, 50, 100],
+              vibrate: [200, 100, 200], // Increased vibration pattern
               data: {
                 taskId: task.id,
                 url: window.location.origin + '/dashboard'
               },
               tag: `task-${task.id}`,
-              renotify: true
+              renotify: true,
+              requireInteraction: true, // This ensures the notification stays until user interaction
+              silent: false // This ensures sound plays with the notification
             }).then(() => {
               // Add to notified tasks after successful notification
               notifiedTasks.add(task.id);
