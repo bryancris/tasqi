@@ -1,11 +1,8 @@
-
 import { Button } from "@/components/ui/button";
-import { useNotifications } from "@/hooks/use-notifications";
+import { useTaskNotifications } from "@/hooks/use-notifications";
 import { toast } from "sonner";
 
 export function NotificationTest() {
-  const { sendNotification } = useNotifications();
-  
   const handleTestNotification = async () => {
     try {
       console.log("Testing notification...");
