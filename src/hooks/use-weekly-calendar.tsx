@@ -13,14 +13,17 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
   const { data: tasks = [] } = useQuery({
     queryKey: ['tasks'],
     queryFn: async () => {
+      console.log('Fetching tasks for weekly calendar...');
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
-        .or(`status.eq.scheduled,status.eq.unscheduled`)
         .order('position', { ascending: true });
       
-      if (error) throw error;
-      console.log('Fetched tasks:', data);
+      if (error) {
+        console.error('Error fetching tasks:', error);
+        throw error;
+      }
+      console.log('Fetched tasks for weekly calendar:', data);
       return data as Task[];
     },
   });
@@ -89,13 +92,19 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
     }
   };
 
+  console.log('All tasks before filtering:', tasks);
+
   const scheduledTasks = tasks.filter(task => 
     task.status === 'scheduled' && task.date && task.start_time
   );
 
+  console.log('Scheduled tasks:', scheduledTasks);
+
   const unscheduledTasks = tasks.filter(task => 
-    task.status === 'unscheduled'
+    task.status === 'unscheduled' || !task.status
   );
+
+  console.log('Unscheduled tasks:', unscheduledTasks);
 
   const visitsPerDay = weekDays.map(day => {
     const dayTasks = scheduledTasks.filter(task => {
