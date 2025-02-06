@@ -1,14 +1,19 @@
+
 {
   "name": "TASQI-AI Assistant",
   "short_name": "TASQI-AI",
   "description": "AI-powered task management assistant",
-  "start_url": "/",
+  "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#1a1a2e",
   "theme_color": "#1a1a2e",
   "orientation": "any",
   "categories": ["productivity", "utilities"],
   "prefer_related_applications": false,
+  "permissions": [
+    "notifications"
+  ],
+  "gcm_sender_id": "103953800507",
   "icons": [
     {
       "src": "/lovable-uploads/98b0b439-cc30-41da-8912-7786e473fb9a.png",
