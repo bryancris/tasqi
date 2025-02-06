@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { DesktopTaskView } from "./DesktopTaskView";
 import { MobileTaskView } from "./MobileTaskView";
@@ -33,7 +33,7 @@ interface TaskBoardProps {
 
 export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
   const isMobile = useIsMobile();
-  const queryClient = useQuery();
+  const queryClient = useQueryClient();
 
   const { data: tasks = [], refetch } = useQuery({
     queryKey: ['tasks'],
@@ -48,7 +48,7 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
       return data as Task[];
     },
     staleTime: 0, // Disable caching to always fetch fresh data
-    cacheTime: 0  // Remove data from cache immediately
+    gcTime: 0  // Remove data from cache immediately (formerly cacheTime)
   });
 
   // Set up real-time subscription for task updates
