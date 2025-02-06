@@ -8,7 +8,8 @@ const notifiedTasks = new Set<number>();
 export const checkAndNotifyUpcomingTasks = async () => {
   try {
     console.log("\n==================== 🔔 TASK NOTIFICATION CHECK 🔔 ====================");
-    console.log("⏰ Current time:", new Date().toLocaleString());
+    const now = new Date();
+    console.log("⏰ Current time:", now.toLocaleString());
     
     // First check if notifications are supported and permitted
     if (!("Notification" in window)) {
@@ -29,21 +30,23 @@ export const checkAndNotifyUpcomingTasks = async () => {
       }
     }
 
-    // Get tasks that are scheduled and have reminders enabled
+    // Get tasks for today that are scheduled and have reminders enabled
+    const today = format(now, 'yyyy-MM-dd');
+    console.log("📅 Checking tasks for date:", today);
+
     const { data: tasks, error } = await supabase
       .from("tasks")
       .select("*")
       .eq("status", "scheduled")
-      .eq("reminder_enabled", true);
+      .eq("reminder_enabled", true)
+      .gte("date", today); // Only get today's and future tasks
 
     if (error) {
       console.error("❌ Error fetching tasks:", error);
       throw error;
     }
 
-    console.log(`📋 Found ${tasks?.length || 0} tasks with reminders enabled`);
-
-    const now = new Date();
+    console.log(`📋 Found ${tasks?.length || 0} upcoming tasks with reminders enabled`);
 
     tasks?.forEach(task => {
       console.log("\n🔍 Checking task:", task.title);
@@ -76,7 +79,9 @@ export const checkAndNotifyUpcomingTasks = async () => {
         timeUntilTask: minutesUntilTask >= 0 
           ? `⏳ Task starts in ${hoursUntil}h ${minutesRemaining}m`
           : `⌛ Task started ${hoursUntil}h ${minutesRemaining}m ago`,
-        isSameMinute: isSameMinute(taskDateTime, now)
+        isSameMinute: isSameMinute(taskDateTime, now),
+        reminderEnabled: task.reminder_enabled,
+        status: task.status
       });
 
       // Check if current time matches task start time exactly
@@ -128,4 +133,3 @@ export const checkAndNotifyUpcomingTasks = async () => {
     console.error("❌ Error checking upcoming tasks:", error);
   }
 };
-
