@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { TaskBoard } from "@/components/dashboard/TaskBoard";
@@ -13,6 +14,7 @@ import { MobileFooter } from "@/components/layouts/MobileFooter";
 import { MobileWeeklyView } from "@/components/dashboard/mobile/MobileWeeklyView";
 import { useLocation } from "react-router-dom";
 import { useCalendarView, CalendarView } from "@/hooks/use-calendar-view";
+import { checkAndNotifyUpcomingTasks } from "@/utils/taskNotifications";
 
 const Dashboard = () => {
   const { view, changeView } = useCalendarView('tasks');
@@ -28,7 +30,19 @@ const Dashboard = () => {
         await new Promise(resolve => setTimeout(resolve, 100));
         if (session) {
           console.log("Session found, initializing dashboard");
+          // Start task notification checks
+          const notificationInterval = setInterval(() => {
+            checkAndNotifyUpcomingTasks();
+          }, 30000); // Check every 30 seconds
+          
+          // Initial check
+          checkAndNotifyUpcomingTasks();
+          
           setIsLoading(false);
+          
+          return () => {
+            clearInterval(notificationInterval);
+          };
         }
       } catch (error) {
         console.error("Dashboard initialization error:", error);
