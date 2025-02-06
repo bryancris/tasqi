@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, addWeeks, subWeeks } from "date-fns";
 import { CalendarHeader } from "./calendar/CalendarHeader";
@@ -7,6 +6,7 @@ import { UnscheduledTasks } from "./calendar/UnscheduledTasks";
 import { useWeeklyCalendar } from "@/hooks/use-weekly-calendar";
 import { supabase } from "@/integrations/supabase/client";
 import { DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface WeeklyCalendarProps {
   initialDate?: Date;
@@ -17,6 +17,7 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
   const [showFullWeek, setShowFullWeek] = useState(true);
   const [startHour, setStartHour] = useState(8);
   const [endHour, setEndHour] = useState(17);
+  const queryClient = useQueryClient();
   
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -64,6 +65,29 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
 
     loadUserSettings();
   }, []);
+
+  // Set up real-time subscription for task updates
+  useEffect(() => {
+    const channel = supabase
+      .channel('tasks-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tasks'
+        },
+        () => {
+          // Invalidate and refetch tasks when changes occur
+          queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const timeSlots = Array.from({ length: endHour - startHour + 1 }, (_, i) => {
     const hour = startHour + i;
