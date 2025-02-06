@@ -164,6 +164,7 @@ const showNotification = async (task: any) => {
     } catch (error) {
       console.error('Error subscribing to push notifications:', error);
       toast.error('Failed to enable push notifications. Please try again.');
+      return;
     }
 
     const title = task.title;
