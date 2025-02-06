@@ -1,9 +1,10 @@
 
 import { format } from "date-fns";
 import { HeaderUserMenu } from "@/components/dashboard/header/HeaderUserMenu";
-import { Plus } from "lucide-react";
+import { Plus, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AddTaskDrawer } from "@/components/dashboard/AddTaskDrawer";
+import { NotificationTest } from "@/components/dashboard/notifications/NotificationTest";
 
 export function MobileHeader() {
   const currentTime = format(new Date(), 'HH:mm');
@@ -17,6 +18,7 @@ export function MobileHeader() {
           <p className="text-sm text-[#333333]">{currentTime} {currentDate}</p>
         </div>
         <div className="flex items-center gap-2">
+          <NotificationTest />
           <AddTaskDrawer>
             <div className="relative group">
               <div className="absolute -inset-0.5 bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 rounded-full opacity-75 group-hover:opacity-100 animate-spin"></div>
