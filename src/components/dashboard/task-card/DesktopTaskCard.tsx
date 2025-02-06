@@ -5,7 +5,6 @@ import { getTimeDisplay } from "@/utils/dateUtils";
 
 interface DesktopTaskCardProps {
   task: Task;
-  onComplete?: () => void;
   onClick?: () => void;
   dragHandleProps?: any;
 }
@@ -17,24 +16,22 @@ export function DesktopTaskCard({ task, onClick, dragHandleProps }: DesktopTaskC
     <div
       onClick={onClick}
       className={cn(
-        "rounded-lg px-4 py-3 mb-3 cursor-pointer",
+        "p-4 rounded-lg cursor-pointer mb-2 min-h-[80px]",
         "hover:ring-2 hover:ring-offset-1 hover:ring-blue-500",
+        task.status === 'unscheduled' ? 'bg-blue-500' : 
+        task.status === 'completed' ? 'bg-gray-500' :
         getPriorityColor(task.priority),
-        "text-white min-h-[80px] flex flex-col justify-center"
+        "text-white"
       )}
       {...dragHandleProps}
     >
-      <div className="text-base font-medium mb-1">
-        {task.title}
+      <div className="flex flex-col">
+        <h3 className="font-medium text-base">{task.title}</h3>
+        <p className="text-sm text-white/90">Status: {task.status}</p>
+        {timeDisplay && (
+          <p className="text-sm text-white/90">{timeDisplay}</p>
+        )}
       </div>
-      <div className="text-sm text-white/90">
-        Status: {task.status}
-      </div>
-      {timeDisplay && (
-        <div className="text-sm text-white/90">
-          {timeDisplay}
-        </div>
-      )}
     </div>
   );
 }
