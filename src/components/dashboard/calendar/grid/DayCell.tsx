@@ -30,15 +30,15 @@ export function DayCell({ day, timeSlot, tasks, dayIndex }: DayCellProps) {
     <div
       ref={setNodeRef}
       className={cn(
-        "min-h-[60px] relative p-0.5", // Reduced padding for more compact look
+        "min-h-[60px] relative p-0.5",
         "transition-colors duration-200",
-        "border-t border-gray-200",
+        "border-t-2 border-gray-600",
         isOver ? "bg-blue-50" : "hover:bg-gray-50",
         dayIndex % 2 === 0 ? "bg-white" : "bg-gray-50/30"
       )}
     >
       {tasks.map((task, index) => (
-        <div key={task.id} className="text-[10px] leading-tight"> {/* Smaller font size */}
+        <div key={task.id} className="text-[10px] leading-tight">
           <TaskCard 
             key={task.id} 
             task={task} 
