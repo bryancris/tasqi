@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Task } from "../TaskBoard";
 import { format, parseISO } from "date-fns";
@@ -56,7 +55,7 @@ const CalendarCell = ({
     // Calculate duration in minutes
     const durationInMinutes = ((endHour - startHour) * 60) + (endMinute - startMinute);
     
-    // For tasks less than an hour
+    // For tasks less than 30 minutes
     if (durationInMinutes <= 30) {
       // If task starts in first half of hour
       if (startMinute < 30) {
@@ -66,12 +65,8 @@ const CalendarCell = ({
         return { top: '31px', height: '28px' };
       }
     } else if (durationInMinutes <= 60) {
-      // For tasks between 30-60 minutes
-      if (startMinute < 30) {
-        return { top: '1px', height: '28px' };
-      } else {
-        return { top: '31px', height: '28px' };
-      }
+      // For tasks that are about an hour, fill the whole cell
+      return { top: '1px', height: '58px' };
     }
     
     // For tasks longer than an hour
@@ -118,7 +113,7 @@ const CalendarCell = ({
       })}
     </div>
   );
-};
+}
 
 export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks, showFullWeek }: WeeklyCalendarGridProps) {
   const displayDays = showFullWeek ? weekDays : weekDays.slice(0, 5);
