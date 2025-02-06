@@ -1,6 +1,5 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import { format, parseISO, differenceInMinutes, isSameMinute } from "date-fns";
+import { format, parseISO, differenceInMinutes, differenceInSeconds, isSameMinute } from "date-fns";
 
 // Keep track of notifications we've already sent
 const notifiedTasks = new Set<number>();
@@ -64,6 +63,7 @@ export const checkAndNotifyUpcomingTasks = async () => {
 
       const taskDateTime = parseISO(`${task.date}T${task.start_time}`);
       const minutesUntilTask = differenceInMinutes(taskDateTime, now);
+      const secondsUntilTask = differenceInSeconds(taskDateTime, now);
       const hoursUntil = Math.floor(Math.abs(minutesUntilTask) / 60);
       const minutesRemaining = Math.abs(minutesUntilTask) % 60;
       
@@ -76,6 +76,7 @@ export const checkAndNotifyUpcomingTasks = async () => {
         taskDateTime: taskDateTime.toLocaleString(),
         currentTime: now.toLocaleString(),
         minutesUntilTask: minutesUntilTask,
+        secondsUntilTask: secondsUntilTask,
         timeUntilTask: minutesUntilTask >= 0 
           ? `⏳ Task starts in ${hoursUntil}h ${minutesRemaining}m`
           : `⌛ Task started ${hoursUntil}h ${minutesRemaining}m ago`,
@@ -84,9 +85,11 @@ export const checkAndNotifyUpcomingTasks = async () => {
         status: task.status
       });
 
-      // Check if current time matches task start time exactly
-      if (isSameMinute(taskDateTime, now)) {
-        console.log("🎯 EXACT TIME MATCH! Sending notification for task:", task.title);
+      // Check if we're within 30 seconds before or after the task start time
+      const isWithinNotificationWindow = Math.abs(secondsUntilTask) <= 30;
+      
+      if (isWithinNotificationWindow) {
+        console.log("🎯 Within notification window! Sending notification for task:", task.title);
         
         if ("Notification" in window && Notification.permission === "granted") {
           const timeString = format(taskDateTime, "h:mm a");
