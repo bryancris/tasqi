@@ -59,7 +59,6 @@ self.addEventListener('notificationclick', event => {
             return client.focus();
           }
         }
-        // If no window client is available, open a new window
         return clients.openWindow('/dashboard');
       })
   );
@@ -78,42 +77,50 @@ async function playNotificationSound() {
 
 // Handle showing notifications
 self.addEventListener('push', async event => {
-  console.log('📨 Push event received:', event);
+  console.log('📨 Push event received');
   
   try {
-    let title, body;
-    
-    // Handle both direct registration.showNotification calls and push events
-    if (event.data) {
-      const data = event.data.json();
-      console.log('📦 Push data:', data);
-      title = data.title;
-      body = data.body;
-    } else {
-      title = 'Task Notification';
-      body = 'Task reminder';
-    }
+    const showNotification = async (title, body) => {
+      console.log('Showing notification:', { title, body });
+      
+      const options = {
+        body: body,
+        icon: '/pwa-192x192.png',
+        badge: '/pwa-192x192.png',
+        vibrate: [200, 100, 200],
+        data: {
+          url: self.location.origin + '/dashboard'
+        },
+        tag: 'task-notification',
+        renotify: true,
+        requireInteraction: true,
+        silent: false
+      };
 
-    const options = {
-      body: body,
-      icon: '/pwa-192x192.png',
-      badge: '/pwa-192x192.png',
-      vibrate: [200, 100, 200],
-      data: {
-        url: self.location.origin + '/dashboard'
-      },
-      tag: 'task-notification',
-      renotify: true,
-      requireInteraction: true,
-      silent: false
+      try {
+        await playNotificationSound();
+        await self.registration.showNotification(title, options);
+        console.log('✅ Notification shown successfully');
+      } catch (error) {
+        console.error('❌ Error showing notification:', error);
+        throw error;
+      }
     };
 
-    await playNotificationSound();
+    // Handle direct calls from taskNotifications.ts
+    if (!event.data) {
+      console.log('Direct notification call');
+      await showNotification('Task Reminder', 'You have an upcoming task');
+      return;
+    }
+
+    // Handle push events with data
+    const data = event.data.json();
+    console.log('📦 Push data received:', data);
+    await showNotification(data.title, data.body);
     
-    event.waitUntil(
-      self.registration.showNotification(title, options)
-    );
   } catch (error) {
-    console.error('Error handling notification:', error);
+    console.error('❌ Error in push event handler:', error);
+    throw error; // Re-throw to ensure the error is logged in the console
   }
 });

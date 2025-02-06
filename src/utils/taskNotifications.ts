@@ -16,6 +16,11 @@ export const checkAndNotifyUpcomingTasks = async () => {
       return;
     }
 
+    if (!("serviceWorker" in navigator)) {
+      console.error("❌ Service Worker not supported");
+      return;
+    }
+
     console.log("📱 Current notification permission:", Notification.permission);
     
     // If permission is not granted, request it
@@ -38,7 +43,7 @@ export const checkAndNotifyUpcomingTasks = async () => {
       .select("*")
       .eq("status", "scheduled")
       .eq("reminder_enabled", true)
-      .gte("date", today); // Only get today's and future tasks
+      .gte("date", today);
 
     if (error) {
       console.error("❌ Error fetching tasks:", error);
@@ -64,10 +69,7 @@ export const checkAndNotifyUpcomingTasks = async () => {
       const taskDateTime = parseISO(`${task.date}T${task.start_time}`);
       const minutesUntilTask = differenceInMinutes(taskDateTime, now);
       const secondsUntilTask = differenceInSeconds(taskDateTime, now);
-      const hoursUntil = Math.floor(Math.abs(minutesUntilTask) / 60);
-      const minutesRemaining = Math.abs(minutesUntilTask) % 60;
       
-      // Enhanced debug logging
       console.log("📊 Task Details:", {
         taskId: task.id,
         taskTitle: task.title,
@@ -75,12 +77,8 @@ export const checkAndNotifyUpcomingTasks = async () => {
         taskTime: task.start_time,
         taskDateTime: taskDateTime.toLocaleString(),
         currentTime: now.toLocaleString(),
-        minutesUntilTask: minutesUntilTask,
-        secondsUntilTask: secondsUntilTask,
-        timeUntilTask: minutesUntilTask >= 0 
-          ? `⏳ Task starts in ${hoursUntil}h ${minutesRemaining}m`
-          : `⌛ Task started ${hoursUntil}h ${minutesRemaining}m ago`,
-        isSameMinute: isSameMinute(taskDateTime, now),
+        minutesUntilTask,
+        secondsUntilTask,
         reminderEnabled: task.reminder_enabled,
         status: task.status
       });
@@ -91,53 +89,43 @@ export const checkAndNotifyUpcomingTasks = async () => {
       if (isWithinNotificationWindow) {
         console.log("🎯 Within notification window! Sending notification for task:", task.title);
         
-        if ("Notification" in window && Notification.permission === "granted") {
-          const timeString = format(taskDateTime, "h:mm a");
-          
-          // Check if service worker is available
-          if (!('serviceWorker' in navigator)) {
-            console.error("❌ Service Worker not supported in this browser");
-            return;
-          }
+        const timeString = format(taskDateTime, "h:mm a");
+        const notificationTitle = `Task Starting Now: ${task.title}`;
+        const notificationBody = `Your task "${task.title}" is starting now at ${timeString}`;
 
-          console.log("🔄 Getting service worker registration...");
-          navigator.serviceWorker.ready.then(registration => {
-            console.log("✅ Service worker ready, attempting to show notification");
-            return registration.showNotification("Task Starting Now", {
-              body: `${task.title} is starting now at ${timeString}`,
-              icon: "/pwa-192x192.png",
-              badge: "/pwa-192x192.png",
-              vibrate: [200, 100, 200],
-              data: {
-                taskId: task.id,
-                url: window.location.origin + '/dashboard'
-              },
-              tag: `task-${task.id}`,
-              renotify: true,
-              requireInteraction: true,
-              silent: false
-            });
-          }).then(() => {
-            // Add to notified tasks after successful notification
-            notifiedTasks.add(task.id);
-            console.log("✅ Notification sent successfully for task:", task.title);
-          }).catch(error => {
-            console.error("❌ Error showing notification:", error, {
-              error: error.toString(),
-              stack: error.stack
-            });
+        // Get service worker registration and show notification
+        navigator.serviceWorker.ready.then(registration => {
+          console.log("✅ Service worker ready, showing notification...");
+          return registration.showNotification(notificationTitle, {
+            body: notificationBody,
+            icon: "/pwa-192x192.png",
+            badge: "/pwa-192x192.png",
+            vibrate: [200, 100, 200],
+            data: {
+              taskId: task.id,
+              url: window.location.origin + '/dashboard'
+            },
+            tag: `task-${task.id}`,
+            renotify: true,
+            requireInteraction: true,
+            silent: false
           });
-        } else {
-          console.log("❌ Notifications not available or not granted:", {
-            notificationInWindow: "Notification" in window,
-            permission: Notification.permission
+        }).then(() => {
+          notifiedTasks.add(task.id);
+          console.log("✅ Notification sent successfully for task:", task.title);
+        }).catch(error => {
+          console.error("❌ Error showing notification:", error);
+          console.error("Error details:", {
+            message: error.message,
+            stack: error.stack
           });
-        }
+        });
       }
     });
     
     console.log("\n==================== ✅ CHECK COMPLETE ✅ ====================\n");
   } catch (error) {
-    console.error("❌ Error checking upcoming tasks:", error);
+    console.error("❌ Error in checkAndNotifyUpcomingTasks:", error);
+    throw error; // Re-throw to ensure the error appears in the console
   }
 };
