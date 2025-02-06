@@ -85,12 +85,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (event === 'TOKEN_REFRESHED') {
         console.log("Token refreshed successfully");
         setSession(currentSession);
-      } else if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
-        console.log("User signed out or deleted");
+      } else if (event === 'SIGNED_OUT') {
+        console.log("User signed out");
         await handleInvalidSession();
-        if (event === 'SIGNED_OUT') {
-          toast.success("You have been logged out");
-        }
+        toast.success("You have been logged out");
       } else if (event === 'SIGNED_IN') {
         console.log("User signed in");
         setSession(currentSession);
