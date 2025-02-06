@@ -51,7 +51,6 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
 
         if (error) throw error;
       } else {
-        // Safely handle the drop data
         const dropData = over.data?.current as { date?: string; hour?: number } | undefined;
         if (!dropData || !dropData.date || typeof dropData.hour !== 'number') {
           console.error('Invalid drop data:', dropData);
@@ -94,14 +93,17 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
 
   console.log('All tasks before filtering:', tasks);
 
-  const scheduledTasks = tasks.filter(task => 
-    task.status === 'scheduled' && task.date && task.start_time
-  );
+  // Update the filter to properly handle scheduled tasks
+  const scheduledTasks = tasks.filter(task => {
+    const isScheduled = task.status === 'scheduled' || 
+                       (task.date && task.start_time && !task.status);
+    return isScheduled;
+  });
 
   console.log('Scheduled tasks:', scheduledTasks);
 
   const unscheduledTasks = tasks.filter(task => 
-    task.status === 'unscheduled' || !task.status
+    task.status === 'unscheduled' || (!task.status && !task.date && !task.start_time)
   );
 
   console.log('Unscheduled tasks:', unscheduledTasks);
