@@ -57,6 +57,7 @@ self.addEventListener('push', event => {
   
   if (event.data) {
     const data = event.data.json();
+    console.log('Push data:', data);
     
     const options = {
       body: data.body || 'New notification',
@@ -73,6 +74,13 @@ self.addEventListener('push', event => {
     
     event.waitUntil(
       self.registration.showNotification(data.title || 'New Task', options)
+        .then(() => {
+          // Play notification sound
+          const audio = new Audio('/notification-sound.mp3');
+          audio.volume = 0.5;
+          return audio.play();
+        })
+        .catch(error => console.error('Error showing notification:', error))
     );
   }
 });

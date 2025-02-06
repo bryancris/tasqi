@@ -46,6 +46,20 @@ const savePushSubscription = async (subscription: PushSubscription) => {
   }
 };
 
+const getVapidPublicKey = async () => {
+  const { data, error } = await supabase
+    .from('app_settings')
+    .select('vapid_public_key')
+    .single();
+
+  if (error) {
+    console.error('Error fetching VAPID key:', error);
+    throw error;
+  }
+
+  return data.vapid_public_key;
+};
+
 export const checkAndNotifyUpcomingTasks = async () => {
   try {
     // Get tasks for next 24 hours with reminders enabled
@@ -131,9 +145,14 @@ const showNotification = async (task: any) => {
       const existingSubscription = await registration.pushManager.getSubscription();
       
       if (!existingSubscription) {
+        const vapidPublicKey = await getVapidPublicKey();
+        if (!vapidPublicKey) {
+          throw new Error('VAPID public key not found in app settings');
+        }
+
         const subscribeOptions = {
           userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(import.meta.env.VITE_VAPID_PUBLIC_KEY)
+          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
         };
         
         const subscription = await registration.pushManager.subscribe(subscribeOptions);
@@ -144,6 +163,7 @@ const showNotification = async (task: any) => {
       }
     } catch (error) {
       console.error('Error subscribing to push notifications:', error);
+      toast.error('Failed to enable push notifications. Please try again.');
     }
 
     const title = task.title;

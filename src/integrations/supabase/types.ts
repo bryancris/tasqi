@@ -9,6 +9,30 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          created_at: string
+          id: number
+          updated_at: string
+          vapid_private_key: string | null
+          vapid_public_key: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          updated_at?: string
+          vapid_private_key?: string | null
+          vapid_public_key?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          updated_at?: string
+          vapid_private_key?: string | null
+          vapid_public_key?: string | null
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           content: string
