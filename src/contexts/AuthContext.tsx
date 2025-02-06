@@ -21,26 +21,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const handleInvalidSession = () => {
+      setSession(null);
+      setLoading(false);
+      navigate('/auth');
+    };
+
     // Initialize session from local storage if available
     const initializeAuth = async () => {
       try {
         const { data: { session: initialSession }, error } = await supabase.auth.getSession();
+        
         if (error) {
-          if (error.message.includes('Invalid Refresh Token')) {
-            // Clear the session if refresh token is invalid
+          console.error("Error getting session:", error);
+          if (error.message.includes('Invalid Refresh Token') || error.message.includes('token_not_found')) {
+            console.log("Invalid refresh token, clearing session");
             await supabase.auth.signOut();
-            setSession(null);
-            navigate('/auth');
-          } else {
-            console.error("Error getting session:", error);
+            handleInvalidSession();
+            toast.error("Session expired. Please sign in again.");
           }
-          setLoading(false);
           return;
         }
-        setSession(initialSession);
-        setLoading(false);
+
+        if (initialSession) {
+          setSession(initialSession);
+          console.log("Initial session loaded");
+        } else {
+          handleInvalidSession();
+        }
       } catch (error) {
         console.error("Error in auth initialization:", error);
+        handleInvalidSession();
+      } finally {
         setLoading(false);
       }
     };
@@ -68,16 +80,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log("User profile updated");
         setSession(currentSession);
       } else if (event === 'INITIAL_SESSION') {
-        setSession(currentSession);
         if (currentSession) {
+          setSession(currentSession);
           navigate('/dashboard');
+        } else {
+          handleInvalidSession();
         }
       }
 
       setLoading(false);
     });
 
-    // Cleanup subscription
     return () => {
       subscription.unsubscribe();
     };
