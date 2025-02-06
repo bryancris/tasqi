@@ -35,16 +35,17 @@ export function DayCell({ day, timeSlot, tasks, dayIndex, isLastRow }: DayCellPr
     const endHour = parseInt(task.end_time.split(':')[0]);
     const endMinute = parseInt(task.end_time.split(':')[1]);
 
+    // Only show task if it starts in this time slot
     if (startHour !== timeSlot.hour) return null;
 
-    // Calculate duration in hours (including partial hours)
-    const durationHours = (endHour - startHour) + (endMinute - startMinute) / 60;
+    // Calculate total duration in minutes
+    const durationInMinutes = ((endHour - startHour) * 60) + (endMinute - startMinute);
     
-    // Height calculation: 60px per hour (grid cell height) * duration in hours
-    const heightInPixels = Math.max(60 * durationHours, 60);
+    // Convert duration to pixels (60px per hour = 1px per minute)
+    const heightInPixels = Math.max(durationInMinutes, 60);
     
-    // Calculate top position based on start minute
-    const topOffset = (startMinute / 60) * 60; // 60px is the grid cell height
+    // Calculate top offset based on start minute (1px per minute)
+    const topOffset = startMinute;
 
     return {
       height: `${heightInPixels}px`,
