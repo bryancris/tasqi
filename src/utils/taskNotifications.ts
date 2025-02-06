@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { format, parseISO, addMinutes } from "date-fns";
 
@@ -36,7 +37,7 @@ export const checkAndNotifyUpcomingTasks = async () => {
       }
 
       const taskDateTime = parseISO(`${task.date}T${task.start_time}`);
-      const notificationTime = addMinutes(now, 15);
+      const notificationTime = addMinutes(now, 10); // Changed from 15 to 10 minutes
 
       console.log("Task datetime:", taskDateTime);
       console.log("Current time:", now);
