@@ -7,7 +7,7 @@ export const getPriorityColor = (priority: TaskPriority | undefined) => {
     case 'medium':
       return 'bg-[#FF8C42]'; // Bright orange for medium priority
     case 'low':
-      return 'bg-[#2ECC71]'; // Bright green for low priority
+      return 'bg-[#1EAEDB]'; // Changed from green to blue for low priority
     default:
       return 'bg-[#2196F3]'; // Bright blue for unscheduled
   }
