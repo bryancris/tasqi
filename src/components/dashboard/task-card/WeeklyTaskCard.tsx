@@ -1,5 +1,7 @@
+
 import { cn } from "@/lib/utils";
 import { Task } from "../TaskBoard";
+import { Bell } from "lucide-react";
 
 interface WeeklyTaskCardProps {
   task: Task;
@@ -31,13 +33,18 @@ export function WeeklyTaskCard({ task, onClick, onComplete, dragHandleProps }: W
         "cursor-pointer",
         "text-white text-xs leading-tight",
         "shadow-sm",
-        "rounded-md", // Added rounded corners
+        "rounded-md",
         getPriorityColor(task.priority),
       )}
     >
       <div className="p-1 h-full overflow-hidden">
-        <div className="font-medium truncate">
-          {task.title}
+        <div className="flex items-center gap-1">
+          <div className="font-medium truncate flex-1">
+            {task.title}
+          </div>
+          {task.reminder_enabled && (
+            <Bell className="w-3 h-3 shrink-0" />
+          )}
         </div>
         {task.description && (
           <p className="text-[10px] text-white/90 truncate">
