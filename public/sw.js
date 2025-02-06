@@ -6,7 +6,9 @@ const urlsToCache = [
   '/index.html',
   '/manifest.json',
   '/notification-sound.mp3',
-  '/pwa-192x192.png'
+  '/pwa-192x192.png',
+  '/dashboard',
+  '/dashboard/weekly'
 ];
 
 self.addEventListener('install', event => {
@@ -26,6 +28,17 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
+  // Handle navigation requests specially
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        return caches.match('/index.html');
+      })
+    );
+    return;
+  }
+
+  // Handle other requests
   event.respondWith(
     caches.match(event.request)
       .then(response => response || fetch(event.request))
@@ -75,4 +88,3 @@ self.addEventListener('notificationclick', event => {
       })
   );
 });
-
