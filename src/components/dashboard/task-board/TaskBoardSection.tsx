@@ -1,19 +1,17 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TaskCard } from "../TaskCard";
 import { Task } from "../TaskBoard";
-import { DndContext, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { DndContext, MouseSensor, TouchSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useTaskReorder } from "@/hooks/use-task-reorder";
 import { startOfDay, isAfter } from "date-fns";
 
 interface TaskBoardSectionProps {
   tasks: Task[];
+  onDragEnd: (event: DragEndEvent) => void;
 }
 
-export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
-  const { handleDragEnd: handleReorder } = useTaskReorder(tasks);
-  const todayStart = startOfDay(new Date());
-
+export function TaskBoardSection({ tasks, onDragEnd }: TaskBoardSectionProps) {
   const sensors = useSensors(
     useSensor(MouseSensor, {
       activationConstraint: {
@@ -27,6 +25,8 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
       },
     })
   );
+
+  const todayStart = startOfDay(new Date());
 
   const shouldShowCompletedTask = (task: Task) => {
     return task.completed_at && isAfter(new Date(task.completed_at), todayStart);
@@ -50,7 +50,7 @@ export function TaskBoardSection({ tasks }: TaskBoardSectionProps) {
         <CardTitle className="text-2xl font-semibold">Task Board</CardTitle>
       </CardHeader>
       <CardContent className="flex-1 overflow-y-auto">
-        <DndContext sensors={sensors} onDragEnd={handleReorder}>
+        <DndContext sensors={sensors} onDragEnd={onDragEnd}>
           <SortableContext items={draggableTaskIds} strategy={verticalListSortingStrategy}>
             <div className="flex flex-col gap-4 min-h-[600px] pb-40 relative">
               {sortedTasks.map((task, index) => (
