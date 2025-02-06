@@ -4,6 +4,7 @@ import { DesktopTaskView } from "./DesktopTaskView";
 import { MobileTaskView } from "./MobileTaskView";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DragEndEvent } from "@dnd-kit/core";
+import { toast } from "sonner";
 
 export type TaskPriority = 'low' | 'medium' | 'high';
 
@@ -49,48 +50,38 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     
-    if (!over) return;
+    if (!over || active.id === over.id) return;
 
-    const activeTask = tasks.find(task => task.id === active.id);
-    const overTask = tasks.find(task => task.id === over.id);
+    try {
+      const oldIndex = tasks.findIndex(task => task.id === active.id);
+      const newIndex = tasks.findIndex(task => task.id === over.id);
 
-    if (!activeTask || !overTask || activeTask.id === overTask.id) return;
+      if (oldIndex === -1 || newIndex === -1) return;
 
-    const activePosition = activeTask.position;
-    const overPosition = overTask.position;
+      const updatedTasks = Array.from(tasks);
+      const [movedTask] = updatedTasks.splice(oldIndex, 1);
+      updatedTasks.splice(newIndex, 0, movedTask);
 
-    // Calculate new positions
-    const updatedTasks = tasks.map(task => {
-      if (task.id === activeTask.id) {
-        return { ...task, position: overPosition };
-      }
-      if (activePosition < overPosition) {
-        if (task.position <= overPosition && task.position > activePosition) {
-          return { ...task, position: task.position - 1000 };
-        }
-      } else {
-        if (task.position >= overPosition && task.position < activePosition) {
-          return { ...task, position: task.position + 1000 };
-        }
-      }
-      return task;
-    });
-
-    // Update positions in the database
-    const { error } = await supabase.rpc('reorder_tasks', {
-      task_positions: updatedTasks.map(task => ({
+      // Calculate new positions with larger intervals
+      const positions = updatedTasks.map((task, index) => ({
         task_id: task.id,
-        new_position: task.position
-      }))
-    });
+        new_position: (index + 1) * 1000
+      }));
 
-    if (error) {
+      const { error } = await supabase.rpc('reorder_tasks', {
+        task_positions: positions
+      });
+
+      if (error) throw error;
+
+      // Refetch to get the updated order
+      refetch();
+
+      toast.success("Task order updated successfully");
+    } catch (error) {
       console.error('Error reordering tasks:', error);
-      return;
+      toast.error("Failed to reorder tasks. Please try again.");
     }
-
-    // Refetch tasks to get the updated order
-    refetch();
   };
 
   if (isMobile) {
