@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, addWeeks, subWeeks } from "date-fns";
 import { CalendarHeader } from "./calendar/CalendarHeader";
 import { WeeklyCalendarGrid } from "./calendar/WeeklyCalendarGrid";
 import { UnscheduledTasks } from "./calendar/UnscheduledTasks";
 import { useWeeklyCalendar } from "@/hooks/use-weekly-calendar";
+import { supabase } from "@/integrations/supabase/client";
 
 interface WeeklyCalendarProps {
   initialDate?: Date;
@@ -12,6 +13,8 @@ interface WeeklyCalendarProps {
 export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
   const [currentDate, setCurrentDate] = useState(initialDate || new Date());
   const [showFullWeek, setShowFullWeek] = useState(true);
+  const [startHour, setStartHour] = useState(8);
+  const [endHour, setEndHour] = useState(17);
   
   // Start from Sunday if showing full week, Monday if showing 5 days
   const weekStart = startOfWeek(currentDate, { weekStartsOn: showFullWeek ? 0 : 1 });
@@ -21,8 +24,33 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
   
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
-  const timeSlots = Array.from({ length: 12 }, (_, i) => {
-    const hour = 8 + i;
+  useEffect(() => {
+    const loadUserSettings = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { data, error } = await supabase
+        .from('user_settings')
+        .select('start_hour, end_hour')
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (error) {
+        console.error('Error loading settings:', error);
+        return;
+      }
+
+      if (data) {
+        setStartHour(data.start_hour);
+        setEndHour(data.end_hour);
+      }
+    };
+
+    loadUserSettings();
+  }, []);
+
+  const timeSlots = Array.from({ length: endHour - startHour + 1 }, (_, i) => {
+    const hour = startHour + i;
     return {
       hour,
       display: `${hour}:00`

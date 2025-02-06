@@ -1,6 +1,8 @@
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TimelineSlot } from "../TimelineSlot";
 import { Task } from "../TaskBoard";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TimelineSectionProps {
   tasks: Task[];
@@ -9,9 +11,33 @@ interface TimelineSectionProps {
 }
 
 export function TimelineSection({ tasks, selectedDate, onDateChange }: TimelineSectionProps) {
-  // For now, hardcode the range. Later this will come from user settings
-  const startHour = 9;
-  const endHour = 20;
+  const [startHour, setStartHour] = useState(8);
+  const [endHour, setEndHour] = useState(17);
+
+  useEffect(() => {
+    const loadUserSettings = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { data, error } = await supabase
+        .from('user_settings')
+        .select('start_hour, end_hour')
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (error) {
+        console.error('Error loading settings:', error);
+        return;
+      }
+
+      if (data) {
+        setStartHour(data.start_hour);
+        setEndHour(data.end_hour);
+      }
+    };
+
+    loadUserSettings();
+  }, []);
 
   const timeSlots = Array.from(
     { length: endHour - startHour + 1 },
