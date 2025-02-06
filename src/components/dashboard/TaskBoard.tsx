@@ -38,22 +38,31 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
   const { data: tasks = [], refetch } = useQuery({
     queryKey: ['tasks'],
     queryFn: async () => {
+      console.log('Fetching tasks...');
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
         .order('position', { ascending: true });
       
-      if (error) throw error;
-      console.log('Found tasks:', data);
+      if (error) {
+        console.error('Error fetching tasks:', error);
+        throw error;
+      }
+      
+      console.log('Fetched tasks:', data);
       return data as Task[];
     },
-    staleTime: 0, // Disable caching to always fetch fresh data
-    gcTime: 0  // Remove data from cache immediately (formerly cacheTime)
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchOnReconnect: true
   });
 
   // Set up real-time subscription for task updates
   useEffect(() => {
-    console.log('Setting up real-time subscription for tasks...');
+    console.log('Setting up real-time subscription...');
+    
     const channel = supabase
       .channel('tasks-changes')
       .on(
@@ -64,15 +73,18 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
           table: 'tasks'
         },
         (payload) => {
-          console.log('Task change detected:', payload);
+          console.log('Received task change:', payload);
+          // Immediately invalidate and refetch
           queryClient.invalidateQueries({ queryKey: ['tasks'] });
           refetch();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Subscription status:', status);
+      });
 
     return () => {
-      console.log('Cleaning up real-time subscription...');
+      console.log('Cleaning up subscription...');
       supabase.removeChannel(channel);
     };
   }, [queryClient, refetch]);
@@ -104,8 +116,8 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
 
       if (error) throw error;
 
-      // Refetch to get the updated order
-      refetch();
+      // Force a refetch to get the updated order
+      await refetch();
 
       toast.success("Task order updated successfully");
     } catch (error) {
