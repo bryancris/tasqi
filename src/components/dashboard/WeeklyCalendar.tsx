@@ -1,10 +1,8 @@
-
 import { useState } from "react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, addWeeks, subWeeks } from "date-fns";
 import { CalendarHeader } from "./calendar/CalendarHeader";
 import { WeeklyCalendarGrid } from "./calendar/WeeklyCalendarGrid";
 import { UnscheduledTasks } from "./calendar/UnscheduledTasks";
-import { DndContext } from "@dnd-kit/core";
 import { useWeeklyCalendar } from "@/hooks/use-weekly-calendar";
 
 interface WeeklyCalendarProps {
@@ -34,8 +32,7 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
   const {
     scheduledTasks,
     unscheduledTasks,
-    visitsPerDay,
-    handleDragEnd
+    visitsPerDay
   } = useWeeklyCalendar(weekStart, weekEnd, weekDays);
 
   const monthYear = format(currentDate, 'MMMM yyyy');
@@ -53,32 +50,30 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
   };
 
   return (
-    <DndContext onDragEnd={handleDragEnd}>
-      <div className="flex gap-4 w-full max-w-[95%] mx-auto">
-        <div className="flex-1">
-          <CalendarHeader 
-            monthYear={monthYear}
-            onNextMonth={handleNextWeek}
-            onPreviousMonth={handlePreviousWeek}
-            showWeekly={true}
+    <div className="flex gap-4 w-full max-w-[95%] mx-auto">
+      <div className="flex-1">
+        <CalendarHeader 
+          monthYear={monthYear}
+          onNextMonth={handleNextWeek}
+          onPreviousMonth={handlePreviousWeek}
+          showWeekly={true}
+          showFullWeek={showFullWeek}
+          onToggleView={handleToggleView}
+        />
+
+        <div className="border rounded-lg bg-white shadow-sm overflow-hidden mt-4">
+          <WeeklyCalendarGrid 
+            weekDays={weekDays}
+            timeSlots={timeSlots}
+            scheduledTasks={scheduledTasks}
             showFullWeek={showFullWeek}
-            onToggleView={handleToggleView}
           />
-
-          <div className="border rounded-lg bg-white shadow-sm overflow-hidden mt-4">
-            <WeeklyCalendarGrid 
-              weekDays={weekDays}
-              timeSlots={timeSlots}
-              scheduledTasks={scheduledTasks}
-              showFullWeek={showFullWeek}
-            />
-          </div>
-        </div>
-
-        <div className="w-80">
-          <UnscheduledTasks tasks={unscheduledTasks} />
         </div>
       </div>
-    </DndContext>
+
+      <div className="w-80">
+        <UnscheduledTasks tasks={unscheduledTasks} />
+      </div>
+    </div>
   );
 }
