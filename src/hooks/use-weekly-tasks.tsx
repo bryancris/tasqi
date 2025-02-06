@@ -8,14 +8,13 @@ import { Task } from "@/components/dashboard/TaskBoard";
 export function useWeeklyTasks(weekStart: Date, weekEnd: Date) {
   const queryClient = useQueryClient();
 
-  const { data: tasks = [] } = useQuery({
-    queryKey: ['tasks', format(weekStart, 'yyyy-MM-dd'), format(weekEnd, 'yyyy-MM-dd')],
+  const { data: tasks = [], refetch } = useQuery({
+    queryKey: ['tasks'],  // Use the same query key as useTasks
     queryFn: async () => {
-      console.log('Fetching tasks for week:', { weekStart, weekEnd });
+      console.log('Fetching tasks for weekly calendar:', { weekStart, weekEnd });
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
-        .or(`status.eq.scheduled,status.eq.unscheduled`)
         .order('position', { ascending: true });
       
       if (error) {
@@ -25,6 +24,11 @@ export function useWeeklyTasks(weekStart: Date, weekEnd: Date) {
       console.log('Fetched tasks:', data);
       return data as Task[];
     },
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchOnReconnect: true
   });
 
   useEffect(() => {
@@ -40,9 +44,8 @@ export function useWeeklyTasks(weekStart: Date, weekEnd: Date) {
         },
         (payload) => {
           console.log('Received real-time update:', payload);
-          queryClient.invalidateQueries({ 
-            queryKey: ['tasks', format(weekStart, 'yyyy-MM-dd'), format(weekEnd, 'yyyy-MM-dd')] 
-          });
+          queryClient.invalidateQueries({ queryKey: ['tasks'] });
+          void refetch();
         }
       )
       .subscribe();
@@ -51,7 +54,7 @@ export function useWeeklyTasks(weekStart: Date, weekEnd: Date) {
       console.log('Cleaning up real-time subscription');
       supabase.removeChannel(channel);
     };
-  }, [queryClient, weekStart, weekEnd]);
+  }, [queryClient, refetch]);
 
   return tasks;
 }

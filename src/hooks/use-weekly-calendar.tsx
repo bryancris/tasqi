@@ -11,7 +11,7 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
   const { toast } = useToast();
 
   const { data: tasks = [] } = useQuery({
-    queryKey: ['tasks'],
+    queryKey: ['tasks'],  // Use the same query key as useTasks
     queryFn: async () => {
       console.log('Fetching tasks for weekly calendar...');
       const { data, error } = await supabase
@@ -26,6 +26,11 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
       console.log('Fetched tasks for weekly calendar:', data);
       return data as Task[];
     },
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchOnReconnect: true
   });
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -90,8 +95,6 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
       });
     }
   };
-
-  console.log('All tasks before filtering:', tasks);
 
   // Update the filter to properly handle scheduled tasks
   const scheduledTasks = tasks.filter(task => {
