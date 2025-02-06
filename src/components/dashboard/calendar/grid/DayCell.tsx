@@ -38,9 +38,9 @@ export function DayCell({ day, timeSlot, tasks, dayIndex }: DayCellProps) {
     if (startHour !== timeSlot.hour) return null;
 
     // Calculate duration in minutes
-    const durationMinutes = (endHour - startHour) * 60 + (endMinute - startMinute);
+    const durationMinutes = ((endHour - startHour) * 60) + (endMinute - startMinute);
     
-    // Calculate height based on duration (1 hour = 100%)
+    // Calculate height based on duration (60 minutes = 100% height)
     const heightPercentage = (durationMinutes / 60) * 100;
     
     // Calculate top position based on start minute (0-59 minutes)
@@ -50,11 +50,9 @@ export function DayCell({ day, timeSlot, tasks, dayIndex }: DayCellProps) {
       height: `${heightPercentage}%`,
       top: `${topPercentage}%`,
       position: 'absolute' as const,
-      left: '0',
-      right: '0',
-      zIndex: 10,
-      width: '100%',
-      padding: '0 2px'
+      left: '2px',
+      right: '2px',
+      zIndex: 10
     };
   };
 
