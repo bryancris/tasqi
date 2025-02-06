@@ -9,6 +9,25 @@ export const checkAndNotifyUpcomingTasks = async () => {
   try {
     console.log("Checking for upcoming tasks...");
     
+    // First check if notifications are supported and permitted
+    if (!("Notification" in window)) {
+      console.error("This browser does not support notifications");
+      return;
+    }
+
+    console.log("Current notification permission:", Notification.permission);
+    
+    // If permission is not granted, request it
+    if (Notification.permission !== "granted") {
+      console.log("Requesting notification permission...");
+      const permission = await Notification.requestPermission();
+      console.log("Permission response:", permission);
+      if (permission !== "granted") {
+        console.log("Notification permission not granted");
+        return;
+      }
+    }
+
     // Get tasks that are scheduled and have reminders enabled
     const { data: tasks, error } = await supabase
       .from("tasks")
@@ -49,21 +68,27 @@ export const checkAndNotifyUpcomingTasks = async () => {
         if ("Notification" in window && Notification.permission === "granted") {
           const timeString = format(taskDateTime, "h:mm a");
           
+          // Check if service worker is available
+          if (!('serviceWorker' in navigator)) {
+            console.error("Service Worker not supported in this browser");
+            return;
+          }
+
           navigator.serviceWorker.ready.then(registration => {
             console.log("Service worker ready, showing notification");
             registration.showNotification("Upcoming Task", {
               body: `${task.title} starts at ${timeString}`,
               icon: "/pwa-192x192.png",
               badge: "/pwa-192x192.png",
-              vibrate: [200, 100, 200], // Increased vibration pattern
+              vibrate: [200, 100, 200],
               data: {
                 taskId: task.id,
                 url: window.location.origin + '/dashboard'
               },
               tag: `task-${task.id}`,
               renotify: true,
-              requireInteraction: true, // This ensures the notification stays until user interaction
-              silent: false // This ensures sound plays with the notification
+              requireInteraction: true,
+              silent: false
             }).then(() => {
               // Add to notified tasks after successful notification
               notifiedTasks.add(task.id);
