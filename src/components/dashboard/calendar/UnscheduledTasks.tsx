@@ -14,7 +14,7 @@ export function UnscheduledTasks({ tasks }: UnscheduledTasksProps) {
   });
 
   return (
-    <Card className="h-full w-96"> {/* Increased width from w-80 to w-96 */}
+    <Card className="h-full w-80">
       <CardHeader>
         <CardTitle>Unscheduled Tasks</CardTitle>
       </CardHeader>
@@ -25,7 +25,9 @@ export function UnscheduledTasks({ tasks }: UnscheduledTasksProps) {
         }`}
       >
         {tasks.map((task) => (
-          <DraggableTask key={task.id} task={task} />
+          <div key={task.id} className="bg-[#1EAEDB] text-white rounded-lg p-3">
+            <DraggableTask key={task.id} task={task} />
+          </div>
         ))}
       </CardContent>
     </Card>
