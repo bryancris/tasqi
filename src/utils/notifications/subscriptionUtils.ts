@@ -51,3 +51,4 @@ export const setupPushSubscription = async (registration: ServiceWorkerRegistrat
 
   return existingSubscription;
 };
+

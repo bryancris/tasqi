@@ -29,3 +29,4 @@ export const getVapidPublicKey = async () => {
 
   return data.vapid_public_key;
 };
+
