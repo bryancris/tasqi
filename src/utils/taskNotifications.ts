@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { format, parseISO, addMinutes, isAfter, isBefore, differenceInMinutes } from "date-fns";
+import { format, parseISO, differenceInMinutes } from "date-fns";
 
 // Keep track of notifications we've already sent
 const notifiedTasks = new Set<number>();
@@ -62,11 +62,11 @@ export const checkAndNotifyUpcomingTasks = async () => {
         taskDateTime: taskDateTime.toISOString(),
         currentTime: now.toISOString(),
         minutesUntilTask,
-        shouldNotify: minutesUntilTask <= 10 && minutesUntilTask > 0
+        shouldNotify: minutesUntilTask === 0
       });
 
-      // Check if we're within exactly 10 minutes of the task start
-      if (minutesUntilTask <= 10 && minutesUntilTask > 0) {
+      // Check if we're exactly at the task start time (within the same minute)
+      if (minutesUntilTask === 0) {
         console.log("Sending notification for task:", task);
         
         if ("Notification" in window && Notification.permission === "granted") {
@@ -80,8 +80,8 @@ export const checkAndNotifyUpcomingTasks = async () => {
 
           navigator.serviceWorker.ready.then(registration => {
             console.log("Service worker ready, showing notification");
-            registration.showNotification("Upcoming Task", {
-              body: `${task.title} starts at ${timeString} (in ${minutesUntilTask} minutes)`,
+            registration.showNotification("Task Starting Now", {
+              body: `${task.title} is starting now at ${timeString}`,
               icon: "/pwa-192x192.png",
               badge: "/pwa-192x192.png",
               vibrate: [200, 100, 200],
