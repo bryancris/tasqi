@@ -1,10 +1,10 @@
+import { useState } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { Task } from "./TaskBoard";
 import { WeeklyTaskCard } from "./task-card/WeeklyTaskCard";
 import { DailyTaskCard } from "./task-card/DailyTaskCard";
 import { MonthlyTaskCard } from "./task-card/MonthlyTaskCard";
-import { useState } from "react";
 import { EditTaskDrawer } from "./EditTaskDrawer";
 import { cn } from "@/lib/utils";
 
@@ -36,10 +36,8 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
   const style = transform ? {
     transform: CSS.Transform.toString(transform),
     zIndex: isDragging ? 50 : undefined,
-    opacity: isDragging ? 0.8 : undefined,
-    scale: isDragging ? 1.05 : undefined,
-    boxShadow: isDragging ? '0 5px 15px rgba(0,0,0,0.2)' : undefined,
-    cursor: 'grabbing'
+    opacity: isDragging ? 0.9 : undefined,
+    transition: 'transform 200ms cubic-bezier(0.25, 1, 0.5, 1)'
   } : undefined;
 
   const handleClick = () => {
@@ -95,7 +93,7 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
     <>
       <div className={cn(
         "transition-all duration-200",
-        isDragging && "scale-105 shadow-lg"
+        isDragging && "opacity-90"
       )}>
         {renderCard()}
       </div>
