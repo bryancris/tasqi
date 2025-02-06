@@ -6,7 +6,7 @@ import { format, parseISO, differenceInMinutes, differenceInSeconds, isSameMinut
 const notifiedTasks = new Set<number>();
 
 // Helper function to register service worker
-const registerServiceWorker = async () => {
+const registerServiceWorker = async (): Promise<ServiceWorkerRegistration> => {
   try {
     if (!("serviceWorker" in navigator)) {
       throw new Error("Service Worker not supported");
