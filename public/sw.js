@@ -80,24 +80,29 @@ async function playNotificationSound() {
 self.addEventListener('push', async event => {
   console.log('📨 Push event received:', event);
   
-  if (!event.data) {
-    console.log('No data payload in push event');
-    return;
-  }
-
   try {
-    const data = event.data.json();
-    console.log('📦 Push data:', data);
+    let title, body;
+    
+    // Handle both direct registration.showNotification calls and push events
+    if (event.data) {
+      const data = event.data.json();
+      console.log('📦 Push data:', data);
+      title = data.title;
+      body = data.body;
+    } else {
+      title = 'Task Notification';
+      body = 'Task reminder';
+    }
 
     const options = {
-      body: data.body || 'Task notification',
+      body: body,
       icon: '/pwa-192x192.png',
       badge: '/pwa-192x192.png',
       vibrate: [200, 100, 200],
       data: {
         url: self.location.origin + '/dashboard'
       },
-      tag: data.tag || 'task-notification',
+      tag: 'task-notification',
       renotify: true,
       requireInteraction: true,
       silent: false
@@ -106,10 +111,9 @@ self.addEventListener('push', async event => {
     await playNotificationSound();
     
     event.waitUntil(
-      self.registration.showNotification(data.title || 'Task Notification', options)
+      self.registration.showNotification(title, options)
     );
   } catch (error) {
-    console.error('Error handling push notification:', error);
+    console.error('Error handling notification:', error);
   }
 });
-
