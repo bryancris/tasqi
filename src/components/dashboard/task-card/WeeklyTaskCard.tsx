@@ -27,14 +27,14 @@ export function WeeklyTaskCard({ task, onClick, onComplete, dragHandleProps }: W
       {...dragHandleProps}
       onClick={onClick}
       className={cn(
-        "w-full h-full",
+        "absolute inset-0", // This ensures the card takes up the full space of its container
         "cursor-pointer",
         "text-white text-xs leading-tight",
         "shadow-sm",
         getPriorityColor(task.priority),
       )}
     >
-      <div className="p-1 overflow-hidden">
+      <div className="p-1 h-full overflow-hidden">
         <div className="font-medium truncate">
           {task.title}
         </div>
