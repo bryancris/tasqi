@@ -52,12 +52,14 @@ const CalendarCell = ({
     <div
       ref={setNodeRef}
       className={cn(
-        "relative",
-        "h-[60px] min-h-[60px]",
-        "border-t border-slate-200",
-        isLastRow && "border-b border-slate-300",
-        isLastColumn && "border-r border-slate-300",
-        isFirstColumn && "border-l border-slate-300",
+        "relative h-[60px] min-h-[60px]",
+        "border-slate-200",
+        {
+          "border-l": isFirstColumn,
+          "border-r": isLastColumn,
+          "border-t": true,
+          "border-b": isLastRow,
+        },
         isOver && "bg-blue-50/50",
         "transition-colors duration-200"
       )}
@@ -77,12 +79,17 @@ const CalendarCell = ({
 };
 
 export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks, showFullWeek }: WeeklyCalendarGridProps) {
+  const displayDays = showFullWeek ? weekDays : weekDays.slice(0, 5);
+
   return (
     <div className="relative bg-white rounded-lg shadow-sm">
-      <div className="grid grid-cols-[auto_repeat(7,1fr)]">
+      <div className={cn(
+        "grid",
+        showFullWeek ? "grid-cols-[auto_repeat(7,1fr)]" : "grid-cols-[auto_repeat(5,1fr)]"
+      )}>
         {/* Header */}
         <div className="bg-slate-50 border-b border-slate-300 p-4" /> {/* Time column header spacer */}
-        {weekDays.map((day, index) => (
+        {displayDays.map((day, index) => (
           <div
             key={day.toISOString()}
             className={cn(
@@ -101,14 +108,14 @@ export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks, showFu
             <div className="w-20 px-4 py-3 text-right text-sm text-slate-500 bg-slate-50 border-r border-slate-300">
               {timeSlot.display}
             </div>
-            {weekDays.map((day, colIndex) => (
+            {displayDays.map((day, colIndex) => (
               <CalendarCell
                 key={`${day.toISOString()}-${timeSlot.hour}`}
                 day={day}
                 timeSlot={timeSlot}
                 tasks={scheduledTasks}
                 isLastRow={rowIndex === timeSlots.length - 1}
-                isLastColumn={colIndex === weekDays.length - 1}
+                isLastColumn={colIndex === displayDays.length - 1}
                 isFirstColumn={colIndex === 0}
               />
             ))}
