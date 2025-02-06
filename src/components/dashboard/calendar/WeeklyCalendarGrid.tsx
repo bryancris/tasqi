@@ -53,7 +53,7 @@ export function WeeklyCalendarGrid({
 
       {/* Time slots */}
       {timeSlots.map((timeSlot) => (
-        <div key={timeSlot.hour} className="contents">
+        <div key={timeSlot.hour} className="contents divide-x-2 divide-gray-600">
           {/* Time label */}
           <TimeColumn timeSlot={timeSlot} />
 
