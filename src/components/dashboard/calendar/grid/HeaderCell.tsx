@@ -7,7 +7,7 @@ interface HeaderCellProps {
 
 export function HeaderCell({ day }: HeaderCellProps) {
   return (
-    <div className="h-[100px] bg-[#E3F2F6] p-2 text-center relative z-10 border-b border-gray-200">
+    <div className="h-[100px] bg-[#E3F2F6] p-2 text-center relative z-10 border-b-2 border-gray-600">
       <div className="font-semibold uppercase text-sm text-gray-600">
         {format(day, 'EEE')}
       </div>
