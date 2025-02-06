@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Task } from "../TaskBoard";
 import { format, parseISO } from "date-fns";
@@ -48,6 +49,8 @@ const CalendarCell = ({
            taskStartHour <= timeSlot.hour && 
            taskEndHour > timeSlot.hour;
   });
+
+  console.log(`Tasks for slot ${timeSlot.hour} on ${formattedDate}:`, tasksForThisSlot);
 
   const getTaskPosition = (task: Task) => {
     if (!task.start_time || !task.end_time) return null;
@@ -129,6 +132,7 @@ const CalendarCell = ({
 }
 
 export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks, showFullWeek }: WeeklyCalendarGridProps) {
+  console.log('WeeklyCalendarGrid received scheduledTasks:', scheduledTasks);
   const displayDays = showFullWeek ? weekDays : weekDays.slice(0, 5);
 
   return (
