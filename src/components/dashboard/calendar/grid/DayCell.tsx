@@ -30,19 +30,17 @@ export function DayCell({ day, timeSlot, tasks, dayIndex, isLastRow }: DayCellPr
   const getTaskPosition = (task: Task) => {
     if (!task.start_time || !task.end_time) return null;
 
-    const startHour = parseInt(task.start_time.split(':')[0]);
-    const startMinute = parseInt(task.start_time.split(':')[1]);
-    const endHour = parseInt(task.end_time.split(':')[0]);
-    const endMinute = parseInt(task.end_time.split(':')[1]);
+    const [startHour, startMinute] = task.start_time.split(':').map(Number);
+    const [endHour, endMinute] = task.end_time.split(':').map(Number);
 
     // Only show task if it starts in this time slot
     if (startHour !== timeSlot.hour) return null;
 
-    // Calculate total duration in minutes
+    // Calculate duration in minutes
     const durationInMinutes = ((endHour - startHour) * 60) + (endMinute - startMinute);
     
-    // Convert duration to pixels (60px per hour = 1px per minute)
-    const heightInPixels = Math.max(durationInMinutes, 60);
+    // Calculate height (1px per minute)
+    const heightInPixels = durationInMinutes;
     
     // Calculate top offset based on start minute (1px per minute)
     const topOffset = startMinute;
