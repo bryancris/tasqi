@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { format, parseISO, differenceInMinutes } from "date-fns";
+import { format, parseISO, differenceInMinutes, isSameMinute } from "date-fns";
 
 // Keep track of notifications we've already sent
 const notifiedTasks = new Set<number>();
@@ -55,18 +55,18 @@ export const checkAndNotifyUpcomingTasks = async () => {
       }
 
       const taskDateTime = parseISO(`${task.date}T${task.start_time}`);
-      const minutesUntilTask = differenceInMinutes(taskDateTime, now);
       
+      // Debug logging
       console.log({
-        task: task.title,
+        taskId: task.id,
+        taskTitle: task.title,
         taskDateTime: taskDateTime.toISOString(),
         currentTime: now.toISOString(),
-        minutesUntilTask,
-        shouldNotify: minutesUntilTask === 0
+        isSameMinute: isSameMinute(taskDateTime, now)
       });
 
-      // Check if we're exactly at the task start time (within the same minute)
-      if (minutesUntilTask === 0) {
+      // Check if current time matches task start time exactly
+      if (isSameMinute(taskDateTime, now)) {
         console.log("Sending notification for task:", task);
         
         if ("Notification" in window && Notification.permission === "granted") {
