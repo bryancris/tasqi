@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Task } from "../TaskBoard";
 import { format, parseISO } from "date-fns";
@@ -42,8 +43,11 @@ const CalendarCell = ({
   const tasksForThisSlot = tasks.filter(task => {
     if (!task.date || !task.start_time) return false;
     const taskDate = format(parseISO(task.date), 'yyyy-MM-dd');
-    const [taskHour] = task.start_time.split(':').map(Number);
-    return taskDate === formattedDate && taskHour === timeSlot.hour;
+    const [taskStartHour] = task.start_time.split(':').map(Number);
+    const [taskEndHour] = task.end_time ? task.end_time.split(':').map(Number) : [taskStartHour + 1];
+    return taskDate === formattedDate && 
+           taskStartHour <= timeSlot.hour && 
+           taskEndHour > timeSlot.hour;
   });
 
   const getTaskPosition = (task: Task) => {
@@ -54,6 +58,11 @@ const CalendarCell = ({
 
     // Calculate duration in minutes
     const durationInMinutes = ((endHour - startHour) * 60) + (endMinute - startMinute);
+
+    // Only show the task in its starting cell
+    if (startHour !== timeSlot.hour) {
+      return null;
+    }
     
     // For tasks less than 30 minutes
     if (durationInMinutes <= 30) {
@@ -70,7 +79,12 @@ const CalendarCell = ({
     }
     
     // For tasks longer than an hour
-    return { top: '1px', height: '58px' };
+    const numberOfHours = Math.ceil(durationInMinutes / 60);
+    return { 
+      top: '1px', 
+      height: `${numberOfHours * 60 - 2}px`,
+      zIndex: 10
+    };
   };
 
   return (
