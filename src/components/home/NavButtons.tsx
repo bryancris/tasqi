@@ -1,3 +1,4 @@
+
 import { LogIn, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -32,15 +33,15 @@ const NavButtons = () => {
         <>
           <Button 
             onClick={() => navigate('/dashboard')} 
-            variant="outline" 
-            className="bg-white/10 text-white border-white hover:bg-white hover:text-[#1a1b3b]"
+            variant="outline"
+            className="border-blue-600 bg-transparent text-blue-600 hover:bg-blue-600 hover:text-white"
           >
             Dashboard
           </Button>
           <Button 
             onClick={handleLogout} 
-            variant="outline" 
-            className="bg-white/10 text-white border-white hover:bg-white hover:text-[#1a1b3b]"
+            variant="outline"
+            className="border-blue-600 bg-transparent text-blue-600 hover:bg-blue-600 hover:text-white"
           >
             <LogOut className="mr-2 h-4 w-4" />
             Logout
@@ -49,8 +50,8 @@ const NavButtons = () => {
       ) : (
         <Button 
           onClick={() => navigate('/auth')} 
-          variant="outline" 
-          className="bg-white/10 text-white border-white hover:bg-white hover:text-[#1a1b3b]"
+          variant="outline"
+          className="border-blue-600 bg-transparent text-blue-600 hover:bg-blue-600 hover:text-white"
         >
           <LogIn className="mr-2 h-4 w-4" />
           Login
