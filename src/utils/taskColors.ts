@@ -3,13 +3,13 @@ import { TaskPriority } from "@/components/dashboard/TaskBoard";
 export const getPriorityColor = (priority: TaskPriority | undefined) => {
   switch (priority) {
     case 'high':
-      return 'bg-[#FF4444]'; // Bright red for high priority
+      return 'bg-red-500'; // Bright red for high priority
     case 'medium':
-      return 'bg-[#FF8C42]'; // Bright orange for medium priority
+      return 'bg-orange-500'; // Bright orange for medium priority
     case 'low':
-      return 'bg-[#2ECC71]'; // Bright green for low priority
+      return 'bg-green-500'; // Bright green for low priority
     default:
-      return 'bg-[#2196F3]'; // Bright blue for unscheduled
+      return 'bg-blue-500'; // Bright blue for unscheduled
   }
 };
 
