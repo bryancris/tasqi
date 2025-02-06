@@ -97,9 +97,10 @@ export const checkAndNotifyUpcomingTasks = async () => {
             return;
           }
 
+          console.log("🔄 Getting service worker registration...");
           navigator.serviceWorker.ready.then(registration => {
-            console.log("✅ Service worker ready, showing notification");
-            registration.showNotification("Task Starting Now", {
+            console.log("✅ Service worker ready, attempting to show notification");
+            return registration.showNotification("Task Starting Now", {
               body: `${task.title} is starting now at ${timeString}`,
               icon: "/pwa-192x192.png",
               badge: "/pwa-192x192.png",
@@ -112,18 +113,22 @@ export const checkAndNotifyUpcomingTasks = async () => {
               renotify: true,
               requireInteraction: true,
               silent: false
-            }).then(() => {
-              // Add to notified tasks after successful notification
-              notifiedTasks.add(task.id);
-              console.log("✅ Notification sent successfully for task:", task.title);
-            }).catch(error => {
-              console.error("❌ Error showing notification:", error);
             });
+          }).then(() => {
+            // Add to notified tasks after successful notification
+            notifiedTasks.add(task.id);
+            console.log("✅ Notification sent successfully for task:", task.title);
           }).catch(error => {
-            console.error("❌ Error with service worker:", error);
+            console.error("❌ Error showing notification:", error, {
+              error: error.toString(),
+              stack: error.stack
+            });
           });
         } else {
-          console.log("❌ Notifications not granted:", Notification.permission);
+          console.log("❌ Notifications not available or not granted:", {
+            notificationInWindow: "Notification" in window,
+            permission: Notification.permission
+          });
         }
       }
     });
