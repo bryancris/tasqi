@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { Task } from "../TaskBoard";
@@ -35,14 +34,14 @@ export const DraggableTask = ({ task }: DraggableTaskProps) => {
           setIsEditDrawerOpen(true);
         }}
         className={cn(
-          "px-1 py-1 rounded-md mb-0.5",
-          "text-[11px] leading-tight",
+          "px-1 py-0.5 rounded-md mb-0.5",
+          "text-[10px] leading-tight",
           "text-white break-words",
           "h-full cursor-move",
           getPriorityColor(task.priority)
         )}
       >
-        <div className="font-medium line-clamp-3">{task.title}</div>
+        <div className="font-medium line-clamp-2">{task.title}</div>
       </div>
       <EditTaskDrawer 
         task={task} 
