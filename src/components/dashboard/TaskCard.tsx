@@ -7,6 +7,8 @@ import { DailyTaskCard } from "./task-card/DailyTaskCard";
 import { MonthlyTaskCard } from "./task-card/MonthlyTaskCard";
 import { EditTaskDrawer } from "./EditTaskDrawer";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface TaskCardProps {
   task: Task;
@@ -42,9 +44,26 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
     setIsEditDrawerOpen(true);
   };
 
-  const handleComplete = () => {
-    if (onComplete) {
-      onComplete();
+  const handleComplete = async () => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ 
+          status: task.status === 'completed' ? 'unscheduled' : 'completed',
+          completed_at: task.status === 'completed' ? null : new Date().toISOString()
+        })
+        .eq('id', task.id);
+
+      if (error) throw error;
+
+      if (onComplete) {
+        onComplete();
+      }
+
+      toast.success(task.status === 'completed' ? 'Task uncompleted' : 'Task completed');
+    } catch (error) {
+      console.error('Error completing task:', error);
+      toast.error('Failed to update task status');
     }
   };
 
