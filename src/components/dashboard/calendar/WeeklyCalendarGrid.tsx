@@ -47,6 +47,37 @@ const CalendarCell = ({
     return taskDate === formattedDate && taskHour === timeSlot.hour;
   });
 
+  const getTaskPosition = (task: Task) => {
+    if (!task.start_time || !task.end_time) return null;
+
+    const [startHour, startMinute] = task.start_time.split(':').map(Number);
+    const [endHour, endMinute] = task.end_time.split(':').map(Number);
+
+    // Calculate duration in minutes
+    const durationInMinutes = ((endHour - startHour) * 60) + (endMinute - startMinute);
+    
+    // For tasks less than an hour
+    if (durationInMinutes <= 30) {
+      // If task starts in first half of hour
+      if (startMinute < 30) {
+        return { top: '1px', height: '28px' };
+      } else {
+        // Task starts in second half of hour
+        return { top: '31px', height: '28px' };
+      }
+    } else if (durationInMinutes <= 60) {
+      // For tasks between 30-60 minutes
+      if (startMinute < 30) {
+        return { top: '1px', height: '28px' };
+      } else {
+        return { top: '31px', height: '28px' };
+      }
+    }
+    
+    // For tasks longer than an hour
+    return { top: '1px', height: '58px' };
+  };
+
   return (
     <div
       ref={setNodeRef}
@@ -66,16 +97,25 @@ const CalendarCell = ({
       {/* 30-minute marker */}
       <div className="absolute left-0 right-0 top-1/2 border-t border-[#403E43]/30" />
       
-      {tasksForThisSlot.map((task) => (
-        <div key={task.id} className="absolute inset-0 p-0.5">
-          <TaskCard
-            task={task}
-            index={0}
-            isDraggable={true}
-            view="weekly"
-          />
-        </div>
-      ))}
+      {tasksForThisSlot.map((task) => {
+        const position = getTaskPosition(task);
+        if (!position) return null;
+
+        return (
+          <div 
+            key={task.id} 
+            className="absolute inset-x-0.5"
+            style={position}
+          >
+            <TaskCard
+              task={task}
+              index={0}
+              isDraggable={true}
+              view="weekly"
+            />
+          </div>
+        );
+      })}
     </div>
   );
 };
