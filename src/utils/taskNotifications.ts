@@ -7,6 +7,7 @@ const notifiedTasks = new Set<number>();
 
 export const checkAndNotifyUpcomingTasks = async () => {
   try {
+    console.log("================== TASK NOTIFICATION CHECK ==================");
     console.log("Checking for upcoming tasks...");
     
     // First check if notifications are supported and permitted
@@ -40,18 +41,22 @@ export const checkAndNotifyUpcomingTasks = async () => {
       throw error;
     }
 
-    console.log("Found tasks:", tasks);
+    console.log(`Found ${tasks?.length || 0} tasks with reminders enabled`);
 
     const now = new Date();
+    console.log("Current time:", now.toLocaleString());
+
     tasks?.forEach(task => {
+      console.log("\n🔔 Checking task:", task.title);
+      
       if (!task.date || !task.start_time) {
-        console.log("Task missing date or start_time:", task);
+        console.log("❌ Task missing date or start_time:", task);
         return;
       }
 
       // Skip if we've already notified about this task
       if (notifiedTasks.has(task.id)) {
-        console.log("Already notified about task:", task.id);
+        console.log("⏭️ Already notified about task:", task.id);
         return;
       }
 
@@ -59,11 +64,13 @@ export const checkAndNotifyUpcomingTasks = async () => {
       const minutesUntilTask = differenceInMinutes(taskDateTime, now);
       
       // Enhanced debug logging
-      console.log({
+      console.log("📊 Task Details:", {
         taskId: task.id,
         taskTitle: task.title,
-        taskDateTime: taskDateTime.toISOString(),
-        currentTime: now.toISOString(),
+        taskDate: task.date,
+        taskTime: task.start_time,
+        taskDateTime: taskDateTime.toLocaleString(),
+        currentTime: now.toLocaleString(),
         minutesUntilTask: minutesUntilTask,
         isSameMinute: isSameMinute(taskDateTime, now),
         timeUntilNotification: `${Math.floor(minutesUntilTask / 60)}h ${minutesUntilTask % 60}m`
@@ -71,7 +78,7 @@ export const checkAndNotifyUpcomingTasks = async () => {
 
       // Check if current time matches task start time exactly
       if (isSameMinute(taskDateTime, now)) {
-        console.log("Sending notification for task:", task);
+        console.log("✅ Time match found! Sending notification for task:", task.title);
         
         if ("Notification" in window && Notification.permission === "granted") {
           const timeString = format(taskDateTime, "h:mm a");
@@ -100,20 +107,22 @@ export const checkAndNotifyUpcomingTasks = async () => {
             }).then(() => {
               // Add to notified tasks after successful notification
               notifiedTasks.add(task.id);
-              console.log("Notification sent successfully");
+              console.log("✅ Notification sent successfully");
             }).catch(error => {
-              console.error("Error showing notification:", error);
+              console.error("❌ Error showing notification:", error);
             });
           }).catch(error => {
-            console.error("Error with service worker:", error);
+            console.error("❌ Error with service worker:", error);
           });
         } else {
-          console.log("Notifications not granted:", Notification.permission);
+          console.log("❌ Notifications not granted:", Notification.permission);
         }
       } else {
-        console.log("Task not due for notification yet");
+        console.log("⏳ Task not due for notification yet - Time until notification:", `${Math.floor(minutesUntilTask / 60)}h ${minutesUntilTask % 60}m`);
       }
     });
+    
+    console.log("=================== CHECK COMPLETE ===================\n");
   } catch (error) {
     console.error("Error checking upcoming tasks:", error);
   }
