@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { ThemeToggle } from "./ThemeToggle";
 import { Label } from "@/components/ui/label";
@@ -5,11 +6,13 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function SettingsContent() {
   const [startHour, setStartHour] = useState<string>("8");
   const [endHour, setEndHour] = useState<string>("17");
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Load user settings on component mount
   useEffect(() => {
@@ -25,6 +28,11 @@ export function SettingsContent() {
 
       if (error) {
         console.error('Error loading settings:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load time settings"
+        });
         return;
       }
 
@@ -35,43 +43,71 @@ export function SettingsContent() {
     };
 
     loadUserSettings();
-  }, []);
+  }, [toast]);
 
   const handleTimeChange = async (value: string, type: 'start' | 'end') => {
+    const newValue = parseInt(value);
+    const currentStart = parseInt(startHour);
+    const currentEnd = parseInt(endHour);
+
+    // Validate time range
+    if (type === 'start' && newValue >= currentEnd) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Time Range",
+        description: "Start time must be before end time"
+      });
+      return;
+    }
+
+    if (type === 'end' && newValue <= currentStart) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Time Range",
+        description: "End time must be after start time"
+      });
+      return;
+    }
+
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
 
-    const updates = type === 'start' 
-      ? { start_hour: parseInt(value) }
-      : { end_hour: parseInt(value) };
+    try {
+      const updates = type === 'start' 
+        ? { start_hour: newValue }
+        : { end_hour: newValue };
 
-    const { error } = await supabase
-      .from('user_settings')
-      .upsert({ 
-        user_id: session.user.id,
-        ...updates,
-        updated_at: new Date().toISOString()
+      const { error } = await supabase
+        .from('user_settings')
+        .upsert({ 
+          user_id: session.user.id,
+          ...updates,
+          updated_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+
+      if (type === 'start') {
+        setStartHour(value);
+      } else {
+        setEndHour(value);
+      }
+
+      // Invalidate queries that depend on time settings
+      await queryClient.invalidateQueries({ queryKey: ['tasks'] });
+
+      toast({
+        title: "Success",
+        description: "Time settings updated successfully"
       });
-
-    if (error) {
+    } catch (error) {
+      console.error('Error updating time settings:', error);
       toast({
         variant: "destructive",
         title: "Error",
         description: "Failed to update time settings"
       });
-      return;
     }
-
-    if (type === 'start') {
-      setStartHour(value);
-    } else {
-      setEndHour(value);
-    }
-
-    toast({
-      title: "Success",
-      description: "Time settings updated successfully"
-    });
   };
 
   const timeOptions = Array.from({ length: 24 }, (_, i) => {
@@ -115,7 +151,10 @@ export function SettingsContent() {
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>Start Time</Label>
-            <Select value={startHour} onValueChange={(value) => handleTimeChange(value, 'start')}>
+            <Select 
+              value={startHour} 
+              onValueChange={(value) => handleTimeChange(value, 'start')}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -130,7 +169,10 @@ export function SettingsContent() {
           </div>
           <div className="space-y-2">
             <Label>End Time</Label>
-            <Select value={endHour} onValueChange={(value) => handleTimeChange(value, 'end')}>
+            <Select 
+              value={endHour} 
+              onValueChange={(value) => handleTimeChange(value, 'end')}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>

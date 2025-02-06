@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, addWeeks, subWeeks } from "date-fns";
 import { CalendarHeader } from "./calendar/CalendarHeader";
@@ -7,6 +8,7 @@ import { useWeeklyCalendar } from "@/hooks/use-weekly-calendar";
 import { supabase } from "@/integrations/supabase/client";
 import { DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 
 interface WeeklyCalendarProps {
   initialDate?: Date;
@@ -18,6 +20,7 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
   const [startHour, setStartHour] = useState(8);
   const [endHour, setEndHour] = useState(17);
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -43,28 +46,40 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
 
   useEffect(() => {
     const loadUserSettings = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
 
-      const { data, error } = await supabase
-        .from('user_settings')
-        .select('start_hour, end_hour')
-        .eq('user_id', session.user.id)
-        .single();
+        const { data, error } = await supabase
+          .from('user_settings')
+          .select('start_hour, end_hour')
+          .eq('user_id', session.user.id)
+          .single();
 
-      if (error) {
-        console.error('Error loading settings:', error);
-        return;
-      }
+        if (error) {
+          console.error('Error loading settings:', error);
+          return;
+        }
 
-      if (data) {
-        setStartHour(data.start_hour);
-        setEndHour(data.end_hour);
+        if (data) {
+          // Ensure we have valid hours
+          const start = Math.max(0, Math.min(23, data.start_hour));
+          const end = Math.max(start + 1, Math.min(24, data.end_hour));
+          setStartHour(start);
+          setEndHour(end);
+        }
+      } catch (error) {
+        console.error('Error in loadUserSettings:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load time settings. Using default values."
+        });
       }
     };
 
     loadUserSettings();
-  }, []);
+  }, [toast]);
 
   // Set up real-time subscription for task updates
   useEffect(() => {
@@ -89,13 +104,16 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
     };
   }, [queryClient]);
 
-  const timeSlots = Array.from({ length: endHour - startHour + 1 }, (_, i) => {
-    const hour = startHour + i;
-    return {
-      hour,
-      display: `${hour}:00`
-    };
-  });
+  const timeSlots = Array.from(
+    { length: Math.max(1, endHour - startHour + 1) }, 
+    (_, i) => {
+      const hour = startHour + i;
+      return {
+        hour,
+        display: `${hour}:00`
+      };
+    }
+  );
 
   const {
     scheduledTasks,
