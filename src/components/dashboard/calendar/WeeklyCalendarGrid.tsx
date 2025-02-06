@@ -1,6 +1,6 @@
 import React from 'react';
 import { Task } from "../TaskBoard";
-import { format, isSameDay } from "date-fns";
+import { format, isSameDay, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import { TimeColumn } from "./grid/TimeColumn";
 import { DayCell } from "./grid/DayCell";
@@ -22,10 +22,19 @@ export function WeeklyCalendarGrid({
   const getTasksForDayAndTime = (day: Date, hour: number) => {
     return scheduledTasks.filter((task) => {
       if (!task.date || !task.start_time) return false;
-      const taskDate = new Date(task.date);
+      
+      // Parse the task date string to a Date object using parseISO
+      const taskDate = parseISO(task.date);
       const taskHour = parseInt(task.start_time.split(":")[0]);
       
-      // Use isSameDay for more reliable date comparison
+      console.log('Comparing dates:', {
+        taskDate: format(taskDate, 'yyyy-MM-dd'),
+        day: format(day, 'yyyy-MM-dd'),
+        taskHour,
+        hour,
+        isSameDay: isSameDay(taskDate, day)
+      });
+      
       return isSameDay(taskDate, day) && taskHour === hour;
     });
   };
