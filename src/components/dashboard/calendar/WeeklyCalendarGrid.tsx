@@ -1,3 +1,4 @@
+import React from 'react';
 import { Task } from "../TaskBoard";
 import { format } from "date-fns";
 import { useDroppable } from "@dnd-kit/core";
