@@ -1,4 +1,3 @@
-
 import { Task } from "../TaskBoard";
 import { useDroppable } from "@dnd-kit/core";
 import { TaskCard } from "../TaskCard";
@@ -24,12 +23,14 @@ export function UnscheduledTasks({ tasks }: UnscheduledTasksProps) {
       <div className="space-y-2">
         {tasks && tasks.length > 0 ? (
           tasks.map((task, index) => (
-            <TaskCard 
-              key={task.id} 
-              task={task} 
-              index={index}
-              isDraggable={true}
-            />
+            <div key={task.id} className="bg-[#0EA5E9] bg-opacity-10 hover:bg-opacity-20 transition-colors rounded-lg">
+              <TaskCard 
+                key={task.id} 
+                task={task} 
+                index={index}
+                isDraggable={true}
+              />
+            </div>
           ))
         ) : (
           <p className="text-sm text-gray-500">No unscheduled tasks</p>
