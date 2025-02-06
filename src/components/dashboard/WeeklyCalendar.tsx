@@ -5,6 +5,7 @@ import { WeeklyCalendarGrid } from "./calendar/WeeklyCalendarGrid";
 import { UnscheduledTasks } from "./calendar/UnscheduledTasks";
 import { useWeeklyCalendar } from "@/hooks/use-weekly-calendar";
 import { supabase } from "@/integrations/supabase/client";
+import { DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 
 interface WeeklyCalendarProps {
   initialDate?: Date;
@@ -16,6 +17,20 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
   const [startHour, setStartHour] = useState(8);
   const [endHour, setEndHour] = useState(17);
   
+  const sensors = useSensors(
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 10,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5,
+      },
+    })
+  );
+
   // Start from Sunday if showing full week, Monday if showing 5 days
   const weekStart = startOfWeek(currentDate, { weekStartsOn: showFullWeek ? 0 : 1 });
   const weekEnd = showFullWeek 
@@ -60,7 +75,8 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
   const {
     scheduledTasks,
     unscheduledTasks,
-    visitsPerDay
+    visitsPerDay,
+    handleDragEnd
   } = useWeeklyCalendar(weekStart, weekEnd, weekDays);
 
   const monthYear = format(currentDate, 'MMMM yyyy');
@@ -78,30 +94,32 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
   };
 
   return (
-    <div className="flex gap-4 w-full max-w-[95%] mx-auto">
-      <div className="flex-1">
-        <CalendarHeader 
-          monthYear={monthYear}
-          onNextMonth={handleNextWeek}
-          onPreviousMonth={handlePreviousWeek}
-          showWeekly={true}
-          showFullWeek={showFullWeek}
-          onToggleView={handleToggleView}
-        />
-
-        <div className="border rounded-lg bg-white shadow-sm overflow-hidden mt-4">
-          <WeeklyCalendarGrid 
-            weekDays={weekDays}
-            timeSlots={timeSlots}
-            scheduledTasks={scheduledTasks}
+    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+      <div className="flex gap-4 w-full max-w-[95%] mx-auto">
+        <div className="flex-1">
+          <CalendarHeader 
+            monthYear={monthYear}
+            onNextMonth={handleNextWeek}
+            onPreviousMonth={handlePreviousWeek}
+            showWeekly={true}
             showFullWeek={showFullWeek}
+            onToggleView={handleToggleView}
           />
+
+          <div className="border rounded-lg bg-white shadow-sm overflow-hidden mt-4">
+            <WeeklyCalendarGrid 
+              weekDays={weekDays}
+              timeSlots={timeSlots}
+              scheduledTasks={scheduledTasks}
+              showFullWeek={showFullWeek}
+            />
+          </div>
+        </div>
+
+        <div className="w-80">
+          <UnscheduledTasks tasks={unscheduledTasks} />
         </div>
       </div>
-
-      <div className="w-80">
-        <UnscheduledTasks tasks={unscheduledTasks} />
-      </div>
-    </div>
+    </DndContext>
   );
 }
