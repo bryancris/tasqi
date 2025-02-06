@@ -15,7 +15,7 @@ export function DailyTaskCard({ task, onComplete, onClick, dragHandleProps }: Da
 
   const getCardColor = () => {
     if (task.status === 'unscheduled') {
-      return 'bg-[#0EA5E9] bg-opacity-10 hover:bg-opacity-20';
+      return 'bg-[#2196F3]';
     }
     return getPriorityColor(task.priority);
   };
