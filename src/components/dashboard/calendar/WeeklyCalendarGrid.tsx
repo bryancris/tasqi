@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { Task } from "../TaskBoard";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { useDroppable } from "@dnd-kit/core";
 import { TaskCard } from "../TaskCard";
 import { cn } from "@/lib/utils";
@@ -42,7 +43,7 @@ const CalendarCell = ({
 
   const tasksForThisSlot = tasks.filter(task => {
     if (!task.date || !task.start_time) return false;
-    const taskDate = format(new Date(task.date), 'yyyy-MM-dd');
+    const taskDate = format(parseISO(task.date), 'yyyy-MM-dd');
     const [taskHour] = task.start_time.split(':').map(Number);
     return taskDate === formattedDate && taskHour === timeSlot.hour;
   });
