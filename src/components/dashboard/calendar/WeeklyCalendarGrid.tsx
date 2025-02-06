@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Task } from "../TaskBoard";
 import { format, parseISO } from "date-fns";
@@ -140,13 +139,13 @@ export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks, showFu
         "border border-[#403E43]"
       )}>
         {/* Header */}
-        <div className="bg-slate-50 p-4 border-r border-[#403E43]" /> {/* Time column header spacer */}
+        <div className="bg-[#B2E3EA] p-4 border-r border-[#403E43]" /> {/* Time column header spacer */}
         {displayDays.map((day, index) => (
           <div
             key={day.toISOString()}
             className={cn(
               "px-2 py-4 text-center",
-              "bg-slate-50",
+              "bg-[#B2E3EA]",
               "border-r border-[#403E43]",
               index === displayDays.length - 1 ? "" : "border-r"
             )}
@@ -159,7 +158,7 @@ export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks, showFu
         {/* Time slots and cells */}
         {timeSlots.map((timeSlot, rowIndex) => (
           <React.Fragment key={timeSlot.hour}>
-            <div className="w-20 px-4 py-3 text-right text-sm text-slate-500 bg-slate-50 border-r border-[#403E43]">
+            <div className="w-20 px-4 py-3 text-right text-sm text-slate-500 bg-[#B2E3EA] border-r border-[#403E43]">
               {timeSlot.display}
             </div>
             {displayDays.map((day, colIndex) => (
