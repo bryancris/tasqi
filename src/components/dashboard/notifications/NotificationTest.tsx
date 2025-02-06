@@ -18,11 +18,6 @@ export function NotificationTest() {
 
       console.log("Current notification permission:", Notification.permission);
       
-      // Create and play notification sound
-      const audio = new Audio('/notification-sound.mp3');
-      audio.volume = 0.5; // Set volume to 50%
-      await audio.play();
-
       // Handle different permission states
       if (Notification.permission === "denied") {
         toast.error(
@@ -46,15 +41,37 @@ export function NotificationTest() {
         }
       }
 
-      // Check service worker
+      // Check service worker registration
       if (!('serviceWorker' in navigator)) {
         toast.error("Service Worker is not supported in this browser");
         return;
       }
 
-      const registration = await navigator.serviceWorker.ready;
-      console.log("Service worker ready, attempting to show notification");
+      // Get all service worker registrations
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      console.log("Current service worker registrations:", registrations);
 
+      if (registrations.length === 0) {
+        console.log("No service worker registered, attempting registration");
+        try {
+          const newRegistration = await navigator.serviceWorker.register('/sw.js');
+          console.log("New service worker registered:", newRegistration);
+        } catch (error) {
+          console.error("Service worker registration failed:", error);
+          toast.error("Failed to register service worker");
+          return;
+        }
+      }
+
+      const registration = await navigator.serviceWorker.ready;
+      console.log("Service worker ready state:", registration.active?.state);
+
+      // Create and play notification sound
+      const audio = new Audio('/notification-sound.mp3');
+      audio.volume = 0.5; // Set volume to 50%
+      await audio.play();
+
+      // Show the notification
       await registration.showNotification("Test Notification", {
         body: "This is a test notification from TasqiAI",
         icon: "/pwa-192x192.png",
