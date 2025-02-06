@@ -6,6 +6,11 @@ export const showNotification = async (task: any) => {
       return;
     }
 
+    if (!('serviceWorker' in navigator)) {
+      console.error('❌ Service Worker not supported');
+      return;
+    }
+
     let permission = Notification.permission;
 
     if (permission === 'default') {
@@ -28,20 +33,27 @@ export const showNotification = async (task: any) => {
       tag: `task-${task.id}`,
       renotify: true,
       requireInteraction: true,
-      silent: false
+      silent: false,
+      vibrate: [200, 100, 200], // Add vibration pattern for mobile
+      data: {
+        url: window.location.origin + '/dashboard'
+      }
     };
 
     await registration.showNotification(title, options);
     console.log('✅ Notification sent successfully for task:', task.title);
 
-    // Play notification sound
-    const audio = new Audio('/notification-sound.mp3');
-    audio.volume = 0.5;
-    await audio.play();
+    // Play notification sound if supported
+    try {
+      const audio = new Audio('/notification-sound.mp3');
+      audio.volume = 0.5;
+      await audio.play();
+    } catch (error) {
+      console.warn('Could not play notification sound:', error);
+    }
 
   } catch (error) {
     console.error('Error showing notification:', error);
     throw error;
   }
 };
-

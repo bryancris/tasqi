@@ -2,6 +2,7 @@ import { useEffect, useCallback, useRef } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { showNotification } from './notificationUtils';
 import { setupPushSubscription } from './subscriptionUtils';
+import { toast } from 'sonner';
 
 // Keep track of notified tasks
 const notifiedTasks = new Set<number>();
@@ -69,33 +70,67 @@ export const useTaskNotifications = () => {
   const checkIntervalRef = useRef<NodeJS.Timeout>();
 
   const startNotificationCheck = useCallback(() => {
-    // Clear any existing interval
     if (checkIntervalRef.current) {
       clearInterval(checkIntervalRef.current);
     }
-
-    // Initial check
     checkAndNotifyUpcomingTasks();
-
-    // Set up interval for subsequent checks
     checkIntervalRef.current = setInterval(() => {
       checkAndNotifyUpcomingTasks();
     }, 30000); // Check every 30 seconds
   }, []);
 
   useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      console.log('Registering service worker...');
-      navigator.serviceWorker.register('/sw.js')
-        .then(async registration => {
-          console.log('Service worker registered:', registration);
-          await setupPushSubscription(registration);
-          startNotificationCheck();
-        })
-        .catch(error => {
-          console.error('Service worker registration failed:', error);
+    const initializeNotifications = async () => {
+      try {
+        if (!('serviceWorker' in navigator)) {
+          toast.error('Service Worker is not supported in this browser');
+          return;
+        }
+
+        if (!('Notification' in window)) {
+          toast.error('Notifications are not supported in this browser');
+          return;
+        }
+
+        // Request notification permission if not granted
+        if (Notification.permission === 'default') {
+          const permission = await Notification.requestPermission();
+          if (permission !== 'granted') {
+            toast.error('Notification permission denied');
+            return;
+          }
+        }
+
+        // Unregister any existing service workers
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const registration of registrations) {
+          await registration.unregister();
+        }
+
+        // Register new service worker
+        console.log('Registering service worker...');
+        const registration = await navigator.serviceWorker.register('/sw.js', {
+          scope: '/'
         });
-    }
+
+        // Wait for the service worker to be ready
+        await navigator.serviceWorker.ready;
+        console.log('Service worker ready:', registration.active?.state);
+
+        // Set up push subscription
+        await setupPushSubscription(registration);
+        
+        // Start checking for tasks
+        startNotificationCheck();
+
+        toast.success('Notifications enabled successfully');
+      } catch (error) {
+        console.error('Error initializing notifications:', error);
+        toast.error('Failed to initialize notifications');
+      }
+    };
+
+    initializeNotifications();
 
     return () => {
       if (checkIntervalRef.current) {
