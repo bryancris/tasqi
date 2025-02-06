@@ -27,6 +27,20 @@
             // Wait for the user to respond to the prompt
             const { outcome } = await deferredPrompt.userChoice;
             console.log(`User response to the install prompt: ${outcome}`);
+            
+            // If installation was successful, request notification permissions
+            if (outcome === 'accepted') {
+              if ('Notification' in window) {
+                const permission = await Notification.requestPermission();
+                console.log('Notification permission:', permission);
+                
+                if (permission === 'granted') {
+                  // Register service worker and set up push notifications
+                  registerServiceWorker();
+                }
+              }
+            }
+            
             // Clear the deferredPrompt variable
             deferredPrompt = null;
           } catch (error) {
@@ -38,37 +52,33 @@
       }
 
       async function registerServiceWorker() {
-        try {
-          const registration = await navigator.serviceWorker.register('/sw.js');
-          console.log('ServiceWorker registration successful');
+        if ('serviceWorker' in navigator) {
+          try {
+            const registration = await navigator.serviceWorker.register('/sw.js');
+            console.log('ServiceWorker registration successful');
 
-          await navigator.serviceWorker.ready;
-          console.log('Service Worker is now active');
+            await navigator.serviceWorker.ready;
+            console.log('Service Worker is now active');
 
-          await setupPushNotifications(registration);
-        } catch (err) {
-          console.error('ServiceWorker registration failed:', err);
+            await setupPushNotifications(registration);
+          } catch (err) {
+            console.error('ServiceWorker registration failed:', err);
+          }
         }
       }
 
       async function setupPushNotifications(registration) {
-        const permission = await Notification.requestPermission();
-        
-        if (permission === 'granted') {
-          console.log('Notification permission granted');
+        try {
+          const subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: 'BO-drbRIS7EgZn3R9oahsptcWfCrMoFgrU3ixeJOIjTDYZOOhIxjb30k6Z45WX6juG4TbGD4_d3IpPmQHkLr9Jk'
+          });
           
-          try {
-            const subscription = await registration.pushManager.subscribe({
-              userVisibleOnly: true,
-              applicationServerKey: 'BO-drbRIS7EgZn3R9oahsptcWfCrMoFgrU3ixeJOIjTDYZOOhIxjb30k6Z45WX6juG4TbGD4_d3IpPmQHkLr9Jk'
-            });
-            
-            console.log('Push notification subscription created');
-            
-            await sendSubscriptionToServer(subscription);
-          } catch (error) {
-            console.error('Push notification setup failed:', error);
-          }
+          console.log('Push notification subscription created');
+          
+          await sendSubscriptionToServer(subscription);
+        } catch (error) {
+          console.error('Push notification setup failed:', error);
         }
       }
 
@@ -96,7 +106,17 @@
       }
 
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', registerServiceWorker);
+        window.addEventListener('load', () => {
+          // Request notification permission on initial load if not already set
+          if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission().then(permission => {
+              console.log('Notification permission on load:', permission);
+              if (permission === 'granted') {
+                registerServiceWorker();
+              }
+            });
+          }
+        });
 
         window.addEventListener('beforeinstallprompt', (e) => {
           e.preventDefault();
