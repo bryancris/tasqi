@@ -13,9 +13,10 @@ interface DayCellProps {
   };
   tasks: Task[];
   dayIndex: number;
+  isLastRow?: boolean;
 }
 
-export function DayCell({ day, timeSlot, tasks, dayIndex }: DayCellProps) {
+export function DayCell({ day, timeSlot, tasks, dayIndex, isLastRow }: DayCellProps) {
   const formattedDate = format(day, 'yyyy-MM-dd');
   
   const { setNodeRef, isOver } = useDroppable({
@@ -34,16 +35,10 @@ export function DayCell({ day, timeSlot, tasks, dayIndex }: DayCellProps) {
     const endHour = parseInt(task.end_time.split(':')[0]);
     const endMinute = parseInt(task.end_time.split(':')[1]);
 
-    // Only show task if it starts in this time slot
     if (startHour !== timeSlot.hour) return null;
 
-    // Calculate duration in minutes
     const durationMinutes = ((endHour - startHour) * 60) + (endMinute - startMinute);
-    
-    // Calculate height based on duration (60 minutes = 100% height)
     const heightPercentage = (durationMinutes / 60) * 100;
-    
-    // Calculate top position based on start minute (0-59 minutes)
     const topPercentage = (startMinute / 60) * 100;
 
     return {
@@ -60,10 +55,11 @@ export function DayCell({ day, timeSlot, tasks, dayIndex }: DayCellProps) {
     <div
       ref={setNodeRef}
       className={cn(
-        "h-[60px]",
+        "h-[60px] min-h-[60px]",
         "relative",
         "transition-all duration-200 ease-in-out",
         "border-t-2 border-gray-600",
+        isLastRow && "border-b-2",
         "hover:bg-gray-50",
         dayIndex % 2 === 0 ? "bg-white" : "bg-gray-50/30"
       )}

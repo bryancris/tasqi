@@ -38,7 +38,7 @@ export function WeeklyCalendarGrid({
       <div className={cn(
         "grid",
         showFullWeek ? "grid-cols-8" : "grid-cols-6",
-        "divide-x-2 divide-gray-600",
+        "divide-x divide-gray-600",
         "border-2 border-gray-600 rounded-lg",
         "bg-white shadow-sm"
       )}>
@@ -53,10 +53,13 @@ export function WeeklyCalendarGrid({
         ))}
 
         {/* Time slots */}
-        {timeSlots.map((timeSlot) => (
+        {timeSlots.map((timeSlot, slotIndex) => (
           <React.Fragment key={timeSlot.hour}>
             {/* Time label */}
-            <TimeColumn timeSlot={timeSlot} />
+            <TimeColumn 
+              timeSlot={timeSlot} 
+              isLastRow={slotIndex === timeSlots.length - 1}
+            />
 
             {/* Day cells */}
             {weekDays.map((day, dayIndex) => {
@@ -68,6 +71,7 @@ export function WeeklyCalendarGrid({
                   timeSlot={timeSlot}
                   tasks={dayTasks}
                   dayIndex={dayIndex}
+                  isLastRow={slotIndex === timeSlots.length - 1}
                 />
               );
             })}
