@@ -11,6 +11,8 @@ interface WeeklyTaskCardProps {
 }
 
 export function WeeklyTaskCard({ task, onComplete, onClick, dragHandleProps }: WeeklyTaskCardProps) {
+  const timeString = task.start_time && task.end_time ? `${task.start_time} - ${task.end_time}` : '';
+  
   return (
     <div 
       className={cn(
@@ -23,6 +25,7 @@ export function WeeklyTaskCard({ task, onComplete, onClick, dragHandleProps }: W
     >
       <TaskStatusIndicator 
         status={task.status}
+        time={timeString}
         onClick={(e) => {
           e.stopPropagation();
           onComplete();
