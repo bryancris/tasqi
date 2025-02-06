@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,7 +26,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         const { data: { session: initialSession }, error } = await supabase.auth.getSession();
         if (error) {
-          console.error("Error getting session:", error);
+          if (error.message.includes('Invalid Refresh Token')) {
+            // Clear the session if refresh token is invalid
+            await supabase.auth.signOut();
+            setSession(null);
+            navigate('/auth');
+          } else {
+            console.error("Error getting session:", error);
+          }
           setLoading(false);
           return;
         }
@@ -47,20 +55,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       if (event === 'TOKEN_REFRESHED') {
         console.log("Token refreshed successfully");
-      }
-      
-      if (event === 'SIGNED_OUT') {
+        setSession(currentSession);
+      } else if (event === 'SIGNED_OUT') {
+        setSession(null);
         navigate('/auth');
         toast.success("You have been logged out");
       } else if (event === 'SIGNED_IN') {
         setSession(currentSession);
         navigate('/dashboard');
+        toast.success("Successfully signed in");
       } else if (event === 'USER_UPDATED') {
         console.log("User profile updated");
         setSession(currentSession);
+      } else if (event === 'INITIAL_SESSION') {
+        setSession(currentSession);
+        if (currentSession) {
+          navigate('/dashboard');
+        }
       }
 
-      setSession(currentSession);
       setLoading(false);
     });
 
