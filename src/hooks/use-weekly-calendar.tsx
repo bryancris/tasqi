@@ -1,3 +1,4 @@
+
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "@/components/dashboard/TaskBoard";
@@ -15,6 +16,7 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
+        .or(`status.eq.scheduled,status.eq.unscheduled`)
         .order('position', { ascending: true });
       
       if (error) throw error;
