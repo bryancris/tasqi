@@ -61,6 +61,50 @@ const TimeSlotContent = ({ time, tasks }: { time: string; tasks: Task[] }) => {
   );
 };
 
+// Date selector component
+const DateSelector = ({ selectedDate, onDateChange }: { selectedDate: Date; onDateChange: (date: Date) => void }) => {
+  const handlePreviousDay = () => {
+    const newDate = subDays(selectedDate, 1);
+    onDateChange(newDate);
+  };
+
+  const handleNextDay = () => {
+    const newDate = addDays(selectedDate, 1);
+    onDateChange(newDate);
+  };
+
+  return (
+    <div className="flex items-center justify-between px-4 py-2 bg-white rounded-lg shadow-sm mb-4">
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={handlePreviousDay}
+        className="h-8 w-8"
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </Button>
+      
+      <div className="flex flex-col items-center">
+        <span className="text-sm font-medium">
+          {format(selectedDate, "MMMM d, yyyy")}
+        </span>
+        <span className="text-xs text-muted-foreground">
+          Daily
+        </span>
+      </div>
+
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={handleNextDay}
+        className="h-8 w-8"
+      >
+        <ChevronRight className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+};
+
 export function TimelineSlot({ time, tasks, selectedDate, onDateChange }: TimelineSlotProps) {
   // Filter tasks for the selected date AND time slot
   const filteredTasks = tasks.filter(task => {
@@ -73,49 +117,18 @@ export function TimelineSlot({ time, tasks, selectedDate, onDateChange }: Timeli
     return isMatchingDate && isMatchingTime;
   });
 
-  const handlePreviousDay = () => {
-    const newDate = subDays(selectedDate, 1);
-    onDateChange(newDate);
-  };
-
-  const handleNextDay = () => {
-    const newDate = addDays(selectedDate, 1);
-    onDateChange(newDate);
-  };
-
-  // Render date navigation only for the first time slot
+  // Render date selector only for the first time slot
   if (time === "09:00") {
     return (
+      <TimeSlotContent time={time} tasks={filteredTasks} />
+    );
+  }
+
+  // Special case for 08:00 to include the date selector
+  if (time === "08:00") {
+    return (
       <div className="space-y-4">
-        <div className="flex items-center justify-between px-4 py-2 bg-white rounded-lg shadow-sm">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handlePreviousDay}
-            className="h-8 w-8"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          
-          <div className="flex flex-col items-center">
-            <span className="text-sm font-medium">
-              {format(selectedDate, "MMMM d, yyyy")}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              Daily
-            </span>
-          </div>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleNextDay}
-            className="h-8 w-8"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-
+        <DateSelector selectedDate={selectedDate} onDateChange={onDateChange} />
         <TimeSlotContent time={time} tasks={filteredTasks} />
       </div>
     );
