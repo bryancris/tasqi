@@ -21,7 +21,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const handleInvalidSession = () => {
+    const handleInvalidSession = async () => {
+      console.log("Handling invalid session");
+      // Clear any existing session data
+      await supabase.auth.signOut();
+      localStorage.removeItem('supabase.auth.token');
       setSession(null);
       setLoading(false);
       navigate('/auth');
@@ -30,28 +34,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Initialize session from local storage if available
     const initializeAuth = async () => {
       try {
+        console.log("Initializing auth...");
         const { data: { session: initialSession }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error("Error getting session:", error);
-          if (error.message.includes('Invalid Refresh Token') || error.message.includes('token_not_found')) {
-            console.log("Invalid refresh token, clearing session");
-            await supabase.auth.signOut();
-            handleInvalidSession();
+          if (error.message.includes('Invalid Refresh Token') || 
+              error.message.includes('token_not_found') || 
+              error.message.includes('refresh_token_not_found')) {
+            console.log("Invalid refresh token detected, clearing session");
             toast.error("Session expired. Please sign in again.");
+            await handleInvalidSession();
           }
           return;
         }
 
         if (initialSession) {
+          console.log("Initial session found and valid");
           setSession(initialSession);
-          console.log("Initial session loaded");
         } else {
-          handleInvalidSession();
+          console.log("No initial session found");
+          await handleInvalidSession();
         }
       } catch (error) {
         console.error("Error in auth initialization:", error);
-        handleInvalidSession();
+        await handleInvalidSession();
       } finally {
         setLoading(false);
       }
@@ -63,16 +70,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
-      console.log("Auth state changed:", event);
+      console.log("Auth state changed:", event, !!currentSession);
       
       if (event === 'TOKEN_REFRESHED') {
         console.log("Token refreshed successfully");
         setSession(currentSession);
       } else if (event === 'SIGNED_OUT') {
-        setSession(null);
-        navigate('/auth');
+        console.log("User signed out");
+        await handleInvalidSession();
         toast.success("You have been logged out");
       } else if (event === 'SIGNED_IN') {
+        console.log("User signed in");
         setSession(currentSession);
         navigate('/dashboard');
         toast.success("Successfully signed in");
@@ -81,10 +89,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setSession(currentSession);
       } else if (event === 'INITIAL_SESSION') {
         if (currentSession) {
+          console.log("Initial session restored");
           setSession(currentSession);
           navigate('/dashboard');
         } else {
-          handleInvalidSession();
+          console.log("No initial session found");
+          await handleInvalidSession();
         }
       }
 
