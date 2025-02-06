@@ -33,6 +33,7 @@ interface TaskBoardProps {
 
 export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
   const isMobile = useIsMobile();
+  const queryClient = useQuery();
 
   const { data: tasks = [], refetch } = useQuery({
     queryKey: ['tasks'],
@@ -46,10 +47,13 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
       console.log('Found tasks:', data);
       return data as Task[];
     },
+    staleTime: 0, // Disable caching to always fetch fresh data
+    cacheTime: 0  // Remove data from cache immediately
   });
 
   // Set up real-time subscription for task updates
   useEffect(() => {
+    console.log('Setting up real-time subscription for tasks...');
     const channel = supabase
       .channel('tasks-changes')
       .on(
@@ -59,17 +63,19 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
           schema: 'public',
           table: 'tasks'
         },
-        () => {
-          console.log('Task change detected, refetching...');
+        (payload) => {
+          console.log('Task change detected:', payload);
+          queryClient.invalidateQueries({ queryKey: ['tasks'] });
           refetch();
         }
       )
       .subscribe();
 
     return () => {
+      console.log('Cleaning up real-time subscription...');
       supabase.removeChannel(channel);
     };
-  }, [refetch]);
+  }, [queryClient, refetch]);
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
