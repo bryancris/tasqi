@@ -1,19 +1,18 @@
 import { Task } from "./TaskBoard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TaskCard } from "./TaskCard";
-import { DndContext, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { DndContext, MouseSensor, TouchSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { useTaskReorder } from "@/hooks/use-task-reorder";
 import { startOfDay, isAfter } from "date-fns";
 
 export interface MobileTaskViewProps {
   tasks: Task[];
   selectedDate: Date;
   onDateChange: (date: Date) => void;
+  onDragEnd: (event: DragEndEvent) => void;
 }
 
-export function MobileTaskView({ tasks, selectedDate, onDateChange }: MobileTaskViewProps) {
-  const { handleDragEnd: handleReorder } = useTaskReorder(tasks);
+export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd }: MobileTaskViewProps) {
   const todayStart = startOfDay(new Date());
 
   const sensors = useSensors(
@@ -53,7 +52,7 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange }: MobileTask
           <CardTitle className="text-2xl font-semibold">Task Board</CardTitle>
         </CardHeader>
         <CardContent className="overflow-y-auto h-[calc(100%-5rem)] p-1">
-          <DndContext sensors={sensors} onDragEnd={handleReorder}>
+          <DndContext sensors={sensors} onDragEnd={onDragEnd}>
             <SortableContext items={draggableTaskIds} strategy={verticalListSortingStrategy}>
               <div className="flex flex-col gap-[1px]">
                 {sortedTasks.map((task, index) => (
