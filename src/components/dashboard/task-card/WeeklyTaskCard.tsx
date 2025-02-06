@@ -29,19 +29,22 @@ export function WeeklyTaskCard({ task, onClick, onComplete, dragHandleProps }: W
       onClick={onClick}
       className={cn(
         "w-full h-full",
-        "cursor-pointer transition-colors",
+        "cursor-pointer",
         "text-white text-xs leading-tight",
+        "flex flex-col",
         getPriorityColor(task.priority),
       )}
     >
-      <div className="font-medium p-1">
-        {task.title}
+      <div className="p-1 overflow-hidden">
+        <div className="font-medium truncate">
+          {task.title}
+        </div>
+        {task.description && (
+          <p className="text-[10px] text-white/90 truncate">
+            {task.description}
+          </p>
+        )}
       </div>
-      {task.description && (
-        <p className="text-[10px] text-white/90 px-1">
-          {task.description}
-        </p>
-      )}
     </div>
   );
 }
