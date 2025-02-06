@@ -13,12 +13,19 @@ interface DailyTaskCardProps {
 export function DailyTaskCard({ task, onComplete, onClick, dragHandleProps }: DailyTaskCardProps) {
   const timeString = task.start_time && task.end_time ? `${task.start_time} - ${task.end_time}` : '';
 
+  const getCardColor = () => {
+    if (task.status === 'unscheduled') {
+      return 'bg-[#0EA5E9] bg-opacity-10 hover:bg-opacity-20';
+    }
+    return getPriorityColor(task.priority);
+  };
+
   return (
     <div 
       className={cn(
-        "flex items-start gap-3 p-3 bg-white rounded-lg shadow-sm border border-gray-200",
+        "flex items-start gap-3 p-3 rounded-lg shadow-sm border border-gray-200",
         "hover:shadow-md transition-shadow cursor-pointer",
-        getPriorityColor(task.priority)
+        getCardColor()
       )}
       onClick={onClick}
       {...dragHandleProps}
