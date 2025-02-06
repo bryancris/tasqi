@@ -10,14 +10,28 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
+import { useState } from "react";
 
 interface DeleteTaskAlertProps {
   isLoading: boolean;
   onDelete: () => Promise<void>;
 }
 
-export function DeleteTaskAlert({ isLoading, onDelete }: DeleteTaskAlertProps) {
+export function DeleteTaskAlert({ isLoading: externalLoading, onDelete }: DeleteTaskAlertProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
+  
+  const handleDelete = async () => {
+    try {
+      setIsDeleting(true);
+      await onDelete();
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const isLoading = isDeleting || externalLoading;
+
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
@@ -26,7 +40,11 @@ export function DeleteTaskAlert({ isLoading, onDelete }: DeleteTaskAlertProps) {
           className="w-full"
           disabled={isLoading}
         >
-          <Trash2 className="h-4 w-4 mr-2" />
+          {isLoading ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <Trash2 className="h-4 w-4 mr-2" />
+          )}
           Delete Task
         </Button>
       </AlertDialogTrigger>
@@ -40,10 +58,18 @@ export function DeleteTaskAlert({ isLoading, onDelete }: DeleteTaskAlertProps) {
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction 
-            onClick={onDelete}
+            onClick={handleDelete}
             className="bg-red-500 hover:bg-red-600"
+            disabled={isLoading}
           >
-            Delete
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Deleting...
+              </>
+            ) : (
+              'Delete'
+            )}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
