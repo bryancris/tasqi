@@ -91,6 +91,7 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
         selectedDate={selectedDate} 
         onDateChange={onDateChange}
         onDragEnd={handleDragEnd}
+        onComplete={refetch}
       />
     );
   }
@@ -101,6 +102,7 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
       selectedDate={selectedDate} 
       onDateChange={onDateChange}
       onDragEnd={handleDragEnd}
+      onComplete={refetch}
     />
   );
 }

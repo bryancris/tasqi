@@ -8,9 +8,10 @@ import { TaskCard } from "../TaskCard";
 interface TaskBoardSectionProps {
   tasks: Task[];
   onDragEnd: (event: DragEndEvent) => void;
+  onComplete?: () => void;
 }
 
-export function TaskBoardSection({ tasks, onDragEnd }: TaskBoardSectionProps) {
+export function TaskBoardSection({ tasks, onDragEnd, onComplete }: TaskBoardSectionProps) {
   const sensors = useSensors(
     useSensor(MouseSensor, {
       activationConstraint: {
@@ -58,6 +59,7 @@ export function TaskBoardSection({ tasks, onDragEnd }: TaskBoardSectionProps) {
                   task={task}
                   index={index}
                   isDraggable={task.status !== 'completed'}
+                  onComplete={onComplete}
                 />
               ))}
             </div>
