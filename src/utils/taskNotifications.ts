@@ -1,6 +1,5 @@
-
 import { supabase } from "@/integrations/supabase/client";
-import { format, parseISO, addMinutes } from "date-fns";
+import { format, parseISO, addMinutes, isAfter, isBefore } from "date-fns";
 
 // Keep track of notifications we've already sent
 const notifiedTasks = new Set<number>();
@@ -56,13 +55,18 @@ export const checkAndNotifyUpcomingTasks = async () => {
       }
 
       const taskDateTime = parseISO(`${task.date}T${task.start_time}`);
-      const notificationTime = addMinutes(now, 10); // Changed from 15 to 10 minutes
+      const notificationTime = addMinutes(taskDateTime, -10); // Notify 10 minutes before
 
-      console.log("Task datetime:", taskDateTime);
-      console.log("Current time:", now);
-      console.log("Notification time:", notificationTime);
+      console.log({
+        task: task.title,
+        taskDateTime: taskDateTime.toISOString(),
+        notificationTime: notificationTime.toISOString(),
+        currentTime: now.toISOString(),
+        shouldNotify: isAfter(now, notificationTime) && isBefore(now, taskDateTime)
+      });
 
-      if (taskDateTime > now && taskDateTime <= notificationTime) {
+      // Check if current time is within the 10-minute window before the task
+      if (isAfter(now, notificationTime) && isBefore(now, taskDateTime)) {
         console.log("Sending notification for task:", task);
         
         if ("Notification" in window && Notification.permission === "granted") {
