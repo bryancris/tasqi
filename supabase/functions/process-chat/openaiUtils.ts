@@ -1,3 +1,4 @@
+
 const SYSTEM_PROMPT = `You are a task scheduling assistant. When a user mentions something that sounds like a task:
 1. If it has a specific time/date, create it as a scheduled task
 2. If no specific time/date is mentioned, create it as an unscheduled task
@@ -21,7 +22,7 @@ Return JSON in this format:
     "is_scheduled": true/false,
     "date": "today/tomorrow/next week/next month",
     "start_time": "HH:mm" (if time specified),
-    "end_time": "HH:mm" (if duration specified)
+    "end_time": "HH:mm" (if duration specified or add 1 hour to start_time if not specified)
   },
   "response": "Your friendly response to the user"
 }`;
@@ -55,9 +56,24 @@ export async function processWithOpenAI(message: string): Promise<OpenAIResponse
   console.log('OpenAI Response:', data);
 
   try {
-    return JSON.parse(data.choices[0].message.content);
+    const parsedResponse = JSON.parse(data.choices[0].message.content) as OpenAIResponse;
+    
+    // Add end time if start time is present but end time is missing
+    if (parsedResponse.task?.is_scheduled && 
+        parsedResponse.task.start_time && 
+        !parsedResponse.task.end_time) {
+      // Parse the start time
+      const [hours, minutes] = parsedResponse.task.start_time.split(':').map(Number);
+      // Add one hour for end time
+      const endHour = (hours + 1) % 24;
+      parsedResponse.task.end_time = `${endHour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+      console.log('Added default end time:', parsedResponse.task.end_time);
+    }
+
+    return parsedResponse;
   } catch (error) {
     console.error('Error parsing OpenAI response:', error);
     throw new Error('Failed to parse OpenAI response');
   }
 }
+

@@ -1,3 +1,4 @@
+
 export interface ChatRequest {
   message: string;
   userId: string;
@@ -24,3 +25,4 @@ export interface OpenAIResponse {
   };
   response: string;
 }
+
