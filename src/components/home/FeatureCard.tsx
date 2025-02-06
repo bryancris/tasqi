@@ -11,11 +11,11 @@ interface FeatureCardProps {
 
 const FeatureCard = ({ icon: Icon, title, description, iconColor }: FeatureCardProps) => {
   return (
-    <Card className="bg-[#1e1f4d] border-gray-700 hover:border-purple-500 transition-colors">
+    <Card className="bg-white border-gray-200 hover:border-blue-500 transition-colors shadow-sm">
       <CardContent className="p-6">
         <Icon className={`w-10 h-10 ${iconColor} mb-4`} />
-        <h3 className="text-xl font-semibold mb-2">{title}</h3>
-        <p className="text-gray-400">{description}</p>
+        <h3 className="text-xl font-semibold mb-2 text-gray-900">{title}</h3>
+        <p className="text-gray-600">{description}</p>
       </CardContent>
     </Card>
   );
