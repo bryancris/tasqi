@@ -14,14 +14,14 @@ export function DesktopTaskCard({ task, onClick, dragHandleProps }: DesktopTaskC
     <div
       onClick={onClick}
       className={cn(
-        "rounded px-1.5 py-1 mb-0.5 cursor-pointer",
+        "rounded-md px-4 py-3 mb-2 cursor-pointer",
         "hover:ring-2 hover:ring-offset-1 hover:ring-blue-500",
         getPriorityColor(task.priority),
-        "text-white"
+        "text-white min-h-[50px] flex items-center"
       )}
       {...dragHandleProps}
     >
-      <div className="truncate text-[10px] leading-tight">
+      <div className="text-sm font-medium line-clamp-2">
         {task.title}
       </div>
     </div>

@@ -17,14 +17,14 @@ export function MobileTaskCard({ task, onComplete, onClick, dragHandleProps }: M
   return (
     <div 
       className={cn(
-        "p-4 rounded-md flex items-center justify-between text-white w-full cursor-pointer border-[0.5px] border-black/10",
+        "p-4 rounded-md flex items-center justify-between text-white w-full cursor-pointer min-h-[64px]",
         task.status === 'unscheduled' ? 'bg-blue-500' : 
         task.status === 'completed' ? 'bg-gray-500' :
         getPriorityColor(task.priority)
       )}
       onClick={onClick}
     >
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 flex-1">
         <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing touch-none">
           <GripVertical className="h-5 w-5 text-white/50 hover:text-white/75 transition-colors" />
         </div>
