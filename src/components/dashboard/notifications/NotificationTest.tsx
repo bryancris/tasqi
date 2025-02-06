@@ -10,6 +10,11 @@ export function NotificationTest() {
     try {
       console.log("Testing notification...");
       
+      // Create and play notification sound
+      const audio = new Audio('/notification-sound.mp3');
+      audio.volume = 0.5; // Set volume to 50%
+      await audio.play();
+      
       // First check if notifications are supported
       if (!("Notification" in window)) {
         toast.error("This browser does not support notifications");
@@ -49,7 +54,8 @@ export function NotificationTest() {
         tag: 'test-notification',
         renotify: true,
         requireInteraction: true,
-        silent: false
+        silent: false,
+        sound: '/notification-sound.mp3' // This is for browsers that support notification sounds
       });
 
       console.log("Notification sent successfully");
