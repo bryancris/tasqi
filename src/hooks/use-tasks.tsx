@@ -45,7 +45,7 @@ export function useTasks() {
         (payload) => {
           console.log('Received task change:', payload);
           queryClient.invalidateQueries({ queryKey: ['tasks'] });
-          refetch();
+          void refetch();
         }
       )
       .subscribe((status) => {
@@ -58,5 +58,9 @@ export function useTasks() {
     };
   }, [queryClient, refetch]);
 
-  return { tasks, refetch };
+  const wrappedRefetch = async () => {
+    await refetch();
+  };
+
+  return { tasks, refetch: wrappedRefetch };
 }
