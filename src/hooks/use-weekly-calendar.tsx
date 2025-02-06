@@ -1,4 +1,3 @@
-
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "@/components/dashboard/TaskBoard";
@@ -47,22 +46,22 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
 
         if (error) throw error;
       } else {
-        const dropData = over.data?.current as { date: string; hour: number } | undefined;
-        if (!dropData) {
-          console.error('Missing drop data');
+        // Safely handle the drop data
+        const dropData = over.data?.current as { date?: string; hour?: number } | undefined;
+        if (!dropData || !dropData.date || typeof dropData.hour !== 'number') {
+          console.error('Invalid drop data:', dropData);
           return;
         }
 
-        const { date, hour } = dropData;
-        const startTime = `${hour.toString().padStart(2, '0')}:00:00`;
-        const endTime = `${(hour + 1).toString().padStart(2, '0')}:00:00`;
+        const startTime = `${dropData.hour.toString().padStart(2, '0')}:00:00`;
+        const endTime = `${(dropData.hour + 1).toString().padStart(2, '0')}:00:00`;
 
-        console.log('Drop data:', { date, startTime, endTime });
+        console.log('Drop data:', { date: dropData.date, startTime, endTime });
 
         const { error } = await supabase
           .from('tasks')
           .update({
-            date: date,
+            date: dropData.date,
             start_time: startTime,
             end_time: endTime,
             status: 'scheduled'
@@ -92,7 +91,6 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
     task.status === 'scheduled' && task.date && task.start_time
   );
 
-  // Only show unscheduled tasks that are not completed
   const unscheduledTasks = tasks.filter(task => 
     task.status === 'unscheduled'
   );
@@ -114,4 +112,3 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
     handleDragEnd
   };
 }
-
