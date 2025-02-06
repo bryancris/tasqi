@@ -72,39 +72,3 @@ self.addEventListener('notificationclick', event => {
       })
   );
 });
-
-// Play sound when showing notification
-self.addEventListener('push', async event => {
-  console.log('📨 Push event received');
-  
-  if (!event.data) {
-    console.log('No data in push event');
-    return;
-  }
-
-  try {
-    const data = event.data.json();
-    console.log('📦 Push data received:', data);
-    
-    const options = {
-      body: data.body,
-      icon: '/pwa-192x192.png',
-      badge: '/pwa-192x192.png',
-      vibrate: [200, 100, 200],
-      requireInteraction: true,
-      tag: data.tag || 'default',
-      renotify: true,
-      silent: false
-    };
-
-    await self.registration.showNotification(data.title, options);
-    
-    // Play notification sound
-    const audio = new Audio('/notification-sound.mp3');
-    audio.volume = 0.5;
-    await audio.play();
-  } catch (error) {
-    console.error('Error handling push event:', error);
-  }
-});
-

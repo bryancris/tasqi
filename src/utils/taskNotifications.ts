@@ -144,4 +144,3 @@ export const checkAndNotifyUpcomingTasks = async () => {
     throw error;
   }
 };
-
