@@ -30,7 +30,7 @@ export function DayCell({ day, timeSlot, tasks, dayIndex }: DayCellProps) {
     <div
       ref={setNodeRef}
       className={cn(
-        "min-h-[80px] relative p-1",
+        "min-h-[60px] relative p-0.5", // Reduced padding for more compact look
         "transition-colors duration-200",
         "border-t border-gray-200",
         isOver ? "bg-blue-50" : "hover:bg-gray-50",
@@ -38,12 +38,14 @@ export function DayCell({ day, timeSlot, tasks, dayIndex }: DayCellProps) {
       )}
     >
       {tasks.map((task, index) => (
-        <TaskCard 
-          key={task.id} 
-          task={task} 
-          index={index}
-          isDraggable={true}
-        />
+        <div key={task.id} className="text-[10px] leading-tight"> {/* Smaller font size */}
+          <TaskCard 
+            key={task.id} 
+            task={task} 
+            index={index}
+            isDraggable={true}
+          />
+        </div>
       ))}
     </div>
   );
