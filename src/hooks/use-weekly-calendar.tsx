@@ -11,7 +11,7 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
   const { toast } = useToast();
 
   const { data: tasks = [] } = useQuery({
-    queryKey: ['tasks'],  // Use the same query key as useTasks
+    queryKey: ['tasks'],
     queryFn: async () => {
       console.log('Fetching tasks for weekly calendar...');
       const { data, error } = await supabase
@@ -23,6 +23,7 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
         console.error('Error fetching tasks:', error);
         throw error;
       }
+      
       console.log('Fetched tasks for weekly calendar:', data);
       return data as Task[];
     },
@@ -98,18 +99,18 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
 
   // Update the filter to properly handle scheduled tasks
   const scheduledTasks = tasks.filter(task => {
-    const isScheduled = task.status === 'scheduled' || 
-                       (task.date && task.start_time && !task.status);
-    return isScheduled;
+    if (!task.date || !task.start_time) return false;
+    const taskDate = format(new Date(task.date), 'yyyy-MM-dd');
+    const weekStartDate = format(weekStart, 'yyyy-MM-dd');
+    const weekEndDate = format(weekEnd, 'yyyy-MM-dd');
+    return taskDate >= weekStartDate && taskDate <= weekEndDate;
   });
 
-  console.log('Scheduled tasks:', scheduledTasks);
+  console.log('Filtered scheduled tasks:', scheduledTasks);
 
   const unscheduledTasks = tasks.filter(task => 
-    task.status === 'unscheduled' || (!task.status && !task.date && !task.start_time)
+    task.status === 'unscheduled' || (!task.date && !task.start_time)
   );
-
-  console.log('Unscheduled tasks:', unscheduledTasks);
 
   const visitsPerDay = weekDays.map(day => {
     const dayTasks = scheduledTasks.filter(task => {
