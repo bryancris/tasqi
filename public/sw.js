@@ -1,3 +1,4 @@
+
 const CACHE_NAME = 'lovable-pwa-v1';
 
 const urlsToCache = [
@@ -73,45 +74,37 @@ self.addEventListener('notificationclick', event => {
 });
 
 // Play sound when showing notification
-async function playNotificationSound() {
-  try {
-    const audio = new Audio('/notification-sound.mp3');
-    audio.volume = 0.5;
-    await audio.play();
-  } catch (error) {
-    console.error('Error playing notification sound:', error);
-  }
-}
-
-// Handle showing notifications
 self.addEventListener('push', async event => {
   console.log('📨 Push event received');
   
   if (!event.data) {
-    console.log('Direct notification call');
-    const title = 'Task Reminder';
-    const options = {
-      body: 'You have an upcoming task',
-      icon: '/pwa-192x192.png',
-      badge: '/pwa-192x192.png',
-      vibrate: [200, 100, 200],
-      requireInteraction: true
-    };
-    
-    await self.registration.showNotification(title, options);
+    console.log('No data in push event');
     return;
   }
 
-  const data = event.data.json();
-  console.log('📦 Push data received:', data);
-  
-  const options = {
-    body: data.body,
-    icon: '/pwa-192x192.png',
-    badge: '/pwa-192x192.png',
-    vibrate: [200, 100, 200],
-    requireInteraction: true
-  };
+  try {
+    const data = event.data.json();
+    console.log('📦 Push data received:', data);
+    
+    const options = {
+      body: data.body,
+      icon: '/pwa-192x192.png',
+      badge: '/pwa-192x192.png',
+      vibrate: [200, 100, 200],
+      requireInteraction: true,
+      tag: data.tag || 'default',
+      renotify: true,
+      silent: false
+    };
 
-  await self.registration.showNotification(data.title, options);
+    await self.registration.showNotification(data.title, options);
+    
+    // Play notification sound
+    const audio = new Audio('/notification-sound.mp3');
+    audio.volume = 0.5;
+    await audio.play();
+  } catch (error) {
+    console.error('Error handling push event:', error);
+  }
 });
+

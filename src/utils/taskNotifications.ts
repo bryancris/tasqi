@@ -20,7 +20,9 @@ const registerServiceWorker = async (): Promise<ServiceWorkerRegistration> => {
     const registration = await navigator.serviceWorker.register('/sw.js');
     console.log("Service worker registered:", registration);
 
-    // Wait for the service worker to be activated
+    // Wait for the service worker to be ready
+    await navigator.serviceWorker.ready;
+    
     if (!registration.active) {
       await new Promise<void>((resolve) => {
         registration.addEventListener('activate', () => {
@@ -73,15 +75,25 @@ export const checkAndNotifyUpcomingTasks = async () => {
 
     console.log(`📋 Found ${tasks?.length || 0} upcoming tasks with reminders enabled`);
 
+    // Get service worker registration first
     const registration = await registerServiceWorker();
+    
+    // Make sure service worker is active
+    if (!registration.active) {
+      console.error("❌ Service worker is not active");
+      return;
+    }
+    
     console.log("✅ Service worker registered and activated");
 
-    tasks?.forEach(task => {
-      if (!task.date || !task.start_time) return;
+    for (const task of tasks || []) {
+      if (!task.date || !task.start_time) continue;
+      
+      console.log("\n🔍 Checking task:", task.title);
       
       if (notifiedTasks.has(task.id)) {
         console.log("⏭️ Already notified about task:", task.id);
-        return;
+        continue;
       }
 
       const taskDateTime = parseISO(`${task.date}T${task.start_time}`);
@@ -90,6 +102,8 @@ export const checkAndNotifyUpcomingTasks = async () => {
       console.log("📊 Task Details:", {
         taskId: task.id,
         taskTitle: task.title,
+        taskDate: task.date,
+        taskTime: task.start_time,
         taskDateTime: taskDateTime.toLocaleString(),
         secondsUntilTask
       });
@@ -103,20 +117,26 @@ export const checkAndNotifyUpcomingTasks = async () => {
 
         console.log("✅ Service worker ready, attempting to show notification");
         
-        registration.showNotification(notificationTitle, {
-          body: notificationBody,
-          icon: "/pwa-192x192.png",
-          badge: "/pwa-192x192.png",
-          vibrate: [200, 100, 200],
-          requireInteraction: true
-        }).then(() => {
+        try {
+          // Use the same direct approach as the test notification
+          await registration.showNotification(notificationTitle, {
+            body: notificationBody,
+            icon: "/pwa-192x192.png",
+            badge: "/pwa-192x192.png",
+            vibrate: [200, 100, 200],
+            requireInteraction: true,
+            tag: `task-${task.id}`,
+            renotify: true,
+            silent: false
+          });
+          
           notifiedTasks.add(task.id);
           console.log("✅ Notification sent successfully for task:", task.title);
-        }).catch(error => {
+        } catch (error) {
           console.error("❌ Error showing notification:", error);
-        });
+        }
       }
-    });
+    }
     
     console.log("\n==================== ✅ CHECK COMPLETE ✅ ====================\n");
   } catch (error) {
@@ -124,3 +144,4 @@ export const checkAndNotifyUpcomingTasks = async () => {
     throw error;
   }
 };
+
