@@ -10,11 +10,6 @@ export function NotificationTest() {
     try {
       console.log("Testing notification...");
       
-      // Create and play notification sound
-      const audio = new Audio('/notification-sound.mp3');
-      audio.volume = 0.5; // Set volume to 50%
-      await audio.play();
-      
       // First check if notifications are supported
       if (!("Notification" in window)) {
         toast.error("This browser does not support notifications");
@@ -22,6 +17,23 @@ export function NotificationTest() {
       }
 
       console.log("Current notification permission:", Notification.permission);
+      
+      // Create and play notification sound
+      const audio = new Audio('/notification-sound.mp3');
+      audio.volume = 0.5; // Set volume to 50%
+      await audio.play();
+
+      // Handle different permission states
+      if (Notification.permission === "denied") {
+        toast.error(
+          "Notifications are blocked. Please enable them in your browser settings:",
+          {
+            description: "Settings → Privacy & Security → Site Settings → Notifications",
+            duration: 5000
+          }
+        );
+        return;
+      }
       
       // If permission is not granted, request it
       if (Notification.permission !== "granted") {
