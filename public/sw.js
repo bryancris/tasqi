@@ -1,74 +1,92 @@
+// Cache name
+const CACHE_NAME = 'tasqi-cache-v1';
 
-const CACHE_NAME = 'lovable-pwa-v1';
-
+// Assets to cache
 const urlsToCache = [
   '/',
   '/index.html',
-  '/manifest.json',
   '/notification-sound.mp3',
   '/pwa-192x192.png',
-  '/dashboard',
-  '/dashboard/weekly'
+  '/pwa-512x512.png'
 ];
 
+// Install event - cache assets
 self.addEventListener('install', event => {
+  console.log('Service Worker: Installing');
+  
+  // Skip waiting to activate immediately
+  self.skipWaiting();
+  
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
-  );
-  // Immediately activate the service worker
-  self.skipWaiting();
-});
-
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    Promise.all([
-      // Clean up old caches
-      caches.keys().then(keys => Promise.all(
-        keys.map(key => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
-        })
-      )),
-      // Take control of all pages immediately
-      self.clients.claim()
-    ])
-  );
-});
-
-self.addEventListener('fetch', event => {
-  // Handle navigation requests specially
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request).catch(() => {
-        return caches.match('/index.html');
+      .then(cache => {
+        console.log('Service Worker: Caching Files');
+        return cache.addAll(urlsToCache);
       })
-    );
-    return;
-  }
+      .then(() => console.log('Service Worker: All Files Cached'))
+      .catch(error => console.error('Service Worker: Cache Failed', error))
+  );
+});
 
-  // Handle other requests
+// Activate event - clean up old caches
+self.addEventListener('activate', event => {
+  console.log('Service Worker: Activated');
+  
+  event.waitUntil(
+    caches.keys()
+      .then(cacheNames => {
+        return Promise.all(
+          cacheNames.map(cache => {
+            if (cache !== CACHE_NAME) {
+              console.log('Service Worker: Clearing Old Cache');
+              return caches.delete(cache);
+            }
+          })
+        );
+      })
+  );
+  
+  // Claim clients immediately
+  self.clients.claim();
+});
+
+// Fetch event - serve cached content when offline
+self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)
-      .then(response => response || fetch(event.request))
+      .then(response => {
+        // Return cached version or fetch new
+        return response || fetch(event.request)
+          .then(fetchResponse => {
+            return caches.open(CACHE_NAME)
+              .then(cache => {
+                cache.put(event.request, fetchResponse.clone());
+                return fetchResponse;
+              });
+          });
+      })
   );
 });
 
-// Handle notification clicks
+// Notification click event
 self.addEventListener('notificationclick', event => {
-  console.log('🔔 Notification clicked:', event);
+  console.log('Notification clicked:', event);
+  
   event.notification.close();
-
+  
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true })
+    clients.matchAll({ type: 'window' })
       .then(clientList => {
-        for (const client of clientList) {
-          if ('focus' in client) {
-            return client.focus();
+        if (clientList.length > 0) {
+          let client = clientList[0];
+          for (let i = 0; i < clientList.length; i++) {
+            if (clientList[i].focused) {
+              client = clientList[i];
+            }
           }
+          return client.focus();
         }
-        return clients.openWindow('/dashboard');
+        return clients.openWindow('/');
       })
   );
 });

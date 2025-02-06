@@ -1,146 +1,152 @@
-
+import { useEffect, useCallback, useRef } from 'react';
 import { supabase } from "@/integrations/supabase/client";
-import { format, parseISO, differenceInSeconds } from "date-fns";
+import { toast } from "sonner";
 
+// Keep track of notified tasks
 const notifiedTasks = new Set<number>();
 
-const registerServiceWorker = async (): Promise<ServiceWorkerRegistration> => {
-  try {
-    if (!("serviceWorker" in navigator)) {
-      throw new Error("Service Worker not supported");
-    }
-
-    // Unregister existing service workers
-    const registrations = await navigator.serviceWorker.getRegistrations();
-    for (const registration of registrations) {
-      await registration.unregister();
-    }
-
-    console.log("Registering new service worker...");
-    const registration = await navigator.serviceWorker.register('/sw.js');
-    console.log("Service worker registered:", registration);
-
-    // Wait for the service worker to be ready
-    await navigator.serviceWorker.ready;
-    
-    if (!registration.active) {
-      await new Promise<void>((resolve) => {
-        registration.addEventListener('activate', () => {
-          console.log("Service worker activated");
-          resolve();
-        });
-      });
-    }
-
-    return registration;
-  } catch (error) {
-    console.error("Service Worker registration failed:", error);
-    throw error;
-  }
-};
-
 export const checkAndNotifyUpcomingTasks = async () => {
+  console.log('📋 Found upcoming tasks with reminders enabled');
+  
   try {
-    console.log("\n==================== 🔔 TASK NOTIFICATION CHECK 🔔 ====================");
-    const now = new Date();
-    
-    if (!("Notification" in window)) {
-      console.error("❌ This browser does not support notifications");
-      return;
-    }
-
-    if (Notification.permission !== "granted") {
-      console.log("🔄 Requesting notification permission...");
-      const permission = await Notification.requestPermission();
-      if (permission !== "granted") {
-        console.log("❌ Notification permission not granted");
-        return;
-      }
-    }
-
-    const today = format(now, 'yyyy-MM-dd');
-    console.log("📅 Checking tasks for date:", today);
-
+    // Get tasks for next 24 hours with reminders enabled
     const { data: tasks, error } = await supabase
-      .from("tasks")
-      .select("*")
-      .eq("status", "scheduled")
-      .eq("reminder_enabled", true)
-      .gte("date", today);
+      .from('tasks')
+      .select('*')
+      .eq('reminder_enabled', true)
+      .eq('status', 'scheduled')
+      .gte('date', new Date().toISOString().split('T')[0])
+      .order('date', { ascending: true });
 
-    if (error) {
-      console.error("❌ Error fetching tasks:", error);
-      throw error;
-    }
+    if (error) throw error;
 
-    console.log(`📋 Found ${tasks?.length || 0} upcoming tasks with reminders enabled`);
-
-    // Get service worker registration first
-    const registration = await registerServiceWorker();
-    
-    // Make sure service worker is active
-    if (!registration.active) {
-      console.error("❌ Service worker is not active");
+    if (!tasks?.length) {
       return;
     }
-    
-    console.log("✅ Service worker registered and activated");
 
-    for (const task of tasks || []) {
-      if (!task.date || !task.start_time) continue;
-      
-      console.log("\n🔍 Checking task:", task.title);
-      
+    console.log('📋 Found', tasks.length, 'upcoming tasks with reminders enabled');
+
+    for (const task of tasks) {
       if (notifiedTasks.has(task.id)) {
-        console.log("⏭️ Already notified about task:", task.id);
+        console.log('⏭️ Already notified about task:', task.id);
         continue;
       }
 
-      const taskDateTime = parseISO(`${task.date}T${task.start_time}`);
-      const secondsUntilTask = differenceInSeconds(taskDateTime, now);
+      const taskDate = new Date(task.date);
+      const taskTime = task.start_time ? task.start_time.split(':') : ['00', '00', '00'];
+      const [hours, minutes] = taskTime;
       
-      console.log("📊 Task Details:", {
+      taskDate.setHours(parseInt(hours), parseInt(minutes), 0);
+      
+      const taskDateTime = taskDate.toLocaleString();
+      console.log('\n🔍 Checking task:', task.title);
+      console.log('📊 Task Details:', {
         taskId: task.id,
         taskTitle: task.title,
         taskDate: task.date,
         taskTime: task.start_time,
-        taskDateTime: taskDateTime.toLocaleString(),
-        secondsUntilTask
+        taskDateTime,
+        currentTime: new Date().toLocaleString()
       });
 
-      if (Math.abs(secondsUntilTask) <= 30) {
-        console.log("🎯 Within notification window! Sending notification for task:", task.title);
-        
-        const timeString = format(taskDateTime, "h:mm a");
-        const notificationTitle = `Task Starting Now: ${task.title}`;
-        const notificationBody = `Your task "${task.title}" is starting now at ${timeString}`;
+      // Check if we're within 15 minutes of the task time
+      const timeDiff = taskDate.getTime() - new Date().getTime();
+      const minutesDiff = Math.floor(timeDiff / (1000 * 60));
 
-        console.log("✅ Service worker ready, attempting to show notification");
-        
-        try {
-          // Use the same direct approach as the test notification
-          await registration.showNotification(notificationTitle, {
-            body: notificationBody,
-            icon: "/pwa-192x192.png",
-            badge: "/pwa-192x192.png",
-            vibrate: [200, 100, 200],
-            requireInteraction: true,
-            tag: `task-${task.id}`,
-            renotify: true,
-            silent: false
-          });
-          
-          notifiedTasks.add(task.id);
-          console.log("✅ Notification sent successfully for task:", task.title);
-        } catch (error) {
-          console.error("❌ Error showing notification:", error);
-        }
+      if (minutesDiff <= 15 && minutesDiff >= -5) {
+        console.log('🎯 Within notification window! Sending notification for task:', task.title);
+        await showNotification(task);
+        notifiedTasks.add(task.id);
       }
     }
-    
-    console.log("\n==================== ✅ CHECK COMPLETE ✅ ====================\n");
+
+    console.log('\n==================== ✅ CHECK COMPLETE ✅ ====================\n');
   } catch (error) {
-    console.error("❌ Error in checkAndNotifyUpcomingTasks:", error);
+    console.error('Error checking tasks:', error);
+  }
+};
+
+const showNotification = async (task: any) => {
+  try {
+    if (!('Notification' in window)) {
+      console.error('❌ Notifications not supported');
+      return;
+    }
+
+    let permission = Notification.permission;
+
+    if (permission === 'default') {
+      permission = await Notification.requestPermission();
+    }
+
+    if (permission !== 'granted') {
+      console.error('❌ Notification permission not granted');
+      return;
+    }
+
+    const registration = await navigator.serviceWorker.ready;
+    console.log('✅ Service worker ready, attempting to show notification');
+
+    const title = task.title;
+    const options = {
+      body: `Task scheduled for ${task.start_time}`,
+      icon: '/pwa-192x192.png',
+      badge: '/pwa-192x192.png',
+      tag: `task-${task.id}`,
+      renotify: true,
+      requireInteraction: true,
+      silent: false
+    };
+
+    await registration.showNotification(title, options);
+    console.log('✅ Notification sent successfully for task:', task.title);
+
+    // Play notification sound
+    const audio = new Audio('/notification-sound.mp3');
+    audio.volume = 0.5;
+    await audio.play();
+
+  } catch (error) {
+    console.error('Error showing notification:', error);
     throw error;
   }
+};
+
+export const useTaskNotifications = () => {
+  const checkIntervalRef = useRef<NodeJS.Timeout>();
+
+  const startNotificationCheck = useCallback(() => {
+    // Clear any existing interval
+    if (checkIntervalRef.current) {
+      clearInterval(checkIntervalRef.current);
+    }
+
+    // Initial check
+    checkAndNotifyUpcomingTasks();
+
+    // Set up interval for subsequent checks
+    checkIntervalRef.current = setInterval(() => {
+      checkAndNotifyUpcomingTasks();
+    }, 30000); // Check every 30 seconds
+  }, []);
+
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      console.log('Registering new service worker...');
+      navigator.serviceWorker.register('/sw.js')
+        .then(registration => {
+          console.log('Service worker registered:', registration);
+          startNotificationCheck();
+        })
+        .catch(error => {
+          console.error('Service worker registration failed:', error);
+        });
+    }
+
+    return () => {
+      if (checkIntervalRef.current) {
+        clearInterval(checkIntervalRef.current);
+      }
+    };
+  }, [startNotificationCheck]);
 };
