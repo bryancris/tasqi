@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +15,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { TaskForm } from "./TaskForm";
 import { createTask } from "@/utils/taskUtils";
 import { TaskPriority } from "./TaskBoard";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AddTaskDrawerProps {
   children?: React.ReactNode;
@@ -31,6 +33,7 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
 
   const handleSubmit = async () => {
     try {
@@ -85,8 +88,8 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
           </Button>
         )}
       </DrawerTrigger>
-      <DrawerContent className="w-[400px] left-0 right-auto">
-        <div className="mx-auto w-full max-w-sm">
+      <DrawerContent className={`${isMobile ? 'h-[90vh] max-h-[90vh] overflow-y-auto' : 'w-[400px]'} ${!isMobile ? 'left-0 right-auto' : ''}`}>
+        <div className={`mx-auto w-full ${isMobile ? 'max-w-full px-4' : 'max-w-sm'}`}>
           <DrawerHeader>
             <div className="flex items-center justify-between">
               <DrawerTitle>Add New Task</DrawerTitle>
