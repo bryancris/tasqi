@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { Task } from "../TaskBoard";
@@ -47,7 +48,7 @@ export const DraggableTask = ({ task }: DraggableTaskProps) => {
           "text-[10px] leading-tight",
           "text-white break-words",
           "h-full cursor-move",
-          getPriorityColor(task.priority)
+          task.status === 'unscheduled' ? 'bg-[#1EAEDB]' : getPriorityColor(task.priority)
         )}
       >
         <div className="font-medium line-clamp-2">{task.title}</div>
