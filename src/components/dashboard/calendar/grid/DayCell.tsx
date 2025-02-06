@@ -1,6 +1,6 @@
 import React from 'react';
 import { useDroppable } from "@dnd-kit/core";
-import { format, addDays } from "date-fns";
+import { format } from "date-fns";
 import { Task } from "../../TaskBoard";
 import { TaskCard } from "../../TaskCard";
 import { cn } from "@/lib/utils";
@@ -50,10 +50,11 @@ export function DayCell({ day, timeSlot, tasks, dayIndex }: DayCellProps) {
       height: `${heightPercentage}%`,
       top: `${topPercentage}%`,
       position: 'absolute' as const,
-      left: '0px',
-      right: '0px',
+      left: '0',
+      right: '0',
       zIndex: 10,
-      width: '100%'
+      width: '100%',
+      padding: '0 2px'
     };
   };
 
@@ -76,7 +77,7 @@ export function DayCell({ day, timeSlot, tasks, dayIndex }: DayCellProps) {
         if (!position) return null;
 
         return (
-          <div key={task.id} style={position} className="px-0.5">
+          <div key={task.id} style={position}>
             <TaskCard 
               key={task.id} 
               task={task} 
