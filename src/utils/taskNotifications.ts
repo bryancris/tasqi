@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { format, parseISO, differenceInMinutes, isSameMinute } from "date-fns";
 
@@ -55,14 +56,17 @@ export const checkAndNotifyUpcomingTasks = async () => {
       }
 
       const taskDateTime = parseISO(`${task.date}T${task.start_time}`);
+      const minutesUntilTask = differenceInMinutes(taskDateTime, now);
       
-      // Debug logging
+      // Enhanced debug logging
       console.log({
         taskId: task.id,
         taskTitle: task.title,
         taskDateTime: taskDateTime.toISOString(),
         currentTime: now.toISOString(),
-        isSameMinute: isSameMinute(taskDateTime, now)
+        minutesUntilTask: minutesUntilTask,
+        isSameMinute: isSameMinute(taskDateTime, now),
+        timeUntilNotification: `${Math.floor(minutesUntilTask / 60)}h ${minutesUntilTask % 60}m`
       });
 
       // Check if current time matches task start time exactly
