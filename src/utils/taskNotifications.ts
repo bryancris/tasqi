@@ -1,8 +1,40 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { format, parseISO, differenceInMinutes, differenceInSeconds, isSameMinute } from "date-fns";
 
 // Keep track of notifications we've already sent
 const notifiedTasks = new Set<number>();
+
+// Helper function to register service worker
+const registerServiceWorker = async () => {
+  try {
+    if (!("serviceWorker" in navigator)) {
+      throw new Error("Service Worker not supported");
+    }
+
+    // Unregister any existing service workers first
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    for (const registration of registrations) {
+      await registration.unregister();
+    }
+
+    // Register new service worker
+    const registration = await navigator.serviceWorker.register('/sw.js');
+    
+    // Wait for the service worker to be activated
+    if (registration.active) {
+      return registration;
+    }
+
+    // If not active yet, wait for activation
+    return new Promise((resolve) => {
+      registration.addEventListener('activate', () => resolve(registration));
+    });
+  } catch (error) {
+    console.error("Service Worker registration failed:", error);
+    throw error;
+  }
+};
 
 export const checkAndNotifyUpcomingTasks = async () => {
   try {
@@ -13,11 +45,6 @@ export const checkAndNotifyUpcomingTasks = async () => {
     // First check if notifications are supported and permitted
     if (!("Notification" in window)) {
       console.error("❌ This browser does not support notifications");
-      return;
-    }
-
-    if (!("serviceWorker" in navigator)) {
-      console.error("❌ Service Worker not supported");
       return;
     }
 
@@ -52,6 +79,10 @@ export const checkAndNotifyUpcomingTasks = async () => {
 
     console.log(`📋 Found ${tasks?.length || 0} upcoming tasks with reminders enabled`);
 
+    // Register service worker before processing tasks
+    const registration = await registerServiceWorker();
+    console.log("✅ Service worker registered and activated");
+
     tasks?.forEach(task => {
       console.log("\n🔍 Checking task:", task.title);
       
@@ -67,7 +98,6 @@ export const checkAndNotifyUpcomingTasks = async () => {
       }
 
       const taskDateTime = parseISO(`${task.date}T${task.start_time}`);
-      const minutesUntilTask = differenceInMinutes(taskDateTime, now);
       const secondsUntilTask = differenceInSeconds(taskDateTime, now);
       
       console.log("📊 Task Details:", {
@@ -77,7 +107,6 @@ export const checkAndNotifyUpcomingTasks = async () => {
         taskTime: task.start_time,
         taskDateTime: taskDateTime.toLocaleString(),
         currentTime: now.toLocaleString(),
-        minutesUntilTask,
         secondsUntilTask,
         reminderEnabled: task.reminder_enabled,
         status: task.status
@@ -93,23 +122,20 @@ export const checkAndNotifyUpcomingTasks = async () => {
         const notificationTitle = `Task Starting Now: ${task.title}`;
         const notificationBody = `Your task "${task.title}" is starting now at ${timeString}`;
 
-        // Get service worker registration and show notification
-        navigator.serviceWorker.ready.then(registration => {
-          console.log("✅ Service worker ready, showing notification...");
-          return registration.showNotification(notificationTitle, {
-            body: notificationBody,
-            icon: "/pwa-192x192.png",
-            badge: "/pwa-192x192.png",
-            vibrate: [200, 100, 200],
-            data: {
-              taskId: task.id,
-              url: window.location.origin + '/dashboard'
-            },
-            tag: `task-${task.id}`,
-            renotify: true,
-            requireInteraction: true,
-            silent: false
-          });
+        console.log("✅ Service worker ready, attempting to show notification");
+        registration.showNotification(notificationTitle, {
+          body: notificationBody,
+          icon: "/pwa-192x192.png",
+          badge: "/pwa-192x192.png",
+          vibrate: [200, 100, 200],
+          data: {
+            taskId: task.id,
+            url: window.location.origin + '/dashboard'
+          },
+          tag: `task-${task.id}`,
+          renotify: true,
+          requireInteraction: true,
+          silent: false
         }).then(() => {
           notifiedTasks.add(task.id);
           console.log("✅ Notification sent successfully for task:", task.title);
@@ -126,6 +152,6 @@ export const checkAndNotifyUpcomingTasks = async () => {
     console.log("\n==================== ✅ CHECK COMPLETE ✅ ====================\n");
   } catch (error) {
     console.error("❌ Error in checkAndNotifyUpcomingTasks:", error);
-    throw error; // Re-throw to ensure the error appears in the console
+    throw error;
   }
 };
