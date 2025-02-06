@@ -21,14 +21,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Clear all auth data and redirect to login
     const handleInvalidSession = async () => {
       console.log("Handling invalid session");
-      // Clear any existing session data
-      await supabase.auth.signOut();
-      localStorage.removeItem('supabase.auth.token');
-      setSession(null);
-      setLoading(false);
-      navigate('/auth');
+      try {
+        // Clear session from Supabase
+        await supabase.auth.signOut();
+        // Clear all local storage related to auth
+        localStorage.clear();
+        // Update state
+        setSession(null);
+        // Redirect to auth page
+        navigate('/auth');
+      } catch (error) {
+        console.error("Error handling invalid session:", error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     // Initialize session from local storage if available
@@ -42,7 +51,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           if (error.message.includes('Invalid Refresh Token') || 
               error.message.includes('token_not_found') || 
               error.message.includes('refresh_token_not_found')) {
-            console.log("Invalid refresh token detected, clearing session");
+            console.log("Invalid refresh token detected");
             toast.error("Session expired. Please sign in again.");
             await handleInvalidSession();
           }
@@ -64,21 +73,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     };
 
+    // Initialize auth
     initializeAuth();
 
     // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
-      console.log("Auth state changed:", event, !!currentSession);
+      console.log("Auth state changed:", event, currentSession?.user?.email);
       
       if (event === 'TOKEN_REFRESHED') {
         console.log("Token refreshed successfully");
         setSession(currentSession);
-      } else if (event === 'SIGNED_OUT') {
-        console.log("User signed out");
+      } else if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+        console.log("User signed out or deleted");
         await handleInvalidSession();
-        toast.success("You have been logged out");
+        if (event === 'SIGNED_OUT') {
+          toast.success("You have been logged out");
+        }
       } else if (event === 'SIGNED_IN') {
         console.log("User signed in");
         setSession(currentSession);
