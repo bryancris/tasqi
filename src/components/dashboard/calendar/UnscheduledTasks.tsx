@@ -25,7 +25,7 @@ export function UnscheduledTasks({ tasks }: UnscheduledTasksProps) {
         }`}
       >
         {tasks.map((task) => (
-          <div key={task.id} className="bg-[#1EAEDB] text-white rounded-lg p-3">
+          <div key={task.id} className="bg-[#C8C8C9] text-white rounded-lg p-3">
             <DraggableTask key={task.id} task={task} />
           </div>
         ))}
