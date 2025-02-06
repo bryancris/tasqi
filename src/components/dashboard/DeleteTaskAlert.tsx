@@ -20,11 +20,15 @@ interface DeleteTaskAlertProps {
 
 export function DeleteTaskAlert({ isLoading: externalLoading, onDelete }: DeleteTaskAlertProps) {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
       await onDelete();
+      setIsOpen(false); // Close the dialog after successful deletion
+    } catch (error) {
+      console.error('Error deleting task:', error);
     } finally {
       setIsDeleting(false);
     }
@@ -33,7 +37,7 @@ export function DeleteTaskAlert({ isLoading: externalLoading, onDelete }: Delete
   const isLoading = isDeleting || externalLoading;
 
   return (
-    <AlertDialog>
+    <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
       <AlertDialogTrigger asChild>
         <Button 
           variant="destructive" 
