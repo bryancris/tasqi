@@ -1,9 +1,11 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Task } from "../TaskBoard";
 import { DndContext, MouseSensor, TouchSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { startOfDay, isAfter } from "date-fns";
 import { TaskCard } from "../TaskCard";
+import { NotificationTest } from "../notifications/NotificationTest";
 
 interface TaskBoardSectionProps {
   tasks: Task[];
@@ -47,7 +49,10 @@ export function TaskBoardSection({ tasks, onDragEnd, onComplete }: TaskBoardSect
   return (
     <Card className="flex flex-col h-full overflow-hidden">
       <CardHeader className="flex-none pb-4 border-b">
-        <CardTitle className="text-2xl font-semibold">Task Board</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-2xl font-semibold">Task Board</CardTitle>
+          <NotificationTest />
+        </div>
       </CardHeader>
       <CardContent className="flex-1 overflow-y-auto">
         <DndContext sensors={sensors} onDragEnd={onDragEnd}>
