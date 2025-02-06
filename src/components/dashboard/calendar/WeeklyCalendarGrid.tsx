@@ -39,11 +39,11 @@ export function WeeklyCalendarGrid({
       showFullWeek ? "grid-cols-8" : "grid-cols-6",
       "divide-x divide-gray-600",
       "border border-gray-600 rounded-lg overflow-hidden",
-      "bg-[#1A1F2C] shadow-sm"
+      "bg-white shadow-sm"
     )}>
       {/* Time column header */}
-      <div className="h-[100px] bg-[#222222] flex items-center justify-center relative z-10 border-b border-gray-600">
-        <span className="text-gray-300 font-medium">Time</span>
+      <div className="h-[100px] bg-[#E3F2F6] flex items-center justify-center relative z-10 border-b border-gray-600">
+        <span className="text-gray-600 font-medium">Time</span>
       </div>
 
       {/* Day column headers */}
