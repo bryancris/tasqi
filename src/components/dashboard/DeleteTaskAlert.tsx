@@ -50,9 +50,9 @@ export function DeleteTaskAlert({ isLoading: externalLoading, onDelete }: Delete
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete the task.
+            This action cannot be undone. This will permanently delete the task from your account.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

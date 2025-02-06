@@ -52,6 +52,11 @@ self.addEventListener('activate', event => {
 
 // Fetch event - serve cached content when offline
 self.addEventListener('fetch', event => {
+  // Skip caching for DELETE requests
+  if (event.request.method === 'DELETE') {
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then(response => {
