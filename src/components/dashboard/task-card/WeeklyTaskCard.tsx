@@ -27,10 +27,11 @@ export function WeeklyTaskCard({ task, onClick, onComplete, dragHandleProps }: W
       {...dragHandleProps}
       onClick={onClick}
       className={cn(
-        "absolute inset-0", // This ensures the card takes up the full space of its container
+        "absolute inset-0",
         "cursor-pointer",
         "text-white text-xs leading-tight",
         "shadow-sm",
+        "rounded-md", // Added rounded corners
         getPriorityColor(task.priority),
       )}
     >
