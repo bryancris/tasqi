@@ -97,19 +97,26 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
     }
   };
 
-  // Update the filter to properly handle scheduled tasks
+  // Update the filter to properly handle scheduled tasks and exclude completed ones
   const scheduledTasks = tasks.filter(task => {
+    // First check if task is completed
+    if (task.status === 'completed') return false;
+    
+    // Then check if it has date and time
     if (!task.date || !task.start_time) return false;
+    
+    // Finally check if it falls within the week range
     const taskDate = format(new Date(task.date), 'yyyy-MM-dd');
     const weekStartDate = format(weekStart, 'yyyy-MM-dd');
     const weekEndDate = format(weekEnd, 'yyyy-MM-dd');
     return taskDate >= weekStartDate && taskDate <= weekEndDate;
   });
 
-  console.log('Filtered scheduled tasks:', scheduledTasks);
+  console.log('Filtered scheduled tasks (excluding completed):', scheduledTasks);
 
   const unscheduledTasks = tasks.filter(task => 
-    task.status === 'unscheduled' || (!task.date && !task.start_time)
+    task.status !== 'completed' && // Exclude completed tasks
+    (task.status === 'unscheduled' || (!task.date && !task.start_time))
   );
 
   const visitsPerDay = weekDays.map(day => {
