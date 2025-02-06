@@ -14,21 +14,16 @@ export function DesktopTaskCard({ task, onClick, dragHandleProps }: DesktopTaskC
     <div
       onClick={onClick}
       className={cn(
-        "rounded px-1.5 py-1 mb-0.5 cursor-pointer", // Reduced padding
+        "rounded px-1.5 py-1 mb-0.5 cursor-pointer",
         "hover:ring-2 hover:ring-offset-1 hover:ring-blue-500",
         getPriorityColor(task.priority),
         "text-white"
       )}
       {...dragHandleProps}
     >
-      <div className="truncate text-[10px] leading-tight"> {/* Smaller font and tighter leading */}
+      <div className="truncate text-[10px] leading-tight">
         {task.title}
       </div>
-      {task.start_time && (
-        <div className="text-[9px] opacity-90"> {/* Even smaller time display */}
-          {task.start_time.substring(0, 5)}
-        </div>
-      )}
     </div>
   );
 }
