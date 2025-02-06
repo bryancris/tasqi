@@ -1,4 +1,6 @@
 import React from 'react';
+import { useDroppable } from "@dnd-kit/core";
+import { format, addDays } from "date-fns";
 import { Task } from "../../TaskBoard";
 import { TaskCard } from "../../TaskCard";
 import { cn } from "@/lib/utils";
@@ -14,6 +16,16 @@ interface DayCellProps {
 }
 
 export function DayCell({ day, timeSlot, tasks, dayIndex }: DayCellProps) {
+  const formattedDate = format(day, 'yyyy-MM-dd');
+  
+  const { setNodeRef, isOver } = useDroppable({
+    id: `${formattedDate}-${timeSlot.hour}`,
+    data: {
+      date: formattedDate,
+      hour: timeSlot.hour
+    }
+  });
+
   const getTaskPosition = (task: Task) => {
     if (!task.start_time || !task.end_time) return null;
 
@@ -28,11 +40,10 @@ export function DayCell({ day, timeSlot, tasks, dayIndex }: DayCellProps) {
     // Calculate duration in minutes
     const durationMinutes = (endHour - startHour) * 60 + (endMinute - startMinute);
     
-    // For a one-hour task, heightPercentage should be 100%
-    // For a 30-minute task, heightPercentage should be 50%
-    const heightPercentage = Math.min((durationMinutes / 60) * 100, 100);
+    // Calculate height based on duration (1 hour = 100%)
+    const heightPercentage = (durationMinutes / 60) * 100;
     
-    // Calculate top position (0 for start at hour, 50 for start at half hour)
+    // Calculate top position based on start minute (0-59 minutes)
     const topPercentage = (startMinute / 60) * 100;
 
     return {
@@ -42,11 +53,13 @@ export function DayCell({ day, timeSlot, tasks, dayIndex }: DayCellProps) {
       left: '0px',
       right: '0px',
       zIndex: 10,
+      width: '100%'
     };
   };
 
   return (
     <div
+      ref={setNodeRef}
       className={cn(
         "min-h-[60px] relative p-0.5",
         "transition-all duration-200 ease-in-out",
@@ -63,7 +76,7 @@ export function DayCell({ day, timeSlot, tasks, dayIndex }: DayCellProps) {
         if (!position) return null;
 
         return (
-          <div key={task.id} style={position} className="w-full px-0.5">
+          <div key={task.id} style={position} className="px-0.5">
             <TaskCard 
               key={task.id} 
               task={task} 
