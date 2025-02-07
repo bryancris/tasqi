@@ -1,3 +1,4 @@
+
 import { useEffect, useCallback, useRef } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { showNotification, checkNotificationPermission } from './notificationUtils';
@@ -13,15 +14,17 @@ export const checkAndNotifyUpcomingTasks = async (userId: string) => {
   try {
     console.log('🔍 Checking upcoming tasks for user:', userId);
     
-    // Get tasks for next 24 hours with reminders enabled
+    const now = new Date();
+    const currentDate = now.toISOString().split('T')[0];
+    
+    // Get tasks for today with reminders enabled
     const { data: tasks, error } = await supabase
       .from('tasks')
       .select('*')
       .eq('reminder_enabled', true)
       .eq('status', 'scheduled')
       .eq('user_id', userId)
-      .gte('date', new Date().toISOString().split('T')[0])
-      .order('date', { ascending: true });
+      .eq('date', currentDate);  // Only get today's tasks
 
     if (error) {
       console.error('❌ Error fetching tasks:', error);
@@ -33,9 +36,8 @@ export const checkAndNotifyUpcomingTasks = async (userId: string) => {
       return;
     }
 
-    console.log('📋 Found', tasks.length, 'upcoming tasks with reminders enabled');
+    console.log('📋 Found tasks:', tasks);
 
-    const now = new Date();
     for (const task of tasks) {
       if (notifiedTasks.has(task.id)) {
         console.log('⏭️ Already notified about task:', task.id);
@@ -50,8 +52,8 @@ export const checkAndNotifyUpcomingTasks = async (userId: string) => {
       // Combine date and time into a single Date object
       const taskDateTime = parseISO(`${task.date}T${task.start_time}`);
       
-      // Calculate notification window (1 minute before the task)
-      const notificationTime = addMinutes(taskDateTime, -1);
+      // Calculate notification window (5 minutes before the task)
+      const notificationTime = addMinutes(taskDateTime, -5);
       
       console.log('Task timing check:', {
         taskId: task.id,
@@ -62,7 +64,7 @@ export const checkAndNotifyUpcomingTasks = async (userId: string) => {
         shouldNotify: isAfter(now, notificationTime) && isBefore(now, taskDateTime)
       });
 
-      // Notify if we're within the 1-minute window before the task
+      // Notify if we're within the 5-minute window before the task
       if (isAfter(now, notificationTime) && isBefore(now, taskDateTime)) {
         console.log('🔔 Sending notification for task:', task.title);
         await showNotification(task);
