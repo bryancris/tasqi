@@ -57,7 +57,7 @@ export function DayColumn({ tempDate, onDaySelect }: DayColumnProps) {
             type="button"
             onClick={() => onDaySelect(dayNumbers[index])}
             className={cn(
-              "w-full h-10 px-3 text-sm font-medium text-center hover:bg-accent rounded-md transition-colors",
+              "w-full h-10 px-3 text-sm font-medium text-center hover:bg-accent rounded-md transition-colors border border-gray-200",
               tempDate && format(tempDate, 'dd') === day && "bg-[#1e1b4b] text-white"
             )}
           >
