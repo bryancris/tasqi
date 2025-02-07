@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useDroppable } from "@dnd-kit/core";
-import { format, isSameDay } from "date-fns";
+import { format, isSameDay, parseISO } from "date-fns";
 import { Task } from "../../TaskBoard";
 import { TaskCard } from "../../TaskCard";
 import { cn } from "@/lib/utils";
@@ -60,8 +60,8 @@ export function DayCell({ day, timeSlot, tasks, dayIndex, isLastRow }: DayCellPr
   const tasksForCell = tasks.filter(task => {
     if (!task.date || !task.start_time) return false;
     
-    // Parse the task date and compare using isSameDay
-    const taskDate = new Date(task.date);
+    // Parse the task date properly with timezone consideration
+    const taskDate = parseISO(task.date);
     const [taskStartHour] = task.start_time.split(':').map(Number);
     
     return isSameDay(taskDate, day) && taskStartHour === timeSlot.hour;

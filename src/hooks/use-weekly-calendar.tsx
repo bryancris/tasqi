@@ -2,7 +2,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "@/components/dashboard/TaskBoard";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { useToast } from "./use-toast";
 import { DragEndEvent } from "@dnd-kit/core";
 
@@ -105,8 +105,8 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
     // Check if task has required scheduling data
     if (!task.date || !task.start_time || !task.end_time) return false;
     
-    // Check if task falls within the selected week
-    const taskDate = format(new Date(task.date), 'yyyy-MM-dd');
+    // Check if task falls within the selected week, using parseISO for consistent date handling
+    const taskDate = format(parseISO(task.date), 'yyyy-MM-dd');
     const weekStartDate = format(weekStart, 'yyyy-MM-dd');
     const weekEndDate = format(weekEnd, 'yyyy-MM-dd');
     
@@ -124,7 +124,7 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
   const visitsPerDay = weekDays.map(day => {
     const dayTasks = scheduledTasks.filter(task => {
       if (!task.date) return false;
-      const taskDate = format(new Date(task.date), 'yyyy-MM-dd');
+      const taskDate = format(parseISO(task.date), 'yyyy-MM-dd');
       return taskDate === format(day, 'yyyy-MM-dd');
     });
     return `${dayTasks.length} ${dayTasks.length === 1 ? 'Visit' : 'Visits'}`;
