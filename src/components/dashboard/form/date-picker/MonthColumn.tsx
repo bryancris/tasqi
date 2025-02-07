@@ -1,6 +1,6 @@
 
 import { cn } from "@/lib/utils";
-import { format, addMonths, subMonths } from "date-fns";
+import { format } from "date-fns";
 import { useEffect, useRef } from "react";
 
 interface MonthColumnProps {
@@ -13,21 +13,14 @@ export function MonthColumn({ currentDate, tempDate, onMonthSelect }: MonthColum
   const selectedMonthIndex = tempDate.getMonth();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
-  const months = [
-    format(subMonths(tempDate, 1), 'MMM'),
-    format(tempDate, 'MMM'),
-    format(addMonths(tempDate, 1), 'MMM')
-  ];
-
-  const monthIndices = [
-    (selectedMonthIndex - 1 + 12) % 12,
-    selectedMonthIndex,
-    (selectedMonthIndex + 1) % 12
-  ];
+  const months = Array.from(
+    { length: 12 }, 
+    (_, i) => format(new Date(tempDate.getFullYear(), i, 1), 'MMM')
+  );
 
   useEffect(() => {
     if (scrollContainerRef.current) {
-      const selectedButton = scrollContainerRef.current.children[1] as HTMLElement;
+      const selectedButton = scrollContainerRef.current.children[selectedMonthIndex] as HTMLElement;
       if (selectedButton) {
         const containerHeight = scrollContainerRef.current.clientHeight;
         const buttonTop = selectedButton.offsetTop;
@@ -50,13 +43,13 @@ export function MonthColumn({ currentDate, tempDate, onMonthSelect }: MonthColum
       <div 
         ref={scrollContainerRef}
         onWheel={handleWheel}
-        className="space-y-3 px-1"
+        className="space-y-3 px-1 max-h-[250px] overflow-y-auto scrollbar-hide"
       >
         {months.map((month, index) => (
           <button
             key={month}
             type="button"
-            onClick={() => onMonthSelect(monthIndices[index])}
+            onClick={() => onMonthSelect(index)}
             className={cn(
               "w-full h-10 px-3 text-sm font-medium text-center hover:bg-accent rounded-md transition-colors border border-gray-200",
               tempDate && format(tempDate, 'MMM') === month && "bg-[#1e1b4b] text-white"
