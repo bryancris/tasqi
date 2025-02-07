@@ -60,13 +60,13 @@ export function DayCell({ day, timeSlot, tasks, dayIndex, isLastRow }: DayCellPr
   const tasksForCell = tasks.filter(task => {
     if (!task.date || !task.start_time) return false;
     
-    // Ensure we're comparing the dates without time components
-    const taskDate = startOfDay(parseISO(task.date));
-    const cellDate = startOfDay(day);
+    // Get the task date and format it for comparison
+    const taskFormattedDate = format(parseISO(task.date), 'yyyy-MM-dd');
+    const cellFormattedDate = format(day, 'yyyy-MM-dd');
     const [taskStartHour] = task.start_time.split(':').map(Number);
     
-    // Compare the dates and hours
-    return +taskDate === +cellDate && taskStartHour === timeSlot.hour;
+    // Compare the formatted dates and hours
+    return taskFormattedDate === cellFormattedDate && taskStartHour === timeSlot.hour;
   });
 
   return (
