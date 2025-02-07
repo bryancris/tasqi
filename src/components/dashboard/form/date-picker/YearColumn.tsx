@@ -1,3 +1,4 @@
+
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
@@ -10,8 +11,8 @@ interface YearColumnProps {
 export function YearColumn({ currentDate, tempDate, onYearSelect }: YearColumnProps) {
   const selectedYear = tempDate.getFullYear();
   const years = Array.from(
-    { length: 5 }, 
-    (_, i) => String(selectedYear - 2 + i)
+    { length: 3 }, 
+    (_, i) => String(selectedYear - 1 + i)
   );
 
   return (

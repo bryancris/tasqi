@@ -1,5 +1,6 @@
+
 import { cn } from "@/lib/utils";
-import { format, addMonths } from "date-fns";
+import { format, addMonths, subMonths } from "date-fns";
 import { useEffect, useRef } from "react";
 
 interface MonthColumnProps {
@@ -12,13 +13,21 @@ export function MonthColumn({ currentDate, tempDate, onMonthSelect }: MonthColum
   const selectedMonthIndex = tempDate.getMonth();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
-  const months = Array.from({ length: 12 }, (_, i) => 
-    format(addMonths(new Date(currentDate.getFullYear(), 0), i), 'MMM')
-  );
+  const months = [
+    format(subMonths(tempDate, 1), 'MMM'),
+    format(tempDate, 'MMM'),
+    format(addMonths(tempDate, 1), 'MMM')
+  ];
+
+  const monthIndices = [
+    (selectedMonthIndex - 1 + 12) % 12,
+    selectedMonthIndex,
+    (selectedMonthIndex + 1) % 12
+  ];
 
   useEffect(() => {
     if (scrollContainerRef.current) {
-      const selectedButton = scrollContainerRef.current.children[selectedMonthIndex] as HTMLElement;
+      const selectedButton = scrollContainerRef.current.children[1] as HTMLElement;
       if (selectedButton) {
         const containerHeight = scrollContainerRef.current.clientHeight;
         const buttonTop = selectedButton.offsetTop;
@@ -35,38 +44,27 @@ export function MonthColumn({ currentDate, tempDate, onMonthSelect }: MonthColum
     }
   };
 
-  // Calculate visible range (6 items)
-  const itemHeight = 40; // Height of each button
-  const visibleCount = 6;
-  const containerHeight = visibleCount * itemHeight;
-
   return (
-    <div className="flex flex-col space-y-2" style={{ height: containerHeight }}>
+    <div className="flex flex-col space-y-2">
       <div className="text-sm font-medium text-center bg-background z-10">Month</div>
       <div 
         ref={scrollContainerRef}
         onWheel={handleWheel}
-        className="relative flex-1 overflow-y-auto scrollbar-hide"
-        style={{ height: `${containerHeight - 24}px` }}
+        className="space-y-1 px-1"
       >
-        <div className="absolute inset-0">
-          {months.map((month, index) => (
-            <button
-              key={month}
-              type="button"
-              onClick={() => onMonthSelect(index)}
-              className={cn(
-                "absolute w-full h-[40px] px-3 text-sm font-semibold text-center hover:bg-accent rounded-md transition-colors",
-                tempDate && format(tempDate, 'MMM') === month && "bg-[#1e1b4b] text-white"
-              )}
-              style={{
-                top: `${index * itemHeight}px`,
-              }}
-            >
-              {month}
-            </button>
-          ))}
-        </div>
+        {months.map((month, index) => (
+          <button
+            key={month}
+            type="button"
+            onClick={() => onMonthSelect(monthIndices[index])}
+            className={cn(
+              "w-full px-3 py-2 text-sm font-semibold text-center hover:bg-accent rounded-md transition-colors",
+              tempDate && format(tempDate, 'MMM') === month && "bg-[#1e1b4b] text-white"
+            )}
+          >
+            {month}
+          </button>
+        ))}
       </div>
     </div>
   );
