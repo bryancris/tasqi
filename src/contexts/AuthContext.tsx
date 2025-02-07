@@ -21,26 +21,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Clear all auth data and redirect to login
-    const handleInvalidSession = async () => {
-      console.log("Handling invalid session");
-      try {
-        // Clear session from Supabase
-        await supabase.auth.signOut();
-        // Clear all local storage related to auth
-        localStorage.clear();
-        // Update state
-        setSession(null);
-        // Redirect to auth page
-        navigate('/auth');
-      } catch (error) {
-        console.error("Error handling invalid session:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    // Initialize session from local storage if available
     const initializeAuth = async () => {
       try {
         console.log("Initializing auth...");
@@ -48,34 +28,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         if (error) {
           console.error("Error getting session:", error);
-          if (error.message.includes('Invalid Refresh Token') || 
-              error.message.includes('token_not_found') || 
-              error.message.includes('refresh_token_not_found')) {
-            console.log("Invalid refresh token detected");
-            toast.error("Session expired. Please sign in again.");
-            await handleInvalidSession();
-          }
+          toast.error("Session expired. Please sign in again.");
+          setSession(null);
+          navigate('/auth');
           return;
         }
 
         if (initialSession) {
           console.log("Initial session found and valid");
           setSession(initialSession);
-          setLoading(false);
         } else {
           console.log("No initial session found");
-          await handleInvalidSession();
+          setSession(null);
+          if (window.location.pathname !== '/auth') {
+            navigate('/auth');
+          }
         }
       } catch (error) {
         console.error("Error in auth initialization:", error);
-        await handleInvalidSession();
+        setSession(null);
+        navigate('/auth');
+      } finally {
+        setLoading(false);
       }
     };
 
-    // Initialize auth
     initializeAuth();
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
@@ -98,8 +77,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.log("User profile updated");
         setSession(currentSession);
       }
-
-      setLoading(false);
     });
 
     return () => {

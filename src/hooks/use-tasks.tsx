@@ -10,7 +10,7 @@ export function useTasks() {
   const { session } = useAuth();
 
   const { data: tasks = [], refetch } = useQuery({
-    queryKey: ['tasks'],
+    queryKey: ['tasks', session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) {
         console.log('No session, skipping task fetch');
@@ -31,11 +31,9 @@ export function useTasks() {
       console.log('Fetched tasks:', data);
       return data as Task[];
     },
-    enabled: !!session?.user?.id, // Only run query when we have a session
-    staleTime: 0,
-    gcTime: 0,
-    refetchOnWindowFocus: true,
+    enabled: !!session?.user?.id,
     refetchOnMount: true,
+    refetchOnWindowFocus: true,
     refetchOnReconnect: true
   });
 
@@ -45,7 +43,7 @@ export function useTasks() {
       return;
     }
 
-    console.log('Setting up real-time subscription...');
+    console.log('Setting up real-time subscription for user:', session.user.id);
     
     const channel = supabase
       .channel('tasks-changes')
@@ -58,7 +56,7 @@ export function useTasks() {
         },
         (payload) => {
           console.log('Received task change:', payload);
-          queryClient.invalidateQueries({ queryKey: ['tasks'] });
+          queryClient.invalidateQueries({ queryKey: ['tasks', session.user.id] });
           void refetch();
         }
       )
