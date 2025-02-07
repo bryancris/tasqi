@@ -33,10 +33,8 @@ export function NotificationTest() {
       if (permission !== "granted") {
         try {
           console.log("Requesting notification permission...");
-          // Request permission synchronously to ensure browser shows the prompt
-          permission = await new Promise<NotificationPermission>((resolve) => {
-            Notification.requestPermission().then(resolve);
-          });
+          // Request permission directly from the click handler
+          permission = await Notification.requestPermission();
           console.log("Permission response:", permission);
         } catch (error) {
           console.error("Error requesting permission:", error);
@@ -56,8 +54,8 @@ export function NotificationTest() {
         return;
       }
 
-      // Create and show test notification using the Notification API directly first
-      const testNotification = new Notification("Test Notification", {
+      // Create a direct notification first to test permissions
+      new Notification("Test Notification", {
         body: "This is a direct test notification",
         icon: "/pwa-192x192.png"
       });
