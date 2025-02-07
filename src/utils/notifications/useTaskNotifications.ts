@@ -4,6 +4,7 @@ import { showNotification, checkNotificationPermission } from './notificationUti
 import { setupPushSubscription } from './subscriptionUtils';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
+import { parseISO, addMinutes, isBefore, isAfter } from 'date-fns';
 
 // Keep track of notified tasks
 const notifiedTasks = new Set<number>();
@@ -41,28 +42,28 @@ export const checkAndNotifyUpcomingTasks = async (userId: string) => {
         continue;
       }
 
-      const taskDate = new Date(task.date);
-      if (task.start_time) {
-        const [hours, minutes] = task.start_time.split(':');
-        taskDate.setHours(parseInt(hours), parseInt(minutes), 0);
-      } else {
-        // If no start time, default to start of day
-        taskDate.setHours(0, 0, 0, 0);
+      if (!task.date || !task.start_time) {
+        console.log('⚠️ Task missing date or start time:', task.id);
+        continue;
       }
 
-      const timeDiff = Math.abs(taskDate.getTime() - now.getTime());
-      const minutesDiff = Math.floor(timeDiff / (1000 * 60));
-
+      // Combine date and time into a single Date object
+      const taskDateTime = parseISO(`${task.date}T${task.start_time}`);
+      
+      // Calculate notification window (1 minute before the task)
+      const notificationTime = addMinutes(taskDateTime, -1);
+      
       console.log('Task timing check:', {
         taskId: task.id,
         taskTitle: task.title,
-        taskDateTime: taskDate.toLocaleString(),
-        currentTime: now.toLocaleString(),
-        minutesDiff
+        taskDateTime: taskDateTime.toISOString(),
+        notificationTime: notificationTime.toISOString(),
+        currentTime: now.toISOString(),
+        shouldNotify: isAfter(now, notificationTime) && isBefore(now, taskDateTime)
       });
 
-      // Notify if within 1 minute window
-      if (minutesDiff <= 1) {
+      // Notify if we're within the 1-minute window before the task
+      if (isAfter(now, notificationTime) && isBefore(now, taskDateTime)) {
         console.log('🔔 Sending notification for task:', task.title);
         await showNotification(task);
         notifiedTasks.add(task.id);
