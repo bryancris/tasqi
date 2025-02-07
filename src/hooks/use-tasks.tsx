@@ -1,15 +1,23 @@
+
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "@/components/dashboard/TaskBoard";
 import { useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function useTasks() {
   const queryClient = useQueryClient();
+  const { session } = useAuth();
 
   const { data: tasks = [], refetch } = useQuery({
     queryKey: ['tasks'],
     queryFn: async () => {
-      console.log('Fetching tasks...');
+      if (!session?.user?.id) {
+        console.log('No session, skipping task fetch');
+        return [];
+      }
+
+      console.log('Fetching tasks with session:', session.user.id);
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
@@ -23,6 +31,7 @@ export function useTasks() {
       console.log('Fetched tasks:', data);
       return data as Task[];
     },
+    enabled: !!session?.user?.id, // Only run query when we have a session
     staleTime: 0,
     gcTime: 0,
     refetchOnWindowFocus: true,
@@ -31,6 +40,11 @@ export function useTasks() {
   });
 
   useEffect(() => {
+    if (!session?.user?.id) {
+      console.log('No session, skipping subscription');
+      return;
+    }
+
     console.log('Setting up real-time subscription...');
     
     const channel = supabase
@@ -56,7 +70,7 @@ export function useTasks() {
       console.log('Cleaning up subscription...');
       supabase.removeChannel(channel);
     };
-  }, [queryClient, refetch]);
+  }, [queryClient, refetch, session?.user?.id]);
 
   const wrappedRefetch = async () => {
     await refetch();

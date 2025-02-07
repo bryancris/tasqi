@@ -19,7 +19,6 @@ import { useTaskNotifications } from "@/utils/notifications/useTaskNotifications
 const Dashboard = () => {
   const { view, changeView } = useCalendarView('tasks');
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [isLoading, setIsLoading] = useState(true);
   const { session } = useAuth();
   const isMobile = useIsMobile();
   const location = useLocation();
@@ -27,29 +26,12 @@ const Dashboard = () => {
   // Use the task notifications hook
   useTaskNotifications();
 
-  useEffect(() => {
-    const initializeDashboard = async () => {
-      try {
-        if (session) {
-          console.log("Session found, initializing dashboard");
-          setIsLoading(false);
-        }
-      } catch (error) {
-        console.error("Dashboard initialization error:", error);
-        toast.error("Error loading dashboard. Please try refreshing the page.");
-        setIsLoading(false);
-      }
-    };
-
-    initializeDashboard();
-  }, [session]);
-
   const handleDateChange = (date: Date) => {
     console.log('Date changed in Dashboard:', date);
     setSelectedDate(date);
   };
 
-  if (isLoading) {
+  if (!session) {
     return (
       <div className="flex items-center justify-center h-screen bg-background">
         <div className="space-y-4 w-[80%] max-w-[800px]">
