@@ -5,6 +5,7 @@ import { setupPushSubscription } from './subscriptionUtils';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { parseISO, addMinutes, isBefore, isAfter } from 'date-fns';
+import { zonedTimeToUtc, utcToZonedTime } from 'date-fns-tz';
 
 // Keep track of notified tasks
 const notifiedTasks = new Set<number>();
@@ -14,15 +15,8 @@ export const checkAndNotifyUpcomingTasks = async (userId: string) => {
     console.log('🔍 Checking upcoming tasks for user:', userId);
     
     const now = new Date();
-    const currentDate = now.toISOString().split('T')[0];
-    
-    // First get all tasks to debug what's available
-    const { data: allTasks } = await supabase
-      .from('tasks')
-      .select('*')
-      .eq('user_id', userId);
-      
-    console.log('📋 All tasks:', allTasks);
+    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    console.log('🌍 User timezone:', userTimeZone);
     
     // Get tasks with reminders enabled
     const { data: tasks, error } = await supabase
@@ -30,7 +24,7 @@ export const checkAndNotifyUpcomingTasks = async (userId: string) => {
       .select('*')
       .eq('reminder_enabled', true)
       .eq('user_id', userId)
-      .neq('status', 'completed'); // Changed to include all non-completed tasks
+      .neq('status', 'completed');
 
     if (error) {
       console.error('❌ Error fetching tasks:', error);
@@ -55,25 +49,32 @@ export const checkAndNotifyUpcomingTasks = async (userId: string) => {
         continue;
       }
 
-      // Combine date and time into a single Date object
-      const taskDateTime = parseISO(`${task.date}T${task.start_time}`);
+      // Convert task datetime to user's timezone
+      const taskDateTime = zonedTimeToUtc(
+        `${task.date}T${task.start_time}`,
+        userTimeZone
+      );
       
-      // Calculate notification window (5 minutes before the task)
+      // Calculate notification time (5 minutes before)
       const notificationTime = addMinutes(taskDateTime, -5);
+      
+      // Convert current time to user's timezone for comparison
+      const userLocalTime = utcToZonedTime(now, userTimeZone);
       
       console.log('Task timing check:', {
         taskId: task.id,
         taskTitle: task.title,
         taskDateTime: taskDateTime.toISOString(),
         notificationTime: notificationTime.toISOString(),
-        currentTime: now.toISOString(),
-        shouldNotify: isAfter(now, notificationTime) && isBefore(now, taskDateTime),
+        currentTime: userLocalTime.toISOString(),
+        userTimeZone,
+        shouldNotify: isAfter(userLocalTime, notificationTime) && isBefore(userLocalTime, taskDateTime),
         reminderEnabled: task.reminder_enabled,
         status: task.status
       });
 
       // Notify if we're within the 5-minute window before the task
-      if (isAfter(now, notificationTime) && isBefore(now, taskDateTime)) {
+      if (isAfter(userLocalTime, notificationTime) && isBefore(userLocalTime, taskDateTime)) {
         console.log('🔔 Sending notification for task:', task.title);
         await showNotification(task);
         notifiedTasks.add(task.id);
