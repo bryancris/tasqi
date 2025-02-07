@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useDroppable } from "@dnd-kit/core";
-import { format, parseISO, startOfDay } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { Task } from "../../TaskBoard";
 import { TaskCard } from "../../TaskCard";
 import { cn } from "@/lib/utils";
@@ -60,13 +60,11 @@ export function DayCell({ day, timeSlot, tasks, dayIndex, isLastRow }: DayCellPr
   const tasksForCell = tasks.filter(task => {
     if (!task.date || !task.start_time) return false;
     
-    // Get the task date and format it for comparison
     const taskFormattedDate = format(parseISO(task.date), 'yyyy-MM-dd');
-    const cellFormattedDate = format(day, 'yyyy-MM-dd');
     const [taskStartHour] = task.start_time.split(':').map(Number);
     
     // Compare the formatted dates and hours
-    return taskFormattedDate === cellFormattedDate && taskStartHour === timeSlot.hour;
+    return taskFormattedDate === formattedDate && taskStartHour === timeSlot.hour;
   });
 
   return (

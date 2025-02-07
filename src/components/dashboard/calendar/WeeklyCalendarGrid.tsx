@@ -43,7 +43,7 @@ const CalendarCell = ({
   const tasksForThisSlot = tasks.filter(task => {
     if (!task.date || !task.start_time) return false;
     
-    const taskDate = format(new Date(task.date), 'yyyy-MM-dd');
+    const taskDate = format(parseISO(task.date), 'yyyy-MM-dd');
     if (taskDate !== formattedDate) return false;
 
     const [taskStartHour] = task.start_time.split(':').map(Number);
