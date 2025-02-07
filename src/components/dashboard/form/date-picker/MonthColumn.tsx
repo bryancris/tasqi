@@ -39,9 +39,11 @@ export function MonthColumn({ currentDate, tempDate, onMonthSelect }: MonthColum
   }, [selectedMonthIndex]);
 
   const handleWheel = (e: React.WheelEvent) => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTop += e.deltaY;
-    }
+    e.preventDefault();
+    const newIndex = e.deltaY > 0 
+      ? (selectedMonthIndex + 1) % 12
+      : (selectedMonthIndex - 1 + 12) % 12;
+    onMonthSelect(newIndex);
   };
 
   return (

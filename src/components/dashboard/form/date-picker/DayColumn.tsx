@@ -38,9 +38,11 @@ export function DayColumn({ tempDate, onDaySelect }: DayColumnProps) {
   }, [selectedDay]);
 
   const handleWheel = (e: React.WheelEvent) => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTop += e.deltaY;
-    }
+    e.preventDefault();
+    const newDay = e.deltaY > 0 
+      ? dayNumbers[2]  // Next day
+      : dayNumbers[0]; // Previous day
+    onDaySelect(newDay);
   };
 
   return (
