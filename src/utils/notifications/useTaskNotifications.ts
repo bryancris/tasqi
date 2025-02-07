@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { supabase } from "@/integrations/supabase/client";
-import { showNotification } from './notificationUtils';
+import { showNotification, checkNotificationPermission } from './notificationUtils';
 import { setupPushSubscription } from './subscriptionUtils';
 import { toast } from 'sonner';
 
@@ -87,35 +87,22 @@ export const useTaskNotifications = () => {
           return;
         }
 
-        if (!('Notification' in window)) {
-          toast.error('Notifications are not supported in this browser');
+        // Check and request notification permission
+        const permissionGranted = await checkNotificationPermission();
+        if (!permissionGranted) {
+          toast.error('Please enable notifications to receive task reminders');
           return;
         }
 
-        // Request notification permission if not granted
-        if (Notification.permission === 'default') {
-          const permission = await Notification.requestPermission();
-          if (permission !== 'granted') {
-            toast.error('Notification permission denied');
-            return;
-          }
-        }
-
-        // Unregister any existing service workers
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        for (const registration of registrations) {
-          await registration.unregister();
-        }
-
-        // Register new service worker
-        console.log('Registering service worker...');
+        // Register service worker
+        console.log('📱 Registering service worker...');
         const registration = await navigator.serviceWorker.register('/sw.js', {
           scope: '/'
         });
 
         // Wait for the service worker to be ready
         await navigator.serviceWorker.ready;
-        console.log('Service worker ready:', registration.active?.state);
+        console.log('✅ Service worker activated:', registration.active?.state);
 
         // Set up push subscription
         await setupPushSubscription(registration);

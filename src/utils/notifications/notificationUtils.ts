@@ -13,15 +13,20 @@ export const showNotification = async (task: any) => {
 
     let permission = Notification.permission;
 
-    if (permission === 'default') {
-      permission = await Notification.requestPermission();
-    }
-
+    // Always request permission if not granted
     if (permission !== 'granted') {
-      console.error('❌ Notification permission not granted');
-      return;
+      console.log('📱 Requesting notification permission...');
+      permission = await Notification.requestPermission();
+      
+      if (permission !== 'granted') {
+        console.error('❌ Notification permission not granted');
+        return;
+      }
     }
 
+    console.log('🔔 Notification permission:', permission);
+
+    // Get service worker registration
     const registration = await navigator.serviceWorker.ready;
     console.log('✅ Service worker ready, attempting to show notification');
 
@@ -34,7 +39,7 @@ export const showNotification = async (task: any) => {
       renotify: true,
       requireInteraction: true,
       silent: false,
-      vibrate: [200, 100, 200], // Add vibration pattern for mobile
+      vibrate: [200, 100, 200],
       data: {
         url: window.location.origin + '/dashboard'
       }
@@ -55,5 +60,31 @@ export const showNotification = async (task: any) => {
   } catch (error) {
     console.error('Error showing notification:', error);
     throw error;
+  }
+};
+
+// Add a helper function to check and request permissions
+export const checkNotificationPermission = async () => {
+  try {
+    if (!('Notification' in window)) {
+      console.error('❌ Notifications not supported');
+      return false;
+    }
+
+    if (Notification.permission === 'granted') {
+      console.log('✅ Notification permission already granted');
+      return true;
+    }
+
+    if (Notification.permission !== 'denied') {
+      const permission = await Notification.requestPermission();
+      console.log('📱 Notification permission result:', permission);
+      return permission === 'granted';
+    }
+
+    return false;
+  } catch (error) {
+    console.error('Error checking notification permission:', error);
+    return false;
   }
 };
