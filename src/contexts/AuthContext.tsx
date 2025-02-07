@@ -20,6 +20,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      setSession(null);
+      navigate('/auth');
+    } catch (error) {
+      console.error("Error signing out:", error);
+      toast.error("Failed to sign out");
+    }
+  };
+
   useEffect(() => {
     const initializeAuth = async () => {
       try {
@@ -28,15 +39,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         if (error) {
           console.error("Error getting session:", error);
-          toast.error("Session expired. Please sign in again.");
-          setSession(null);
-          navigate('/auth');
+          await handleSignOut(); // Properly clean up the session
           return;
         }
 
         if (initialSession) {
           console.log("Initial session found and valid");
           setSession(initialSession);
+          if (window.location.pathname === '/auth') {
+            navigate('/dashboard');
+          }
         } else {
           console.log("No initial session found");
           setSession(null);
@@ -46,8 +58,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       } catch (error) {
         console.error("Error in auth initialization:", error);
-        setSession(null);
-        navigate('/auth');
+        await handleSignOut(); // Properly clean up the session
       } finally {
         setLoading(false);
       }
@@ -63,8 +74,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (event === 'TOKEN_REFRESHED') {
         console.log("Token refreshed successfully");
         setSession(currentSession);
-      } else if (event === 'SIGNED_OUT') {
-        console.log("User signed out");
+      } else if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+        console.log("User signed out or deleted");
         setSession(null);
         navigate('/auth');
         toast.success("You have been logged out");
@@ -76,6 +87,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } else if (event === 'USER_UPDATED') {
         console.log("User profile updated");
         setSession(currentSession);
+      } else if (event === 'TOKEN_REFRESHED') {
+        if (!currentSession) {
+          console.log("Token refresh failed - no session");
+          await handleSignOut();
+        } else {
+          console.log("Token refreshed successfully");
+          setSession(currentSession);
+        }
       }
     });
 
