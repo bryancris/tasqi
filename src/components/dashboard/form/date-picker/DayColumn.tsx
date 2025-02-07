@@ -1,6 +1,6 @@
 
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, addDays, subDays } from "date-fns";
 import { useEffect, useRef } from "react";
 
 interface DayColumnProps {
@@ -12,20 +12,21 @@ export function DayColumn({ tempDate, onDaySelect }: DayColumnProps) {
   const selectedDay = tempDate.getDate();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
-  const daysInMonth = new Date(
-    tempDate.getFullYear(),
-    tempDate.getMonth() + 1,
-    0
-  ).getDate();
+  const days = [
+    format(subDays(tempDate, 1), 'dd'),
+    format(tempDate, 'dd'),
+    format(addDays(tempDate, 1), 'dd')
+  ];
 
-  const days = Array.from(
-    { length: daysInMonth },
-    (_, i) => String(i + 1).padStart(2, '0')
-  );
+  const dayNumbers = [
+    parseInt(format(subDays(tempDate, 1), 'dd')),
+    parseInt(format(tempDate, 'dd')),
+    parseInt(format(addDays(tempDate, 1), 'dd'))
+  ];
 
   useEffect(() => {
     if (scrollContainerRef.current) {
-      const selectedButton = scrollContainerRef.current.children[selectedDay - 1] as HTMLElement;
+      const selectedButton = scrollContainerRef.current.children[1] as HTMLElement;
       if (selectedButton) {
         const containerHeight = scrollContainerRef.current.clientHeight;
         const buttonTop = selectedButton.offsetTop;
@@ -44,17 +45,17 @@ export function DayColumn({ tempDate, onDaySelect }: DayColumnProps) {
 
   return (
     <div className="flex flex-col space-y-4">
-      <div className="text-sm font-medium text-center sticky top-0 bg-background z-10 pb-2">Day</div>
+      <div className="text-sm font-medium text-center bg-background z-10 pb-2">Day</div>
       <div 
         ref={scrollContainerRef}
         onWheel={handleWheel}
-        className="space-y-3 px-1 max-h-[250px] overflow-y-auto scrollbar-hide"
+        className="space-y-3 px-1"
       >
-        {days.map((day) => (
+        {days.map((day, index) => (
           <button
             key={day}
             type="button"
-            onClick={() => onDaySelect(parseInt(day))}
+            onClick={() => onDaySelect(dayNumbers[index])}
             className={cn(
               "w-full h-10 px-3 text-sm font-medium text-center hover:bg-accent rounded-md transition-colors border border-gray-200",
               tempDate && format(tempDate, 'dd') === day && "bg-[#1e1b4b] text-white"
