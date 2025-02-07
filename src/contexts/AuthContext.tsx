@@ -61,6 +61,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (initialSession) {
           console.log("Initial session found and valid");
           setSession(initialSession);
+          setLoading(false);
         } else {
           console.log("No initial session found");
           await handleInvalidSession();
@@ -68,8 +69,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } catch (error) {
         console.error("Error in auth initialization:", error);
         await handleInvalidSession();
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -87,7 +86,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setSession(currentSession);
       } else if (event === 'SIGNED_OUT') {
         console.log("User signed out");
-        await handleInvalidSession();
+        setSession(null);
+        navigate('/auth');
         toast.success("You have been logged out");
       } else if (event === 'SIGNED_IN') {
         console.log("User signed in");
@@ -97,15 +97,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } else if (event === 'USER_UPDATED') {
         console.log("User profile updated");
         setSession(currentSession);
-      } else if (event === 'INITIAL_SESSION') {
-        if (currentSession) {
-          console.log("Initial session restored");
-          setSession(currentSession);
-          navigate('/dashboard');
-        } else {
-          console.log("No initial session found");
-          await handleInvalidSession();
-        }
       }
 
       setLoading(false);
