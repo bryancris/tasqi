@@ -1,9 +1,10 @@
+
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format, parse } from "date-fns";
+import { format, parse, startOfToday } from "date-fns";
 import { useState } from "react";
 import { MonthColumn } from "./date-picker/MonthColumn";
 import { DayColumn } from "./date-picker/DayColumn";
@@ -18,12 +19,15 @@ interface DatePickerInputProps {
 
 export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePickerInputProps) {
   const [open, setOpen] = useState(false);
+  const today = startOfToday();
+  
+  // Initialize with today's date if no date is provided
   const [tempDate, setTempDate] = useState<Date>(
-    date ? parse(date, 'yyyy-MM-dd', new Date()) : new Date()
+    date ? parse(date, 'yyyy-MM-dd', today) : today
   );
   
-  const selectedDate = date ? parse(date, 'yyyy-MM-dd', new Date()) : undefined;
-  const currentDate = new Date();
+  const selectedDate = date ? parse(date, 'yyyy-MM-dd', today) : undefined;
+  const currentDate = today;
 
   const handleSetDate = () => {
     if (tempDate) {
@@ -98,7 +102,7 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
             <DatePickerControls
               onSet={handleSetDate}
               onCancel={() => {
-                setTempDate(selectedDate || new Date());
+                setTempDate(selectedDate || today);
                 setOpen(false);
               }}
             />
