@@ -71,30 +71,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
       console.log("Auth state changed:", event, currentSession?.user?.email);
       
-      if (event === 'TOKEN_REFRESHED') {
-        console.log("Token refreshed successfully");
-        setSession(currentSession);
-      } else if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
-        console.log("User signed out or deleted");
-        setSession(null);
-        navigate('/auth');
-        toast.success("You have been logged out");
-      } else if (event === 'SIGNED_IN') {
-        console.log("User signed in");
-        setSession(currentSession);
-        navigate('/dashboard');
-        toast.success("Successfully signed in");
-      } else if (event === 'USER_UPDATED') {
-        console.log("User profile updated");
-        setSession(currentSession);
-      } else if (event === 'TOKEN_REFRESHED') {
-        if (!currentSession) {
-          console.log("Token refresh failed - no session");
-          await handleSignOut();
-        } else {
-          console.log("Token refreshed successfully");
+      switch (event) {
+        case 'SIGNED_IN':
+          console.log("User signed in");
           setSession(currentSession);
-        }
+          navigate('/dashboard');
+          toast.success("Successfully signed in");
+          break;
+          
+        case 'SIGNED_OUT':
+          console.log("User signed out");
+          setSession(null);
+          navigate('/auth');
+          toast.success("You have been logged out");
+          break;
+          
+        case 'USER_UPDATED':
+          console.log("User profile updated");
+          setSession(currentSession);
+          break;
+          
+        case 'INITIAL_SESSION':
+          console.log("Initial session loaded");
+          if (currentSession) {
+            setSession(currentSession);
+          }
+          break;
       }
     });
 
