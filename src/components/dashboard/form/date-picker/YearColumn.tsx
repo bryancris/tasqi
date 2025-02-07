@@ -18,13 +18,13 @@ export function YearColumn({ currentDate, tempDate, onYearSelect }: YearColumnPr
   return (
     <div className="flex flex-col space-y-2 overflow-hidden">
       <div className="text-sm font-medium text-center sticky top-0 bg-background z-10 py-1">Year</div>
-      <div className="space-y-1 px-1 overflow-y-auto">
+      <div className="space-y-1 px-1">
         {years.map((year) => (
           <button
             key={year}
             type="button"
             className={cn(
-              "w-full px-3 py-2 text-sm font-medium text-center hover:bg-accent rounded-md transition-colors",
+              "w-full h-10 px-3 text-sm font-medium text-center hover:bg-accent rounded-md transition-colors",
               tempDate && format(tempDate, 'yyyy') === year && "bg-[#1e1b4b] text-white"
             )}
             onClick={() => onYearSelect(parseInt(year))}

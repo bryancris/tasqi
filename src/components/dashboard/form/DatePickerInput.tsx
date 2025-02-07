@@ -21,7 +21,6 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
   const [open, setOpen] = useState(false);
   const today = startOfToday();
   
-  // Initialize with today's date if no date is provided
   const [tempDate, setTempDate] = useState<Date>(
     date ? parse(date, 'yyyy-MM-dd', today) : today
   );
@@ -72,7 +71,7 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
           </Button>
         </PopoverTrigger>
         <PopoverContent 
-          className="w-[300px] p-0 bg-background border shadow-lg relative z-[100]" 
+          className="w-[350px] p-0 bg-background border shadow-lg relative z-[100]" 
           align="start"
           onInteractOutside={(e) => {
             e.preventDefault();

@@ -58,7 +58,7 @@ export function MonthColumn({ currentDate, tempDate, onMonthSelect }: MonthColum
             type="button"
             onClick={() => onMonthSelect(monthIndices[index])}
             className={cn(
-              "w-full px-3 py-2 text-sm font-semibold text-center hover:bg-accent rounded-md transition-colors",
+              "w-full h-10 px-3 text-sm font-medium text-center hover:bg-accent rounded-md transition-colors",
               tempDate && format(tempDate, 'MMM') === month && "bg-[#1e1b4b] text-white"
             )}
           >
