@@ -1,5 +1,6 @@
+
 import { Button } from "@/components/ui/button";
-import { useTaskNotifications } from "@/hooks/use-notifications";
+import { useTaskNotifications } from "@/utils/notifications/useTaskNotifications";
 import { toast } from "sonner";
 
 export function NotificationTest() {

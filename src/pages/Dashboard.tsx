@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { TaskBoard } from "@/components/dashboard/TaskBoard";
@@ -13,7 +14,7 @@ import { MobileFooter } from "@/components/layouts/MobileFooter";
 import { MobileWeeklyView } from "@/components/dashboard/mobile/MobileWeeklyView";
 import { useLocation } from "react-router-dom";
 import { useCalendarView } from "@/hooks/use-calendar-view";
-import { useTaskNotifications } from "@/hooks/use-notifications";
+import { useTaskNotifications } from "@/utils/notifications/useTaskNotifications";
 
 const Dashboard = () => {
   const { view, changeView } = useCalendarView('tasks');
