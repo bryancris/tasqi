@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -33,33 +32,16 @@ export function NotificationTest() {
       if (permission !== "granted") {
         try {
           console.log("Requesting notification permission...");
-          
-          // Force a user interaction to trigger permission prompt
-          const directRequest = await Notification.requestPermission();
-          permission = directRequest;
-          
-          // Double-check permission after request
-          if (directRequest === "default") {
-            // Try one more time with a different approach
-            permission = await new Promise<NotificationPermission>((resolve) => {
-              const permissionResult = Notification.requestPermission();
-              if (permissionResult) {
-                permissionResult.then(resolve);
-              } else {
-                resolve("default");
-              }
-            });
-          }
-          
+          permission = await Notification.requestPermission();
           console.log("Permission response:", permission);
+          
+          if (permission !== "granted") {
+            toast.error("Notification permission not granted");
+            return;
+          }
         } catch (error) {
           console.error("Error requesting permission:", error);
           toast.error("Failed to request notification permission");
-          return;
-        }
-
-        if (permission !== "granted") {
-          toast.error("Notification permission not granted");
           return;
         }
       }
@@ -70,29 +52,11 @@ export function NotificationTest() {
         return;
       }
 
-      // Create a direct notification first to test permissions
-      new Notification("Test Notification", {
-        body: "This is a direct test notification",
-        icon: "/pwa-192x192.png"
-      });
-
-      // Then proceed with service worker notification
-      console.log("Registering service worker...");
-      const registration = await navigator.serviceWorker.register('/sw.js', {
-        scope: '/'
-      });
-      console.log("Service worker registered:", registration);
-
-      // Wait for the service worker to be ready
-      await navigator.serviceWorker.ready;
+      // Get service worker registration
+      const registration = await navigator.serviceWorker.ready;
       console.log("Service worker ready state:", registration.active?.state);
 
-      // Play notification sound
-      const audio = new Audio('/notification-sound.mp3');
-      audio.volume = 0.5;
-      await audio.play();
-
-      // Show the notification through service worker
+      // Always use ServiceWorkerRegistration.showNotification() for consistency across platforms
       await registration.showNotification("Test Notification", {
         body: "This is a test notification from TasqiAI",
         icon: "/pwa-192x192.png",
@@ -106,6 +70,11 @@ export function NotificationTest() {
         requireInteraction: true,
         silent: false
       });
+
+      // Play notification sound
+      const audio = new Audio('/notification-sound.mp3');
+      audio.volume = 0.5;
+      await audio.play();
 
       console.log("Notification sent successfully");
       toast.success("Test notification sent!");
