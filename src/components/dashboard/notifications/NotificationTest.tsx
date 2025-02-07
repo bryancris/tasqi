@@ -1,6 +1,5 @@
 
 import { Button } from "@/components/ui/button";
-import { useTaskNotifications } from "@/utils/notifications/useTaskNotifications";
 import { toast } from "sonner";
 
 export function NotificationTest() {
@@ -14,10 +13,12 @@ export function NotificationTest() {
         return;
       }
 
-      console.log("Current notification permission:", Notification.permission);
+      // Get current permission state
+      let permission = Notification.permission;
+      console.log("Current notification permission:", permission);
       
       // Handle different permission states
-      if (Notification.permission === "denied") {
+      if (permission === "denied") {
         toast.error(
           "Notifications are blocked. Please enable them in your browser settings:",
           {
@@ -29,10 +30,20 @@ export function NotificationTest() {
       }
       
       // If permission is not granted, request it
-      if (Notification.permission !== "granted") {
-        console.log("Requesting notification permission...");
-        const permission = await Notification.requestPermission();
-        console.log("Permission response:", permission);
+      if (permission !== "granted") {
+        try {
+          console.log("Requesting notification permission...");
+          // Request permission synchronously to ensure browser shows the prompt
+          permission = await new Promise<NotificationPermission>((resolve) => {
+            Notification.requestPermission().then(resolve);
+          });
+          console.log("Permission response:", permission);
+        } catch (error) {
+          console.error("Error requesting permission:", error);
+          toast.error("Failed to request notification permission");
+          return;
+        }
+
         if (permission !== "granted") {
           toast.error("Notification permission not granted");
           return;
@@ -45,14 +56,14 @@ export function NotificationTest() {
         return;
       }
 
-      // Unregister any existing service workers
-      const registrations = await navigator.serviceWorker.getRegistrations();
-      for (const registration of registrations) {
-        await registration.unregister();
-      }
+      // Create and show test notification using the Notification API directly first
+      const testNotification = new Notification("Test Notification", {
+        body: "This is a direct test notification",
+        icon: "/pwa-192x192.png"
+      });
 
-      // Register a new service worker
-      console.log("Registering new service worker...");
+      // Then proceed with service worker notification
+      console.log("Registering service worker...");
       const registration = await navigator.serviceWorker.register('/sw.js', {
         scope: '/'
       });
@@ -62,12 +73,12 @@ export function NotificationTest() {
       await navigator.serviceWorker.ready;
       console.log("Service worker ready state:", registration.active?.state);
 
-      // Create and play notification sound
+      // Play notification sound
       const audio = new Audio('/notification-sound.mp3');
       audio.volume = 0.5;
       await audio.play();
 
-      // Show the notification
+      // Show the notification through service worker
       await registration.showNotification("Test Notification", {
         body: "This is a test notification from TasqiAI",
         icon: "/pwa-192x192.png",
