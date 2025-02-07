@@ -33,8 +33,24 @@ export function NotificationTest() {
       if (permission !== "granted") {
         try {
           console.log("Requesting notification permission...");
-          // Request permission directly from the click handler
-          permission = await Notification.requestPermission();
+          
+          // Force a user interaction to trigger permission prompt
+          const directRequest = await Notification.requestPermission();
+          permission = directRequest;
+          
+          // Double-check permission after request
+          if (directRequest === "default") {
+            // Try one more time with a different approach
+            permission = await new Promise<NotificationPermission>((resolve) => {
+              const permissionResult = Notification.requestPermission();
+              if (permissionResult) {
+                permissionResult.then(resolve);
+              } else {
+                resolve("default");
+              }
+            });
+          }
+          
           console.log("Permission response:", permission);
         } catch (error) {
           console.error("Error requesting permission:", error);
