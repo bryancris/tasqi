@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -43,6 +42,7 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
         title,
         description,
         isScheduled,
+        // Ensure we're using the selected date without timezone conversion
         date: isScheduled && date ? date : null,
         startTime: isScheduled && startTime ? startTime : null,
         endTime: isScheduled && endTime ? endTime : null,
