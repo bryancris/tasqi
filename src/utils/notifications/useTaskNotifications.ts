@@ -1,4 +1,3 @@
-
 import { useEffect, useCallback, useRef } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { showNotification, checkNotificationPermission } from './notificationUtils';
@@ -17,14 +16,21 @@ export const checkAndNotifyUpcomingTasks = async (userId: string) => {
     const now = new Date();
     const currentDate = now.toISOString().split('T')[0];
     
-    // Get tasks for today with reminders enabled
+    // First get all tasks to debug what's available
+    const { data: allTasks } = await supabase
+      .from('tasks')
+      .select('*')
+      .eq('user_id', userId);
+      
+    console.log('📋 All tasks:', allTasks);
+    
+    // Get tasks with reminders enabled
     const { data: tasks, error } = await supabase
       .from('tasks')
       .select('*')
       .eq('reminder_enabled', true)
-      .eq('status', 'scheduled')
       .eq('user_id', userId)
-      .eq('date', currentDate);  // Only get today's tasks
+      .neq('status', 'completed'); // Changed to include all non-completed tasks
 
     if (error) {
       console.error('❌ Error fetching tasks:', error);
@@ -32,11 +38,11 @@ export const checkAndNotifyUpcomingTasks = async (userId: string) => {
     }
 
     if (!tasks?.length) {
-      console.log('ℹ️ No upcoming tasks found with reminders enabled');
+      console.log('ℹ️ No tasks found with reminders enabled');
       return;
     }
 
-    console.log('📋 Found tasks:', tasks);
+    console.log('📋 Found tasks with reminders:', tasks);
 
     for (const task of tasks) {
       if (notifiedTasks.has(task.id)) {
@@ -61,7 +67,9 @@ export const checkAndNotifyUpcomingTasks = async (userId: string) => {
         taskDateTime: taskDateTime.toISOString(),
         notificationTime: notificationTime.toISOString(),
         currentTime: now.toISOString(),
-        shouldNotify: isAfter(now, notificationTime) && isBefore(now, taskDateTime)
+        shouldNotify: isAfter(now, notificationTime) && isBefore(now, taskDateTime),
+        reminderEnabled: task.reminder_enabled,
+        status: task.status
       });
 
       // Notify if we're within the 5-minute window before the task
