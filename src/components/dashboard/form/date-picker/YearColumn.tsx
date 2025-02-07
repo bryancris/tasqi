@@ -16,9 +16,9 @@ export function YearColumn({ currentDate, tempDate, onYearSelect }: YearColumnPr
   );
 
   return (
-    <div className="flex flex-col space-y-2 overflow-hidden">
-      <div className="text-sm font-medium text-center sticky top-0 bg-background z-10 py-1">Year</div>
-      <div className="space-y-1 px-1">
+    <div className="flex flex-col space-y-4">
+      <div className="text-sm font-medium text-center sticky top-0 bg-background z-10 pb-2">Year</div>
+      <div className="space-y-3 px-1">
         {years.map((year) => (
           <button
             key={year}

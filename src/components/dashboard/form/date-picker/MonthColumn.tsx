@@ -45,12 +45,12 @@ export function MonthColumn({ currentDate, tempDate, onMonthSelect }: MonthColum
   };
 
   return (
-    <div className="flex flex-col space-y-2">
-      <div className="text-sm font-medium text-center bg-background z-10">Month</div>
+    <div className="flex flex-col space-y-4">
+      <div className="text-sm font-medium text-center sticky top-0 bg-background z-10 pb-2">Month</div>
       <div 
         ref={scrollContainerRef}
         onWheel={handleWheel}
-        className="space-y-1 px-1"
+        className="space-y-3 px-1"
       >
         {months.map((month, index) => (
           <button

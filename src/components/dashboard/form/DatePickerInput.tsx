@@ -71,7 +71,7 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
           </Button>
         </PopoverTrigger>
         <PopoverContent 
-          className="w-[350px] p-0 bg-background border shadow-lg relative z-[100]" 
+          className="w-[400px] p-0 bg-background border shadow-lg relative z-[100]" 
           align="start"
           onInteractOutside={(e) => {
             e.preventDefault();
@@ -80,8 +80,8 @@ export function DatePickerInput({ date, onDateChange, label = "Date" }: DatePick
           style={{ pointerEvents: 'auto' }}
         >
           <div className="fixed inset-0 bg-black/50 z-50" onClick={() => setOpen(false)} />
-          <div className="p-4 relative z-[101] bg-background rounded-md">
-            <div className="grid grid-cols-3 gap-4 h-[300px] mb-4">
+          <div className="p-6 relative z-[101] bg-background rounded-md">
+            <div className="grid grid-cols-3 gap-8 h-[300px] mb-4">
               <MonthColumn
                 currentDate={currentDate}
                 tempDate={tempDate}

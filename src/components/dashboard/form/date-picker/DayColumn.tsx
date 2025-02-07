@@ -44,12 +44,12 @@ export function DayColumn({ tempDate, onDaySelect }: DayColumnProps) {
   };
 
   return (
-    <div className="flex flex-col space-y-2">
-      <div className="text-sm font-medium text-center bg-background z-10">Day</div>
+    <div className="flex flex-col space-y-4">
+      <div className="text-sm font-medium text-center bg-background z-10 pb-2">Day</div>
       <div 
         ref={scrollContainerRef}
         onWheel={handleWheel}
-        className="space-y-1 px-1"
+        className="space-y-3 px-1"
       >
         {days.map((day, index) => (
           <button
