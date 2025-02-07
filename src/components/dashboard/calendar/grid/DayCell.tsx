@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { useDroppable } from "@dnd-kit/core";
-import { format } from "date-fns";
+import { format, isSameDay } from "date-fns";
 import { Task } from "../../TaskBoard";
 import { TaskCard } from "../../TaskCard";
 import { cn } from "@/lib/utils";
@@ -55,6 +56,17 @@ export function DayCell({ day, timeSlot, tasks, dayIndex, isLastRow }: DayCellPr
     };
   };
 
+  // Filter tasks for this day and time slot
+  const tasksForCell = tasks.filter(task => {
+    if (!task.date || !task.start_time) return false;
+    
+    // Parse the task date and compare using isSameDay
+    const taskDate = new Date(task.date);
+    const [taskStartHour] = task.start_time.split(':').map(Number);
+    
+    return isSameDay(taskDate, day) && taskStartHour === timeSlot.hour;
+  });
+
   return (
     <div
       ref={setNodeRef}
@@ -72,7 +84,7 @@ export function DayCell({ day, timeSlot, tasks, dayIndex, isLastRow }: DayCellPr
       <div className="absolute left-0 right-0 top-1/2 border-t border-gray-200" />
       
       {/* Tasks */}
-      {tasks.map((task, index) => {
+      {tasksForCell.map((task, index) => {
         const position = getTaskPosition(task);
         if (!position) return null;
 
