@@ -32,7 +32,7 @@ export const showNotification = async (task: any) => {
 
     const title = task.title;
     const options = {
-      body: `Task scheduled for ${task.start_time}`,
+      body: `Task due ${task.start_time ? `at ${task.start_time}` : 'today'}`,
       icon: '/pwa-192x192.png',
       badge: '/pwa-192x192.png',
       tag: `task-${task.id}`,
@@ -41,7 +41,8 @@ export const showNotification = async (task: any) => {
       silent: false,
       vibrate: [200, 100, 200],
       data: {
-        url: window.location.origin + '/dashboard'
+        url: window.location.origin + '/dashboard',
+        taskId: task.id
       }
     };
 
@@ -88,3 +89,4 @@ export const checkNotificationPermission = async () => {
     return false;
   }
 };
+

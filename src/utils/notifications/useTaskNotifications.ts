@@ -3,29 +3,38 @@ import { supabase } from "@/integrations/supabase/client";
 import { showNotification, checkNotificationPermission } from './notificationUtils';
 import { setupPushSubscription } from './subscriptionUtils';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Keep track of notified tasks
 const notifiedTasks = new Set<number>();
 
-export const checkAndNotifyUpcomingTasks = async () => {
+export const checkAndNotifyUpcomingTasks = async (userId: string) => {
   try {
+    console.log('🔍 Checking upcoming tasks for user:', userId);
+    
     // Get tasks for next 24 hours with reminders enabled
     const { data: tasks, error } = await supabase
       .from('tasks')
       .select('*')
       .eq('reminder_enabled', true)
       .eq('status', 'scheduled')
+      .eq('user_id', userId)
       .gte('date', new Date().toISOString().split('T')[0])
       .order('date', { ascending: true });
 
-    if (error) throw error;
+    if (error) {
+      console.error('❌ Error fetching tasks:', error);
+      throw error;
+    }
 
     if (!tasks?.length) {
+      console.log('ℹ️ No upcoming tasks found with reminders enabled');
       return;
     }
 
     console.log('📋 Found', tasks.length, 'upcoming tasks with reminders enabled');
 
+    const now = new Date();
     for (const task of tasks) {
       if (notifiedTasks.has(task.id)) {
         console.log('⏭️ Already notified about task:', task.id);
@@ -33,57 +42,70 @@ export const checkAndNotifyUpcomingTasks = async () => {
       }
 
       const taskDate = new Date(task.date);
-      const taskTime = task.start_time ? task.start_time.split(':') : ['00', '00', '00'];
-      const [hours, minutes] = taskTime;
-      
-      taskDate.setHours(parseInt(hours), parseInt(minutes), 0);
-      
-      const taskDateTime = taskDate.toLocaleString();
-      console.log('\n🔍 Checking task:', task.title);
-      console.log('📊 Task Details:', {
-        taskId: task.id,
-        taskTitle: task.title,
-        taskDate: task.date,
-        taskTime: task.start_time,
-        taskDateTime,
-        currentTime: new Date().toLocaleString()
-      });
+      if (task.start_time) {
+        const [hours, minutes] = task.start_time.split(':');
+        taskDate.setHours(parseInt(hours), parseInt(minutes), 0);
+      } else {
+        // If no start time, default to start of day
+        taskDate.setHours(0, 0, 0, 0);
+      }
 
-      // Check if we're within 1 minute of the task time (allowing for slight delays)
-      const timeDiff = taskDate.getTime() - new Date().getTime();
+      const timeDiff = Math.abs(taskDate.getTime() - now.getTime());
       const minutesDiff = Math.floor(timeDiff / (1000 * 60));
 
-      if (minutesDiff <= 1 && minutesDiff >= -1) {
-        console.log('🎯 At start time! Sending notification for task:', task.title);
+      console.log('Task timing check:', {
+        taskId: task.id,
+        taskTitle: task.title,
+        taskDateTime: taskDate.toLocaleString(),
+        currentTime: now.toLocaleString(),
+        minutesDiff
+      });
+
+      // Notify if within 1 minute window
+      if (minutesDiff <= 1) {
+        console.log('🔔 Sending notification for task:', task.title);
         await showNotification(task);
         notifiedTasks.add(task.id);
       }
     }
-
-    console.log('\n==================== ✅ CHECK COMPLETE ✅ ====================\n');
   } catch (error) {
-    console.error('Error checking tasks:', error);
+    console.error('Error in checkAndNotifyUpcomingTasks:', error);
   }
 };
 
 export const useTaskNotifications = () => {
   const checkIntervalRef = useRef<NodeJS.Timeout>();
+  const { session } = useAuth();
 
   const startNotificationCheck = useCallback(() => {
+    if (!session?.user?.id) {
+      console.log('No user session, skipping notification check');
+      return;
+    }
+
     if (checkIntervalRef.current) {
       clearInterval(checkIntervalRef.current);
     }
-    checkAndNotifyUpcomingTasks();
+
+    // Do an initial check
+    void checkAndNotifyUpcomingTasks(session.user.id);
+
+    // Set up periodic checks
     checkIntervalRef.current = setInterval(() => {
-      checkAndNotifyUpcomingTasks();
+      void checkAndNotifyUpcomingTasks(session.user.id);
     }, 30000); // Check every 30 seconds
-  }, []);
+  }, [session?.user?.id]);
 
   useEffect(() => {
     const initializeNotifications = async () => {
       try {
         if (!('serviceWorker' in navigator)) {
           toast.error('Service Worker is not supported in this browser');
+          return;
+        }
+
+        if (!session?.user?.id) {
+          console.log('No user session, skipping notification setup');
           return;
         }
 
@@ -110,19 +132,22 @@ export const useTaskNotifications = () => {
         // Start checking for tasks
         startNotificationCheck();
 
-        toast.success('Notifications enabled successfully');
+        toast.success('Task notifications enabled successfully');
       } catch (error) {
         console.error('Error initializing notifications:', error);
         toast.error('Failed to initialize notifications');
       }
     };
 
-    initializeNotifications();
+    // Initialize notifications when user session is available
+    if (session?.user?.id) {
+      initializeNotifications();
+    }
 
     return () => {
       if (checkIntervalRef.current) {
         clearInterval(checkIntervalRef.current);
       }
     };
-  }, [startNotificationCheck]);
+  }, [session?.user?.id, startNotificationCheck]);
 };
