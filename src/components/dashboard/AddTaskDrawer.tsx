@@ -9,13 +9,14 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import { X } from "lucide-react";
+import { X, Share2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { TaskForm } from "./TaskForm";
 import { createTask } from "@/utils/taskUtils";
 import { TaskPriority } from "./TaskBoard";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ShareTaskDialog } from "./ShareTaskDialog";
 
 interface AddTaskDrawerProps {
   children?: React.ReactNode;
@@ -32,6 +33,7 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
   const [reminderEnabled, setReminderEnabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
@@ -84,7 +86,6 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
         title,
         description,
         isScheduled,
-        // Ensure we're using the selected date without timezone conversion
         date: isScheduled && date ? date : null,
         startTime: isScheduled && startTime ? startTime : null,
         endTime: isScheduled && endTime ? endTime : null,
@@ -92,7 +93,7 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
         reminderEnabled,
       };
 
-      await createTask(taskData);
+      const newTask = await createTask(taskData);
 
       toast({
         title: "Success",
@@ -135,7 +136,17 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
         <div className={`mx-auto w-full ${isMobile ? 'max-w-full px-4' : 'max-w-sm'}`}>
           <DrawerHeader>
             <div className="flex items-center justify-between">
-              <DrawerTitle>Add New Task</DrawerTitle>
+              <div className="flex items-center gap-2">
+                <DrawerTitle>Add New Task</DrawerTitle>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowShareDialog(true)}
+                >
+                  <Share2 className="h-4 w-4" />
+                </Button>
+              </div>
               <DrawerClose asChild>
                 <Button variant="ghost" size="icon">
                   <X className="h-4 w-4" />
@@ -165,6 +176,12 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
           />
         </div>
       </DrawerContent>
+      <ShareTaskDialog
+        task={null}
+        open={showShareDialog}
+        onOpenChange={setShowShareDialog}
+      />
     </Drawer>
   );
 }
+
