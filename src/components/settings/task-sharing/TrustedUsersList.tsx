@@ -22,7 +22,7 @@ export function TrustedUsersList() {
         .select(`
           id,
           trusted_user_id,
-          profiles:trusted_user_id (
+          trusted_user:trusted_user_id (
             email
           )
         `)
@@ -34,7 +34,7 @@ export function TrustedUsersList() {
         trustedUsersData.map(user => ({
           id: user.id,
           trusted_user_id: user.trusted_user_id,
-          email: user.profiles.email
+          email: user.trusted_user.email
         }))
       );
     } catch (error) {
