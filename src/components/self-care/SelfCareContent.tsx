@@ -51,6 +51,7 @@ const categories = [
     description: "Understanding and processing emotions",
     gradient: "from-[#E11D48] to-[#FDA4AF]",
     iconColor: "text-[#E11D48]",
+    path: "/self-care/emotional-care",
   },
 ];
 

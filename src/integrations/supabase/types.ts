@@ -99,6 +99,42 @@ export type Database = {
         }
         Relationships: []
       }
+      emotional_care_activities: {
+        Row: {
+          coping_strategy: string | null
+          created_at: string
+          date_logged: string
+          emotion: string
+          id: number
+          intensity: number | null
+          notes: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          coping_strategy?: string | null
+          created_at?: string
+          date_logged?: string
+          emotion: string
+          id?: number
+          intensity?: number | null
+          notes?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          coping_strategy?: string | null
+          created_at?: string
+          date_logged?: string
+          emotion?: string
+          id?: number
+          intensity?: number | null
+          notes?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       mental_wellness_activities: {
         Row: {
           activity_name: string
