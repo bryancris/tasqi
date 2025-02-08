@@ -7,7 +7,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { TimeRangeSelector } from "./TimeRangeSelector";
-import { UserInviteForm } from "./UserInviteForm";
 
 interface CalendarSettingsProps {
   initialStartHour: string;
@@ -79,12 +78,6 @@ export function CalendarSettings({
             onCheckedChange={handleSharedCalendarToggle}
           />
         </div>
-
-        {sharedCalendarEnabled && (
-          <div className="space-y-4 pt-4">
-            <UserInviteForm />
-          </div>
-        )}
 
         <TimeRangeSelector
           startHour={startHour}
