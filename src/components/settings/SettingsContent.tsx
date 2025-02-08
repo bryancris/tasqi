@@ -8,7 +8,6 @@ import { CalendarSettings } from "./calendar/CalendarSettings";
 export function SettingsContent() {
   const [startHour, setStartHour] = useState<string>("8");
   const [endHour, setEndHour] = useState<string>("17");
-  const [sharedCalendarEnabled, setSharedCalendarEnabled] = useState(false);
 
   // Load user settings on component mount
   useEffect(() => {
@@ -18,7 +17,7 @@ export function SettingsContent() {
 
       const { data, error } = await supabase
         .from('user_settings')
-        .select('start_hour, end_hour, shared_calendar_enabled')
+        .select('start_hour, end_hour')
         .eq('user_id', session.user.id)
         .single();
 
@@ -31,7 +30,6 @@ export function SettingsContent() {
       if (data) {
         setStartHour(data.start_hour.toString());
         setEndHour(data.end_hour.toString());
-        setSharedCalendarEnabled(data.shared_calendar_enabled || false);
       }
     };
 
@@ -44,7 +42,6 @@ export function SettingsContent() {
       <CalendarSettings
         initialStartHour={startHour}
         initialEndHour={endHour}
-        initialSharedCalendarEnabled={sharedCalendarEnabled}
       />
     </div>
   );
