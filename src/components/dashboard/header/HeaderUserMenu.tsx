@@ -23,16 +23,17 @@ export function HeaderUserMenu() {
 
   const handleLogout = async () => {
     try {
-      // First invalidate the Supabase session
+      // Clear all storage first
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // Then attempt to sign out from Supabase
       const { error } = await supabase.auth.signOut();
       if (error && !error.message?.includes('session_not_found')) {
         console.error('Error logging out:', error);
       }
-    } catch (error) {
-      console.error('Error in logout process:', error);
     } finally {
-      // Always clear local storage and redirect regardless of Supabase response
-      localStorage.clear(); // Clear all storage to be thorough
+      // Always redirect regardless of Supabase response
       navigate('/auth');
       toast.success("Successfully logged out");
     }
