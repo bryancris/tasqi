@@ -656,6 +656,7 @@ export type Database = {
       }
       trusted_task_users: {
         Row: {
+          alias: string | null
           created_at: string
           id: number
           trusted_user_id: string
@@ -663,6 +664,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          alias?: string | null
           created_at?: string
           id?: number
           trusted_user_id: string
@@ -670,6 +672,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          alias?: string | null
           created_at?: string
           id?: number
           trusted_user_id?: string
