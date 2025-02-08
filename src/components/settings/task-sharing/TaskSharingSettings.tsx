@@ -5,7 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { TrustedUsersList } from "./TrustedUsersList";
 import { AddTrustedUserDialog } from "./AddTrustedUserDialog";
-import { Plus } from "lucide-react";
+import { Plus, Users } from "lucide-react";
 
 export function TaskSharingSettings() {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -36,6 +36,23 @@ export function TaskSharingSettings() {
             </Button>
           </div>
           <TrustedUsersList key={refreshTrigger} />
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <Label className="text-base">Groups</Label>
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Create Group
+            </Button>
+          </div>
+          <div className="text-sm text-muted-foreground">
+            No groups created yet
+          </div>
         </div>
       </div>
 
