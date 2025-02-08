@@ -233,6 +233,42 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: number
+          message: string
+          read: boolean | null
+          reference_id: string | null
+          reference_type: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          message: string
+          read?: boolean | null
+          reference_id?: string | null
+          reference_type?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          message?: string
+          read?: boolean | null
+          reference_id?: string | null
+          reference_type?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       organization_members: {
         Row: {
           id: string
@@ -455,6 +491,7 @@ export type Database = {
         Row: {
           created_at: string
           id: number
+          notification_sent: boolean | null
           shared_by_user_id: string | null
           shared_with_user_id: string | null
           status: string
@@ -464,6 +501,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: number
+          notification_sent?: boolean | null
           shared_by_user_id?: string | null
           shared_with_user_id?: string | null
           status?: string
@@ -473,6 +511,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: number
+          notification_sent?: boolean | null
           shared_by_user_id?: string | null
           shared_with_user_id?: string | null
           status?: string
