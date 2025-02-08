@@ -68,7 +68,6 @@ export function TrustedUsersList() {
     loadTrustedUsers();
   }, []);
 
-  // Effect to focus input when editing starts
   useEffect(() => {
     if (editingId !== null && inputRef.current) {
       inputRef.current.focus();

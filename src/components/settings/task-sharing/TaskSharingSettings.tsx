@@ -5,11 +5,17 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { TrustedUsersList } from "./TrustedUsersList";
 import { AddTrustedUserDialog } from "./AddTrustedUserDialog";
+import { CreateGroupDialog } from "./CreateGroupDialog";
 import { Plus, Users } from "lucide-react";
 
 export function TaskSharingSettings() {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [createGroupOpen, setCreateGroupOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const handleUserAdded = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
 
   return (
     <div>
@@ -44,6 +50,7 @@ export function TaskSharingSettings() {
             <Button 
               variant="outline" 
               size="sm"
+              onClick={() => setCreateGroupOpen(true)}
               className="flex items-center gap-2"
             >
               <Plus className="h-4 w-4" />
@@ -59,8 +66,15 @@ export function TaskSharingSettings() {
       <AddTrustedUserDialog 
         open={addDialogOpen} 
         onOpenChange={setAddDialogOpen}
-        onUserAdded={() => {
-          setRefreshTrigger(prev => prev + 1);
+        onUserAdded={handleUserAdded}
+      />
+      
+      <CreateGroupDialog
+        open={createGroupOpen}
+        onOpenChange={setCreateGroupOpen}
+        trustedUsers={[]} // We'll need to pass the actual trusted users list here
+        onGroupCreated={() => {
+          // We'll implement this later when we add the groups list component
         }}
       />
     </div>
