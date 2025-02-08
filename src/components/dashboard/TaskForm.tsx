@@ -67,20 +67,21 @@ export function TaskForm({
       className="p-4 space-y-4"
     >
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold flex items-center">
-          {isEditing ? "Edit Task" : "Add Task"}
-          {isEditing && (
+        {isEditing ? (
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold">Edit Task</h2>
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              className="ml-2"
               onClick={() => setShowShareDialog(true)}
             >
               <Share2 className="h-4 w-4" />
             </Button>
-          )}
-        </h2>
+          </div>
+        ) : (
+          <h2 className="text-lg font-semibold">Add Task</h2>
+        )}
       </div>
 
       <div className="space-y-2">
