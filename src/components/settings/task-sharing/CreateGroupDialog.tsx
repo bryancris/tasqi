@@ -47,11 +47,16 @@ export function CreateGroupDialog({
 
     setIsCreating(true);
     try {
+      // Get current user's ID
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No authenticated user");
+
       // Create the group
       const { data: groupData, error: groupError } = await supabase
         .from('task_groups')
         .insert({
           name: groupName.trim(),
+          user_id: user.id
         })
         .select()
         .single();
