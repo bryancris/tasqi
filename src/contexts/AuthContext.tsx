@@ -102,11 +102,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setSession(currentSession);
           break;
         
-        case 'USER_DELETED':
-          console.log("User deleted");
-          await handleSignOut();
-          break;
-          
         case 'INITIAL_SESSION':
           console.log("Initial session loaded");
           if (currentSession) {
