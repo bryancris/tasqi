@@ -27,7 +27,10 @@ export function CalendarSettings({
 
   const handleSharedCalendarToggle = async (enabled: boolean) => {
     const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return;
+    if (!session) {
+      toast.error("You must be logged in to change calendar settings");
+      return;
+    }
 
     try {
       const { error } = await supabase
@@ -36,6 +39,8 @@ export function CalendarSettings({
           user_id: session.user.id,
           shared_calendar_enabled: enabled,
           updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'user_id'
         });
 
       if (error) throw error;
@@ -46,6 +51,8 @@ export function CalendarSettings({
     } catch (error) {
       console.error('Error updating shared calendar settings:', error);
       toast.error("Failed to update shared calendar settings");
+      // Revert the UI state if the update failed
+      setSharedCalendarEnabled(!enabled);
     }
   };
 
