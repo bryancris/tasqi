@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -5,6 +6,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { TaskPriority } from "./TaskBoard";
 import { DatePickerInput } from "./form/DatePickerInput";
+import { ShareTaskDialog } from "./ShareTaskDialog";
+import { useState } from "react";
+import { Share2 } from "lucide-react";
+import { Task } from "./TaskBoard";
 
 interface TaskFormProps {
   title: string;
@@ -17,6 +22,7 @@ interface TaskFormProps {
   reminderEnabled: boolean;
   isLoading: boolean;
   isEditing?: boolean;
+  task?: Task;
   onTitleChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
   onIsScheduledChange: (value: boolean) => void;
@@ -39,6 +45,7 @@ export function TaskForm({
   reminderEnabled,
   isLoading,
   isEditing = false,
+  task,
   onTitleChange,
   onDescriptionChange,
   onIsScheduledChange,
@@ -49,6 +56,8 @@ export function TaskForm({
   onReminderEnabledChange,
   onSubmit,
 }: TaskFormProps) {
+  const [showShareDialog, setShowShareDialog] = useState(false);
+
   return (
     <form
       onSubmit={(e) => {
@@ -57,15 +66,28 @@ export function TaskForm({
       }}
       className="p-4 space-y-4"
     >
-      <div className="space-y-2">
-        <Label htmlFor="title">Title</Label>
-        <Input
-          id="title"
-          value={title}
-          onChange={(e) => onTitleChange(e.target.value)}
-          placeholder="Task title"
-          required
-        />
+      <div className="flex items-center justify-between mb-4">
+        <div className="space-y-2 flex-1">
+          <Label htmlFor="title">Title</Label>
+          <Input
+            id="title"
+            value={title}
+            onChange={(e) => onTitleChange(e.target.value)}
+            placeholder="Task title"
+            required
+          />
+        </div>
+        {isEditing && task && (
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="ml-2"
+            onClick={() => setShowShareDialog(true)}
+          >
+            <Share2 className="h-4 w-4" />
+          </Button>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -147,6 +169,14 @@ export function TaskForm({
       >
         {isLoading ? "Loading..." : isEditing ? "Update Task" : "Create Task"}
       </Button>
+
+      {isEditing && task && (
+        <ShareTaskDialog
+          task={task}
+          open={showShareDialog}
+          onOpenChange={setShowShareDialog}
+        />
+      )}
     </form>
   );
 }
