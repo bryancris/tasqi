@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { TrustedUsersList } from "./TrustedUsersList";
 import { AddTrustedUserDialog } from "./AddTrustedUserDialog";
 import { CreateGroupDialog } from "./CreateGroupDialog";
+import { GroupsList } from "./GroupsList";
 import { Plus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -65,7 +66,7 @@ export function TaskSharingSettings() {
   };
 
   const handleGroupCreated = () => {
-    // We'll implement this later when we add the groups list component
+    setRefreshTrigger(prev => prev + 1);
   };
 
   return (
@@ -108,9 +109,7 @@ export function TaskSharingSettings() {
               Create Group
             </Button>
           </div>
-          <div className="text-sm text-muted-foreground">
-            No groups created yet
-          </div>
+          <GroupsList key={refreshTrigger} />
         </div>
       </div>
 
