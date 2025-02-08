@@ -5,10 +5,14 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
 
+interface Profile {
+  email: string;
+}
+
 interface TrustedUser {
   id: number;
   trusted_user_id: string;
-  email: string;
+  profiles: Profile;
 }
 
 export function TrustedUsersList() {
@@ -22,7 +26,7 @@ export function TrustedUsersList() {
         .select(`
           id,
           trusted_user_id,
-          profiles!trusted_task_users_trusted_user_id_fkey (
+          profiles (
             email
           )
         `)
@@ -30,13 +34,9 @@ export function TrustedUsersList() {
 
       if (trustedUsersError) throw trustedUsersError;
 
-      setTrustedUsers(
-        trustedUsersData.map(user => ({
-          id: user.id,
-          trusted_user_id: user.trusted_user_id,
-          email: user.profiles.email
-        }))
-      );
+      if (trustedUsersData) {
+        setTrustedUsers(trustedUsersData as TrustedUser[]);
+      }
     } catch (error) {
       console.error('Error loading trusted users:', error);
       toast.error('Failed to load trusted users');
@@ -78,7 +78,7 @@ export function TrustedUsersList() {
         <ul className="space-y-3">
           {trustedUsers.map((user) => (
             <li key={user.id} className="flex items-center justify-between bg-secondary/50 p-3 rounded-lg">
-              <span className="text-sm">{user.email}</span>
+              <span className="text-sm">{user.profiles.email}</span>
               <Button
                 variant="ghost"
                 size="icon"
