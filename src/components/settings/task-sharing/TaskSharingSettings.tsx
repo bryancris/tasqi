@@ -9,6 +9,7 @@ import { Plus } from "lucide-react";
 
 export function TaskSharingSettings() {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   return (
     <div>
@@ -34,7 +35,7 @@ export function TaskSharingSettings() {
               Add User
             </Button>
           </div>
-          <TrustedUsersList />
+          <TrustedUsersList key={refreshTrigger} />
         </div>
       </div>
 
@@ -42,8 +43,7 @@ export function TaskSharingSettings() {
         open={addDialogOpen} 
         onOpenChange={setAddDialogOpen}
         onUserAdded={() => {
-          // Force refresh of the TrustedUsersList component
-          window.location.reload();
+          setRefreshTrigger(prev => prev + 1);
         }}
       />
     </div>

@@ -44,7 +44,7 @@ export function AddTrustedUserDialog({ open, onOpenChange, onUserAdded }: AddTru
       if (addError) throw addError;
 
       toast.success('User added successfully');
-      onUserAdded();
+      onUserAdded(); // This will trigger the list refresh
       onOpenChange(false);
       setEmail('');
     } catch (error) {
