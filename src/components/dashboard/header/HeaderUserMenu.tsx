@@ -23,14 +23,29 @@ export function HeaderUserMenu() {
 
   const handleLogout = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      // Clear local session state first
+      localStorage.removeItem('sb-refresh-token');
+      localStorage.removeItem('sb-access-token');
       
-      toast.success("Successfully logged out");
+      // Attempt to sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      
+      // Even if there's an error, we want to redirect to auth
+      // since the session is already cleared locally
       navigate('/auth');
+      
+      // Only show error if it's not related to session not found
+      if (error && !error.message?.includes('session_not_found')) {
+        console.error('Error logging out:', error);
+        toast.error("There was an issue logging out");
+      } else {
+        toast.success("Successfully logged out");
+      }
     } catch (error) {
-      console.error('Error logging out:', error);
-      toast.error("Failed to log out");
+      console.error('Error in logout process:', error);
+      // Still redirect to auth page even if there's an error
+      navigate('/auth');
+      toast.error("There was an issue logging out");
     }
   };
 

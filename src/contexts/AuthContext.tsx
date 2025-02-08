@@ -22,13 +22,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const handleSignOut = async () => {
     try {
+      // Clear local storage first
+      localStorage.removeItem('sb-refresh-token');
+      localStorage.removeItem('sb-access-token');
+      
       await supabase.auth.signOut();
       setSession(null);
-      localStorage.removeItem('sb-refresh-token'); // Clear any stored refresh token
       navigate('/auth');
     } catch (error) {
       console.error("Error signing out:", error);
-      toast.error("Failed to sign out");
+      // Still clear the session and redirect
+      setSession(null);
+      navigate('/auth');
+      toast.error("Failed to sign out properly");
     }
   };
 
@@ -40,8 +46,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         if (error) {
           console.error("Error getting session:", error);
-          // If there's a refresh token error, clear the session
-          if (error.message?.includes('refresh_token')) {
+          // If there's a refresh token error or session error, clear everything
+          if (error.message?.includes('refresh_token') || error.message?.includes('session')) {
             await handleSignOut();
             return;
           }
@@ -63,7 +69,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       } catch (error) {
         console.error("Error in auth initialization:", error);
-        await handleSignOut(); // Properly clean up the session
+        await handleSignOut();
       } finally {
         setLoading(false);
       }
@@ -87,7 +93,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         case 'SIGNED_OUT':
           console.log("User signed out");
           setSession(null);
-          localStorage.removeItem('sb-refresh-token'); // Clear refresh token on sign out
+          localStorage.removeItem('sb-refresh-token');
+          localStorage.removeItem('sb-access-token');
           navigate('/auth');
           toast.success("You have been logged out");
           break;
