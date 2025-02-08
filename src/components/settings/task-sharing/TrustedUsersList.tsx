@@ -22,7 +22,7 @@ export function TrustedUsersList() {
         .select(`
           id,
           trusted_user_id,
-          trusted_user:trusted_user_id (
+          trusted_user:profiles!trusted_task_users_trusted_user_id_fkey (
             email
           )
         `)
