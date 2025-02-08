@@ -35,6 +35,7 @@ const categories = [
     description: "Building and maintaining relationships",
     gradient: "from-[#0EA5E9] to-[#7DD3FC]",
     iconColor: "text-[#0EA5E9]",
+    path: "/self-care/social-connections",
   },
   {
     title: "Daily Rituals",

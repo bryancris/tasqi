@@ -17,6 +17,7 @@ import SelfCare from "./pages/SelfCare";
 import PhysicalWellness from "./pages/PhysicalWellness";
 import MentalWellbeing from "./pages/MentalWellbeing";
 import PersonalGrowth from "./pages/PersonalGrowth";
+import SocialConnections from "./pages/SocialConnections";
 
 const queryClient = new QueryClient();
 
@@ -92,6 +93,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <PersonalGrowth />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/self-care/social-connections"
+                element={
+                  <ProtectedRoute>
+                    <SocialConnections />
                   </ProtectedRoute>
                 }
               />

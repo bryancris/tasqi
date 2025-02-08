@@ -379,6 +379,66 @@ export type Database = {
         }
         Relationships: []
       }
+      social_activities: {
+        Row: {
+          activity_name: string
+          created_at: string
+          description: string | null
+          id: number
+          participants: string[] | null
+          scheduled_date: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity_name: string
+          created_at?: string
+          description?: string | null
+          id?: number
+          participants?: string[] | null
+          scheduled_date?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity_name?: string
+          created_at?: string
+          description?: string | null
+          id?: number
+          participants?: string[] | null
+          scheduled_date?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      social_connections: {
+        Row: {
+          connected_user_id: string
+          created_at: string
+          id: number
+          status: Database["public"]["Enums"]["connection_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          connected_user_id: string
+          created_at?: string
+          id?: number
+          status?: Database["public"]["Enums"]["connection_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          connected_user_id?: string
+          created_at?: string
+          id?: number
+          status?: Database["public"]["Enums"]["connection_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           completed_at: string | null
@@ -665,6 +725,7 @@ export type Database = {
       }
     }
     Enums: {
+      connection_status: "pending" | "accepted" | "rejected"
       measurement_unit:
         | "count"
         | "minutes"
