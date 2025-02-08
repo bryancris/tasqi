@@ -1,3 +1,4 @@
+
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DesktopTaskView } from "./DesktopTaskView";
 import { MobileTaskView } from "./MobileTaskView";
@@ -21,6 +22,7 @@ export interface Task {
   position: number;
   reminder_enabled?: boolean;
   completed_at?: string;
+  reschedule_count?: number;
 }
 
 interface TaskBoardProps {
