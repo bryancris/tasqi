@@ -23,7 +23,9 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseKey)
     
-    // Get invitation details
+    console.log('Fetching invitation details for id:', invitationId)
+
+    // Get invitation details using profiles table instead of users
     const { data: invitation, error: invitationError } = await supabase
       .from('calendar_invitations')
       .select(`
@@ -31,11 +33,18 @@ serve(async (req) => {
         sender:profiles!calendar_invitations_sender_id_fkey(email)
       `)
       .eq('id', invitationId)
-      .single()
+      .maybeSingle()
 
-    if (invitationError || !invitation) {
+    if (invitationError) {
+      console.error('Error fetching invitation:', invitationError)
+      throw new Error('Failed to fetch invitation details')
+    }
+
+    if (!invitation) {
       throw new Error('Invitation not found')
     }
+
+    console.log('Retrieved invitation:', { ...invitation, sender: invitation.sender })
 
     // Send email
     const { data: emailData, error: emailError } = await resend.emails.send({
@@ -51,14 +60,24 @@ serve(async (req) => {
     })
 
     if (emailError) {
+      console.error('Error sending email:', emailError)
       throw emailError
     }
 
+    console.log('Email sent successfully')
+
     // Update invitation status
-    await supabase
+    const { error: updateError } = await supabase
       .from('calendar_invitations')
       .update({ status: 'sent' })
       .eq('id', invitationId)
+
+    if (updateError) {
+      console.error('Error updating invitation status:', updateError)
+      throw new Error('Failed to update invitation status')
+    }
+
+    console.log('Invitation status updated to sent')
 
     return new Response(
       JSON.stringify({ success: true, data: emailData }),
