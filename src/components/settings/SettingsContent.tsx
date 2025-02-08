@@ -41,10 +41,25 @@ export function SettingsContent() {
   return (
     <div className="space-y-8 bg-white p-6 rounded-lg shadow-sm">
       <Tabs defaultValue="appearance" className="w-full">
-        <TabsList className="w-full mb-6">
-          <TabsTrigger value="appearance" className="flex-1">Appearance</TabsTrigger>
-          <TabsTrigger value="calendar" className="flex-1">Calendar</TabsTrigger>
-          <TabsTrigger value="task-sharing" className="flex-1">Task Sharing</TabsTrigger>
+        <TabsList className="w-full mb-6 bg-[#E5DEFF] p-1.5">
+          <TabsTrigger 
+            value="appearance" 
+            className="flex-1 data-[state=active]:bg-[#8B5CF6] data-[state=active]:text-white"
+          >
+            Appearance
+          </TabsTrigger>
+          <TabsTrigger 
+            value="calendar" 
+            className="flex-1 data-[state=active]:bg-[#8B5CF6] data-[state=active]:text-white"
+          >
+            Calendar
+          </TabsTrigger>
+          <TabsTrigger 
+            value="task-sharing" 
+            className="flex-1 data-[state=active]:bg-[#8B5CF6] data-[state=active]:text-white"
+          >
+            Task Sharing
+          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="appearance">
