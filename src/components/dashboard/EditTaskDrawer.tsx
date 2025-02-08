@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -7,13 +8,14 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import { X } from "lucide-react";
+import { Share2, X } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { TaskForm } from "./TaskForm";
 import { supabase } from "@/integrations/supabase/client";
 import { Task, TaskPriority } from "./TaskBoard";
 import { DeleteTaskAlert } from "./DeleteTaskAlert";
+import { ShareTaskDialog } from "./ShareTaskDialog";
 
 interface EditTaskDrawerProps {
   task: Task;
@@ -31,6 +33,7 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
   const [priority, setPriority] = useState<TaskPriority>(task.priority || "low");
   const [reminderEnabled, setReminderEnabled] = useState(task.reminder_enabled || false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -109,7 +112,17 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
         <div className="mx-auto w-full max-w-sm">
           <DrawerHeader>
             <div className="flex items-center justify-between">
-              <DrawerTitle>Edit Task</DrawerTitle>
+              <div className="flex items-center gap-2">
+                <DrawerTitle>Edit Task</DrawerTitle>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowShareDialog(true)}
+                >
+                  <Share2 className="h-4 w-4" />
+                </Button>
+              </div>
               <DrawerClose asChild>
                 <Button variant="ghost" size="icon">
                   <X className="h-4 w-4" />
@@ -129,6 +142,7 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
               reminderEnabled={reminderEnabled}
               isLoading={isLoading}
               isEditing={true}
+              task={task}
               onTitleChange={setTitle}
               onDescriptionChange={setDescription}
               onIsScheduledChange={setIsScheduled}
@@ -147,6 +161,11 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
           </div>
         </div>
       </DrawerContent>
+      <ShareTaskDialog
+        task={task}
+        open={showShareDialog}
+        onOpenChange={setShowShareDialog}
+      />
     </Drawer>
   );
 }
