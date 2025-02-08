@@ -2,7 +2,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -32,12 +31,27 @@ export function UserInviteForm() {
         throw new Error('User not found');
       }
 
-      toast.success(`Invitation sent to ${recipientEmail}`);
+      // Create the shared task record
+      const { error: shareError } = await supabase
+        .from('shared_tasks')
+        .insert({
+          shared_by_user_id: session.user.id,
+          shared_with_user_id: recipientProfile.id,
+          status: 'pending'
+        });
+
+      if (shareError) throw shareError;
+
+      toast.success(`Task shared with ${recipientEmail}`);
       setRecipientEmail("");
       
     } catch (error) {
-      console.error('Error sending invitation:', error);
-      toast.error("Failed to send invitation");
+      console.error('Error sharing task:', error);
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Failed to share task");
+      }
     } finally {
       setIsSharing(false);
     }
