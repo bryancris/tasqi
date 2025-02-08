@@ -1,3 +1,4 @@
+
 import { Clock, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getUrgencyColor } from "@/utils/taskColors";
@@ -26,6 +27,7 @@ export function TaskStatusIndicator({ status, time, onClick }: TaskStatusIndicat
     <div 
       className={cn(
         "flex items-center justify-center w-8 h-8 rounded-full cursor-pointer shadow-lg transition-colors",
+        "ring-2 ring-white ring-opacity-100",
         status === 'unscheduled' ? 'bg-[#1EAEDB]' : 
         status === 'completed' ? 'bg-gray-500' :
         getUrgencyColor(time),
