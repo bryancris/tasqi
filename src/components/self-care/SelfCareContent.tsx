@@ -27,6 +27,7 @@ const categories = [
     description: "Learning, development, and self-improvement",
     gradient: "from-[#2ECC71] to-[#82E0AA]",
     iconColor: "text-[#2ECC71]",
+    path: "/self-care/personal-growth",
   },
   {
     title: "Social Connection",
