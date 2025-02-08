@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,6 +14,7 @@ import Notes from "./pages/Notes";
 import Analytics from "./pages/Analytics";
 import SelfCare from "./pages/SelfCare";
 import PhysicalWellness from "./pages/PhysicalWellness";
+import MentalWellbeing from "./pages/MentalWellbeing";
 
 const queryClient = new QueryClient();
 
@@ -74,6 +74,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <PhysicalWellness />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/self-care/mental-wellbeing"
+                element={
+                  <ProtectedRoute>
+                    <MentalWellbeing />
                   </ProtectedRoute>
                 }
               />

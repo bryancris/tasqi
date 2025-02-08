@@ -63,6 +63,74 @@ export type Database = {
         }
         Relationships: []
       }
+      mental_wellness_activities: {
+        Row: {
+          activity_name: string
+          activity_type: string
+          created_at: string
+          id: number
+          measurement_unit: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity_name: string
+          activity_type: string
+          created_at?: string
+          id?: never
+          measurement_unit: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity_name?: string
+          activity_type?: string
+          created_at?: string
+          id?: never
+          measurement_unit?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mental_wellness_logs: {
+        Row: {
+          activity_id: number | null
+          created_at: string
+          id: number
+          logged_at: string
+          notes: string | null
+          user_id: string
+          value: number
+        }
+        Insert: {
+          activity_id?: number | null
+          created_at?: string
+          id?: never
+          logged_at?: string
+          notes?: string | null
+          user_id: string
+          value: number
+        }
+        Update: {
+          activity_id?: number | null
+          created_at?: string
+          id?: never
+          logged_at?: string
+          notes?: string | null
+          user_id?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mental_wellness_logs_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "mental_wellness_activities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notes: {
         Row: {
           color: string | null
