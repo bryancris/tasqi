@@ -56,22 +56,25 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
       // Add the current key to the buffer
       keyBuffer.current += e.key;
 
-      // Check if the buffer ends with `t
+      // Check if the buffer ends with `t and drawer is not already open
       if (keyBuffer.current.endsWith("`t") && !isOpen) {
-        setIsOpen(true);
-        keyBuffer.current = ""; // Reset the buffer
         e.preventDefault(); // Prevent the key from being typed
+        keyBuffer.current = ""; // Reset the buffer
+        setIsOpen(true);
       }
     };
 
+    // Add event listener
     window.addEventListener("keydown", handleKeyDown);
+
+    // Cleanup function
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       if (keyTimeout.current) {
         clearTimeout(keyTimeout.current);
       }
     };
-  }, [isMobile, isOpen]); // Added isOpen to dependencies
+  }, [isMobile, isOpen]); // Keep isOpen in dependencies
 
   const handleSubmit = async () => {
     try {
