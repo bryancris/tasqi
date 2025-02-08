@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { TaskPriority } from "@/components/dashboard/TaskBoard";
 
@@ -33,7 +34,6 @@ export const createTask = async ({
 
   const nextPosition = existingTasks && existingTasks[0] ? existingTasks[0].position + 1 : 0;
 
-  // Use the date directly without any transformation
   const { data, error } = await supabase.from("tasks").insert({
     title,
     description,
@@ -44,7 +44,9 @@ export const createTask = async ({
     priority,
     position: nextPosition,
     reminder_enabled: reminderEnabled,
-    user_id: user.user.id
+    user_id: user.user.id,
+    owner_id: user.user.id, // Add the owner_id field
+    shared: false // Initialize shared as false
   });
 
   if (error) throw error;
