@@ -737,6 +737,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      reschedule_overdue_tasks: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       sparsevec_out: {
         Args: {
           "": unknown
