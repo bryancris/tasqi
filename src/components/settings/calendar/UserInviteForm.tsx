@@ -22,21 +22,6 @@ export function UserInviteForm() {
         throw new Error("No session found");
       }
 
-      // First check if an invitation already exists
-      const { data: existingInvitation, error: checkError } = await supabase
-        .from('calendar_invitations')
-        .select('*')
-        .eq('recipient_email', inviteEmail)
-        .eq('sender_id', session.user.id)
-        .maybeSingle();
-
-      if (checkError) throw checkError;
-
-      if (existingInvitation) {
-        toast.error("An invitation has already been sent to this email");
-        return;
-      }
-
       // Create invitation record
       const { data: invitation, error: inviteError } = await supabase
         .from('calendar_invitations')
