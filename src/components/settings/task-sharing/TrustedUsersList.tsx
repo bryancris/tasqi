@@ -22,27 +22,36 @@ export function TrustedUsersList() {
   const loadTrustedUsers = async () => {
     try {
       const { data: session } = await supabase.auth.getUser();
+      
+      // First, get the trusted user records
       const { data: trustedUsersData, error: trustedUsersError } = await supabase
         .from('trusted_task_users')
-        .select(`
-          id,
-          trusted_user_id,
-          profiles:profiles(email)
-        `)
+        .select('id, trusted_user_id')
         .eq('user_id', session.user?.id);
 
       if (trustedUsersError) throw trustedUsersError;
+      if (!trustedUsersData) return;
 
-      if (trustedUsersData) {
-        const transformedData: TrustedUser[] = trustedUsersData.map(user => ({
-          id: user.id,
-          trusted_user_id: user.trusted_user_id,
-          profiles: {
-            email: user.profiles.email
-          }
-        }));
-        setTrustedUsers(transformedData);
-      }
+      // Then, for each trusted user, get their profile information
+      const trustedUsersWithProfiles = await Promise.all(
+        trustedUsersData.map(async (user) => {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('email')
+            .eq('id', user.trusted_user_id)
+            .single();
+
+          return {
+            id: user.id,
+            trusted_user_id: user.trusted_user_id,
+            profiles: {
+              email: profileData?.email || 'Unknown email'
+            }
+          };
+        })
+      );
+
+      setTrustedUsers(trustedUsersWithProfiles);
     } catch (error) {
       console.error('Error loading trusted users:', error);
       toast.error('Failed to load trusted users');
