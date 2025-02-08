@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { AppearanceSettings } from "./appearance/AppearanceSettings";
 import { CalendarSettings } from "./calendar/CalendarSettings";
+import { Separator } from "@/components/ui/separator";
 
 export function SettingsContent() {
   const [startHour, setStartHour] = useState<string>("8");
@@ -37,12 +38,17 @@ export function SettingsContent() {
   }, []);
 
   return (
-    <div className="space-y-6">
-      <AppearanceSettings />
-      <CalendarSettings
-        initialStartHour={startHour}
-        initialEndHour={endHour}
-      />
+    <div className="space-y-8 bg-white p-6 rounded-lg shadow-sm">
+      <div>
+        <AppearanceSettings />
+      </div>
+      <Separator />
+      <div>
+        <CalendarSettings
+          initialStartHour={startHour}
+          initialEndHour={endHour}
+        />
+      </div>
     </div>
   );
 }

@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -20,6 +19,7 @@ import PersonalGrowth from "./pages/PersonalGrowth";
 import SocialConnections from "./pages/SocialConnections";
 import DailyRituals from "./pages/DailyRituals";
 import EmotionalCare from "./pages/EmotionalCare";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +47,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/settings"
+                element={
+                  <ProtectedRoute>
+                    <Settings />
                   </ProtectedRoute>
                 }
               />
