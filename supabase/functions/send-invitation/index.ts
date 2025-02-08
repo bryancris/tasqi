@@ -16,46 +16,50 @@ serve(async (req) => {
 
   try {
     const resend = new Resend(Deno.env.get("RESEND_API_KEY"))
-    const { invitationId } = await req.json()
+    const { sharedTaskId } = await req.json()
     
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseKey)
     
-    console.log('Fetching invitation details for id:', invitationId)
+    console.log('Fetching shared task details for id:', sharedTaskId)
 
-    // Get invitation details using profiles table instead of users
-    const { data: invitation, error: invitationError } = await supabase
-      .from('calendar_invitations')
+    // Get shared task details along with task info and user profiles
+    const { data: sharedTask, error: sharedTaskError } = await supabase
+      .from('shared_tasks')
       .select(`
         *,
-        sender:profiles!calendar_invitations_sender_id_fkey(email)
+        task:tasks(*),
+        shared_by:profiles!shared_tasks_shared_by_user_id_fkey(email),
+        shared_with:profiles!shared_tasks_shared_with_user_id_fkey(email)
       `)
-      .eq('id', invitationId)
-      .maybeSingle()
+      .eq('id', sharedTaskId)
+      .single()
 
-    if (invitationError) {
-      console.error('Error fetching invitation:', invitationError)
-      throw new Error('Failed to fetch invitation details')
+    if (sharedTaskError) {
+      console.error('Error fetching shared task:', sharedTaskError)
+      throw new Error('Failed to fetch shared task details')
     }
 
-    if (!invitation) {
-      throw new Error('Invitation not found')
+    if (!sharedTask) {
+      throw new Error('Shared task not found')
     }
 
-    console.log('Retrieved invitation:', { ...invitation, sender: invitation.sender })
+    console.log('Retrieved shared task:', sharedTask)
 
     // Send email
     const { data: emailData, error: emailError } = await resend.emails.send({
-      from: 'TASQI Calendar <onboarding@resend.dev>',
-      to: invitation.recipient_email,
-      subject: 'Calendar Sharing Invitation',
+      from: 'TASQI Tasks <onboarding@resend.dev>',
+      to: sharedTask.shared_with.email,
+      subject: 'Task Shared With You',
       html: `
-        <h1>You've been invited to share a calendar!</h1>
-        <p>${invitation.sender.email} has invited you to share their calendar with ${invitation.permission_level} access.</p>
-        <p>Click the link below to accept the invitation:</p>
-        <a href="https://tasqi.lovable.app/accept-invite?id=${invitation.id}">Accept Invitation</a>
+        <h1>A Task Has Been Shared With You</h1>
+        <p>${sharedTask.shared_by.email} has shared a task with you:</p>
+        <h2>${sharedTask.task.title}</h2>
+        <p>${sharedTask.task.description || ''}</p>
+        <p>Click the link below to view the task:</p>
+        <a href="https://tasqi.lovable.app/dashboard">View Task</a>
       `
     })
 
@@ -66,18 +70,18 @@ serve(async (req) => {
 
     console.log('Email sent successfully')
 
-    // Update invitation status
+    // Update shared task status
     const { error: updateError } = await supabase
-      .from('calendar_invitations')
-      .update({ status: 'sent' })
-      .eq('id', invitationId)
+      .from('shared_tasks')
+      .update({ notification_sent: true })
+      .eq('id', sharedTaskId)
 
     if (updateError) {
-      console.error('Error updating invitation status:', updateError)
-      throw new Error('Failed to update invitation status')
+      console.error('Error updating shared task status:', updateError)
+      throw new Error('Failed to update shared task status')
     }
 
-    console.log('Invitation status updated to sent')
+    console.log('Shared task status updated')
 
     return new Response(
       JSON.stringify({ success: true, data: emailData }),
@@ -85,7 +89,7 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Error processing invitation:', error)
+    console.error('Error processing shared task:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { 

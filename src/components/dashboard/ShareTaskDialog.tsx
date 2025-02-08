@@ -50,7 +50,7 @@ export function ShareTaskDialog({ task, open, onOpenChange }: ShareTaskDialogPro
       // Send email notification using the Edge Function
       const { error: notificationError } = await supabase.functions.invoke('send-invitation', {
         body: {
-          invitationId: sharedTask.id
+          sharedTaskId: sharedTask.id
         }
       });
 
