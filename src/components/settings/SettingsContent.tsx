@@ -7,10 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { Switch } from "@/components/ui/switch";
 
 export function SettingsContent() {
   const [startHour, setStartHour] = useState<string>("8");
   const [endHour, setEndHour] = useState<string>("17");
+  const [sharedCalendarEnabled, setSharedCalendarEnabled] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -22,7 +24,7 @@ export function SettingsContent() {
 
       const { data, error } = await supabase
         .from('user_settings')
-        .select('start_hour, end_hour')
+        .select('start_hour, end_hour, shared_calendar_enabled')
         .eq('user_id', session.user.id)
         .single();
 
@@ -31,7 +33,7 @@ export function SettingsContent() {
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Failed to load time settings"
+          description: "Failed to load settings"
         });
         return;
       }
@@ -39,6 +41,7 @@ export function SettingsContent() {
       if (data) {
         setStartHour(data.start_hour.toString());
         setEndHour(data.end_hour.toString());
+        setSharedCalendarEnabled(data.shared_calendar_enabled || false);
       }
     };
 
@@ -110,6 +113,38 @@ export function SettingsContent() {
     }
   };
 
+  const handleSharedCalendarToggle = async (enabled: boolean) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+
+    try {
+      const { error } = await supabase
+        .from('user_settings')
+        .upsert({ 
+          user_id: session.user.id,
+          shared_calendar_enabled: enabled,
+          updated_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+
+      setSharedCalendarEnabled(enabled);
+      await queryClient.invalidateQueries({ queryKey: ['tasks'] });
+
+      toast({
+        title: "Success",
+        description: `Shared calendar ${enabled ? 'enabled' : 'disabled'}`
+      });
+    } catch (error) {
+      console.error('Error updating shared calendar settings:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update shared calendar settings"
+      });
+    }
+  };
+
   const timeOptions = Array.from({ length: 24 }, (_, i) => {
     const hour = i;
     const displayHour = hour === 0 ? "12 AM" : 
@@ -141,13 +176,27 @@ export function SettingsContent() {
       </div>
 
       <div>
-        <h3 className="text-lg font-medium">Time Settings</h3>
+        <h3 className="text-lg font-medium">Calendar Settings</h3>
         <p className="text-sm text-muted-foreground">
-          Customize your working hours for the calendar views
+          Customize your calendar preferences
         </p>
       </div>
       <Separator />
+      
       <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label>Shared Calendar</Label>
+            <p className="text-sm text-muted-foreground">
+              Enable calendar sharing with other users
+            </p>
+          </div>
+          <Switch
+            checked={sharedCalendarEnabled}
+            onCheckedChange={handleSharedCalendarToggle}
+          />
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>Start Time</Label>
