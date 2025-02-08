@@ -1,7 +1,6 @@
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Brain, HeartHandshake, BookOpen, Smile, Coffee, Yoga } from "lucide-react";
+import { Brain, HeartHandshake, BookOpen, Smile, Coffee, Dumbbell } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,7 +55,7 @@ const suggestedActivities = [
   {
     title: "Mindful Movement",
     description: "Yoga and mindful exercises",
-    icon: Yoga,
+    icon: Dumbbell,
     color: "text-green-500",
     gradient: "from-green-500 to-lime-500",
     defaultUnit: "minutes" as MentalWellnessMeasurementUnit,
@@ -75,9 +74,13 @@ export function MentalWellbeingContent() {
   const { data: activities } = useQuery({
     queryKey: ['mental-wellness-activities'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No user found');
+
       const { data, error } = await supabase
         .from('mental_wellness_activities')
-        .select('*');
+        .select('*')
+        .eq('user_id', user.id);
       
       if (error) throw error;
       return data as MentalWellnessActivity[];
@@ -86,12 +89,16 @@ export function MentalWellbeingContent() {
 
   const addActivityMutation = useMutation({
     mutationFn: async (data: { activity_name: string; measurement_unit: MentalWellnessMeasurementUnit }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No user found');
+
       const { error } = await supabase
         .from('mental_wellness_activities')
         .insert({
           activity_name: data.activity_name,
           activity_type: 'custom',
           measurement_unit: data.measurement_unit,
+          user_id: user.id
         });
       
       if (error) throw error;

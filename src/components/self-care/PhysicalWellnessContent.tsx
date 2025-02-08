@@ -85,9 +85,13 @@ export function PhysicalWellnessContent() {
   const { data: activities } = useQuery({
     queryKey: ['physical-wellness-activities'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No user found');
+
       const { data, error } = await supabase
         .from('physical_wellness_activities')
-        .select('*');
+        .select('*')
+        .eq('user_id', user.id);
       
       if (error) throw error;
       return data as PhysicalWellnessActivity[];
@@ -96,12 +100,16 @@ export function PhysicalWellnessContent() {
 
   const addActivityMutation = useMutation({
     mutationFn: async (data: { activity_name: string; measurement_unit: MeasurementUnit }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No user found');
+
       const { error } = await supabase
         .from('physical_wellness_activities')
         .insert({
           activity_name: data.activity_name,
           activity_type: 'custom',
           measurement_unit: data.measurement_unit,
+          user_id: user.id
         });
       
       if (error) throw error;
