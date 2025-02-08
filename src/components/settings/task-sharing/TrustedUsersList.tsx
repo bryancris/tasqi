@@ -26,7 +26,7 @@ export function TrustedUsersList() {
         .select(`
           id,
           trusted_user_id,
-          profiles (
+          profiles:trusted_user_id (
             email
           )
         `)
