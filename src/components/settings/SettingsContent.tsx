@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { ThemeToggle } from "./ThemeToggle";
 import { Label } from "@/components/ui/label";
@@ -154,11 +155,17 @@ export function SettingsContent() {
     setIsInviting(true);
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("No session found");
+      }
+
       const { error } = await supabase
         .from('calendar_invitations')
         .insert({
           recipient_email: inviteEmail,
           permission_level: permissionLevel,
+          sender_id: session.user.id,
         });
 
       if (error) throw error;
@@ -310,3 +317,4 @@ export function SettingsContent() {
     </div>
   );
 }
+
