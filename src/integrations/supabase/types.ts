@@ -33,6 +33,63 @@ export type Database = {
         }
         Relationships: []
       }
+      calendar_invitations: {
+        Row: {
+          created_at: string
+          id: string
+          permission_level: Database["public"]["Enums"]["calendar_permission"]
+          recipient_email: string
+          sender_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          permission_level?: Database["public"]["Enums"]["calendar_permission"]
+          recipient_email: string
+          sender_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          permission_level?: Database["public"]["Enums"]["calendar_permission"]
+          recipient_email?: string
+          sender_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      calendar_permissions: {
+        Row: {
+          created_at: string
+          id: string
+          owner_id: string
+          permission_level: Database["public"]["Enums"]["calendar_permission"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          owner_id: string
+          permission_level?: Database["public"]["Enums"]["calendar_permission"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          owner_id?: string
+          permission_level?: Database["public"]["Enums"]["calendar_permission"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           content: string
@@ -807,6 +864,7 @@ export type Database = {
       }
     }
     Enums: {
+      calendar_permission: "view" | "edit" | "admin"
       connection_status: "pending" | "accepted" | "rejected"
       measurement_unit:
         | "count"

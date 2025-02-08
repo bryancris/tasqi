@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { ThemeToggle } from "./ThemeToggle";
 import { Label } from "@/components/ui/label";
@@ -8,11 +7,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export function SettingsContent() {
   const [startHour, setStartHour] = useState<string>("8");
   const [endHour, setEndHour] = useState<string>("17");
   const [sharedCalendarEnabled, setSharedCalendarEnabled] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [permissionLevel, setPermissionLevel] = useState<"view" | "edit" | "admin">("view");
+  const [isInviting, setIsInviting] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -145,6 +149,38 @@ export function SettingsContent() {
     }
   };
 
+  const handleInviteUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsInviting(true);
+
+    try {
+      const { error } = await supabase
+        .from('calendar_invitations')
+        .insert({
+          recipient_email: inviteEmail,
+          permission_level: permissionLevel,
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Invitation Sent",
+        description: `Invitation sent to ${inviteEmail}`
+      });
+      
+      setInviteEmail("");
+    } catch (error) {
+      console.error('Error sending invitation:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to send invitation"
+      });
+    } finally {
+      setIsInviting(false);
+    }
+  };
+
   const timeOptions = Array.from({ length: 24 }, (_, i) => {
     const hour = i;
     const displayHour = hour === 0 ? "12 AM" : 
@@ -196,6 +232,41 @@ export function SettingsContent() {
             onCheckedChange={handleSharedCalendarToggle}
           />
         </div>
+
+        {sharedCalendarEnabled && (
+          <div className="space-y-4 pt-4">
+            <form onSubmit={handleInviteUser} className="space-y-4">
+              <div className="space-y-2">
+                <Label>Invite User</Label>
+                <div className="flex gap-4">
+                  <Input
+                    type="email"
+                    placeholder="Enter email address"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    required
+                  />
+                  <Select
+                    value={permissionLevel}
+                    onValueChange={(value: "view" | "edit" | "admin") => setPermissionLevel(value)}
+                  >
+                    <SelectTrigger className="w-[120px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="view">View</SelectItem>
+                      <SelectItem value="edit">Edit</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button type="submit" disabled={isInviting}>
+                    {isInviting ? "Sending..." : "Invite"}
+                  </Button>
+                </div>
+              </div>
+            </form>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
