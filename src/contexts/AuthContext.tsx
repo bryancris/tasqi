@@ -22,19 +22,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const handleSignOut = async () => {
     try {
-      // Clear local storage first
-      localStorage.removeItem('sb-refresh-token');
-      localStorage.removeItem('sb-access-token');
-      
+      // First try to sign out from Supabase
       await supabase.auth.signOut();
-      setSession(null);
-      navigate('/auth');
     } catch (error) {
       console.error("Error signing out:", error);
-      // Still clear the session and redirect
+    } finally {
+      // Always clear everything and redirect
+      localStorage.clear(); // Clear all storage to be thorough
       setSession(null);
       navigate('/auth');
-      toast.error("Failed to sign out properly");
     }
   };
 
@@ -46,12 +42,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         if (error) {
           console.error("Error getting session:", error);
-          // If there's a refresh token error or session error, clear everything
-          if (error.message?.includes('refresh_token') || error.message?.includes('session')) {
-            await handleSignOut();
-            return;
-          }
-          throw error;
+          await handleSignOut();
+          return;
         }
 
         if (initialSession?.user) {
@@ -93,8 +85,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         case 'SIGNED_OUT':
           console.log("User signed out");
           setSession(null);
-          localStorage.removeItem('sb-refresh-token');
-          localStorage.removeItem('sb-access-token');
+          localStorage.clear(); // Clear all storage
           navigate('/auth');
           toast.success("You have been logged out");
           break;
