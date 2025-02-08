@@ -35,17 +35,32 @@ export function ShareTaskDialog({ task, open, onOpenChange }: ShareTaskDialogPro
       }
 
       // Create the shared task record
-      const { error: shareError } = await supabase
+      const { data: sharedTask, error: shareError } = await supabase
         .from('shared_tasks')
         .insert({
           task_id: task.id,
           shared_with_user_id: profiles.id,
           shared_by_user_id: (await supabase.auth.getUser()).data.user?.id
-        });
+        })
+        .select()
+        .single();
 
       if (shareError) throw shareError;
 
-      toast.success('Task shared successfully');
+      // Send email notification using the Edge Function
+      const { error: notificationError } = await supabase.functions.invoke('send-invitation', {
+        body: {
+          invitationId: sharedTask.id
+        }
+      });
+
+      if (notificationError) {
+        console.error('Error sending notification:', notificationError);
+        toast.error('Task shared but notification could not be sent');
+      } else {
+        toast.success('Task shared successfully');
+      }
+
       onOpenChange(false);
       setRecipientEmail('');
     } catch (error) {
