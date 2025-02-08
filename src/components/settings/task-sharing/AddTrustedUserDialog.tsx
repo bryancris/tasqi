@@ -23,13 +23,14 @@ export function AddTrustedUserDialog({ open, onOpenChange, onUserAdded }: AddTru
 
     try {
       // First get the user ID from their email
-      const { data: profiles, error: profileError } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('id')
         .eq('email', email)
-        .single();
+        .maybeSingle();
 
-      if (profileError || !profiles) {
+      if (profileError) throw profileError;
+      if (!profile) {
         throw new Error('User not found');
       }
 
@@ -37,7 +38,7 @@ export function AddTrustedUserDialog({ open, onOpenChange, onUserAdded }: AddTru
       const { error: addError } = await supabase
         .from('trusted_task_users')
         .insert({
-          trusted_user_id: profiles.id,
+          trusted_user_id: profile.id,
           user_id: (await supabase.auth.getUser()).data.user?.id
         });
 
@@ -47,9 +48,13 @@ export function AddTrustedUserDialog({ open, onOpenChange, onUserAdded }: AddTru
       onUserAdded(); // This will trigger the list refresh
       onOpenChange(false);
       setEmail('');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding trusted user:', error);
-      toast.error('Failed to add user. Please verify the email and try again.');
+      // Provide a more specific error message based on the error type
+      const errorMessage = error.message === 'User not found' 
+        ? 'User not found. Please verify the email and try again.'
+        : 'Failed to add user. Please try again.';
+      toast.error(errorMessage);
     } finally {
       setIsAdding(false);
     }
