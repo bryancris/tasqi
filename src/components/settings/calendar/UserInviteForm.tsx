@@ -22,15 +22,26 @@ export function UserInviteForm() {
         throw new Error("No session found");
       }
 
-      const { error } = await supabase
+      // Create invitation record
+      const { data: invitation, error: inviteError } = await supabase
         .from('calendar_invitations')
         .insert({
           recipient_email: inviteEmail,
           permission_level: permissionLevel,
           sender_id: session.user.id,
-        });
+          status: 'pending'
+        })
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (inviteError) throw inviteError;
+
+      // Send invitation email
+      const { error: emailError } = await supabase.functions.invoke('send-invitation', {
+        body: { invitationId: invitation.id }
+      });
+
+      if (emailError) throw emailError;
 
       toast.success(`Invitation sent to ${inviteEmail}`);
       setInviteEmail("");
