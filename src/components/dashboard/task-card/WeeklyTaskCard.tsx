@@ -8,9 +8,10 @@ interface WeeklyTaskCardProps {
   onClick?: () => void;
   onComplete?: () => void;
   dragHandleProps?: any;
+  extraButton?: React.ReactNode;
 }
 
-export function WeeklyTaskCard({ task, onClick, onComplete, dragHandleProps }: WeeklyTaskCardProps) {
+export function WeeklyTaskCard({ task, onClick, onComplete, dragHandleProps, extraButton }: WeeklyTaskCardProps) {
   const getPriorityColor = (priority: string | null) => {
     switch (priority) {
       case 'high':
@@ -42,9 +43,12 @@ export function WeeklyTaskCard({ task, onClick, onComplete, dragHandleProps }: W
           <div className="font-medium truncate flex-1">
             {task.title}
           </div>
-          {task.reminder_enabled && (
-            <Bell className="w-3 h-3 shrink-0" />
-          )}
+          <div className="flex items-center gap-1 shrink-0">
+            {task.reminder_enabled && (
+              <Bell className="w-3 h-3" />
+            )}
+            {extraButton}
+          </div>
         </div>
         {task.description && (
           <p className="text-[10px] text-white/90 truncate">

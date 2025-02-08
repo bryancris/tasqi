@@ -10,9 +10,10 @@ interface DailyTaskCardProps {
   onComplete: () => void;
   onClick: () => void;
   dragHandleProps?: any;
+  extraButton?: React.ReactNode;
 }
 
-export function DailyTaskCard({ task, onComplete, onClick, dragHandleProps }: DailyTaskCardProps) {
+export function DailyTaskCard({ task, onComplete, onClick, dragHandleProps, extraButton }: DailyTaskCardProps) {
   const timeString = task.start_time && task.end_time ? `${task.start_time} - ${task.end_time}` : '';
 
   const getCardColor = () => {
@@ -51,12 +52,15 @@ export function DailyTaskCard({ task, onComplete, onClick, dragHandleProps }: Da
             "font-medium truncate flex-1",
             task.status === 'completed' ? 'text-white line-through' : 'text-gray-900'
           )}>{task.title}</h3>
-          {task.reminder_enabled && (
-            <Bell className={cn(
-              "w-4 h-4 shrink-0",
-              task.status === 'completed' ? 'text-white/80' : 'text-gray-500'
-            )} />
-          )}
+          <div className="flex items-center gap-1">
+            {task.reminder_enabled && (
+              <Bell className={cn(
+                "w-4 h-4 shrink-0",
+                task.status === 'completed' ? 'text-white/80' : 'text-gray-500'
+              )} />
+            )}
+            {extraButton}
+          </div>
         </div>
         {timeString && (
           <p className={cn(

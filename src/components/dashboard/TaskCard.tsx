@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -9,6 +10,9 @@ import { EditTaskDrawer } from "./EditTaskDrawer";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ShareTaskDialog } from "./ShareTaskDialog";
+import { Button } from "@/components/ui/button";
+import { Share2 } from "lucide-react";
 
 interface TaskCardProps {
   task: Task;
@@ -20,6 +24,7 @@ interface TaskCardProps {
 
 export function TaskCard({ task, index, isDraggable = false, view = 'daily', onComplete }: TaskCardProps) {
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   
   const {
     attributes,
@@ -75,34 +80,33 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
   } : {};
 
   const renderCard = () => {
+    const cardProps = {
+      task,
+      onClick: handleClick,
+      onComplete: handleComplete,
+      dragHandleProps,
+      extraButton: (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsShareDialogOpen(true);
+          }}
+        >
+          <Share2 className="h-4 w-4" />
+        </Button>
+      )
+    };
+
     switch (view) {
       case 'weekly':
-        return (
-          <WeeklyTaskCard
-            task={task}
-            onClick={handleClick}
-            onComplete={handleComplete}
-            dragHandleProps={dragHandleProps}
-          />
-        );
+        return <WeeklyTaskCard {...cardProps} />;
       case 'monthly':
-        return (
-          <MonthlyTaskCard
-            task={task}
-            onClick={handleClick}
-            onComplete={handleComplete}
-            dragHandleProps={dragHandleProps}
-          />
-        );
+        return <MonthlyTaskCard {...cardProps} />;
       default:
-        return (
-          <DailyTaskCard
-            task={task}
-            onClick={handleClick}
-            onComplete={handleComplete}
-            dragHandleProps={dragHandleProps}
-          />
-        );
+        return <DailyTaskCard {...cardProps} />;
     }
   };
 
@@ -118,6 +122,11 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
         task={task}
         open={isEditDrawerOpen}
         onOpenChange={setIsEditDrawerOpen}
+      />
+      <ShareTaskDialog
+        task={task}
+        open={isShareDialogOpen}
+        onOpenChange={setIsShareDialogOpen}
       />
     </>
   );
