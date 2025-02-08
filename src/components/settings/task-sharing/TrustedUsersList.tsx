@@ -22,7 +22,9 @@ export function TrustedUsersList() {
         .select(`
           id,
           trusted_user_id,
-          profiles!trusted_task_users_trusted_user_id_fkey(email)
+          profiles:trusted_user_id (
+            email
+          )
         `)
         .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
 
