@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -56,7 +55,7 @@ export function SettingsContent() {
           </TabsTrigger>
           <TabsTrigger 
             value="task-sharing" 
-            className="flex-1 bg-[#FFD199] data-[state=active]:bg-[#F97316] data-[state=active]:text-white text-[#F97316]"
+            className="flex-1 bg-[#E5DEFF] data-[state=active]:bg-[#8B5CF6] data-[state=active]:text-white text-[#8B5CF6]"
           >
             Task Sharing
           </TabsTrigger>
@@ -80,4 +79,3 @@ export function SettingsContent() {
     </div>
   );
 }
-
