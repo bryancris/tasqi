@@ -19,6 +19,7 @@ const categories = [
     description: "Meditation, mindfulness, and mental exercises",
     gradient: "from-[#8B5CF6] to-[#D946EF]",
     iconColor: "text-[#8B5CF6]",
+    path: "/self-care/mental-wellbeing",
   },
   {
     title: "Personal Growth",
