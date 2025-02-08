@@ -21,16 +21,20 @@ export function TrustedUsersList() {
 
   const loadTrustedUsers = async () => {
     try {
+      const { data: session } = await supabase.auth.getUser();
       const { data: trustedUsersData, error: trustedUsersError } = await supabase
         .from('trusted_task_users')
-        .select('*, profiles:profiles!trusted_task_users_trusted_user_id_fkey(email)')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
+        .select(`
+          id,
+          trusted_user_id,
+          profiles:profiles(email)
+        `)
+        .eq('user_id', session.user?.id);
 
       if (trustedUsersError) throw trustedUsersError;
 
       if (trustedUsersData) {
-        // Transform the data to match our TrustedUser interface
-        const transformedData = trustedUsersData.map(user => ({
+        const transformedData: TrustedUser[] = trustedUsersData.map(user => ({
           id: user.id,
           trusted_user_id: user.trusted_user_id,
           profiles: {
