@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -30,9 +31,45 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
   const [priority, setPriority] = useState<TaskPriority>("low");
   const [reminderEnabled, setReminderEnabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const keyBuffer = useRef<string>("");
+  const keyTimeout = useRef<NodeJS.Timeout>();
+
+  useEffect(() => {
+    if (isMobile) return; // Only add keyboard shortcuts on desktop
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Clear the key buffer after 500ms of no keypress
+      if (keyTimeout.current) {
+        clearTimeout(keyTimeout.current);
+      }
+      keyTimeout.current = setTimeout(() => {
+        keyBuffer.current = "";
+      }, 500);
+
+      // Add the current key to the buffer
+      keyBuffer.current += e.key;
+
+      // Check if the buffer ends with `t
+      if (keyBuffer.current.endsWith("`t")) {
+        setIsOpen(true);
+        keyBuffer.current = ""; // Reset the buffer
+        e.preventDefault(); // Prevent the key from being typed
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      if (keyTimeout.current) {
+        clearTimeout(keyTimeout.current);
+      }
+    };
+  }, [isMobile]);
 
   const handleSubmit = async () => {
     try {
@@ -65,6 +102,7 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
       setEndTime("");
       setPriority("low");
       setReminderEnabled(false);
+      setIsOpen(false);
 
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
     } catch (error) {
@@ -80,8 +118,8 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
   };
 
   return (
-    <Drawer>
-      <DrawerTrigger asChild>
+    <Drawer open={isOpen} onOpenChange={setIsOpen}>
+      <DrawerTrigger asChild ref={triggerRef}>
         {children || (
           <Button className="w-full bg-[#22C55E] hover:bg-[#16A34A] text-white text-base font-semibold py-6">
             + Add a task
