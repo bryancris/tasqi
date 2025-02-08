@@ -2,6 +2,7 @@
 import { Activity, Brain, Heart, Leaf, Sun, User } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useNavigate } from "react-router-dom";
 
 const categories = [
   {
@@ -10,6 +11,7 @@ const categories = [
     description: "Exercise, nutrition, and rest for your body",
     gradient: "from-[#FF719A] to-[#FF9F9F]",
     iconColor: "text-[#FF719A]",
+    path: "/self-care/physical-wellness",
   },
   {
     title: "Mental Wellbeing",
@@ -50,6 +52,7 @@ const categories = [
 
 export function SelfCareContent() {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
 
   return (
     <div className={isMobile ? "px-4 py-2" : "container mx-auto p-6"}>
@@ -68,6 +71,7 @@ export function SelfCareContent() {
               <Card
                 key={category.title}
                 className="overflow-hidden transition-all duration-300 hover:scale-[1.02] cursor-pointer"
+                onClick={() => category.path && navigate(category.path)}
               >
                 <div className={`h-full bg-gradient-to-r ${category.gradient} p-0.5`}>
                   <div className="bg-white dark:bg-gray-950 p-4 h-full">
