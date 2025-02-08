@@ -198,6 +198,74 @@ export type Database = {
         }
         Relationships: []
       }
+      physical_wellness_activities: {
+        Row: {
+          activity_name: string
+          activity_type: string
+          created_at: string
+          id: number
+          measurement_unit: Database["public"]["Enums"]["measurement_unit"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity_name: string
+          activity_type: string
+          created_at?: string
+          id?: never
+          measurement_unit: Database["public"]["Enums"]["measurement_unit"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity_name?: string
+          activity_type?: string
+          created_at?: string
+          id?: never
+          measurement_unit?: Database["public"]["Enums"]["measurement_unit"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      physical_wellness_logs: {
+        Row: {
+          activity_id: number
+          created_at: string
+          id: number
+          logged_at: string
+          notes: string | null
+          user_id: string
+          value: number
+        }
+        Insert: {
+          activity_id: number
+          created_at?: string
+          id?: never
+          logged_at?: string
+          notes?: string | null
+          user_id: string
+          value: number
+        }
+        Update: {
+          activity_id?: number
+          created_at?: string
+          id?: never
+          logged_at?: string
+          notes?: string | null
+          user_id?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "physical_wellness_logs_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "physical_wellness_activities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -529,6 +597,16 @@ export type Database = {
       }
     }
     Enums: {
+      measurement_unit:
+        | "count"
+        | "minutes"
+        | "hours"
+        | "meters"
+        | "kilometers"
+        | "pounds"
+        | "kilograms"
+        | "milliliters"
+        | "liters"
       message_type: "text" | "file"
       org_role: "admin" | "member"
       task_priority: "low" | "medium" | "high"

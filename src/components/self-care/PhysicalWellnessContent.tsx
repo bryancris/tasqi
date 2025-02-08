@@ -5,8 +5,12 @@ import { Plus, Dumbbell, Apple, Droplets, Moon, Heart, Timer } from "lucide-reac
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import type { MeasurementUnit, PhysicalWellnessActivity } from "@/types/physical-wellness";
 
 const suggestedActivities = [
   {
@@ -15,6 +19,7 @@ const suggestedActivities = [
     icon: Dumbbell,
     color: "text-orange-500",
     gradient: "from-orange-500 to-pink-500",
+    defaultUnit: "count" as MeasurementUnit,
   },
   {
     title: "Nutrition",
@@ -22,6 +27,7 @@ const suggestedActivities = [
     icon: Apple,
     color: "text-green-500",
     gradient: "from-green-500 to-emerald-500",
+    defaultUnit: "count" as MeasurementUnit,
   },
   {
     title: "Hydration",
@@ -29,6 +35,7 @@ const suggestedActivities = [
     icon: Droplets,
     color: "text-blue-500",
     gradient: "from-blue-500 to-cyan-500",
+    defaultUnit: "milliliters" as MeasurementUnit,
   },
   {
     title: "Sleep",
@@ -36,6 +43,7 @@ const suggestedActivities = [
     icon: Moon,
     color: "text-indigo-500",
     gradient: "from-indigo-500 to-purple-500",
+    defaultUnit: "hours" as MeasurementUnit,
   },
   {
     title: "Cardio",
@@ -43,6 +51,7 @@ const suggestedActivities = [
     icon: Heart,
     color: "text-red-500",
     gradient: "from-red-500 to-rose-500",
+    defaultUnit: "minutes" as MeasurementUnit,
   },
   {
     title: "Exercise Duration",
@@ -50,23 +59,93 @@ const suggestedActivities = [
     icon: Timer,
     color: "text-violet-500",
     gradient: "from-violet-500 to-purple-500",
+    defaultUnit: "minutes" as MeasurementUnit,
   },
+];
+
+const measurementUnits: MeasurementUnit[] = [
+  'count',
+  'minutes',
+  'hours',
+  'meters',
+  'kilometers',
+  'pounds',
+  'kilograms',
+  'milliliters',
+  'liters'
 ];
 
 export function PhysicalWellnessContent() {
   const [isAddingCustom, setIsAddingCustom] = useState(false);
   const [customActivity, setCustomActivity] = useState("");
+  const [selectedUnit, setSelectedUnit] = useState<MeasurementUnit>("count");
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const handleAddCustomActivity = () => {
-    if (customActivity.trim()) {
+  const { data: activities } = useQuery({
+    queryKey: ['physical-wellness-activities'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('physical_wellness_activities')
+        .select('*');
+      
+      if (error) throw error;
+      return data as PhysicalWellnessActivity[];
+    }
+  });
+
+  const addActivityMutation = useMutation({
+    mutationFn: async (data: { activity_name: string; measurement_unit: MeasurementUnit }) => {
+      const { error } = await supabase
+        .from('physical_wellness_activities')
+        .insert({
+          activity_name: data.activity_name,
+          activity_type: 'custom',
+          measurement_unit: data.measurement_unit,
+        });
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['physical-wellness-activities'] });
+      setCustomActivity("");
+      setIsAddingCustom(false);
       toast({
         title: "Activity Added",
         description: `${customActivity} has been added to your tracking list.`,
       });
-      setCustomActivity("");
-      setIsAddingCustom(false);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to add activity. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleAddSuggestedActivity = async (activity: typeof suggestedActivities[0]) => {
+    try {
+      await addActivityMutation.mutateAsync({
+        activity_name: activity.title,
+        measurement_unit: activity.defaultUnit,
+      });
+    } catch (error) {
+      console.error('Error adding suggested activity:', error);
     }
+  };
+
+  const handleAddCustomActivity = () => {
+    if (customActivity.trim()) {
+      addActivityMutation.mutate({
+        activity_name: customActivity,
+        measurement_unit: selectedUnit,
+      });
+    }
+  };
+
+  const isActivityAdded = (activityName: string) => {
+    return activities?.some(activity => activity.activity_name === activityName);
   };
 
   return (
@@ -83,25 +162,33 @@ export function PhysicalWellnessContent() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
         {suggestedActivities.map((activity) => {
           const Icon = activity.icon;
+          const isAdded = isActivityAdded(activity.title);
+          
           return (
             <Card
               key={activity.title}
               className="overflow-hidden transition-all duration-300 hover:scale-[1.02] cursor-pointer"
+              onClick={() => !isAdded && handleAddSuggestedActivity(activity)}
             >
               <div className={`h-full bg-gradient-to-r ${activity.gradient} p-0.5`}>
                 <div className="bg-white dark:bg-gray-950 p-4 h-full">
-                  <div className="flex items-center space-x-4">
-                    <div className="p-2 rounded-full bg-white dark:bg-gray-900 shadow-lg">
-                      <Icon className={`w-6 h-6 ${activity.color}`} />
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="p-2 rounded-full bg-white dark:bg-gray-900 shadow-lg">
+                        <Icon className={`w-6 h-6 ${activity.color}`} />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-900 dark:text-white">
+                          {activity.title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {activity.description}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900 dark:text-white">
-                        {activity.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {activity.description}
-                      </p>
-                    </div>
+                    {isAdded && (
+                      <span className="text-sm text-muted-foreground">Added ✓</span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -133,9 +220,25 @@ export function PhysicalWellnessContent() {
                 onChange={(e) => setCustomActivity(e.target.value)}
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="unit">Measurement Unit</Label>
+              <Select value={selectedUnit} onValueChange={(value) => setSelectedUnit(value as MeasurementUnit)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a unit" />
+                </SelectTrigger>
+                <SelectContent>
+                  {measurementUnits.map((unit) => (
+                    <SelectItem key={unit} value={unit}>
+                      {unit.charAt(0).toUpperCase() + unit.slice(1)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <Button
               className="w-full bg-gradient-to-r from-[#FF719A] to-[#FF9F9F] text-white hover:opacity-90"
               onClick={handleAddCustomActivity}
+              disabled={!customActivity.trim()}
             >
               Add Activity
             </Button>
