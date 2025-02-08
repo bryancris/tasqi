@@ -12,14 +12,6 @@ export function TaskSharingSettings() {
         </p>
       </div>
       <Separator className="my-6" />
-      <div className="space-y-6">
-        <div>
-          <h4 className="text-sm font-medium mb-4">Sharing Preferences</h4>
-          <p className="text-sm text-muted-foreground">
-            Control who can see and edit your shared tasks
-          </p>
-        </div>
-      </div>
     </div>
   );
 }
