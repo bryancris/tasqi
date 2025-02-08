@@ -44,19 +44,19 @@ export function SettingsContent() {
         <TabsList className="w-full mb-6 bg-[#E5DEFF] p-1.5">
           <TabsTrigger 
             value="appearance" 
-            className="flex-1 data-[state=active]:bg-[#8B5CF6] data-[state=active]:text-white"
+            className="flex-1 data-[state=active]:bg-[#D946EF] data-[state=active]:text-white"
           >
             Appearance
           </TabsTrigger>
           <TabsTrigger 
             value="calendar" 
-            className="flex-1 data-[state=active]:bg-[#8B5CF6] data-[state=active]:text-white"
+            className="flex-1 data-[state=active]:bg-[#0EA5E9] data-[state=active]:text-white"
           >
             Calendar
           </TabsTrigger>
           <TabsTrigger 
             value="task-sharing" 
-            className="flex-1 data-[state=active]:bg-[#8B5CF6] data-[state=active]:text-white"
+            className="flex-1 data-[state=active]:bg-[#F97316] data-[state=active]:text-white"
           >
             Task Sharing
           </TabsTrigger>
