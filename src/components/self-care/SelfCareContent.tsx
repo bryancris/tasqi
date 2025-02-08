@@ -43,6 +43,7 @@ const categories = [
     description: "Routines and habits for wellbeing",
     gradient: "from-[#F97316] to-[#FDBA74]",
     iconColor: "text-[#F97316]",
+    path: "/self-care/daily-rituals",
   },
   {
     title: "Emotional Care",

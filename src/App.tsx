@@ -18,6 +18,7 @@ import PhysicalWellness from "./pages/PhysicalWellness";
 import MentalWellbeing from "./pages/MentalWellbeing";
 import PersonalGrowth from "./pages/PersonalGrowth";
 import SocialConnections from "./pages/SocialConnections";
+import DailyRituals from "./pages/DailyRituals";
 
 const queryClient = new QueryClient();
 
@@ -101,6 +102,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <SocialConnections />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/self-care/daily-rituals"
+                element={
+                  <ProtectedRoute>
+                    <DailyRituals />
                   </ProtectedRoute>
                 }
               />

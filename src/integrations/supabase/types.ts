@@ -63,6 +63,42 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_rituals: {
+        Row: {
+          created_at: string
+          description: string | null
+          frequency: string[] | null
+          id: number
+          is_completed: boolean | null
+          time_of_day: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          frequency?: string[] | null
+          id?: number
+          is_completed?: boolean | null
+          time_of_day?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          frequency?: string[] | null
+          id?: number
+          is_completed?: boolean | null
+          time_of_day?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       mental_wellness_activities: {
         Row: {
           activity_name: string
