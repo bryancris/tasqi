@@ -22,10 +22,11 @@ export function TrustedUsersList() {
         .select(`
           id,
           trusted_user_id,
-          profiles:trusted_user_id (
-            email
+          trusted_user:trusted_user_id(
+            email:profiles!inner(email)
           )
-        `);
+        `)
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
 
       if (trustedUsersError) throw trustedUsersError;
 
@@ -33,7 +34,7 @@ export function TrustedUsersList() {
         trustedUsersData.map(user => ({
           id: user.id,
           trusted_user_id: user.trusted_user_id,
-          email: (user.profiles as { email: string }).email
+          email: user.trusted_user.email
         }))
       );
     } catch (error) {
