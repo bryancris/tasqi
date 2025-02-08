@@ -1,12 +1,20 @@
 
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "./TaskBoard";
 import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useQuery } from "@tanstack/react-query";
 
 interface ShareTaskDialogProps {
   task: Task;
@@ -14,38 +22,107 @@ interface ShareTaskDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+interface TrustedUser {
+  id: number;
+  trusted_user_id: string;
+  alias: string | null;
+  profiles: {
+    email: string;
+  };
+}
+
+interface Group {
+  id: number;
+  name: string;
+}
+
 export function ShareTaskDialog({ task, open, onOpenChange }: ShareTaskDialogProps) {
-  const [recipientEmail, setRecipientEmail] = useState("");
   const [isSharing, setIsSharing] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [selectedGroupId, setSelectedGroupId] = useState<string>("");
+  const [sharingType, setSharingType] = useState<"individual" | "group">("individual");
 
-  const handleShare = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSharing(true);
+  const { data: trustedUsers = [] } = useQuery({
+    queryKey: ['trusted-users'],
+    queryFn: async () => {
+      const { data: session } = await supabase.auth.getUser();
+      
+      const { data: trustedUsersData, error: trustedUsersError } = await supabase
+        .from('trusted_task_users')
+        .select('id, trusted_user_id, alias')
+        .eq('user_id', session.user?.id);
 
+      if (trustedUsersError) throw trustedUsersError;
+      if (!trustedUsersData) return [];
+
+      const trustedUsersWithProfiles = await Promise.all(
+        trustedUsersData.map(async (user) => {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('email')
+            .eq('id', user.trusted_user_id)
+            .single();
+
+          return {
+            id: user.id,
+            trusted_user_id: user.trusted_user_id,
+            alias: user.alias,
+            profiles: {
+              email: profileData?.email || 'Unknown email'
+            }
+          };
+        })
+      );
+
+      return trustedUsersWithProfiles;
+    }
+  });
+
+  const { data: groups = [] } = useQuery({
+    queryKey: ['task-groups'],
+    queryFn: async () => {
+      const { data: session } = await supabase.auth.getUser();
+      if (!session.user) throw new Error('No authenticated user');
+
+      const { data, error } = await supabase
+        .from('task_groups')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data as Group[];
+    }
+  });
+
+  const handleShare = async () => {
+    if (!task?.id) return;
+    
     try {
-      // First get the recipient's user ID from their email
-      const { data: profiles, error: profileError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('email', recipientEmail)
-        .single();
-
-      if (profileError || !profiles) {
-        throw new Error('User not found');
-      }
+      setIsSharing(true);
 
       // Create the shared task record
       const { data: sharedTask, error: shareError } = await supabase
         .from('shared_tasks')
         .insert({
           task_id: task.id,
-          shared_with_user_id: profiles.id,
-          shared_by_user_id: (await supabase.auth.getUser()).data.user?.id
+          shared_with_user_id: sharingType === 'individual' ? selectedUserId : null,
+          group_id: sharingType === 'group' ? parseInt(selectedGroupId) : null,
+          shared_by_user_id: (await supabase.auth.getUser()).data.user?.id,
+          sharing_type: sharingType
         })
         .select()
         .single();
 
       if (shareError) throw shareError;
+
+      // Update the task's shared status
+      const { error: updateError } = await supabase
+        .from('tasks')
+        .update({ shared: true })
+        .eq('id', task.id);
+
+      if (updateError) throw updateError;
 
       // Send email notification using the Edge Function
       const { error: notificationError } = await supabase.functions.invoke('send-invitation', {
@@ -62,10 +139,11 @@ export function ShareTaskDialog({ task, open, onOpenChange }: ShareTaskDialogPro
       }
 
       onOpenChange(false);
-      setRecipientEmail('');
+      setSelectedUserId("");
+      setSelectedGroupId("");
     } catch (error) {
       console.error('Error sharing task:', error);
-      toast.error('Failed to share task. Please verify the email and try again.');
+      toast.error('Failed to share task. Please try again.');
     } finally {
       setIsSharing(false);
     }
@@ -77,24 +155,59 @@ export function ShareTaskDialog({ task, open, onOpenChange }: ShareTaskDialogPro
         <DialogHeader>
           <DialogTitle>Share Task</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleShare} className="space-y-4 pt-4">
-          <div className="space-y-2">
-            <Label htmlFor="recipientEmail">Recipient Email</Label>
-            <Input
-              id="recipientEmail"
-              type="email"
-              placeholder="Enter recipient's email"
-              value={recipientEmail}
-              onChange={(e) => setRecipientEmail(e.target.value)}
-              required
-            />
-          </div>
+        <div className="space-y-4 pt-4">
+          <Tabs defaultValue="individual" onValueChange={(value) => setSharingType(value as "individual" | "group")}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="individual">Individual</TabsTrigger>
+              <TabsTrigger value="group">Group</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="individual" className="space-y-4">
+              <div className="space-y-2">
+                <Label>Select User</Label>
+                <Select onValueChange={setSelectedUserId} value={selectedUserId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a trusted user" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {trustedUsers.map((user) => (
+                      <SelectItem key={user.trusted_user_id} value={user.trusted_user_id}>
+                        {user.alias || user.profiles.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="group" className="space-y-4">
+              <div className="space-y-2">
+                <Label>Select Group</Label>
+                <Select onValueChange={setSelectedGroupId} value={selectedGroupId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a group" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {groups.map((group) => (
+                      <SelectItem key={group.id} value={group.id.toString()}>
+                        {group.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </TabsContent>
+          </Tabs>
+
           <div className="flex justify-end">
-            <Button type="submit" disabled={isSharing}>
+            <Button 
+              onClick={handleShare} 
+              disabled={isSharing || (!selectedUserId && !selectedGroupId)}
+            >
               {isSharing ? "Sharing..." : "Share"}
             </Button>
           </div>
-        </form>
+        </div>
       </DialogContent>
     </Dialog>
   );

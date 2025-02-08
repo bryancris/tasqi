@@ -490,35 +490,48 @@ export type Database = {
       shared_tasks: {
         Row: {
           created_at: string
+          group_id: number | null
           id: number
           notification_sent: boolean | null
           shared_by_user_id: string | null
           shared_with_user_id: string | null
+          sharing_type: string
           status: string
           task_id: number | null
           updated_at: string
         }
         Insert: {
           created_at?: string
+          group_id?: number | null
           id?: number
           notification_sent?: boolean | null
           shared_by_user_id?: string | null
           shared_with_user_id?: string | null
+          sharing_type?: string
           status?: string
           task_id?: number | null
           updated_at?: string
         }
         Update: {
           created_at?: string
+          group_id?: number | null
           id?: number
           notification_sent?: boolean | null
           shared_by_user_id?: string | null
           shared_with_user_id?: string | null
+          sharing_type?: string
           status?: string
           task_id?: number | null
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "shared_tasks_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "task_groups"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "shared_tasks_task_id_fkey"
             columns: ["task_id"]
