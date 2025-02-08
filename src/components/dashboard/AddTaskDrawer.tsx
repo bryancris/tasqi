@@ -43,6 +43,8 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
     if (isMobile) return; // Only add keyboard shortcuts on desktop
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.repeat) return; // Prevent multiple triggers from key being held down
+      
       // Clear the key buffer after 500ms of no keypress
       if (keyTimeout.current) {
         clearTimeout(keyTimeout.current);
@@ -55,7 +57,7 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
       keyBuffer.current += e.key;
 
       // Check if the buffer ends with `t
-      if (keyBuffer.current.endsWith("`t")) {
+      if (keyBuffer.current.endsWith("`t") && !isOpen) {
         setIsOpen(true);
         keyBuffer.current = ""; // Reset the buffer
         e.preventDefault(); // Prevent the key from being typed
@@ -69,7 +71,7 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
         clearTimeout(keyTimeout.current);
       }
     };
-  }, [isMobile]);
+  }, [isMobile, isOpen]); // Added isOpen to dependencies
 
   const handleSubmit = async () => {
     try {
