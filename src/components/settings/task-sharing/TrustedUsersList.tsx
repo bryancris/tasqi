@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +22,7 @@ export function TrustedUsersList() {
   const [isLoading, setIsLoading] = useState(true);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingAlias, setEditingAlias] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const loadTrustedUsers = async () => {
     try {
@@ -66,6 +67,13 @@ export function TrustedUsersList() {
   useEffect(() => {
     loadTrustedUsers();
   }, []);
+
+  // Effect to focus input when editing starts
+  useEffect(() => {
+    if (editingId !== null && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [editingId]);
 
   const handleRemoveUser = async (id: number) => {
     try {
@@ -133,6 +141,7 @@ export function TrustedUsersList() {
                 {editingId === user.id ? (
                   <>
                     <Input
+                      ref={inputRef}
                       type="text"
                       value={editingAlias}
                       onChange={(e) => setEditingAlias(e.target.value)}
@@ -178,6 +187,3 @@ export function TrustedUsersList() {
           ))}
         </ul>
       )}
-    </div>
-  );
-}
