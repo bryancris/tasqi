@@ -8,7 +8,6 @@ import { TaskPriority } from "./TaskBoard";
 import { DatePickerInput } from "./form/DatePickerInput";
 import { ShareTaskDialog } from "./ShareTaskDialog";
 import { useState } from "react";
-import { Share2 } from "lucide-react";
 import { Task } from "./TaskBoard";
 
 interface TaskFormProps {
@@ -66,10 +65,6 @@ export function TaskForm({
       }}
       className="p-4 space-y-4"
     >
-      {!isEditing && (
-        <h2 className="text-lg font-semibold">Add Task</h2>
-      )}
-
       <div className="space-y-2">
         <Label htmlFor="title">Title</Label>
         <Input
