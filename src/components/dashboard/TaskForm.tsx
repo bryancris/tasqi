@@ -67,27 +67,31 @@ export function TaskForm({
       className="p-4 space-y-4"
     >
       <div className="flex items-center justify-between mb-4">
-        <div className="space-y-2 flex-1">
-          <Label htmlFor="title">Title</Label>
-          <Input
-            id="title"
-            value={title}
-            onChange={(e) => onTitleChange(e.target.value)}
-            placeholder="Task title"
-            required
-          />
-        </div>
-        {task && (
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="ml-2"
-            onClick={() => setShowShareDialog(true)}
-          >
-            <Share2 className="h-4 w-4" />
-          </Button>
-        )}
+        <h2 className="text-lg font-semibold">
+          {isEditing ? "Edit Task" : "Add Task"}
+          {isEditing && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="ml-2"
+              onClick={() => setShowShareDialog(true)}
+            >
+              <Share2 className="h-4 w-4" />
+            </Button>
+          )}
+        </h2>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="title">Title</Label>
+        <Input
+          id="title"
+          value={title}
+          onChange={(e) => onTitleChange(e.target.value)}
+          placeholder="Task title"
+          required
+        />
       </div>
 
       <div className="space-y-2">
