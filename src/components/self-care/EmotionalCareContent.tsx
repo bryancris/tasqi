@@ -57,6 +57,16 @@ export function EmotionalCareContent() {
   }, []);
 
   const fetchLogs = async () => {
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !sessionData.session) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to view emotional care logs",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const { data, error } = await supabase
       .from("emotional_care_activities")
       .select("*")
@@ -75,12 +85,23 @@ export function EmotionalCareContent() {
   };
 
   const handleSubmit = async () => {
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !sessionData.session) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to create emotional care logs",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const { error } = await supabase.from("emotional_care_activities").insert([
       {
         emotion: newLog.emotion,
         intensity: parseInt(newLog.intensity),
         notes: newLog.notes,
         coping_strategy: newLog.coping_strategy,
+        user_id: sessionData.session.user.id,
       },
     ]);
 
