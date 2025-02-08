@@ -20,15 +20,28 @@ export function CalendarSettings({
           Customize your calendar preferences
         </p>
       </div>
-      <Separator />
+      <Separator className="my-6" />
       
-      <div className="space-y-4">
-        <TimeRangeSelector
-          startHour={initialStartHour}
-          endHour={initialEndHour}
-          onStartHourChange={() => {}}
-          onEndHourChange={() => {}}
-        />
+      <div className="space-y-6">
+        <div>
+          <h4 className="text-sm font-medium mb-4">Time Settings</h4>
+          <TimeRangeSelector
+            startHour={initialStartHour}
+            endHour={initialEndHour}
+            onStartHourChange={() => {}}
+            onEndHourChange={() => {}}
+          />
+        </div>
+
+        <Separator />
+        
+        <div>
+          <h4 className="text-sm font-medium mb-4">Shared Task Settings</h4>
+          <p className="text-sm text-muted-foreground">
+            Configure how shared tasks appear and behave in your calendar
+          </p>
+          {/* Placeholder for future shared task settings */}
+        </div>
       </div>
     </div>
   );
