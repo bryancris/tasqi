@@ -39,14 +39,14 @@ serve(async (req) => {
 
     // Send email
     const { data: emailData, error: emailError } = await resend.emails.send({
-      from: 'Lovable Calendar <onboarding@resend.dev>',
+      from: 'TASQI Calendar <onboarding@resend.dev>',
       to: invitation.recipient_email,
       subject: 'Calendar Sharing Invitation',
       html: `
         <h1>You've been invited to share a calendar!</h1>
         <p>${invitation.sender.email} has invited you to share their calendar with ${invitation.permission_level} access.</p>
         <p>Click the link below to accept the invitation:</p>
-        <a href="${Deno.env.get('PUBLIC_APP_URL')}/accept-invite?id=${invitation.id}">Accept Invitation</a>
+        <a href="https://tasqi.lovable.app/accept-invite?id=${invitation.id}">Accept Invitation</a>
       `
     })
 
