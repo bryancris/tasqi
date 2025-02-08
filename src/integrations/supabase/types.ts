@@ -558,10 +558,12 @@ export type Database = {
           end_time: string | null
           id: number
           is_tracking: boolean | null
+          owner_id: string
           position: number
           priority: Database["public"]["Enums"]["task_priority"] | null
           reminder_enabled: boolean | null
           reschedule_count: number | null
+          shared: boolean | null
           start_time: string | null
           status: Database["public"]["Enums"]["task_status"]
           time_spent: number | null
@@ -577,10 +579,12 @@ export type Database = {
           end_time?: string | null
           id?: never
           is_tracking?: boolean | null
+          owner_id: string
           position: number
           priority?: Database["public"]["Enums"]["task_priority"] | null
           reminder_enabled?: boolean | null
           reschedule_count?: number | null
+          shared?: boolean | null
           start_time?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           time_spent?: number | null
@@ -596,10 +600,12 @@ export type Database = {
           end_time?: string | null
           id?: never
           is_tracking?: boolean | null
+          owner_id?: string
           position?: number
           priority?: Database["public"]["Enums"]["task_priority"] | null
           reminder_enabled?: boolean | null
           reschedule_count?: number | null
+          shared?: boolean | null
           start_time?: string | null
           status?: Database["public"]["Enums"]["task_status"]
           time_spent?: number | null
