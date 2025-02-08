@@ -8,13 +8,12 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 export function UserInviteForm() {
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [permissionLevel, setPermissionLevel] = useState<"view" | "edit" | "admin">("view");
-  const [isInviting, setIsInviting] = useState(false);
+  const [recipientEmail, setRecipientEmail] = useState("");
+  const [isSharing, setIsSharing] = useState(false);
 
-  const handleInviteUser = async (e: React.FormEvent) => {
+  const handleShare = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsInviting(true);
+    setIsSharing(true);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -22,65 +21,42 @@ export function UserInviteForm() {
         throw new Error("No session found");
       }
 
-      // Create invitation record
-      const { data: invitation, error: inviteError } = await supabase
-        .from('calendar_invitations')
-        .insert({
-          recipient_email: inviteEmail,
-          permission_level: permissionLevel,
-          sender_id: session.user.id,
-          status: 'pending'
-        })
-        .select()
+      // Get the recipient's user ID from their email
+      const { data: recipientProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', recipientEmail)
         .single();
 
-      if (inviteError) throw inviteError;
+      if (profileError || !recipientProfile) {
+        throw new Error('User not found');
+      }
 
-      // Send invitation email
-      const { error: emailError } = await supabase.functions.invoke('send-invitation', {
-        body: { invitationId: invitation.id }
-      });
-
-      if (emailError) throw emailError;
-
-      toast.success(`Invitation sent to ${inviteEmail}`);
-      setInviteEmail("");
+      toast.success(`Invitation sent to ${recipientEmail}`);
+      setRecipientEmail("");
       
     } catch (error) {
       console.error('Error sending invitation:', error);
       toast.error("Failed to send invitation");
     } finally {
-      setIsInviting(false);
+      setIsSharing(false);
     }
   };
 
   return (
-    <form onSubmit={handleInviteUser} className="space-y-4">
+    <form onSubmit={handleShare} className="space-y-4">
       <div className="space-y-2">
-        <Label>Invite User</Label>
+        <Label>Share with User</Label>
         <div className="flex gap-4">
           <Input
             type="email"
             placeholder="Enter email address"
-            value={inviteEmail}
-            onChange={(e) => setInviteEmail(e.target.value)}
+            value={recipientEmail}
+            onChange={(e) => setRecipientEmail(e.target.value)}
             required
           />
-          <Select
-            value={permissionLevel}
-            onValueChange={(value: "view" | "edit" | "admin") => setPermissionLevel(value)}
-          >
-            <SelectTrigger className="w-[120px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="view">View</SelectItem>
-              <SelectItem value="edit">Edit</SelectItem>
-              <SelectItem value="admin">Admin</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button type="submit" disabled={isInviting}>
-            {isInviting ? "Sending..." : "Invite"}
+          <Button type="submit" disabled={isSharing}>
+            {isSharing ? "Sharing..." : "Share"}
           </Button>
         </div>
       </div>
