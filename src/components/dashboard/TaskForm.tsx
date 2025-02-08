@@ -77,7 +77,7 @@ export function TaskForm({
             required
           />
         </div>
-        {isEditing && task && (
+        {task && (
           <Button
             type="button"
             variant="outline"
@@ -170,7 +170,7 @@ export function TaskForm({
         {isLoading ? "Loading..." : isEditing ? "Update Task" : "Create Task"}
       </Button>
 
-      {isEditing && task && (
+      {task && (
         <ShareTaskDialog
           task={task}
           open={showShareDialog}
