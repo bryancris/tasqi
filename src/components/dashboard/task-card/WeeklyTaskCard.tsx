@@ -1,3 +1,4 @@
+
 import { cn } from "@/lib/utils";
 import { Task } from "../TaskBoard";
 import { Bell } from "lucide-react";
@@ -35,7 +36,7 @@ export function WeeklyTaskCard({ task, onClick, onComplete, dragHandleProps, ext
         "shadow-sm",
         "rounded-md",
         getPriorityColor(task.priority),
-        task.shared && "ring-6 ring-[#8B5CF6]"
+        task.shared && "ring-10 ring-[#8B5CF6]"
       )}
     >
       <div className="p-1 h-full overflow-hidden">

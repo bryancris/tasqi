@@ -1,3 +1,4 @@
+
 import { Task } from "../TaskBoard";
 import { TaskStatusIndicator } from "../TaskStatusIndicator";
 import { cn } from "@/lib/utils";
@@ -21,7 +22,7 @@ export function MonthlyTaskCard({ task, onComplete, onClick, dragHandleProps, ex
         "flex items-start gap-2 p-2 bg-white rounded-md shadow-sm",
         "hover:shadow-md transition-shadow cursor-pointer",
         getPriorityColor(task.priority),
-        task.shared && "ring-6 ring-[#8B5CF6]"
+        task.shared && "ring-10 ring-[#8B5CF6]"
       )}
       onClick={onClick}
       {...dragHandleProps}

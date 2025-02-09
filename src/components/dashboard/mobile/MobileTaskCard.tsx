@@ -1,3 +1,4 @@
+
 import { cn } from "@/lib/utils";
 import { Task } from "../TaskBoard";
 import { TaskStatusIndicator } from "../TaskStatusIndicator";
@@ -23,7 +24,7 @@ export function MobileTaskCard({ task, onComplete, onClick, dragHandleProps }: M
         task.status === 'unscheduled' ? 'bg-blue-500' : 
         task.status === 'completed' ? 'bg-gray-500' :
         getPriorityColor(task.priority),
-        task.shared && "ring-6 ring-[#8B5CF6]"
+        task.shared && "ring-10 ring-[#8B5CF6]"
       )}
       onClick={onClick}
     >
