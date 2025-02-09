@@ -67,7 +67,7 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
         })
         .eq('id', task.id)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error updating task:', error);
@@ -75,7 +75,13 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
         return;
       }
 
-      console.log('Task update response:', data);
+      if (!data) {
+        console.error('Task not found or no permission to update');
+        toast.error('Unable to update task - no permission or task not found');
+        return;
+      }
+
+      console.log('Task updated successfully:', data);
 
       if (onComplete) {
         onComplete();
