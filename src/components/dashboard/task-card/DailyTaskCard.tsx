@@ -33,7 +33,7 @@ export function DailyTaskCard({ task, onComplete, onClick, dragHandleProps, extr
         "hover:shadow-md transition-shadow cursor-pointer",
         getCardColor(),
         task.status === 'completed' ? 'text-white' : '',
-        task.shared ? 'border-2 border-[#9b87f5]' : 'border border-gray-200'
+        task.shared ? 'ring-2 ring-[#9b87f5]' : 'border border-gray-200'
       )}
       onClick={onClick}
       {...dragHandleProps}
