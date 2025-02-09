@@ -102,15 +102,12 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
         }
       }
 
-      // Local state update
-      task.status = newStatus;
-      task.completed_at = completedAt;
-
       console.log('Task update successful');
-      toast.success(task.status === 'completed' ? 'Task completed' : 'Task uncompleted');
+      toast.success(newStatus === 'completed' ? 'Task completed' : 'Task uncompleted');
 
+      // Call onComplete to trigger refetch
       if (onComplete) {
-        onComplete();
+        await onComplete();
       }
     } catch (error: any) {
       console.error('Unexpected error completing task:', error);
