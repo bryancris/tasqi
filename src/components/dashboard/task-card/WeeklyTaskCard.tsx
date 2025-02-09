@@ -60,3 +60,4 @@ export function WeeklyTaskCard({ task, onClick, onComplete, dragHandleProps, ext
     </div>
   );
 }
+

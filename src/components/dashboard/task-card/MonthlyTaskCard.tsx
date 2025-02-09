@@ -22,7 +22,7 @@ export function MonthlyTaskCard({ task, onComplete, onClick, dragHandleProps, ex
         "flex items-start gap-2 p-2 bg-white rounded-md shadow-sm",
         "hover:shadow-md transition-shadow cursor-pointer",
         getPriorityColor(task.priority),
-        task.shared ? 'border-2 border-[#9b87f5]' : 'border border-gray-200'
+        task.shared && "ring-2 ring-[#9b87f5]"
       )}
       onClick={onClick}
       {...dragHandleProps}
@@ -52,3 +52,4 @@ export function MonthlyTaskCard({ task, onComplete, onClick, dragHandleProps, ex
     </div>
   );
 }
+
