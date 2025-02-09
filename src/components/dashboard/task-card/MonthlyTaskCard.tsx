@@ -1,4 +1,5 @@
 
+import { memo } from "react";
 import { Task } from "../TaskBoard";
 import { TaskStatusIndicator } from "../TaskStatusIndicator";
 import { cn } from "@/lib/utils";
@@ -13,7 +14,7 @@ interface MonthlyTaskCardProps {
   extraButton?: React.ReactNode;
 }
 
-export function MonthlyTaskCard({ task, onComplete, onClick, dragHandleProps, extraButton }: MonthlyTaskCardProps) {
+function MonthlyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, extraButton }: MonthlyTaskCardProps) {
   const timeString = task.start_time && task.end_time ? `${task.start_time} - ${task.end_time}` : '';
   
   return (
@@ -57,3 +58,5 @@ export function MonthlyTaskCard({ task, onComplete, onClick, dragHandleProps, ex
     </div>
   );
 }
+
+export const MonthlyTaskCard = memo(MonthlyTaskCardComponent);
