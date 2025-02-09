@@ -19,9 +19,10 @@ export function MonthlyTaskCard({ task, onComplete, onClick, dragHandleProps, ex
   return (
     <div 
       className={cn(
-        "flex items-start gap-2 p-2 bg-white rounded-md shadow-sm border border-gray-200",
+        "flex items-start gap-2 p-2 bg-white rounded-md shadow-sm",
         "hover:shadow-md transition-shadow cursor-pointer",
-        getPriorityColor(task.priority)
+        getPriorityColor(task.priority),
+        task.shared ? 'border-2 border-[#9b87f5]' : 'border border-gray-200'
       )}
       onClick={onClick}
       {...dragHandleProps}

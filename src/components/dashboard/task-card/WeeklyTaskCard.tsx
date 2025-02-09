@@ -36,6 +36,7 @@ export function WeeklyTaskCard({ task, onClick, onComplete, dragHandleProps, ext
         "shadow-sm",
         "rounded-md",
         getPriorityColor(task.priority),
+        task.shared && "ring-2 ring-[#9b87f5]"
       )}
     >
       <div className="p-1 h-full overflow-hidden">

@@ -29,10 +29,11 @@ export function DailyTaskCard({ task, onComplete, onClick, dragHandleProps, extr
   return (
     <div 
       className={cn(
-        "flex items-start gap-3 p-3 rounded-lg shadow-sm border border-gray-200",
+        "flex items-start gap-3 p-3 rounded-lg shadow-sm",
         "hover:shadow-md transition-shadow cursor-pointer",
         getCardColor(),
-        task.status === 'completed' ? 'text-white' : ''
+        task.status === 'completed' ? 'text-white' : '',
+        task.shared ? 'border-2 border-[#9b87f5]' : 'border border-gray-200'
       )}
       onClick={onClick}
       {...dragHandleProps}
