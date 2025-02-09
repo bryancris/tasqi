@@ -57,16 +57,19 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
         })
         .eq('id', task.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating task:', error);
+        throw error;
+      }
 
       if (onComplete) {
         onComplete();
       }
 
       toast.success(task.status === 'completed' ? 'Task uncompleted' : 'Task completed');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error completing task:', error);
-      toast.error('Failed to update task status');
+      toast.error(error.message || 'Failed to update task status');
     }
   };
 
