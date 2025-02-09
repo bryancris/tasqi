@@ -117,7 +117,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           }
           break;
           
-        case 'USER_DELETED':
         case 'PASSWORD_RECOVERY':
           await handleSignOut();
           break;
