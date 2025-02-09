@@ -66,7 +66,7 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
           completed_at: completedAt
         })
         .eq('id', task.id)
-        .select()
+        .select('*')
         .maybeSingle();
 
       if (error) {
@@ -74,7 +74,7 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
         if (error.code === 'PGRST116') {
           toast.error('Task not found or you do not have permission to update it');
         } else {
-          toast.error(error.message || 'Failed to update task status');
+          toast.error('Failed to update task status');
         }
         return;
       }
