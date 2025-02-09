@@ -54,25 +54,36 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
       setIsUpdating(true);
       console.log('Attempting to update task:', task.id);
 
-      // First check if user has access to update this task
-      const { data: sharedTaskData, error: sharedError } = await supabase
-        .from('shared_tasks')
-        .select('*')
-        .eq('task_id', task.id)
-        .eq('status', 'accepted')
-        .single();
-
-      if (sharedError && !sharedError.message.includes('No rows found')) {
-        console.error('Error checking shared task:', sharedError);
-        toast.error('Failed to verify task access');
+      const currentUser = (await supabase.auth.getUser()).data.user;
+      if (!currentUser) {
+        toast.error('Not authenticated');
         return;
       }
 
-      // If user is neither the owner nor has an accepted shared task, they can't update
-      const isSharedWithUser = sharedTaskData && sharedTaskData.shared_with_user_id === (await supabase.auth.getUser()).data.user?.id;
-      const isOwner = task.user_id === (await supabase.auth.getUser()).data.user?.id;
+      // Check if user owns the task
+      const isOwner = task.user_id === currentUser.id;
+      
+      // If not owner, check if task is shared with user
+      let hasAccess = isOwner;
+      if (!isOwner) {
+        const { data: sharedTaskData, error: sharedError } = await supabase
+          .from('shared_tasks')
+          .select('*')
+          .eq('task_id', task.id)
+          .eq('shared_with_user_id', currentUser.id)
+          .eq('status', 'accepted')
+          .maybeSingle();
 
-      if (!isSharedWithUser && !isOwner) {
+        if (sharedError) {
+          console.error('Error checking shared task:', sharedError);
+          toast.error('Failed to verify task access');
+          return;
+        }
+
+        hasAccess = !!sharedTaskData;
+      }
+
+      if (!hasAccess) {
         toast.error('You do not have permission to complete this task');
         return;
       }
