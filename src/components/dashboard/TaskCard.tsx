@@ -23,6 +23,7 @@ interface TaskCardProps {
 export function TaskCard({ task, index, isDraggable = false, view = 'daily', onComplete }: TaskCardProps) {
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   
   const {
     attributes,
@@ -49,6 +50,10 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
 
   const handleComplete = async () => {
     try {
+      if (isUpdating) return;
+      setIsUpdating(true);
+      console.log('Attempting to update task:', task.id);
+
       const { error } = await supabase
         .from('tasks')
         .update({ 
@@ -59,7 +64,8 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
 
       if (error) {
         console.error('Error updating task:', error);
-        throw error;
+        toast.error(error.message || 'Failed to update task status');
+        return;
       }
 
       if (onComplete) {
@@ -67,9 +73,12 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
       }
 
       toast.success(task.status === 'completed' ? 'Task uncompleted' : 'Task completed');
+      console.log('Task update successful');
     } catch (error: any) {
       console.error('Error completing task:', error);
       toast.error(error.message || 'Failed to update task status');
+    } finally {
+      setIsUpdating(false);
     }
   };
 
