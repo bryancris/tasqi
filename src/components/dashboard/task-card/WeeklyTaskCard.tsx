@@ -36,8 +36,7 @@ export function WeeklyTaskCard({ task, onClick, onComplete, dragHandleProps, ext
         "shadow-sm",
         "rounded-md",
         "flex overflow-hidden",
-        getPriorityColor(task.priority),
-        task.shared && "ring-10 ring-[#8B5CF6]"
+        getPriorityColor(task.priority)
       )}
     >
       <div className="p-1 flex-1 overflow-hidden">
@@ -53,7 +52,7 @@ export function WeeklyTaskCard({ task, onClick, onComplete, dragHandleProps, ext
         )}
       </div>
       {task.shared && (
-        <div className="w-8 bg-[#8B5CF6] h-full shrink-0" />
+        <div className="w-2 bg-[#8B5CF6] h-full shrink-0" />
       )}
     </div>
   );

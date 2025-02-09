@@ -23,8 +23,7 @@ export function MobileTaskCard({ task, onComplete, onClick, dragHandleProps }: M
         "rounded-lg flex items-stretch text-white w-full cursor-pointer mb-2 min-h-[80px] overflow-hidden",
         task.status === 'unscheduled' ? 'bg-blue-500' : 
         task.status === 'completed' ? 'bg-gray-500' :
-        getPriorityColor(task.priority),
-        task.shared && "ring-10 ring-[#8B5CF6]"
+        getPriorityColor(task.priority)
       )}
       onClick={onClick}
     >
@@ -54,7 +53,7 @@ export function MobileTaskCard({ task, onComplete, onClick, dragHandleProps }: M
           }}
         />
         {task.shared && (
-          <div className="w-8 bg-[#8B5CF6] h-full" />
+          <div className="w-2 bg-[#8B5CF6] h-full shrink-0" />
         )}
       </div>
     </div>

@@ -22,8 +22,7 @@ export function MonthlyTaskCard({ task, onComplete, onClick, dragHandleProps, ex
         "flex items-start bg-white rounded-md shadow-sm",
         "hover:shadow-md transition-shadow cursor-pointer",
         "overflow-hidden",
-        getPriorityColor(task.priority),
-        task.shared && "ring-10 ring-[#8B5CF6]"
+        getPriorityColor(task.priority)
       )}
       onClick={onClick}
       {...dragHandleProps}
@@ -53,7 +52,7 @@ export function MonthlyTaskCard({ task, onComplete, onClick, dragHandleProps, ex
         </div>
       </div>
       {task.shared && (
-        <div className="w-8 bg-[#8B5CF6] h-full shrink-0" />
+        <div className="w-2 bg-[#8B5CF6] h-full shrink-0" />
       )}
     </div>
   );
