@@ -38,9 +38,11 @@ const NavButtons = () => {
     }
   };
 
-  const handleLogin = () => {
-    console.log('Navigating to auth page...');
-    navigate('/auth', { replace: true });
+  const handleLogin = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent any default behavior
+    console.log('Attempting navigation to auth page...');
+    navigate('/auth');
+    console.log('Navigation command executed');
   };
 
   return (
