@@ -36,7 +36,7 @@ export function useTasks() {
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
     staleTime: 0,
-    cacheTime: 0
+    gcTime: 0
   });
 
   useEffect(() => {
