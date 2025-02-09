@@ -24,6 +24,7 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [localTaskStatus, setLocalTaskStatus] = useState(task.status);
   
   const {
     attributes,
@@ -70,6 +71,11 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
         return;
       }
 
+      // Optimistically update local state
+      setLocalTaskStatus(newStatus);
+      task.status = newStatus;
+      task.completed_at = completedAt;
+
       if (task.shared) {
         console.log('Updating shared task');
         const { error: sharedUpdateError } = await supabase
@@ -83,6 +89,8 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
         if (sharedUpdateError) {
           console.error('Error updating shared task:', sharedUpdateError);
           toast.error('Failed to update shared task status');
+          // Revert local state on error
+          setLocalTaskStatus(task.status);
           return;
         }
       } else {
@@ -98,13 +106,11 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
         if (updateError) {
           console.error('Error updating task:', updateError);
           toast.error('Failed to update task status');
+          // Revert local state on error
+          setLocalTaskStatus(task.status);
           return;
         }
       }
-
-      // Update local state
-      task.status = newStatus;
-      task.completed_at = completedAt;
 
       console.log('Task update successful');
       toast.success(newStatus === 'completed' ? 'Task completed' : 'Task uncompleted');
@@ -116,6 +122,8 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
     } catch (error: any) {
       console.error('Unexpected error completing task:', error);
       toast.error('An unexpected error occurred');
+      // Revert local state on error
+      setLocalTaskStatus(task.status);
     } finally {
       setIsUpdating(false);
     }
@@ -130,7 +138,7 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
 
   const renderCard = () => {
     const cardProps = {
-      task,
+      task: { ...task, status: localTaskStatus },
       onClick: handleClick,
       onComplete: handleComplete,
       dragHandleProps
