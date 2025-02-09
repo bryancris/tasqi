@@ -18,6 +18,7 @@ export interface Task {
   end_time?: string;
   priority?: TaskPriority;
   user_id: string;
+  owner_id: string;
   created_at?: string;
   updated_at?: string;
   position: number;
