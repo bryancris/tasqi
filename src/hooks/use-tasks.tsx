@@ -32,10 +32,20 @@ export function useTasks() {
       return data as Task[];
     },
     enabled: !!session?.user?.id,
-    refetchOnMount: true,
+    refetchOnMount: "always",
     refetchOnWindowFocus: true,
-    refetchOnReconnect: true
+    refetchOnReconnect: true,
+    staleTime: 0,
+    cacheTime: 0
   });
+
+  useEffect(() => {
+    // Immediately refetch when session changes
+    if (session?.user?.id) {
+      console.log('Session changed, refetching tasks...');
+      void refetch();
+    }
+  }, [session?.user?.id, refetch]);
 
   useEffect(() => {
     if (!session?.user?.id) {
