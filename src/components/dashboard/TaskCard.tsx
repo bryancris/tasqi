@@ -59,8 +59,7 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
       const newStatus = task.status === 'completed' ? 'unscheduled' : 'completed';
       const completedAt = task.status === 'completed' ? null : new Date().toISOString();
       
-      // First try to update as if we own the task
-      let { data, error } = await supabase
+      const { data, error } = await supabase
         .from('tasks')
         .update({ 
           status: newStatus,
@@ -68,31 +67,11 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
         })
         .eq('id', task.id)
         .select()
-        .maybeSingle();
-
-      // If no rows were affected, try updating the task using the user_id field
-      if (!data) {
-        console.log('Trying to update shared task...');
-        ({ data, error } = await supabase
-          .from('tasks')
-          .update({ 
-            status: newStatus,
-            completed_at: completedAt
-          })
-          .eq('id', task.id)
-          .select()
-          .maybeSingle());
-      }
+        .single();
 
       if (error) {
         console.error('Error updating task:', error);
         toast.error(error.message || 'Failed to update task status');
-        return;
-      }
-
-      if (!data) {
-        console.error('No task was updated');
-        toast.error('Failed to update task status');
         return;
       }
 
