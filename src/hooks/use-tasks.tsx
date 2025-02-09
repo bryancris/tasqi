@@ -60,10 +60,7 @@ export function useTasks() {
       return uniqueTasks as Task[];
     },
     enabled: !!session?.user?.id,
-    refetchOnMount: "always",
-    refetchOnWindowFocus: true,
-    refetchOnReconnect: true,
-    staleTime: 0,
+    staleTime: 1000, // Add a small stale time to prevent rapid refetches
     gcTime: 0
   });
 
@@ -75,6 +72,21 @@ export function useTasks() {
 
     console.log('Setting up real-time subscriptions for user:', session.user.id);
     
+    let lastUpdateTime = Date.now();
+    const DEBOUNCE_TIME = 500; // Debounce time in milliseconds
+
+    const handleUpdate = async () => {
+      const now = Date.now();
+      if (now - lastUpdateTime < DEBOUNCE_TIME) {
+        console.log('Debouncing update...');
+        return;
+      }
+      
+      lastUpdateTime = now;
+      console.log('Invalidating queries and refetching...');
+      await queryClient.invalidateQueries({ queryKey: ['tasks', session.user.id] });
+    };
+
     // Subscribe to owned tasks changes
     const tasksChannel = supabase
       .channel('tasks-changes')
@@ -86,10 +98,9 @@ export function useTasks() {
           table: 'tasks',
           filter: `user_id=eq.${session.user.id}`
         },
-        async (payload) => {
-          console.log('Received task change:', payload);
-          await queryClient.invalidateQueries({ queryKey: ['tasks', session.user.id] });
-          await refetch();
+        () => {
+          console.log('Received task change');
+          void handleUpdate();
         }
       )
       .subscribe((status) => {
@@ -107,10 +118,9 @@ export function useTasks() {
           table: 'shared_tasks',
           filter: `shared_with_user_id=eq.${session.user.id}`
         },
-        async (payload) => {
-          console.log('Received shared task change:', payload);
-          await queryClient.invalidateQueries({ queryKey: ['tasks', session.user.id] });
-          await refetch();
+        () => {
+          console.log('Received shared task change');
+          void handleUpdate();
         }
       )
       .subscribe((status) => {
@@ -122,7 +132,7 @@ export function useTasks() {
       void supabase.removeChannel(tasksChannel);
       void supabase.removeChannel(sharedTasksChannel);
     };
-  }, [queryClient, refetch, session?.user?.id]);
+  }, [queryClient, session?.user?.id]); // Remove refetch from dependencies
 
   const wrappedRefetch = async () => {
     console.log('Refetching tasks...');
