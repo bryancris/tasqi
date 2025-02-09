@@ -63,8 +63,8 @@ export function MobileFooter() {
                 className="flex items-center justify-center gap-2 py-3 relative"
               >
                 <div className="relative">
-                  <CalendarDays className="h-5 w-5" />
-                  <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs font-bold">
+                  <CalendarDays className="h-7 w-7" />
+                  <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-sm font-bold">
                     W
                   </span>
                 </div>
@@ -74,8 +74,8 @@ export function MobileFooter() {
                 className="flex items-center justify-center gap-2 py-3 relative"
               >
                 <div className="relative">
-                  <Calendar className="h-5 w-5" />
-                  <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs font-bold">
+                  <Calendar className="h-7 w-7" />
+                  <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-sm font-bold">
                     M
                   </span>
                 </div>
