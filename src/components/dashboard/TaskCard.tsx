@@ -60,24 +60,17 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
         return;
       }
 
-      // Check if user owns the task
-      const isOwner = task.owner_id === currentUser.id;
+      // Check if user owns the task or is the assigned user
+      const hasAccess = currentUser.id === task.owner_id || currentUser.id === task.user_id;
       
-      // If not owner, check if task is shared with user
-      let hasAccess = isOwner;
-      if (!isOwner) {
-        const { data: sharedTasks, error: sharedError } = await supabase
+      // If not owner or assigned user, check if task is shared with user
+      if (!hasAccess) {
+        const { data: sharedTasks } = await supabase
           .from('shared_tasks')
           .select('*')
           .eq('task_id', task.id)
           .eq('shared_with_user_id', currentUser.id)
           .eq('status', 'accepted');
-
-        if (sharedError) {
-          console.error('Error checking shared task:', sharedError);
-          toast.error('Failed to verify task access');
-          return;
-        }
 
         hasAccess = sharedTasks && sharedTasks.length > 0;
       }
