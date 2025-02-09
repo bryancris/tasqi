@@ -23,6 +23,7 @@ export interface Task {
   reminder_enabled?: boolean;
   completed_at?: string;
   reschedule_count?: number;
+  shared?: boolean;
 }
 
 interface TaskBoardProps {
