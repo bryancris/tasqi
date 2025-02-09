@@ -44,6 +44,8 @@ serve(async (req) => {
       throw new Error(`Failed to fetch shared task details: ${sharedTaskError.message}`)
     }
 
+    console.log('Fetched shared task details:', sharedTask)
+
     // Create notification for the recipient
     const { error: notificationError } = await supabase
       .from('notifications')
@@ -60,6 +62,8 @@ serve(async (req) => {
       console.error('Error creating notification:', notificationError)
       throw new Error('Failed to create notification')
     }
+
+    console.log('Notification created successfully')
 
     // Get push subscription for the recipient
     const { data: pushSubscription, error: subscriptionError } = await supabase
