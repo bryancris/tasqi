@@ -28,13 +28,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       localStorage.clear();
       sessionStorage.clear();
       
+      // Navigate to home page before signing out
+      navigate('/');
+      
       // Then attempt to sign out from Supabase
       const { error } = await supabase.auth.signOut();
       if (error && !error.message?.includes('session_not_found')) {
         console.error("Error signing out:", error);
       }
-    } finally {
-      navigate('/auth');
+    } catch (error) {
+      console.error("Sign out error:", error);
     }
   };
 
@@ -91,7 +94,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           
         case 'SIGNED_OUT':
           console.log("User signed out");
-          await handleSignOut();
+          setSession(null);
+          navigate('/');
           break;
           
         case 'TOKEN_REFRESHED':
@@ -99,7 +103,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           if (currentSession) {
             setSession(currentSession);
           } else {
-            await handleSignOut();
+            setSession(null);
+            navigate('/');
           }
           break;
           
@@ -113,12 +118,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           if (currentSession) {
             setSession(currentSession);
           } else {
-            await handleSignOut();
+            setSession(null);
+            navigate('/');
           }
           break;
           
         case 'PASSWORD_RECOVERY':
-          await handleSignOut();
+          setSession(null);
+          navigate('/');
           break;
       }
     });
@@ -142,4 +149,3 @@ export const useAuth = () => {
   }
   return context;
 };
-

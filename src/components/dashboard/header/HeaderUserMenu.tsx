@@ -23,15 +23,19 @@ export function HeaderUserMenu() {
       localStorage.clear();
       sessionStorage.clear();
       
+      // Navigate before signing out to prevent white screen
+      navigate('/');
+      
       // Then attempt to sign out from Supabase
       const { error } = await supabase.auth.signOut();
       if (error && !error.message?.includes('session_not_found')) {
         console.error('Error logging out:', error);
       }
-    } finally {
-      // Always redirect regardless of Supabase response
-      navigate('/auth');
+      
       toast.success("Successfully logged out");
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error("Error during logout");
     }
   };
 
