@@ -48,11 +48,17 @@ export const DraggableTask = ({ task }: DraggableTaskProps) => {
           "text-[10px] leading-tight",
           "text-white break-words",
           "h-full cursor-move",
+          "flex overflow-hidden", // Added flex and overflow-hidden
           task.status === 'unscheduled' ? 'bg-[#1EAEDB]' : getPriorityColor(task.priority),
           task.shared && "ring-10 ring-[#8B5CF6]"
         )}
       >
-        <div className="font-medium line-clamp-2">{task.title}</div>
+        <div className="flex-1 min-w-0">
+          <div className="font-medium line-clamp-2">{task.title}</div>
+        </div>
+        {task.shared && (
+          <div className="w-2 bg-[#8B5CF6] h-full shrink-0" />
+        )}
       </div>
       <EditTaskDrawer 
         task={task} 
@@ -61,4 +67,4 @@ export const DraggableTask = ({ task }: DraggableTaskProps) => {
       />
     </>
   );
-};
+}

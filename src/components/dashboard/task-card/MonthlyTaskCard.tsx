@@ -19,36 +19,42 @@ export function MonthlyTaskCard({ task, onComplete, onClick, dragHandleProps, ex
   return (
     <div 
       className={cn(
-        "flex items-start gap-2 p-2 bg-white rounded-md shadow-sm",
+        "flex items-start bg-white rounded-md shadow-sm",
         "hover:shadow-md transition-shadow cursor-pointer",
+        "overflow-hidden", // Added overflow-hidden
         getPriorityColor(task.priority),
         task.shared && "ring-10 ring-[#8B5CF6]"
       )}
       onClick={onClick}
       {...dragHandleProps}
     >
-      <TaskStatusIndicator 
-        status={task.status}
-        time={timeString}
-        onClick={(e) => {
-          e.stopPropagation();
-          onComplete();
-        }} 
-      />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <h3 className="font-medium text-gray-900 truncate text-sm flex-1">{task.title}</h3>
-          <div className="flex items-center gap-1">
-            {task.reminder_enabled && (
-              <Bell className="w-3 h-3 shrink-0 text-gray-500" />
-            )}
-            {extraButton}
+      <div className="flex-1 p-2 min-w-0">
+        <TaskStatusIndicator 
+          status={task.status}
+          time={timeString}
+          onClick={(e) => {
+            e.stopPropagation();
+            onComplete();
+          }} 
+        />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <h3 className="font-medium text-gray-900 truncate text-sm flex-1">{task.title}</h3>
+            <div className="flex items-center gap-1">
+              {task.reminder_enabled && (
+                <Bell className="w-3 h-3 shrink-0 text-gray-500" />
+              )}
+              {extraButton}
+            </div>
           </div>
+          {timeString && (
+            <p className="text-xs text-gray-500">{timeString}</p>
+          )}
         </div>
-        {timeString && (
-          <p className="text-xs text-gray-500">{timeString}</p>
-        )}
       </div>
+      {task.shared && (
+        <div className="w-8 bg-[#8B5CF6] h-full shrink-0" />
+      )}
     </div>
   );
 }

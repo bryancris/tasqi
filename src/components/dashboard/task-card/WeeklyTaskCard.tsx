@@ -35,11 +35,12 @@ export function WeeklyTaskCard({ task, onClick, onComplete, dragHandleProps, ext
         "text-white text-xs leading-tight",
         "shadow-sm",
         "rounded-md",
+        "flex overflow-hidden", // Added flex and overflow-hidden
         getPriorityColor(task.priority),
         task.shared && "ring-10 ring-[#8B5CF6]"
       )}
     >
-      <div className="p-1 h-full overflow-hidden">
+      <div className="p-1 flex-1 overflow-hidden">
         <div className="flex items-center gap-1">
           <div className="font-medium truncate flex-1">{task.title}</div>
           <div className="flex items-center gap-1 shrink-0">
@@ -51,6 +52,9 @@ export function WeeklyTaskCard({ task, onClick, onComplete, dragHandleProps, ext
           <p className="text-[10px] text-white/90 truncate">{task.description}</p>
         )}
       </div>
+      {task.shared && (
+        <div className="w-8 bg-[#8B5CF6] h-full shrink-0" />
+      )}
     </div>
   );
 }
