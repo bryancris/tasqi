@@ -40,14 +40,6 @@ export function useTasks() {
   });
 
   useEffect(() => {
-    // Immediately refetch when session changes
-    if (session?.user?.id) {
-      console.log('Session changed, refetching tasks...');
-      void refetch();
-    }
-  }, [session?.user?.id, refetch]);
-
-  useEffect(() => {
     if (!session?.user?.id) {
       console.log('No session, skipping subscription');
       return;
@@ -81,6 +73,7 @@ export function useTasks() {
   }, [queryClient, refetch, session?.user?.id]);
 
   const wrappedRefetch = async () => {
+    console.log('Refetching tasks...');
     await refetch();
   };
 

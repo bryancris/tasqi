@@ -53,21 +53,18 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
       if (isUpdating) return;
       setIsUpdating(true);
       
-      console.log('Attempting to complete task:', task.id);
-      console.log('Current task status:', task.status);
-      
       const newStatus = task.status === 'completed' ? 'unscheduled' : 'completed';
       const completedAt = task.status === 'completed' ? null : new Date().toISOString();
       
-      console.log('Updating task with:', { status: newStatus, completed_at: completedAt });
-
-      const { error } = await supabase
+      const { error, data } = await supabase
         .from('tasks')
         .update({ 
           status: newStatus,
           completed_at: completedAt
         })
-        .eq('id', task.id);
+        .eq('id', task.id)
+        .select()
+        .single();
 
       if (error) {
         console.error('Error updating task:', error);
@@ -75,7 +72,7 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
         return;
       }
 
-      console.log('Task updated successfully');
+      console.log('Task updated successfully:', data);
       toast.success(task.status === 'completed' ? 'Task uncompleted' : 'Task completed');
 
       if (onComplete) {
