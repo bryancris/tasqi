@@ -1,4 +1,5 @@
 
+import { memo } from "react";
 import { Task } from "../TaskBoard";
 import { TaskStatusIndicator } from "../TaskStatusIndicator";
 import { cn } from "@/lib/utils";
@@ -13,7 +14,7 @@ interface DailyTaskCardProps {
   extraButton?: React.ReactNode;
 }
 
-export function DailyTaskCard({ task, onComplete, onClick, dragHandleProps, extraButton }: DailyTaskCardProps) {
+function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, extraButton }: DailyTaskCardProps) {
   const timeString = task.start_time && task.end_time ? `${task.start_time} - ${task.end_time}` : '';
 
   const getCardColor = () => {
@@ -73,3 +74,6 @@ export function DailyTaskCard({ task, onComplete, onClick, dragHandleProps, extr
     </div>
   );
 }
+
+// Memoize the component to prevent unnecessary re-renders
+export const DailyTaskCard = memo(DailyTaskCardComponent);

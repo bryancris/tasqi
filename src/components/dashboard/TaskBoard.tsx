@@ -4,6 +4,7 @@ import { DesktopTaskView } from "./DesktopTaskView";
 import { MobileTaskView } from "./MobileTaskView";
 import { useTasks } from "@/hooks/use-tasks";
 import { useTaskReorder } from "@/hooks/use-task-reorder";
+import { useCallback, useMemo } from 'react';
 
 export type TaskPriority = 'low' | 'medium' | 'high';
 
@@ -36,25 +37,33 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
   const { tasks, refetch } = useTasks();
   const { handleDragEnd } = useTaskReorder(tasks, refetch);
 
+  // Memoize the refetch callback
+  const memoizedRefetch = useCallback(() => {
+    void refetch();
+  }, [refetch]);
+
+  // Memoize tasks array to prevent unnecessary re-renders
+  const memoizedTasks = useMemo(() => tasks, [tasks]);
+
   if (isMobile) {
     return (
       <MobileTaskView 
-        tasks={tasks} 
+        tasks={memoizedTasks}
         selectedDate={selectedDate} 
         onDateChange={onDateChange}
         onDragEnd={handleDragEnd}
-        onComplete={refetch}
+        onComplete={memoizedRefetch}
       />
     );
   }
 
   return (
     <DesktopTaskView 
-      tasks={tasks} 
+      tasks={memoizedTasks}
       selectedDate={selectedDate} 
       onDateChange={onDateChange}
       onDragEnd={handleDragEnd}
-      onComplete={refetch}
+      onComplete={memoizedRefetch}
     />
   );
 }
