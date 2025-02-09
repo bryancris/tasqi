@@ -1,5 +1,5 @@
 
-import { Home, Calendar, FileText, MessageSquare, Heart } from "lucide-react";
+import { Home, Calendar, FileText, MessageSquare, Heart, CalendarDays } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -57,12 +57,18 @@ export function MobileFooter() {
                 <span className="text-xs mt-1">Calendars</span>
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => handleNavigation("/dashboard/weekly")}>
-                Weekly View
+            <DropdownMenuContent align="center" className="min-w-[120px]">
+              <DropdownMenuItem 
+                onClick={() => handleNavigation("/dashboard/weekly")}
+                className="flex items-center justify-center gap-2 py-3"
+              >
+                <CalendarDays className="h-5 w-5" />
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleNavigation("/dashboard?view=calendar")}>
-                Monthly View
+              <DropdownMenuItem 
+                onClick={() => handleNavigation("/dashboard?view=calendar")}
+                className="flex items-center justify-center gap-2 py-3"
+              >
+                <Calendar className="h-5 w-5" />
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
