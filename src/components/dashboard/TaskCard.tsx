@@ -54,6 +54,29 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
       setIsUpdating(true);
       console.log('Attempting to update task:', task.id);
 
+      // First check if user has access to update this task
+      const { data: sharedTaskData, error: sharedError } = await supabase
+        .from('shared_tasks')
+        .select('*')
+        .eq('task_id', task.id)
+        .eq('status', 'accepted')
+        .single();
+
+      if (sharedError && !sharedError.message.includes('No rows found')) {
+        console.error('Error checking shared task:', sharedError);
+        toast.error('Failed to verify task access');
+        return;
+      }
+
+      // If user is neither the owner nor has an accepted shared task, they can't update
+      const isSharedWithUser = sharedTaskData && sharedTaskData.shared_with_user_id === (await supabase.auth.getUser()).data.user?.id;
+      const isOwner = task.user_id === (await supabase.auth.getUser()).data.user?.id;
+
+      if (!isSharedWithUser && !isOwner) {
+        toast.error('You do not have permission to complete this task');
+        return;
+      }
+
       const { error } = await supabase
         .from('tasks')
         .update({ 
