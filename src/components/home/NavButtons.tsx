@@ -39,10 +39,8 @@ const NavButtons = () => {
   };
 
   const handleLogin = () => {
-    // Use a slight delay to ensure the navigation completes
-    setTimeout(() => {
-      navigate('/auth');
-    }, 100);
+    console.log('Navigating to auth page...');
+    navigate('/auth', { replace: true });
   };
 
   return (
