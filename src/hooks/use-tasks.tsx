@@ -17,7 +17,7 @@ export function useTasks() {
         return [];
       }
 
-      console.log('Fetching tasks with session:', session.user.id);
+      console.log('Fetching tasks for user:', session.user.id);
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
@@ -54,12 +54,13 @@ export function useTasks() {
         {
           event: '*',
           schema: 'public',
-          table: 'tasks'
+          table: 'tasks',
+          filter: `user_id=eq.${session.user.id}`
         },
-        (payload) => {
+        async (payload) => {
           console.log('Received task change:', payload);
-          queryClient.invalidateQueries({ queryKey: ['tasks', session.user.id] });
-          void refetch();
+          await queryClient.invalidateQueries({ queryKey: ['tasks', session.user.id] });
+          await refetch();
         }
       )
       .subscribe((status) => {
@@ -68,7 +69,7 @@ export function useTasks() {
 
     return () => {
       console.log('Cleaning up subscription...');
-      supabase.removeChannel(channel);
+      void supabase.removeChannel(channel);
     };
   }, [queryClient, refetch, session?.user?.id]);
 
