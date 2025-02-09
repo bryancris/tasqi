@@ -22,7 +22,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const handleSignOut = async () => {
     try {
-      // Clear all storage first to ensure no stale tokens remain
+      setSession(null); // Clear session state first
+      
+      // Clear all storage
       localStorage.clear();
       sessionStorage.clear();
       
@@ -32,8 +34,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.error("Error signing out:", error);
       }
     } finally {
-      // Always clear session state and redirect
-      setSession(null);
       navigate('/auth');
     }
   };
@@ -43,25 +43,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         console.log("Initializing auth...");
         
-        // Clear any potentially invalid tokens first
         const currentPath = window.location.pathname;
-        if (currentPath !== '/auth') {
-          const { data: { session: initialSession }, error } = await supabase.auth.getSession();
-          
-          if (error) {
-            console.error("Error getting session:", error);
-            await handleSignOut();
-            return;
-          }
-
-          if (initialSession?.user) {
-            console.log("Initial session found and valid");
-            setSession(initialSession);
-          } else {
-            console.log("No initial session found");
-            await handleSignOut();
-          }
+        if (currentPath === '/auth') {
+          setLoading(false);
+          return;
         }
+
+        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Error getting session:", error);
+          await handleSignOut();
+          return;
+        }
+
+        if (!initialSession?.user) {
+          console.log("No initial session found");
+          await handleSignOut();
+          return;
+        }
+
+        console.log("Initial session found and valid");
+        setSession(initialSession);
+        
       } catch (error) {
         console.error("Error in auth initialization:", error);
         await handleSignOut();
@@ -94,6 +98,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           console.log("Token refreshed");
           if (currentSession) {
             setSession(currentSession);
+          } else {
+            await handleSignOut();
           }
           break;
           
@@ -109,6 +115,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           } else {
             await handleSignOut();
           }
+          break;
+          
+        case 'USER_DELETED':
+        case 'PASSWORD_RECOVERY':
+          await handleSignOut();
           break;
       }
     });
@@ -132,3 +143,4 @@ export const useAuth = () => {
   }
   return context;
 };
+
