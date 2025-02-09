@@ -52,7 +52,7 @@ export function MonthlyTaskCard({ task, onComplete, onClick, dragHandleProps, ex
         </div>
       </div>
       {task.shared && (
-        <div className="w-2 bg-[#8B5CF6] h-full absolute right-0 top-0" />
+        <div className="absolute right-0 top-0 bottom-0 w-2 bg-[#8B5CF6]" />
       )}
     </div>
   );
