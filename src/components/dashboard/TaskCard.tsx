@@ -55,8 +55,9 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
       
       const newStatus = task.status === 'completed' ? 'unscheduled' : 'completed';
       const completedAt = task.status === 'completed' ? null : new Date().toISOString();
-      
-      const { error } = await supabase
+
+      // First try direct update for tasks user owns
+      let { error: updateError } = await supabase
         .from('tasks')
         .update({ 
           status: newStatus,
@@ -64,10 +65,25 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
         })
         .eq('id', task.id);
 
-      if (error) {
-        console.error('Error updating task:', error);
-        toast.error('Failed to update task. Please try again.');
-        return;
+      if (updateError) {
+        console.error('Error updating task:', updateError);
+        if (task.shared) {
+          // If task is shared and direct update failed, try updating through shared_tasks
+          const { error: sharedUpdateError } = await supabase
+            .from('shared_tasks')
+            .update({ status: newStatus === 'completed' ? 'completed' : 'pending' })
+            .eq('task_id', task.id)
+            .eq('shared_with_user_id', (await supabase.auth.getUser()).data.user?.id);
+
+          if (sharedUpdateError) {
+            console.error('Error updating shared task:', sharedUpdateError);
+            toast.error('You do not have permission to complete this task');
+            return;
+          }
+        } else {
+          toast.error('Failed to update task. Please try again.');
+          return;
+        }
       }
 
       toast.success(task.status === 'completed' ? 'Task uncompleted' : 'Task completed');

@@ -18,18 +18,46 @@ export function useTasks() {
       }
 
       console.log('Fetching tasks for user:', session.user.id);
-      const { data, error } = await supabase
+      
+      // Get tasks owned by the user
+      const { data: ownedTasks = [], error: ownedError } = await supabase
         .from('tasks')
         .select('*')
+        .or(`user_id.eq.${session.user.id},owner_id.eq.${session.user.id}`)
         .order('position', { ascending: true });
-      
-      if (error) {
-        console.error('Error fetching tasks:', error);
-        throw error;
+
+      if (ownedError) {
+        console.error('Error fetching owned tasks:', ownedError);
+        throw ownedError;
       }
-      
-      console.log('Fetched tasks:', data);
-      return data as Task[];
+
+      // Get shared tasks
+      const { data: sharedTasks = [], error: sharedError } = await supabase
+        .from('shared_tasks')
+        .select('task_id, tasks(*)')
+        .eq('shared_with_user_id', session.user.id);
+
+      if (sharedError) {
+        console.error('Error fetching shared tasks:', sharedError);
+        throw sharedError;
+      }
+
+      // Combine and deduplicate tasks
+      const allTasks = [
+        ...ownedTasks,
+        ...sharedTasks.map(st => ({
+          ...st.tasks,
+          shared: true
+        }))
+      ];
+
+      // Remove duplicates based on task ID
+      const uniqueTasks = Array.from(
+        new Map(allTasks.map(task => [task.id, task])).values()
+      );
+
+      console.log('Fetched tasks:', uniqueTasks);
+      return uniqueTasks as Task[];
     },
     enabled: !!session?.user?.id,
     refetchOnMount: "always",
