@@ -13,11 +13,22 @@ const NavButtons = () => {
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
-      toast({
-        title: "Success",
-        description: "You have been logged out successfully",
-      });
+      // Clear all storage first
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // Navigate before signing out
+      navigate('/');
+      
+      // Then attempt to sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      if (error && !error.message?.includes('session_not_found')) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.message,
+        });
+      }
     } catch (error: any) {
       toast({
         variant: "destructive",
