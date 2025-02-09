@@ -30,7 +30,7 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
   return (
     <div 
       className={cn(
-        "flex items-start gap-3 p-3 rounded-lg shadow-sm",
+        "flex items-start gap-3 p-3 rounded-lg shadow-sm relative",
         "hover:shadow-md transition-shadow cursor-pointer",
         getCardColor(),
         task.status === 'completed' ? 'text-white' : '',
