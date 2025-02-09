@@ -38,6 +38,13 @@ const NavButtons = () => {
     }
   };
 
+  const handleLogin = () => {
+    // Use a slight delay to ensure the navigation completes
+    setTimeout(() => {
+      navigate('/auth');
+    }, 100);
+  };
+
   return (
     <div className="absolute top-4 right-4 flex gap-2">
       {session ? (
@@ -60,7 +67,7 @@ const NavButtons = () => {
         </>
       ) : (
         <Button 
-          onClick={() => navigate('/auth')} 
+          onClick={handleLogin}
           variant="outline"
           className="border-blue-600 bg-transparent text-blue-600 hover:bg-blue-600 hover:text-white"
         >
