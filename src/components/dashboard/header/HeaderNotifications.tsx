@@ -64,7 +64,22 @@ export function HeaderNotifications() {
           console.log('New notification received:', payload);
           queryClient.invalidateQueries({ queryKey: ['notifications'] });
           
-          // Show push notification and play sound for shared tasks
+          // Immediately show toast and play sound for all notifications
+          // Play notification sound
+          try {
+            const audio = new Audio('/notification-sound.mp3');
+            audio.volume = 0.5;
+            await audio.play();
+          } catch (error) {
+            console.warn('Could not play notification sound:', error);
+          }
+
+          // Show toast notification
+          toast.info(payload.new.title, {
+            description: payload.new.message,
+          });
+          
+          // Handle system notification for shared tasks
           if (payload.new.type === 'task_share' && payload.new.reference_id) {
             try {
               // Fetch the shared task details
@@ -77,20 +92,6 @@ export function HeaderNotifications() {
               if (error) throw error;
 
               if (task) {
-                // Play notification sound immediately
-                try {
-                  const audio = new Audio('/notification-sound.mp3');
-                  audio.volume = 0.5;
-                  await audio.play();
-                } catch (error) {
-                  console.warn('Could not play notification sound:', error);
-                }
-
-                // Show toast notification
-                toast.info(payload.new.title, {
-                  description: payload.new.message,
-                });
-
                 // Show system notification
                 await showNotification(task, 'shared');
               }
