@@ -35,7 +35,7 @@ export function TaskBoardSection({ tasks, onDragEnd, onComplete }: TaskBoardSect
   };
 
   const sortedTasks = [...tasks]
-    .filter(task => task.status !== 'completed' || shouldShowCompletedTask(task))
+    .filter(task => !task.status || task.status !== 'completed' || shouldShowCompletedTask(task))
     .sort((a, b) => {
       if (a.status === 'completed' && b.status !== 'completed') return 1;
       if (a.status !== 'completed' && b.status === 'completed') return -1;
