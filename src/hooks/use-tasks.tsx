@@ -73,9 +73,10 @@ export function useTasks() {
       return;
     }
 
-    console.log('Setting up real-time subscription for user:', session.user.id);
+    console.log('Setting up real-time subscriptions for user:', session.user.id);
     
-    const channel = supabase
+    // Subscribe to owned tasks changes
+    const tasksChannel = supabase
       .channel('tasks-changes')
       .on(
         'postgres_changes',
@@ -92,12 +93,34 @@ export function useTasks() {
         }
       )
       .subscribe((status) => {
-        console.log('Subscription status:', status);
+        console.log('Tasks subscription status:', status);
+      });
+
+    // Subscribe to shared tasks changes
+    const sharedTasksChannel = supabase
+      .channel('shared-tasks-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'shared_tasks',
+          filter: `shared_with_user_id=eq.${session.user.id}`
+        },
+        async (payload) => {
+          console.log('Received shared task change:', payload);
+          await queryClient.invalidateQueries({ queryKey: ['tasks', session.user.id] });
+          await refetch();
+        }
+      )
+      .subscribe((status) => {
+        console.log('Shared tasks subscription status:', status);
       });
 
     return () => {
-      console.log('Cleaning up subscription...');
-      void supabase.removeChannel(channel);
+      console.log('Cleaning up subscriptions...');
+      void supabase.removeChannel(tasksChannel);
+      void supabase.removeChannel(sharedTasksChannel);
     };
   }, [queryClient, refetch, session?.user?.id]);
 
