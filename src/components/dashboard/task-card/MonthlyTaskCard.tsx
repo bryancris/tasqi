@@ -19,7 +19,7 @@ export function MonthlyTaskCard({ task, onComplete, onClick, dragHandleProps, ex
   return (
     <div 
       className={cn(
-        "flex items-start bg-white rounded-md shadow-sm",
+        "flex items-start bg-white rounded-md shadow-sm relative",
         "hover:shadow-md transition-shadow cursor-pointer",
         "overflow-hidden",
         getPriorityColor(task.priority)
@@ -52,7 +52,7 @@ export function MonthlyTaskCard({ task, onComplete, onClick, dragHandleProps, ex
         </div>
       </div>
       {task.shared && (
-        <div className="w-2 bg-[#8B5CF6] h-full shrink-0" />
+        <div className="w-2 bg-[#8B5CF6] h-full absolute right-0 top-0" />
       )}
     </div>
   );
