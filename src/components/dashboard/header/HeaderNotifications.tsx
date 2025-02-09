@@ -61,10 +61,10 @@ export function HeaderNotifications() {
           table: 'notifications'
         },
         async (payload) => {
-          console.log('New notification:', payload);
+          console.log('New notification received:', payload);
           queryClient.invalidateQueries({ queryKey: ['notifications'] });
           
-          // Show push notification for shared tasks
+          // Show push notification and play sound for shared tasks
           if (payload.new.type === 'task_share') {
             try {
               // Fetch the shared task details
@@ -82,6 +82,15 @@ export function HeaderNotifications() {
             } catch (error) {
               console.error('Error showing shared task notification:', error);
             }
+          }
+
+          // Play notification sound
+          try {
+            const audio = new Audio('/notification-sound.mp3');
+            audio.volume = 0.5;
+            await audio.play();
+          } catch (error) {
+            console.warn('Could not play notification sound:', error);
           }
 
           // Show toast for new notification
