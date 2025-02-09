@@ -93,8 +93,7 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
             status: newStatus,
             completed_at: completedAt
           })
-          .eq('id', task.id)
-          .eq('owner_id', user.id);
+          .eq('id', task.id);
 
         if (updateError) {
           console.error('Error updating task:', updateError);
