@@ -102,8 +102,12 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
         }
       }
 
+      // Local state update
+      task.status = newStatus;
+      task.completed_at = completedAt;
+
       console.log('Task update successful');
-      toast.success(task.status === 'completed' ? 'Task uncompleted' : 'Task completed');
+      toast.success(task.status === 'completed' ? 'Task completed' : 'Task uncompleted');
 
       if (onComplete) {
         onComplete();
