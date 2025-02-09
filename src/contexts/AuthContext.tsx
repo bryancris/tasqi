@@ -22,16 +22,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const handleSignOut = async () => {
     try {
-      setSession(null); // Clear session state first
-      
-      // Clear all storage
+      setSession(null);
       localStorage.clear();
       sessionStorage.clear();
-      
-      // Navigate to home page before signing out
       navigate('/');
-      
-      // Then attempt to sign out from Supabase
       const { error } = await supabase.auth.signOut();
       if (error && !error.message?.includes('session_not_found')) {
         console.error("Error signing out:", error);
@@ -46,6 +40,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         console.log("Initializing auth...");
         
+        // Don't interfere with navigation if we're heading to the auth page
         const currentPath = window.location.pathname;
         if (currentPath === '/auth') {
           setLoading(false);
@@ -62,7 +57,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         if (!initialSession?.user) {
           console.log("No initial session found");
-          await handleSignOut();
+          setSession(null);
           return;
         }
 
@@ -95,16 +90,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         case 'SIGNED_OUT':
           console.log("User signed out");
           setSession(null);
-          navigate('/');
+          // Only navigate to home if we're not already going to /auth
+          if (window.location.pathname !== '/auth') {
+            navigate('/');
+          }
           break;
           
         case 'TOKEN_REFRESHED':
           console.log("Token refreshed");
           if (currentSession) {
             setSession(currentSession);
-          } else {
-            setSession(null);
-            navigate('/');
           }
           break;
           
@@ -119,7 +114,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setSession(currentSession);
           } else {
             setSession(null);
-            navigate('/');
           }
           break;
           

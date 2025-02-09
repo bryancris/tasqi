@@ -13,14 +13,9 @@ const NavButtons = () => {
 
   const handleLogout = async () => {
     try {
-      // Clear all storage first
       localStorage.clear();
       sessionStorage.clear();
-      
-      // Navigate before signing out
       navigate('/');
-      
-      // Then attempt to sign out from Supabase
       const { error } = await supabase.auth.signOut();
       if (error && !error.message?.includes('session_not_found')) {
         toast({
@@ -38,11 +33,9 @@ const NavButtons = () => {
     }
   };
 
-  const handleLogin = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent any default behavior
+  const handleLogin = () => {
     console.log('Attempting navigation to auth page...');
     navigate('/auth');
-    console.log('Navigation command executed');
   };
 
   return (
