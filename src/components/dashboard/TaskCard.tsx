@@ -56,7 +56,6 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
       console.log('Attempting to complete task:', task.id);
       console.log('Current task status:', task.status);
       
-      // Define the new status based on current status
       const newStatus = task.status === 'completed' ? 'unscheduled' : 'completed';
       const completedAt = task.status === 'completed' ? null : new Date().toISOString();
       
@@ -69,8 +68,8 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
           completed_at: completedAt
         })
         .eq('id', task.id)
-        .select('id, status, completed_at')
-        .maybeSingle();
+        .select()
+        .single();
 
       if (error) {
         console.error('Error updating task:', error);
