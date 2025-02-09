@@ -21,7 +21,7 @@ export function MonthlyTaskCard({ task, onComplete, onClick, dragHandleProps, ex
       className={cn(
         "flex items-start bg-white rounded-md shadow-sm",
         "hover:shadow-md transition-shadow cursor-pointer",
-        "overflow-hidden", // Added overflow-hidden
+        "overflow-hidden",
         getPriorityColor(task.priority),
         task.shared && "ring-10 ring-[#8B5CF6]"
       )}

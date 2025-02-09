@@ -35,7 +35,7 @@ export function WeeklyTaskCard({ task, onClick, onComplete, dragHandleProps, ext
         "text-white text-xs leading-tight",
         "shadow-sm",
         "rounded-md",
-        "flex overflow-hidden", // Added flex and overflow-hidden
+        "flex overflow-hidden",
         getPriorityColor(task.priority),
         task.shared && "ring-10 ring-[#8B5CF6]"
       )}

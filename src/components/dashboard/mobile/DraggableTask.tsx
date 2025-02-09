@@ -48,7 +48,7 @@ export const DraggableTask = ({ task }: DraggableTaskProps) => {
           "text-[10px] leading-tight",
           "text-white break-words",
           "h-full cursor-move",
-          "flex overflow-hidden", // Added flex and overflow-hidden
+          "flex overflow-hidden",
           task.status === 'unscheduled' ? 'bg-[#1EAEDB]' : getPriorityColor(task.priority),
           task.shared && "ring-10 ring-[#8B5CF6]"
         )}
