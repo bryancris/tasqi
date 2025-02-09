@@ -18,6 +18,8 @@ serve(async (req) => {
     const resend = new Resend(Deno.env.get("RESEND_API_KEY"))
     const { sharedTaskId } = await req.json()
     
+    console.log('Starting send-invitation function with sharedTaskId:', sharedTaskId)
+    
     if (!sharedTaskId) {
       console.error('No sharedTaskId provided');
       throw new Error('sharedTaskId is required');
@@ -35,9 +37,9 @@ serve(async (req) => {
       .from('shared_tasks')
       .select(`
         *,
-        task:tasks(*),
-        shared_by:profiles!shared_tasks_shared_by_user_id_fkey(email),
-        shared_with:profiles!shared_tasks_shared_with_user_id_fkey(email)
+        tasks:task_id (*),
+        shared_by:shared_by_user_id (email),
+        shared_with:shared_with_user_id (email)
       `)
       .eq('id', sharedTaskId)
       .single()
@@ -52,23 +54,22 @@ serve(async (req) => {
       throw new Error('Shared task not found')
     }
 
+    console.log('Retrieved shared task:', {
+      id: sharedTask.id,
+      taskId: sharedTask.task_id,
+      sharedWithEmail: sharedTask.shared_with?.email,
+      sharedByEmail: sharedTask.shared_by?.email
+    })
+
     if (!sharedTask.shared_with?.email) {
       console.error('No recipient email found for shared task:', sharedTask)
       throw new Error('Recipient email not found')
     }
 
-    if (!sharedTask.task?.title) {
+    if (!sharedTask.tasks?.title) {
       console.error('No task details found for shared task:', sharedTask)
       throw new Error('Task details not found')
     }
-
-    console.log('Retrieved shared task:', {
-      id: sharedTask.id,
-      taskId: sharedTask.task.id,
-      title: sharedTask.task.title,
-      sharedWithEmail: sharedTask.shared_with.email,
-      sharedByEmail: sharedTask.shared_by.email
-    })
 
     // Send email
     const { data: emailData, error: emailError } = await resend.emails.send({
@@ -78,8 +79,8 @@ serve(async (req) => {
       html: `
         <h1>A Task Has Been Shared With You</h1>
         <p>${sharedTask.shared_by.email} has shared a task with you:</p>
-        <h2>${sharedTask.task.title}</h2>
-        <p>${sharedTask.task.description || ''}</p>
+        <h2>${sharedTask.tasks.title}</h2>
+        <p>${sharedTask.tasks.description || ''}</p>
         <p>Click the link below to view the task:</p>
         <a href="https://tasqi.lovable.app/dashboard">View Task</a>
       `
