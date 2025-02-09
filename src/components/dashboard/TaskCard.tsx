@@ -60,26 +60,6 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
         return;
       }
 
-      // Check if user owns the task or is the assigned user
-      let hasAccess = currentUser.id === task.owner_id || currentUser.id === task.user_id;
-      
-      // If not owner or assigned user, check if task is shared with user
-      if (!hasAccess) {
-        const { data: sharedTasks } = await supabase
-          .from('shared_tasks')
-          .select('*')
-          .eq('task_id', task.id)
-          .eq('shared_with_user_id', currentUser.id)
-          .eq('status', 'accepted');
-
-        hasAccess = sharedTasks && sharedTasks.length > 0;
-      }
-
-      if (!hasAccess) {
-        toast.error('You do not have permission to complete this task');
-        return;
-      }
-
       const { error } = await supabase
         .from('tasks')
         .update({ 
