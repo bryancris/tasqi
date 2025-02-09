@@ -65,7 +65,7 @@ export function HeaderNotifications() {
           queryClient.invalidateQueries({ queryKey: ['notifications'] });
           
           // Show push notification and play sound for shared tasks
-          if (payload.new.type === 'task_share') {
+          if (payload.new.type === 'task_share' && payload.new.reference_id) {
             try {
               // Fetch the shared task details
               const { data: task, error } = await supabase
@@ -77,26 +77,27 @@ export function HeaderNotifications() {
               if (error) throw error;
 
               if (task) {
+                // Play notification sound immediately
+                try {
+                  const audio = new Audio('/notification-sound.mp3');
+                  audio.volume = 0.5;
+                  await audio.play();
+                } catch (error) {
+                  console.warn('Could not play notification sound:', error);
+                }
+
+                // Show toast notification
+                toast.info(payload.new.title, {
+                  description: payload.new.message,
+                });
+
+                // Show system notification
                 await showNotification(task, 'shared');
               }
             } catch (error) {
-              console.error('Error showing shared task notification:', error);
+              console.error('Error handling shared task notification:', error);
             }
           }
-
-          // Play notification sound
-          try {
-            const audio = new Audio('/notification-sound.mp3');
-            audio.volume = 0.5;
-            await audio.play();
-          } catch (error) {
-            console.warn('Could not play notification sound:', error);
-          }
-
-          // Show toast for new notification
-          toast.info(payload.new.title, {
-            description: payload.new.message
-          });
         }
       )
       .subscribe();
