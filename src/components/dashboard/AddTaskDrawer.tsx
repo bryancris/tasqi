@@ -144,7 +144,7 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
                   size="icon"
                   onClick={() => setShowShareDialog(true)}
                 >
-                  <Share2 className="h-4 w-4" />
+                  <Share2 className="h-4 w-4 text-[#0EA5E9]" />
                 </Button>
               </div>
               <DrawerClose asChild>
