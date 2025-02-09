@@ -1,5 +1,5 @@
 
-export const showNotification = async (task: any) => {
+export const showNotification = async (task: any, type: 'reminder' | 'shared' = 'reminder') => {
   try {
     if (!('Notification' in window)) {
       console.error('❌ Notifications not supported');
@@ -30,19 +30,24 @@ export const showNotification = async (task: any) => {
     const registration = await navigator.serviceWorker.ready;
     console.log('✅ Service worker ready, attempting to show notification');
 
-    const title = task.title;
+    const title = type === 'shared' ? 'New Shared Task' : task.title;
+    const body = type === 'shared' 
+      ? `A task has been shared with you: ${task.title}`
+      : `Task due ${task.start_time ? `at ${task.start_time}` : 'today'}`;
+
     const options = {
-      body: `Task due ${task.start_time ? `at ${task.start_time}` : 'today'}`,
+      body,
       icon: '/pwa-192x192.png',
       badge: '/pwa-192x192.png',
-      tag: `task-${task.id}`,
+      tag: `task-${task.id}-${type}`,
       renotify: true,
       requireInteraction: true,
       silent: false,
       vibrate: [200, 100, 200],
       data: {
         url: window.location.origin + '/dashboard',
-        taskId: task.id
+        taskId: task.id,
+        type: type === 'shared' ? 'task_share' : 'task_reminder'
       }
     };
 
@@ -89,4 +94,3 @@ export const checkNotificationPermission = async () => {
     return false;
   }
 };
-

@@ -12,6 +12,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { showNotification } from "@/utils/notifications/notificationUtils";
 
 interface Notification {
   id: number;
@@ -59,10 +60,30 @@ export function HeaderNotifications() {
           schema: 'public',
           table: 'notifications'
         },
-        (payload) => {
+        async (payload) => {
           console.log('New notification:', payload);
           queryClient.invalidateQueries({ queryKey: ['notifications'] });
           
+          // Show push notification for shared tasks
+          if (payload.new.type === 'task_share') {
+            try {
+              // Fetch the shared task details
+              const { data: task, error } = await supabase
+                .from('tasks')
+                .select('*')
+                .eq('id', payload.new.reference_id)
+                .single();
+
+              if (error) throw error;
+
+              if (task) {
+                await showNotification(task, 'shared');
+              }
+            } catch (error) {
+              console.error('Error showing shared task notification:', error);
+            }
+          }
+
           // Show toast for new notification
           toast.info(payload.new.title, {
             description: payload.new.message

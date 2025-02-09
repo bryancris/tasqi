@@ -68,19 +68,17 @@ self.addEventListener('push', event => {
       renotify: true,
       requireInteraction: true,
       data: {
-        url: self.registration.scope
+        url: self.registration.scope,
+        type: data.type // Add type to handle different notification types
       }
     };
     
     event.waitUntil(
-      self.registration.showNotification(data.title || 'New Task', options)
-        .then(() => {
-          // Play notification sound
-          const audio = new Audio('/notification-sound.mp3');
-          audio.volume = 0.5;
-          return audio.play();
-        })
-        .catch(error => console.error('Error showing notification:', error))
+      Promise.all([
+        self.registration.showNotification(data.title || 'New Task', options),
+        // Play notification sound
+        new Audio('/notification-sound.mp3').play()
+      ]).catch(error => console.error('Error showing notification:', error))
     );
   }
 });
@@ -90,6 +88,14 @@ self.addEventListener('notificationclick', event => {
   console.log('Notification clicked:', event);
   
   event.notification.close();
+  
+  // Handle different notification types
+  const notificationData = event.notification.data;
+  let targetUrl = '/dashboard';
+  
+  if (notificationData?.type === 'task_share') {
+    targetUrl = '/dashboard'; // Could be a specific view for shared tasks
+  }
   
   event.waitUntil(
     clients.matchAll({ type: 'window' })
@@ -103,7 +109,7 @@ self.addEventListener('notificationclick', event => {
           }
           return client.focus();
         }
-        return clients.openWindow('/');
+        return clients.openWindow(targetUrl);
       })
   );
 });
@@ -134,4 +140,3 @@ self.addEventListener('fetch', event => {
       })
   );
 });
-
