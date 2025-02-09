@@ -71,7 +71,11 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
 
       if (error) {
         console.error('Error updating task:', error);
-        toast.error(error.message || 'Failed to update task status');
+        if (error.code === 'PGRST116') {
+          toast.error('Task not found or you do not have permission to update it');
+        } else {
+          toast.error(error.message || 'Failed to update task status');
+        }
         return;
       }
 
@@ -82,15 +86,14 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
       }
 
       console.log('Task updated successfully:', data);
+      toast.success(task.status === 'completed' ? 'Task uncompleted' : 'Task completed');
 
       if (onComplete) {
         onComplete();
       }
-
-      toast.success(task.status === 'completed' ? 'Task uncompleted' : 'Task completed');
     } catch (error: any) {
       console.error('Error completing task:', error);
-      toast.error(error.message || 'Failed to update task status');
+      toast.error('An unexpected error occurred while updating the task');
     } finally {
       setIsUpdating(false);
     }
