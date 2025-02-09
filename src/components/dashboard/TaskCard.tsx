@@ -50,50 +50,61 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
 
   const handleComplete = async () => {
     try {
-      if (isUpdating) return;
+      console.log('Attempting to complete task:', task.id);
+      if (isUpdating) {
+        console.log('Task update already in progress, skipping...');
+        return;
+      }
+      
       setIsUpdating(true);
+      console.log('Current task status:', task.status);
       
       const newStatus = task.status === 'completed' ? 'unscheduled' : 'completed';
       const completedAt = task.status === 'completed' ? null : new Date().toISOString();
+      
+      console.log('Updating task to:', { newStatus, completedAt });
 
-      // First try direct update for tasks user owns
-      let { error: updateError } = await supabase
-        .from('tasks')
-        .update({ 
-          status: newStatus,
-          completed_at: completedAt
-        })
-        .eq('id', task.id);
+      if (task.shared) {
+        console.log('Updating shared task');
+        const { error: sharedUpdateError } = await supabase
+          .from('shared_tasks')
+          .update({ 
+            status: newStatus === 'completed' ? 'completed' : 'pending'
+          })
+          .eq('task_id', task.id)
+          .eq('shared_with_user_id', (await supabase.auth.getUser()).data.user?.id);
 
-      if (updateError) {
-        console.error('Error updating task:', updateError);
-        if (task.shared) {
-          // If task is shared and direct update failed, try updating through shared_tasks
-          const { error: sharedUpdateError } = await supabase
-            .from('shared_tasks')
-            .update({ status: newStatus === 'completed' ? 'completed' : 'pending' })
-            .eq('task_id', task.id)
-            .eq('shared_with_user_id', (await supabase.auth.getUser()).data.user?.id);
+        if (sharedUpdateError) {
+          console.error('Error updating shared task:', sharedUpdateError);
+          toast.error('Failed to update shared task status');
+          return;
+        }
+      } else {
+        console.log('Updating owned task');
+        const { error: updateError } = await supabase
+          .from('tasks')
+          .update({ 
+            status: newStatus,
+            completed_at: completedAt
+          })
+          .eq('id', task.id);
 
-          if (sharedUpdateError) {
-            console.error('Error updating shared task:', sharedUpdateError);
-            toast.error('You do not have permission to complete this task');
-            return;
-          }
-        } else {
-          toast.error('Failed to update task. Please try again.');
+        if (updateError) {
+          console.error('Error updating task:', updateError);
+          toast.error('Failed to update task status');
           return;
         }
       }
 
+      console.log('Task update successful');
       toast.success(task.status === 'completed' ? 'Task uncompleted' : 'Task completed');
 
       if (onComplete) {
         onComplete();
       }
     } catch (error: any) {
-      console.error('Error completing task:', error);
-      toast.error('An unexpected error occurred while updating the task');
+      console.error('Unexpected error completing task:', error);
+      toast.error('An unexpected error occurred');
     } finally {
       setIsUpdating(false);
     }
