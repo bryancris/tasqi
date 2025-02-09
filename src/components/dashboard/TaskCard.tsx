@@ -11,8 +11,6 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ShareTaskDialog } from "./ShareTaskDialog";
-import { Button } from "@/components/ui/button";
-import { Share2 } from "lucide-react";
 
 interface TaskCardProps {
   task: Task;
@@ -84,20 +82,7 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
       task,
       onClick: handleClick,
       onComplete: handleComplete,
-      dragHandleProps,
-      extraButton: (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsShareDialogOpen(true);
-          }}
-        >
-          <Share2 className="h-4 w-4" />
-        </Button>
-      )
+      dragHandleProps
     };
 
     switch (view) {
