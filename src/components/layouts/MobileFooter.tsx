@@ -1,8 +1,15 @@
+
 import { Home, Calendar, FileText, MessageSquare, Heart } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { ChatBubble } from "@/components/chat/ChatBubble";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function MobileFooter() {
   const location = useLocation();
@@ -37,16 +44,29 @@ export function MobileFooter() {
             <Home className="h-6 w-6" />
             <span className="text-xs mt-1">Daily</span>
           </button>
-          <button 
-            className={cn(
-              "flex flex-col items-center p-2",
-              isWeekly ? "text-[#8B5CF6]" : "text-gray-500 hover:text-[#8B5CF6]"
-            )}
-            onClick={() => handleNavigation("/dashboard/weekly")}
-          >
-            <Calendar className="h-6 w-6" />
-            <span className="text-xs mt-1">Week</span>
-          </button>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button 
+                className={cn(
+                  "flex flex-col items-center p-2",
+                  isWeekly ? "text-[#8B5CF6]" : "text-gray-500 hover:text-[#8B5CF6]"
+                )}
+              >
+                <Calendar className="h-6 w-6" />
+                <span className="text-xs mt-1">Calendars</span>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => handleNavigation("/dashboard/weekly")}>
+                Weekly View
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleNavigation("/dashboard?view=calendar")}>
+                Monthly View
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <button 
             className="flex flex-col items-center p-2 text-[#D946EF]"
             onClick={() => handleNavigation("/notes")}
