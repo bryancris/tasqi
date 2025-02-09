@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "./TaskBoard";
 import { toast } from "sonner";
@@ -38,7 +39,7 @@ interface Group {
 
 export function ShareTaskDialog({ task, open, onOpenChange }: ShareTaskDialogProps) {
   const [isSharing, setIsSharing] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState<string>("");
   const [sharingType, setSharingType] = useState<"individual" | "group">("individual");
 
@@ -101,20 +102,62 @@ export function ShareTaskDialog({ task, open, onOpenChange }: ShareTaskDialogPro
     try {
       setIsSharing(true);
 
-      // Create the shared task record
-      const { data: sharedTask, error: shareError } = await supabase
-        .from('shared_tasks')
-        .insert({
-          task_id: task.id,
-          shared_with_user_id: sharingType === 'individual' ? selectedUserId : null,
-          group_id: sharingType === 'group' ? parseInt(selectedGroupId) : null,
-          shared_by_user_id: (await supabase.auth.getUser()).data.user?.id,
-          sharing_type: sharingType
-        })
-        .select()
-        .single();
+      const currentUser = (await supabase.auth.getUser()).data.user;
+      if (!currentUser) throw new Error('No authenticated user');
 
-      if (shareError) throw shareError;
+      if (sharingType === 'individual') {
+        // Create shared task records for each selected user
+        const sharedTaskPromises = selectedUserIds.map(userId =>
+          supabase
+            .from('shared_tasks')
+            .insert({
+              task_id: task.id,
+              shared_with_user_id: userId,
+              shared_by_user_id: currentUser.id,
+              sharing_type: 'individual'
+            })
+            .select()
+            .single()
+        );
+
+        const results = await Promise.all(sharedTaskPromises);
+        const errors = results.filter(result => result.error);
+
+        if (errors.length > 0) {
+          throw new Error('Failed to share task with some users');
+        }
+
+        // Send notifications for each shared task
+        await Promise.all(
+          results.map(result => {
+            if (result.data) {
+              return supabase.functions.invoke('send-invitation', {
+                body: { sharedTaskId: result.data.id }
+              });
+            }
+            return Promise.resolve();
+          })
+        );
+      } else {
+        // Share with group
+        const { data: sharedTask, error: shareError } = await supabase
+          .from('shared_tasks')
+          .insert({
+            task_id: task.id,
+            group_id: parseInt(selectedGroupId),
+            shared_by_user_id: currentUser.id,
+            sharing_type: 'group'
+          })
+          .select()
+          .single();
+
+        if (shareError) throw shareError;
+
+        // Send notification for group share
+        await supabase.functions.invoke('send-invitation', {
+          body: { sharedTaskId: sharedTask.id }
+        });
+      }
 
       // Update the task's shared status
       const { error: updateError } = await supabase
@@ -124,22 +167,9 @@ export function ShareTaskDialog({ task, open, onOpenChange }: ShareTaskDialogPro
 
       if (updateError) throw updateError;
 
-      // Send email notification using the Edge Function
-      const { error: notificationError } = await supabase.functions.invoke('send-invitation', {
-        body: {
-          sharedTaskId: sharedTask.id
-        }
-      });
-
-      if (notificationError) {
-        console.error('Error sending notification:', notificationError);
-        toast.error('Task shared but notification could not be sent');
-      } else {
-        toast.success('Task shared successfully');
-      }
-
+      toast.success('Task shared successfully');
       onOpenChange(false);
-      setSelectedUserId("");
+      setSelectedUserIds([]);
       setSelectedGroupId("");
     } catch (error) {
       console.error('Error sharing task:', error);
@@ -147,6 +177,14 @@ export function ShareTaskDialog({ task, open, onOpenChange }: ShareTaskDialogPro
     } finally {
       setIsSharing(false);
     }
+  };
+
+  const toggleUser = (userId: string) => {
+    setSelectedUserIds(current =>
+      current.includes(userId)
+        ? current.filter(id => id !== userId)
+        : [...current, userId]
+    );
   };
 
   return (
@@ -164,19 +202,21 @@ export function ShareTaskDialog({ task, open, onOpenChange }: ShareTaskDialogPro
 
             <TabsContent value="individual" className="space-y-4">
               <div className="space-y-2">
-                <Label>Select User</Label>
-                <Select onValueChange={setSelectedUserId} value={selectedUserId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a trusted user" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {trustedUsers.map((user) => (
-                      <SelectItem key={user.trusted_user_id} value={user.trusted_user_id}>
+                <Label>Select Users</Label>
+                <div className="space-y-2">
+                  {trustedUsers.map((user) => (
+                    <div key={user.trusted_user_id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={user.trusted_user_id}
+                        checked={selectedUserIds.includes(user.trusted_user_id)}
+                        onCheckedChange={() => toggleUser(user.trusted_user_id)}
+                      />
+                      <Label htmlFor={user.trusted_user_id}>
                         {user.alias || user.profiles.email}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                      </Label>
+                    </div>
+                  ))}
+                </div>
               </div>
             </TabsContent>
 
@@ -202,7 +242,7 @@ export function ShareTaskDialog({ task, open, onOpenChange }: ShareTaskDialogPro
           <div className="flex justify-end">
             <Button 
               onClick={handleShare} 
-              disabled={isSharing || (!selectedUserId && !selectedGroupId)}
+              disabled={isSharing || (sharingType === 'individual' ? selectedUserIds.length === 0 : !selectedGroupId)}
             >
               {isSharing ? "Sharing..." : "Share"}
             </Button>
