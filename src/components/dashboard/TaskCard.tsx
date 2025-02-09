@@ -52,14 +52,7 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
     try {
       if (isUpdating) return;
       setIsUpdating(true);
-      console.log('Attempting to update task:', task.id);
-
-      const currentUser = (await supabase.auth.getUser()).data.user;
-      if (!currentUser) {
-        toast.error('Not authenticated');
-        return;
-      }
-
+      
       const { error } = await supabase
         .from('tasks')
         .update({ 
@@ -79,7 +72,6 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
       }
 
       toast.success(task.status === 'completed' ? 'Task uncompleted' : 'Task completed');
-      console.log('Task update successful');
     } catch (error: any) {
       console.error('Error completing task:', error);
       toast.error(error.message || 'Failed to update task status');
