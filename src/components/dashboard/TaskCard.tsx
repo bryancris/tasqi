@@ -66,13 +66,19 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
 
       if (task.shared) {
         console.log('Updating shared task');
+        const user = (await supabase.auth.getUser()).data.user;
+        if (!user) {
+          toast.error('User not authenticated');
+          return;
+        }
+
         const { error: sharedUpdateError } = await supabase
           .from('shared_tasks')
           .update({ 
             status: newStatus === 'completed' ? 'completed' : 'pending'
           })
           .eq('task_id', task.id)
-          .eq('shared_with_user_id', (await supabase.auth.getUser()).data.user?.id);
+          .eq('shared_with_user_id', user.id);
 
         if (sharedUpdateError) {
           console.error('Error updating shared task:', sharedUpdateError);
