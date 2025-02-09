@@ -61,7 +61,7 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
       }
 
       // Check if user owns the task or is the assigned user
-      const hasAccess = currentUser.id === task.owner_id || currentUser.id === task.user_id;
+      let hasAccess = currentUser.id === task.owner_id || currentUser.id === task.user_id;
       
       // If not owner or assigned user, check if task is shared with user
       if (!hasAccess) {
