@@ -75,7 +75,7 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
         const { error: sharedUpdateError } = await supabase
           .from('shared_tasks')
           .update({ 
-            status: newStatus
+            status: newStatus === 'completed' ? 'completed' : 'pending'
           })
           .eq('task_id', task.id)
           .eq('shared_with_user_id', user.id);
@@ -93,7 +93,8 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
             status: newStatus,
             completed_at: completedAt
           })
-          .eq('id', task.id);
+          .eq('id', task.id)
+          .eq('owner_id', user.id);
 
         if (updateError) {
           console.error('Error updating task:', updateError);
