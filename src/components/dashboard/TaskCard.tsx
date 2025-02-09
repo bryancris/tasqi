@@ -69,21 +69,11 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
         })
         .eq('id', task.id)
         .select('*')
-        .maybeSingle();
+        .single();
 
       if (error) {
         console.error('Error updating task:', error);
-        if (error.code === 'PGRST116') {
-          toast.error('Unable to update task - task not found');
-        } else {
-          toast.error(`Failed to update task: ${error.message}`);
-        }
-        return;
-      }
-
-      if (!data) {
-        console.error('Task not found');
-        toast.error('Unable to update task - task not found');
+        toast.error('Failed to update task. Please try again.');
         return;
       }
 
