@@ -34,7 +34,7 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
         "hover:shadow-md transition-shadow cursor-pointer",
         getCardColor(),
         task.status === 'completed' ? 'text-white' : '',
-        task.shared && 'ring-2 ring-[#9b87f5]'
+        "overflow-hidden"
       )}
       onClick={onClick}
       {...dragHandleProps}
@@ -71,9 +71,11 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
           )}>{timeString}</p>
         )}
       </div>
+      {task.shared && (
+        <div className="w-2 bg-[#8B5CF6] h-full shrink-0" />
+      )}
     </div>
   );
 }
 
 export const DailyTaskCard = memo(DailyTaskCardComponent);
-
