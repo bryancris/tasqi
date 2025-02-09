@@ -18,6 +18,11 @@ serve(async (req) => {
     const resend = new Resend(Deno.env.get("RESEND_API_KEY"))
     const { sharedTaskId } = await req.json()
     
+    if (!sharedTaskId) {
+      console.error('No sharedTaskId provided');
+      throw new Error('sharedTaskId is required');
+    }
+    
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -39,14 +44,31 @@ serve(async (req) => {
 
     if (sharedTaskError) {
       console.error('Error fetching shared task:', sharedTaskError)
-      throw new Error('Failed to fetch shared task details')
+      throw new Error(`Failed to fetch shared task details: ${sharedTaskError.message}`)
     }
 
     if (!sharedTask) {
+      console.error('Shared task not found for id:', sharedTaskId)
       throw new Error('Shared task not found')
     }
 
-    console.log('Retrieved shared task:', sharedTask)
+    if (!sharedTask.shared_with?.email) {
+      console.error('No recipient email found for shared task:', sharedTask)
+      throw new Error('Recipient email not found')
+    }
+
+    if (!sharedTask.task?.title) {
+      console.error('No task details found for shared task:', sharedTask)
+      throw new Error('Task details not found')
+    }
+
+    console.log('Retrieved shared task:', {
+      id: sharedTask.id,
+      taskId: sharedTask.task.id,
+      title: sharedTask.task.title,
+      sharedWithEmail: sharedTask.shared_with.email,
+      sharedByEmail: sharedTask.shared_by.email
+    })
 
     // Send email
     const { data: emailData, error: emailError } = await resend.emails.send({
