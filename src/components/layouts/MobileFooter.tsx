@@ -60,15 +60,25 @@ export function MobileFooter() {
             <DropdownMenuContent align="center" className="min-w-[120px]">
               <DropdownMenuItem 
                 onClick={() => handleNavigation("/dashboard/weekly")}
-                className="flex items-center justify-center gap-2 py-3"
+                className="flex items-center justify-center gap-2 py-3 relative"
               >
-                <CalendarDays className="h-5 w-5" />
+                <div className="relative">
+                  <CalendarDays className="h-5 w-5" />
+                  <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs font-bold">
+                    W
+                  </span>
+                </div>
               </DropdownMenuItem>
               <DropdownMenuItem 
                 onClick={() => handleNavigation("/dashboard?view=calendar")}
-                className="flex items-center justify-center gap-2 py-3"
+                className="flex items-center justify-center gap-2 py-3 relative"
               >
-                <Calendar className="h-5 w-5" />
+                <div className="relative">
+                  <Calendar className="h-5 w-5" />
+                  <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs font-bold">
+                    M
+                  </span>
+                </div>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
