@@ -1,7 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
-import { Resend } from "npm:resend@2.0.0"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,7 +14,6 @@ serve(async (req) => {
   }
 
   try {
-    const resend = new Resend(Deno.env.get("RESEND_API_KEY"))
     const { sharedTaskId } = await req.json()
     
     console.log('Starting send-invitation function with sharedTaskId:', sharedTaskId)
@@ -71,27 +69,22 @@ serve(async (req) => {
       throw new Error('Task details not found')
     }
 
-    // Send email
-    const { data: emailData, error: emailError } = await resend.emails.send({
-      from: 'TASQI Tasks <onboarding@resend.dev>',
-      to: sharedTask.shared_with.email,
-      subject: 'Task Shared With You',
-      html: `
-        <h1>A Task Has Been Shared With You</h1>
-        <p>${sharedTask.shared_by.email} has shared a task with you:</p>
-        <h2>${sharedTask.tasks.title}</h2>
-        <p>${sharedTask.tasks.description || ''}</p>
-        <p>Click the link below to view the task:</p>
-        <a href="https://tasqi.lovable.app/dashboard">View Task</a>
-      `
-    })
+    // Create notification for the recipient
+    const { error: notificationError } = await supabase
+      .from('notifications')
+      .insert({
+        user_id: sharedTask.shared_with_user_id,
+        type: 'task_share',
+        title: 'New Task Shared With You',
+        message: `${sharedTask.shared_by.email} has shared a task with you: ${sharedTask.tasks.title}`,
+        reference_type: 'task',
+        reference_id: sharedTask.task_id.toString()
+      })
 
-    if (emailError) {
-      console.error('Error sending email:', emailError)
-      throw emailError
+    if (notificationError) {
+      console.error('Error creating notification:', notificationError)
+      throw new Error('Failed to create notification')
     }
-
-    console.log('Email sent successfully')
 
     // Update shared task status
     const { error: updateError } = await supabase
@@ -104,10 +97,10 @@ serve(async (req) => {
       throw new Error('Failed to update shared task status')
     }
 
-    console.log('Shared task status updated')
+    console.log('Notification created and shared task status updated')
 
     return new Response(
-      JSON.stringify({ success: true, data: emailData }),
+      JSON.stringify({ success: true }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
