@@ -56,9 +56,12 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
       console.log('Attempting to complete task:', task.id);
       console.log('Current task status:', task.status);
       
+      // Define the new status based on current status
       const newStatus = task.status === 'completed' ? 'unscheduled' : 'completed';
       const completedAt = task.status === 'completed' ? null : new Date().toISOString();
       
+      console.log('Updating task with:', { status: newStatus, completed_at: completedAt });
+
       const { data, error } = await supabase
         .from('tasks')
         .update({ 
@@ -66,7 +69,7 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
           completed_at: completedAt
         })
         .eq('id', task.id)
-        .select('*')
+        .select('id, status, completed_at')
         .maybeSingle();
 
       if (error) {
@@ -74,7 +77,7 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
         if (error.code === 'PGRST116') {
           toast.error('Task not found or you do not have permission to update it');
         } else {
-          toast.error('Failed to update task status');
+          toast.error(`Failed to update task: ${error.message}`);
         }
         return;
       }
