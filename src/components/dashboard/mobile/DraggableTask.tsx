@@ -49,7 +49,7 @@ export const DraggableTask = ({ task }: DraggableTaskProps) => {
           "text-white break-words",
           "h-full cursor-move",
           task.status === 'unscheduled' ? 'bg-[#1EAEDB]' : getPriorityColor(task.priority),
-          task.shared && "ring-1 ring-[#9b87f5]"
+          task.shared && "ring-4 ring-[#8B5CF6]"
         )}
       >
         <div className="font-medium line-clamp-2">{task.title}</div>

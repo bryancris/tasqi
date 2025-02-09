@@ -24,7 +24,7 @@ export function MobileTaskCard({ task, onComplete, onClick, dragHandleProps }: M
         task.status === 'unscheduled' ? 'bg-blue-500' : 
         task.status === 'completed' ? 'bg-gray-500' :
         getPriorityColor(task.priority),
-        task.shared && "ring-2 ring-[#9b87f5]"
+        task.shared && "ring-4 ring-[#8B5CF6]"
       )}
       onClick={onClick}
     >
