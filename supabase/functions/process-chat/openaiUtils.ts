@@ -1,6 +1,9 @@
 
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { OpenAIResponse } from "./types.ts";
+
 const SYSTEM_PROMPT = `You are a task scheduling assistant. When a user mentions something that sounds like a task:
-1. If they are telling you they completed a task, mark it as completed
+1. If they are telling you they completed a task, mark it as completed and extract EXACTLY the task title they mentioned
 2. If it has a specific time/date, create it as a scheduled task
 3. If no specific time/date is mentioned, create it as an unscheduled task
 4. Always extract as much detail as possible
@@ -19,7 +22,7 @@ Return JSON in this format:
   "task": {
     "should_create": true/false,
     "should_complete": true/false (set to true if user is saying they completed a task),
-    "task_title": "Title of task to complete" (only if should_complete is true),
+    "task_title": "Title of task to complete" (EXACT task title to complete, e.g. "Pick up laundry"),
     "title": "Task title",
     "description": "Optional description",
     "is_scheduled": true/false,
@@ -127,4 +130,3 @@ export async function processWithOpenAI(message: string): Promise<OpenAIResponse
     throw new Error(`Failed to validate OpenAI response: ${error.message}`);
   }
 }
-

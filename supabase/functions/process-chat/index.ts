@@ -40,7 +40,7 @@ serve(async (req) => {
     if (result.task?.should_complete && result.task.task_title) {
       console.log('Completing task:', result.task.task_title);
       
-      // Find matching task with case-insensitive comparison
+      // Find all active tasks
       const { data: tasks, error: findError } = await supabase
         .from('tasks')
         .select('id, title')
@@ -53,12 +53,24 @@ serve(async (req) => {
         throw findError;
       }
 
-      // Find the best matching task
-      const taskTitle = result.task.task_title.toLowerCase();
-      const matchingTask = tasks?.find(task => 
-        task.title.toLowerCase().includes(taskTitle) || 
-        taskTitle.includes(task.title.toLowerCase())
-      );
+      if (!tasks || tasks.length === 0) {
+        console.log('No active tasks found');
+        return new Response(
+          JSON.stringify({ 
+            response: "I couldn't find any active tasks to complete. Make sure you have an active task with that title." 
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Find the best matching task using exact match or includes
+      const taskTitle = result.task.task_title.toLowerCase().trim();
+      const matchingTask = tasks.find(task => {
+        const currentTitle = task.title.toLowerCase().trim();
+        return currentTitle === taskTitle || 
+               currentTitle.includes(taskTitle) || 
+               taskTitle.includes(currentTitle);
+      });
 
       if (matchingTask) {
         console.log('Found matching task:', matchingTask);
@@ -77,6 +89,12 @@ serve(async (req) => {
         }
       } else {
         console.log('No matching task found');
+        return new Response(
+          JSON.stringify({ 
+            response: "I couldn't find a matching task to complete. Make sure you have an active task with that title." 
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
     }
     // Create task if needed
