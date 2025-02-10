@@ -40,35 +40,43 @@ serve(async (req) => {
     if (result.task?.should_complete && result.task.task_title) {
       console.log('Completing task:', result.task.task_title);
       
-      // Find and update the task
+      // Find matching task with case-insensitive comparison
       const { data: tasks, error: findError } = await supabase
         .from('tasks')
-        .select('id')
+        .select('id, title')
         .eq('user_id', userId)
-        .eq('title', result.task.task_title)
-        .eq('status', 'scheduled')
-        .order('created_at', { ascending: false })
-        .limit(1);
+        .neq('status', 'completed')
+        .order('created_at', { ascending: false });
 
       if (findError) {
         console.error('Error finding task:', findError);
         throw findError;
       }
 
-      if (tasks && tasks.length > 0) {
-        const taskId = tasks[0].id;
+      // Find the best matching task
+      const taskTitle = result.task.task_title.toLowerCase();
+      const matchingTask = tasks?.find(task => 
+        task.title.toLowerCase().includes(taskTitle) || 
+        taskTitle.includes(task.title.toLowerCase())
+      );
+
+      if (matchingTask) {
+        console.log('Found matching task:', matchingTask);
+        
         const { error: updateError } = await supabase
           .from('tasks')
           .update({ 
             status: 'completed',
             completed_at: new Date().toISOString()
           })
-          .eq('id', taskId);
+          .eq('id', matchingTask.id);
 
         if (updateError) {
           console.error('Error updating task:', updateError);
           throw updateError;
         }
+      } else {
+        console.log('No matching task found');
       }
     }
     // Create task if needed
@@ -108,4 +116,3 @@ serve(async (req) => {
     );
   }
 });
-
