@@ -1,3 +1,4 @@
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { TaskDetails } from './types.ts';
 
@@ -30,6 +31,7 @@ export async function createTask(supabase: any, userId: string, taskDetails: Tas
       end_time: taskDetails.endTime,
       priority: "low",
       user_id: userId,
+      owner_id: userId, // Add the owner_id field
       position: nextPosition,
     });
 
