@@ -11,6 +11,7 @@ export interface TaskDetails {
   startTime?: string;
   endTime?: string;
   isScheduled: boolean;
+  priority?: "low" | "medium" | "high";
 }
 
 export interface OpenAIResponse {
@@ -22,7 +23,7 @@ export interface OpenAIResponse {
     date?: string;
     start_time?: string;
     end_time?: string;
+    priority?: "low" | "medium" | "high";
   };
   response: string;
 }
-

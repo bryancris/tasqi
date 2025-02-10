@@ -23,7 +23,8 @@ Return JSON in this format:
     "is_scheduled": true/false,
     "date": "today/tomorrow/next week/next month",
     "start_time": "HH:mm" (if time specified),
-    "end_time": "HH:mm" (if duration specified or add 1 hour to start_time if not specified)
+    "end_time": "HH:mm" (if duration specified or add 1 hour to start_time if not specified),
+    "priority": "low"/"medium"/"high"
   },
   "response": "Your friendly response to the user"
 }`;

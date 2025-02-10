@@ -29,9 +29,9 @@ export async function createTask(supabase: any, userId: string, taskDetails: Tas
       status: taskDetails.isScheduled ? "scheduled" : "unscheduled",
       start_time: taskDetails.startTime,
       end_time: taskDetails.endTime,
-      priority: "low",
+      priority: taskDetails.priority || "low", // Use the priority from taskDetails
       user_id: userId,
-      owner_id: userId, // Add the owner_id field
+      owner_id: userId,
       position: nextPosition,
     });
 
