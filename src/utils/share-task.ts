@@ -18,6 +18,18 @@ export async function shareTask({
   currentUserId,
 }: ShareTaskParams) {
   try {
+    // First get the task's current status to preserve it
+    const { data: taskData, error: taskError } = await supabase
+      .from('tasks')
+      .select('*')
+      .eq('id', taskId)
+      .single();
+
+    if (taskError) {
+      console.error('Error fetching task:', taskError);
+      throw taskError;
+    }
+
     if (sharingType === 'individual') {
       // Create shared task records for each selected user
       const sharedTaskPromises = selectedUserIds.map(userId =>
@@ -27,7 +39,9 @@ export async function shareTask({
             task_id: taskId,
             shared_with_user_id: userId,
             shared_by_user_id: currentUserId,
-            sharing_type: 'individual'
+            sharing_type: 'individual',
+            // Preserve the task's status
+            status: taskData.status === 'completed' ? 'completed' : 'pending'
           })
           .select()
           .single()
@@ -48,6 +62,10 @@ export async function shareTask({
         toast.success(`Task shared with ${selectedUserIds.length} users`);
       }
 
+      // Play notification sound
+      const audio = new Audio('/notification-sound.mp3');
+      audio.play().catch(console.error);
+
       // Send notifications for each shared task
       await Promise.all(
         results.map(result => {
@@ -67,7 +85,9 @@ export async function shareTask({
           task_id: taskId,
           group_id: parseInt(selectedGroupId),
           shared_by_user_id: currentUserId,
-          sharing_type: 'group'
+          sharing_type: 'group',
+          // Preserve the task's status
+          status: taskData.status === 'completed' ? 'completed' : 'pending'
         })
         .select()
         .single();
@@ -77,8 +97,10 @@ export async function shareTask({
         throw shareError;
       }
 
-      // Show success toast
+      // Show success toast and play sound
       toast.success('Task shared with group successfully');
+      const audio = new Audio('/notification-sound.mp3');
+      audio.play().catch(console.error);
 
       // Send notification for group share
       await supabase.functions.invoke('send-invitation', {
@@ -89,7 +111,15 @@ export async function shareTask({
     // Update the task's shared status
     const { error: updateError } = await supabase
       .from('tasks')
-      .update({ shared: true })
+      .update({ 
+        shared: true,
+        // Ensure we preserve the original status and scheduling
+        status: taskData.status,
+        date: taskData.date,
+        start_time: taskData.start_time,
+        end_time: taskData.end_time,
+        priority: taskData.priority
+      })
       .eq('id', taskId);
 
     if (updateError) {
