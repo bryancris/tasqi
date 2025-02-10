@@ -63,7 +63,7 @@ export function MobileFooter() {
                 className="flex items-center justify-center gap-2 py-3 relative hover:bg-transparent focus:bg-transparent"
               >
                 <div className="relative">
-                  <CalendarDays className="h-7 w-7 text-[#555555]" />
+                  <CalendarDays className="h-7 w-7 text-[#AAAAAA]" />
                   <span className="absolute top-[55%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs font-bold text-[#8B5CF6]">
                     W
                   </span>
@@ -74,7 +74,7 @@ export function MobileFooter() {
                 className="flex items-center justify-center gap-2 py-3 relative hover:bg-transparent focus:bg-transparent"
               >
                 <div className="relative">
-                  <Calendar className="h-7 w-7 text-[#555555]" />
+                  <Calendar className="h-7 w-7 text-[#AAAAAA]" />
                   <span className="absolute top-[55%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs font-bold text-[#8B5CF6]">
                     M
                   </span>
