@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -37,6 +38,11 @@ export function SettingsContent() {
     loadUserSettings();
   }, []);
 
+  const handleTimeChange = (newStartHour: string, newEndHour: string) => {
+    setStartHour(newStartHour);
+    setEndHour(newEndHour);
+  };
+
   return (
     <div className="space-y-8 bg-white p-6 rounded-lg shadow-sm">
       <Tabs defaultValue="appearance" className="w-full">
@@ -69,6 +75,7 @@ export function SettingsContent() {
           <CalendarSettings
             initialStartHour={startHour}
             initialEndHour={endHour}
+            onTimeChange={handleTimeChange}
           />
         </TabsContent>
         
