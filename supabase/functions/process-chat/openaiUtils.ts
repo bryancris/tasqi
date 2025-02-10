@@ -1,4 +1,5 @@
 
+
 const SYSTEM_PROMPT = `You are a task scheduling assistant. When a user mentions something that sounds like a task:
 1. If it has a specific time/date, create it as a scheduled task
 2. If no specific time/date is mentioned, create it as an unscheduled task
@@ -53,27 +54,74 @@ export async function processWithOpenAI(message: string): Promise<OpenAIResponse
   }
 
   const data = await openAIResponse.json();
-  console.log('OpenAI Response:', data);
+  console.log('Raw OpenAI Response:', data);
 
   try {
-    const parsedResponse = JSON.parse(data.choices[0].message.content) as OpenAIResponse;
-    
-    // Add end time if start time is present but end time is missing
-    if (parsedResponse.task?.is_scheduled && 
-        parsedResponse.task.start_time && 
-        !parsedResponse.task.end_time) {
-      // Parse the start time
-      const [hours, minutes] = parsedResponse.task.start_time.split(':').map(Number);
-      // Add one hour for end time
-      const endHour = (hours + 1) % 24;
-      parsedResponse.task.end_time = `${endHour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-      console.log('Added default end time:', parsedResponse.task.end_time);
+    // Validate that we have a response with choices
+    if (!data.choices?.[0]?.message?.content) {
+      console.error('Invalid OpenAI response format:', data);
+      throw new Error('Invalid response format from OpenAI');
+    }
+
+    let parsedResponse: OpenAIResponse;
+    try {
+      parsedResponse = JSON.parse(data.choices[0].message.content);
+    } catch (parseError) {
+      console.error('Error parsing JSON from OpenAI response:', parseError);
+      console.log('Response content:', data.choices[0].message.content);
+      
+      // If JSON parsing fails, create a fallback response
+      return {
+        task: {
+          should_create: false,
+          title: "",
+          is_scheduled: false
+        },
+        response: "I'm sorry, but I couldn't process that request properly. Could you please rephrase it?"
+      };
+    }
+
+    // Validate the parsed response structure
+    if (!parsedResponse || typeof parsedResponse !== 'object') {
+      throw new Error('Invalid response structure');
+    }
+
+    if (!parsedResponse.response || typeof parsedResponse.response !== 'string') {
+      throw new Error('Missing or invalid response field');
+    }
+
+    if (parsedResponse.task) {
+      // Validate task fields if present
+      if (typeof parsedResponse.task.should_create !== 'boolean') {
+        throw new Error('Invalid task.should_create field');
+      }
+
+      if (parsedResponse.task.should_create) {
+        if (!parsedResponse.task.title || typeof parsedResponse.task.title !== 'string') {
+          throw new Error('Missing or invalid task.title field');
+        }
+
+        if (typeof parsedResponse.task.is_scheduled !== 'boolean') {
+          throw new Error('Invalid task.is_scheduled field');
+        }
+      }
+
+      // Add end time if start time is present but end time is missing
+      if (parsedResponse.task.is_scheduled && 
+          parsedResponse.task.start_time && 
+          !parsedResponse.task.end_time) {
+        const [hours, minutes] = parsedResponse.task.start_time.split(':').map(Number);
+        const endHour = (hours + 1) % 24;
+        parsedResponse.task.end_time = `${endHour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        console.log('Added default end time:', parsedResponse.task.end_time);
+      }
     }
 
     return parsedResponse;
   } catch (error) {
-    console.error('Error parsing OpenAI response:', error);
-    throw new Error('Failed to parse OpenAI response');
+    console.error('Error validating OpenAI response:', error);
+    console.error('Response data:', data);
+    throw new Error(`Failed to validate OpenAI response: ${error.message}`);
   }
 }
 
