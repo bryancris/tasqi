@@ -6,7 +6,7 @@ import { useEffect, useCallback, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
-const TASKS_PER_PAGE = 20; // Limit number of tasks fetched at once
+const TASKS_PER_PAGE = 100; // Increased to handle more tasks at once
 
 export function useTasks() {
   const queryClient = useQueryClient();
@@ -27,40 +27,41 @@ export function useTasks() {
     console.log('Fetching tasks for user:', session.user.id);
     
     try {
-      // Get tasks owned by the user with pagination
-      const { data: ownedTasks = [], error: ownedError } = await supabase
-        .from('tasks')
-        .select('*')
-        .or(`user_id.eq.${session.user.id},owner_id.eq.${session.user.id}`)
-        .order('position', { ascending: true })
-        .range(page * TASKS_PER_PAGE, (page + 1) * TASKS_PER_PAGE - 1);
+      // Get tasks owned by or shared with the user
+      const [ownedResult, sharedResult] = await Promise.all([
+        supabase
+          .from('tasks')
+          .select('*')
+          .or(`user_id.eq.${session.user.id},owner_id.eq.${session.user.id}`)
+          .order('position', { ascending: true }),
+        supabase
+          .from('shared_tasks')
+          .select('task_id, tasks(*)')
+          .eq('shared_with_user_id', session.user.id)
+      ]);
 
-      if (ownedError) {
-        console.error('Error fetching owned tasks:', ownedError);
+      if (ownedResult.error) {
+        console.error('Error fetching owned tasks:', ownedResult.error);
         toast.error('Failed to load your tasks');
         return [];
       }
 
-      // Get shared tasks with pagination
-      const { data: sharedTasks = [], error: sharedError } = await supabase
-        .from('shared_tasks')
-        .select('task_id, tasks(*)')
-        .eq('shared_with_user_id', session.user.id)
-        .range(page * TASKS_PER_PAGE, (page + 1) * TASKS_PER_PAGE - 1);
-
-      if (sharedError) {
-        console.error('Error fetching shared tasks:', sharedError);
+      if (sharedResult.error) {
+        console.error('Error fetching shared tasks:', sharedResult.error);
         toast.error('Failed to load shared tasks');
         return [];
       }
 
+      const ownedTasks = ownedResult.data || [];
+      const sharedTasks = (sharedResult.data || []).map(st => ({
+        ...st.tasks,
+        shared: true
+      }));
+
       // Combine and deduplicate tasks
       const allTasks = [
         ...ownedTasks,
-        ...sharedTasks.map(st => ({
-          ...st.tasks,
-          shared: true
-        }))
+        ...sharedTasks
       ];
 
       // Remove duplicates based on task ID
@@ -75,10 +76,10 @@ export function useTasks() {
       toast.error('An error occurred while loading tasks');
       return [];
     }
-  }, [session?.user?.id, page]);
+  }, [session?.user?.id]);
 
   const { data: tasks = [], refetch } = useQuery({
-    queryKey: ['tasks', session?.user?.id, page],
+    queryKey: ['tasks', session?.user?.id],
     queryFn: fetchTasks,
     enabled: !!session?.user?.id,
     staleTime: 30000,
