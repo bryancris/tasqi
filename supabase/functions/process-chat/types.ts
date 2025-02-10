@@ -17,6 +17,8 @@ export interface TaskDetails {
 export interface OpenAIResponse {
   task?: {
     should_create: boolean;
+    should_complete?: boolean;
+    task_title?: string;
     title: string;
     description?: string;
     is_scheduled: boolean;
@@ -27,3 +29,4 @@ export interface OpenAIResponse {
   };
   response: string;
 }
+

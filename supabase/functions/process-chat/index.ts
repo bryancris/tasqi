@@ -36,8 +36,43 @@ serve(async (req) => {
     const result = await processWithOpenAI(message);
     console.log('Processed result:', result);
 
+    // Handle task completion if detected
+    if (result.task?.should_complete && result.task.task_title) {
+      console.log('Completing task:', result.task.task_title);
+      
+      // Find and update the task
+      const { data: tasks, error: findError } = await supabase
+        .from('tasks')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('title', result.task.task_title)
+        .eq('status', 'scheduled')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (findError) {
+        console.error('Error finding task:', findError);
+        throw findError;
+      }
+
+      if (tasks && tasks.length > 0) {
+        const taskId = tasks[0].id;
+        const { error: updateError } = await supabase
+          .from('tasks')
+          .update({ 
+            status: 'completed',
+            completed_at: new Date().toISOString()
+          })
+          .eq('id', taskId);
+
+        if (updateError) {
+          console.error('Error updating task:', updateError);
+          throw updateError;
+        }
+      }
+    }
     // Create task if needed
-    if (result.task?.should_create) {
+    else if (result.task?.should_create) {
       const startTime = validateTimeFormat(result.task.start_time);
       const endTime = validateTimeFormat(result.task.end_time);
 
@@ -48,7 +83,7 @@ serve(async (req) => {
         startTime,
         endTime,
         isScheduled: result.task.is_scheduled,
-        priority: result.task.priority, // Pass the priority
+        priority: result.task.priority,
       });
     }
 
@@ -73,3 +108,4 @@ serve(async (req) => {
     );
   }
 });
+
