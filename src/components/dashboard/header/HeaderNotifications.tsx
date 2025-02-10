@@ -64,8 +64,7 @@ export function HeaderNotifications() {
           console.log('New notification received:', payload);
           queryClient.invalidateQueries({ queryKey: ['notifications'] });
           
-          // Immediately show toast and play sound for all notifications
-          // Play notification sound
+          // Play notification sound immediately for all notifications
           try {
             const audio = new Audio('/notification-sound.mp3');
             audio.volume = 0.5;
@@ -75,7 +74,7 @@ export function HeaderNotifications() {
           }
 
           // Show toast notification
-          toast.info(payload.new.title, {
+          toast(payload.new.title, {
             description: payload.new.message,
           });
           
