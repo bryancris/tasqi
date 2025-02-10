@@ -79,3 +79,4 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
 }
 
 export const DailyTaskCard = memo(DailyTaskCardComponent);
+
