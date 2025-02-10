@@ -2,12 +2,16 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "@/components/dashboard/TaskBoard";
-import { useEffect } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
 export function useTasks() {
   const queryClient = useQueryClient();
   const { session } = useAuth();
+  const channelsRef = useRef<{
+    tasksChannel?: ReturnType<typeof supabase.channel>;
+    sharedTasksChannel?: ReturnType<typeof supabase.channel>;
+  }>({});
 
   const { data: tasks = [], refetch } = useQuery({
     queryKey: ['tasks', session?.user?.id],
@@ -19,53 +23,61 @@ export function useTasks() {
 
       console.log('Fetching tasks for user:', session.user.id);
       
-      // Get tasks owned by the user
-      const { data: ownedTasks = [], error: ownedError } = await supabase
-        .from('tasks')
-        .select('*')
-        .or(`user_id.eq.${session.user.id},owner_id.eq.${session.user.id}`)
-        .order('position', { ascending: true });
+      try {
+        // Get tasks owned by the user
+        const { data: ownedTasks = [], error: ownedError } = await supabase
+          .from('tasks')
+          .select('*')
+          .or(`user_id.eq.${session.user.id},owner_id.eq.${session.user.id}`)
+          .order('position', { ascending: true });
 
-      if (ownedError) {
-        console.error('Error fetching owned tasks:', ownedError);
-        throw ownedError;
+        if (ownedError) {
+          console.error('Error fetching owned tasks:', ownedError);
+          return [];
+        }
+
+        // Get shared tasks
+        const { data: sharedTasks = [], error: sharedError } = await supabase
+          .from('shared_tasks')
+          .select('task_id, tasks(*)')
+          .eq('shared_with_user_id', session.user.id);
+
+        if (sharedError) {
+          console.error('Error fetching shared tasks:', sharedError);
+          return [];
+        }
+
+        // Combine and deduplicate tasks
+        const allTasks = [
+          ...ownedTasks,
+          ...sharedTasks.map(st => ({
+            ...st.tasks,
+            shared: true
+          }))
+        ];
+
+        // Remove duplicates based on task ID
+        const uniqueTasks = Array.from(
+          new Map(allTasks.map(task => [task.id, task])).values()
+        );
+
+        console.log('Fetched tasks:', uniqueTasks);
+        return uniqueTasks as Task[];
+      } catch (error) {
+        console.error('Error in task fetch:', error);
+        return [];
       }
-
-      // Get shared tasks
-      const { data: sharedTasks = [], error: sharedError } = await supabase
-        .from('shared_tasks')
-        .select('task_id, tasks(*)')
-        .eq('shared_with_user_id', session.user.id);
-
-      if (sharedError) {
-        console.error('Error fetching shared tasks:', sharedError);
-        throw sharedError;
-      }
-
-      // Combine and deduplicate tasks
-      const allTasks = [
-        ...ownedTasks,
-        ...sharedTasks.map(st => ({
-          ...st.tasks,
-          shared: true
-        }))
-      ];
-
-      // Remove duplicates based on task ID
-      const uniqueTasks = Array.from(
-        new Map(allTasks.map(task => [task.id, task])).values()
-      );
-
-      console.log('Fetched tasks:', uniqueTasks);
-      return uniqueTasks as Task[];
     },
     enabled: !!session?.user?.id,
-    // Add polling every 60 seconds
-    refetchInterval: 60000,
-    // Add stale time to prevent rapid refetches
-    staleTime: 1000,
-    gcTime: 0
+    staleTime: 30000, // Increase stale time to 30 seconds
+    gcTime: 300000,   // Increase cache time to 5 minutes
+    refetchInterval: 60000 // Keep the 60-second polling
   });
+
+  const handleUpdate = useCallback(async () => {
+    console.log('Invalidating queries and refetching...');
+    await queryClient.invalidateQueries({ queryKey: ['tasks', session?.user?.id] });
+  }, [queryClient, session?.user?.id]);
 
   useEffect(() => {
     if (!session?.user?.id) {
@@ -74,25 +86,18 @@ export function useTasks() {
     }
 
     console.log('Setting up real-time subscriptions for user:', session.user.id);
-    
-    let lastUpdateTime = Date.now();
-    const DEBOUNCE_TIME = 500; // Debounce time in milliseconds
 
-    const handleUpdate = async () => {
-      const now = Date.now();
-      if (now - lastUpdateTime < DEBOUNCE_TIME) {
-        console.log('Debouncing update...');
-        return;
-      }
-      
-      lastUpdateTime = now;
-      console.log('Invalidating queries and refetching...');
-      await queryClient.invalidateQueries({ queryKey: ['tasks', session.user.id] });
-    };
+    // Clean up any existing channels
+    if (channelsRef.current.tasksChannel) {
+      supabase.removeChannel(channelsRef.current.tasksChannel);
+    }
+    if (channelsRef.current.sharedTasksChannel) {
+      supabase.removeChannel(channelsRef.current.sharedTasksChannel);
+    }
 
-    // Subscribe to owned tasks changes
+    // Create new channels with unique names
     const tasksChannel = supabase
-      .channel('tasks-changes')
+      .channel(`tasks-changes-${session.user.id}`)
       .on(
         'postgres_changes',
         {
@@ -110,9 +115,8 @@ export function useTasks() {
         console.log('Tasks subscription status:', status);
       });
 
-    // Subscribe to shared tasks changes
     const sharedTasksChannel = supabase
-      .channel('shared-tasks-changes')
+      .channel(`shared-tasks-changes-${session.user.id}`)
       .on(
         'postgres_changes',
         {
@@ -130,17 +134,27 @@ export function useTasks() {
         console.log('Shared tasks subscription status:', status);
       });
 
+    // Store the channels in the ref
+    channelsRef.current = {
+      tasksChannel,
+      sharedTasksChannel
+    };
+
     return () => {
       console.log('Cleaning up subscriptions...');
-      void supabase.removeChannel(tasksChannel);
-      void supabase.removeChannel(sharedTasksChannel);
+      if (channelsRef.current.tasksChannel) {
+        void supabase.removeChannel(channelsRef.current.tasksChannel);
+      }
+      if (channelsRef.current.sharedTasksChannel) {
+        void supabase.removeChannel(channelsRef.current.sharedTasksChannel);
+      }
     };
-  }, [queryClient, session?.user?.id]); // Remove refetch from dependencies
+  }, [session?.user?.id, handleUpdate]);
 
-  const wrappedRefetch = async () => {
+  const wrappedRefetch = useCallback(async () => {
     console.log('Refetching tasks...');
     await refetch();
-  };
+  }, [refetch]);
 
   return { tasks, refetch: wrappedRefetch };
 }

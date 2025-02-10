@@ -1,60 +1,79 @@
 
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
 import { Task } from "@/components/dashboard/TaskBoard";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function useWeeklyTasks(weekStart: Date, weekEnd: Date) {
   const queryClient = useQueryClient();
+  const { session } = useAuth();
 
   const { data: tasks = [], refetch } = useQuery({
-    queryKey: ['tasks'],  // Use the same query key as useTasks
+    queryKey: ['weekly-tasks', session?.user?.id, weekStart.toISOString(), weekEnd.toISOString()],
     queryFn: async () => {
-      console.log('Fetching tasks for weekly calendar:', { weekStart, weekEnd });
-      const { data, error } = await supabase
-        .from('tasks')
-        .select('*')
-        .order('position', { ascending: true });
-      
-      if (error) {
-        console.error('Error fetching tasks:', error);
-        throw error;
+      if (!session?.user?.id) {
+        return [];
       }
-      console.log('Fetched tasks:', data);
-      return data as Task[];
+
+      console.log('Fetching tasks for weekly calendar:', { weekStart, weekEnd });
+      try {
+        const { data, error } = await supabase
+          .from('tasks')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .order('position', { ascending: true });
+        
+        if (error) {
+          console.error('Error fetching tasks:', error);
+          return [];
+        }
+        
+        console.log('Fetched weekly tasks:', data);
+        return data as Task[];
+      } catch (error) {
+        console.error('Error in weekly task fetch:', error);
+        return [];
+      }
     },
-    staleTime: 0,
-    gcTime: 0,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    refetchOnReconnect: true
+    staleTime: 30000,
+    gcTime: 300000,
+    enabled: !!session?.user?.id
   });
 
+  const handleUpdate = useCallback(() => {
+    console.log('Invalidating weekly tasks queries...');
+    void queryClient.invalidateQueries({ 
+      queryKey: ['weekly-tasks', session?.user?.id]
+    });
+  }, [queryClient, session?.user?.id]);
+
   useEffect(() => {
-    console.log('Setting up real-time subscription');
+    if (!session?.user?.id) return;
+
+    console.log('Setting up weekly tasks real-time subscription');
     const channel = supabase
-      .channel('tasks-changes')
+      .channel(`weekly-tasks-${session.user.id}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'tasks'
+          table: 'tasks',
+          filter: `user_id=eq.${session.user.id}`
         },
         (payload) => {
-          console.log('Received real-time update:', payload);
-          queryClient.invalidateQueries({ queryKey: ['tasks'] });
-          void refetch();
+          console.log('Received weekly tasks update:', payload);
+          handleUpdate();
         }
       )
       .subscribe();
 
     return () => {
-      console.log('Cleaning up real-time subscription');
-      supabase.removeChannel(channel);
+      console.log('Cleaning up weekly tasks subscription');
+      void supabase.removeChannel(channel);
     };
-  }, [queryClient, refetch]);
+  }, [session?.user?.id, handleUpdate]);
 
   return tasks;
 }
