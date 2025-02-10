@@ -25,43 +25,33 @@ export function ChatBubble({ isOpen, onOpenChange, variant = 'floating' }: ChatB
     fetchChatHistory 
   } = useChat();
 
-  const [keyBuffer, setKeyBuffer] = useState("");
-
   useEffect(() => {
     if (isMobile) return; // Only add keyboard shortcuts on desktop
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.repeat) return; // Prevent multiple triggers from key being held down
-      
-      // Add the current key to the buffer
-      setKeyBuffer(prev => {
-        const newBuffer = prev + e.key;
-        
-        // Check if the buffer ends with one of our shortcuts
-        if (newBuffer.endsWith("`a")) {
-          // Open the chat window
-          const newOpen = true;
-          if (!isOpen) {
-            onOpenChange?.(newOpen);
-            setOpen(newOpen);
+      if (e.key === '`') {
+        const handleNextKey = (nextE: KeyboardEvent) => {
+          if (nextE.key === 'a') {
+            // Open the chat window
+            const newOpen = true;
+            if (!isOpen) {
+              onOpenChange?.(newOpen);
+              setOpen(newOpen);
+            }
+          } else if (nextE.key === 'w') {
+            // Navigate to weekly view
+            navigate("/dashboard/weekly");
           }
-          // Reset the buffer
-          return "";
-        }
-        
-        if (newBuffer.endsWith("`w")) {
-          // Navigate to weekly view
-          navigate("/dashboard/weekly");
-          // Reset the buffer
-          return "";
-        }
-        
-        // Keep only the last 2 characters to avoid buffer growing too large
-        return newBuffer.slice(-2);
-      });
+          // Remove the event listener after handling the second key
+          window.removeEventListener('keydown', handleNextKey);
+        };
+
+        // Add event listener for the next key
+        window.addEventListener('keydown', handleNextKey, { once: true });
+      }
     };
 
-    // Add event listener
+    // Add event listener for the backtick key
     window.addEventListener("keydown", handleKeyDown);
 
     // Cleanup function
