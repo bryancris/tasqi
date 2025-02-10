@@ -2,6 +2,7 @@
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { TimeRangeSelector } from "./TimeRangeSelector";
+import { useState } from "react";
 
 interface CalendarSettingsProps {
   initialStartHour: string;
@@ -12,6 +13,9 @@ export function CalendarSettings({
   initialStartHour, 
   initialEndHour
 }: CalendarSettingsProps) {
+  const [startHour, setStartHour] = useState(initialStartHour);
+  const [endHour, setEndHour] = useState(initialEndHour);
+
   return (
     <div>
       <div>
@@ -26,10 +30,10 @@ export function CalendarSettings({
         <div>
           <h4 className="text-sm font-medium mb-4">Time Settings</h4>
           <TimeRangeSelector
-            startHour={initialStartHour}
-            endHour={initialEndHour}
-            onStartHourChange={() => {}}
-            onEndHourChange={() => {}}
+            startHour={startHour}
+            endHour={endHour}
+            onStartHourChange={setStartHour}
+            onEndHourChange={setEndHour}
           />
         </div>
 
