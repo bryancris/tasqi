@@ -5,8 +5,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTrustedUsers } from "@/hooks/use-trusted-users";
 import { useTaskGroups } from "@/hooks/use-task-groups";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TaskSharingFormProps {
+  taskId?: number;
   selectedUserIds: string[];
   selectedGroupId: string;
   sharingType: "individual" | "group";
@@ -16,6 +19,7 @@ interface TaskSharingFormProps {
 }
 
 export function TaskSharingForm({
+  taskId,
   selectedUserIds,
   selectedGroupId,
   sharingType,
@@ -25,6 +29,40 @@ export function TaskSharingForm({
 }: TaskSharingFormProps) {
   const { data: trustedUsers = [] } = useTrustedUsers();
   const { data: groups = [] } = useTaskGroups();
+
+  useEffect(() => {
+    const fetchExistingShares = async () => {
+      if (!taskId) return;
+
+      const { data: sharedTasks } = await supabase
+        .from('shared_tasks')
+        .select('shared_with_user_id, group_id')
+        .eq('task_id', taskId);
+
+      if (sharedTasks) {
+        // Update selected users based on existing shares
+        const sharedUserIds = sharedTasks
+          .filter(st => st.shared_with_user_id)
+          .map(st => st.shared_with_user_id!);
+          
+        // Update all shared users at once
+        sharedUserIds.forEach(userId => {
+          if (!selectedUserIds.includes(userId)) {
+            onUserToggle(userId);
+          }
+        });
+
+        // Update group if shared with group
+        const groupShare = sharedTasks.find(st => st.group_id);
+        if (groupShare?.group_id) {
+          onSharingTypeChange('group');
+          onGroupSelect(groupShare.group_id.toString());
+        }
+      }
+    };
+
+    fetchExistingShares();
+  }, [taskId]);
 
   return (
     <Tabs defaultValue={sharingType} onValueChange={(value) => onSharingTypeChange(value as "individual" | "group")}>

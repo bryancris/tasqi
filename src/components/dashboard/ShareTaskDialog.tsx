@@ -20,37 +20,6 @@ export function ShareTaskDialog({ task, open, onOpenChange }: ShareTaskDialogPro
   const [selectedGroupId, setSelectedGroupId] = useState<string>("");
   const [sharingType, setSharingType] = useState<"individual" | "group">("individual");
 
-  // Fetch existing shared users for this task
-  useEffect(() => {
-    const fetchSharedUsers = async () => {
-      if (!task?.id || !open) return;
-
-      const { data: sharedTasks, error } = await supabase
-        .from('shared_tasks')
-        .select('shared_with_user_id, group_id')
-        .eq('task_id', task.id);
-
-      if (error) {
-        console.error('Error fetching shared users:', error);
-        return;
-      }
-
-      const sharedUserIds = sharedTasks
-        .filter(st => st.shared_with_user_id)
-        .map(st => st.shared_with_user_id!) || [];
-
-      const groupId = sharedTasks.find(st => st.group_id)?.group_id?.toString();
-
-      setSelectedUserIds(sharedUserIds);
-      if (groupId) {
-        setSharingType('group');
-        setSelectedGroupId(groupId);
-      }
-    };
-
-    fetchSharedUsers();
-  }, [task?.id, open]);
-
   const handleShare = async () => {
     if (!task?.id) return;
     
@@ -94,6 +63,7 @@ export function ShareTaskDialog({ task, open, onOpenChange }: ShareTaskDialogPro
         </DialogHeader>
         <div className="space-y-4 pt-4">
           <TaskSharingForm
+            taskId={task?.id}
             selectedUserIds={selectedUserIds}
             selectedGroupId={selectedGroupId}
             sharingType={sharingType}
