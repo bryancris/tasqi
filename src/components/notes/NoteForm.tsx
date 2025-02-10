@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,18 +39,20 @@ export function NoteForm({ onOpenDictateDialog }: NoteFormProps) {
 
   const createNoteMutation = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("notes").insert([
+      const { error, data } = await supabase.from("notes").insert([
         {
           title,
           content,
           color,
           user_id: session?.user.id,
         },
-      ]);
+      ]).select();
 
       if (error) throw error;
+      return data;
     },
     onSuccess: () => {
+      // Immediately invalidate the notes query to trigger a refresh
       queryClient.invalidateQueries({ queryKey: ["notes"] });
       setTitle("");
       setContent("");
