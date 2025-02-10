@@ -22,6 +22,44 @@ export function ChatBubble({ isOpen, onOpenChange, variant = 'floating' }: ChatB
     fetchChatHistory 
   } = useChat();
 
+  const [keyBuffer, setKeyBuffer] = useState("");
+
+  useEffect(() => {
+    if (isMobile) return; // Only add keyboard shortcuts on desktop
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.repeat) return; // Prevent multiple triggers from key being held down
+      
+      // Add the current key to the buffer
+      setKeyBuffer(prev => {
+        const newBuffer = prev + e.key;
+        
+        // Check if the buffer ends with `a
+        if (newBuffer.endsWith("`a")) {
+          // Open the chat window
+          const newOpen = true;
+          if (!isOpen) {
+            onOpenChange?.(newOpen);
+            setOpen(newOpen);
+          }
+          // Reset the buffer
+          return "";
+        }
+        
+        // Keep only the last 2 characters to avoid buffer growing too large
+        return newBuffer.slice(-2);
+      });
+    };
+
+    // Add event listener
+    window.addEventListener("keydown", handleKeyDown);
+
+    // Cleanup function
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isMobile, isOpen, onOpenChange]);
+
   useEffect(() => {
     if (open) {
       fetchChatHistory();
