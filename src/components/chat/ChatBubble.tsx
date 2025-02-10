@@ -1,8 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { useChat } from "@/hooks/use-chat";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ChatDialog } from "./components/ChatDialog";
 import { MobileChatView } from "./components/MobileChatView";
+import { useNavigate } from "react-router-dom";
 
 interface ChatBubbleProps {
   isOpen?: boolean;
@@ -13,6 +15,7 @@ interface ChatBubbleProps {
 export function ChatBubble({ isOpen, onOpenChange, variant = 'floating' }: ChatBubbleProps) {
   const [open, setOpen] = useState(false);
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const { 
     message, 
     messages, 
@@ -34,7 +37,7 @@ export function ChatBubble({ isOpen, onOpenChange, variant = 'floating' }: ChatB
       setKeyBuffer(prev => {
         const newBuffer = prev + e.key;
         
-        // Check if the buffer ends with `a
+        // Check if the buffer ends with one of our shortcuts
         if (newBuffer.endsWith("`a")) {
           // Open the chat window
           const newOpen = true;
@@ -42,6 +45,13 @@ export function ChatBubble({ isOpen, onOpenChange, variant = 'floating' }: ChatB
             onOpenChange?.(newOpen);
             setOpen(newOpen);
           }
+          // Reset the buffer
+          return "";
+        }
+        
+        if (newBuffer.endsWith("`w")) {
+          // Navigate to weekly view
+          navigate("/dashboard/weekly");
           // Reset the buffer
           return "";
         }
@@ -58,7 +68,7 @@ export function ChatBubble({ isOpen, onOpenChange, variant = 'floating' }: ChatB
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isMobile, isOpen, onOpenChange]);
+  }, [isMobile, isOpen, onOpenChange, navigate]);
 
   useEffect(() => {
     if (open) {
