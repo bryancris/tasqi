@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -43,6 +43,7 @@ export function ShareTaskDialog({ task, open, onOpenChange }: ShareTaskDialogPro
   const [selectedGroupId, setSelectedGroupId] = useState<string>("");
   const [sharingType, setSharingType] = useState<"individual" | "group">("individual");
 
+  // Fetch trusted users
   const { data: trustedUsers = [] } = useQuery({
     queryKey: ['trusted-users'],
     queryFn: async () => {
@@ -79,6 +80,7 @@ export function ShareTaskDialog({ task, open, onOpenChange }: ShareTaskDialogPro
     }
   });
 
+  // Fetch groups
   const { data: groups = [] } = useQuery({
     queryKey: ['task-groups'],
     queryFn: async () => {
@@ -96,6 +98,37 @@ export function ShareTaskDialog({ task, open, onOpenChange }: ShareTaskDialogPro
     }
   });
 
+  // Fetch existing shared users for this task
+  useEffect(() => {
+    const fetchSharedUsers = async () => {
+      if (!task?.id || !open) return;
+
+      const { data: sharedTasks, error } = await supabase
+        .from('shared_tasks')
+        .select('shared_with_user_id, group_id')
+        .eq('task_id', task.id);
+
+      if (error) {
+        console.error('Error fetching shared users:', error);
+        return;
+      }
+
+      const sharedUserIds = sharedTasks
+        .filter(st => st.shared_with_user_id)
+        .map(st => st.shared_with_user_id!) || [];
+
+      const groupId = sharedTasks.find(st => st.group_id)?.group_id?.toString();
+
+      setSelectedUserIds(sharedUserIds);
+      if (groupId) {
+        setSharingType('group');
+        setSelectedGroupId(groupId);
+      }
+    };
+
+    fetchSharedUsers();
+  }, [task?.id, open]);
+
   const handleShare = async () => {
     if (!task?.id) return;
     
@@ -110,7 +143,7 @@ export function ShareTaskDialog({ task, open, onOpenChange }: ShareTaskDialogPro
         const sharedTaskPromises = selectedUserIds.map(userId =>
           supabase
             .from('shared_tasks')
-            .insert({
+            .upsert({
               task_id: task.id,
               shared_with_user_id: userId,
               shared_by_user_id: currentUser.id,
@@ -142,7 +175,7 @@ export function ShareTaskDialog({ task, open, onOpenChange }: ShareTaskDialogPro
         // Share with group
         const { data: sharedTask, error: shareError } = await supabase
           .from('shared_tasks')
-          .insert({
+          .upsert({
             task_id: task.id,
             group_id: parseInt(selectedGroupId),
             shared_by_user_id: currentUser.id,
@@ -169,8 +202,6 @@ export function ShareTaskDialog({ task, open, onOpenChange }: ShareTaskDialogPro
 
       toast.success('Task shared successfully');
       onOpenChange(false);
-      setSelectedUserIds([]);
-      setSelectedGroupId("");
     } catch (error) {
       console.error('Error sharing task:', error);
       toast.error('Failed to share task. Please try again.');
