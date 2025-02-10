@@ -60,7 +60,10 @@ export function useTasks() {
       return uniqueTasks as Task[];
     },
     enabled: !!session?.user?.id,
-    staleTime: 1000, // Add a small stale time to prevent rapid refetches
+    // Add polling every 60 seconds
+    refetchInterval: 60000,
+    // Add stale time to prevent rapid refetches
+    staleTime: 1000,
     gcTime: 0
   });
 
