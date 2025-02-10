@@ -12,7 +12,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileHeader } from "@/components/layouts/MobileHeader";
 import { MobileFooter } from "@/components/layouts/MobileFooter";
 import { MobileWeeklyView } from "@/components/dashboard/mobile/MobileWeeklyView";
-import { useLocation } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { useCalendarView } from "@/hooks/use-calendar-view";
 import { useTaskNotifications } from "@/utils/notifications/useTaskNotifications";
 
@@ -22,6 +22,8 @@ const Dashboard = () => {
   const { session } = useAuth();
   const isMobile = useIsMobile();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const calendarView = searchParams.get('view');
 
   // Use the task notifications hook
   useTaskNotifications();
@@ -52,7 +54,7 @@ const Dashboard = () => {
       <div className="flex flex-col h-screen bg-gradient-to-b from-[#F1F0FB] to-[#E5DEFF]">
         <MobileHeader />
         <main className="flex-1 overflow-y-auto scrollbar-hide p-4 mt-[72px] mb-[64px]">
-          {currentPath === '/dashboard' && (
+          {currentPath === '/dashboard' && !calendarView && (
             <TaskBoard 
               selectedDate={selectedDate} 
               onDateChange={handleDateChange} 
@@ -60,6 +62,12 @@ const Dashboard = () => {
           )}
           {currentPath === '/dashboard/weekly' && (
             <MobileWeeklyView />
+          )}
+          {calendarView === 'calendar' && (
+            <Calendar 
+              initialDate={selectedDate}
+              onDateSelect={handleDateChange}
+            />
           )}
         </main>
         <MobileFooter />
