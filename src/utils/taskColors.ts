@@ -2,6 +2,7 @@
 import { TaskPriority } from "@/components/dashboard/TaskBoard";
 
 export const getPriorityColor = (priority: TaskPriority | undefined) => {
+  // For completed tasks, we want to show gray regardless of priority
   switch (priority) {
     case 'high':
       return 'bg-[#FF4444]'; // Bright red for high priority
@@ -10,7 +11,7 @@ export const getPriorityColor = (priority: TaskPriority | undefined) => {
     case 'low':
       return 'bg-[#2ECC71]'; // Back to green for low priority
     default:
-      return 'bg-[#1EAEDB]'; // Bright blue for unscheduled
+      return 'bg-[#1EAEDB]'; // Bright blue for unset priority
   }
 };
 
@@ -31,3 +32,4 @@ export const getUrgencyColor = (time: string) => {
   if (diffInMinutes < 30) return 'bg-orange-500';
   return 'bg-green-500';
 };
+
