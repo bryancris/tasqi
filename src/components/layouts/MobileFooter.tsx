@@ -64,7 +64,7 @@ export function MobileFooter() {
               >
                 <div className="relative">
                   <CalendarDays className="h-7 w-7 text-gray-300" />
-                  <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs font-bold text-[#8B5CF6]">
+                  <span className="absolute top-[55%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs font-bold text-[#8B5CF6]">
                     W
                   </span>
                 </div>
@@ -75,7 +75,7 @@ export function MobileFooter() {
               >
                 <div className="relative">
                   <Calendar className="h-7 w-7 text-gray-300" />
-                  <span className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs font-bold text-[#8B5CF6]">
+                  <span className="absolute top-[55%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs font-bold text-[#8B5CF6]">
                     M
                   </span>
                 </div>
