@@ -7,7 +7,7 @@ const HeroSection = () => {
       <img 
         src="/lovable-uploads/3f275e6b-84cc-4b91-9c41-2e30b0a99384.png" 
         alt="TASQI-AI Logo" 
-        className="w-20 h-20 object-contain mx-auto mb-8"
+        className="w-60 h-60 object-contain mx-auto mb-8"
       />
       <h1 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">
         TASQI-AI Assistant
@@ -22,3 +22,4 @@ const HeroSection = () => {
 };
 
 export default HeroSection;
+
