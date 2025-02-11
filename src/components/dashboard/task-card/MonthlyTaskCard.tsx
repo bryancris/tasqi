@@ -20,40 +20,25 @@ function MonthlyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, 
   return (
     <div 
       className={cn(
-        "flex items-start bg-white rounded-md shadow-sm relative",
-        "hover:shadow-md transition-shadow cursor-pointer",
-        "overflow-hidden min-h-[40px]",
-        getPriorityColor(task.priority)
+        "text-xs p-2 rounded-md cursor-pointer",
+        "text-white truncate",
+        getPriorityColor(task.priority),
+        task.shared && "relative overflow-hidden"
       )}
       onClick={onClick}
-      {...dragHandleProps}
     >
-      <div className="flex-1 p-2 min-w-0">
-        <TaskStatusIndicator 
-          status={task.status}
-          time={timeString}
-          onClick={(e) => {
-            e.stopPropagation();
-            onComplete();
-          }} 
-        />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <h3 className="font-medium text-gray-900 truncate text-sm flex-1">{task.title}</h3>
-            <div className="flex items-center gap-1">
-              {task.reminder_enabled && (
-                <Bell className="w-3 h-3 shrink-0 text-gray-500" />
-              )}
-              {extraButton}
-            </div>
-          </div>
-          {timeString && (
-            <p className="text-xs text-gray-500">{timeString}</p>
-          )}
-        </div>
+      <div className="flex items-center justify-between gap-1">
+        <span className="truncate flex-1">{task.title}</span>
+        {task.reminder_enabled && (
+          <Bell className="h-3 w-3 shrink-0 text-white/80" />
+        )}
+        {extraButton}
       </div>
+      {timeString && (
+        <p className="text-[10px] text-white/90 truncate">{timeString}</p>
+      )}
       {task.shared && (
-        <div className="absolute right-0 top-0 bottom-0 w-2 bg-[#8B5CF6]" />
+        <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-[#9b87f5]" />
       )}
     </div>
   );
