@@ -22,17 +22,20 @@ function MonthlyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, 
       className={cn(
         "text-xs p-2 rounded-md cursor-pointer",
         "text-white truncate",
-        getPriorityColor(task.priority),
-        task.shared && "relative overflow-hidden"
+        "relative overflow-hidden",
+        getPriorityColor(task.priority)
       )}
       onClick={onClick}
+      {...dragHandleProps}
     >
       <div className="flex items-center justify-between gap-1">
         <span className="truncate flex-1">{task.title}</span>
-        {task.reminder_enabled && (
-          <Bell className="h-3 w-3 shrink-0 text-white/80" />
-        )}
-        {extraButton}
+        <div className="flex items-center gap-1 shrink-0">
+          {task.reminder_enabled && (
+            <Bell className="h-3 w-3 text-white/80" />
+          )}
+          {extraButton}
+        </div>
       </div>
       {timeString && (
         <p className="text-[10px] text-white/90 truncate">{timeString}</p>
