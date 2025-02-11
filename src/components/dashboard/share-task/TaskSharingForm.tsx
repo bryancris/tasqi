@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTrustedUsers } from "@/hooks/use-trusted-users";
 import { useTaskGroups } from "@/hooks/use-task-groups";
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface TaskSharingFormProps {
@@ -29,10 +29,11 @@ export function TaskSharingForm({
 }: TaskSharingFormProps) {
   const { data: trustedUsers = [] } = useTrustedUsers();
   const { data: groups = [] } = useTaskGroups();
+  const initialFetchDone = useRef(false);
 
-  // Memoize the fetch function to prevent unnecessary re-renders
+  // Only depend on taskId to prevent infinite loops
   const fetchExistingShares = useCallback(async () => {
-    if (!taskId) return;
+    if (!taskId || initialFetchDone.current) return;
 
     try {
       const { data: sharedTasks } = await supabase
@@ -41,28 +42,41 @@ export function TaskSharingForm({
         .eq('task_id', taskId);
 
       if (sharedTasks && sharedTasks.length > 0) {
-        // Update selected users based on existing shares
+        // Batch all state updates together
+        const updates: (() => void)[] = [];
+        
+        // Collect user updates
         const sharedUserIds = sharedTasks
           .filter(st => st.shared_with_user_id)
           .map(st => st.shared_with_user_id!)
           .filter(id => !selectedUserIds.includes(id));
           
-        // Only update if there are new users to add
         if (sharedUserIds.length > 0) {
-          sharedUserIds.forEach(userId => onUserToggle(userId));
+          updates.push(() => {
+            sharedUserIds.forEach(userId => onUserToggle(userId));
+          });
         }
 
-        // Update group if shared with group and not already selected
+        // Collect group updates
         const groupShare = sharedTasks.find(st => st.group_id);
         if (groupShare?.group_id && groupShare.group_id.toString() !== selectedGroupId) {
-          onSharingTypeChange('group');
-          onGroupSelect(groupShare.group_id.toString());
+          updates.push(() => {
+            onSharingTypeChange('group');
+            onGroupSelect(groupShare.group_id.toString());
+          });
         }
+
+        // Apply all updates in one batch
+        requestAnimationFrame(() => {
+          updates.forEach(update => update());
+        });
       }
+
+      initialFetchDone.current = true;
     } catch (error) {
       console.error('Error fetching shared tasks:', error);
     }
-  }, [taskId, selectedUserIds, selectedGroupId, onUserToggle, onGroupSelect, onSharingTypeChange]);
+  }, [taskId]); // Only depend on taskId
 
   useEffect(() => {
     fetchExistingShares();
