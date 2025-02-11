@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { AppearanceSettings } from "./appearance/AppearanceSettings";
@@ -11,9 +11,9 @@ export function SettingsContent() {
   const [startHour, setStartHour] = useState<string>("8");
   const [endHour, setEndHour] = useState<string>("17");
 
-  // Load user settings on component mount
-  useEffect(() => {
-    const loadUserSettings = async () => {
+  // Memoize the load settings function
+  const loadUserSettings = useCallback(async () => {
+    try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
@@ -21,7 +21,7 @@ export function SettingsContent() {
         .from('user_settings')
         .select('start_hour, end_hour')
         .eq('user_id', session.user.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error loading settings:', error);
@@ -33,15 +33,20 @@ export function SettingsContent() {
         setStartHour(data.start_hour.toString());
         setEndHour(data.end_hour.toString());
       }
-    };
-
-    loadUserSettings();
+    } catch (error) {
+      console.error('Error in loadUserSettings:', error);
+      toast.error("Failed to load settings");
+    }
   }, []);
 
-  const handleTimeChange = (newStartHour: string, newEndHour: string) => {
+  useEffect(() => {
+    loadUserSettings();
+  }, [loadUserSettings]);
+
+  const handleTimeChange = useCallback((newStartHour: string, newEndHour: string) => {
     setStartHour(newStartHour);
     setEndHour(newEndHour);
-  };
+  }, []);
 
   return (
     <div className="space-y-8 bg-white p-6 rounded-lg shadow-sm">

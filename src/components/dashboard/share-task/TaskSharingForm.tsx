@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTrustedUsers } from "@/hooks/use-trusted-users";
 import { useTaskGroups } from "@/hooks/use-task-groups";
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface TaskSharingFormProps {
@@ -30,39 +30,43 @@ export function TaskSharingForm({
   const { data: trustedUsers = [] } = useTrustedUsers();
   const { data: groups = [] } = useTaskGroups();
 
-  useEffect(() => {
-    const fetchExistingShares = async () => {
-      if (!taskId) return;
+  // Memoize the fetch function to prevent unnecessary re-renders
+  const fetchExistingShares = useCallback(async () => {
+    if (!taskId) return;
 
+    try {
       const { data: sharedTasks } = await supabase
         .from('shared_tasks')
         .select('shared_with_user_id, group_id')
         .eq('task_id', taskId);
 
-      if (sharedTasks) {
+      if (sharedTasks && sharedTasks.length > 0) {
         // Update selected users based on existing shares
         const sharedUserIds = sharedTasks
           .filter(st => st.shared_with_user_id)
-          .map(st => st.shared_with_user_id!);
+          .map(st => st.shared_with_user_id!)
+          .filter(id => !selectedUserIds.includes(id));
           
-        // Update all shared users at once
-        sharedUserIds.forEach(userId => {
-          if (!selectedUserIds.includes(userId)) {
-            onUserToggle(userId);
-          }
-        });
+        // Only update if there are new users to add
+        if (sharedUserIds.length > 0) {
+          sharedUserIds.forEach(userId => onUserToggle(userId));
+        }
 
-        // Update group if shared with group
+        // Update group if shared with group and not already selected
         const groupShare = sharedTasks.find(st => st.group_id);
-        if (groupShare?.group_id) {
+        if (groupShare?.group_id && groupShare.group_id.toString() !== selectedGroupId) {
           onSharingTypeChange('group');
           onGroupSelect(groupShare.group_id.toString());
         }
       }
-    };
+    } catch (error) {
+      console.error('Error fetching shared tasks:', error);
+    }
+  }, [taskId, selectedUserIds, selectedGroupId, onUserToggle, onGroupSelect, onSharingTypeChange]);
 
+  useEffect(() => {
     fetchExistingShares();
-  }, [taskId]);
+  }, [fetchExistingShares]);
 
   return (
     <Tabs defaultValue={sharingType} onValueChange={(value) => onSharingTypeChange(value as "individual" | "group")}>
