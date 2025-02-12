@@ -11,7 +11,7 @@ export function ToolsSection() {
         <PenLine className="mr-2 h-5 w-5" />
         Notes
       </Button>
-      <Button variant="ghost" onClick={() => navigate("/analytics")} className="w-full justify-start text-base hover:bg-[#E5E7EB] text-[#bf275f]/0">
+      <Button variant="ghost" onClick={() => navigate("/analytics")} className="w-full justify-start text-base hover:bg-[#E5E7EB] text-[#b62b5f]/0">
         <BarChart2 className="mr-2 h-5 w-5" />
         Analytics
       </Button>
