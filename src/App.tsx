@@ -20,6 +20,21 @@ import SocialConnections from "./pages/SocialConnections";
 import DailyRituals from "./pages/DailyRituals";
 import EmotionalCare from "./pages/EmotionalCare";
 import Settings from "./pages/Settings";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { UpdatePasswordForm } from "@/components/auth/UpdatePasswordForm";
+
+const UpdatePasswordPage = () => (
+  <div className="min-h-screen bg-[#1a1b3b] flex items-center justify-center p-4">
+    <Card className="w-full max-w-md bg-white/10 border-gray-700">
+      <CardHeader>
+        <CardTitle className="text-center text-white">Update Password</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <UpdatePasswordForm />
+      </CardContent>
+    </Card>
+  </div>
+);
 
 const queryClient = new QueryClient();
 
@@ -34,6 +49,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
               <Route
                 path="/dashboard"
                 element={
