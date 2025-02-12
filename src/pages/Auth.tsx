@@ -39,16 +39,7 @@ const Auth = () => {
                   <TabsTrigger value="signup">Sign Up</TabsTrigger>
                 </TabsList>
                 <TabsContent value="signin">
-                  <div className="space-y-4">
-                    <SignInForm />
-                    <Button
-                      variant="ghost"
-                      className="w-full text-white/70 hover:text-white"
-                      onClick={() => setShowReset(true)}
-                    >
-                      Forgot password?
-                    </Button>
-                  </div>
+                  <SignInForm />
                 </TabsContent>
                 <TabsContent value="signup">
                   <SignUpForm />
