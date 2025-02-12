@@ -16,8 +16,8 @@ export function ResetPasswordForm() {
     setIsLoading(true);
 
     try {
-      // Use a hash instead of a query parameter for the recovery type
-      const redirectTo = `${window.location.origin}/auth/update-password#type=recovery`;
+      // Use window.location.origin to get the current domain
+      const redirectTo = `${window.location.origin}/auth/update-password?type=recovery`;
       console.log("Setting redirect URL to:", redirectTo);
       
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
