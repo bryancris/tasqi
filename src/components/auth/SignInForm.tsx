@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -37,26 +38,35 @@ export function SignInForm() {
   };
 
   return (
-    <form onSubmit={handleSignIn} className="space-y-4">
-      <div className="space-y-2">
-        <Input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <Input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-      </div>
-      <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? "Signing in..." : "Sign In"}
+    <div className="space-y-4">
+      <form onSubmit={handleSignIn} className="space-y-4">
+        <div className="space-y-2">
+          <Input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <Input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+        <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading ? "Signing in..." : "Sign In"}
+        </Button>
+      </form>
+      <Button
+        variant="ghost"
+        className="w-full text-white/70 hover:text-white"
+        onClick={() => window.history.pushState({}, '', '/auth/reset-password')}
+      >
+        Forgot password?
       </Button>
-    </form>
+    </div>
   );
 }
