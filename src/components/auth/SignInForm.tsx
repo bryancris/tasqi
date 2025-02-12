@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
-export function SignInForm() {
+export function SignInForm({ onResetPassword }: { onResetPassword: () => void }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -63,7 +63,7 @@ export function SignInForm() {
       <Button
         variant="ghost"
         className="w-full text-white/70 hover:text-white"
-        onClick={() => window.history.pushState({}, '', '/auth/reset-password')}
+        onClick={onResetPassword}
       >
         Forgot password?
       </Button>

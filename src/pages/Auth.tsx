@@ -39,7 +39,7 @@ const Auth = () => {
                   <TabsTrigger value="signup">Sign Up</TabsTrigger>
                 </TabsList>
                 <TabsContent value="signin">
-                  <SignInForm />
+                  <SignInForm onResetPassword={() => setShowReset(true)} />
                 </TabsContent>
                 <TabsContent value="signup">
                   <SignUpForm />
