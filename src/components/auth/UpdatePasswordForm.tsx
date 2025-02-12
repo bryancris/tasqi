@@ -50,7 +50,7 @@ export function UpdatePasswordForm() {
         description: "Your password has been successfully updated.",
       });
       
-      // Sign out the user after password update
+      // After successful password update, sign out and redirect to auth page
       await supabase.auth.signOut();
       navigate("/auth");
     } catch (error: any) {
