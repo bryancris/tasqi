@@ -16,9 +16,8 @@ export function ResetPasswordForm() {
     setIsLoading(true);
 
     try {
-      // Add the recovery token parameter to ensure proper handling
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/update-password?type=recovery`,
+        redirectTo: `${window.location.origin}/auth/update-password`,
       });
 
       if (error) throw error;
