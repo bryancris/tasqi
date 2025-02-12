@@ -40,6 +40,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         console.log("Initializing auth...");
         
+        // Check if we're on the password reset flow
+        const hash = window.location.hash;
+        if (hash && hash.includes('type=recovery')) {
+          console.log("Password recovery flow detected");
+          setLoading(false);
+          navigate('/auth/update-password');
+          return;
+        }
+        
         // Don't interfere with navigation if we're heading to the auth page
         const currentPath = window.location.pathname;
         if (currentPath === '/auth') {
