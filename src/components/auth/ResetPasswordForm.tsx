@@ -16,8 +16,12 @@ export function ResetPasswordForm() {
     setIsLoading(true);
 
     try {
+      // Use the full URL for the redirectTo parameter
+      const redirectTo = `${window.location.origin}/auth/update-password?type=recovery`;
+      console.log("Setting redirect URL to:", redirectTo);
+      
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/update-password`,
+        redirectTo: redirectTo,
       });
 
       if (error) throw error;
