@@ -16,7 +16,12 @@ export function UpdatePasswordForm() {
     // Check if we have a session when the component mounts
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      // Get the current URL parameters
+      const params = new URLSearchParams(window.location.search);
+      const hash = window.location.hash;
+      
+      // If no session and no recovery token in URL, redirect to auth
+      if (!session && !params.get('type') && !hash.includes('type=recovery')) {
         toast({
           title: "Error",
           description: "Invalid or expired reset link. Please try again.",
