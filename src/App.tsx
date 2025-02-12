@@ -1,8 +1,9 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "next-themes";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -22,19 +23,52 @@ import EmotionalCare from "./pages/EmotionalCare";
 import Settings from "./pages/Settings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UpdatePasswordForm } from "@/components/auth/UpdatePasswordForm";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
-const UpdatePasswordPage = () => (
-  <div className="min-h-screen bg-[#1a1b3b] flex items-center justify-center p-4">
-    <Card className="w-full max-w-md bg-white/10 border-gray-700">
-      <CardHeader>
-        <CardTitle className="text-center text-white">Update Password</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <UpdatePasswordForm />
-      </CardContent>
-    </Card>
-  </div>
-);
+const UpdatePasswordPage = () => {
+  useEffect(() => {
+    // Handle the password reset token if present in URL
+    const handlePasswordReset = async () => {
+      const hash = window.location.hash;
+      if (hash && hash.includes('type=recovery')) {
+        // Parse the access_token from the URL fragment
+        const accessToken = hash
+          .substring(1)
+          .split('&')
+          .find(param => param.startsWith('access_token='))
+          ?.split('=')[1];
+
+        if (accessToken) {
+          // Set the session with the recovery token
+          const { data, error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: '',
+          });
+
+          if (error) {
+            console.error('Error setting session:', error);
+          }
+        }
+      }
+    };
+
+    handlePasswordReset();
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-[#1a1b3b] flex items-center justify-center p-4">
+      <Card className="w-full max-w-md bg-white/10 border-gray-700">
+        <CardHeader>
+          <CardTitle className="text-center text-white">Update Password</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <UpdatePasswordForm />
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
 
 const queryClient = new QueryClient();
 
