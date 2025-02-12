@@ -40,9 +40,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         console.log("Initializing auth...");
         
-        // Check if we're on the password reset flow
+        // Check if we're on the password reset flow by checking both URL hash and search params
         const hash = window.location.hash;
-        if (hash && hash.includes('type=recovery')) {
+        const searchParams = new URLSearchParams(window.location.search);
+        const isRecoveryFlow = hash.includes('type=recovery') || searchParams.get('type') === 'recovery';
+        
+        if (isRecoveryFlow) {
           console.log("Password recovery flow detected");
           setLoading(false);
           navigate('/auth/update-password');
