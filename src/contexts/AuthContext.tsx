@@ -118,8 +118,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           break;
           
         case 'PASSWORD_RECOVERY':
+          console.log("Password recovery initiated");
           setSession(null);
-          navigate('/');
+          navigate('/auth/update-password');
           break;
       }
     });
