@@ -23,6 +23,7 @@ interface Notification {
   created_at: string;
   reference_id: string | null;
   reference_type: string | null;
+  user_id: string;
 }
 
 export function HeaderNotifications() {
@@ -49,8 +50,22 @@ export function HeaderNotifications() {
     }
   });
 
+  // Play notification sound function
+  const playNotificationSound = async () => {
+    try {
+      console.log('Playing notification sound...');
+      const audio = new Audio('/notification-sound.mp3');
+      audio.volume = 0.5;
+      await audio.play();
+      console.log('Notification sound played successfully');
+    } catch (error) {
+      console.warn('Could not play notification sound:', error);
+    }
+  };
+
   // Subscribe to new notifications
   useEffect(() => {
+    console.log('Setting up notification subscription...');
     const channel = supabase
       .channel('notifications')
       .on(
@@ -62,47 +77,53 @@ export function HeaderNotifications() {
         },
         async (payload) => {
           console.log('New notification received:', payload);
-          queryClient.invalidateQueries({ queryKey: ['notifications'] });
+
+          // Get current user
+          const { data: { user } } = await supabase.auth.getUser();
           
-          // Play notification sound only for the recipient (the current user)
-          try {
-            const audio = new Audio('/notification-sound.mp3');
-            audio.volume = 0.5;
-            await audio.play();
-          } catch (error) {
-            console.warn('Could not play notification sound:', error);
-          }
+          // Only proceed if we have a user and the notification is for them
+          if (user && payload.new.user_id === user.id) {
+            console.log('Notification is for current user, playing sound...');
+            // Play notification sound
+            await playNotificationSound();
+            
+            // Update notifications in UI
+            queryClient.invalidateQueries({ queryKey: ['notifications'] });
 
-          // Show toast notification
-          toast(payload.new.title, {
-            description: payload.new.message,
-          });
-          
-          // Handle system notification for shared tasks
-          if (payload.new.type === 'task_share' && payload.new.reference_id) {
-            try {
-              // Fetch the shared task details
-              const { data: task, error } = await supabase
-                .from('tasks')
-                .select('*')
-                .eq('id', payload.new.reference_id)
-                .single();
+            // Show toast notification
+            toast(payload.new.title, {
+              description: payload.new.message,
+            });
+            
+            // Handle system notification for shared tasks
+            if (payload.new.type === 'task_share' && payload.new.reference_id) {
+              try {
+                // Fetch the shared task details
+                const { data: task, error } = await supabase
+                  .from('tasks')
+                  .select('*')
+                  .eq('id', payload.new.reference_id)
+                  .single();
 
-              if (error) throw error;
+                if (error) throw error;
 
-              if (task) {
-                // Show system notification
-                await showNotification(task, 'shared');
+                if (task) {
+                  // Show system notification
+                  await showNotification(task, 'shared');
+                }
+              } catch (error) {
+                console.error('Error handling shared task notification:', error);
               }
-            } catch (error) {
-              console.error('Error handling shared task notification:', error);
             }
           }
         }
       )
       .subscribe();
 
+    console.log('Notification subscription set up');
+
     return () => {
+      console.log('Cleaning up notification subscription');
       supabase.removeChannel(channel);
     };
   }, [queryClient]);
