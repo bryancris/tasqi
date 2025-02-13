@@ -51,12 +51,14 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
   const { tasks, refetch } = useTasks();
   const { handleDragEnd } = useTaskReorder(tasks, refetch);
 
-  // Memoize the refetch callback and handle the Promise properly
+  // Memoize the refetch callback and explicitly return void
   const memoizedRefetch = useCallback(async () => {
     try {
-      await refetch();
+      const result = await refetch();
+      return undefined; // Explicitly return void
     } catch (error) {
       console.error('Error refetching tasks:', error);
+      return undefined; // Explicitly return void
     }
   }, [refetch]);
 
