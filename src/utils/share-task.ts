@@ -62,10 +62,6 @@ export async function shareTask({
         toast.success(`Task shared with ${selectedUserIds.length} users`);
       }
 
-      // Play notification sound
-      const audio = new Audio('/notification-sound.mp3');
-      audio.play().catch(console.error);
-
       // Send notifications for each shared task
       await Promise.all(
         results.map(result => {
@@ -97,10 +93,8 @@ export async function shareTask({
         throw shareError;
       }
 
-      // Show success toast and play sound
+      // Show success toast
       toast.success('Task shared with group successfully');
-      const audio = new Audio('/notification-sound.mp3');
-      audio.play().catch(console.error);
 
       // Send notification for group share
       await supabase.functions.invoke('send-invitation', {

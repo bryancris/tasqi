@@ -64,7 +64,7 @@ export function HeaderNotifications() {
           console.log('New notification received:', payload);
           queryClient.invalidateQueries({ queryKey: ['notifications'] });
           
-          // Play notification sound immediately for all notifications
+          // Play notification sound only for the recipient (the current user)
           try {
             const audio = new Audio('/notification-sound.mp3');
             audio.volume = 0.5;
