@@ -4,13 +4,14 @@ import { TaskCard } from "./TaskCard";
 import { DndContext, MouseSensor, TouchSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { startOfDay, isAfter } from "date-fns";
+import { QueryObserverResult } from "@tanstack/react-query";
 
 export interface MobileTaskViewProps {
   tasks: Task[];
   selectedDate: Date;
   onDateChange: (date: Date) => void;
   onDragEnd: (event: DragEndEvent) => void;
-  onComplete?: () => void;
+  onComplete?: () => void | Promise<QueryObserverResult<Task[], Error>>;
 }
 
 export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, onComplete }: MobileTaskViewProps) {

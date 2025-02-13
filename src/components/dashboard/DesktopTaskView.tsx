@@ -1,14 +1,16 @@
+
 import { Task } from "./TaskBoard";
 import { TaskBoardSection } from "./task-board/TaskBoardSection";
 import { TimelineSection } from "./timeline/TimelineSection";
 import { DragEndEvent } from "@dnd-kit/core";
+import { QueryObserverResult } from "@tanstack/react-query";
 
 interface DesktopTaskViewProps {
   tasks: Task[];
   selectedDate: Date;
   onDateChange: (date: Date) => void;
   onDragEnd: (event: DragEndEvent) => void;
-  onComplete?: () => void;
+  onComplete?: () => void | Promise<QueryObserverResult<Task[], Error>>;
 }
 
 export function DesktopTaskView({ tasks, selectedDate, onDateChange, onDragEnd, onComplete }: DesktopTaskViewProps) {

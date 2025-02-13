@@ -51,10 +51,8 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
   const { tasks, refetch } = useTasks();
   const { handleDragEnd } = useTaskReorder(tasks, refetch);
 
-  // Memoize the refetch callback
-  const memoizedRefetch = useCallback(() => {
-    void refetch();
-  }, [refetch]);
+  // Pass the refetch function directly without wrapping
+  const memoizedRefetch = useCallback(() => refetch(), [refetch]);
 
   // Memoize tasks array to prevent unnecessary re-renders
   const memoizedTasks = useMemo(() => tasks, [tasks]);
