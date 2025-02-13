@@ -69,14 +69,10 @@ export function HeaderNotifications() {
       console.log('Playing notification sound...');
       const audio = new Audio('/notification-sound.mp3');
       audio.volume = 0.5;
-      const playPromise = audio.play();
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => console.log('Notification sound played successfully'))
-          .catch(error => console.warn('Could not play notification sound:', error));
-      }
+      await audio.play();
+      console.log('✅ Notification sound played successfully');
     } catch (error) {
-      console.warn('Error creating audio:', error);
+      console.warn('❌ Could not play notification sound:', error);
     }
   };
 
@@ -154,7 +150,9 @@ export function HeaderNotifications() {
           await playNotificationSound();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Shared tasks subscription status:', status);
+      });
 
     console.log('Notification and shared tasks subscriptions set up');
 
