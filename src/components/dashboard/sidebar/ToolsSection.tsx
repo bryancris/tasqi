@@ -1,8 +1,10 @@
+
 import { Button } from "@/components/ui/button";
 import { PenLine, BarChart2, Zap, MessageSquare } from "lucide-react";
 import { ChatBubble } from "@/components/chat/ChatBubble";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+
 export function ToolsSection() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const navigate = useNavigate();
@@ -11,7 +13,7 @@ export function ToolsSection() {
         <PenLine className="mr-2 h-5 w-5" />
         Notes
       </Button>
-      <Button variant="ghost" onClick={() => navigate("/analytics")} className="w-full justify-start text-base hover:bg-[#E5E7EB] text-[#b62b5f]/0">
+      <Button variant="ghost" onClick={() => navigate("/analytics")} className="w-full justify-start text-base hover:bg-[#E5E7EB] text-[#FF6B6B]">
         <BarChart2 className="mr-2 h-5 w-5" />
         Analytics
       </Button>
