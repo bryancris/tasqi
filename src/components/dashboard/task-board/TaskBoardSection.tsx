@@ -7,11 +7,12 @@ import { startOfDay, isAfter } from "date-fns";
 import { TaskCard } from "../TaskCard";
 import { NotificationTest } from "../notifications/NotificationTest";
 import { TaskLegend } from "../TaskLegend";
+import { QueryObserverResult } from "@tanstack/react-query";
 
 interface TaskBoardSectionProps {
   tasks: Task[];
   onDragEnd: (event: DragEndEvent) => void;
-  onComplete?: () => void;
+  onComplete?: () => void | Promise<QueryObserverResult<Task[], Error>>;
 }
 
 export function TaskBoardSection({ tasks, onDragEnd, onComplete }: TaskBoardSectionProps) {
