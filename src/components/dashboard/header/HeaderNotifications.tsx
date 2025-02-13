@@ -30,6 +30,19 @@ export function HeaderNotifications() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  // Get current user ID on mount
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        console.log('Current user ID:', user.id);
+        setCurrentUserId(user.id);
+      }
+    };
+    getCurrentUser();
+  }, []);
 
   // Query notifications
   const { data: notifications = [] } = useQuery<Notification[]>({
@@ -56,16 +69,25 @@ export function HeaderNotifications() {
       console.log('Playing notification sound...');
       const audio = new Audio('/notification-sound.mp3');
       audio.volume = 0.5;
-      await audio.play();
-      console.log('Notification sound played successfully');
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => console.log('Notification sound played successfully'))
+          .catch(error => console.warn('Could not play notification sound:', error));
+      }
     } catch (error) {
-      console.warn('Could not play notification sound:', error);
+      console.warn('Error creating audio:', error);
     }
   };
 
   // Subscribe to new notifications
   useEffect(() => {
-    console.log('Setting up notification subscription...');
+    if (!currentUserId) {
+      console.log('No current user ID, skipping notification subscription');
+      return;
+    }
+
+    console.log('Setting up notification subscription for user:', currentUserId);
     const channel = supabase
       .channel('notifications')
       .on(
@@ -75,16 +97,16 @@ export function HeaderNotifications() {
           schema: 'public',
           table: 'notifications'
         },
-        async (payload) => {
+        async (payload: any) => {
           console.log('New notification received:', payload);
-
-          // Get current user
-          const { data: { user } } = await supabase.auth.getUser();
+          console.log('Current user ID:', currentUserId);
+          console.log('Notification user ID:', payload.new.user_id);
           
-          // Only proceed if we have a user and the notification is for them
-          if (user && payload.new.user_id === user.id) {
-            console.log('Notification is for current user, playing sound...');
-            // Play notification sound
+          // Check if this notification is for the current user
+          if (payload.new.user_id === currentUserId) {
+            console.log('Notification matches current user, playing sound...');
+            
+            // Play sound first before any other operations
             await playNotificationSound();
             
             // Update notifications in UI
@@ -115,6 +137,8 @@ export function HeaderNotifications() {
                 console.error('Error handling shared task notification:', error);
               }
             }
+          } else {
+            console.log('Notification is not for current user, skipping sound');
           }
         }
       )
@@ -126,7 +150,7 @@ export function HeaderNotifications() {
       console.log('Cleaning up notification subscription');
       supabase.removeChannel(channel);
     };
-  }, [queryClient]);
+  }, [currentUserId, queryClient]); // Added currentUserId as dependency
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
