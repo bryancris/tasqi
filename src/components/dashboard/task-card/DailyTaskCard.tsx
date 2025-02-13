@@ -18,23 +18,29 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
   const timeString = task.start_time && task.end_time ? `${task.start_time} - ${task.end_time}` : '';
 
   const renderAssigneeInfo = () => {
-    if (!task.assignees?.length) return null;
+    if (!task.assignments?.length) return null;
     
-    if (task.assignees.length === 1) {
+    const acceptedAssignments = task.assignments.filter(a => a.status === 'accepted');
+    
+    if (acceptedAssignments.length === 1) {
       return (
         <div className="flex items-center gap-1 text-white/80">
           <ArrowRight className="w-4 h-4" />
-          <span className="text-xs truncate">{task.assignees[0]}</span>
+          <span className="text-xs truncate">1 assignee</span>
         </div>
       );
     }
     
-    return (
-      <div className="flex items-center gap-1 text-white/80">
-        <Users className="w-4 h-4" />
-        <span className="text-xs">+{task.assignees.length}</span>
-      </div>
-    );
+    if (acceptedAssignments.length > 1) {
+      return (
+        <div className="flex items-center gap-1 text-white/80">
+          <Users className="w-4 h-4" />
+          <span className="text-xs">+{acceptedAssignments.length}</span>
+        </div>
+      );
+    }
+
+    return null;
   };
 
   const getCardColor = () => {
@@ -81,7 +87,7 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
                 task.status === 'completed' ? 'text-white/80' : 'text-gray-500'
               )} />
             )}
-            {task.shared && !task.assignees?.length && (
+            {task.shared && !task.assignments?.length && (
               <Share2 className="w-4 h-4 text-white/80" />
             )}
             {renderAssigneeInfo()}

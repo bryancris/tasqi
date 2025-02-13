@@ -615,6 +615,44 @@ export type Database = {
         }
         Relationships: []
       }
+      task_assignments: {
+        Row: {
+          assigned_by_id: string | null
+          assignee_id: string | null
+          created_at: string
+          id: number
+          status: string | null
+          task_id: number | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_by_id?: string | null
+          assignee_id?: string | null
+          created_at?: string
+          id?: never
+          status?: string | null
+          task_id?: number | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_by_id?: string | null
+          assignee_id?: string | null
+          created_at?: string
+          id?: never
+          status?: string | null
+          task_id?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_assignments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       task_group_members: {
         Row: {
           created_at: string
@@ -676,6 +714,7 @@ export type Database = {
       }
       tasks: {
         Row: {
+          assignees: string[] | null
           completed_at: string | null
           created_at: string | null
           date: string | null
@@ -697,6 +736,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          assignees?: string[] | null
           completed_at?: string | null
           created_at?: string | null
           date?: string | null
@@ -718,6 +758,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          assignees?: string[] | null
           completed_at?: string | null
           created_at?: string | null
           date?: string | null

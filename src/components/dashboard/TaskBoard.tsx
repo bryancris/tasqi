@@ -1,3 +1,4 @@
+
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DesktopTaskView } from "./DesktopTaskView";
 import { MobileTaskView } from "./MobileTaskView";
@@ -6,6 +7,16 @@ import { useTaskReorder } from "@/hooks/use-task-reorder";
 import { useCallback, useMemo } from 'react';
 
 export type TaskPriority = 'low' | 'medium' | 'high';
+
+export interface TaskAssignment {
+  id: number;
+  task_id: number;
+  assignee_id: string;
+  assigned_by_id: string;
+  status: 'pending' | 'accepted' | 'declined' | 'completed';
+  created_at: string;
+  updated_at: string;
+}
 
 export interface Task {
   id: number;
@@ -26,6 +37,7 @@ export interface Task {
   reschedule_count?: number;
   shared?: boolean;
   assignees?: string[];
+  assignments?: TaskAssignment[];
   sharedBy?: string;
 }
 
