@@ -1,10 +1,12 @@
+
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "@/components/dashboard/TaskBoard";
 import { DragEndEvent } from "@dnd-kit/core";
 import { toast } from "sonner";
+import { QueryObserverResult } from "@tanstack/react-query";
 
-export function useTaskReorder(tasks: Task[], refetch: () => Promise<void>) {
+export function useTaskReorder(tasks: Task[], refetch: () => Promise<QueryObserverResult<Task[], Error>>) {
   const queryClient = useQueryClient();
 
   const handleDragEnd = async (event: DragEndEvent) => {

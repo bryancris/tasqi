@@ -11,13 +11,14 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ShareTaskDialog } from "./ShareTaskDialog";
+import { QueryObserverResult } from "@tanstack/react-query";
 
 interface TaskCardProps {
   task: Task;
   index: number;
   isDraggable?: boolean;
   view?: 'daily' | 'weekly' | 'monthly';
-  onComplete?: () => void;
+  onComplete?: () => void | Promise<QueryObserverResult<Task[], Error>>;
 }
 
 export function TaskCard({ task, index, isDraggable = false, view = 'daily', onComplete }: TaskCardProps) {
