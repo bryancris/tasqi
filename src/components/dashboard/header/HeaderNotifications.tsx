@@ -88,69 +88,82 @@ export function HeaderNotifications() {
     }
 
     console.log('Setting up notification subscription for user:', currentUserId);
-    const channel = supabase
+    
+    // Setup two channel subscriptions: one for notifications and one for shared tasks
+    const notificationChannel = supabase
       .channel('notifications')
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'notifications'
+          table: 'notifications',
+          filter: `user_id=eq.${currentUserId}`
         },
         async (payload: any) => {
           console.log('New notification received:', payload);
-          console.log('Current user ID:', currentUserId);
-          console.log('Notification user ID:', payload.new.user_id);
           
-          // Check if this notification is for the current user
-          if (payload.new.user_id === currentUserId) {
-            console.log('Notification matches current user, playing sound...');
-            
-            // Play sound first before any other operations
-            await playNotificationSound();
-            
-            // Update notifications in UI
-            queryClient.invalidateQueries({ queryKey: ['notifications'] });
+          // Play sound immediately when notification is received
+          await playNotificationSound();
+          
+          // Update notifications in UI
+          queryClient.invalidateQueries({ queryKey: ['notifications'] });
 
-            // Show toast notification
-            toast(payload.new.title, {
-              description: payload.new.message,
-            });
-            
-            // Handle system notification for shared tasks
-            if (payload.new.type === 'task_share' && payload.new.reference_id) {
-              try {
-                // Fetch the shared task details
-                const { data: task, error } = await supabase
-                  .from('tasks')
-                  .select('*')
-                  .eq('id', payload.new.reference_id)
-                  .single();
+          // Show toast notification
+          toast(payload.new.title, {
+            description: payload.new.message,
+          });
+          
+          // Handle system notification for shared tasks
+          if (payload.new.type === 'task_share' && payload.new.reference_id) {
+            try {
+              // Fetch the shared task details
+              const { data: task, error } = await supabase
+                .from('tasks')
+                .select('*')
+                .eq('id', payload.new.reference_id)
+                .single();
 
-                if (error) throw error;
+              if (error) throw error;
 
-                if (task) {
-                  // Show system notification
-                  await showNotification(task, 'shared');
-                }
-              } catch (error) {
-                console.error('Error handling shared task notification:', error);
+              if (task) {
+                // Show system notification
+                await showNotification(task, 'shared');
               }
+            } catch (error) {
+              console.error('Error handling shared task notification:', error);
             }
-          } else {
-            console.log('Notification is not for current user, skipping sound');
           }
         }
       )
       .subscribe();
 
-    console.log('Notification subscription set up');
+    const sharedTasksChannel = supabase
+      .channel('shared_tasks')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'shared_tasks',
+          filter: `shared_with_user_id=eq.${currentUserId}`
+        },
+        async (payload: any) => {
+          console.log('New shared task received:', payload);
+          // Play sound when a new task is shared
+          await playNotificationSound();
+        }
+      )
+      .subscribe();
+
+    console.log('Notification and shared tasks subscriptions set up');
 
     return () => {
-      console.log('Cleaning up notification subscription');
-      supabase.removeChannel(channel);
+      console.log('Cleaning up subscriptions');
+      supabase.removeChannel(notificationChannel);
+      supabase.removeChannel(sharedTasksChannel);
     };
-  }, [currentUserId, queryClient]); // Added currentUserId as dependency
+  }, [currentUserId, queryClient]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
