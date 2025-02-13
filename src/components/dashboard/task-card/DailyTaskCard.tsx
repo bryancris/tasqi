@@ -4,7 +4,7 @@ import { Task } from "../TaskBoard";
 import { TaskStatusIndicator } from "../TaskStatusIndicator";
 import { cn } from "@/lib/utils";
 import { getPriorityColor } from "@/utils/taskColors";
-import { Bell } from "lucide-react";
+import { Bell, Share2, ArrowRight, Users } from "lucide-react";
 
 interface DailyTaskCardProps {
   task: Task;
@@ -16,6 +16,26 @@ interface DailyTaskCardProps {
 
 function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, extraButton }: DailyTaskCardProps) {
   const timeString = task.start_time && task.end_time ? `${task.start_time} - ${task.end_time}` : '';
+
+  const renderAssigneeInfo = () => {
+    if (!task.assignees?.length) return null;
+    
+    if (task.assignees.length === 1) {
+      return (
+        <div className="flex items-center gap-1 text-white/80">
+          <ArrowRight className="w-4 h-4" />
+          <span className="text-xs truncate">{task.assignees[0]}</span>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="flex items-center gap-1 text-white/80">
+        <Users className="w-4 h-4" />
+        <span className="text-xs">+{task.assignees.length}</span>
+      </div>
+    );
+  };
 
   const getCardColor = () => {
     if (task.status === 'completed') {
@@ -54,13 +74,17 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
             "font-medium truncate flex-1",
             task.status === 'completed' ? 'text-white line-through' : 'text-gray-900'
           )}>{task.title}</h3>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
             {task.reminder_enabled && (
               <Bell className={cn(
                 "w-4 h-4 shrink-0",
                 task.status === 'completed' ? 'text-white/80' : 'text-gray-500'
               )} />
             )}
+            {task.shared && !task.assignees?.length && (
+              <Share2 className="w-4 h-4 text-white/80" />
+            )}
+            {renderAssigneeInfo()}
             {extraButton}
           </div>
         </div>
@@ -79,4 +103,3 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
 }
 
 export const DailyTaskCard = memo(DailyTaskCardComponent);
-

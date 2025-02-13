@@ -1,4 +1,3 @@
-
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DesktopTaskView } from "./DesktopTaskView";
 import { MobileTaskView } from "./MobileTaskView";
@@ -26,6 +25,8 @@ export interface Task {
   completed_at?: string;
   reschedule_count?: number;
   shared?: boolean;
+  assignees?: string[];
+  sharedBy?: string;
 }
 
 interface TaskBoardProps {

@@ -6,6 +6,7 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { startOfDay, isAfter } from "date-fns";
 import { TaskCard } from "../TaskCard";
 import { NotificationTest } from "../notifications/NotificationTest";
+import { TaskLegend } from "../TaskLegend";
 
 interface TaskBoardSectionProps {
   tasks: Task[];
@@ -53,6 +54,7 @@ export function TaskBoardSection({ tasks, onDragEnd, onComplete }: TaskBoardSect
           <CardTitle className="text-2xl font-semibold">Task Board</CardTitle>
           <NotificationTest />
         </div>
+        <TaskLegend />
       </CardHeader>
       <CardContent className="flex-1 overflow-y-auto">
         <DndContext sensors={sensors} onDragEnd={onDragEnd}>
