@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Task } from "./TaskBoard";
@@ -6,6 +5,8 @@ import { TaskForm } from "./TaskForm";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Subtask } from "./subtasks/SubtaskList";
+import { Trash2, Save } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface EditTaskDrawerProps {
   task: Task;
@@ -48,6 +49,23 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
     } catch (error) {
       console.error('Error loading subtasks:', error);
       toast.error('Failed to load subtasks');
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', task.id);
+
+      if (error) throw error;
+
+      toast.success('Task deleted successfully');
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      toast.error('Failed to delete task');
     }
   };
 
@@ -110,7 +128,27 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="left" className="w-[400px] sm:max-w-[540px]">
         <SheetHeader className="sticky top-0 bg-background z-10 pb-4">
-          <SheetTitle>Edit Task</SheetTitle>
+          <div className="flex items-center justify-between">
+            <SheetTitle>Edit Task</SheetTitle>
+            <div className="flex gap-2">
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={handleSubmit}
+                className="text-blue-500 hover:text-blue-700 hover:bg-blue-100"
+              >
+                <Save className="h-5 w-5" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={handleDelete}
+                className="text-red-500 hover:text-red-700 hover:bg-red-100"
+              >
+                <Trash2 className="h-5 w-5" />
+              </Button>
+            </div>
+          </div>
         </SheetHeader>
         <div className="overflow-y-auto h-[calc(100vh-80px)]">
           <TaskForm
