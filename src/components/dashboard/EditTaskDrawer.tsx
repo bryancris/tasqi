@@ -110,6 +110,7 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
               title: subtask.title,
               status: subtask.status,
               position: subtask.position,
+              notes: subtask.notes // Add notes to the update
             })
             .eq('id', subtask.id);
 
@@ -122,6 +123,7 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
               title: subtask.title,
               status: subtask.status,
               position: subtask.position,
+              notes: subtask.notes // Add notes to the insert
             });
 
           if (newSubtaskError) throw newSubtaskError;
