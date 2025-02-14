@@ -36,7 +36,7 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
     try {
       const { data, error } = await supabase
         .from('subtasks')
-        .select('*')
+        .select('id, title, status, position, notes') // Explicitly select the notes field
         .eq('task_id', task.id)
         .order('position');
 
@@ -110,7 +110,7 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
               title: subtask.title,
               status: subtask.status,
               position: subtask.position,
-              notes: subtask.notes // Add notes to the update
+              notes: subtask.notes
             })
             .eq('id', subtask.id);
 
@@ -123,7 +123,7 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
               title: subtask.title,
               status: subtask.status,
               position: subtask.position,
-              notes: subtask.notes // Add notes to the insert
+              notes: subtask.notes
             });
 
           if (newSubtaskError) throw newSubtaskError;
