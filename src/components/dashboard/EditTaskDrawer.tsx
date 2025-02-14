@@ -6,9 +6,6 @@ import { TaskForm } from "./TaskForm";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Subtask } from "./subtasks/SubtaskList";
-import { Trash2, Save } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { DeleteTaskAlert } from "./DeleteTaskAlert";
 
 interface EditTaskDrawerProps {
   task: Task;
@@ -144,19 +141,7 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="left" className="w-[400px] sm:max-w-[540px]">
         <SheetHeader className="sticky top-0 bg-background z-10 pb-4">
-          <div className="flex items-center justify-between">
-            <SheetTitle>Edit Task</SheetTitle>
-            <div className="flex gap-2">
-              <Button 
-                variant="ghost" 
-                size="icon"
-                onClick={handleSubmit}
-                className="text-blue-500 hover:text-blue-700 hover:bg-blue-100"
-              >
-                <Save className="h-5 w-5" />
-              </Button>
-            </div>
-          </div>
+          <SheetTitle>Edit Task</SheetTitle>
         </SheetHeader>
         <div className="overflow-y-auto h-[calc(100vh-80px)]">
           <TaskForm
