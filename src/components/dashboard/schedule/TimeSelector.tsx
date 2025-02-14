@@ -56,7 +56,14 @@ export function TimeSelector({
 
   const formatTime = (hours: string, minutes: string, period: "AM" | "PM") => {
     let hourNum = parseInt(hours || "12");
-    // Just use the hours as entered, padded to 2 digits
+    
+    // Convert 12-hour to 24-hour format
+    if (period === "PM" && hourNum !== 12) {
+      hourNum += 12;
+    } else if (period === "AM" && hourNum === 12) {
+      hourNum = 0;
+    }
+    
     return `${String(hourNum).padStart(2, '0')}:${minutes}:00`;
   };
 
