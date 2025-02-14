@@ -36,7 +36,7 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
     try {
       const { data, error } = await supabase
         .from('subtasks')
-        .select('id, title, status, position, notes') // Explicitly select the notes field
+        .select('id, title, status, position, notes')
         .eq('task_id', task.id)
         .order('position');
 
@@ -101,32 +101,51 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
 
       if (taskError) throw taskError;
 
-      // Update or create subtasks
+      // Handle existing subtasks - Update or Delete
+      const existingSubtaskIds = subtasks.filter(st => st.id).map(st => st.id);
+      
+      // First, delete any subtasks that are no longer in our list
+      if (existingSubtaskIds.length > 0) {
+        const { error: deleteError } = await supabase
+          .from('subtasks')
+          .delete()
+          .eq('task_id', task.id)
+          .not('id', 'in', `(${existingSubtaskIds.join(',')})`);
+
+        if (deleteError) throw deleteError;
+      }
+
+      // Then update existing and create new subtasks
       for (const subtask of subtasks) {
+        const subtaskData = {
+          task_id: task.id,
+          title: subtask.title,
+          status: subtask.status,
+          position: subtask.position,
+          notes: subtask.notes
+        };
+
         if (subtask.id) {
-          const { error: subtaskError } = await supabase
+          // Update existing subtask
+          const { error: updateError } = await supabase
             .from('subtasks')
-            .update({
-              title: subtask.title,
-              status: subtask.status,
-              position: subtask.position,
-              notes: subtask.notes
-            })
+            .update(subtaskData)
             .eq('id', subtask.id);
 
-          if (subtaskError) throw subtaskError;
+          if (updateError) {
+            console.error('Error updating subtask:', updateError);
+            throw updateError;
+          }
         } else {
-          const { error: newSubtaskError } = await supabase
+          // Create new subtask
+          const { error: createError } = await supabase
             .from('subtasks')
-            .insert({
-              task_id: task.id,
-              title: subtask.title,
-              status: subtask.status,
-              position: subtask.position,
-              notes: subtask.notes
-            });
+            .insert(subtaskData);
 
-          if (newSubtaskError) throw newSubtaskError;
+          if (createError) {
+            console.error('Error creating subtask:', createError);
+            throw createError;
+          }
         }
       }
 
