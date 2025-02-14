@@ -5,7 +5,7 @@ const HeroSection = () => {
   return (
     <div className="max-w-4xl mx-auto text-center mb-20">
       <img 
-        src="/lovable-uploads/3f275e6b-84cc-4b91-9c41-2e30b0a99384.png" 
+        src="/lovable-uploads/5f059472-aad4-42ce-ba2d-2c1ffa0e684a.png" 
         alt="TASQI-AI Logo" 
         className="w-60 h-60 object-contain mx-auto mb-8"
       />
@@ -19,4 +19,3 @@ const HeroSection = () => {
 };
 
 export default HeroSection;
-
