@@ -4,6 +4,8 @@ import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 export async function createTask(supabase: SupabaseClient, userId: string, taskDetails: TaskDetails) {
   try {
+    console.log('Creating task with details:', taskDetails);
+    
     // First create the task
     const { data: task, error: taskError } = await supabase
       .from('tasks')
@@ -22,10 +24,17 @@ export async function createTask(supabase: SupabaseClient, userId: string, taskD
       .select()
       .single();
 
-    if (taskError) throw taskError;
+    if (taskError) {
+      console.error('Error creating task:', taskError);
+      throw taskError;
+    }
+
+    console.log('Created task:', task);
 
     // If there are subtasks, create them
     if (taskDetails.subtasks && taskDetails.subtasks.length > 0 && task) {
+      console.log('Creating subtasks:', taskDetails.subtasks);
+      
       const { error: subtasksError } = await supabase
         .from('subtasks')
         .insert(
@@ -37,12 +46,17 @@ export async function createTask(supabase: SupabaseClient, userId: string, taskD
           }))
         );
 
-      if (subtasksError) throw subtasksError;
+      if (subtasksError) {
+        console.error('Error creating subtasks:', subtasksError);
+        throw subtasksError;
+      }
+      
+      console.log('Successfully created subtasks');
     }
 
     return task;
   } catch (error) {
-    console.error('Error creating task:', error);
+    console.error('Error in createTask:', error);
     throw error;
   }
 }
