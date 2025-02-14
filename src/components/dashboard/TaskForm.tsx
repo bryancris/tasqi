@@ -69,21 +69,33 @@ export function TaskForm({
   useEffect(() => {
     const handleAIResponse = (e: CustomEvent<any>) => {
       console.log('AI Response received:', e.detail);
-      if (e.detail?.task?.subtasks && subtaskListRef.current) {
-        const subtaskTitles = e.detail.task.subtasks.map((subtask: any) => subtask.title);
-        console.log('Adding subtasks:', subtaskTitles);
-        subtaskListRef.current.addMultipleSubtasks(subtaskTitles);
+      
+      // Check if we have subtasks in the response
+      if (e.detail?.task?.subtasks) {
+        console.log('Found subtasks in response:', e.detail.task.subtasks);
+        
+        // Create new subtasks array
+        const newSubtasks = e.detail.task.subtasks.map((subtask: any, index: number) => ({
+          title: subtask.title,
+          status: 'pending' as const,
+          position: subtasks.length + index
+        }));
+        
+        console.log('Created new subtasks:', newSubtasks);
+        
+        // Update the subtasks through the provided callback
+        onSubtasksChange([...subtasks, ...newSubtasks]);
       }
     };
 
     // Add the event listener
-    window.addEventListener('ai-response' as any, handleAIResponse as EventListener);
+    window.addEventListener('ai-response', handleAIResponse as EventListener);
     
     // Cleanup
     return () => {
-      window.removeEventListener('ai-response' as any, handleAIResponse as EventListener);
+      window.removeEventListener('ai-response', handleAIResponse as EventListener);
     };
-  }, []);
+  }, [subtasks, onSubtasksChange]);
 
   return (
     <form
