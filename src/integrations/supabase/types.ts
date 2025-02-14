@@ -615,6 +615,44 @@ export type Database = {
         }
         Relationships: []
       }
+      subtasks: {
+        Row: {
+          created_at: string
+          id: number
+          position: number
+          status: Database["public"]["Enums"]["subtask_status"]
+          task_id: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: never
+          position: number
+          status?: Database["public"]["Enums"]["subtask_status"]
+          task_id?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: never
+          position?: number
+          status?: Database["public"]["Enums"]["subtask_status"]
+          task_id?: number | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subtasks_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       task_assignments: {
         Row: {
           assigned_by_id: string | null
@@ -1055,6 +1093,7 @@ export type Database = {
         | "liters"
       message_type: "text" | "file"
       org_role: "admin" | "member"
+      subtask_status: "pending" | "completed"
       task_priority: "low" | "medium" | "high"
       task_status:
         | "scheduled"

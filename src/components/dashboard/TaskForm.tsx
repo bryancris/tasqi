@@ -8,6 +8,7 @@ import { TaskPriority } from "./TaskBoard";
 import { DatePickerInput } from "./form/DatePickerInput";
 import { ShareTaskDialog } from "./ShareTaskDialog";
 import { TimeSelector } from "./schedule/TimeSelector";
+import { SubtaskList, Subtask } from "./subtasks/SubtaskList";
 import { useState } from "react";
 import { Task } from "./TaskBoard";
 
@@ -20,6 +21,7 @@ interface TaskFormProps {
   endTime: string;
   priority: TaskPriority;
   reminderEnabled: boolean;
+  subtasks: Subtask[];
   isLoading: boolean;
   isEditing?: boolean;
   task?: Task;
@@ -31,6 +33,7 @@ interface TaskFormProps {
   onEndTimeChange: (value: string) => void;
   onPriorityChange: (value: TaskPriority) => void;
   onReminderEnabledChange: (value: boolean) => void;
+  onSubtasksChange: (subtasks: Subtask[]) => void;
   onSubmit: () => void;
 }
 
@@ -43,6 +46,7 @@ export function TaskForm({
   endTime,
   priority,
   reminderEnabled,
+  subtasks,
   isLoading,
   isEditing = false,
   task,
@@ -54,6 +58,7 @@ export function TaskForm({
   onEndTimeChange,
   onPriorityChange,
   onReminderEnabledChange,
+  onSubtasksChange,
   onSubmit,
 }: TaskFormProps) {
   const [showShareDialog, setShowShareDialog] = useState(false);
@@ -84,6 +89,14 @@ export function TaskForm({
           value={description}
           onChange={(e) => onDescriptionChange(e.target.value)}
           placeholder="Task description"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label>Subtasks</Label>
+        <SubtaskList 
+          subtasks={subtasks} 
+          onSubtasksChange={onSubtasksChange}
         />
       </div>
 
