@@ -14,27 +14,15 @@ export function useAiGreeting() {
   useEffect(() => {
     const checkAndShowGreeting = async () => {
       try {
-        if (hasGreeted) return;
-
+        // Temporarily removed the hasGreeted check for testing
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        // Get user settings
-        const { data: settings } = await supabase
-          .from('user_settings')
-          .select('last_greeting_at')
-          .eq('user_id', user.id)
-          .single();
-
-        const now = new Date();
-        const resetTime = new Date();
-        resetTime.setHours(2, 0, 0, 0);
-
-        // Check if we should show greeting (if last greeting was before 2 AM today)
-        const shouldShowGreeting = !settings?.last_greeting_at || 
-          new Date(settings.last_greeting_at) < resetTime;
+        // For testing, always show greeting
+        const shouldShowGreeting = true;
 
         if (shouldShowGreeting) {
+          const now = new Date();
           // Count today's tasks
           const todayTasks = tasks.filter(task => 
             task.status === 'scheduled' && 
@@ -56,15 +44,6 @@ export function useAiGreeting() {
             message += "You don't have any tasks scheduled for today yet.";
           }
 
-          // Update last greeting time in database
-          await supabase
-            .from('user_settings')
-            .update({ 
-              last_greeting_at: now.toISOString(),
-              greeting_message: message
-            })
-            .eq('user_id', user.id);
-
           setGreetingMessage(message);
           setShowGreeting(true);
           setHasGreeted(true);
@@ -75,7 +54,7 @@ export function useAiGreeting() {
     };
 
     checkAndShowGreeting();
-  }, [tasks, hasGreeted]);
+  }, [tasks]);
 
   return (
     <Dialog open={showGreeting} onOpenChange={setShowGreeting}>
