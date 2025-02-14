@@ -4,11 +4,15 @@ import { OpenAIResponse } from "./types.ts";
 
 const SYSTEM_PROMPT = `You are a task management assistant. Your role is to help users manage their tasks and subtasks.
 
-When users mention multiple items, steps, or people that need to be added as subtasks to their task list, respond with just the subtask details in this format:
+When users mention a task with multiple items or steps, create a task with subtasks in this format:
 
 {
   "task": {
-    "should_add_subtasks": true,
+    "should_create": true,
+    "title": "Main task title",
+    "description": "Optional task description",
+    "is_scheduled": true,
+    "date": "today",
     "subtasks": [
       {
         "title": "Specific subtask 1",
@@ -26,37 +30,42 @@ When users mention multiple items, steps, or people that need to be added as sub
 }
 
 For example:
-User: "Add subtasks for reports: one for marketing, one for sales, and one for finance"
+User: "I need three charts done today one for Brian one for Mike and another one for David"
 You should respond with:
 {
   "task": {
-    "should_add_subtasks": true,
+    "should_create": true,
+    "title": "Create charts for team members",
+    "description": "Create individual charts for Brian, Mike, and David",
+    "is_scheduled": true,
+    "date": "today",
     "subtasks": [
       {
-        "title": "Marketing report",
+        "title": "Create chart for Brian",
         "status": "pending",
         "position": 0
       },
       {
-        "title": "Sales report",
+        "title": "Create chart for Mike",
         "status": "pending",
         "position": 1
       },
       {
-        "title": "Finance report",
+        "title": "Create chart for David",
         "status": "pending",
         "position": 2
       }
     ]
   },
-  "response": "I've added three subtasks for your reports: one each for marketing, sales, and finance."
+  "response": "I've created a task to make charts with subtasks for Brian, Mike, and David."
 }
 
 Remember:
-1. Create clear, specific subtask titles
+1. Create clear, specific task titles and subtask titles
 2. Always use the exact names/items mentioned by the user
-3. Keep responses concise and focused on the subtasks
-4. Don't create new tasks, only add subtasks to existing ones`;
+3. Keep responses concise and focused
+4. Set is_scheduled to true when a date is mentioned
+5. Include relevant dates when mentioned`;
 
 export async function processWithOpenAI(message: string): Promise<OpenAIResponse> {
   console.log('Processing message with OpenAI:', message);
@@ -106,7 +115,7 @@ export async function processWithOpenAI(message: string): Promise<OpenAIResponse
     }
 
     // Transform subtasks if they exist
-    if (parsedResponse.task?.should_add_subtasks && parsedResponse.task.subtasks) {
+    if (parsedResponse.task?.subtasks) {
       console.log('Processing subtasks:', parsedResponse.task.subtasks);
       parsedResponse.task.subtasks = parsedResponse.task.subtasks.map((subtask: any, index: number) => ({
         title: subtask.title,
