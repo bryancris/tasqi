@@ -1,20 +1,10 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/components/ui/drawer";
-import { Share2, X } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
+
+import { useState, useEffect } from "react";
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import { Task } from "./TaskBoard";
 import { TaskForm } from "./TaskForm";
 import { supabase } from "@/integrations/supabase/client";
-import { Task, TaskPriority } from "./TaskBoard";
-import { DeleteTaskAlert } from "./DeleteTaskAlert";
-import { ShareTaskDialog } from "./ShareTaskDialog";
+import { toast } from "sonner";
 import { Subtask } from "./subtasks/SubtaskList";
 
 interface EditTaskDrawerProps {
@@ -30,102 +20,91 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
   const [date, setDate] = useState(task.date || "");
   const [startTime, setStartTime] = useState(task.start_time || "");
   const [endTime, setEndTime] = useState(task.end_time || "");
-  const [priority, setPriority] = useState<TaskPriority>(task.priority || "low");
+  const [priority, setPriority] = useState(task.priority || "low");
   const [reminderEnabled, setReminderEnabled] = useState(task.reminder_enabled || false);
-  const [subtasks, setSubtasks] = useState<Subtask[]>(task.subtasks || []);
+  const [subtasks, setSubtasks] = useState<Subtask[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [showShareDialog, setShowShareDialog] = useState(false);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
 
-  const handleSubmit = async () => {
+  useEffect(() => {
+    loadSubtasks();
+  }, [task.id]);
+
+  const loadSubtasks = async () => {
     try {
-      setIsLoading(true);
-      
-      const { error } = await supabase
-        .from("tasks")
-        .update({
-          title,
-          description,
-          date: isScheduled ? date : null,
-          status: isScheduled ? "scheduled" : "unscheduled",
-          start_time: isScheduled && startTime ? startTime : null,
-          end_time: isScheduled && endTime ? endTime : null,
-          priority,
-          reminder_enabled: reminderEnabled,
-        })
-        .eq("id", task.id);
+      const { data, error } = await supabase
+        .from('subtasks')
+        .select('*')
+        .eq('task_id', task.id)
+        .order('position');
 
-      if (error) throw error;
-
-      // Remove existing subtasks first
-      const { error: deleteError } = await supabase
-        .from("subtasks")
-        .delete()
-        .eq("task_id", task.id);
-
-      if (deleteError) throw deleteError;
-
-      // Then insert new subtasks if there are any
-      if (subtasks.length > 0) {
-        const { error: subtasksError } = await supabase
-          .from("subtasks")
-          .insert(
-            subtasks.map((subtask) => ({
-              title: subtask.title,
-              status: subtask.status,
-              position: subtask.position,
-              task_id: task.id,
-            }))
-          );
-
-        if (subtasksError) throw subtasksError;
+      if (error) {
+        throw error;
       }
 
-      toast({
-        title: "Success",
-        description: "Task updated successfully",
-      });
-
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      onOpenChange(false);
+      if (data) {
+        console.log('Loaded subtasks:', data);
+        setSubtasks(data);
+      }
     } catch (error) {
-      console.error("Error updating task:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update task. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+      console.error('Error loading subtasks:', error);
+      toast.error('Failed to load subtasks');
     }
   };
 
-  const handleDelete = async () => {
+  const handleSubmit = async () => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      
-      const { error } = await supabase
-        .from("tasks")
-        .delete()
-        .eq("id", task.id);
+      // Update main task
+      const { error: taskError } = await supabase
+        .from('tasks')
+        .update({
+          title,
+          description,
+          status: isScheduled ? 'scheduled' : 'unscheduled',
+          date: isScheduled ? date : null,
+          start_time: isScheduled ? startTime : null,
+          end_time: isScheduled ? endTime : null,
+          priority,
+          reminder_enabled: reminderEnabled,
+        })
+        .eq('id', task.id);
 
-      if (error) throw error;
+      if (taskError) throw taskError;
 
-      toast({
-        title: "Success",
-        description: "Task deleted successfully",
-      });
+      // Update subtasks
+      for (const subtask of subtasks) {
+        if (subtask.id) {
+          // Update existing subtask
+          const { error: subtaskError } = await supabase
+            .from('subtasks')
+            .update({
+              title: subtask.title,
+              status: subtask.status,
+              position: subtask.position,
+            })
+            .eq('id', subtask.id);
 
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+          if (subtaskError) throw subtaskError;
+        } else {
+          // Create new subtask
+          const { error: newSubtaskError } = await supabase
+            .from('subtasks')
+            .insert({
+              task_id: task.id,
+              title: subtask.title,
+              status: subtask.status,
+              position: subtask.position,
+            });
+
+          if (newSubtaskError) throw newSubtaskError;
+        }
+      }
+
+      toast.success('Task updated successfully');
       onOpenChange(false);
     } catch (error) {
-      console.error("Error deleting task:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete task. Please try again.",
-        variant: "destructive",
-      });
+      console.error('Error updating task:', error);
+      toast.error('Failed to update task');
     } finally {
       setIsLoading(false);
     }
@@ -133,66 +112,35 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="w-[400px] left-0 right-auto">
-        <div className="mx-auto w-full max-w-sm">
-          <DrawerHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <DrawerTitle>Edit Task</DrawerTitle>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowShareDialog(true)}
-                >
-                  <Share2 className="h-4 w-4 text-[#0EA5E9]" />
-                </Button>
-              </div>
-              <DrawerClose asChild>
-                <Button variant="ghost" size="icon">
-                  <X className="h-4 w-4" />
-                </Button>
-              </DrawerClose>
-            </div>
-          </DrawerHeader>
-          <div className="p-4 space-y-4">
-            <TaskForm
-              title={title}
-              description={description}
-              isScheduled={isScheduled}
-              date={date}
-              startTime={startTime}
-              endTime={endTime}
-              priority={priority}
-              reminderEnabled={reminderEnabled}
-              subtasks={subtasks}
-              isLoading={isLoading}
-              isEditing={true}
-              task={task}
-              onTitleChange={setTitle}
-              onDescriptionChange={setDescription}
-              onIsScheduledChange={setIsScheduled}
-              onDateChange={setDate}
-              onStartTimeChange={setStartTime}
-              onEndTimeChange={setEndTime}
-              onPriorityChange={setPriority}
-              onReminderEnabledChange={setReminderEnabled}
-              onSubtasksChange={setSubtasks}
-              onSubmit={handleSubmit}
-            />
-            
-            <DeleteTaskAlert 
-              isLoading={isLoading}
-              onDelete={handleDelete}
-            />
-          </div>
-        </div>
+      <DrawerContent>
+        <DrawerHeader>
+          <DrawerTitle>Edit Task</DrawerTitle>
+        </DrawerHeader>
+        <TaskForm
+          title={title}
+          description={description}
+          isScheduled={isScheduled}
+          date={date}
+          startTime={startTime}
+          endTime={endTime}
+          priority={task.priority || "low"}
+          reminderEnabled={reminderEnabled}
+          subtasks={subtasks}
+          isLoading={isLoading}
+          isEditing={true}
+          task={task}
+          onTitleChange={setTitle}
+          onDescriptionChange={setDescription}
+          onIsScheduledChange={setIsScheduled}
+          onDateChange={setDate}
+          onStartTimeChange={setStartTime}
+          onEndTimeChange={setEndTime}
+          onPriorityChange={setPriority}
+          onReminderEnabledChange={setReminderEnabled}
+          onSubtasksChange={setSubtasks}
+          onSubmit={handleSubmit}
+        />
       </DrawerContent>
-      <ShareTaskDialog
-        task={task}
-        open={showShareDialog}
-        onOpenChange={setShowShareDialog}
-      />
     </Drawer>
   );
 }
