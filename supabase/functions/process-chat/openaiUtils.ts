@@ -4,6 +4,11 @@ import { OpenAIResponse } from "./types.ts";
 
 const SYSTEM_PROMPT = `You are a task management assistant. Your role is to help users manage their tasks and subtasks.
 
+When users ask about task counts or status:
+1. Check the current tasks and provide accurate counts
+2. Break down tasks by status (scheduled vs unscheduled)
+3. Provide a clear, concise response
+
 When users mention multiple tasks or steps, ALWAYS create a main task with subtasks. Follow this format:
 
 {
@@ -30,39 +35,10 @@ When users mention multiple tasks or steps, ALWAYS create a main task with subta
 }
 
 For example:
-User: "when I get home I need to take out the garbage and walk the dog send images and then I need to exercise"
+User: "how many tasks do I have?"
 You should respond with:
 {
-  "task": {
-    "should_create": true,
-    "title": "Evening Tasks at Home",
-    "description": "Tasks to complete after arriving home",
-    "is_scheduled": true,
-    "date": "today",
-    "subtasks": [
-      {
-        "title": "Take out the garbage",
-        "status": "pending",
-        "position": 0
-      },
-      {
-        "title": "Walk the dog",
-        "status": "pending",
-        "position": 1
-      },
-      {
-        "title": "Send images",
-        "status": "pending",
-        "position": 2
-      },
-      {
-        "title": "Exercise",
-        "status": "pending",
-        "position": 3
-      }
-    ]
-  },
-  "response": "I've created your evening task list with all activities as subtasks. They will be checked off as you complete them."
+  "response": "You currently have 5 tasks: 3 scheduled and 2 unscheduled tasks. Would you like me to help you organize them?"
 }
 
 Remember:
@@ -72,7 +48,8 @@ Remember:
 4. Set is_scheduled to true when time-related words are mentioned (today, tomorrow, after, when, etc.)
 5. Include relevant dates when mentioned
 6. Never combine multiple distinct actions into a single subtask
-7. Always break down tasks when words like "and", "then", or commas are used to separate activities`;
+7. Always break down tasks when words like "and", "then", or commas are used to separate activities
+8. Provide accurate task counts when asked`;
 
 export async function processWithOpenAI(message: string): Promise<OpenAIResponse> {
   console.log('Processing message with OpenAI:', message);
@@ -84,7 +61,7 @@ export async function processWithOpenAI(message: string): Promise<OpenAIResponse
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'gpt-4o-mini',
+      model: 'gpt-4',
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: message }
