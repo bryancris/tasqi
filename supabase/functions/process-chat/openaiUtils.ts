@@ -4,57 +4,50 @@ import { OpenAIResponse } from "./types.ts";
 
 const SYSTEM_PROMPT = `You are a task scheduling assistant. When a user mentions something that sounds like a task:
 
-1. MOST IMPORTANT: If a task involves multiple items, people, or steps, you MUST ALWAYS either:
-   a) Create subtasks automatically if it's clearly needed (like "three charts for different people")
-   b) Ask the user "Would you like me to break this down into subtasks?" if you're unsure
-   Never just create a single task when multiple subtasks would be more appropriate.
+1. MOST IMPORTANT: If a task involves multiple items, people, or steps, you MUST create subtasks in the following format:
+   {
+     "task": {
+       "should_create": true,
+       "title": "Main task title",
+       "description": "Overall task description",
+       "is_scheduled": false,
+       "subtasks": [
+         {
+           "title": "Specific subtask 1",
+           "status": "pending",
+           "position": 0
+         },
+         {
+           "title": "Specific subtask 2",
+           "status": "pending",
+           "position": 1
+         }
+       ]
+     },
+     "response": "Your response to user"
+   }
 
 2. ALWAYS create subtasks when you see:
-   - Multiple recipients or stakeholders (e.g., "for David, Mike, and Michelle")
-   - Multiple deliverables (e.g., "three charts", "two reports")
-   - Sequential steps or processes
-   - Any task that mentions numbers (e.g., "three", "two", etc.)
+   - Multiple names mentioned (e.g., "David, Mike, and Brian")
+   - Multiple items (e.g., "three charts", "two reports")
+   - Sequential steps in a process
+   - Any numbers mentioned (e.g., "three", "two")
 
-3. For task completion:
-   - If they are telling you they completed a task, mark it as completed and extract EXACTLY the task title they mentioned
+3. For tasks with multiple people:
+   - Title should be the overall goal (e.g., "Create charts for team members")
+   - Each person MUST get their own subtask
+   - Include the person's name in the subtask title
+   - Use the exact names mentioned by the user
 
-4. For scheduling:
-   - If it has a specific time/date, create it as a scheduled task
-   - If no specific time/date is mentioned, create it as an unscheduled task
-
-5. For tasks involving multiple people or items:
-   - Main task title should describe the overall goal
-   - Create a separate subtask for each person/item
-   - Make subtask titles specific and actionable
-   - Include the person's name in each subtask title
-
-6. Other important rules:
-   - Always extract as much detail as possible
-   - Always set priority to "low" unless specifically mentioned
-   - For scheduled tasks, ALWAYS return time in HH:mm format (24-hour)
-   - Only include time fields if explicitly mentioned
-
-7. For dates, understand and convert relative terms:
-   - "today" → return literal string "today"
-   - "tomorrow" → return literal string "tomorrow"
-   - "next week" → return literal string "next week"
-   - "next month" → return literal string "next month"
-
-8. For subtasks:
-   - Each subtask must have a clear, specific title
-   - Status is always initially "pending"
-   - Position is determined by the order mentioned (0-based index)
-   
-Example of correct subtask creation:
-User: "I need three charts done today one for David one for Mike and one for Michelle"
-Response should create:
+Example:
+User: "Create charts for David Mike and Brian"
+You must respond with:
 {
   "task": {
     "should_create": true,
     "title": "Create charts for team members",
-    "description": "Create individual charts for David, Mike, and Michelle",
-    "is_scheduled": true,
-    "date": "today",
+    "description": "Create individual charts for David, Mike, and Brian",
+    "is_scheduled": false,
     "priority": "low",
     "subtasks": [
       {
@@ -68,14 +61,32 @@ Response should create:
         "position": 1
       },
       {
-        "title": "Create chart for Michelle",
+        "title": "Create chart for Brian",
         "status": "pending",
         "position": 2
       }
     ]
   },
-  "response": "I've created a task for the three charts with individual subtasks for David, Mike, and Michelle, scheduled for today. Each chart is tracked as a separate subtask so you can mark them complete individually. Would you like me to set specific times for these?"
-}`;
+  "response": "I've created a task to make charts with individual subtasks for David, Mike, and Brian. Each person has their own subtask so you can track progress individually. Would you like me to schedule specific times for these?"
+}
+
+4. For task completion:
+   - When they complete a task, mark it as completed
+   - Extract EXACTLY the task title they mentioned
+
+5. For scheduling:
+   - If time/date mentioned, create as scheduled task
+   - If no time/date, create as unscheduled task
+   - Always use HH:mm format (24-hour) for times
+   - Only include time fields if explicitly mentioned
+
+6. For dates, use these exact strings:
+   - "today" for today
+   - "tomorrow" for tomorrow
+   - "next week" for next week
+   - "next month" for next month
+
+Remember: NEVER skip creating subtasks when multiple items or people are mentioned. Each person or item MUST have their own subtask.`;
 
 export async function processWithOpenAI(message: string): Promise<OpenAIResponse> {
   console.log('Processing message with OpenAI:', message);
@@ -106,7 +117,6 @@ export async function processWithOpenAI(message: string): Promise<OpenAIResponse
   console.log('Raw OpenAI Response:', data);
 
   try {
-    // Validate that we have a response with choices
     if (!data.choices?.[0]?.message?.content) {
       console.error('Invalid OpenAI response format:', data);
       throw new Error('Invalid response format from OpenAI');
@@ -115,11 +125,11 @@ export async function processWithOpenAI(message: string): Promise<OpenAIResponse
     let parsedResponse: OpenAIResponse;
     try {
       parsedResponse = JSON.parse(data.choices[0].message.content);
+      console.log('Parsed response:', parsedResponse);
     } catch (parseError) {
       console.error('Error parsing JSON from OpenAI response:', parseError);
       console.log('Response content:', data.choices[0].message.content);
       
-      // If JSON parsing fails, create a fallback response
       return {
         task: {
           should_create: false,
@@ -130,7 +140,6 @@ export async function processWithOpenAI(message: string): Promise<OpenAIResponse
       };
     }
 
-    // Validate the parsed response structure
     if (!parsedResponse || typeof parsedResponse !== 'object') {
       throw new Error('Invalid response structure');
     }
@@ -140,7 +149,6 @@ export async function processWithOpenAI(message: string): Promise<OpenAIResponse
     }
 
     if (parsedResponse.task) {
-      // Validate task fields if present
       if (typeof parsedResponse.task.should_create !== 'boolean') {
         throw new Error('Invalid task.should_create field');
       }
@@ -167,6 +175,7 @@ export async function processWithOpenAI(message: string): Promise<OpenAIResponse
 
       // Ensure subtasks array exists and has valid structure
       if (parsedResponse.task.subtasks) {
+        console.log('Processing subtasks:', parsedResponse.task.subtasks);
         parsedResponse.task.subtasks = parsedResponse.task.subtasks.map((subtask: any, index: number) => ({
           title: subtask.title,
           status: 'pending',
