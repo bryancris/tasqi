@@ -105,6 +105,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         case 'SIGNED_OUT':
           console.log("User signed out");
           setSession(null);
+          // Check if this was due to a token refresh failure
+          if (currentSession === null) {
+            toast.error("Your session has expired. Please sign in again.");
+          }
           // Only navigate to home if we're not already going to /auth
           if (window.location.pathname !== '/auth') {
             navigate('/');
@@ -139,13 +143,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           console.log("Password recovery initiated");
           setSession(null);
           navigate('/auth/update-password');
-          break;
-
-        case 'TOKEN_REFRESH_FAILED':
-          console.log("Token refresh failed");
-          await handleSignOut();
-          toast.error("Your session has expired. Please sign in again.");
-          navigate('/auth');
           break;
       }
     });
