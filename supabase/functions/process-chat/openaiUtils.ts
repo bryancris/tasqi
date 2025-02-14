@@ -121,14 +121,9 @@ export async function processWithOpenAI(message: string): Promise<OpenAIResponse
       };
     }
 
-    // Transform subtasks if they exist
-    if (parsedResponse.task?.subtasks) {
-      console.log('Processing subtasks:', parsedResponse.task.subtasks);
-      parsedResponse.task.subtasks = parsedResponse.task.subtasks.map((subtask: any, index: number) => ({
-        title: subtask.title,
-        status: 'pending' as const,
-        position: index
-      }));
+    // Ensure task has should_create set to true if it has subtasks
+    if (parsedResponse.task?.subtasks && parsedResponse.task.subtasks.length > 0) {
+      parsedResponse.task.should_create = true;
     }
 
     return parsedResponse;
