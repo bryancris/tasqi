@@ -1,4 +1,3 @@
-
 import { format } from "date-fns";
 import { HeaderUserMenu } from "@/components/dashboard/header/HeaderUserMenu";
 import { Plus, AlarmClock, Smile } from "lucide-react";
@@ -6,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { AddTaskDrawer } from "@/components/dashboard/AddTaskDrawer";
 import { toast } from "sonner";
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTasks } from "@/hooks/use-tasks";
 import { Task } from "@/components/dashboard/TaskBoard";
+import { generateGreetingMessage } from "@/utils/greetingUtils";
+import { GreetingDialog } from "@/components/dashboard/greeting/GreetingDialog";
 
 export function MobileHeader() {
   const [showGreeting, setShowGreeting] = useState(false);
@@ -32,34 +32,8 @@ export function MobileHeader() {
     const unscheduled = tasks.filter(task => task.status === 'unscheduled');
     setUnscheduledTasks(unscheduled);
 
-    // Generate greeting based on time of day
-    const hour = now.getHours();
-    let timeGreeting = "Hello";
-    if (hour < 12) timeGreeting = "Good morning";
-    else if (hour < 18) timeGreeting = "Good afternoon";
-    else timeGreeting = "Good evening";
-
-    // Construct greeting message
-    let message = `${timeGreeting}! `;
-    const totalTasks = todayTasks.length + unscheduled.length;
-    
-    if (totalTasks > 0) {
-      message += `You have ${totalTasks} task${totalTasks === 1 ? '' : 's'} to manage `;
-      if (todayTasks.length > 0) {
-        message += `(${todayTasks.length} scheduled for today`;
-        if (unscheduled.length > 0) {
-          message += ` and ${unscheduled.length} unscheduled)`;
-        } else {
-          message += ")";
-        }
-      } else if (unscheduled.length > 0) {
-        message += `(all ${unscheduled.length} unscheduled)`;
-      }
-      message += ".";
-    } else {
-      message += "You don't have any tasks to manage yet.";
-    }
-
+    // Generate greeting message
+    const message = generateGreetingMessage(todayTasks, unscheduled);
     setGreetingMessage(message);
     setShowGreeting(true);
   };
@@ -186,57 +160,13 @@ export function MobileHeader() {
         </div>
       </div>
 
-      <Dialog open={showGreeting} onOpenChange={setShowGreeting}>
-        <DialogContent className="bg-gradient-to-r from-violet-500 to-fuchsia-500">
-          <DialogHeader>
-            <DialogTitle className="text-white text-xl font-semibold">
-              Daily Update
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="text-white text-lg">
-              {greetingMessage}
-            </div>
-            {todaysTaskDetails.length > 0 && (
-              <div className="space-y-2">
-                <h3 className="text-white font-medium">Today's Schedule:</h3>
-                <div className="space-y-2">
-                  {todaysTaskDetails.map((task) => (
-                    <div 
-                      key={task.id} 
-                      className="bg-white/10 rounded-lg p-3 backdrop-blur-sm"
-                    >
-                      <div className="text-white font-medium">{task.title}</div>
-                      <div className="text-white/80 text-sm">
-                        {task.start_time ? format(new Date(`2000-01-01 ${task.start_time}`), 'h:mm a') : 'Anytime'} 
-                        {task.end_time && ` - ${format(new Date(`2000-01-01 ${task.end_time}`), 'h:mm a')}`}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            {unscheduledTasks.length > 0 && (
-              <div className="space-y-2">
-                <h3 className="text-white font-medium">Unscheduled Tasks:</h3>
-                <div className="space-y-2">
-                  {unscheduledTasks.map((task) => (
-                    <div 
-                      key={task.id} 
-                      className="bg-white/10 rounded-lg p-3 backdrop-blur-sm border-l-4 border-yellow-400"
-                    >
-                      <div className="text-white font-medium">{task.title}</div>
-                      {task.description && (
-                        <div className="text-white/80 text-sm">{task.description}</div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <GreetingDialog
+        open={showGreeting}
+        onOpenChange={setShowGreeting}
+        greetingMessage={greetingMessage}
+        todaysTaskDetails={todaysTaskDetails}
+        unscheduledTasks={unscheduledTasks}
+      />
     </div>
   );
 }
