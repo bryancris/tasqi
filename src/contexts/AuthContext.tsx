@@ -70,6 +70,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (!initialSession?.user) {
           console.log("No initial session found");
           setSession(null);
+          if (currentPath !== '/') {
+            navigate('/auth');
+          }
           return;
         }
 
@@ -126,6 +129,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setSession(currentSession);
           } else {
             setSession(null);
+            if (window.location.pathname !== '/' && window.location.pathname !== '/auth') {
+              navigate('/auth');
+            }
           }
           break;
           
@@ -133,6 +139,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           console.log("Password recovery initiated");
           setSession(null);
           navigate('/auth/update-password');
+          break;
+
+        case 'TOKEN_REFRESH_FAILED':
+          console.log("Token refresh failed");
+          await handleSignOut();
+          toast.error("Your session has expired. Please sign in again.");
+          navigate('/auth');
           break;
       }
     });
