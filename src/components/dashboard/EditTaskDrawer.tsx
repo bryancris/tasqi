@@ -1,15 +1,13 @@
 
 import { useState, useEffect } from "react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Task } from "./TaskBoard";
-import { TaskForm } from "./TaskForm";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Subtask } from "./subtasks/SubtaskList";
-import { DeleteTaskAlert } from "./DeleteTaskAlert";
 import { ShareTaskDialog } from "./ShareTaskDialog";
-import { Share2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { EditTaskHeader } from "./edit-task/EditTaskHeader";
+import { EditTaskContent } from "./edit-task/EditTaskContent";
 
 interface EditTaskDrawerProps {
   task: Task;
@@ -89,7 +87,6 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
         reminder_enabled: reminderEnabled,
       } as const;
 
-      // Only add time fields if they have valid values and the task is scheduled
       if (isScheduled && startTime && startTime.trim() !== '') {
         Object.assign(updateData, { start_time: startTime });
       }
@@ -105,10 +102,8 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
 
       if (taskError) throw taskError;
 
-      // Handle existing subtasks - Update or Delete
       const existingSubtaskIds = subtasks.filter(st => st.id).map(st => st.id);
       
-      // First, delete any subtasks that are no longer in our list
       if (existingSubtaskIds.length > 0) {
         const { error: deleteError } = await supabase
           .from('subtasks')
@@ -119,7 +114,6 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
         if (deleteError) throw deleteError;
       }
 
-      // Then update existing and create new subtasks
       for (const subtask of subtasks) {
         const subtaskData = {
           task_id: task.id,
@@ -130,26 +124,18 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
         };
 
         if (subtask.id) {
-          // Update existing subtask
           const { error: updateError } = await supabase
             .from('subtasks')
             .update(subtaskData)
             .eq('id', subtask.id);
 
-          if (updateError) {
-            console.error('Error updating subtask:', updateError);
-            throw updateError;
-          }
+          if (updateError) throw updateError;
         } else {
-          // Create new subtask
           const { error: createError } = await supabase
             .from('subtasks')
             .insert(subtaskData);
 
-          if (createError) {
-            console.error('Error creating subtask:', createError);
-            throw createError;
-          }
+          if (createError) throw createError;
         }
       }
 
@@ -167,52 +153,31 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent side="left" className="w-[400px] sm:max-w-[540px]">
-          <SheetHeader className="sticky top-0 bg-background z-10 pb-4">
-            <div className="flex items-center gap-2">
-              <SheetTitle>Edit Task</SheetTitle>
-              <Button
-                size="sm"
-                variant="outline"
-                className="bg-blue-500 text-white hover:bg-blue-600"
-                onClick={() => setShowShareDialog(true)}
-              >
-                <Share2 className="h-4 w-4 mr-1" />
-                Share
-              </Button>
-            </div>
-          </SheetHeader>
-          <div className="overflow-y-auto h-[calc(100vh-80px)]">
-            <TaskForm
-              title={title}
-              description={description}
-              isScheduled={isScheduled}
-              date={date}
-              startTime={startTime}
-              endTime={endTime}
-              priority={priority}
-              reminderEnabled={reminderEnabled}
-              subtasks={subtasks}
-              isLoading={isLoading}
-              isEditing={true}
-              task={task}
-              onTitleChange={setTitle}
-              onDescriptionChange={setDescription}
-              onIsScheduledChange={setIsScheduled}
-              onDateChange={setDate}
-              onStartTimeChange={setStartTime}
-              onEndTimeChange={setEndTime}
-              onPriorityChange={setPriority}
-              onReminderEnabledChange={setReminderEnabled}
-              onSubtasksChange={setSubtasks}
-              onSubmit={handleSubmit}
-            />
-            <div className="mt-6">
-              <DeleteTaskAlert 
-                isLoading={isLoading} 
-                onDelete={handleDelete}
-              />
-            </div>
-          </div>
+          <EditTaskHeader onShareClick={() => setShowShareDialog(true)} />
+          <EditTaskContent
+            task={task}
+            title={title}
+            description={description}
+            isScheduled={isScheduled}
+            date={date}
+            startTime={startTime}
+            endTime={endTime}
+            priority={priority}
+            reminderEnabled={reminderEnabled}
+            subtasks={subtasks}
+            isLoading={isLoading}
+            onTitleChange={setTitle}
+            onDescriptionChange={setDescription}
+            onIsScheduledChange={setIsScheduled}
+            onDateChange={setDate}
+            onStartTimeChange={setStartTime}
+            onEndTimeChange={setEndTime}
+            onPriorityChange={setPriority}
+            onReminderEnabledChange={setReminderEnabled}
+            onSubtasksChange={setSubtasks}
+            onSubmit={handleSubmit}
+            onDelete={handleDelete}
+          />
         </SheetContent>
       </Sheet>
       <ShareTaskDialog
