@@ -11,6 +11,7 @@ import { useTasks } from "@/hooks/use-tasks";
 
 export function MobileHeader() {
   const [showGreeting, setShowGreeting] = useState(false);
+  const [greetingMessage, setGreetingMessage] = useState("");
   const { tasks } = useTasks();
   const currentTime = format(new Date(), 'HH:mm');
   const currentDate = format(new Date(), 'EEE, MMM d');
@@ -38,8 +39,8 @@ export function MobileHeader() {
       message += "You don't have any tasks scheduled for today yet.";
     }
 
+    setGreetingMessage(message);
     setShowGreeting(true);
-    return message;
   };
 
   const handleTestNotification = async () => {
@@ -172,7 +173,7 @@ export function MobileHeader() {
             </DialogTitle>
           </DialogHeader>
           <div className="text-white text-lg py-4">
-            {showGreeting && handleTestGreeting()}
+            {greetingMessage}
           </div>
         </DialogContent>
       </Dialog>
