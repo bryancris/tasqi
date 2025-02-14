@@ -100,13 +100,24 @@ export function TaskForm({
         />
       </div>
 
-      <div className="flex items-center space-x-2">
-        <Switch
-          id="scheduled"
-          checked={isScheduled}
-          onCheckedChange={onIsScheduledChange}
-        />
-        <Label htmlFor="scheduled">Schedule this task</Label>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="scheduled"
+            checked={isScheduled}
+            onCheckedChange={onIsScheduledChange}
+          />
+          <Label htmlFor="scheduled">Schedule this task</Label>
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="reminder"
+            checked={reminderEnabled}
+            onCheckedChange={onReminderEnabledChange}
+          />
+          <Label htmlFor="reminder">Enable notifications</Label>
+        </div>
       </div>
 
       {isScheduled && (
@@ -135,15 +146,6 @@ export function TaskForm({
               <option value="medium">Medium</option>
               <option value="high">High</option>
             </select>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="reminder"
-              checked={reminderEnabled}
-              onCheckedChange={onReminderEnabledChange}
-            />
-            <Label htmlFor="reminder">Enable notifications</Label>
           </div>
         </div>
       )}
