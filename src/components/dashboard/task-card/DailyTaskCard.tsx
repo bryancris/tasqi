@@ -15,7 +15,14 @@ interface DailyTaskCardProps {
 }
 
 function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, extraButton }: DailyTaskCardProps) {
-  const timeString = task.start_time && task.end_time ? `${task.start_time} - ${task.end_time}` : '';
+  const getTimeDisplay = () => {
+    if (task.start_time && task.end_time) {
+      const startTime = task.start_time.split(':').slice(0, 2).join(':');
+      const endTime = task.end_time.split(':').slice(0, 2).join(':');
+      return `${startTime} - ${endTime}`;
+    }
+    return '';
+  };
 
   const renderAssigneeInfo = () => {
     if (!task.assignments?.length) return null;
@@ -53,6 +60,8 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
     return getPriorityColor(task.priority);
   };
 
+  const timeDisplay = getTimeDisplay();
+
   return (
     <div 
       className={cn(
@@ -67,7 +76,7 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
     >
       <TaskStatusIndicator 
         status={task.status} 
-        time={timeString}
+        time={timeDisplay}
         rescheduleCount={task.reschedule_count}
         onClick={(e) => {
           e.stopPropagation();
@@ -94,11 +103,11 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
             {extraButton}
           </div>
         </div>
-        {timeString && (
+        {timeDisplay && (
           <p className={cn(
             "text-sm",
             task.status === 'completed' ? 'text-white/80' : 'text-gray-500'
-          )}>{timeString}</p>
+          )}>{timeDisplay}</p>
         )}
       </div>
       {task.shared && (

@@ -1,3 +1,4 @@
+
 import { Task } from "../TaskBoard";
 import { TaskStatusIndicator } from "../TaskStatusIndicator";
 import { cn } from "@/lib/utils";
@@ -12,7 +13,16 @@ interface DesktopTaskCardProps {
 }
 
 export function DesktopTaskCard({ task, onComplete, onClick, dragHandleProps, hideTime = false }: DesktopTaskCardProps) {
-  const timeString = task.start_time && task.end_time ? `${task.start_time} - ${task.end_time}` : '';
+  const getTimeDisplay = () => {
+    if (task.start_time && task.end_time) {
+      const startTime = task.start_time.split(':').slice(0, 2).join(':');
+      const endTime = task.end_time.split(':').slice(0, 2).join(':');
+      return `${startTime} - ${endTime}`;
+    }
+    return '';
+  };
+
+  const timeDisplay = getTimeDisplay();
 
   return (
     <div 
@@ -26,7 +36,7 @@ export function DesktopTaskCard({ task, onComplete, onClick, dragHandleProps, hi
     >
       <TaskStatusIndicator 
         status={task.status} 
-        time={timeString}
+        time={timeDisplay}
         onClick={(e) => {
           e.stopPropagation();
           onComplete();
@@ -34,8 +44,8 @@ export function DesktopTaskCard({ task, onComplete, onClick, dragHandleProps, hi
       />
       <div className="flex-1 min-w-0">
         <h3 className="font-medium text-gray-900 truncate">{task.title}</h3>
-        {!hideTime && timeString && (
-          <p className="text-sm text-gray-500">{timeString}</p>
+        {!hideTime && timeDisplay && (
+          <p className="text-sm text-gray-500">{timeDisplay}</p>
         )}
       </div>
     </div>

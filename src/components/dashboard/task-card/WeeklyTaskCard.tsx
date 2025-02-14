@@ -25,6 +25,15 @@ export function WeeklyTaskCard({ task, onClick, onComplete, dragHandleProps, ext
     }
   };
 
+  const getTimeDisplay = () => {
+    if (task.start_time && task.end_time) {
+      const startTime = task.start_time.split(':').slice(0, 2).join(':');
+      const endTime = task.end_time.split(':').slice(0, 2).join(':');
+      return `${startTime} - ${endTime}`;
+    }
+    return '';
+  };
+
   return (
     <div
       {...dragHandleProps}

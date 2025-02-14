@@ -2,9 +2,7 @@
 import { cn } from "@/lib/utils";
 import { Task } from "../TaskBoard";
 import { TaskStatusIndicator } from "../TaskStatusIndicator";
-import { MobileTaskContent } from "../MobileTaskContent";
 import { GripVertical } from "lucide-react";
-import { getTimeDisplay } from "@/utils/dateUtils";
 import { getPriorityColor } from "@/utils/taskColors";
 
 interface MobileTaskCardProps {
@@ -15,7 +13,16 @@ interface MobileTaskCardProps {
 }
 
 export function MobileTaskCard({ task, onComplete, onClick, dragHandleProps }: MobileTaskCardProps) {
-  const timeDisplay = getTimeDisplay(task);
+  const getTimeDisplay = () => {
+    if (task.start_time && task.end_time) {
+      const startTime = task.start_time.split(':').slice(0, 2).join(':');
+      const endTime = task.end_time.split(':').slice(0, 2).join(':');
+      return `${startTime} - ${endTime}`;
+    }
+    return '';
+  };
+
+  const timeDisplay = getTimeDisplay();
   
   return (
     <div 
