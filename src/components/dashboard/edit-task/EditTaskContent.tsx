@@ -1,7 +1,7 @@
 
 import { TaskForm } from "../TaskForm";
 import { DeleteTaskAlert } from "../DeleteTaskAlert";
-import { Task } from "../TaskBoard";
+import { Task, TaskPriority } from "../TaskBoard";
 import { Subtask } from "../subtasks/SubtaskList";
 
 interface EditTaskContentProps {
@@ -12,7 +12,7 @@ interface EditTaskContentProps {
   date: string;
   startTime: string;
   endTime: string;
-  priority: string;
+  priority: TaskPriority;  // Changed from string to TaskPriority
   reminderEnabled: boolean;
   subtasks: Subtask[];
   isLoading: boolean;
@@ -22,7 +22,7 @@ interface EditTaskContentProps {
   onDateChange: (value: string) => void;
   onStartTimeChange: (value: string) => void;
   onEndTimeChange: (value: string) => void;
-  onPriorityChange: (value: any) => void;
+  onPriorityChange: (value: TaskPriority) => void;  // Changed from any to TaskPriority
   onReminderEnabledChange: (value: boolean) => void;
   onSubtasksChange: (subtasks: Subtask[]) => void;
   onSubmit: () => void;
@@ -75,7 +75,7 @@ export function EditTaskContent({
         onStartTimeChange={onStartTimeChange}
         onEndTimeChange={onEndTimeChange}
         onPriorityChange={onPriorityChange}
-        onReminderEnabledChange={onReminderEnabledChange}
+        onReminderEnabledChange={onReminderEnabled}
         onSubtasksChange={onSubtasksChange}
         onSubmit={onSubmit}
       />
