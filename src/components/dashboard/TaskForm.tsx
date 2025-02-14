@@ -64,38 +64,47 @@ export function TaskForm({
 }: TaskFormProps) {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const { message, setMessage } = useChat();
-  const subtaskListRef = useRef<SubtaskListHandle>(null);
 
   useEffect(() => {
     const handleAIResponse = (e: CustomEvent<any>) => {
-      console.log('AI Response received:', e.detail);
+      console.log('AI Response received in TaskForm:', e.detail);
       
-      // Check if we have subtasks in the response
-      if (e.detail?.task?.subtasks) {
-        console.log('Found subtasks in response:', e.detail.task.subtasks);
+      if (e.detail?.task) {
+        console.log('Task details:', e.detail.task);
         
-        // Create new subtasks array
-        const newSubtasks = e.detail.task.subtasks.map((subtask: any, index: number) => ({
-          title: subtask.title,
-          status: 'pending' as const,
-          position: subtasks.length + index
-        }));
+        // Update title and description if provided
+        if (e.detail.task.title) {
+          onTitleChange(e.detail.task.title);
+        }
+        if (e.detail.task.description) {
+          onDescriptionChange(e.detail.task.description);
+        }
         
-        console.log('Created new subtasks:', newSubtasks);
+        // Update scheduling if provided
+        if (e.detail.task.is_scheduled !== undefined) {
+          onIsScheduledChange(e.detail.task.is_scheduled);
+        }
+        if (e.detail.task.date) {
+          onDateChange(e.detail.task.date);
+        }
         
-        // Update the subtasks through the provided callback
-        onSubtasksChange([...subtasks, ...newSubtasks]);
+        // Handle subtasks
+        if (e.detail.task.subtasks && Array.isArray(e.detail.task.subtasks)) {
+          console.log('Processing subtasks:', e.detail.task.subtasks);
+          const newSubtasks = e.detail.task.subtasks.map((subtask: any, index: number) => ({
+            title: subtask.title,
+            status: 'pending' as const,
+            position: index
+          }));
+          console.log('Created new subtasks:', newSubtasks);
+          onSubtasksChange(newSubtasks);
+        }
       }
     };
 
-    // Add the event listener
     window.addEventListener('ai-response', handleAIResponse as EventListener);
-    
-    // Cleanup
-    return () => {
-      window.removeEventListener('ai-response', handleAIResponse as EventListener);
-    };
-  }, [subtasks, onSubtasksChange]);
+    return () => window.removeEventListener('ai-response', handleAIResponse as EventListener);
+  }, [onTitleChange, onDescriptionChange, onIsScheduledChange, onDateChange, onSubtasksChange]);
 
   return (
     <form
@@ -129,7 +138,6 @@ export function TaskForm({
       <div className="space-y-2">
         <Label>Subtasks</Label>
         <SubtaskList 
-          ref={subtaskListRef}
           subtasks={subtasks} 
           onSubtasksChange={onSubtasksChange}
         />

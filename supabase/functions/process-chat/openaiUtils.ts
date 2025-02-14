@@ -30,33 +30,33 @@ When users mention multiple tasks or steps, ALWAYS create a main task with subta
 }
 
 For example:
-User: "when I get home I need to take out the dog send images take out the garbage and then go to bed"
+User: "when I get home I need to take out the garbage and walk the dog send images and then I need to exercise"
 You should respond with:
 {
   "task": {
     "should_create": true,
-    "title": "Evening Home Tasks",
+    "title": "Evening Tasks at Home",
     "description": "Tasks to complete after arriving home",
     "is_scheduled": true,
     "date": "today",
     "subtasks": [
       {
-        "title": "Take out the dog",
+        "title": "Take out the garbage",
         "status": "pending",
         "position": 0
       },
       {
-        "title": "Send images",
+        "title": "Walk the dog",
         "status": "pending",
         "position": 1
       },
       {
-        "title": "Take out the garbage",
+        "title": "Send images",
         "status": "pending",
         "position": 2
       },
       {
-        "title": "Go to bed",
+        "title": "Exercise",
         "status": "pending",
         "position": 3
       }
@@ -71,7 +71,8 @@ Remember:
 3. Keep responses concise and focused
 4. Set is_scheduled to true when time-related words are mentioned (today, tomorrow, after, when, etc.)
 5. Include relevant dates when mentioned
-6. Never combine multiple distinct actions into a single subtask`;
+6. Never combine multiple distinct actions into a single subtask
+7. Always break down tasks when words like "and", "then", or commas are used to separate activities`;
 
 export async function processWithOpenAI(message: string): Promise<OpenAIResponse> {
   console.log('Processing message with OpenAI:', message);
