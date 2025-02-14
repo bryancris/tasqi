@@ -168,15 +168,15 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent side="left" className="w-[400px] sm:max-w-[540px]">
           <SheetHeader className="sticky top-0 bg-background z-10 pb-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
               <SheetTitle>Edit Task</SheetTitle>
               <Button
-                size="icon"
-                variant="ghost"
+                size="sm"
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
                 onClick={() => setShowShareDialog(true)}
-                className="ml-2"
               >
-                <Share2 className="h-5 w-5" />
+                <Share2 className="h-4 w-4 mr-1" />
+                Share
               </Button>
             </div>
           </SheetHeader>
