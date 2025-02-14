@@ -17,10 +17,10 @@ export function TimeSelector({
   onStartTimeChange, 
   onEndTimeChange 
 }: TimeSelectorProps) {
-  const [startHours, setStartHours] = useState("8");
+  const [startHours, setStartHours] = useState("00");
   const [startMinutes, setStartMinutes] = useState("00");
   const [startPeriod, setStartPeriod] = useState<"AM" | "PM">("AM");
-  const [endHours, setEndHours] = useState("9");
+  const [endHours, setEndHours] = useState("00");
   const [endMinutes, setEndMinutes] = useState("00");
   const [endPeriod, setEndPeriod] = useState<"AM" | "PM">("AM");
 
@@ -36,7 +36,7 @@ export function TimeSelector({
         setStartPeriod("AM");
         if (parsedHours === 0) parsedHours = 12;
       }
-      setStartHours(parsedHours.toString());
+      setStartHours(parsedHours.toString().padStart(2, '0'));
       setStartMinutes(minutes);
     }
   }, [startTime]);
@@ -52,7 +52,7 @@ export function TimeSelector({
         setEndPeriod("AM");
         if (parsedHours === 0) parsedHours = 12;
       }
-      setEndHours(parsedHours.toString());
+      setEndHours(parsedHours.toString().padStart(2, '0'));
       setEndMinutes(minutes);
     }
   }, [endTime]);
@@ -82,11 +82,11 @@ export function TimeSelector({
     const numValue = parseInt(value);
     if (value === '' || (numValue >= 0 && numValue <= 12)) {
       if (type === 'start') {
-        setStartHours(value);
-        if (value.length === 2) handleTimeChange('start');
+        setStartHours(value.padStart(2, '0'));
+        handleTimeChange('start');
       } else {
-        setEndHours(value);
-        if (value.length === 2) handleTimeChange('end');
+        setEndHours(value.padStart(2, '0'));
+        handleTimeChange('end');
       }
     }
   };
@@ -96,10 +96,10 @@ export function TimeSelector({
     if (value === '' || (numValue >= 0 && numValue <= 59)) {
       if (type === 'start') {
         setStartMinutes(value.padStart(2, '0'));
-        if (value.length === 2) handleTimeChange('start');
+        handleTimeChange('start');
       } else {
         setEndMinutes(value.padStart(2, '0'));
-        if (value.length === 2) handleTimeChange('end');
+        handleTimeChange('end');
       }
     }
   };
