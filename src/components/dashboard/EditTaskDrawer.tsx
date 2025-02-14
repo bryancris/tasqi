@@ -6,6 +6,7 @@ import { TaskForm } from "./TaskForm";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Subtask } from "./subtasks/SubtaskList";
+import { DeleteTaskAlert } from "./DeleteTaskAlert";
 
 interface EditTaskDrawerProps {
   task: Task;
