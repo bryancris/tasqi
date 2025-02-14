@@ -40,6 +40,7 @@ serve(async (req) => {
     // Create task if the AI suggests one
     if (result.task?.should_create) {
       console.log('Creating task with details:', result.task);
+      console.log('Subtasks to create:', result.task.subtasks);
 
       // Get the next position for the task
       const { data: existingTasks } = await supabase
@@ -73,20 +74,38 @@ serve(async (req) => {
 
       // If the task has subtasks, create them
       if (result.task.subtasks && task) {
-        const subtasks = result.task.subtasks.map((subtask: any, index: number) => ({
-          task_id: task.id,
-          title: subtask.title || subtask,
-          status: 'pending',
-          position: index
-        }));
+        // Ensure subtasks array is properly formatted
+        const formattedSubtasks = result.task.subtasks.map((subtask: any, index: number) => {
+          const subtaskTitle = typeof subtask === 'string' ? subtask : subtask.title;
+          return {
+            task_id: task.id,
+            title: subtaskTitle,
+            status: 'pending',
+            position: index
+          };
+        });
+
+        console.log('Formatted subtasks for insertion:', formattedSubtasks);
 
         const { error: subtaskError } = await supabase
           .from('subtasks')
-          .insert(subtasks);
+          .insert(formattedSubtasks);
 
         if (subtaskError) {
           console.error('Error creating subtasks:', subtaskError);
           throw subtaskError;
+        }
+
+        // Verify subtasks were created
+        const { data: createdSubtasks, error: verifyError } = await supabase
+          .from('subtasks')
+          .select('*')
+          .eq('task_id', task.id);
+
+        if (verifyError) {
+          console.error('Error verifying subtasks:', verifyError);
+        } else {
+          console.log('Created subtasks:', createdSubtasks);
         }
       }
     }
