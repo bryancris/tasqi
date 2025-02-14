@@ -66,7 +66,7 @@ export function TimePickerDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] p-6">
+      <DialogContent className="sm:max-w-[425px] p-4">
         <DialogTitle className="sr-only">Pick a time</DialogTitle>
         <div className="flex flex-col items-center gap-4">
           <div className="flex items-center justify-center gap-2">
