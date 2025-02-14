@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { TaskPriority } from "./TaskBoard";
 import { DatePickerInput } from "./form/DatePickerInput";
 import { ShareTaskDialog } from "./ShareTaskDialog";
+import { TimeSelector } from "./schedule/TimeSelector";
 import { useState } from "react";
 import { Task } from "./TaskBoard";
 
@@ -102,26 +103,12 @@ export function TaskForm({
             onDateChange={onDateChange}
           />
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="startTime">Start Time</Label>
-              <Input
-                id="startTime"
-                type="time"
-                value={startTime}
-                onChange={(e) => onStartTimeChange(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="endTime">End Time</Label>
-              <Input
-                id="endTime"
-                type="time"
-                value={endTime}
-                onChange={(e) => onEndTimeChange(e.target.value)}
-              />
-            </div>
-          </div>
+          <TimeSelector
+            startTime={startTime}
+            endTime={endTime}
+            onStartTimeChange={onStartTimeChange}
+            onEndTimeChange={onEndTimeChange}
+          />
 
           <div className="space-y-2">
             <Label htmlFor="priority">Priority</Label>
