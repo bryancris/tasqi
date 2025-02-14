@@ -1,14 +1,46 @@
 
 import { format } from "date-fns";
 import { HeaderUserMenu } from "@/components/dashboard/header/HeaderUserMenu";
-import { Plus, AlarmClock } from "lucide-react";
+import { Plus, AlarmClock, Smile } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AddTaskDrawer } from "@/components/dashboard/AddTaskDrawer";
 import { toast } from "sonner";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useTasks } from "@/hooks/use-tasks";
 
 export function MobileHeader() {
+  const [showGreeting, setShowGreeting] = useState(false);
+  const { tasks } = useTasks();
   const currentTime = format(new Date(), 'HH:mm');
   const currentDate = format(new Date(), 'EEE, MMM d');
+
+  const handleTestGreeting = () => {
+    const now = new Date();
+    // Count today's tasks
+    const todayTasks = tasks.filter(task => 
+      task.status === 'scheduled' && 
+      task.date === format(now, 'yyyy-MM-dd')
+    );
+
+    // Generate greeting based on time of day
+    const hour = now.getHours();
+    let timeGreeting = "Hello";
+    if (hour < 12) timeGreeting = "Good morning";
+    else if (hour < 18) timeGreeting = "Good afternoon";
+    else timeGreeting = "Good evening";
+
+    // Construct greeting message
+    let message = `${timeGreeting}! `;
+    if (todayTasks.length > 0) {
+      message += `You have ${todayTasks.length} task${todayTasks.length === 1 ? '' : 's'} scheduled for today.`;
+    } else {
+      message += "You don't have any tasks scheduled for today yet.";
+    }
+
+    setShowGreeting(true);
+    return message;
+  };
 
   const handleTestNotification = async () => {
     try {
@@ -108,6 +140,14 @@ export function MobileHeader() {
           >
             <AlarmClock className="h-5 w-5" />
           </Button>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="text-[#9B87F5]"
+            onClick={handleTestGreeting}
+          >
+            <Smile className="h-5 w-5" />
+          </Button>
           <AddTaskDrawer>
             <div className="relative group">
               <div className="absolute -inset-0.5 bg-gradient-to-r from-pink-600 via-purple-600 to-blue-600 rounded-full opacity-75 group-hover:opacity-100 animate-spin"></div>
@@ -123,6 +163,19 @@ export function MobileHeader() {
           <HeaderUserMenu />
         </div>
       </div>
+
+      <Dialog open={showGreeting} onOpenChange={setShowGreeting}>
+        <DialogContent className="bg-gradient-to-r from-violet-500 to-fuchsia-500">
+          <DialogHeader>
+            <DialogTitle className="text-white text-xl font-semibold">
+              Daily Update
+            </DialogTitle>
+          </DialogHeader>
+          <div className="text-white text-lg py-4">
+            {showGreeting && handleTestGreeting()}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
