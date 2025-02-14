@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
@@ -145,7 +144,6 @@ export function TimePickerDialog({
                   transform: `rotate(${getHandRotation()}deg)`,
                 }}
               >
-                <div className="absolute -left-1 -top-1 w-2 h-2 bg-[#4A5AB9] rounded-full" />
                 <div className="absolute -left-1 bottom-0 w-2 h-2 bg-[#4A5AB9] rounded-full" />
               </div>
             </div>
