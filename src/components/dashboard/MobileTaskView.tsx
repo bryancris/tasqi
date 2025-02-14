@@ -1,17 +1,17 @@
+
 import { Task } from "./TaskBoard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TaskCard } from "./TaskCard";
 import { DndContext, MouseSensor, TouchSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { startOfDay, isAfter } from "date-fns";
-import { QueryObserverResult } from "@tanstack/react-query";
+import { startOfDay, isAfter, isSameDay } from "date-fns";
 
 export interface MobileTaskViewProps {
   tasks: Task[];
   selectedDate: Date;
   onDateChange: (date: Date) => void;
   onDragEnd: (event: DragEndEvent) => void;
-  onComplete?: () => void | Promise<QueryObserverResult<Task[], Error>>;
+  onComplete?: () => void;
 }
 
 export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, onComplete }: MobileTaskViewProps) {
@@ -32,11 +32,28 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
   );
 
   const shouldShowCompletedTask = (task: Task) => {
-    return task.status === 'completed' && task.completed_at && isAfter(new Date(task.completed_at), todayStart);
+    return task.completed_at && isAfter(new Date(task.completed_at), todayStart);
+  };
+
+  const shouldShowTask = (task: Task) => {
+    // Always show unscheduled tasks
+    if (task.status === 'unscheduled') return true;
+    
+    // For completed tasks, check if they were completed today
+    if (task.status === 'completed') {
+      return shouldShowCompletedTask(task);
+    }
+    
+    // For scheduled tasks, check if they're scheduled for today
+    if (task.status === 'scheduled' && task.date) {
+      return isSameDay(new Date(task.date), todayStart);
+    }
+    
+    return false;
   };
 
   const sortedTasks = [...tasks]
-    .filter(task => task.status !== 'completed' || shouldShowCompletedTask(task))
+    .filter(shouldShowTask)
     .sort((a, b) => {
       if (a.status === 'completed' && b.status !== 'completed') return 1;
       if (a.status !== 'completed' && b.status === 'completed') return -1;
