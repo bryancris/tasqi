@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Task } from "./TaskBoard";
@@ -32,6 +33,8 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
   }, [task.id]);
 
   const loadSubtasks = async () => {
+    if (!task.id) return;
+    
     try {
       const { data, error } = await supabase
         .from('subtasks')
@@ -73,22 +76,24 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
   const handleSubmit = async () => {
     setIsLoading(true);
     try {
+      const status = isScheduled ? 'scheduled' as const : 'unscheduled' as const;
+      
       const updateData = {
         title,
         description,
-        status: isScheduled ? 'scheduled' : 'unscheduled',
+        status,
         date: isScheduled && date ? date : null,
-        start_time: isScheduled && startTime ? startTime : null,
-        end_time: isScheduled && endTime ? endTime : null,
         priority,
         reminder_enabled: reminderEnabled,
-      };
+      } as const;
 
-      if (!updateData.start_time) {
-        delete updateData.start_time;
+      // Only add time fields if they have valid values and the task is scheduled
+      if (isScheduled && startTime && startTime.trim() !== '') {
+        Object.assign(updateData, { start_time: startTime });
       }
-      if (!updateData.end_time) {
-        delete updateData.end_time;
+      
+      if (isScheduled && endTime && endTime.trim() !== '') {
+        Object.assign(updateData, { end_time: endTime });
       }
 
       const { error: taskError } = await supabase
@@ -98,6 +103,7 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
 
       if (taskError) throw taskError;
 
+      // Update or create subtasks
       for (const subtask of subtasks) {
         if (subtask.id) {
           const { error: subtaskError } = await supabase
@@ -160,7 +166,7 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
             date={date}
             startTime={startTime}
             endTime={endTime}
-            priority={task.priority || "low"}
+            priority={priority}
             reminderEnabled={reminderEnabled}
             subtasks={subtasks}
             isLoading={isLoading}
