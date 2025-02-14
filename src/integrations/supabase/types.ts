@@ -619,6 +619,7 @@ export type Database = {
         Row: {
           created_at: string
           id: number
+          notes: string | null
           position: number
           status: Database["public"]["Enums"]["subtask_status"]
           task_id: number | null
@@ -628,6 +629,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: never
+          notes?: string | null
           position: number
           status?: Database["public"]["Enums"]["subtask_status"]
           task_id?: number | null
@@ -637,6 +639,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: never
+          notes?: string | null
           position?: number
           status?: Database["public"]["Enums"]["subtask_status"]
           task_id?: number | null

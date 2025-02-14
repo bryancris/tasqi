@@ -2,7 +2,15 @@
 import React, { forwardRef, useState, useImperativeHandle } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { X, Plus, Check } from "lucide-react";
+import { X, Plus, Check, Pencil } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 export interface Subtask {
   id?: number;
@@ -12,6 +20,7 @@ export interface Subtask {
   task_id?: number;
   created_at?: string;
   updated_at?: string;
+  notes?: string | null;
 }
 
 interface SubtaskListProps {
@@ -27,6 +36,8 @@ export interface SubtaskListHandle {
 export const SubtaskList = forwardRef<SubtaskListHandle, SubtaskListProps>(
   ({ subtasks, onSubtasksChange }, ref) => {
     const [newSubtask, setNewSubtask] = useState("");
+    const [editingNoteFor, setEditingNoteFor] = useState<number | null>(null);
+    const [currentNote, setCurrentNote] = useState("");
 
     const addSubtask = (title?: string) => {
       const subtaskTitle = title || newSubtask.trim();
@@ -58,7 +69,6 @@ export const SubtaskList = forwardRef<SubtaskListHandle, SubtaskListProps>(
       onSubtasksChange(newSubtasksList);
     };
 
-    // Expose methods via ref
     useImperativeHandle(ref, () => ({
       addSubtask,
       addMultipleSubtasks,
@@ -80,6 +90,24 @@ export const SubtaskList = forwardRef<SubtaskListHandle, SubtaskListProps>(
         return subtask;
       });
       onSubtasksChange(newSubtasks);
+    };
+
+    const handleNoteChange = (index: number, note: string) => {
+      const newSubtasks = subtasks.map((subtask, i) => {
+        if (i === index) {
+          return {
+            ...subtask,
+            notes: note
+          };
+        }
+        return subtask;
+      });
+      onSubtasksChange(newSubtasks);
+    };
+
+    const handleNoteEdit = (index: number) => {
+      setEditingNoteFor(index);
+      setCurrentNote(subtasks[index].notes || "");
     };
 
     return (
@@ -124,6 +152,50 @@ export const SubtaskList = forwardRef<SubtaskListHandle, SubtaskListProps>(
               <span className={`flex-1 ${subtask.status === 'completed' ? 'line-through text-gray-500' : ''}`}>
                 {subtask.title}
               </span>
+              <Dialog open={editingNoteFor === index} onOpenChange={(open) => !open && setEditingNoteFor(null)}>
+                <DialogTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleNoteEdit(index)}
+                    className="text-blue-500 hover:text-blue-700"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Add Note to Subtask</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 pt-4">
+                    <Textarea
+                      value={currentNote}
+                      onChange={(e) => setCurrentNote(e.target.value)}
+                      placeholder="Add your notes here..."
+                      className="min-h-[100px]"
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setEditingNoteFor(null)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          handleNoteChange(index, currentNote);
+                          setEditingNoteFor(null);
+                        }}
+                      >
+                        Save Note
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
               <Button
                 type="button"
                 variant="ghost"
