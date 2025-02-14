@@ -112,34 +112,36 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent>
-        <DrawerHeader>
+      <DrawerContent className="max-h-[85vh] overflow-y-auto">
+        <DrawerHeader className="sticky top-0 bg-background z-10">
           <DrawerTitle>Edit Task</DrawerTitle>
         </DrawerHeader>
-        <TaskForm
-          title={title}
-          description={description}
-          isScheduled={isScheduled}
-          date={date}
-          startTime={startTime}
-          endTime={endTime}
-          priority={task.priority || "low"}
-          reminderEnabled={reminderEnabled}
-          subtasks={subtasks}
-          isLoading={isLoading}
-          isEditing={true}
-          task={task}
-          onTitleChange={setTitle}
-          onDescriptionChange={setDescription}
-          onIsScheduledChange={setIsScheduled}
-          onDateChange={setDate}
-          onStartTimeChange={setStartTime}
-          onEndTimeChange={setEndTime}
-          onPriorityChange={setPriority}
-          onReminderEnabledChange={setReminderEnabled}
-          onSubtasksChange={setSubtasks}
-          onSubmit={handleSubmit}
-        />
+        <div className="px-4 pb-8">
+          <TaskForm
+            title={title}
+            description={description}
+            isScheduled={isScheduled}
+            date={date}
+            startTime={startTime}
+            endTime={endTime}
+            priority={task.priority || "low"}
+            reminderEnabled={reminderEnabled}
+            subtasks={subtasks}
+            isLoading={isLoading}
+            isEditing={true}
+            task={task}
+            onTitleChange={setTitle}
+            onDescriptionChange={setDescription}
+            onIsScheduledChange={setIsScheduled}
+            onDateChange={setDate}
+            onStartTimeChange={setStartTime}
+            onEndTimeChange={setEndTime}
+            onPriorityChange={setPriority}
+            onReminderEnabledChange={setReminderEnabled}
+            onSubtasksChange={setSubtasks}
+            onSubmit={handleSubmit}
+          />
+        </div>
       </DrawerContent>
     </Drawer>
   );
