@@ -31,7 +31,41 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const result = await processWithOpenAI(message);
+    // Fetch tasks for the user
+    const today = new Date().toISOString().split('T')[0];
+    const { data: tasks, error: tasksError } = await supabase
+      .from('tasks')
+      .select('*')
+      .eq('user_id', userId)
+      .neq('status', 'completed');
+
+    if (tasksError) {
+      console.error('Error fetching tasks:', tasksError);
+      throw tasksError;
+    }
+
+    // Count scheduled and unscheduled tasks
+    const scheduledTasks = tasks.filter(task => task.status === 'scheduled');
+    const unscheduledTasks = tasks.filter(task => task.status === 'unscheduled');
+    
+    // Count today's tasks
+    const todayTasks = tasks.filter(task => task.date === today);
+
+    // Add task information to the message context
+    const contextMessage = `
+Current tasks status:
+- Total active tasks: ${tasks.length}
+- Scheduled tasks: ${scheduledTasks.length}
+- Unscheduled tasks: ${unscheduledTasks.length}
+- Tasks for today: ${todayTasks.length}
+
+Today's tasks:
+${todayTasks.map(task => `- ${task.title}`).join('\n')}
+
+User message: ${message}
+`;
+
+    const result = await processWithOpenAI(contextMessage);
     console.log('OpenAI Processing Result:', result);
 
     // Save chat messages
