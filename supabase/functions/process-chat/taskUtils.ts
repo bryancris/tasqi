@@ -35,23 +35,28 @@ export async function createTask(supabase: SupabaseClient, userId: string, taskD
     if (taskDetails.subtasks && taskDetails.subtasks.length > 0 && task) {
       console.log('Creating subtasks:', taskDetails.subtasks);
       
-      const { error: subtasksError } = await supabase
+      const subtasksToCreate = taskDetails.subtasks.map(subtask => ({
+        task_id: task.id,
+        title: subtask.title,
+        status: subtask.status,
+        position: subtask.position
+      }));
+
+      console.log('Subtasks to create:', subtasksToCreate);
+
+      const { data: createdSubtasks, error: subtasksError } = await supabase
         .from('subtasks')
-        .insert(
-          taskDetails.subtasks.map(subtask => ({
-            task_id: task.id,
-            title: subtask.title,
-            status: subtask.status,
-            position: subtask.position
-          }))
-        );
+        .insert(subtasksToCreate)
+        .select();
 
       if (subtasksError) {
         console.error('Error creating subtasks:', subtasksError);
         throw subtasksError;
       }
       
-      console.log('Successfully created subtasks');
+      console.log('Successfully created subtasks:', createdSubtasks);
+    } else {
+      console.log('No subtasks to create');
     }
 
     return task;
