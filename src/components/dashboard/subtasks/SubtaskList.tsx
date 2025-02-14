@@ -50,6 +50,7 @@ export const SubtaskList = forwardRef<SubtaskListHandle, SubtaskListProps>(
           title: subtaskTitle,
           status: 'pending',
           position: subtasks.length,
+          notes: null // Initialize notes as null for new subtasks
         }
       ];
       onSubtasksChange(newSubtasks);
@@ -65,6 +66,7 @@ export const SubtaskList = forwardRef<SubtaskListHandle, SubtaskListProps>(
           title,
           status: 'pending' as const,
           position: subtasks.length + index,
+          notes: null // Initialize notes as null for new subtasks
         }))
       ];
       onSubtasksChange(newSubtasksList);
@@ -98,7 +100,7 @@ export const SubtaskList = forwardRef<SubtaskListHandle, SubtaskListProps>(
         if (i === index) {
           return {
             ...subtask,
-            notes: note
+            notes: note || null // Ensure empty strings are stored as null
           };
         }
         return subtask;
@@ -113,7 +115,8 @@ export const SubtaskList = forwardRef<SubtaskListHandle, SubtaskListProps>(
 
     const handleTranscriptionComplete = (text: string) => {
       if (editingNoteFor !== null) {
-        setCurrentNote(prev => prev ? `${prev}\n${text}` : text);
+        const newNote = currentNote ? `${currentNote}\n${text}` : text;
+        setCurrentNote(newNote);
       }
     };
 
