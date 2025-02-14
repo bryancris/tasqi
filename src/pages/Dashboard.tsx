@@ -15,6 +15,7 @@ import { MobileWeeklyView } from "@/components/dashboard/mobile/MobileWeeklyView
 import { useLocation, useSearchParams } from "react-router-dom";
 import { useCalendarView } from "@/hooks/use-calendar-view";
 import { useTaskNotifications } from "@/utils/notifications/useTaskNotifications";
+import { useAiGreeting } from "@/hooks/use-ai-greeting";
 
 const Dashboard = () => {
   const { view, changeView } = useCalendarView('tasks');
@@ -24,6 +25,9 @@ const Dashboard = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const calendarView = searchParams.get('view');
+
+  // Use the AI greeting hook
+  useAiGreeting();
 
   // Use the task notifications hook
   useTaskNotifications();

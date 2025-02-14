@@ -853,6 +853,8 @@ export type Database = {
         Row: {
           created_at: string
           end_hour: number
+          greeting_message: string | null
+          last_greeting_at: string | null
           start_hour: number
           text_to_speech_enabled: boolean | null
           time_format: Database["public"]["Enums"]["time_format"] | null
@@ -862,6 +864,8 @@ export type Database = {
         Insert: {
           created_at?: string
           end_hour?: number
+          greeting_message?: string | null
+          last_greeting_at?: string | null
           start_hour?: number
           text_to_speech_enabled?: boolean | null
           time_format?: Database["public"]["Enums"]["time_format"] | null
@@ -871,6 +875,8 @@ export type Database = {
         Update: {
           created_at?: string
           end_hour?: number
+          greeting_message?: string | null
+          last_greeting_at?: string | null
           start_hour?: number
           text_to_speech_enabled?: boolean | null
           time_format?: Database["public"]["Enums"]["time_format"] | null
