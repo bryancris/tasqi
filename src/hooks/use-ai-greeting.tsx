@@ -14,37 +14,30 @@ export function useAiGreeting() {
   useEffect(() => {
     const checkAndShowGreeting = async () => {
       try {
-        // Temporarily removed the hasGreeted check for testing
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        // For testing, always show greeting
-        const shouldShowGreeting = true;
+        // Get user settings to check last greeting time
+        const { data: settings } = await supabase
+          .from('user_settings')
+          .select('last_greeting_at')
+          .eq('user_id', user.id)
+          .single();
+
+        const lastGreeting = settings?.last_greeting_at ? new Date(settings.last_greeting_at) : null;
+        const now = new Date();
+        const shouldShowGreeting = !lastGreeting || 
+          format(lastGreeting, 'yyyy-MM-dd') !== format(now, 'yyyy-MM-dd');
 
         if (shouldShowGreeting) {
-          const now = new Date();
-          // Count today's tasks
-          const todayTasks = tasks.filter(task => 
-            task.status === 'scheduled' && 
-            task.date === format(now, 'yyyy-MM-dd')
-          );
+          // Generate new AI greeting
+          const { data, error } = await supabase.functions.invoke('generate-greeting', {
+            body: { tasks, userId: user.id }
+          });
 
-          // Generate greeting based on time of day
-          const hour = now.getHours();
-          let timeGreeting = "Hello";
-          if (hour < 12) timeGreeting = "Good morning";
-          else if (hour < 18) timeGreeting = "Good afternoon";
-          else timeGreeting = "Good evening";
+          if (error) throw error;
 
-          // Construct greeting message
-          let message = `${timeGreeting}! `;
-          if (todayTasks.length > 0) {
-            message += `You have ${todayTasks.length} task${todayTasks.length === 1 ? '' : 's'} scheduled for today.`;
-          } else {
-            message += "You don't have any tasks scheduled for today yet.";
-          }
-
-          setGreetingMessage(message);
+          setGreetingMessage(data.message);
           setShowGreeting(true);
           setHasGreeted(true);
         }
@@ -53,8 +46,10 @@ export function useAiGreeting() {
       }
     };
 
-    checkAndShowGreeting();
-  }, [tasks]);
+    if (!hasGreeted) {
+      checkAndShowGreeting();
+    }
+  }, [tasks, hasGreeted]);
 
   return (
     <Dialog open={showGreeting} onOpenChange={setShowGreeting}>
