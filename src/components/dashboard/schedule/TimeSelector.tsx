@@ -2,7 +2,6 @@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Clock } from "lucide-react";
 import { useState, useEffect } from "react";
 
 interface TimeSelectorProps {
@@ -107,17 +106,17 @@ export function TimeSelector({
   };
 
   return (
-    <div className="grid grid-cols-2 gap-4">
-      <div className="space-y-2">
-        <Label htmlFor="startTime">Start Time</Label>
-        <div className="flex items-center gap-2">
+    <div className="grid grid-cols-2 gap-2">
+      <div>
+        <Label htmlFor="startTime" className="text-sm">Start Time</Label>
+        <div className="flex items-center gap-1 mt-1">
           <Input
             type="number"
             min="1"
             max="12"
             value={startHours}
             onChange={(e) => handleStartHourChange(e.target.value)}
-            className="w-16 text-center"
+            className="w-12 text-center px-1"
           />
           <span>:</span>
           <Input
@@ -126,7 +125,7 @@ export function TimeSelector({
             max="59"
             value={startMinutes}
             onChange={(e) => handleStartMinuteChange(e.target.value)}
-            className="w-16 text-center"
+            className="w-12 text-center px-1"
           />
           <Button
             variant="ghost"
@@ -134,23 +133,24 @@ export function TimeSelector({
               setStartPeriod(startPeriod === "AM" ? "PM" : "AM");
               setTimeout(handleStartTimeChange, 0);
             }}
-            className="px-3"
+            className="px-2 h-8"
+            type="button"
           >
             {startPeriod}
           </Button>
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="endTime">End Time</Label>
-        <div className="flex items-center gap-2">
+      <div>
+        <Label htmlFor="endTime" className="text-sm">End Time</Label>
+        <div className="flex items-center gap-1 mt-1">
           <Input
             type="number"
             min="1"
             max="12"
             value={endHours}
             onChange={(e) => handleEndHourChange(e.target.value)}
-            className="w-16 text-center"
+            className="w-12 text-center px-1"
           />
           <span>:</span>
           <Input
@@ -159,7 +159,7 @@ export function TimeSelector({
             max="59"
             value={endMinutes}
             onChange={(e) => handleEndMinuteChange(e.target.value)}
-            className="w-16 text-center"
+            className="w-12 text-center px-1"
           />
           <Button
             variant="ghost"
@@ -167,7 +167,8 @@ export function TimeSelector({
               setEndPeriod(endPeriod === "AM" ? "PM" : "AM");
               setTimeout(handleEndTimeChange, 0);
             }}
-            className="px-3"
+            className="px-2 h-8"
+            type="button"
           >
             {endPeriod}
           </Button>
