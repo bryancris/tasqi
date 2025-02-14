@@ -172,7 +172,8 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
               <SheetTitle>Edit Task</SheetTitle>
               <Button
                 size="sm"
-                variant="default"
+                variant="outline"
+                className="bg-blue-500 text-white hover:bg-blue-600"
                 onClick={() => setShowShareDialog(true)}
               >
                 <Share2 className="h-4 w-4 mr-1" />
