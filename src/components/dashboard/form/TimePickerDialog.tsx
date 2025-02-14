@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
@@ -51,14 +52,14 @@ export function TimePickerDialog({
     const x = e.clientX - centerX;
     const y = e.clientY - centerY;
     
-    let angle = Math.atan2(x, -y) * 180 / Math.PI;
+    let angle = Math.atan2(-x, -y) * 180 / Math.PI;
     if (angle < 0) angle += 360;
 
     if (isMinuteMode) {
-      const newMinutes = Math.round(angle / 6) % 60; // 360 / 60 = 6 degrees per minute
+      const newMinutes = Math.round(angle / 6) % 60;
       setMinutes(newMinutes);
     } else {
-      let newHours = Math.round(angle / 30) % 12; // 360 / 12 = 30 degrees per hour
+      let newHours = Math.round(angle / 30) % 12;
       if (newHours === 0) newHours = 12;
       setHours(newHours);
     }
@@ -76,9 +77,9 @@ export function TimePickerDialog({
 
   const getHandRotation = () => {
     if (isMinuteMode) {
-      return minutes * 6; // 360 / 60 = 6 degrees per minute
+      return minutes * 6 + 180; // 360 / 60 = 6 degrees per minute
     }
-    return hours * 30; // 360 / 12 = 30 degrees per hour
+    return hours * 30 + 180; // 360 / 12 = 30 degrees per hour
   };
 
   return (
@@ -112,7 +113,7 @@ export function TimePickerDialog({
               {[...Array(12)].map((_, i) => {
                 const value = i + 1;
                 const angle = ((value % 12) * 30 * Math.PI) / 180;
-                const radius = 120; // Distance from center
+                const radius = 120;
                 const x = 140 + Math.sin(angle) * radius;
                 const y = 140 - Math.cos(angle) * radius;
                 const isSelected = !isMinuteMode && hours === value;
@@ -134,15 +135,12 @@ export function TimePickerDialog({
               })}
 
               {/* Clock hand */}
-              <div className="absolute w-[95px] h-2 bg-transparent left-1/2 top-1/2 -translate-y-1/2"
+              <div className="absolute w-[95px] h-[2px] bg-[#4A5AB9] left-1/2 top-1/2 -translate-y-1/2"
                    style={{
                      transformOrigin: 'left center',
                      transform: `rotate(${getHandRotation()}deg)`
                    }}>
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full">
-                  <div className="w-full h-[2px] bg-[#4A5AB9]" />
-                  <div className="absolute right-0 -translate-y-1/2 top-1/2 w-2 h-2 bg-[#4A5AB9] rounded-full" />
-                </div>
+                <div className="absolute right-0 -translate-y-1/2 w-2 h-2 bg-[#4A5AB9] rounded-full" />
               </div>
             </div>
           </div>
