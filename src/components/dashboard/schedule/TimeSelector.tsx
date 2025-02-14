@@ -67,14 +67,40 @@ export function TimeSelector({
   const handleTimeChange = (type: 'start' | 'end') => {
     try {
       if (type === 'start') {
-        const time = formatTime(parseInt(startHours), startMinutes, startPeriod);
+        const time = formatTime(parseInt(startHours) || 0, startMinutes, startPeriod);
         onStartTimeChange(time);
       } else {
-        const time = formatTime(parseInt(endHours), endMinutes, endPeriod);
+        const time = formatTime(parseInt(endHours) || 0, endMinutes, endPeriod);
         onEndTimeChange(time);
       }
     } catch (error) {
       console.error(`Error formatting ${type} time:`, error);
+    }
+  };
+
+  const handleHourChange = (value: string, type: 'start' | 'end') => {
+    const numValue = parseInt(value);
+    if (value === '' || (numValue >= 0 && numValue <= 12)) {
+      if (type === 'start') {
+        setStartHours(value);
+        if (value.length === 2) handleTimeChange('start');
+      } else {
+        setEndHours(value);
+        if (value.length === 2) handleTimeChange('end');
+      }
+    }
+  };
+
+  const handleMinuteChange = (value: string, type: 'start' | 'end') => {
+    const numValue = parseInt(value);
+    if (value === '' || (numValue >= 0 && numValue <= 59)) {
+      if (type === 'start') {
+        setStartMinutes(value.padStart(2, '0'));
+        if (value.length === 2) handleTimeChange('start');
+      } else {
+        setEndMinutes(value.padStart(2, '0'));
+        if (value.length === 2) handleTimeChange('end');
+      }
     }
   };
 
@@ -84,33 +110,21 @@ export function TimeSelector({
         <Label htmlFor="startTime" className="text-sm">Start Time</Label>
         <div className="flex items-center gap-1 mt-1">
           <Input
-            type="number"
-            min="1"
-            max="12"
+            type="text"
+            inputMode="numeric"
             value={startHours}
-            onChange={(e) => {
-              const num = parseInt(e.target.value);
-              if (!isNaN(num) && num >= 1 && num <= 12) {
-                setStartHours(num.toString());
-                handleTimeChange('start');
-              }
-            }}
-            className="w-12 text-center px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            onChange={(e) => handleHourChange(e.target.value, 'start')}
+            className="w-12 text-center px-1"
+            maxLength={2}
           />
           <span>:</span>
           <Input
-            type="number"
-            min="0"
-            max="59"
+            type="text"
+            inputMode="numeric"
             value={startMinutes}
-            onChange={(e) => {
-              const num = parseInt(e.target.value);
-              if (!isNaN(num) && num >= 0 && num <= 59) {
-                setStartMinutes(num.toString().padStart(2, '0'));
-                handleTimeChange('start');
-              }
-            }}
-            className="w-12 text-center px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            onChange={(e) => handleMinuteChange(e.target.value, 'start')}
+            className="w-12 text-center px-1"
+            maxLength={2}
           />
           <Button
             variant="ghost"
@@ -130,33 +144,21 @@ export function TimeSelector({
         <Label htmlFor="endTime" className="text-sm">End Time</Label>
         <div className="flex items-center gap-1 mt-1">
           <Input
-            type="number"
-            min="1"
-            max="12"
+            type="text"
+            inputMode="numeric"
             value={endHours}
-            onChange={(e) => {
-              const num = parseInt(e.target.value);
-              if (!isNaN(num) && num >= 1 && num <= 12) {
-                setEndHours(num.toString());
-                handleTimeChange('end');
-              }
-            }}
-            className="w-12 text-center px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            onChange={(e) => handleHourChange(e.target.value, 'end')}
+            className="w-12 text-center px-1"
+            maxLength={2}
           />
           <span>:</span>
           <Input
-            type="number"
-            min="0"
-            max="59"
+            type="text"
+            inputMode="numeric"
             value={endMinutes}
-            onChange={(e) => {
-              const num = parseInt(e.target.value);
-              if (!isNaN(num) && num >= 0 && num <= 59) {
-                setEndMinutes(num.toString().padStart(2, '0'));
-                handleTimeChange('end');
-              }
-            }}
-            className="w-12 text-center px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            onChange={(e) => handleMinuteChange(e.target.value, 'end')}
+            className="w-12 text-center px-1"
+            maxLength={2}
           />
           <Button
             variant="ghost"
