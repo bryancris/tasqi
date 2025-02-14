@@ -59,18 +59,19 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
       if (error) throw error;
 
       // Update subtasks
-      if (task.subtasks) {
-        const { error: subtasksError } = await supabase
-          .from("subtasks")
-          .upsert(
-            subtasks.map(subtask => ({
-              ...subtask,
-              task_id: task.id
-            }))
-          );
+      const subtasksToUpsert = subtasks.map((subtask) => ({
+        title: subtask.title,
+        status: subtask.status,
+        position: subtask.position,
+        task_id: task.id,
+        ...(subtask.id ? { id: subtask.id } : {})
+      }));
 
-        if (subtasksError) throw subtasksError;
-      }
+      const { error: subtasksError } = await supabase
+        .from("subtasks")
+        .upsert(subtasksToUpsert);
+
+      if (subtasksError) throw subtasksError;
 
       toast({
         title: "Success",

@@ -1,4 +1,3 @@
-
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DesktopTaskView } from "./DesktopTaskView";
 import { MobileTaskView } from "./MobileTaskView";
@@ -6,14 +5,14 @@ import { useTasks } from "@/hooks/use-tasks";
 import { useTaskReorder } from "@/hooks/use-task-reorder";
 import { useCallback, useMemo } from 'react';
 
-export type TaskPriority = 'low' | 'medium' | 'high';
+export type TaskPriority = "low" | "medium" | "high";
 
 export interface TaskAssignment {
   id: number;
   task_id: number;
   assignee_id: string;
   assigned_by_id: string;
-  status: 'pending' | 'accepted' | 'declined' | 'completed';
+  status: "pending" | "accepted" | "declined" | "completed";
   created_at: string;
   updated_at: string;
 }
@@ -21,19 +20,19 @@ export interface TaskAssignment {
 export interface Task {
   id: number;
   title: string;
-  description?: string;
-  date?: string;
-  status: 'unscheduled' | 'scheduled' | 'completed';
-  start_time?: string;
-  end_time?: string;
-  priority?: TaskPriority;
+  description: string | null;
+  status: "scheduled" | "unscheduled";
+  date: string | null;
+  start_time: string | null;
+  end_time: string | null;
+  priority: TaskPriority;
+  reminder_enabled: boolean;
+  position: number;
+  subtasks?: Subtask[];
   user_id: string;
   owner_id: string;
   created_at?: string;
   updated_at?: string;
-  position: number;
-  reminder_enabled?: boolean;
-  completed_at?: string;
   reschedule_count?: number;
   shared?: boolean;
   assignees?: string[];

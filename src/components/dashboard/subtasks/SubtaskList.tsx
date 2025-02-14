@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,6 +8,7 @@ export interface Subtask {
   title: string;
   status: 'pending' | 'completed';
   position: number;
+  task_id?: number;
 }
 
 interface SubtaskListProps {
@@ -28,6 +28,7 @@ export function SubtaskList({ subtasks, onSubtasksChange }: SubtaskListProps) {
         title: newSubtask.trim(),
         status: 'pending' as const,
         position: subtasks.length,
+        task_id: null,
       }
     ];
     onSubtasksChange(newSubtasks);
