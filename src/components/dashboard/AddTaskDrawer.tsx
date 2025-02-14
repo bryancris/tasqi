@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +16,7 @@ import { createTask } from "@/utils/taskUtils";
 import { TaskPriority } from "./TaskBoard";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ShareTaskDialog } from "./ShareTaskDialog";
+import { Subtask } from "./subtasks/SubtaskList";
 
 interface AddTaskDrawerProps {
   children?: React.ReactNode;
@@ -34,6 +34,7 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const [subtasks, setSubtasks] = useState<Subtask[]>([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
@@ -91,6 +92,7 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
         endTime: isScheduled && endTime ? endTime : null,
         priority,
         reminderEnabled,
+        subtasks
       };
 
       const newTask = await createTask(taskData);
@@ -108,6 +110,7 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
       setEndTime("");
       setPriority("low");
       setReminderEnabled(false);
+      setSubtasks([]);
       setIsOpen(false);
 
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
@@ -163,6 +166,7 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
             endTime={endTime}
             priority={priority}
             reminderEnabled={reminderEnabled}
+            subtasks={subtasks}
             isLoading={isLoading}
             onTitleChange={setTitle}
             onDescriptionChange={setDescription}
@@ -172,6 +176,7 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
             onEndTimeChange={setEndTime}
             onPriorityChange={setPriority}
             onReminderEnabledChange={setReminderEnabled}
+            onSubtasksChange={setSubtasks}
             onSubmit={handleSubmit}
           />
         </div>
@@ -184,4 +189,3 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
     </Drawer>
   );
 }
-

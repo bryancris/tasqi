@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Task, TaskPriority } from "./TaskBoard";
 import { DeleteTaskAlert } from "./DeleteTaskAlert";
 import { ShareTaskDialog } from "./ShareTaskDialog";
+import { Subtask } from "./subtasks/SubtaskList";
 
 interface EditTaskDrawerProps {
   task: Task;
@@ -32,6 +32,7 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
   const [endTime, setEndTime] = useState(task.end_time || "");
   const [priority, setPriority] = useState<TaskPriority>(task.priority || "low");
   const [reminderEnabled, setReminderEnabled] = useState(task.reminder_enabled || false);
+  const [subtasks, setSubtasks] = useState<Subtask[]>(task.subtasks || []);
   const [isLoading, setIsLoading] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const { toast } = useToast();
@@ -56,6 +57,20 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
         .eq("id", task.id);
 
       if (error) throw error;
+
+      // Update subtasks
+      if (task.subtasks) {
+        const { error: subtasksError } = await supabase
+          .from("subtasks")
+          .upsert(
+            subtasks.map(subtask => ({
+              ...subtask,
+              task_id: task.id
+            }))
+          );
+
+        if (subtasksError) throw subtasksError;
+      }
 
       toast({
         title: "Success",
@@ -140,6 +155,7 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
               endTime={endTime}
               priority={priority}
               reminderEnabled={reminderEnabled}
+              subtasks={subtasks}
               isLoading={isLoading}
               isEditing={true}
               task={task}
@@ -151,6 +167,7 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
               onEndTimeChange={setEndTime}
               onPriorityChange={setPriority}
               onReminderEnabledChange={setReminderEnabled}
+              onSubtasksChange={setSubtasks}
               onSubmit={handleSubmit}
             />
             

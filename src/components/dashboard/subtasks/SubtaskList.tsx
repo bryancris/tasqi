@@ -22,11 +22,11 @@ export function SubtaskList({ subtasks, onSubtasksChange }: SubtaskListProps) {
   const addSubtask = () => {
     if (!newSubtask.trim()) return;
     
-    const newSubtasks = [
+    const newSubtasks: Subtask[] = [
       ...subtasks,
       {
         title: newSubtask.trim(),
-        status: 'pending',
+        status: 'pending' as const,
         position: subtasks.length,
       }
     ];
@@ -40,11 +40,11 @@ export function SubtaskList({ subtasks, onSubtasksChange }: SubtaskListProps) {
   };
 
   const toggleSubtask = (index: number) => {
-    const newSubtasks = subtasks.map((subtask, i) => {
+    const newSubtasks: Subtask[] = subtasks.map((subtask, i) => {
       if (i === index) {
         return {
           ...subtask,
-          status: subtask.status === 'pending' ? 'completed' : 'pending'
+          status: subtask.status === 'pending' ? 'completed' as const : 'pending' as const
         };
       }
       return subtask;
