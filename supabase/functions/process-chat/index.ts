@@ -81,7 +81,7 @@ serve(async (req) => {
     }
     // Handle creating a new task with subtasks
     else if (result.task?.should_create) {
-      console.log('Creating task with subtasks:', result.task.subtasks);
+      console.log('Creating task with subtasks:', result.task);
       
       const startTime = validateTimeFormat(result.task.start_time);
       const endTime = validateTimeFormat(result.task.end_time);
@@ -90,80 +90,20 @@ serve(async (req) => {
       await createTask(supabase, userId, {
         title: result.task.title,
         description: result.task.description,
-        date: result.task.date || 'today', // Set default date to today
+        date: result.task.date || 'today',
         startTime,
         endTime,
         isScheduled: result.task.is_scheduled,
         priority: result.task.priority,
-        subtasks: result.task.subtasks || [] // Ensure subtasks are passed
+        subtasks: result.task.subtasks || []
       });
-    }
-    else if (result.task?.should_complete && result.task.task_title) {
-      console.log('Completing task:', result.task.task_title);
-      
-      // Find all active tasks
-      const { data: tasks, error: findError } = await supabase
-        .from('tasks')
-        .select('id, title')
-        .eq('user_id', userId)
-        .neq('status', 'completed')
-        .order('created_at', { ascending: false });
-
-      if (findError) {
-        console.error('Error finding task:', findError);
-        throw findError;
-      }
-
-      if (!tasks || tasks.length === 0) {
-        console.log('No active tasks found');
-        return new Response(
-          JSON.stringify({ 
-            response: "I couldn't find any active tasks to complete. Make sure you have an active task with that title." 
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      // Find the best matching task using exact match or includes
-      const taskTitle = result.task.task_title.toLowerCase().trim();
-      const matchingTask = tasks.find(task => {
-        const currentTitle = task.title.toLowerCase().trim();
-        return currentTitle === taskTitle || 
-               currentTitle.includes(taskTitle) || 
-               taskTitle.includes(currentTitle);
-      });
-
-      if (matchingTask) {
-        console.log('Found matching task:', matchingTask);
-        
-        const { error: updateError } = await supabase
-          .from('tasks')
-          .update({ 
-            status: 'completed',
-            completed_at: new Date().toISOString()
-          })
-          .eq('id', matchingTask.id);
-
-        if (updateError) {
-          console.error('Error updating task:', updateError);
-          throw updateError;
-        }
-      } else {
-        console.log('No matching task found');
-        return new Response(
-          JSON.stringify({ 
-            response: "I couldn't find a matching task to complete. Make sure you have an active task with that title." 
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
     }
 
     // Save chat messages
     await saveChatMessages(supabase, userId, message, result.response);
 
     return new Response(
-      JSON.stringify({ response: result.response }),
+      JSON.stringify(result),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 

@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -65,6 +64,7 @@ export function TaskForm({
   const [showShareDialog, setShowShareDialog] = useState(false);
   const { message, setMessage } = useChat();
   const [processingAIResponse, setProcessingAIResponse] = useState(false);
+  const subtaskListRef = useRef<SubtaskListHandle>(null);
 
   useEffect(() => {
     const handleAIResponse = (e: CustomEvent<any>) => {
@@ -95,16 +95,12 @@ export function TaskForm({
           if (e.detail.task.subtasks && Array.isArray(e.detail.task.subtasks)) {
             console.log('Processing subtasks from AI:', e.detail.task.subtasks);
             
-            const aiSubtasks = e.detail.task.subtasks.map((subtask: any, index: number) => ({
-              title: subtask.title,
-              status: 'pending' as const,
-              position: index,
-            }));
-            
-            console.log('Created subtask objects:', aiSubtasks);
-            
-            // Update subtasks state
-            onSubtasksChange(aiSubtasks);
+            // Map the subtasks array and add them one by one
+            e.detail.task.subtasks.forEach((subtask: any) => {
+              if (subtaskListRef.current) {
+                subtaskListRef.current.addSubtask(subtask.title);
+              }
+            });
           }
         } finally {
           setProcessingAIResponse(false);
@@ -114,7 +110,7 @@ export function TaskForm({
 
     window.addEventListener('ai-response', handleAIResponse as EventListener);
     return () => window.removeEventListener('ai-response', handleAIResponse as EventListener);
-  }, [onTitleChange, onDescriptionChange, onIsScheduledChange, onDateChange, onSubtasksChange]);
+  }, [onTitleChange, onDescriptionChange, onIsScheduledChange, onDateChange]);
 
   return (
     <form
@@ -148,6 +144,7 @@ export function TaskForm({
       <div className="space-y-2">
         <Label>Subtasks</Label>
         <SubtaskList 
+          ref={subtaskListRef}
           subtasks={subtasks} 
           onSubtasksChange={onSubtasksChange}
         />
