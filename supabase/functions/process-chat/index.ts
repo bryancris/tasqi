@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -26,15 +25,32 @@ serve(async (req) => {
       throw new Error('Message and userId are required');
     }
 
-    // Initialize Supabase client
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Process message with OpenAI
     const result = await processWithOpenAI(message);
-    console.log('Processed result:', result);
+    console.log('OpenAI Processing Result:', result);
+
+    if (result.task?.should_create) {
+      console.log('Creating task with subtasks:', result.task.subtasks);
+      
+      const startTime = validateTimeFormat(result.task.start_time);
+      const endTime = validateTimeFormat(result.task.end_time);
+
+      // Create the task with all details including subtasks
+      await createTask(supabase, userId, {
+        title: result.task.title,
+        description: result.task.description,
+        date: result.task.date || 'today', // Set default date to today
+        startTime,
+        endTime,
+        isScheduled: result.task.is_scheduled,
+        priority: result.task.priority,
+        subtasks: result.task.subtasks || [] // Ensure subtasks are passed
+      });
+    }
 
     // Handle task completion if detected
     if (result.task?.should_complete && result.task.task_title) {
@@ -96,22 +112,6 @@ serve(async (req) => {
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-    }
-    // Create task if needed
-    else if (result.task?.should_create) {
-      const startTime = validateTimeFormat(result.task.start_time);
-      const endTime = validateTimeFormat(result.task.end_time);
-
-      await createTask(supabase, userId, {
-        title: result.task.title,
-        description: result.task.description,
-        date: result.task.date,
-        startTime,
-        endTime,
-        isScheduled: result.task.is_scheduled,
-        priority: result.task.priority,
-        subtasks: result.task.subtasks
-      });
     }
 
     // Save chat messages

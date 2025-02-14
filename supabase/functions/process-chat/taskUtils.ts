@@ -4,7 +4,7 @@ import { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 export async function createTask(supabase: SupabaseClient, userId: string, taskDetails: TaskDetails) {
   try {
-    console.log('Creating task with details:', taskDetails);
+    console.log('Creating task with details:', JSON.stringify(taskDetails, null, 2));
     
     // First create the task
     const { data: task, error: taskError } = await supabase
@@ -35,15 +35,17 @@ export async function createTask(supabase: SupabaseClient, userId: string, taskD
     if (taskDetails.subtasks && taskDetails.subtasks.length > 0 && task) {
       console.log('Creating subtasks:', taskDetails.subtasks);
       
+      // Prepare subtasks for insertion
       const subtasksToCreate = taskDetails.subtasks.map(subtask => ({
         task_id: task.id,
         title: subtask.title,
-        status: subtask.status,
+        status: 'pending',
         position: subtask.position
       }));
 
-      console.log('Subtasks to create:', subtasksToCreate);
+      console.log('Prepared subtasks for creation:', subtasksToCreate);
 
+      // Insert the subtasks
       const { data: createdSubtasks, error: subtasksError } = await supabase
         .from('subtasks')
         .insert(subtasksToCreate)

@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { OpenAIResponse } from "./types.ts";
 
@@ -140,47 +139,24 @@ export async function processWithOpenAI(message: string): Promise<OpenAIResponse
       };
     }
 
-    if (!parsedResponse || typeof parsedResponse !== 'object') {
-      throw new Error('Invalid response structure');
-    }
-
-    if (!parsedResponse.response || typeof parsedResponse.response !== 'string') {
-      throw new Error('Missing or invalid response field');
-    }
-
-    if (parsedResponse.task) {
-      if (typeof parsedResponse.task.should_create !== 'boolean') {
-        throw new Error('Invalid task.should_create field');
-      }
-
-      if (parsedResponse.task.should_create) {
-        if (!parsedResponse.task.title || typeof parsedResponse.task.title !== 'string') {
-          throw new Error('Missing or invalid task.title field');
-        }
-
-        if (typeof parsedResponse.task.is_scheduled !== 'boolean') {
-          throw new Error('Invalid task.is_scheduled field');
-        }
-      }
-
-      // Add end time if start time is present but end time is missing
-      if (parsedResponse.task.is_scheduled && 
-          parsedResponse.task.start_time && 
-          !parsedResponse.task.end_time) {
-        const [hours, minutes] = parsedResponse.task.start_time.split(':').map(Number);
-        const endHour = (hours + 1) % 24;
-        parsedResponse.task.end_time = `${endHour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-        console.log('Added default end time:', parsedResponse.task.end_time);
-      }
-
-      // Ensure subtasks array exists and has valid structure
+    // Validate and transform the response
+    if (parsedResponse.task?.should_create) {
+      // Ensure subtasks are properly structured
       if (parsedResponse.task.subtasks) {
-        console.log('Processing subtasks:', parsedResponse.task.subtasks);
-        parsedResponse.task.subtasks = parsedResponse.task.subtasks.map((subtask: any, index: number) => ({
-          title: subtask.title,
-          status: 'pending',
-          position: index
-        }));
+        console.log('Original subtasks from OpenAI:', parsedResponse.task.subtasks);
+        
+        // Transform subtasks to match our schema
+        parsedResponse.task.subtasks = parsedResponse.task.subtasks.map((subtask: any, index: number) => {
+          const transformedSubtask = {
+            title: subtask.title,
+            status: 'pending' as const,
+            position: index
+          };
+          console.log(`Transformed subtask ${index}:`, transformedSubtask);
+          return transformedSubtask;
+        });
+        
+        console.log('Final transformed subtasks:', parsedResponse.task.subtasks);
       }
     }
 
