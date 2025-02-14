@@ -75,7 +75,7 @@ export function EditTaskContent({
         onStartTimeChange={onStartTimeChange}
         onEndTimeChange={onEndTimeChange}
         onPriorityChange={onPriorityChange}
-        onReminderEnabledChange={onReminderEnabled}
+        onReminderEnabledChange={onReminderEnabledChange}
         onSubtasksChange={onSubtasksChange}
         onSubmit={onSubmit}
       />
