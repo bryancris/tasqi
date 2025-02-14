@@ -3,7 +3,8 @@ import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Task } from "@/components/dashboard/TaskBoard";
 import { Button } from "@/components/ui/button";
-import { Check, CalendarRange } from "lucide-react";
+import { Check, CalendarRange, MessageCircle } from "lucide-react";
+import { useState } from "react";
 
 interface GreetingDialogProps {
   open: boolean;
@@ -20,6 +21,24 @@ export function GreetingDialog({
   todaysTaskDetails,
   unscheduledTasks,
 }: GreetingDialogProps) {
+  const [showResponse, setShowResponse] = useState(false);
+  const [aiResponse, setAiResponse] = useState("");
+
+  const handleUserResponse = async (response: "good" | "adjust") => {
+    setShowResponse(true);
+    
+    if (response === "good") {
+      setAiResponse("Perfect! Have a productive day. I'll be here if you need any help managing your tasks.");
+    } else {
+      setAiResponse("Of course! Let me know which tasks you'd like to adjust, and I'll help you reorganize your schedule.");
+    }
+
+    // Auto close after showing response
+    setTimeout(() => {
+      onOpenChange(false);
+    }, 3000);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-gradient-to-r from-violet-500 to-fuchsia-500">
@@ -31,10 +50,17 @@ export function GreetingDialog({
         </DialogHeader>
         <div className="space-y-4">
           <div className="text-white text-lg py-2 leading-relaxed">
-            {greetingMessage}
+            {showResponse ? (
+              <div className="flex items-start gap-2">
+                <MessageCircle className="h-5 w-5 mt-1 flex-shrink-0" />
+                <p>{aiResponse}</p>
+              </div>
+            ) : (
+              greetingMessage
+            )}
           </div>
           
-          {todaysTaskDetails.length > 0 && (
+          {!showResponse && todaysTaskDetails.length > 0 && (
             <div className="space-y-2">
               <h3 className="text-white font-medium">Today's Schedule:</h3>
               <div className="space-y-2">
@@ -57,7 +83,7 @@ export function GreetingDialog({
             </div>
           )}
           
-          {unscheduledTasks.length > 0 && (
+          {!showResponse && unscheduledTasks.length > 0 && (
             <div className="space-y-2">
               <h3 className="text-white font-medium">Unscheduled Tasks:</h3>
               <div className="space-y-2">
@@ -77,19 +103,23 @@ export function GreetingDialog({
           )}
 
           <div className="flex justify-end gap-3 pt-2">
-            <Button 
-              variant="ghost" 
-              className="text-white hover:bg-white/20"
-              onClick={() => onOpenChange(false)}
-            >
-              I'll review later
-            </Button>
-            <Button 
-              className="bg-white text-violet-600 hover:bg-white/90"
-              onClick={() => onOpenChange(false)}
-            >
-              Looks good, thanks!
-            </Button>
+            {!showResponse && (
+              <>
+                <Button 
+                  variant="ghost" 
+                  className="text-white hover:bg-white/20"
+                  onClick={() => handleUserResponse("adjust")}
+                >
+                  I need to adjust some tasks
+                </Button>
+                <Button 
+                  className="bg-white text-violet-600 hover:bg-white/90"
+                  onClick={() => handleUserResponse("good")}
+                >
+                  Schedule looks perfect
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </DialogContent>
