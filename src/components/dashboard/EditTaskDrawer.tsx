@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Task } from "./TaskBoard";
@@ -8,7 +9,6 @@ import { Subtask } from "./subtasks/SubtaskList";
 import { Trash2, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DeleteTaskAlert } from "./DeleteTaskAlert";
-import { AlertDialog, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 interface EditTaskDrawerProps {
   task: Task;
@@ -141,21 +141,6 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
               >
                 <Save className="h-5 w-5" />
               </Button>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    className="text-red-500 hover:text-red-700 hover:bg-red-100"
-                  >
-                    <Trash2 className="h-5 w-5" />
-                  </Button>
-                </AlertDialogTrigger>
-                <DeleteTaskAlert 
-                  isLoading={isLoading} 
-                  onDelete={handleDelete}
-                />
-              </AlertDialog>
             </div>
           </div>
         </SheetHeader>
@@ -184,6 +169,12 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
             onSubtasksChange={setSubtasks}
             onSubmit={handleSubmit}
           />
+          <div className="mt-6">
+            <DeleteTaskAlert 
+              isLoading={isLoading} 
+              onDelete={handleDelete}
+            />
+          </div>
         </div>
       </SheetContent>
     </Sheet>
