@@ -1,5 +1,5 @@
 
-import { forwardRef, useState } from "react";
+import React, { forwardRef, useState, useImperativeHandle } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { X, Plus, Check } from "lucide-react";
@@ -57,7 +57,7 @@ export const SubtaskList = forwardRef<SubtaskListHandle, SubtaskListProps>(
     };
 
     // Expose methods via ref
-    React.useImperativeHandle(ref, () => ({
+    useImperativeHandle(ref, () => ({
       addSubtask,
       addMultipleSubtasks,
     }));
