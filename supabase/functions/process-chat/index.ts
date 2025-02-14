@@ -34,74 +34,19 @@ serve(async (req) => {
     const result = await processWithOpenAI(message);
     console.log('OpenAI Processing Result:', result);
 
-    // Handle adding subtasks to existing task
-    if (result.task?.should_add_subtasks && result.task.subtasks) {
-      console.log('Adding subtasks:', result.task.subtasks);
-      
-      // Get the latest task for the user
-      const { data: latestTask, error: taskError } = await supabase
-        .from('tasks')
-        .select('id')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (taskError) {
-        console.error('Error finding latest task:', taskError);
-        throw taskError;
-      }
-
-      if (!latestTask) {
-        return new Response(
-          JSON.stringify({ 
-            response: "I couldn't find an active task to add subtasks to. Please create a task first." 
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      // Prepare subtasks for insertion
-      const subtasksToAdd = result.task.subtasks.map((subtask: SubtaskDetails) => ({
-        task_id: latestTask.id,
-        title: subtask.title,
-        status: subtask.status,
-        position: subtask.position
+    // Transform the result to ensure proper structure
+    if (result.task?.subtasks) {
+      result.task.subtasks = result.task.subtasks.map((subtask: any, index: number) => ({
+        title: subtask.title || subtask,
+        status: 'pending',
+        position: index
       }));
-
-      // Insert the subtasks
-      const { error: insertError } = await supabase
-        .from('subtasks')
-        .insert(subtasksToAdd);
-
-      if (insertError) {
-        console.error('Error adding subtasks:', insertError);
-        throw insertError;
-      }
-    }
-    // Handle creating a new task with subtasks
-    else if (result.task?.should_create) {
-      console.log('Creating task with subtasks:', result.task);
-      
-      const startTime = validateTimeFormat(result.task.start_time);
-      const endTime = validateTimeFormat(result.task.end_time);
-
-      // Create the task with all details including subtasks
-      await createTask(supabase, userId, {
-        title: result.task.title,
-        description: result.task.description,
-        date: result.task.date || 'today',
-        startTime,
-        endTime,
-        isScheduled: result.task.is_scheduled,
-        priority: result.task.priority,
-        subtasks: result.task.subtasks || []
-      });
     }
 
-    // Save chat messages
+    // Save chat messages before handling task creation
     await saveChatMessages(supabase, userId, message, result.response);
-
+    
+    // Return the result immediately - task creation will be handled on the client side
     return new Response(
       JSON.stringify(result),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

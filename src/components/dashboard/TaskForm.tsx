@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +12,7 @@ import { SubtaskList, Subtask, SubtaskListHandle } from "./subtasks/SubtaskList"
 import { useState, useRef, useEffect } from "react";
 import { Task } from "./TaskBoard";
 import { useChat } from "@/hooks/use-chat";
+import { toast } from "@/components/ui/use-toast";
 
 interface TaskFormProps {
   title: string;
@@ -64,7 +66,6 @@ export function TaskForm({
   const [showShareDialog, setShowShareDialog] = useState(false);
   const { message, setMessage } = useChat();
   const [processingAIResponse, setProcessingAIResponse] = useState(false);
-  const subtaskListRef = useRef<SubtaskListHandle>(null);
 
   useEffect(() => {
     const handleAIResponse = (e: CustomEvent<any>) => {
@@ -72,36 +73,39 @@ export function TaskForm({
       
       if (e.detail?.task) {
         setProcessingAIResponse(true);
-        console.log('Task details:', e.detail.task);
         
         try {
-          // Update title and description if provided
-          if (e.detail.task.title) {
-            onTitleChange(e.detail.task.title);
-          }
-          if (e.detail.task.description) {
-            onDescriptionChange(e.detail.task.description);
-          }
-          
-          // Update scheduling if provided
-          if (e.detail.task.is_scheduled !== undefined) {
-            onIsScheduledChange(e.detail.task.is_scheduled);
-          }
-          if (e.detail.task.date) {
-            onDateChange(e.detail.task.date);
-          }
-          
-          // Handle subtasks - ensure we're creating new subtask objects
-          if (e.detail.task.subtasks && Array.isArray(e.detail.task.subtasks)) {
-            console.log('Processing subtasks from AI:', e.detail.task.subtasks);
+          const taskData = e.detail.task;
+          console.log('Processing task data:', taskData);
+
+          // Update basic task details
+          onTitleChange(taskData.title || '');
+          onDescriptionChange(taskData.description || '');
+          onIsScheduledChange(!!taskData.is_scheduled);
+          if (taskData.date) onDateChange(taskData.date);
+
+          // Process subtasks
+          if (taskData.subtasks && Array.isArray(taskData.subtasks)) {
+            console.log('Setting subtasks:', taskData.subtasks);
+            const newSubtasks = taskData.subtasks.map((subtask: any, index: number) => ({
+              title: subtask.title,
+              status: 'pending',
+              position: index
+            }));
+            onSubtasksChange(newSubtasks); // Update the subtasks state
             
-            // Map the subtasks array and add them one by one
-            e.detail.task.subtasks.forEach((subtask: any) => {
-              if (subtaskListRef.current) {
-                subtaskListRef.current.addSubtask(subtask.title);
-              }
+            toast({
+              title: "Subtasks Added",
+              description: `Added ${newSubtasks.length} subtasks to your task.`,
             });
           }
+        } catch (error) {
+          console.error('Error processing AI response:', error);
+          toast({
+            title: "Error",
+            description: "Failed to process AI response",
+            variant: "destructive",
+          });
         } finally {
           setProcessingAIResponse(false);
         }
@@ -110,7 +114,7 @@ export function TaskForm({
 
     window.addEventListener('ai-response', handleAIResponse as EventListener);
     return () => window.removeEventListener('ai-response', handleAIResponse as EventListener);
-  }, [onTitleChange, onDescriptionChange, onIsScheduledChange, onDateChange]);
+  }, [onTitleChange, onDescriptionChange, onIsScheduledChange, onDateChange, onSubtasksChange]);
 
   return (
     <form
@@ -144,7 +148,6 @@ export function TaskForm({
       <div className="space-y-2">
         <Label>Subtasks</Label>
         <SubtaskList 
-          ref={subtaskListRef}
           subtasks={subtasks} 
           onSubtasksChange={onSubtasksChange}
         />
