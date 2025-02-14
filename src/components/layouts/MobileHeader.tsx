@@ -14,18 +14,23 @@ export function MobileHeader() {
   const [showGreeting, setShowGreeting] = useState(false);
   const [greetingMessage, setGreetingMessage] = useState("");
   const [todaysTaskDetails, setTodaysTaskDetails] = useState<Task[]>([]);
+  const [unscheduledTasks, setUnscheduledTasks] = useState<Task[]>([]);
   const { tasks } = useTasks();
   const currentTime = format(new Date(), 'HH:mm');
   const currentDate = format(new Date(), 'EEE, MMM d');
 
   const handleTestGreeting = () => {
     const now = new Date();
-    // Get today's tasks
+    // Get today's scheduled tasks
     const todayTasks = tasks.filter(task => 
       task.status === 'scheduled' && 
       task.date === format(now, 'yyyy-MM-dd')
     );
     setTodaysTaskDetails(todayTasks);
+
+    // Get unscheduled tasks
+    const unscheduled = tasks.filter(task => task.status === 'unscheduled');
+    setUnscheduledTasks(unscheduled);
 
     // Generate greeting based on time of day
     const hour = now.getHours();
@@ -36,10 +41,23 @@ export function MobileHeader() {
 
     // Construct greeting message
     let message = `${timeGreeting}! `;
-    if (todayTasks.length > 0) {
-      message += `You have ${todayTasks.length} task${todayTasks.length === 1 ? '' : 's'} scheduled for today.`;
+    const totalTasks = todayTasks.length + unscheduled.length;
+    
+    if (totalTasks > 0) {
+      message += `You have ${totalTasks} task${totalTasks === 1 ? '' : 's'} to manage `;
+      if (todayTasks.length > 0) {
+        message += `(${todayTasks.length} scheduled for today`;
+        if (unscheduled.length > 0) {
+          message += ` and ${unscheduled.length} unscheduled)`;
+        } else {
+          message += ")";
+        }
+      } else if (unscheduled.length > 0) {
+        message += `(all ${unscheduled.length} unscheduled)`;
+      }
+      message += ".";
     } else {
-      message += "You don't have any tasks scheduled for today yet.";
+      message += "You don't have any tasks to manage yet.";
     }
 
     setGreetingMessage(message);
@@ -193,6 +211,24 @@ export function MobileHeader() {
                         {task.start_time ? format(new Date(`2000-01-01 ${task.start_time}`), 'h:mm a') : 'Anytime'} 
                         {task.end_time && ` - ${format(new Date(`2000-01-01 ${task.end_time}`), 'h:mm a')}`}
                       </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {unscheduledTasks.length > 0 && (
+              <div className="space-y-2">
+                <h3 className="text-white font-medium">Unscheduled Tasks:</h3>
+                <div className="space-y-2">
+                  {unscheduledTasks.map((task) => (
+                    <div 
+                      key={task.id} 
+                      className="bg-white/10 rounded-lg p-3 backdrop-blur-sm border-l-4 border-yellow-400"
+                    >
+                      <div className="text-white font-medium">{task.title}</div>
+                      {task.description && (
+                        <div className="text-white/80 text-sm">{task.description}</div>
+                      )}
                     </div>
                   ))}
                 </div>
