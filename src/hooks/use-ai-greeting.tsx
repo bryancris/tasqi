@@ -2,11 +2,13 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTasks } from "./use-tasks";
 
 export function useAiGreeting() {
   const [hasGreeted, setHasGreeted] = useState(false);
+  const [showGreeting, setShowGreeting] = useState(false);
+  const [greetingMessage, setGreetingMessage] = useState("");
   const { tasks } = useTasks();
 
   useEffect(() => {
@@ -63,12 +65,8 @@ export function useAiGreeting() {
             })
             .eq('user_id', user.id);
 
-          // Show greeting toast
-          toast(message, {
-            duration: 5000,
-            className: "bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white"
-          });
-
+          setGreetingMessage(message);
+          setShowGreeting(true);
           setHasGreeted(true);
         }
       } catch (error) {
@@ -79,5 +77,18 @@ export function useAiGreeting() {
     checkAndShowGreeting();
   }, [tasks, hasGreeted]);
 
-  return null;
+  return (
+    <Dialog open={showGreeting} onOpenChange={setShowGreeting}>
+      <DialogContent className="bg-gradient-to-r from-violet-500 to-fuchsia-500">
+        <DialogHeader>
+          <DialogTitle className="text-white text-xl font-semibold">
+            Daily Update
+          </DialogTitle>
+        </DialogHeader>
+        <div className="text-white text-lg py-4">
+          {greetingMessage}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 }
