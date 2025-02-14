@@ -64,40 +64,50 @@ export function TaskForm({
 }: TaskFormProps) {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const { message, setMessage } = useChat();
+  const [processingAIResponse, setProcessingAIResponse] = useState(false);
 
   useEffect(() => {
     const handleAIResponse = (e: CustomEvent<any>) => {
       console.log('AI Response received in TaskForm:', e.detail);
       
       if (e.detail?.task) {
+        setProcessingAIResponse(true);
         console.log('Task details:', e.detail.task);
         
-        // Update title and description if provided
-        if (e.detail.task.title) {
-          onTitleChange(e.detail.task.title);
-        }
-        if (e.detail.task.description) {
-          onDescriptionChange(e.detail.task.description);
-        }
-        
-        // Update scheduling if provided
-        if (e.detail.task.is_scheduled !== undefined) {
-          onIsScheduledChange(e.detail.task.is_scheduled);
-        }
-        if (e.detail.task.date) {
-          onDateChange(e.detail.task.date);
-        }
-        
-        // Handle subtasks
-        if (e.detail.task.subtasks && Array.isArray(e.detail.task.subtasks)) {
-          console.log('Processing subtasks:', e.detail.task.subtasks);
-          const newSubtasks = e.detail.task.subtasks.map((subtask: any, index: number) => ({
-            title: subtask.title,
-            status: 'pending' as const,
-            position: index
-          }));
-          console.log('Created new subtasks:', newSubtasks);
-          onSubtasksChange(newSubtasks);
+        try {
+          // Update title and description if provided
+          if (e.detail.task.title) {
+            onTitleChange(e.detail.task.title);
+          }
+          if (e.detail.task.description) {
+            onDescriptionChange(e.detail.task.description);
+          }
+          
+          // Update scheduling if provided
+          if (e.detail.task.is_scheduled !== undefined) {
+            onIsScheduledChange(e.detail.task.is_scheduled);
+          }
+          if (e.detail.task.date) {
+            onDateChange(e.detail.task.date);
+          }
+          
+          // Handle subtasks - ensure we're creating new subtask objects
+          if (e.detail.task.subtasks && Array.isArray(e.detail.task.subtasks)) {
+            console.log('Processing subtasks from AI:', e.detail.task.subtasks);
+            
+            const aiSubtasks = e.detail.task.subtasks.map((subtask: any, index: number) => ({
+              title: subtask.title,
+              status: 'pending' as const,
+              position: index,
+            }));
+            
+            console.log('Created subtask objects:', aiSubtasks);
+            
+            // Update subtasks state
+            onSubtasksChange(aiSubtasks);
+          }
+        } finally {
+          setProcessingAIResponse(false);
         }
       }
     };
@@ -196,9 +206,9 @@ export function TaskForm({
       <Button
         type="submit"
         className="w-full"
-        disabled={isLoading}
+        disabled={isLoading || processingAIResponse}
       >
-        {isLoading ? "Loading..." : isEditing ? "Update Task" : "Create Task"}
+        {isLoading || processingAIResponse ? "Loading..." : isEditing ? "Update Task" : "Create Task"}
       </Button>
 
       {task && (
