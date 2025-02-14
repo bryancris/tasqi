@@ -134,17 +134,15 @@ export function TimePickerDialog({
               })}
 
               {/* Clock hand */}
-              <div 
-                className="absolute left-1/2 top-1/2"
-                style={{
-                  width: '2px',
-                  height: '95px',
-                  backgroundColor: '#4A5AB9',
-                  transformOrigin: '50% 0',
-                  transform: `rotate(${getHandRotation()}deg)`,
-                }}
-              >
-                <div className="absolute -left-1 bottom-0 w-2 h-2 bg-[#4A5AB9] rounded-full" />
+              <div className="absolute w-[95px] h-2 bg-transparent left-1/2 top-1/2 -translate-y-1/2"
+                   style={{
+                     transformOrigin: 'left center',
+                     transform: `rotate(${getHandRotation()}deg)`
+                   }}>
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full">
+                  <div className="w-full h-[2px] bg-[#4A5AB9]" />
+                  <div className="absolute right-0 -translate-y-1/2 top-1/2 w-2 h-2 bg-[#4A5AB9] rounded-full" />
+                </div>
               </div>
             </div>
           </div>
