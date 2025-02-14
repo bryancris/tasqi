@@ -7,6 +7,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Subtask } from "./subtasks/SubtaskList";
 import { DeleteTaskAlert } from "./DeleteTaskAlert";
+import { ShareTaskDialog } from "./ShareTaskDialog";
+import { Share2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface EditTaskDrawerProps {
   task: Task;
@@ -25,6 +28,7 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
   const [reminderEnabled, setReminderEnabled] = useState(task.reminder_enabled || false);
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
 
   useEffect(() => {
     loadSubtasks();
@@ -160,44 +164,61 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="left" className="w-[400px] sm:max-w-[540px]">
-        <SheetHeader className="sticky top-0 bg-background z-10 pb-4">
-          <SheetTitle>Edit Task</SheetTitle>
-        </SheetHeader>
-        <div className="overflow-y-auto h-[calc(100vh-80px)]">
-          <TaskForm
-            title={title}
-            description={description}
-            isScheduled={isScheduled}
-            date={date}
-            startTime={startTime}
-            endTime={endTime}
-            priority={priority}
-            reminderEnabled={reminderEnabled}
-            subtasks={subtasks}
-            isLoading={isLoading}
-            isEditing={true}
-            task={task}
-            onTitleChange={setTitle}
-            onDescriptionChange={setDescription}
-            onIsScheduledChange={setIsScheduled}
-            onDateChange={setDate}
-            onStartTimeChange={setStartTime}
-            onEndTimeChange={setEndTime}
-            onPriorityChange={setPriority}
-            onReminderEnabledChange={setReminderEnabled}
-            onSubtasksChange={setSubtasks}
-            onSubmit={handleSubmit}
-          />
-          <div className="mt-6">
-            <DeleteTaskAlert 
-              isLoading={isLoading} 
-              onDelete={handleDelete}
+    <>
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent side="left" className="w-[400px] sm:max-w-[540px]">
+          <SheetHeader className="sticky top-0 bg-background z-10 pb-4">
+            <div className="flex items-center justify-between">
+              <SheetTitle>Edit Task</SheetTitle>
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => setShowShareDialog(true)}
+                className="ml-2"
+              >
+                <Share2 className="h-5 w-5" />
+              </Button>
+            </div>
+          </SheetHeader>
+          <div className="overflow-y-auto h-[calc(100vh-80px)]">
+            <TaskForm
+              title={title}
+              description={description}
+              isScheduled={isScheduled}
+              date={date}
+              startTime={startTime}
+              endTime={endTime}
+              priority={priority}
+              reminderEnabled={reminderEnabled}
+              subtasks={subtasks}
+              isLoading={isLoading}
+              isEditing={true}
+              task={task}
+              onTitleChange={setTitle}
+              onDescriptionChange={setDescription}
+              onIsScheduledChange={setIsScheduled}
+              onDateChange={setDate}
+              onStartTimeChange={setStartTime}
+              onEndTimeChange={setEndTime}
+              onPriorityChange={setPriority}
+              onReminderEnabledChange={setReminderEnabled}
+              onSubtasksChange={setSubtasks}
+              onSubmit={handleSubmit}
             />
+            <div className="mt-6">
+              <DeleteTaskAlert 
+                isLoading={isLoading} 
+                onDelete={handleDelete}
+              />
+            </div>
           </div>
-        </div>
-      </SheetContent>
-    </Sheet>
+        </SheetContent>
+      </Sheet>
+      <ShareTaskDialog
+        task={task}
+        open={showShareDialog}
+        onOpenChange={setShowShareDialog}
+      />
+    </>
   );
 }
