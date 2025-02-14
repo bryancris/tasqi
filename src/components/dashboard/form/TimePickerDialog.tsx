@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
+import { Input } from "@/components/ui/input";
 
 interface TimePickerDialogProps {
   open: boolean;
@@ -77,9 +78,23 @@ export function TimePickerDialog({
 
   const getHandRotation = () => {
     if (isMinuteMode) {
-      return minutes * 6 + 180; // 360 / 60 = 6 degrees per minute
+      return minutes * 6 + 180;
     }
-    return hours * 30 + 180; // 360 / 12 = 30 degrees per hour
+    return hours * 30 + 180;
+  };
+
+  const handleHourChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value);
+    if (!isNaN(value) && value >= 1 && value <= 12) {
+      setHours(value);
+    }
+  };
+
+  const handleMinuteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value);
+    if (!isNaN(value) && value >= 0 && value <= 59) {
+      setMinutes(value);
+    }
   };
 
   return (
@@ -88,14 +103,25 @@ export function TimePickerDialog({
         <DialogTitle className="sr-only">Pick a time</DialogTitle>
         <div className="bg-[#4A5AB9] text-white p-6 text-center text-4xl font-light cursor-pointer"
              onClick={() => setIsMinuteMode(!isMinuteMode)}>
-          {format(
-            new Date(2024, 0, 1, 
-              period === "PM" && hours !== 12 ? hours + 12 : 
-              period === "AM" && hours === 12 ? 0 : hours, 
-              minutes
-            ),
-            "h:mm"
-          )}
+          <div className="flex items-center justify-center gap-2">
+            <Input
+              type="number"
+              min="1"
+              max="12"
+              value={hours}
+              onChange={handleHourChange}
+              className="w-16 text-center bg-transparent border-none text-white text-4xl"
+            />
+            <span>:</span>
+            <Input
+              type="number"
+              min="0"
+              max="59"
+              value={minutes.toString().padStart(2, '0')}
+              onChange={handleMinuteChange}
+              className="w-16 text-center bg-transparent border-none text-white text-4xl"
+            />
+          </div>
           <div className="text-2xl mt-1">{period}</div>
         </div>
         
