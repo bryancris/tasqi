@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,7 +7,7 @@ import { TaskPriority } from "./TaskBoard";
 import { DatePickerInput } from "./form/DatePickerInput";
 import { ShareTaskDialog } from "./ShareTaskDialog";
 import { TimeSelector } from "./schedule/TimeSelector";
-import { SubtaskList, Subtask } from "./subtasks/SubtaskList";
+import { SubtaskList, Subtask, SubtaskListHandle } from "./subtasks/SubtaskList";
 import { useState, useRef, useEffect } from "react";
 import { Task } from "./TaskBoard";
 import { useChat } from "@/hooks/use-chat";
@@ -63,28 +62,23 @@ export function TaskForm({
   onSubmit,
 }: TaskFormProps) {
   const [showShareDialog, setShowShareDialog] = useState(false);
-  const { message, setMessage, handleSubmit } = useChat();
-  const subtaskListRef = useRef<SubtaskList | null>(null);
+  const { message, setMessage } = useChat();
+  const subtaskListRef = useRef<SubtaskListHandle>(null);
 
   useEffect(() => {
-    if (subtaskListRef.current) {
-      // Update subtasks when AI suggestions are received
-      const handleAIResponse = async (response: any) => {
-        if (response.task?.subtasks) {
-          const newSubtasks = response.task.subtasks.map((subtask: any) => ({
-            title: subtask.title,
-            status: 'pending' as const,
-            position: subtasks.length + subtask.position
-          }));
-          onSubtasksChange([...subtasks, ...newSubtasks]);
-        }
-      };
+    const handleAIResponse = (response: any) => {
+      if (response.task?.subtasks && subtaskListRef.current) {
+        const subtaskTitles = response.task.subtasks.map((subtask: any) => subtask.title);
+        subtaskListRef.current.addMultipleSubtasks(subtaskTitles);
+      }
+    };
 
-      // Subscribe to AI chat responses
-      const unsubscribe = handleSubmit(handleAIResponse);
-      return () => unsubscribe();
-    }
-  }, [subtasks, onSubtasksChange]);
+    window.addEventListener('ai-response', (e: any) => handleAIResponse(e.detail));
+    
+    return () => {
+      window.removeEventListener('ai-response', (e: any) => handleAIResponse(e.detail));
+    };
+  }, []);
 
   return (
     <form
