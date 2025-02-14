@@ -58,20 +58,29 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
 
       if (error) throw error;
 
-      // Update subtasks
-      const subtasksToUpsert = subtasks.map((subtask) => ({
-        title: subtask.title,
-        status: subtask.status,
-        position: subtask.position,
-        task_id: task.id,
-        ...(subtask.id ? { id: subtask.id } : {})
-      }));
-
-      const { error: subtasksError } = await supabase
+      // Remove existing subtasks first
+      const { error: deleteError } = await supabase
         .from("subtasks")
-        .upsert(subtasksToUpsert);
+        .delete()
+        .eq("task_id", task.id);
 
-      if (subtasksError) throw subtasksError;
+      if (deleteError) throw deleteError;
+
+      // Then insert new subtasks if there are any
+      if (subtasks.length > 0) {
+        const { error: subtasksError } = await supabase
+          .from("subtasks")
+          .insert(
+            subtasks.map((subtask) => ({
+              title: subtask.title,
+              status: subtask.status,
+              position: subtask.position,
+              task_id: task.id,
+            }))
+          );
+
+        if (subtasksError) throw subtasksError;
+      }
 
       toast({
         title: "Success",

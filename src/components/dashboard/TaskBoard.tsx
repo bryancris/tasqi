@@ -1,9 +1,11 @@
+
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DesktopTaskView } from "./DesktopTaskView";
 import { MobileTaskView } from "./MobileTaskView";
 import { useTasks } from "@/hooks/use-tasks";
 import { useTaskReorder } from "@/hooks/use-task-reorder";
 import { useCallback, useMemo } from 'react';
+import { Subtask } from "./subtasks/SubtaskList";
 
 export type TaskPriority = "low" | "medium" | "high";
 
@@ -21,7 +23,7 @@ export interface Task {
   id: number;
   title: string;
   description: string | null;
-  status: "scheduled" | "unscheduled";
+  status: "scheduled" | "unscheduled" | "completed";
   date: string | null;
   start_time: string | null;
   end_time: string | null;
@@ -33,6 +35,7 @@ export interface Task {
   owner_id: string;
   created_at?: string;
   updated_at?: string;
+  completed_at?: string;
   reschedule_count?: number;
   shared?: boolean;
   assignees?: string[];

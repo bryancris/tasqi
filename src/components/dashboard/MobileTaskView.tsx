@@ -32,7 +32,7 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
   );
 
   const shouldShowCompletedTask = (task: Task) => {
-    return task.completed_at && isAfter(new Date(task.completed_at), todayStart);
+    return task.status === 'completed' && task.completed_at && isAfter(new Date(task.completed_at), todayStart);
   };
 
   const sortedTasks = [...tasks]
