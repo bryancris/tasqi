@@ -110,6 +110,7 @@ serve(async (req) => {
         endTime,
         isScheduled: result.task.is_scheduled,
         priority: result.task.priority,
+        subtasks: result.task.subtasks
       });
     }
 
