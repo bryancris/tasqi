@@ -1,42 +1,48 @@
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { TaskDetails } from './types.ts';
+import { TaskDetails } from "./types.ts";
+import { SupabaseClient } from '@supabase/supabase-js';
 
-export async function getNextPosition(supabase: any, userId: string): Promise<number> {
-  const { data: existingTasks } = await supabase
-    .from("tasks")
-    .select("position")
-    .eq("user_id", userId)
-    .order("position", { ascending: false })
-    .limit(1);
+export async function createTask(supabase: SupabaseClient, userId: string, taskDetails: TaskDetails) {
+  try {
+    // First create the task
+    const { data: task, error: taskError } = await supabase
+      .from('tasks')
+      .insert({
+        title: taskDetails.title,
+        description: taskDetails.description,
+        date: taskDetails.date,
+        start_time: taskDetails.startTime,
+        end_time: taskDetails.endTime,
+        status: taskDetails.isScheduled ? 'scheduled' : 'unscheduled',
+        priority: taskDetails.priority || 'low',
+        user_id: userId,
+        owner_id: userId,
+        position: 0, // Will be updated by the client
+      })
+      .select()
+      .single();
 
-  return existingTasks && existingTasks.length > 0 
-    ? existingTasks[0].position + 1 
-    : 1;
-}
+    if (taskError) throw taskError;
 
-export async function createTask(supabase: any, userId: string, taskDetails: TaskDetails): Promise<void> {
-  console.log('Creating task with details:', taskDetails);
-  
-  const nextPosition = await getNextPosition(supabase, userId);
-  
-  const { error: taskError } = await supabase
-    .from("tasks")
-    .insert({
-      title: taskDetails.title,
-      description: taskDetails.description || null,
-      date: taskDetails.isScheduled ? taskDetails.date : null,
-      status: taskDetails.isScheduled ? "scheduled" : "unscheduled",
-      start_time: taskDetails.startTime,
-      end_time: taskDetails.endTime,
-      priority: taskDetails.priority || "low", // Use the priority from taskDetails
-      user_id: userId,
-      owner_id: userId,
-      position: nextPosition,
-    });
+    // If there are subtasks, create them
+    if (taskDetails.subtasks && taskDetails.subtasks.length > 0 && task) {
+      const { error: subtasksError } = await supabase
+        .from('subtasks')
+        .insert(
+          taskDetails.subtasks.map(subtask => ({
+            task_id: task.id,
+            title: subtask.title,
+            status: subtask.status,
+            position: subtask.position
+          }))
+        );
 
-  if (taskError) {
-    console.error('Error creating task:', taskError);
-    throw taskError;
+      if (subtasksError) throw subtasksError;
+    }
+
+    return task;
+  } catch (error) {
+    console.error('Error creating task:', error);
+    throw error;
   }
 }

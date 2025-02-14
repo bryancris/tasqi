@@ -16,6 +16,11 @@ const SYSTEM_PROMPT = `You are a task scheduling assistant. When a user mentions
    - "next week" → return literal string "next week"
    - "next month" → return literal string "next month"
    DO NOT return placeholders like <YYYY-MM-DD>. The date conversion will happen in the code.
+9. If the user mentions subtasks or steps, include them in the response
+10. For subtasks:
+    - Each subtask should have a title
+    - Status is always initially "pending"
+    - Position is determined by the order mentioned (0-based index)
 
 Return JSON in this format:
 {
@@ -29,7 +34,14 @@ Return JSON in this format:
     "date": "today/tomorrow/next week/next month",
     "start_time": "HH:mm" (if time specified),
     "end_time": "HH:mm" (if duration specified or add 1 hour to start_time if not specified),
-    "priority": "low"/"medium"/"high"
+    "priority": "low"/"medium"/"high",
+    "subtasks": [
+      {
+        "title": "Subtask title",
+        "status": "pending",
+        "position": 0
+      }
+    ]
   },
   "response": "Your friendly response to the user"
 }`;
@@ -120,6 +132,15 @@ export async function processWithOpenAI(message: string): Promise<OpenAIResponse
         const endHour = (hours + 1) % 24;
         parsedResponse.task.end_time = `${endHour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
         console.log('Added default end time:', parsedResponse.task.end_time);
+      }
+
+      // Ensure subtasks array exists and has valid structure
+      if (parsedResponse.task.subtasks) {
+        parsedResponse.task.subtasks = parsedResponse.task.subtasks.map((subtask: any, index: number) => ({
+          title: subtask.title,
+          status: 'pending',
+          position: index
+        }));
       }
     }
 

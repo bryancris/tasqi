@@ -4,6 +4,12 @@ export interface ChatRequest {
   userId: string;
 }
 
+export interface SubtaskDetails {
+  title: string;
+  status: 'pending' | 'completed';
+  position: number;
+}
+
 export interface TaskDetails {
   title: string;
   description?: string;
@@ -12,6 +18,7 @@ export interface TaskDetails {
   endTime?: string;
   isScheduled: boolean;
   priority?: "low" | "medium" | "high";
+  subtasks?: SubtaskDetails[];
 }
 
 export interface OpenAIResponse {
@@ -26,7 +33,7 @@ export interface OpenAIResponse {
     start_time?: string;
     end_time?: string;
     priority?: "low" | "medium" | "high";
+    subtasks?: SubtaskDetails[];
   };
   response: string;
 }
-
