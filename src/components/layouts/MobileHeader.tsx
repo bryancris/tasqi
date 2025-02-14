@@ -8,21 +8,24 @@ import { toast } from "sonner";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTasks } from "@/hooks/use-tasks";
+import { Task } from "@/components/dashboard/TaskBoard";
 
 export function MobileHeader() {
   const [showGreeting, setShowGreeting] = useState(false);
   const [greetingMessage, setGreetingMessage] = useState("");
+  const [todaysTaskDetails, setTodaysTaskDetails] = useState<Task[]>([]);
   const { tasks } = useTasks();
   const currentTime = format(new Date(), 'HH:mm');
   const currentDate = format(new Date(), 'EEE, MMM d');
 
   const handleTestGreeting = () => {
     const now = new Date();
-    // Count today's tasks
+    // Get today's tasks
     const todayTasks = tasks.filter(task => 
       task.status === 'scheduled' && 
       task.date === format(now, 'yyyy-MM-dd')
     );
+    setTodaysTaskDetails(todayTasks);
 
     // Generate greeting based on time of day
     const hour = now.getHours();
@@ -172,8 +175,29 @@ export function MobileHeader() {
               Daily Update
             </DialogTitle>
           </DialogHeader>
-          <div className="text-white text-lg py-4">
-            {greetingMessage}
+          <div className="space-y-4">
+            <div className="text-white text-lg">
+              {greetingMessage}
+            </div>
+            {todaysTaskDetails.length > 0 && (
+              <div className="space-y-2">
+                <h3 className="text-white font-medium">Today's Schedule:</h3>
+                <div className="space-y-2">
+                  {todaysTaskDetails.map((task) => (
+                    <div 
+                      key={task.id} 
+                      className="bg-white/10 rounded-lg p-3 backdrop-blur-sm"
+                    >
+                      <div className="text-white font-medium">{task.title}</div>
+                      <div className="text-white/80 text-sm">
+                        {task.start_time ? format(new Date(`2000-01-01 ${task.start_time}`), 'h:mm a') : 'Anytime'} 
+                        {task.end_time && ` - ${format(new Date(`2000-01-01 ${task.end_time}`), 'h:mm a')}`}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
