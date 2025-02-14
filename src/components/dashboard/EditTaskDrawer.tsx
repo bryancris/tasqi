@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Task } from "./TaskBoard";
@@ -74,18 +73,27 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
   const handleSubmit = async () => {
     setIsLoading(true);
     try {
+      const updateData = {
+        title,
+        description,
+        status: isScheduled ? 'scheduled' : 'unscheduled',
+        date: isScheduled && date ? date : null,
+        start_time: isScheduled && startTime ? startTime : null,
+        end_time: isScheduled && endTime ? endTime : null,
+        priority,
+        reminder_enabled: reminderEnabled,
+      };
+
+      if (!updateData.start_time) {
+        delete updateData.start_time;
+      }
+      if (!updateData.end_time) {
+        delete updateData.end_time;
+      }
+
       const { error: taskError } = await supabase
         .from('tasks')
-        .update({
-          title,
-          description,
-          status: isScheduled ? 'scheduled' : 'unscheduled',
-          date: isScheduled ? date : null,
-          start_time: isScheduled ? startTime : null,
-          end_time: isScheduled ? endTime : null,
-          priority,
-          reminder_enabled: reminderEnabled,
-        })
+        .update(updateData)
         .eq('id', task.id);
 
       if (taskError) throw taskError;
