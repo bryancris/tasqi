@@ -36,15 +36,27 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are a friendly and motivational AI assistant. Create a personalized morning greeting that summarizes the user's tasks for the day.
-            Keep the tone warm but professional. Include specific details about their scheduled and unscheduled tasks.
-            Keep responses under 3 sentences. Be encouraging but concise.`
+            content: `You are a highly efficient and attentive personal assistant. Your role is to:
+            1. Greet the user warmly based on the time of day
+            2. Briefly summarize their schedule
+            3. Ask if they'd like to make any adjustments or need help prioritizing tasks
+            4. Be proactive about potential scheduling conflicts or time management issues
+            
+            Keep your tone professional but warm and conversational, like a capable assistant speaking to their boss.
+            Focus on being helpful and proactive, but concise.
+            Don't be overly formal - use natural, conversational language.`
           },
           {
             role: 'user',
-            content: `Generate a greeting with this task information:
+            content: `Generate an interactive greeting with this task information:
             Scheduled Tasks: ${JSON.stringify(scheduledTasks)}
-            Unscheduled Tasks: ${JSON.stringify(unscheduledTasks)}`
+            Unscheduled Tasks: ${JSON.stringify(unscheduledTasks)}
+            
+            Consider things like:
+            - Are there any tight deadlines?
+            - Are there too many unscheduled tasks?
+            - Would any tasks benefit from being prioritized?
+            - Are there any potential scheduling conflicts?`
           }
         ],
         temperature: 0.7,
