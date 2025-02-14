@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -66,17 +67,21 @@ export function TaskForm({
   const subtaskListRef = useRef<SubtaskListHandle>(null);
 
   useEffect(() => {
-    const handleAIResponse = (response: any) => {
-      if (response.task?.subtasks && subtaskListRef.current) {
-        const subtaskTitles = response.task.subtasks.map((subtask: any) => subtask.title);
+    const handleAIResponse = (e: CustomEvent<any>) => {
+      console.log('AI Response received:', e.detail);
+      if (e.detail?.task?.subtasks && subtaskListRef.current) {
+        const subtaskTitles = e.detail.task.subtasks.map((subtask: any) => subtask.title);
+        console.log('Adding subtasks:', subtaskTitles);
         subtaskListRef.current.addMultipleSubtasks(subtaskTitles);
       }
     };
 
-    window.addEventListener('ai-response', (e: any) => handleAIResponse(e.detail));
+    // Add the event listener
+    window.addEventListener('ai-response' as any, handleAIResponse as EventListener);
     
+    // Cleanup
     return () => {
-      window.removeEventListener('ai-response', (e: any) => handleAIResponse(e.detail));
+      window.removeEventListener('ai-response' as any, handleAIResponse as EventListener);
     };
   }, []);
 

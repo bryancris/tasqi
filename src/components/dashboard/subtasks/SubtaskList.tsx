@@ -45,6 +45,8 @@ export const SubtaskList = forwardRef<SubtaskListHandle, SubtaskListProps>(
     };
 
     const addMultipleSubtasks = (newSubtaskTitles: string[]) => {
+      if (!newSubtaskTitles.length) return;
+      
       const newSubtasksList = [
         ...subtasks,
         ...newSubtaskTitles.map((title, index) => ({
