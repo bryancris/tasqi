@@ -112,35 +112,37 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[60vh] overflow-y-auto max-w-xl mx-auto w-full">
-        <DrawerHeader className="sticky top-0 bg-background z-10 pb-4">
-          <DrawerTitle>Edit Task</DrawerTitle>
-        </DrawerHeader>
-        <div className="px-4 pb-4">
-          <TaskForm
-            title={title}
-            description={description}
-            isScheduled={isScheduled}
-            date={date}
-            startTime={startTime}
-            endTime={endTime}
-            priority={task.priority || "low"}
-            reminderEnabled={reminderEnabled}
-            subtasks={subtasks}
-            isLoading={isLoading}
-            isEditing={true}
-            task={task}
-            onTitleChange={setTitle}
-            onDescriptionChange={setDescription}
-            onIsScheduledChange={setIsScheduled}
-            onDateChange={setDate}
-            onStartTimeChange={setStartTime}
-            onEndTimeChange={setEndTime}
-            onPriorityChange={setPriority}
-            onReminderEnabledChange={setReminderEnabled}
-            onSubtasksChange={setSubtasks}
-            onSubmit={handleSubmit}
-          />
+      <DrawerContent>
+        <div className="max-w-xl mx-auto w-full">
+          <DrawerHeader className="sticky top-0 bg-background z-10 pb-4">
+            <DrawerTitle>Edit Task</DrawerTitle>
+          </DrawerHeader>
+          <div className="px-4 pb-4 max-h-[calc(85vh-80px)] overflow-y-auto">
+            <TaskForm
+              title={title}
+              description={description}
+              isScheduled={isScheduled}
+              date={date}
+              startTime={startTime}
+              endTime={endTime}
+              priority={task.priority || "low"}
+              reminderEnabled={reminderEnabled}
+              subtasks={subtasks}
+              isLoading={isLoading}
+              isEditing={true}
+              task={task}
+              onTitleChange={setTitle}
+              onDescriptionChange={setDescription}
+              onIsScheduledChange={setIsScheduled}
+              onDateChange={setDate}
+              onStartTimeChange={setStartTime}
+              onEndTimeChange={setEndTime}
+              onPriorityChange={setPriority}
+              onReminderEnabledChange={setReminderEnabled}
+              onSubtasksChange={setSubtasks}
+              onSubmit={handleSubmit}
+            />
+          </div>
         </div>
       </DrawerContent>
     </Drawer>
