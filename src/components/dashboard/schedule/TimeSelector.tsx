@@ -57,51 +57,24 @@ export function TimeSelector({
     }
   }, [endTime]);
 
-  const handleStartTimeChange = () => {
-    let hours = parseInt(startHours);
-    if (startPeriod === "PM" && hours !== 12) hours += 12;
-    if (startPeriod === "AM" && hours === 12) hours = 0;
-    const time = `${hours.toString().padStart(2, '0')}:${startMinutes.padStart(2, '0')}:00`;
-    onStartTimeChange(time);
+  const formatTime = (hours: number, minutes: string, period: "AM" | "PM") => {
+    let formattedHours = hours;
+    if (period === "PM" && hours !== 12) formattedHours += 12;
+    if (period === "AM" && hours === 12) formattedHours = 0;
+    return `${formattedHours.toString().padStart(2, '0')}:${minutes}:00`;
   };
 
-  const handleEndTimeChange = () => {
-    let hours = parseInt(endHours);
-    if (endPeriod === "PM" && hours !== 12) hours += 12;
-    if (endPeriod === "AM" && hours === 12) hours = 0;
-    const time = `${hours.toString().padStart(2, '0')}:${endMinutes.padStart(2, '0')}:00`;
-    onEndTimeChange(time);
-  };
-
-  const handleStartHourChange = (value: string) => {
-    const num = parseInt(value);
-    if (!isNaN(num) && num >= 1 && num <= 12) {
-      setStartHours(num.toString());
-      setTimeout(handleStartTimeChange, 0);
-    }
-  };
-
-  const handleStartMinuteChange = (value: string) => {
-    const num = parseInt(value);
-    if (!isNaN(num) && num >= 0 && num <= 59) {
-      setStartMinutes(num.toString().padStart(2, '0'));
-      setTimeout(handleStartTimeChange, 0);
-    }
-  };
-
-  const handleEndHourChange = (value: string) => {
-    const num = parseInt(value);
-    if (!isNaN(num) && num >= 1 && num <= 12) {
-      setEndHours(num.toString());
-      setTimeout(handleEndTimeChange, 0);
-    }
-  };
-
-  const handleEndMinuteChange = (value: string) => {
-    const num = parseInt(value);
-    if (!isNaN(num) && num >= 0 && num <= 59) {
-      setEndMinutes(num.toString().padStart(2, '0'));
-      setTimeout(handleEndTimeChange, 0);
+  const handleTimeChange = (type: 'start' | 'end') => {
+    try {
+      if (type === 'start') {
+        const time = formatTime(parseInt(startHours), startMinutes, startPeriod);
+        onStartTimeChange(time);
+      } else {
+        const time = formatTime(parseInt(endHours), endMinutes, endPeriod);
+        onEndTimeChange(time);
+      }
+    } catch (error) {
+      console.error(`Error formatting ${type} time:`, error);
     }
   };
 
@@ -115,7 +88,13 @@ export function TimeSelector({
             min="1"
             max="12"
             value={startHours}
-            onChange={(e) => handleStartHourChange(e.target.value)}
+            onChange={(e) => {
+              const num = parseInt(e.target.value);
+              if (!isNaN(num) && num >= 1 && num <= 12) {
+                setStartHours(num.toString());
+                handleTimeChange('start');
+              }
+            }}
             className="w-12 text-center px-1"
           />
           <span>:</span>
@@ -124,14 +103,20 @@ export function TimeSelector({
             min="0"
             max="59"
             value={startMinutes}
-            onChange={(e) => handleStartMinuteChange(e.target.value)}
+            onChange={(e) => {
+              const num = parseInt(e.target.value);
+              if (!isNaN(num) && num >= 0 && num <= 59) {
+                setStartMinutes(num.toString().padStart(2, '0'));
+                handleTimeChange('start');
+              }
+            }}
             className="w-12 text-center px-1"
           />
           <Button
             variant="ghost"
             onClick={() => {
               setStartPeriod(startPeriod === "AM" ? "PM" : "AM");
-              setTimeout(handleStartTimeChange, 0);
+              handleTimeChange('start');
             }}
             className="px-2 h-8"
             type="button"
@@ -149,7 +134,13 @@ export function TimeSelector({
             min="1"
             max="12"
             value={endHours}
-            onChange={(e) => handleEndHourChange(e.target.value)}
+            onChange={(e) => {
+              const num = parseInt(e.target.value);
+              if (!isNaN(num) && num >= 1 && num <= 12) {
+                setEndHours(num.toString());
+                handleTimeChange('end');
+              }
+            }}
             className="w-12 text-center px-1"
           />
           <span>:</span>
@@ -158,14 +149,20 @@ export function TimeSelector({
             min="0"
             max="59"
             value={endMinutes}
-            onChange={(e) => handleEndMinuteChange(e.target.value)}
+            onChange={(e) => {
+              const num = parseInt(e.target.value);
+              if (!isNaN(num) && num >= 0 && num <= 59) {
+                setEndMinutes(num.toString().padStart(2, '0'));
+                handleTimeChange('end');
+              }
+            }}
             className="w-12 text-center px-1"
           />
           <Button
             variant="ghost"
             onClick={() => {
               setEndPeriod(endPeriod === "AM" ? "PM" : "AM");
-              setTimeout(handleEndTimeChange, 0);
+              handleTimeChange('end');
             }}
             className="px-2 h-8"
             type="button"
