@@ -1,5 +1,5 @@
 
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -85,6 +85,7 @@ export function TimePickerDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px] p-0">
+        <DialogTitle className="sr-only">Pick a time</DialogTitle>
         <div className="bg-[#4A5AB9] text-white p-6 text-center text-4xl font-light cursor-pointer"
              onClick={() => setIsMinuteMode(!isMinuteMode)}>
           {format(
@@ -105,15 +106,17 @@ export function TimePickerDialog({
             onClick={handleClockClick}
           >
             <div className="absolute inset-0 rounded-full bg-gray-100">
-              <div className="absolute w-1 h-1 bg-gray-400 rounded-full left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" />
+              {/* Center dot */}
+              <div className="absolute w-2 h-2 bg-[#4A5AB9] rounded-full left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" />
               
               {/* Clock numbers */}
-              {[...Array(isMinuteMode ? 12 : 12)].map((_, i) => {
-                const value = isMinuteMode ? i * 5 : i + 1;
-                const angle = (value * (isMinuteMode ? 30 : 30) * Math.PI) / 180;
-                const x = 140 + Math.sin(angle) * 120;
-                const y = 140 - Math.cos(angle) * 120;
-                const isSelected = isMinuteMode ? minutes === value : hours === value;
+              {[...Array(12)].map((_, i) => {
+                const value = i + 1;
+                const angle = ((value % 12) * 30 * Math.PI) / 180;
+                const radius = 120; // Distance from center
+                const x = 140 + Math.sin(angle) * radius;
+                const y = 140 - Math.cos(angle) * radius;
+                const isSelected = !isMinuteMode && hours === value;
                 
                 return (
                   <div key={i} className="absolute" style={{ left: `${x}px`, top: `${y}px` }}>
@@ -132,15 +135,18 @@ export function TimePickerDialog({
               })}
 
               {/* Clock hand */}
-              <div className="absolute left-1/2 top-1/2 origin-center" style={{
-                transform: `rotate(${getHandRotation()}deg)`,
-                width: '2px',
-                height: '140px',
-                backgroundColor: '#4A5AB9',
-                transformOrigin: '50% 0%',
-              }}>
-                <div className="absolute top-[-4px] left-[-4px] w-[8px] h-[8px] bg-[#4A5AB9] rounded-full" />
-                <div className="absolute bottom-0 left-[-4px] w-[8px] h-[8px] bg-[#4A5AB9] rounded-full" />
+              <div 
+                className="absolute left-1/2 top-1/2"
+                style={{
+                  width: '2px',
+                  height: '95px',
+                  backgroundColor: '#4A5AB9',
+                  transformOrigin: '50% 0',
+                  transform: `rotate(${getHandRotation()}deg)`,
+                }}
+              >
+                <div className="absolute -left-1 -top-1 w-2 h-2 bg-[#4A5AB9] rounded-full" />
+                <div className="absolute -left-1 bottom-0 w-2 h-2 bg-[#4A5AB9] rounded-full" />
               </div>
             </div>
           </div>
@@ -156,7 +162,12 @@ export function TimePickerDialog({
               >
                 {period}
               </Button>
-              <Button onClick={handleTimeSet}>Set</Button>
+              <Button 
+                onClick={handleTimeSet}
+                className="bg-[#4A5AB9] text-white hover:bg-[#4A5AB9]/90"
+              >
+                Set
+              </Button>
             </div>
           </div>
         </div>
