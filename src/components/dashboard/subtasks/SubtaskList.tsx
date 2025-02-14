@@ -11,6 +11,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { AudioRecorder } from "@/components/chat/AudioRecorder";
 
 export interface Subtask {
   id?: number;
@@ -110,6 +111,12 @@ export const SubtaskList = forwardRef<SubtaskListHandle, SubtaskListProps>(
       setCurrentNote(subtasks[index].notes || "");
     };
 
+    const handleTranscriptionComplete = (text: string) => {
+      if (editingNoteFor !== null) {
+        setCurrentNote(prev => prev ? `${prev}\n${text}` : text);
+      }
+    };
+
     return (
       <div className="space-y-3">
         <div className="flex gap-2">
@@ -169,12 +176,15 @@ export const SubtaskList = forwardRef<SubtaskListHandle, SubtaskListProps>(
                     <DialogTitle>Add Note to Subtask</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4 pt-4">
-                    <Textarea
-                      value={currentNote}
-                      onChange={(e) => setCurrentNote(e.target.value)}
-                      placeholder="Add your notes here..."
-                      className="min-h-[100px]"
-                    />
+                    <div className="flex gap-2 items-start">
+                      <Textarea
+                        value={currentNote}
+                        onChange={(e) => setCurrentNote(e.target.value)}
+                        placeholder="Add your notes here..."
+                        className="min-h-[100px] flex-1"
+                      />
+                      <AudioRecorder onTranscriptionComplete={handleTranscriptionComplete} />
+                    </div>
                     <div className="flex justify-end gap-2">
                       <Button
                         type="button"
