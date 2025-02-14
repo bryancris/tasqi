@@ -166,7 +166,7 @@ export const SubtaskList = forwardRef<SubtaskListHandle, SubtaskListProps>(
                     variant="ghost"
                     size="sm"
                     onClick={() => handleNoteEdit(index)}
-                    className="text-blue-500 hover:text-blue-700"
+                    className={`hover:text-blue-700 ${subtask.notes ? 'text-[#ea384c]' : 'text-blue-500'}`}
                   >
                     <Pencil className="h-4 w-4" />
                   </Button>
