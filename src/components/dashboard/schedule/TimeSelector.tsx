@@ -95,7 +95,7 @@ export function TimeSelector({
                 handleTimeChange('start');
               }
             }}
-            className="w-12 text-center px-1"
+            className="w-12 text-center px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />
           <span>:</span>
           <Input
@@ -110,7 +110,7 @@ export function TimeSelector({
                 handleTimeChange('start');
               }
             }}
-            className="w-12 text-center px-1"
+            className="w-12 text-center px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />
           <Button
             variant="ghost"
@@ -141,7 +141,7 @@ export function TimeSelector({
                 handleTimeChange('end');
               }
             }}
-            className="w-12 text-center px-1"
+            className="w-12 text-center px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />
           <span>:</span>
           <Input
@@ -156,7 +156,7 @@ export function TimeSelector({
                 handleTimeChange('end');
               }
             }}
-            className="w-12 text-center px-1"
+            className="w-12 text-center px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />
           <Button
             variant="ghost"
