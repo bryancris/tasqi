@@ -113,35 +113,35 @@ export function TimePickerDialog({
                 const angle = (value * (isMinuteMode ? 30 : 30) * Math.PI) / 180;
                 const x = 140 + Math.sin(angle) * 120;
                 const y = 140 - Math.cos(angle) * 120;
+                const isSelected = isMinuteMode ? minutes === value : hours === value;
                 
                 return (
-                  <div
-                    key={i}
-                    className={`absolute text-gray-600 font-medium ${
-                      (isMinuteMode ? minutes === value : hours === value)
-                        ? "text-blue-600"
-                        : ""
-                    }`}
-                    style={{
-                      left: `${x}px`,
-                      top: `${y}px`,
-                      transform: "translate(-50%, -50%)",
-                    }}
-                  >
-                    {value}
+                  <div key={i} className="absolute" style={{ left: `${x}px`, top: `${y}px` }}>
+                    {isSelected && (
+                      <div className="absolute w-10 h-10 bg-[#4A5AB9] rounded-full -translate-x-1/2 -translate-y-1/2" />
+                    )}
+                    <div
+                      className={`relative z-10 flex items-center justify-center w-10 h-10 -translate-x-1/2 -translate-y-1/2 ${
+                        isSelected ? "text-white" : "text-gray-600"
+                      } font-medium text-lg`}
+                    >
+                      {value}
+                    </div>
                   </div>
                 );
               })}
 
               {/* Clock hand */}
-              <div
-                className="absolute w-[2px] bg-blue-600 origin-bottom left-1/2 -translate-x-1/2"
-                style={{
-                  height: "100px",
-                  bottom: "50%",
-                  transform: `translateX(-50%) rotate(${getHandRotation()}deg)`,
-                }}
-              />
+              <div className="absolute left-1/2 top-1/2 origin-center" style={{
+                transform: `rotate(${getHandRotation()}deg)`,
+                width: '2px',
+                height: '140px',
+                backgroundColor: '#4A5AB9',
+                transformOrigin: '50% 0%',
+              }}>
+                <div className="absolute top-[-4px] left-[-4px] w-[8px] h-[8px] bg-[#4A5AB9] rounded-full" />
+                <div className="absolute bottom-0 left-[-4px] w-[8px] h-[8px] bg-[#4A5AB9] rounded-full" />
+              </div>
             </div>
           </div>
 
