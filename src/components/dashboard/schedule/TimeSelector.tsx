@@ -67,10 +67,12 @@ export function TimeSelector({
   const handleTimeChange = (type: 'start' | 'end') => {
     try {
       if (type === 'start') {
-        const time = formatTime(parseInt(startHours) || 0, startMinutes, startPeriod);
+        const hours = parseInt(startHours) || 0;
+        const time = formatTime(hours, startMinutes, startPeriod);
         onStartTimeChange(time);
       } else {
-        const time = formatTime(parseInt(endHours) || 0, endMinutes, endPeriod);
+        const hours = parseInt(endHours) || 0;
+        const time = formatTime(hours, endMinutes, endPeriod);
         onEndTimeChange(time);
       }
     } catch (error) {
@@ -79,26 +81,32 @@ export function TimeSelector({
   };
 
   const handleHourChange = (value: string, type: 'start' | 'end') => {
-    const numValue = parseInt(value);
-    if (value === '' || (numValue >= 0 && numValue <= 12)) {
+    // Only allow numbers and restrict to 2 digits
+    const cleanValue = value.replace(/\D/g, '').slice(0, 2);
+    const numValue = parseInt(cleanValue);
+
+    if (cleanValue === '' || (numValue >= 0 && numValue <= 12)) {
       if (type === 'start') {
-        setStartHours(value.padStart(2, '0'));
+        setStartHours(cleanValue);
         handleTimeChange('start');
       } else {
-        setEndHours(value.padStart(2, '0'));
+        setEndHours(cleanValue);
         handleTimeChange('end');
       }
     }
   };
 
   const handleMinuteChange = (value: string, type: 'start' | 'end') => {
-    const numValue = parseInt(value);
-    if (value === '' || (numValue >= 0 && numValue <= 59)) {
+    // Only allow numbers and restrict to 2 digits
+    const cleanValue = value.replace(/\D/g, '').slice(0, 2);
+    const numValue = parseInt(cleanValue);
+
+    if (cleanValue === '' || (numValue >= 0 && numValue <= 59)) {
       if (type === 'start') {
-        setStartMinutes(value.padStart(2, '0'));
+        setStartMinutes(cleanValue);
         handleTimeChange('start');
       } else {
-        setEndMinutes(value.padStart(2, '0'));
+        setEndMinutes(cleanValue);
         handleTimeChange('end');
       }
     }
