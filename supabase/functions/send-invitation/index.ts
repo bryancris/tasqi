@@ -46,44 +46,53 @@ async function fetchSharedTaskDetails(supabase: any, sharedTaskId: string): Prom
     throw new Error(`Failed to fetch shared task details: ${sharedTaskError.message}`);
   }
 
+  if (!sharedTask) {
+    throw new Error('Shared task not found');
+  }
+
   console.log('Fetched shared task details:', sharedTask);
   return sharedTask;
 }
 
 async function createNotification(supabase: any, sharedTask: SharedTaskDetails) {
-  const { error: notificationError } = await supabase
-    .from('notifications')
-    .insert({
-      user_id: sharedTask.shared_with_user_id,
-      title: 'New Task Shared With You',
-      message: `${sharedTask.shared_by.email} has shared a task with you: ${sharedTask.tasks.title}`,
-      type: 'task_share',
-      reference_id: sharedTask.task_id.toString(),
-      reference_type: 'task'
-    });
+  try {
+    const { error: notificationError } = await supabase
+      .from('notifications')
+      .insert({
+        user_id: sharedTask.shared_with_user_id,
+        title: 'New Task Shared With You',
+        message: `${sharedTask.shared_by.email} has shared a task with you: ${sharedTask.tasks.title}`,
+        type: 'task_share',
+        reference_id: sharedTask.task_id.toString(),
+        reference_type: 'task'
+      });
 
-  if (notificationError) {
-    console.error('Error creating notification:', notificationError);
-    throw new Error('Failed to create notification');
+    if (notificationError) {
+      console.error('Error creating notification:', notificationError);
+      throw new Error('Failed to create notification');
+    }
+
+    console.log('Notification created successfully');
+  } catch (error) {
+    console.error('Error in createNotification:', error);
+    throw error;
   }
-
-  console.log('Notification created successfully');
 }
 
 async function sendPushNotification(supabase: any, sharedTask: SharedTaskDetails) {
-  const { data: pushSubscription, error: subscriptionError } = await supabase
-    .from('push_subscriptions')
-    .select('*')
-    .eq('user_id', sharedTask.shared_with_user_id)
-    .single();
+  try {
+    const { data: pushSubscription, error: subscriptionError } = await supabase
+      .from('push_subscriptions')
+      .select('*')
+      .eq('user_id', sharedTask.shared_with_user_id)
+      .single();
 
-  if (subscriptionError) {
-    console.log('No push subscription found for user');
-    return;
-  }
+    if (subscriptionError) {
+      console.log('No push subscription found for user');
+      return;
+    }
 
-  if (pushSubscription) {
-    try {
+    if (pushSubscription) {
       const response = await fetch(
         `${Deno.env.get('SUPABASE_URL')}/functions/v1/push-notification`,
         {
@@ -104,29 +113,39 @@ async function sendPushNotification(supabase: any, sharedTask: SharedTaskDetails
       );
 
       if (!response.ok) {
+        console.error('Push notification failed:', await response.text());
         throw new Error(`Failed to send push notification: ${response.statusText}`);
       }
 
       console.log('Push notification sent successfully');
-    } catch (error) {
-      console.error('Error sending push notification:', error);
     }
+  } catch (error) {
+    console.error('Error in sendPushNotification:', error);
+    // Don't throw here as push notifications are not critical
   }
 }
 
 async function updateSharedTaskStatus(supabase: any, sharedTaskId: string) {
-  const { error: updateError } = await supabase
-    .from('shared_tasks')
-    .update({ notification_sent: true })
-    .eq('id', sharedTaskId);
+  try {
+    const { error: updateError } = await supabase
+      .from('shared_tasks')
+      .update({ notification_sent: true })
+      .eq('id', sharedTaskId);
 
-  if (updateError) {
-    console.error('Error updating shared task status:', updateError);
-    throw new Error('Failed to update shared task status');
+    if (updateError) {
+      console.error('Error updating shared task status:', updateError);
+      throw new Error(`Failed to update shared task status: ${updateError.message}`);
+    }
+
+    console.log('Successfully updated shared task status');
+  } catch (error) {
+    console.error('Error in updateSharedTaskStatus:', error);
+    throw error;
   }
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -137,29 +156,51 @@ serve(async (req) => {
     console.log('Starting send-invitation function with sharedTaskId:', sharedTaskId);
     
     if (!sharedTaskId) {
-      console.error('No sharedTaskId provided');
       throw new Error('sharedTaskId is required');
     }
     
     const supabase = await initializeSupabase();
+    
+    // Fetch shared task details first
     const sharedTask = await fetchSharedTaskDetails(supabase, sharedTaskId);
     
+    // Create notification
     await createNotification(supabase, sharedTask);
+    
+    // Try to send push notification (non-critical)
     await sendPushNotification(supabase, sharedTask);
+    
+    // Update shared task status
     await updateSharedTaskStatus(supabase, sharedTaskId);
 
     return new Response(
-      JSON.stringify({ success: true }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ 
+        success: true,
+        message: 'Invitation sent successfully'
+      }),
+      { 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        } 
+      }
     );
 
   } catch (error) {
     console.error('Error processing shared task:', error);
+    
+    // Return a more detailed error response
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message || 'An unexpected error occurred',
+        details: error.stack
+      }),
       { 
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        }
       }
     );
   }
