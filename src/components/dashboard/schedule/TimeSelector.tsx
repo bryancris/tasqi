@@ -1,3 +1,4 @@
+
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -55,16 +56,7 @@ export function TimeSelector({
 
   const formatTime = (hours: string, minutes: string, period: "AM" | "PM") => {
     let hourNum = parseInt(hours || "12");
-    
-    // Convert 12 AM to 00, keep 12 PM as 12
-    if (hourNum === 12 && period === "AM") {
-      hourNum = 0;
-    } 
-    // For PM times other than 12 PM, add 12
-    else if (period === "PM" && hourNum !== 12) {
-      hourNum += 12;
-    }
-    
+    // Just use the hours as entered, padded to 2 digits
     return `${String(hourNum).padStart(2, '0')}:${minutes}:00`;
   };
 
