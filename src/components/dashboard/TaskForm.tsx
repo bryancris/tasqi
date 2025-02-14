@@ -9,8 +9,9 @@ import { DatePickerInput } from "./form/DatePickerInput";
 import { ShareTaskDialog } from "./ShareTaskDialog";
 import { TimeSelector } from "./schedule/TimeSelector";
 import { SubtaskList, Subtask } from "./subtasks/SubtaskList";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Task } from "./TaskBoard";
+import { useChat } from "@/hooks/use-chat";
 
 interface TaskFormProps {
   title: string;
@@ -62,6 +63,28 @@ export function TaskForm({
   onSubmit,
 }: TaskFormProps) {
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const { message, setMessage, handleSubmit } = useChat();
+  const subtaskListRef = useRef<SubtaskList | null>(null);
+
+  useEffect(() => {
+    if (subtaskListRef.current) {
+      // Update subtasks when AI suggestions are received
+      const handleAIResponse = async (response: any) => {
+        if (response.task?.subtasks) {
+          const newSubtasks = response.task.subtasks.map((subtask: any) => ({
+            title: subtask.title,
+            status: 'pending' as const,
+            position: subtasks.length + subtask.position
+          }));
+          onSubtasksChange([...subtasks, ...newSubtasks]);
+        }
+      };
+
+      // Subscribe to AI chat responses
+      const unsubscribe = handleSubmit(handleAIResponse);
+      return () => unsubscribe();
+    }
+  }, [subtasks, onSubtasksChange]);
 
   return (
     <form
@@ -95,6 +118,7 @@ export function TaskForm({
       <div className="space-y-2">
         <Label>Subtasks</Label>
         <SubtaskList 
+          ref={subtaskListRef}
           subtasks={subtasks} 
           onSubtasksChange={onSubtasksChange}
         />

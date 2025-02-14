@@ -22,19 +22,32 @@ interface SubtaskListProps {
 export function SubtaskList({ subtasks, onSubtasksChange }: SubtaskListProps) {
   const [newSubtask, setNewSubtask] = useState("");
 
-  const addSubtask = () => {
-    if (!newSubtask.trim()) return;
+  const addSubtask = (title?: string) => {
+    const subtaskTitle = title || newSubtask.trim();
+    if (!subtaskTitle) return;
     
     const newSubtasks: Subtask[] = [
       ...subtasks,
       {
-        title: newSubtask.trim(),
+        title: subtaskTitle,
         status: 'pending',
         position: subtasks.length,
       }
     ];
     onSubtasksChange(newSubtasks);
     setNewSubtask("");
+  };
+
+  const addMultipleSubtasks = (newSubtaskTitles: string[]) => {
+    const newSubtasksList = [
+      ...subtasks,
+      ...newSubtaskTitles.map((title, index) => ({
+        title,
+        status: 'pending' as const,
+        position: subtasks.length + index,
+      }))
+    ];
+    onSubtasksChange(newSubtasksList);
   };
 
   const removeSubtask = (index: number) => {
@@ -72,7 +85,7 @@ export function SubtaskList({ subtasks, onSubtasksChange }: SubtaskListProps) {
         <Button 
           type="button"
           variant="outline"
-          onClick={addSubtask}
+          onClick={() => addSubtask()}
           className="shrink-0"
         >
           <Plus className="h-4 w-4" />
