@@ -112,7 +112,7 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent className="max-h-[60vh] overflow-y-auto">
+      <DrawerContent className="max-h-[60vh] overflow-y-auto max-w-xl mx-auto w-full">
         <DrawerHeader className="sticky top-0 bg-background z-10 pb-4">
           <DrawerTitle>Edit Task</DrawerTitle>
         </DrawerHeader>
