@@ -4,7 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { processWithOpenAI } from './openaiUtils.ts';
 import { createTask } from './taskUtils.ts';
 import { saveChatMessages } from './chatUtils.ts';
-import { ChatRequest } from './types.ts';
+import { ChatRequest, SubtaskDetails } from './types.ts';
 import { validateTimeFormat } from './dateUtils.ts';
 
 const corsHeaders = {
@@ -33,7 +33,53 @@ serve(async (req) => {
     const result = await processWithOpenAI(message);
     console.log('OpenAI Processing Result:', result);
 
-    if (result.task?.should_create) {
+    // Handle adding subtasks to existing task
+    if (result.task?.should_add_subtasks && result.task.subtasks) {
+      console.log('Adding subtasks:', result.task.subtasks);
+      
+      // Get the latest task for the user
+      const { data: latestTask, error: taskError } = await supabase
+        .from('tasks')
+        .select('id')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (taskError) {
+        console.error('Error finding latest task:', taskError);
+        throw taskError;
+      }
+
+      if (!latestTask) {
+        return new Response(
+          JSON.stringify({ 
+            response: "I couldn't find an active task to add subtasks to. Please create a task first." 
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Prepare subtasks for insertion
+      const subtasksToAdd = result.task.subtasks.map((subtask: SubtaskDetails) => ({
+        task_id: latestTask.id,
+        title: subtask.title,
+        status: subtask.status,
+        position: subtask.position
+      }));
+
+      // Insert the subtasks
+      const { error: insertError } = await supabase
+        .from('subtasks')
+        .insert(subtasksToAdd);
+
+      if (insertError) {
+        console.error('Error adding subtasks:', insertError);
+        throw insertError;
+      }
+    }
+    // Handle other task operations (create/complete)
+    else if (result.task?.should_create) {
       console.log('Creating task with subtasks:', result.task.subtasks);
       
       const startTime = validateTimeFormat(result.task.start_time);
@@ -51,9 +97,7 @@ serve(async (req) => {
         subtasks: result.task.subtasks || [] // Ensure subtasks are passed
       });
     }
-
-    // Handle task completion if detected
-    if (result.task?.should_complete && result.task.task_title) {
+    else if (result.task?.should_complete && result.task.task_title) {
       console.log('Completing task:', result.task.task_title);
       
       // Find all active tasks

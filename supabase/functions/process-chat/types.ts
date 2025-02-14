@@ -23,12 +23,13 @@ export interface TaskDetails {
 
 export interface OpenAIResponse {
   task?: {
-    should_create: boolean;
+    should_create?: boolean;
     should_complete?: boolean;
+    should_add_subtasks?: boolean;
     task_title?: string;
-    title: string;
+    title?: string;
     description?: string;
-    is_scheduled: boolean;
+    is_scheduled?: boolean;
     date?: string;
     start_time?: string;
     end_time?: string;
