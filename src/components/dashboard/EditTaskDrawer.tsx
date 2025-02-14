@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Task } from "./TaskBoard";
 import { TaskForm } from "./TaskForm";
 import { supabase } from "@/integrations/supabase/client";
@@ -54,7 +54,6 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
   const handleSubmit = async () => {
     setIsLoading(true);
     try {
-      // Update main task
       const { error: taskError } = await supabase
         .from('tasks')
         .update({
@@ -71,10 +70,8 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
 
       if (taskError) throw taskError;
 
-      // Update subtasks
       for (const subtask of subtasks) {
         if (subtask.id) {
-          // Update existing subtask
           const { error: subtaskError } = await supabase
             .from('subtasks')
             .update({
@@ -86,7 +83,6 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
 
           if (subtaskError) throw subtaskError;
         } else {
-          // Create new subtask
           const { error: newSubtaskError } = await supabase
             .from('subtasks')
             .insert({
@@ -111,40 +107,38 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
   };
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent>
-        <div className="max-w-xl mx-auto w-full">
-          <DrawerHeader className="sticky top-0 bg-background z-10 pb-4">
-            <DrawerTitle>Edit Task</DrawerTitle>
-          </DrawerHeader>
-          <div className="px-4 pb-4 max-h-[calc(85vh-80px)] overflow-y-auto">
-            <TaskForm
-              title={title}
-              description={description}
-              isScheduled={isScheduled}
-              date={date}
-              startTime={startTime}
-              endTime={endTime}
-              priority={task.priority || "low"}
-              reminderEnabled={reminderEnabled}
-              subtasks={subtasks}
-              isLoading={isLoading}
-              isEditing={true}
-              task={task}
-              onTitleChange={setTitle}
-              onDescriptionChange={setDescription}
-              onIsScheduledChange={setIsScheduled}
-              onDateChange={setDate}
-              onStartTimeChange={setStartTime}
-              onEndTimeChange={setEndTime}
-              onPriorityChange={setPriority}
-              onReminderEnabledChange={setReminderEnabled}
-              onSubtasksChange={setSubtasks}
-              onSubmit={handleSubmit}
-            />
-          </div>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="left" className="w-[400px] sm:max-w-[540px]">
+        <SheetHeader className="sticky top-0 bg-background z-10 pb-4">
+          <SheetTitle>Edit Task</SheetTitle>
+        </SheetHeader>
+        <div className="overflow-y-auto h-[calc(100vh-80px)]">
+          <TaskForm
+            title={title}
+            description={description}
+            isScheduled={isScheduled}
+            date={date}
+            startTime={startTime}
+            endTime={endTime}
+            priority={task.priority || "low"}
+            reminderEnabled={reminderEnabled}
+            subtasks={subtasks}
+            isLoading={isLoading}
+            isEditing={true}
+            task={task}
+            onTitleChange={setTitle}
+            onDescriptionChange={setDescription}
+            onIsScheduledChange={setIsScheduled}
+            onDateChange={setDate}
+            onStartTimeChange={setStartTime}
+            onEndTimeChange={setEndTime}
+            onPriorityChange={setPriority}
+            onReminderEnabledChange={setReminderEnabled}
+            onSubtasksChange={setSubtasks}
+            onSubmit={handleSubmit}
+          />
         </div>
-      </DrawerContent>
-    </Drawer>
+      </SheetContent>
+    </Sheet>
   );
 }
