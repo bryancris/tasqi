@@ -122,24 +122,27 @@ export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks, showFu
         ))}
 
         {/* Time slots and cells */}
-        {timeSlots.map((timeSlot, rowIndex) => (
-          <React.Fragment key={timeSlot.hour}>
-            <div className="w-20 px-4 py-3 text-right text-sm text-slate-500 bg-[#B2E3EA] border-r border-[#403E43]">
-              {timeSlot.display}
+        {timeSlots.map((timeSlot, rowIndex) => {
+          const rowKey = `row-${timeSlot.hour}`;
+          return (
+            <div key={rowKey} className="contents">
+              <div className="w-20 px-4 py-3 text-right text-sm text-slate-500 bg-[#B2E3EA] border-r border-[#403E43]">
+                {timeSlot.display}
+              </div>
+              {displayDays.map((day, colIndex) => (
+                <CalendarCell
+                  key={`${day.toISOString()}-${timeSlot.hour}`}
+                  day={day}
+                  timeSlot={timeSlot}
+                  tasks={scheduledTasks}
+                  isLastRow={rowIndex === timeSlots.length - 1}
+                  isLastColumn={colIndex === displayDays.length - 1}
+                  isFirstColumn={colIndex === 0}
+                />
+              ))}
             </div>
-            {displayDays.map((day, colIndex) => (
-              <CalendarCell
-                key={`${day.toISOString()}-${timeSlot.hour}`}
-                day={day}
-                timeSlot={timeSlot}
-                tasks={scheduledTasks}
-                isLastRow={rowIndex === timeSlots.length - 1}
-                isLastColumn={colIndex === displayDays.length - 1}
-                isFirstColumn={colIndex === 0}
-              />
-            ))}
-          </React.Fragment>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
