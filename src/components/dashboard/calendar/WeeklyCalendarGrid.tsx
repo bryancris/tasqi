@@ -47,59 +47,20 @@ const CalendarCell = ({
     if (taskDate !== formattedDate) return false;
 
     const [taskStartHour] = task.start_time.split(':').map(Number);
-    return taskStartHour === timeSlot.hour;
+    const matchesHour = taskStartHour === timeSlot.hour;
+    
+    console.log(`Task ${task.id} check:`, {
+      taskDate,
+      cellDate: formattedDate,
+      taskStartHour,
+      cellHour: timeSlot.hour,
+      matches: taskDate === formattedDate && matchesHour
+    });
+    
+    return matchesHour;
   });
 
-  console.log(`Checking tasks for ${formattedDate} at ${timeSlot.hour}:00 -`, tasksForThisSlot);
-
-  const getTaskPosition = (task: Task) => {
-    if (!task.start_time || !task.end_time) return null;
-
-    const [startHour, startMinute] = task.start_time.split(':').map(Number);
-    const [endHour, endMinute] = task.end_time.split(':').map(Number);
-
-    // Calculate duration in minutes
-    const durationInMinutes = ((endHour - startHour) * 60) + (endMinute - startMinute);
-    
-    // Only show task in its starting cell
-    if (startHour !== timeSlot.hour) {
-      return null;
-    }
-
-    // For tasks less than 30 minutes
-    if (durationInMinutes <= 30) {
-      return { 
-        top: startMinute < 30 ? '1px' : '31px', 
-        height: '28px',
-        position: 'absolute' as const,
-        left: '1px',
-        right: '1px',
-        zIndex: 10
-      };
-    }
-    
-    // For tasks that span the full hour
-    if (durationInMinutes <= 60) {
-      return { 
-        top: '1px',
-        height: '58px',
-        position: 'absolute' as const,
-        left: '1px',
-        right: '1px',
-        zIndex: 10
-      };
-    }
-    
-    // For tasks longer than an hour
-    return {
-      top: '1px',
-      height: '58px', // Only show within the hour slot
-      position: 'absolute' as const,
-      left: '1px',
-      right: '1px',
-      zIndex: 10
-    };
-  };
+  console.log(`Cell ${formattedDate} ${timeSlot.hour}:00 has tasks:`, tasksForThisSlot);
 
   return (
     <div
@@ -120,24 +81,19 @@ const CalendarCell = ({
       {/* 30-minute marker */}
       <div className="absolute left-0 right-0 top-1/2 border-t border-[#403E43]/30" />
       
-      {tasksForThisSlot.map((task) => {
-        const position = getTaskPosition(task);
-        if (!position) return null;
-
-        return (
-          <div 
-            key={task.id} 
-            style={position}
-          >
-            <TaskCard
-              task={task}
-              index={0}
-              isDraggable={true}
-              view="weekly"
-            />
-          </div>
-        );
-      })}
+      {tasksForThisSlot.map((task) => (
+        <div 
+          key={task.id} 
+          className="absolute inset-0 p-0.5"
+        >
+          <TaskCard
+            task={task}
+            index={0}
+            isDraggable={true}
+            view="weekly"
+          />
+        </div>
+      ))}
     </div>
   );
 }
