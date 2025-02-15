@@ -74,7 +74,7 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
         task.status === 'completed' ? 'text-white' : '',
         "overflow-hidden",
         "before:content-[''] before:absolute before:inset-0",
-        "before:bg-gradient-to-b before:from-white/10 before:to-transparent",
+        "before:bg-gradient-to-l before:from-black/20 before:to-transparent",
         "before:pointer-events-none"
       )}
       onClick={onClick}
