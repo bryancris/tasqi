@@ -65,11 +65,17 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
   return (
     <div 
       className={cn(
-        "flex items-start gap-3 p-3 rounded-lg shadow-sm relative",
-        "hover:shadow-md transition-shadow cursor-pointer",
+        "flex items-start gap-3 p-3 rounded-lg relative",
+        "transition-all duration-200",
+        "shadow-[0_2px_4px_rgba(0,0,0,0.1),0_3px_6px_rgba(0,0,0,0.05)]",
+        "hover:shadow-[0_4px_8px_rgba(0,0,0,0.12),0_6px_12px_rgba(0,0,0,0.08)]",
+        "cursor-pointer",
         getCardColor(),
         task.status === 'completed' ? 'text-white' : '',
-        "overflow-hidden"
+        "overflow-hidden",
+        "before:content-[''] before:absolute before:inset-0",
+        "before:bg-gradient-to-b before:from-white/10 before:to-transparent",
+        "before:pointer-events-none"
       )}
       onClick={onClick}
       {...dragHandleProps}

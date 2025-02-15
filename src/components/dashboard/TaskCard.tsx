@@ -159,8 +159,9 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
   return (
     <>
       <div className={cn(
-        "transition-all duration-200",
-        isDragging && "opacity-50"
+        "transition-all duration-200 transform",
+        "hover:translate-y-[-2px]",
+        isDragging && "opacity-50 scale-105"
       )}>
         {renderCard()}
       </div>

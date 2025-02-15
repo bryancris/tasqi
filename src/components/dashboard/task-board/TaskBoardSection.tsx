@@ -36,20 +36,16 @@ export function TaskBoardSection({ tasks, onDragEnd, onComplete }: TaskBoardSect
     return task.completed_at && isAfter(new Date(task.completed_at), todayStart);
   };
 
-  // Modified filtering logic to show all unscheduled and today's scheduled tasks
   const sortedTasks = [...tasks]
     .filter(task => {
-      // Always show unscheduled tasks
       if (task.status === 'unscheduled') {
         return true;
       }
       
-      // For completed tasks, check if they were completed today
       if (task.status === 'completed') {
         return shouldShowCompletedTask(task);
       }
       
-      // For scheduled tasks, show all of them
       return task.status === 'scheduled';
     })
     .sort((a, b) => {
@@ -58,15 +54,13 @@ export function TaskBoardSection({ tasks, onDragEnd, onComplete }: TaskBoardSect
       return (a.position || 0) - (b.position || 0);
     });
 
-  console.log('Tasks being displayed:', sortedTasks);
-
   const draggableTaskIds = sortedTasks
     .filter(task => task.status !== 'completed')
     .map(task => task.id);
 
   return (
-    <Card className="flex flex-col h-full overflow-hidden">
-      <CardHeader className="flex-none pb-4 border-b">
+    <Card className="flex flex-col h-full overflow-hidden shadow-lg bg-gradient-to-b from-white to-gray-50">
+      <CardHeader className="flex-none pb-4 border-b bg-white">
         <div className="flex items-center justify-between">
           <CardTitle className="text-2xl font-semibold">Task Board</CardTitle>
           <NotificationTest />
