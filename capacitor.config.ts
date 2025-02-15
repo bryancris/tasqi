@@ -2,7 +2,7 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.tasqi.app',
+  appId: 'app.lovable.tasqi',
   appName: 'tasqi',
   webDir: 'dist',
   server: {
