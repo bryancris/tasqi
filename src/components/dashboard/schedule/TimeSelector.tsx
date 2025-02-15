@@ -88,15 +88,16 @@ export function TimeSelector({
     // Remove any non-digits
     const cleanValue = value.replace(/\D/g, '');
     
-    // Only update if the value is valid (empty or 0-59)
+    // Only update if the value is valid (0-59)
     const num = parseInt(cleanValue);
     if (!cleanValue || (num >= 0 && num <= 59)) {
+      const formattedMinutes = cleanValue.padStart(2, '0');
       if (type === 'start') {
-        setStartMinutes(cleanValue.padStart(2, '0'));
-        onStartTimeChange(formatTime(startHours || "12", cleanValue.padStart(2, '0'), startPeriod));
+        setStartMinutes(formattedMinutes);
+        onStartTimeChange(formatTime(startHours || "12", formattedMinutes, startPeriod));
       } else {
-        setEndMinutes(cleanValue.padStart(2, '0'));
-        onEndTimeChange(formatTime(endHours || "12", cleanValue.padStart(2, '0'), endPeriod));
+        setEndMinutes(formattedMinutes);
+        onEndTimeChange(formatTime(endHours || "12", formattedMinutes, endPeriod));
       }
     }
   };
