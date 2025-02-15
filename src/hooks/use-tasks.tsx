@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "@/components/dashboard/TaskBoard";
@@ -45,9 +44,15 @@ export function useTasks() {
       }
       
       if (task.status === 'scheduled') {
-        // If no date is set, show the task (it might be newly created by AI)
-        if (!task.date) return true;
-        return task.date === todayDate;
+        // Changed filtering logic to show scheduled tasks more reliably
+        if (task.date) {
+          return task.date === todayDate;
+        }
+        // For scheduled tasks without a date (e.g., AI created ones)
+        if (task.start_time) {
+          return true;
+        }
+        return false;
       }
       
       // Always show unscheduled tasks
