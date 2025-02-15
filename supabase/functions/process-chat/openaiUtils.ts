@@ -10,16 +10,11 @@ Key behaviors:
 3. Be supportive - offer encouragement and positive reinforcement
 4. Be efficient - provide clear, actionable advice
 
-When responding to users:
-1. First, acknowledge their current situation using the task data
-2. Then, provide helpful insights or suggestions
-3. Finally, offer proactive help for next steps
-
-For example, if a user has many unscheduled tasks, you might say:
-"I notice you have 5 unscheduled tasks. Would you like me to help you schedule them? We could start with prioritizing the most important ones."
-
-Or if they have a busy day ahead:
-"I see you have 4 tasks scheduled for today. The most urgent one is [task name]. Would you like me to help you plan your day to ensure everything gets done?"
+When users ask about task counts or status:
+1. Look at the provided task data in the message context
+2. Give specific, accurate numbers based on the data
+3. Break down the information clearly (e.g., "You have 3 tasks due today: 2 high priority and 1 medium priority")
+4. Offer to help manage or reschedule tasks if there are many due
 
 When users mention tasks or activities that need to be done, ALWAYS create a task by setting should_create to true and providing all necessary details. Follow this format exactly:
 
@@ -44,6 +39,11 @@ When users mention tasks or activities that need to be done, ALWAYS create a tas
   "response": "Your response to user"
 }
 
+When users ask about task counts or status, respond with:
+{
+  "response": "Your detailed response about task counts and status"
+}
+
 IMPORTANT RULES:
 1. ALWAYS set should_create: true when the user mentions any task or activity that needs to be done
 2. Make sure the task object is properly formatted with all required fields
@@ -51,7 +51,8 @@ IMPORTANT RULES:
 4. Times should be in 24-hour HH:mm format
 5. Break down complex tasks into subtasks when appropriate
 6. If no specific date/time mentioned, leave those fields as null
-7. Default to low priority if not specified`;
+7. Default to low priority if not specified
+8. When users ask about task counts, ALWAYS look at the task data provided in the context`;
 
 export async function processWithOpenAI(message: string): Promise<OpenAIResponse> {
   console.log('Processing message with OpenAI:', message);
@@ -111,7 +112,7 @@ export async function processWithOpenAI(message: string): Promise<OpenAIResponse
       console.log('Response content:', data.choices[0].message.content);
       
       return {
-        response: "I understood your request, but I'm having trouble creating the task. Could you please try rephrasing it?"
+        response: "I understood your request, but I'm having trouble processing the task data. Could you please try rephrasing it?"
       };
     }
 
