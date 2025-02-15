@@ -37,17 +37,44 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
 
   // Filter tasks for the weekly calendar
   const scheduledTasks = tasks?.filter(task => {
-    if (!task.date || !task.start_time || !task.end_time) return false;
-    if (task.status !== 'scheduled') return false;
+    // First log the task being evaluated
+    console.log('Evaluating task for scheduling:', task);
     
+    // Check if task has required fields
+    if (!task.date || !task.start_time || !task.end_time) {
+      console.log('Task missing required fields:', { 
+        id: task.id, 
+        hasDate: !!task.date, 
+        hasStartTime: !!task.start_time, 
+        hasEndTime: !!task.end_time 
+      });
+      return false;
+    }
+
+    // Check task status
+    if (task.status !== 'scheduled') {
+      console.log('Task not scheduled:', { id: task.id, status: task.status });
+      return false;
+    }
+    
+    // Check if task is within the week
     const taskDate = startOfDay(parseISO(task.date));
     const weekStartDay = startOfDay(weekStart);
     const weekEndDay = startOfDay(weekEnd);
     
-    return taskDate >= weekStartDay && taskDate <= weekEndDay;
+    const isWithinWeek = taskDate >= weekStartDay && taskDate <= weekEndDay;
+    console.log('Task date check:', { 
+      id: task.id,
+      taskDate: format(taskDate, 'yyyy-MM-dd'),
+      weekStart: format(weekStartDay, 'yyyy-MM-dd'),
+      weekEnd: format(weekEndDay, 'yyyy-MM-dd'),
+      isWithinWeek
+    });
+    
+    return isWithinWeek;
   }) ?? [];
 
-  console.log('Filtered scheduled tasks:', scheduledTasks);
+  console.log('Final filtered scheduled tasks:', scheduledTasks);
 
   const unscheduledTasks = tasks?.filter(task => 
     task.status === 'unscheduled'
