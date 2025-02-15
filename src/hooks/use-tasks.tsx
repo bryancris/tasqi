@@ -16,6 +16,8 @@ export function useTasks() {
     const todayEnd = endOfDay(today);
     const todayDate = today.toISOString().split('T')[0];
 
+    console.log('Fetching tasks for date:', todayDate);
+
     // Fetch tasks for today and unscheduled tasks
     const { data: tasks, error: tasksError } = await supabase
       .from('tasks')
@@ -31,6 +33,8 @@ export function useTasks() {
       toast.error("Failed to load tasks");
       throw tasksError;
     }
+
+    console.log('Fetched tasks:', tasks?.length);
 
     // Filter completed tasks to only show today's completed tasks
     return (tasks || []).filter((task) => {
@@ -51,12 +55,17 @@ export function useTasks() {
 
   const invalidateTasksQuery = useCallback(() => {
     console.log('Invalidating tasks query...');
-    queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    void queryClient.invalidateQueries({ 
+      queryKey: ['tasks'],
+      exact: true,
+      refetchType: 'active'
+    });
   }, [queryClient]);
 
   // Set up real-time subscription
   useEffect(() => {
     console.log('Setting up real-time subscription...');
+    let isSubscribed = true;
 
     const channel = supabase
       .channel('tasks-changes')
@@ -69,7 +78,9 @@ export function useTasks() {
         },
         (payload) => {
           console.log('Task changed:', payload);
-          invalidateTasksQuery();
+          if (isSubscribed) {
+            invalidateTasksQuery();
+          }
         }
       )
       .on(
@@ -81,7 +92,9 @@ export function useTasks() {
         },
         (payload) => {
           console.log('Task assignment changed:', payload);
-          invalidateTasksQuery();
+          if (isSubscribed) {
+            invalidateTasksQuery();
+          }
         }
       )
       .on(
@@ -93,7 +106,9 @@ export function useTasks() {
         },
         (payload) => {
           console.log('Subtask changed:', payload);
-          invalidateTasksQuery();
+          if (isSubscribed) {
+            invalidateTasksQuery();
+          }
         }
       )
       .subscribe((status) => {
@@ -106,6 +121,7 @@ export function useTasks() {
     // Cleanup subscription on unmount
     return () => {
       console.log('Cleaning up real-time subscription...');
+      isSubscribed = false;
       supabase.removeChannel(channel);
     };
   }, [invalidateTasksQuery]);
@@ -113,9 +129,11 @@ export function useTasks() {
   const { data: tasks = [], refetch } = useQuery({
     queryKey: ['tasks'],
     queryFn: fetchTasks,
-    staleTime: 0, // Consider data immediately stale
-    gcTime: 300000, // Keep unused data in cache for 5 minutes
+    staleTime: 0,
+    gcTime: 0, // Don't cache at all
     refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchOnReconnect: true,
   });
 
   return { tasks, refetch };
