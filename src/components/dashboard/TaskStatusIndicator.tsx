@@ -1,6 +1,6 @@
 
 import { cn } from "@/lib/utils";
-import { Check, CheckCircle, Calendar } from "lucide-react";
+import { Check, CheckCircle, Clock } from "lucide-react";
 
 interface TaskStatusIndicatorProps {
   status: string;
@@ -41,7 +41,7 @@ export function TaskStatusIndicator({ status, time, rescheduleCount = 0, onClick
           "text-white/80 hover:text-white transition-colors"
         )}
       >
-        <Calendar className="w-5 h-5" />
+        <Clock className="w-5 h-5" />
       </div>
     );
   };
