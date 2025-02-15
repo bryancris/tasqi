@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Check, CalendarRange, MessageCircle, Send } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
+import { AudioRecorder } from "@/components/chat/AudioRecorder";
 
 interface Message {
   content: string;
@@ -63,6 +64,10 @@ export function GreetingDialog({
     if (e.key === 'Enter') {
       handleSendMessage();
     }
+  };
+
+  const handleTranscriptionComplete = (text: string) => {
+    setInputMessage(text);
   };
 
   return (
@@ -143,19 +148,24 @@ export function GreetingDialog({
 
         {/* Chat Input */}
         <div className="mt-4 flex gap-2">
-          <Input
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Type your message..."
-            className="bg-white/20 border-white/20 text-white placeholder:text-white/60"
-          />
-          <Button 
-            onClick={handleSendMessage}
-            className="bg-white text-violet-600 hover:bg-white/90 px-4"
-          >
-            <Send className="h-4 w-4" />
-          </Button>
+          <div className="relative flex-1">
+            <Input
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Type your message..."
+              className="bg-white/20 border-white/20 text-white placeholder:text-white/60 pr-24"
+            />
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+              <AudioRecorder onTranscriptionComplete={handleTranscriptionComplete} />
+              <Button 
+                onClick={handleSendMessage}
+                className="bg-white text-violet-600 hover:bg-white/90 px-4 h-8 w-8"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
