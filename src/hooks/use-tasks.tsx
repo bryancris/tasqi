@@ -27,7 +27,7 @@ export function useTasks() {
     }
 
     // Filter completed tasks to only show today's completed tasks
-    return tasks.filter((task: Task) => {
+    return (tasks || []).filter((task) => {
       if (task.status === 'completed') {
         return task.completed_at && 
                new Date(task.completed_at) >= todayStart && 
