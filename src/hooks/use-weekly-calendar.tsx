@@ -2,7 +2,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "@/components/dashboard/TaskBoard";
-import { format, parseISO, startOfDay } from "date-fns";
+import { format, parseISO, startOfDay, endOfDay } from "date-fns";
 import { useToast } from "./use-toast";
 import { DragEndEvent } from "@dnd-kit/core";
 
@@ -13,17 +13,20 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
   const { data: tasks = [] } = useQuery({
     queryKey: ['tasks', format(weekStart, 'yyyy-MM-dd'), format(weekEnd, 'yyyy-MM-dd')],
     queryFn: async () => {
+      const startDate = format(startOfDay(weekStart), 'yyyy-MM-dd');
+      const endDate = format(endOfDay(weekEnd), 'yyyy-MM-dd');
+
       console.log('Fetching tasks for weekly calendar...', {
-        weekStart: format(weekStart, 'yyyy-MM-dd'),
-        weekEnd: format(weekEnd, 'yyyy-MM-dd')
+        weekStart: startDate,
+        weekEnd: endDate
       });
 
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
-        .or(`status.eq.unscheduled,and(status.eq.scheduled,date.gte.${format(weekStart, 'yyyy-MM-dd')},date.lte.${format(weekEnd, 'yyyy-MM-dd')})`)
-        .not('status', 'eq', 'completed')
-        .order('position', { ascending: true });
+        .or(`and(status.eq.scheduled,date.gte.${startDate},date.lte.${endDate}),status.eq.unscheduled`)
+        .order('date', { ascending: true })
+        .order('start_time', { ascending: true });
       
       if (error) {
         console.error('Error fetching tasks:', error);
@@ -37,40 +40,26 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
 
   // Filter tasks for the weekly calendar
   const scheduledTasks = tasks?.filter(task => {
-    // First log the task being evaluated
-    console.log('Evaluating task for scheduling:', task);
-    
-    // Check if task has required fields
-    if (!task.date || !task.start_time || !task.end_time) {
-      console.log('Task missing required fields:', { 
-        id: task.id, 
-        hasDate: !!task.date, 
-        hasStartTime: !!task.start_time, 
-        hasEndTime: !!task.end_time 
+    if (!task.date || !task.start_time || task.status !== 'scheduled') {
+      console.log('Filtering out task:', task.id, {
+        hasDate: !!task.date,
+        hasStartTime: !!task.start_time,
+        status: task.status
       });
       return false;
     }
 
-    // Check task status
-    if (task.status !== 'scheduled') {
-      console.log('Task not scheduled:', { id: task.id, status: task.status });
-      return false;
-    }
-    
-    // Check if task is within the week
-    const taskDate = startOfDay(parseISO(task.date));
-    const weekStartDay = startOfDay(weekStart);
-    const weekEndDay = startOfDay(weekEnd);
-    
-    const isWithinWeek = taskDate >= weekStartDay && taskDate <= weekEndDay;
-    console.log('Task date check:', { 
-      id: task.id,
+    const taskDate = parseISO(task.date);
+    const isWithinWeek = taskDate >= startOfDay(weekStart) && taskDate <= endOfDay(weekEnd);
+
+    console.log('Task date check:', {
+      taskId: task.id,
       taskDate: format(taskDate, 'yyyy-MM-dd'),
-      weekStart: format(weekStartDay, 'yyyy-MM-dd'),
-      weekEnd: format(weekEndDay, 'yyyy-MM-dd'),
+      weekStart: format(weekStart, 'yyyy-MM-dd'),
+      weekEnd: format(weekEnd, 'yyyy-MM-dd'),
       isWithinWeek
     });
-    
+
     return isWithinWeek;
   }) ?? [];
 
@@ -79,8 +68,6 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
   const unscheduledTasks = tasks?.filter(task => 
     task.status === 'unscheduled'
   ) ?? [];
-
-  console.log('Filtered unscheduled tasks:', unscheduledTasks);
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
