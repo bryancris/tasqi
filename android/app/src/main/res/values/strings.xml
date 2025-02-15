@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">tasqi</string>
+    <string name="title_activity_main">tasqi</string>
+    <string name="package_name">app.lovable.tasqi</string>
+    <string name="custom_url_scheme">app.lovable.tasqi</string>
+</resources>
