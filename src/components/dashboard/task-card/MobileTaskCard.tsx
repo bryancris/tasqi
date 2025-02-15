@@ -53,4 +53,3 @@ export function MobileTaskCard({ task, onComplete, onClick, dragHandleProps }: M
     </div>
   );
 }
-
