@@ -50,8 +50,6 @@ const CalendarCell = ({
     return taskStartHour === timeSlot.hour;
   });
 
-  console.log(`Tasks for slot ${timeSlot.hour} on ${formattedDate}:`, tasksForThisSlot);
-
   const getTaskPosition = (task: Task) => {
     if (!task.start_time || !task.end_time) return null;
 
@@ -60,31 +58,18 @@ const CalendarCell = ({
 
     // Calculate duration in minutes
     const durationInMinutes = ((endHour - startHour) * 60) + (endMinute - startMinute);
-
-    // Only show the task in its starting cell
+    
+    // Only show task in its starting cell
     if (startHour !== timeSlot.hour) {
       return null;
     }
-    
-    // For tasks less than 30 minutes
-    if (durationInMinutes <= 30) {
-      // If task starts in first half of hour
-      if (startMinute < 30) {
-        return { top: '1px', height: '28px' };
-      } else {
-        // Task starts in second half of hour
-        return { top: '31px', height: '28px' };
-      }
-    } else if (durationInMinutes <= 60) {
-      // For tasks that are about an hour, fill the whole cell
-      return { top: '1px', height: '58px' };
-    }
-    
-    // For tasks longer than an hour
-    const numberOfHours = Math.ceil(durationInMinutes / 60);
-    return { 
-      top: '1px', 
-      height: `${numberOfHours * 60 - 2}px`,
+
+    return {
+      top: `${startMinute}px`,
+      height: `${durationInMinutes}px`,
+      position: 'absolute' as const,
+      left: '1px',
+      right: '1px',
       zIndex: 10
     };
   };
@@ -115,7 +100,6 @@ const CalendarCell = ({
         return (
           <div 
             key={task.id} 
-            className="absolute inset-x-0.5"
             style={position}
           >
             <TaskCard
@@ -132,7 +116,6 @@ const CalendarCell = ({
 }
 
 export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks, showFullWeek }: WeeklyCalendarGridProps) {
-  console.log('WeeklyCalendarGrid received scheduledTasks:', scheduledTasks);
   const displayDays = showFullWeek ? weekDays : weekDays.slice(0, 5);
 
   return (
