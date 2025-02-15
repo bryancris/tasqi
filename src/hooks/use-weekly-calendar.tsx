@@ -21,8 +21,7 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
-        .gte('date', format(weekStart, 'yyyy-MM-dd'))
-        .lte('date', format(weekEnd, 'yyyy-MM-dd'))
+        .or(`status.eq.unscheduled,and(status.eq.scheduled,date.gte.${format(weekStart, 'yyyy-MM-dd')},date.lte.${format(weekEnd, 'yyyy-MM-dd')})`)
         .not('status', 'eq', 'completed')
         .order('position', { ascending: true });
       
@@ -39,7 +38,7 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
   // Filter tasks for the weekly calendar
   const scheduledTasks = tasks?.filter(task => {
     if (!task.date || !task.start_time || !task.end_time) return false;
-    if (task.status === 'completed') return false;
+    if (task.status !== 'scheduled') return false;
     
     const taskDate = startOfDay(parseISO(task.date));
     const weekStartDay = startOfDay(weekStart);
@@ -51,9 +50,10 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
   console.log('Filtered scheduled tasks:', scheduledTasks);
 
   const unscheduledTasks = tasks?.filter(task => 
-    task.status !== 'completed' && 
-    (task.status === 'unscheduled' || !task.date || !task.start_time)
+    task.status === 'unscheduled'
   ) ?? [];
+
+  console.log('Filtered unscheduled tasks:', unscheduledTasks);
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
