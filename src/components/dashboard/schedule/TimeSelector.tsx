@@ -18,10 +18,10 @@ export function TimeSelector({
   onEndTimeChange 
 }: TimeSelectorProps) {
   const [startHours, setStartHours] = useState("");
-  const [startMinutes, setStartMinutes] = useState("00");
+  const [startMinutes, setStartMinutes] = useState("");  // Changed initial state to empty string
   const [startPeriod, setStartPeriod] = useState<"AM" | "PM">("AM");
   const [endHours, setEndHours] = useState("");
-  const [endMinutes, setEndMinutes] = useState("00");
+  const [endMinutes, setEndMinutes] = useState("");  // Changed initial state to empty string
   const [endPeriod, setEndPeriod] = useState<"AM" | "PM">("AM");
 
   useEffect(() => {
@@ -35,7 +35,8 @@ export function TimeSelector({
         setStartPeriod("AM");
         setStartHours(hourNum === 0 ? "12" : String(hourNum));
       }
-      setStartMinutes(minutes || "00");
+      // Don't pad minutes when setting state
+      setStartMinutes(minutes ? String(parseInt(minutes)) : "");
     }
   }, [startTime]);
 
@@ -50,7 +51,8 @@ export function TimeSelector({
         setEndPeriod("AM");
         setEndHours(hourNum === 0 ? "12" : String(hourNum));
       }
-      setEndMinutes(minutes || "00");
+      // Don't pad minutes when setting state
+      setEndMinutes(minutes ? String(parseInt(minutes)) : "");
     }
   }, [endTime]);
 
@@ -64,8 +66,8 @@ export function TimeSelector({
       hourNum = 0;
     }
     
-    // Only pad the minutes when formatting the final time string
-    const paddedMinutes = minutes.padStart(2, '0');
+    // Format minutes for the final time string
+    const paddedMinutes = (minutes || "0").padStart(2, '0');
     return `${String(hourNum).padStart(2, '0')}:${paddedMinutes}:00`;
   };
 
@@ -91,9 +93,8 @@ export function TimeSelector({
     const cleanValue = value.replace(/\D/g, '');
     
     // Only update if the value is valid (0-59)
-    const num = parseInt(cleanValue);
+    const num = parseInt(cleanValue || "0");
     if (!cleanValue || (num >= 0 && num <= 59)) {
-      // Don't pad the value while typing, just store it as is
       if (type === 'start') {
         setStartMinutes(cleanValue);
         onStartTimeChange(formatTime(startHours || "12", cleanValue, startPeriod));
