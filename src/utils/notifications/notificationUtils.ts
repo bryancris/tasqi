@@ -7,22 +7,9 @@ const isNativePlatform = () => Capacitor.isNativePlatform();
 export const showNotification = async (task: any, type: 'reminder' | 'shared' = 'reminder') => {
   try {
     if (isNativePlatform()) {
-      // Use Firebase Cloud Messaging for native platforms
-      await FirebaseMessaging.sendMessage({
-        data: {
-          type: type === 'shared' ? 'task_share' : 'task_reminder',
-          taskId: task.id.toString(),
-          url: '/dashboard'
-        },
-        notification: {
-          title: type === 'shared' ? 'New Shared Task' : task.title,
-          body: type === 'shared' 
-            ? `A task has been shared with you: ${task.title}`
-            : `Task due ${task.start_time ? `at ${task.start_time}` : 'today'}`,
-          imageUrl: '/pwa-192x192.png'
-        }
-      });
-      
+      // For native platforms, notifications are handled automatically by Firebase
+      // when they arrive. We don't need to manually show them.
+      console.log('Native notifications are handled by Firebase automatically');
       return;
     }
 
@@ -123,4 +110,3 @@ export const checkNotificationPermission = async () => {
     return false;
   }
 };
-

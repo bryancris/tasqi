@@ -14,9 +14,15 @@ export const savePushSubscription = async (subscription: PushSubscription | stri
       throw new Error('User must be logged in to save push subscription');
     }
 
+    const baseData = {
+      user_id: session.user.id,
+      auth_keys: {} // Provide empty object as default for auth_keys
+    };
+
     const subscriptionData = deviceType === 'web' 
       ? {
-          device_type: 'web',
+          ...baseData,
+          device_type: 'web' as const,
           endpoint: (subscription as PushSubscription).endpoint,
           auth_keys: {
             p256dh: (subscription as PushSubscription).toJSON().keys?.p256dh,
@@ -24,7 +30,9 @@ export const savePushSubscription = async (subscription: PushSubscription | stri
           }
         }
       : {
+          ...baseData,
           device_type: deviceType,
+          endpoint: '', // Provide empty string as required by the schema
           fcm_token: subscription as string,
           device_info: {
             platform: deviceType,
@@ -34,10 +42,7 @@ export const savePushSubscription = async (subscription: PushSubscription | stri
 
     const { error } = await supabase
       .from('push_subscriptions')
-      .upsert({
-        user_id: session.user.id,
-        ...subscriptionData
-      }, {
+      .upsert(subscriptionData, {
         onConflict: deviceType === 'web' 
           ? 'user_id,endpoint' 
           : 'user_id,fcm_token'
@@ -126,4 +131,3 @@ export const setupPushSubscription = async (registration?: ServiceWorkerRegistra
     throw error;
   }
 };
-
