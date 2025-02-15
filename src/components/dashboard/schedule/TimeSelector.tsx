@@ -17,11 +17,11 @@ export function TimeSelector({
   onStartTimeChange, 
   onEndTimeChange 
 }: TimeSelectorProps) {
-  const [startHours, setStartHours] = useState("");
-  const [startMinutes, setStartMinutes] = useState("");  // Changed initial state to empty string
+  const [startHours, setStartHours] = useState("12");
+  const [startMinutes, setStartMinutes] = useState("00");
   const [startPeriod, setStartPeriod] = useState<"AM" | "PM">("AM");
-  const [endHours, setEndHours] = useState("");
-  const [endMinutes, setEndMinutes] = useState("");  // Changed initial state to empty string
+  const [endHours, setEndHours] = useState("12");
+  const [endMinutes, setEndMinutes] = useState("00");
   const [endPeriod, setEndPeriod] = useState<"AM" | "PM">("AM");
 
   useEffect(() => {
@@ -30,13 +30,12 @@ export function TimeSelector({
       const hourNum = parseInt(hours);
       if (hourNum >= 12) {
         setStartPeriod("PM");
-        setStartHours(hourNum === 12 ? "12" : String(hourNum - 12));
+        setStartHours(hourNum === 12 ? "12" : String(hourNum - 12).padStart(2, '0'));
       } else {
         setStartPeriod("AM");
-        setStartHours(hourNum === 0 ? "12" : String(hourNum));
+        setStartHours(hourNum === 0 ? "12" : String(hourNum).padStart(2, '0'));
       }
-      // Don't pad minutes when setting state
-      setStartMinutes(minutes ? String(parseInt(minutes)) : "");
+      setStartMinutes(minutes.padStart(2, '0'));
     }
   }, [startTime]);
 
@@ -46,18 +45,17 @@ export function TimeSelector({
       const hourNum = parseInt(hours);
       if (hourNum >= 12) {
         setEndPeriod("PM");
-        setEndHours(hourNum === 12 ? "12" : String(hourNum - 12));
+        setEndHours(hourNum === 12 ? "12" : String(hourNum - 12).padStart(2, '0'));
       } else {
         setEndPeriod("AM");
-        setEndHours(hourNum === 0 ? "12" : String(hourNum));
+        setEndHours(hourNum === 0 ? "12" : String(hourNum).padStart(2, '0'));
       }
-      // Don't pad minutes when setting state
-      setEndMinutes(minutes ? String(parseInt(minutes)) : "");
+      setEndMinutes(minutes.padStart(2, '0'));
     }
   }, [endTime]);
 
   const formatTime = (hours: string, minutes: string, period: "AM" | "PM") => {
-    let hourNum = parseInt(hours || "12");
+    let hourNum = parseInt(hours);
     
     // Convert 12-hour to 24-hour format
     if (period === "PM" && hourNum !== 12) {
@@ -66,24 +64,23 @@ export function TimeSelector({
       hourNum = 0;
     }
     
-    // Format minutes for the final time string
-    const paddedMinutes = (minutes || "0").padStart(2, '0');
-    return `${String(hourNum).padStart(2, '0')}:${paddedMinutes}:00`;
+    return `${String(hourNum).padStart(2, '0')}:${minutes}:00`;
   };
 
   const handleHourChange = (value: string, type: 'start' | 'end') => {
     // Remove any non-digits
     const cleanValue = value.replace(/\D/g, '');
     
-    // Only update if the value is valid (empty or 1-12)
+    // Only update if the value is valid (1-12)
     const num = parseInt(cleanValue);
-    if (!cleanValue || (num >= 0 && num <= 12)) {
+    if (num >= 1 && num <= 12) {
+      const paddedValue = num.toString().padStart(2, '0');
       if (type === 'start') {
-        setStartHours(cleanValue);
-        onStartTimeChange(formatTime(cleanValue || "12", startMinutes, startPeriod));
+        setStartHours(paddedValue);
+        onStartTimeChange(formatTime(paddedValue, startMinutes, startPeriod));
       } else {
-        setEndHours(cleanValue);
-        onEndTimeChange(formatTime(cleanValue || "12", endMinutes, endPeriod));
+        setEndHours(paddedValue);
+        onEndTimeChange(formatTime(paddedValue, endMinutes, endPeriod));
       }
     }
   };
@@ -93,14 +90,15 @@ export function TimeSelector({
     const cleanValue = value.replace(/\D/g, '');
     
     // Only update if the value is valid (0-59)
-    const num = parseInt(cleanValue || "0");
-    if (!cleanValue || (num >= 0 && num <= 59)) {
+    const num = parseInt(cleanValue);
+    if (num >= 0 && num <= 59) {
+      const paddedValue = num.toString().padStart(2, '0');
       if (type === 'start') {
-        setStartMinutes(cleanValue);
-        onStartTimeChange(formatTime(startHours || "12", cleanValue, startPeriod));
+        setStartMinutes(paddedValue);
+        onStartTimeChange(formatTime(startHours, paddedValue, startPeriod));
       } else {
-        setEndMinutes(cleanValue);
-        onEndTimeChange(formatTime(endHours || "12", cleanValue, endPeriod));
+        setEndMinutes(paddedValue);
+        onEndTimeChange(formatTime(endHours, paddedValue, endPeriod));
       }
     }
   };
@@ -132,7 +130,7 @@ export function TimeSelector({
             onClick={() => {
               const newPeriod = startPeriod === "AM" ? "PM" : "AM";
               setStartPeriod(newPeriod);
-              onStartTimeChange(formatTime(startHours || "12", startMinutes, newPeriod));
+              onStartTimeChange(formatTime(startHours, startMinutes, newPeriod));
             }}
             className="px-2 h-8"
             type="button"
@@ -167,7 +165,7 @@ export function TimeSelector({
             onClick={() => {
               const newPeriod = endPeriod === "AM" ? "PM" : "AM";
               setEndPeriod(newPeriod);
-              onEndTimeChange(formatTime(endHours || "12", endMinutes, newPeriod));
+              onEndTimeChange(formatTime(endHours, endMinutes, newPeriod));
             }}
             className="px-2 h-8"
             type="button"
