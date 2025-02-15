@@ -1,44 +1,54 @@
 
-import { Clock8, Check, CalendarDays, AlertTriangle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-type TaskStatus = 'completed' | 'scheduled' | 'unscheduled' | 'in_progress' | 'stuck';
+import { Check, CheckCircle, Calendar } from "lucide-react";
 
 interface TaskStatusIndicatorProps {
-  status: TaskStatus;
-  time?: string;
+  status: string;
+  time?: string | null;
   rescheduleCount?: number;
-  onClick: (e: React.MouseEvent) => void;
+  onClick?: (e: React.MouseEvent) => void;
 }
 
-export function TaskStatusIndicator({ status, time, rescheduleCount, onClick }: TaskStatusIndicatorProps) {
-  const getStatusIcon = () => {
-    switch (status) {
-      case 'completed':
-        return <Check className="h-5 w-5 text-green-500" />;
-      case 'scheduled':
-        return <Clock8 className="h-5 w-5 text-blue-500" />;
-      case 'unscheduled':
-        return <CalendarDays className="h-5 w-5 text-gray-500" />;
-      case 'in_progress':
-        return <Loader2 className="h-5 w-5 text-yellow-500 animate-spin" />;
-      case 'stuck':
-        return <AlertTriangle className="h-5 w-5 text-red-500" />;
-      default:
-        return <CalendarDays className="h-5 w-5 text-gray-500" />;
+export function TaskStatusIndicator({ status, time, rescheduleCount = 0, onClick }: TaskStatusIndicatorProps) {
+  const renderIcon = () => {
+    if (status === 'completed') {
+      return (
+        <div 
+          onClick={onClick}
+          className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center cursor-pointer hover:bg-white/30 transition-colors"
+        >
+          <Check className="w-3 h-3 text-white" />
+        </div>
+      );
     }
+
+    if (status === 'unscheduled') {
+      return (
+        <div 
+          onClick={onClick}
+          className="w-5 h-5 rounded-full flex items-center justify-center cursor-pointer text-white/80 hover:text-white transition-colors"
+        >
+          <CheckCircle className="w-5 h-5" />
+        </div>
+      );
+    }
+
+    return (
+      <div 
+        onClick={onClick}
+        className={cn(
+          "w-5 h-5 rounded-full flex items-center justify-center cursor-pointer",
+          "text-white/80 hover:text-white transition-colors"
+        )}
+      >
+        <Calendar className="w-5 h-5" />
+      </div>
+    );
   };
 
   return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "flex items-center justify-center rounded-full w-10 h-10",
-        "hover:bg-gray-100 transition-colors",
-        "focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-      )}
-    >
-      {getStatusIcon()}
-    </button>
+    <div className="flex items-center justify-center">
+      {renderIcon()}
+    </div>
   );
 }
