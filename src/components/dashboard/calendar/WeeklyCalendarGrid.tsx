@@ -50,6 +50,8 @@ const CalendarCell = ({
     return taskStartHour === timeSlot.hour;
   });
 
+  console.log(`Checking tasks for ${formattedDate} at ${timeSlot.hour}:00 -`, tasksForThisSlot);
+
   const getTaskPosition = (task: Task) => {
     if (!task.start_time || !task.end_time) return null;
 
@@ -64,9 +66,34 @@ const CalendarCell = ({
       return null;
     }
 
+    // For tasks less than 30 minutes
+    if (durationInMinutes <= 30) {
+      return { 
+        top: startMinute < 30 ? '1px' : '31px', 
+        height: '28px',
+        position: 'absolute' as const,
+        left: '1px',
+        right: '1px',
+        zIndex: 10
+      };
+    }
+    
+    // For tasks that span the full hour
+    if (durationInMinutes <= 60) {
+      return { 
+        top: '1px',
+        height: '58px',
+        position: 'absolute' as const,
+        left: '1px',
+        right: '1px',
+        zIndex: 10
+      };
+    }
+    
+    // For tasks longer than an hour
     return {
-      top: `${startMinute}px`,
-      height: `${durationInMinutes}px`,
+      top: '1px',
+      height: '58px', // Only show within the hour slot
       position: 'absolute' as const,
       left: '1px',
       right: '1px',
@@ -116,6 +143,7 @@ const CalendarCell = ({
 }
 
 export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks, showFullWeek }: WeeklyCalendarGridProps) {
+  console.log('Scheduled tasks received:', scheduledTasks);
   const displayDays = showFullWeek ? weekDays : weekDays.slice(0, 5);
 
   return (
