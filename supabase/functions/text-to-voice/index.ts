@@ -24,65 +24,46 @@ serve(async (req) => {
       apiKey: Deno.env.get('OPENAI_API_KEY'),
     })
 
-    // First, make the text more conversational
-    const conversationResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: `You are a friendly personal assistant. Transform the following message into a more detailed, natural conversation.
-            Important guidelines:
-            1. List out each task individually with its specific time (if scheduled)
-            2. Mention task priorities (if any are high priority)
-            3. Add encouraging comments about task progress
-            4. Use casual transitions like "By the way" or "Also"
-            5. Add brief pauses with commas
-            6. Keep it warm and personal, like talking to a friend
-            7. If there are unscheduled tasks, suggest scheduling them
-            8. Mention if any tasks seem particularly important or urgent`
-          },
-          {
-            role: 'user',
-            content: text
-          }
-        ],
-        temperature: 0.7,
-      }),
+    // Use OpenAI client for chat completion
+    const chatCompletion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: `You are a friendly personal assistant. Transform the following message into a more detailed, natural conversation.
+          Important guidelines:
+          1. List out each task individually with its specific time (if scheduled)
+          2. Mention task priorities (if any are high priority)
+          3. Add encouraging comments about task progress
+          4. Use casual transitions like "By the way" or "Also"
+          5. Add brief pauses with commas
+          6. Keep it warm and personal, like talking to a friend
+          7. If there are unscheduled tasks, suggest scheduling them
+          8. Mention if any tasks seem particularly important or urgent`
+        },
+        {
+          role: 'user',
+          content: text
+        }
+      ],
+      temperature: 0.7,
     })
 
-    const conversationData = await conversationResponse.json()
-    const conversationalText = conversationData.choices[0].message.content
+    const conversationalText = chatCompletion.choices[0].message.content
 
-    // Generate speech from the conversational text
-    const response = await fetch('https://api.openai.com/v1/audio/speech', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'tts-1',
-        input: conversationalText,
-        voice: voice || 'nova', // Using nova voice for a more natural sound
-        response_format: 'mp3',
-      }),
+    // Use OpenAI client for speech generation
+    const mp3Response = await openai.audio.speech.create({
+      model: 'tts-1',
+      voice: voice || 'nova',
+      input: conversationalText,
     })
 
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error?.message || 'Failed to generate speech')
-    }
-
-    // Convert audio buffer to base64
-    const arrayBuffer = await response.arrayBuffer()
+    // Get the audio data as an ArrayBuffer
+    const audioData = await mp3Response.arrayBuffer()
+    
+    // Convert ArrayBuffer to base64
     const base64Audio = btoa(
-      String.fromCharCode(...new Uint8Array(arrayBuffer))
+      String.fromCharCode(...new Uint8Array(audioData))
     )
 
     return new Response(
