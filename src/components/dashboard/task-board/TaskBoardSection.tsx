@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Task } from "../TaskBoard";
 import { DndContext, MouseSensor, TouchSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { startOfDay, isAfter, isSameDay, parseISO } from "date-fns";
+import { startOfDay, isAfter } from "date-fns";
 import { TaskCard } from "../TaskCard";
 import { NotificationTest } from "../notifications/NotificationTest";
 import { TaskLegend } from "../TaskLegend";
@@ -36,36 +36,29 @@ export function TaskBoardSection({ tasks, onDragEnd, onComplete }: TaskBoardSect
     return task.completed_at && isAfter(new Date(task.completed_at), todayStart);
   };
 
-  const shouldShowTask = (task: Task) => {
-    // Always show unscheduled tasks
-    if (task.status === 'unscheduled') {
-      return true;
-    }
-    
-    // For completed tasks, check if they were completed today
-    if (task.status === 'completed') {
-      return shouldShowCompletedTask(task);
-    }
-    
-    // For scheduled tasks, check if they're scheduled for today
-    if (task.status === 'scheduled' && task.date) {
-      const taskDate = parseISO(task.date);
-      const isScheduledForToday = isSameDay(taskDate, todayStart);
-      
-      // Only show tasks if they're scheduled for today
-      return isScheduledForToday;
-    }
-    
-    return false;
-  };
-
+  // Modified filtering logic to show all unscheduled and today's scheduled tasks
   const sortedTasks = [...tasks]
-    .filter(shouldShowTask)
+    .filter(task => {
+      // Always show unscheduled tasks
+      if (task.status === 'unscheduled') {
+        return true;
+      }
+      
+      // For completed tasks, check if they were completed today
+      if (task.status === 'completed') {
+        return shouldShowCompletedTask(task);
+      }
+      
+      // For scheduled tasks, show all of them
+      return task.status === 'scheduled';
+    })
     .sort((a, b) => {
       if (a.status === 'completed' && b.status !== 'completed') return 1;
       if (a.status !== 'completed' && b.status === 'completed') return -1;
       return (a.position || 0) - (b.position || 0);
     });
+
+  console.log('Tasks being displayed:', sortedTasks);
 
   const draggableTaskIds = sortedTasks
     .filter(task => task.status !== 'completed')
