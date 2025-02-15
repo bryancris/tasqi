@@ -21,7 +21,7 @@ export function useWeeklyTasks(weekStart: Date, weekEnd: Date) {
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
-        .eq('user_id', session.user.id)
+        .or(`status.eq.scheduled,status.eq.unscheduled`)
         .gte('date', weekStart.toISOString())
         .lte('date', weekEnd.toISOString())
         .order('position', { ascending: true });
