@@ -47,8 +47,10 @@ export function useTasks() {
     }) as Task[];
   };
 
-  // Set up real-time subscription
+  // Set up real-time subscription with debouncing
   useEffect(() => {
+    let debounceTimeout: NodeJS.Timeout;
+
     const channel = supabase
       .channel('tasks-changes')
       .on(
@@ -58,16 +60,24 @@ export function useTasks() {
           schema: 'public',
           table: 'tasks'
         },
-        () => {
-          console.log('Task changed, invalidating query...');
-          // Invalidate and refetch when tasks change
-          queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        (payload) => {
+          console.log('Task changed, payload:', payload);
+          // Clear any existing timeout
+          clearTimeout(debounceTimeout);
+          // Set a new timeout to invalidate queries
+          debounceTimeout = setTimeout(() => {
+            console.log('Invalidating tasks query...');
+            queryClient.invalidateQueries({ queryKey: ['tasks'] });
+          }, 100); // Small delay to handle multiple rapid changes
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Realtime subscription status:', status);
+      });
 
-    // Cleanup subscription on unmount
+    // Cleanup subscription and timeout on unmount
     return () => {
+      clearTimeout(debounceTimeout);
       supabase.removeChannel(channel);
     };
   }, [queryClient]);
@@ -75,7 +85,7 @@ export function useTasks() {
   const { data: tasks = [], refetch } = useQuery({
     queryKey: ['tasks'],
     queryFn: fetchTasks,
-    staleTime: 30000, // Consider data fresh for 30 seconds
+    staleTime: 0, // Consider data immediately stale
     gcTime: 300000, // Keep unused data in cache for 5 minutes
   });
 
