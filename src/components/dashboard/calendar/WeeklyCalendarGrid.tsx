@@ -3,7 +3,7 @@ import React from 'react';
 import { Task } from "../TaskBoard";
 import { format, parseISO } from "date-fns";
 import { useDroppable } from "@dnd-kit/core";
-import { TaskCard } from "../TaskCard";
+import { WeeklyTaskCard } from "../task-card/WeeklyTaskCard";
 import { cn } from "@/lib/utils";
 
 interface WeeklyCalendarGridProps {
@@ -42,18 +42,40 @@ const CalendarCell = ({
 
   const tasksForThisSlot = tasks.filter(task => {
     if (!task.date || !task.start_time || task.status !== 'scheduled') {
+      console.log('Filtering task:', task.id, {
+        date: task.date,
+        startTime: task.start_time,
+        status: task.status
+      });
       return false;
     }
     
     // Compare dates
     const taskDate = format(parseISO(task.date), 'yyyy-MM-dd');
-    if (taskDate !== formattedDate) {
-      return false;
-    }
+    const dateMatches = taskDate === formattedDate;
 
     // Compare hours
     const taskStartHour = parseInt(task.start_time.split(':')[0], 10);
-    return taskStartHour === timeSlot.hour;
+    const hourMatches = taskStartHour === timeSlot.hour;
+
+    console.log('Task slot check:', {
+      taskId: task.id,
+      taskDate,
+      formattedDate,
+      dateMatches,
+      taskStartHour,
+      slotHour: timeSlot.hour,
+      hourMatches
+    });
+
+    return dateMatches && hourMatches;
+  });
+
+  console.log('Tasks for slot:', {
+    date: formattedDate,
+    hour: timeSlot.hour,
+    count: tasksForThisSlot.length,
+    tasks: tasksForThisSlot
   });
 
   return (
@@ -80,11 +102,12 @@ const CalendarCell = ({
           key={task.id} 
           className="absolute inset-0 p-0.5"
         >
-          <TaskCard
+          <WeeklyTaskCard
             task={task}
-            index={0}
-            isDraggable={true}
-            view="weekly"
+            dragHandleProps={{
+              'data-dnd-draggable': true,
+              'data-dnd-draggable-id': task.id
+            }}
           />
         </div>
       ))}

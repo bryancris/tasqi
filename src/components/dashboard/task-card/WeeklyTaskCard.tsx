@@ -39,7 +39,7 @@ export function WeeklyTaskCard({ task, onClick, onComplete, dragHandleProps, ext
       {...dragHandleProps}
       onClick={onClick}
       className={cn(
-        "absolute inset-0",
+        "h-full w-full",
         "cursor-pointer",
         "text-white text-xs leading-tight",
         "shadow-sm",
