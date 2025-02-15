@@ -64,7 +64,9 @@ export function TimeSelector({
       hourNum = 0;
     }
     
-    return `${String(hourNum).padStart(2, '0')}:${minutes}:00`;
+    // Only pad the minutes when formatting the final time string
+    const paddedMinutes = minutes.padStart(2, '0');
+    return `${String(hourNum).padStart(2, '0')}:${paddedMinutes}:00`;
   };
 
   const handleHourChange = (value: string, type: 'start' | 'end') => {
@@ -91,13 +93,13 @@ export function TimeSelector({
     // Only update if the value is valid (0-59)
     const num = parseInt(cleanValue);
     if (!cleanValue || (num >= 0 && num <= 59)) {
-      const formattedMinutes = cleanValue.padStart(2, '0');
+      // Don't pad the value while typing, just store it as is
       if (type === 'start') {
-        setStartMinutes(formattedMinutes);
-        onStartTimeChange(formatTime(startHours || "12", formattedMinutes, startPeriod));
+        setStartMinutes(cleanValue);
+        onStartTimeChange(formatTime(startHours || "12", cleanValue, startPeriod));
       } else {
-        setEndMinutes(formattedMinutes);
-        onEndTimeChange(formatTime(endHours || "12", formattedMinutes, endPeriod));
+        setEndMinutes(cleanValue);
+        onEndTimeChange(formatTime(endHours || "12", cleanValue, endPeriod));
       }
     }
   };
