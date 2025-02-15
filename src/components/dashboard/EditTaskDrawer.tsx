@@ -152,7 +152,12 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="left" className="w-[400px] sm:max-w-[540px]">
+        <SheetContent 
+          side="left" 
+          className="w-[400px] sm:max-w-[540px]"
+          onOpenAutoFocus={(e) => e.preventDefault()} // Prevent auto-focus
+          onPointerDownOutside={(e) => e.preventDefault()} // Prevent closing on outside click while focused
+        >
           <EditTaskHeader onShareClick={() => setShowShareDialog(true)} />
           <EditTaskContent
             task={task}
