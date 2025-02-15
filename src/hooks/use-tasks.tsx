@@ -7,17 +7,18 @@ import { startOfDay, endOfDay } from "date-fns";
 export function useTasks() {
   const fetchTasks = async () => {
     const today = new Date();
-    const todayStart = startOfDay(today).toISOString();
-    const todayEnd = endOfDay(today).toISOString();
+    const todayStart = startOfDay(today);
+    const todayEnd = endOfDay(today);
+    const todayDate = today.toISOString().split('T')[0];
 
-    // First fetch tasks
+    // Fetch tasks for today and unscheduled tasks
     const { data: tasks, error: tasksError } = await supabase
       .from('tasks')
       .select(`
         *,
         assignments:task_assignments(*)
       `)
-      .or(`status.eq.unscheduled,and(status.eq.scheduled,date.eq.${today.toISOString().split('T')[0]})`)
+      .or(`status.eq.unscheduled,and(status.eq.scheduled,date.eq.${todayDate})`)
       .order('position', { ascending: true });
 
     if (tasksError) {
@@ -25,7 +26,21 @@ export function useTasks() {
       throw tasksError;
     }
 
-    return tasks as Task[];
+    // Filter completed tasks to only show today's completed tasks
+    return tasks.filter((task: Task) => {
+      if (task.status === 'completed') {
+        return task.completed_at && 
+               new Date(task.completed_at) >= todayStart && 
+               new Date(task.completed_at) <= todayEnd;
+      }
+      
+      if (task.status === 'scheduled') {
+        return task.date === todayDate;
+      }
+      
+      // Always show unscheduled tasks
+      return task.status === 'unscheduled';
+    }) as Task[];
   };
 
   const { data: tasks = [], refetch } = useQuery({
