@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -12,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ShareTaskDialog } from "./ShareTaskDialog";
 import { QueryObserverResult } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface TaskCardProps {
   task: Task;
@@ -26,6 +26,7 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [localTaskStatus, setLocalTaskStatus] = useState(task.status);
+  const queryClient = useQueryClient();
   
   const {
     attributes,
@@ -116,10 +117,9 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
       console.log('Task update successful');
       toast.success(newStatus === 'completed' ? 'Task completed' : 'Task uncompleted');
 
-      // Call onComplete to trigger refetch
-      if (onComplete) {
-        await onComplete();
-      }
+      // Invalidate tasks query to trigger a refresh
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+
     } catch (error: any) {
       console.error('Unexpected error completing task:', error);
       toast.error('An unexpected error occurred');

@@ -3,8 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "@/components/dashboard/TaskBoard";
 import { startOfDay, endOfDay } from "date-fns";
+import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function useTasks() {
+  const queryClient = useQueryClient();
+
   const fetchTasks = async () => {
     const today = new Date();
     const todayStart = startOfDay(today);
@@ -42,6 +46,31 @@ export function useTasks() {
       return task.status === 'unscheduled';
     }) as Task[];
   };
+
+  // Set up real-time subscription
+  useEffect(() => {
+    const channel = supabase
+      .channel('tasks-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
+          schema: 'public',
+          table: 'tasks'
+        },
+        () => {
+          console.log('Task changed, invalidating query...');
+          // Invalidate and refetch when tasks change
+          queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription on unmount
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const { data: tasks = [], refetch } = useQuery({
     queryKey: ['tasks'],
