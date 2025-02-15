@@ -25,7 +25,7 @@ export function useTasks() {
         *,
         assignments:task_assignments(*)
       `)
-      .or(`status.eq.unscheduled,and(status.eq.scheduled,date.eq.${todayDate})`)
+      .or(`status.eq.unscheduled,and(status.eq.scheduled,date.eq.${todayDate}),and(status.eq.scheduled,date.is.null)`)
       .order('position', { ascending: true });
 
     if (tasksError) {
@@ -45,6 +45,8 @@ export function useTasks() {
       }
       
       if (task.status === 'scheduled') {
+        // If no date is set, show the task (it might be newly created by AI)
+        if (!task.date) return true;
         return task.date === todayDate;
       }
       
