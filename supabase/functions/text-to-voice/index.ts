@@ -19,52 +19,37 @@ serve(async (req) => {
       throw new Error('Text is required')
     }
 
+    console.log('Processing text:', text)
+
     // Initialize OpenAI
     const openai = new OpenAI({
       apiKey: Deno.env.get('OPENAI_API_KEY'),
     })
 
-    // Use OpenAI client for chat completion
-    const chatCompletion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: `You are a friendly personal assistant. Transform the following message into a more detailed, natural conversation.
-          Important guidelines:
-          1. List out each task individually with its specific time (if scheduled)
-          2. Mention task priorities (if any are high priority)
-          3. Add encouraging comments about task progress
-          4. Use casual transitions like "By the way" or "Also"
-          5. Add brief pauses with commas
-          6. Keep it warm and personal, like talking to a friend
-          7. If there are unscheduled tasks, suggest scheduling them
-          8. Mention if any tasks seem particularly important or urgent`
-        },
-        {
-          role: 'user',
-          content: text
-        }
-      ],
-      temperature: 0.7,
-    })
-
-    const conversationalText = chatCompletion.choices[0].message.content
-
-    // Use OpenAI client for speech generation
+    // Use OpenAI client for speech generation directly
+    // Skip the chat completion step for now to debug the core functionality
     const mp3Response = await openai.audio.speech.create({
       model: 'tts-1',
       voice: voice || 'nova',
-      input: conversationalText,
+      input: text,
     })
 
-    // Get the audio data as an ArrayBuffer
-    const audioData = await mp3Response.arrayBuffer()
+    // Safely handle the binary data
+    const audioBytes = await mp3Response.arrayBuffer()
+    const audioArray = new Uint8Array(audioBytes)
     
-    // Convert ArrayBuffer to base64
-    const base64Audio = btoa(
-      String.fromCharCode(...new Uint8Array(audioData))
-    )
+    // Convert to base64 in chunks to prevent stack overflow
+    const chunkSize = 32768
+    const chunks: string[] = []
+    
+    for (let i = 0; i < audioArray.length; i += chunkSize) {
+      const chunk = audioArray.slice(i, i + chunkSize)
+      chunks.push(String.fromCharCode.apply(null, chunk))
+    }
+    
+    const base64Audio = btoa(chunks.join(''))
+
+    console.log('Successfully generated audio')
 
     return new Response(
       JSON.stringify({ audioContent: base64Audio }),
