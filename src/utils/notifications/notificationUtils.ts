@@ -1,6 +1,32 @@
 
+import { FirebaseMessaging } from '@capacitor-firebase/messaging';
+import { Capacitor } from '@capacitor/core';
+
+const isNativePlatform = () => Capacitor.isNativePlatform();
+
 export const showNotification = async (task: any, type: 'reminder' | 'shared' = 'reminder') => {
   try {
+    if (isNativePlatform()) {
+      // Use Firebase Cloud Messaging for native platforms
+      await FirebaseMessaging.sendMessage({
+        data: {
+          type: type === 'shared' ? 'task_share' : 'task_reminder',
+          taskId: task.id.toString(),
+          url: '/dashboard'
+        },
+        notification: {
+          title: type === 'shared' ? 'New Shared Task' : task.title,
+          body: type === 'shared' 
+            ? `A task has been shared with you: ${task.title}`
+            : `Task due ${task.start_time ? `at ${task.start_time}` : 'today'}`,
+          imageUrl: '/pwa-192x192.png'
+        }
+      });
+      
+      return;
+    }
+
+    // Web platform notifications
     if (!('Notification' in window)) {
       console.error('❌ Notifications not supported');
       return;
@@ -13,7 +39,6 @@ export const showNotification = async (task: any, type: 'reminder' | 'shared' = 
 
     let permission = Notification.permission;
 
-    // Always request permission if not granted
     if (permission !== 'granted') {
       console.log('📱 Requesting notification permission...');
       permission = await Notification.requestPermission();
@@ -26,7 +51,6 @@ export const showNotification = async (task: any, type: 'reminder' | 'shared' = 
 
     console.log('🔔 Notification permission:', permission);
 
-    // Get service worker registration
     const registration = await navigator.serviceWorker.ready;
     console.log('✅ Service worker ready, attempting to show notification');
 
@@ -72,6 +96,11 @@ export const showNotification = async (task: any, type: 'reminder' | 'shared' = 
 // Add a helper function to check and request permissions
 export const checkNotificationPermission = async () => {
   try {
+    if (isNativePlatform()) {
+      const { receive } = await FirebaseMessaging.requestPermissions();
+      return receive === 'granted';
+    }
+
     if (!('Notification' in window)) {
       console.error('❌ Notifications not supported');
       return false;
@@ -94,3 +123,4 @@ export const checkNotificationPermission = async () => {
     return false;
   }
 };
+

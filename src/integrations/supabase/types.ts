@@ -464,7 +464,10 @@ export type Database = {
         Row: {
           auth_keys: Json
           created_at: string
+          device_info: Json | null
+          device_type: string | null
           endpoint: string
+          fcm_token: string | null
           id: number
           updated_at: string
           user_id: string | null
@@ -472,7 +475,10 @@ export type Database = {
         Insert: {
           auth_keys: Json
           created_at?: string
+          device_info?: Json | null
+          device_type?: string | null
           endpoint: string
+          fcm_token?: string | null
           id?: number
           updated_at?: string
           user_id?: string | null
@@ -480,7 +486,10 @@ export type Database = {
         Update: {
           auth_keys?: Json
           created_at?: string
+          device_info?: Json | null
+          device_type?: string | null
           endpoint?: string
+          fcm_token?: string | null
           id?: number
           updated_at?: string
           user_id?: string | null
