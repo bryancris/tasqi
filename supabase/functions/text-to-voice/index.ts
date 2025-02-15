@@ -8,7 +8,6 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -25,7 +24,33 @@ serve(async (req) => {
       apiKey: Deno.env.get('OPENAI_API_KEY'),
     })
 
-    // Generate speech from text
+    // First, make the text more conversational
+    const conversationResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a friendly personal assistant. Convert the following message into a more natural, conversational speech while keeping the same information. Add brief pauses with commas and make it sound more human. Keep the same meaning but make it warmer and more engaging.'
+          },
+          {
+            role: 'user',
+            content: text
+          }
+        ],
+        temperature: 0.7,
+      }),
+    })
+
+    const conversationData = await conversationResponse.json()
+    const conversationalText = conversationData.choices[0].message.content
+
+    // Generate speech from the conversational text
     const response = await fetch('https://api.openai.com/v1/audio/speech', {
       method: 'POST',
       headers: {
@@ -34,8 +59,8 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: 'tts-1',
-        input: text,
-        voice: voice || 'alloy',
+        input: conversationalText,
+        voice: voice || 'nova', // Using nova voice for a more natural sound
         response_format: 'mp3',
       }),
     })
