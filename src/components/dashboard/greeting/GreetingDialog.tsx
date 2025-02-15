@@ -3,10 +3,11 @@ import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Task } from "@/components/dashboard/TaskBoard";
 import { Button } from "@/components/ui/button";
-import { Check, CalendarRange, MessageCircle, Send } from "lucide-react";
-import { useState } from "react";
+import { Check, CalendarRange, MessageCircle, Send, Volume2, VolumeX } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { AudioRecorder } from "@/components/chat/AudioRecorder";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Message {
   content: string;
@@ -31,13 +32,56 @@ export function GreetingDialog({
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState("");
   const [showTasks, setShowTasks] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
 
   // Initialize chat with AI greeting
-  useState(() => {
+  useEffect(() => {
     if (greetingMessage && messages.length === 0) {
       setMessages([{ content: greetingMessage, isUser: false }]);
+      if (open) {
+        playGreeting();
+      }
     }
-  });
+  }, [greetingMessage, messages.length, open]);
+
+  const playGreeting = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('text-to-voice', {
+        body: { text: greetingMessage, voice: 'alloy' }
+      });
+
+      if (error) throw error;
+
+      if (data?.audioContent) {
+        const audio = new Audio(`data:audio/mp3;base64,${data.audioContent}`);
+        setAudioElement(audio);
+        
+        audio.onended = () => {
+          setIsPlaying(false);
+        };
+
+        audio.play();
+        setIsPlaying(true);
+      }
+    } catch (error) {
+      console.error('Error playing greeting:', error);
+    }
+  };
+
+  const toggleAudio = () => {
+    if (audioElement) {
+      if (isPlaying) {
+        audioElement.pause();
+        setIsPlaying(false);
+      } else {
+        audioElement.play();
+        setIsPlaying(true);
+      }
+    } else {
+      playGreeting();
+    }
+  };
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
@@ -73,11 +117,23 @@ export function GreetingDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-gradient-to-r from-violet-500 to-fuchsia-500 max-h-[80vh] flex flex-col">
-        <DialogHeader>
+        <DialogHeader className="flex flex-row items-center justify-between">
           <DialogTitle className="text-white text-xl font-semibold flex items-center gap-2">
             <CalendarRange className="h-6 w-6" />
             Daily Briefing
           </DialogTitle>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-white hover:bg-white/20"
+            onClick={toggleAudio}
+          >
+            {isPlaying ? (
+              <VolumeX className="h-5 w-5" />
+            ) : (
+              <Volume2 className="h-5 w-5" />
+            )}
+          </Button>
         </DialogHeader>
         
         <div className="flex-1 overflow-y-auto py-4 space-y-4">
