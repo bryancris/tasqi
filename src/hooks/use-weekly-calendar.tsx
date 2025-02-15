@@ -11,12 +11,19 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
   const { toast } = useToast();
 
   const { data: tasks = [] } = useQuery({
-    queryKey: ['tasks'],
+    queryKey: ['tasks', format(weekStart, 'yyyy-MM-dd'), format(weekEnd, 'yyyy-MM-dd')],
     queryFn: async () => {
-      console.log('Fetching tasks for weekly calendar...');
+      console.log('Fetching tasks for weekly calendar...', {
+        weekStart: format(weekStart, 'yyyy-MM-dd'),
+        weekEnd: format(weekEnd, 'yyyy-MM-dd')
+      });
+
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
+        .gte('date', format(weekStart, 'yyyy-MM-dd'))
+        .lte('date', format(weekEnd, 'yyyy-MM-dd'))
+        .not('status', 'eq', 'completed')
         .order('position', { ascending: true });
       
       if (error) {
@@ -26,13 +33,27 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
       
       console.log('Fetched tasks for weekly calendar:', data);
       return data as Task[];
-    },
-    staleTime: 0,
-    gcTime: 0,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    refetchOnReconnect: true
+    }
   });
+
+  // Filter tasks for the weekly calendar
+  const scheduledTasks = tasks?.filter(task => {
+    if (!task.date || !task.start_time || !task.end_time) return false;
+    if (task.status === 'completed') return false;
+    
+    const taskDate = startOfDay(parseISO(task.date));
+    const weekStartDay = startOfDay(weekStart);
+    const weekEndDay = startOfDay(weekEnd);
+    
+    return taskDate >= weekStartDay && taskDate <= weekEndDay;
+  }) ?? [];
+
+  console.log('Filtered scheduled tasks:', scheduledTasks);
+
+  const unscheduledTasks = tasks?.filter(task => 
+    task.status !== 'completed' && 
+    (task.status === 'unscheduled' || !task.date || !task.start_time)
+  ) ?? [];
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -97,35 +118,9 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
     }
   };
 
-  // Filter tasks for the weekly calendar
-  const scheduledTasks = tasks.filter(task => {
-    // Exclude completed tasks
-    if (task.status === 'completed') return false;
-    
-    // Check if task has required scheduling data
-    if (!task.date || !task.start_time || !task.end_time) return false;
-    
-    // Use startOfDay to compare dates without time components
-    const taskDate = startOfDay(parseISO(task.date));
-    const weekStartDay = startOfDay(weekStart);
-    const weekEndDay = startOfDay(weekEnd);
-    
-    // Compare dates numerically to avoid timezone issues
-    return +taskDate >= +weekStartDay && +taskDate <= +weekEndDay;
-  });
-
-  console.log('Week range:', { weekStartDate: format(weekStart, 'yyyy-MM-dd'), weekEndDate: format(weekEnd, 'yyyy-MM-dd') });
-  console.log('Filtered scheduled tasks:', scheduledTasks);
-
-  const unscheduledTasks = tasks.filter(task => 
-    task.status !== 'completed' && 
-    (task.status === 'unscheduled' || (!task.date && !task.start_time))
-  );
-
   const visitsPerDay = weekDays.map(day => {
     const dayTasks = scheduledTasks.filter(task => {
       if (!task.date) return false;
-      // Compare dates using startOfDay and numeric comparison
       const taskDate = startOfDay(parseISO(task.date));
       const currentDay = startOfDay(day);
       return +taskDate === +currentDay;
