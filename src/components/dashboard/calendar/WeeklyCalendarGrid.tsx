@@ -41,42 +41,20 @@ const CalendarCell = ({
   });
 
   const tasksForThisSlot = tasks.filter(task => {
-    // First check if task has required fields and correct status
     if (!task.date || !task.start_time || task.status !== 'scheduled') {
-      console.log(`Task ${task.id} skipped - missing required fields or wrong status:`, {
-        hasDate: !!task.date,
-        hasStartTime: !!task.start_time,
-        status: task.status
-      });
       return false;
     }
     
     // Compare dates
     const taskDate = format(parseISO(task.date), 'yyyy-MM-dd');
     if (taskDate !== formattedDate) {
-      console.log(`Task ${task.id} skipped - date mismatch:`, {
-        taskDate,
-        cellDate: formattedDate
-      });
       return false;
     }
 
     // Compare hours
-    const [taskStartHour] = task.start_time.split(':').map(Number);
-    const matchesHour = taskStartHour === timeSlot.hour;
-    
-    console.log(`Task ${task.id} time check:`, {
-      taskDate,
-      cellDate: formattedDate,
-      taskStartHour,
-      cellHour: timeSlot.hour,
-      matches: matchesHour
-    });
-    
-    return matchesHour;
+    const taskStartHour = parseInt(task.start_time.split(':')[0], 10);
+    return taskStartHour === timeSlot.hour;
   });
-
-  console.log(`Cell ${formattedDate} ${timeSlot.hour}:00 has tasks:`, tasksForThisSlot);
 
   return (
     <div
@@ -115,15 +93,15 @@ const CalendarCell = ({
 }
 
 export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks, showFullWeek }: WeeklyCalendarGridProps) {
-  console.log('WeeklyCalendarGrid - Received scheduled tasks:', scheduledTasks.map(task => ({
+  const displayDays = showFullWeek ? weekDays : weekDays.slice(0, 5);
+  
+  console.log('WeeklyCalendarGrid - Scheduled tasks:', scheduledTasks.map(task => ({
     id: task.id,
     title: task.title,
     date: task.date,
     start_time: task.start_time,
     status: task.status
   })));
-  
-  const displayDays = showFullWeek ? weekDays : weekDays.slice(0, 5);
 
   return (
     <div className="relative bg-white rounded-lg shadow-sm overflow-hidden">
