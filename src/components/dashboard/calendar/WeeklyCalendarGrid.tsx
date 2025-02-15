@@ -95,13 +95,7 @@ const CalendarCell = ({
 export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks, showFullWeek }: WeeklyCalendarGridProps) {
   const displayDays = showFullWeek ? weekDays : weekDays.slice(0, 5);
   
-  console.log('WeeklyCalendarGrid - Scheduled tasks:', scheduledTasks.map(task => ({
-    id: task.id,
-    title: task.title,
-    date: task.date,
-    start_time: task.start_time,
-    status: task.status
-  })));
+  console.log('WeeklyCalendarGrid - Scheduled tasks:', scheduledTasks);
 
   return (
     <div className="relative bg-white rounded-lg shadow-sm overflow-hidden">
