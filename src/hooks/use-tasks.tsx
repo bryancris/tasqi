@@ -3,8 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "@/components/dashboard/TaskBoard";
 import { startOfDay, endOfDay } from "date-fns";
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export function useTasks() {
   const queryClient = useQueryClient();
@@ -27,6 +28,7 @@ export function useTasks() {
 
     if (tasksError) {
       console.error('Error fetching tasks:', tasksError);
+      toast.error("Failed to load tasks");
       throw tasksError;
     }
 
@@ -47,9 +49,14 @@ export function useTasks() {
     }) as Task[];
   };
 
-  // Set up real-time subscription with debouncing
+  const invalidateTasksQuery = useCallback(() => {
+    console.log('Invalidating tasks query...');
+    queryClient.invalidateQueries({ queryKey: ['tasks'] });
+  }, [queryClient]);
+
+  // Set up real-time subscription
   useEffect(() => {
-    let debounceTimeout: NodeJS.Timeout;
+    console.log('Setting up real-time subscription...');
 
     const channel = supabase
       .channel('tasks-changes')
@@ -61,32 +68,54 @@ export function useTasks() {
           table: 'tasks'
         },
         (payload) => {
-          console.log('Task changed, payload:', payload);
-          // Clear any existing timeout
-          clearTimeout(debounceTimeout);
-          // Set a new timeout to invalidate queries
-          debounceTimeout = setTimeout(() => {
-            console.log('Invalidating tasks query...');
-            queryClient.invalidateQueries({ queryKey: ['tasks'] });
-          }, 100); // Small delay to handle multiple rapid changes
+          console.log('Task changed:', payload);
+          invalidateTasksQuery();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'task_assignments'
+        },
+        (payload) => {
+          console.log('Task assignment changed:', payload);
+          invalidateTasksQuery();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'subtasks'
+        },
+        (payload) => {
+          console.log('Subtask changed:', payload);
+          invalidateTasksQuery();
         }
       )
       .subscribe((status) => {
-        console.log('Realtime subscription status:', status);
+        console.log('Subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('Successfully subscribed to real-time changes');
+        }
       });
 
-    // Cleanup subscription and timeout on unmount
+    // Cleanup subscription on unmount
     return () => {
-      clearTimeout(debounceTimeout);
+      console.log('Cleaning up real-time subscription...');
       supabase.removeChannel(channel);
     };
-  }, [queryClient]);
+  }, [invalidateTasksQuery]);
 
   const { data: tasks = [], refetch } = useQuery({
     queryKey: ['tasks'],
     queryFn: fetchTasks,
     staleTime: 0, // Consider data immediately stale
     gcTime: 300000, // Keep unused data in cache for 5 minutes
+    refetchOnWindowFocus: true,
   });
 
   return { tasks, refetch };
