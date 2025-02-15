@@ -1,4 +1,5 @@
+
 project_id = "mcwlzrikidzgxexnccju"
 
-[functions.push-notification]
+[functions.text-to-voice]
 verify_jwt = false
