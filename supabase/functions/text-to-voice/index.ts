@@ -36,7 +36,16 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a friendly personal assistant. Convert the following message into a more natural, conversational speech while keeping the same information. Add brief pauses with commas and make it sound more human. Keep the same meaning but make it warmer and more engaging.'
+            content: `You are a friendly personal assistant. Transform the following message into a more detailed, natural conversation.
+            Important guidelines:
+            1. List out each task individually with its specific time (if scheduled)
+            2. Mention task priorities (if any are high priority)
+            3. Add encouraging comments about task progress
+            4. Use casual transitions like "By the way" or "Also"
+            5. Add brief pauses with commas
+            6. Keep it warm and personal, like talking to a friend
+            7. If there are unscheduled tasks, suggest scheduling them
+            8. Mention if any tasks seem particularly important or urgent`
           },
           {
             role: 'user',
