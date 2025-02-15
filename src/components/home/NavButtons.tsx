@@ -3,27 +3,17 @@ import { LogIn, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
 const NavButtons = () => {
   const navigate = useNavigate();
-  const { session } = useAuth();
+  const { session, handleSignOut } = useAuth();
   const { toast } = useToast();
 
   const handleLogout = async () => {
     try {
-      localStorage.clear();
-      sessionStorage.clear();
       navigate('/');
-      const { error } = await supabase.auth.signOut();
-      if (error && !error.message?.includes('session_not_found')) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: error.message,
-        });
-      }
+      await handleSignOut();
     } catch (error: any) {
       toast({
         variant: "destructive",
