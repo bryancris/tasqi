@@ -41,20 +41,36 @@ const CalendarCell = ({
   });
 
   const tasksForThisSlot = tasks.filter(task => {
-    if (!task.date || !task.start_time) return false;
+    // First check if task has required fields and correct status
+    if (!task.date || !task.start_time || task.status !== 'scheduled') {
+      console.log(`Task ${task.id} skipped - missing required fields or wrong status:`, {
+        hasDate: !!task.date,
+        hasStartTime: !!task.start_time,
+        status: task.status
+      });
+      return false;
+    }
     
+    // Compare dates
     const taskDate = format(parseISO(task.date), 'yyyy-MM-dd');
-    if (taskDate !== formattedDate) return false;
+    if (taskDate !== formattedDate) {
+      console.log(`Task ${task.id} skipped - date mismatch:`, {
+        taskDate,
+        cellDate: formattedDate
+      });
+      return false;
+    }
 
+    // Compare hours
     const [taskStartHour] = task.start_time.split(':').map(Number);
     const matchesHour = taskStartHour === timeSlot.hour;
     
-    console.log(`Task ${task.id} check:`, {
+    console.log(`Task ${task.id} time check:`, {
       taskDate,
       cellDate: formattedDate,
       taskStartHour,
       cellHour: timeSlot.hour,
-      matches: taskDate === formattedDate && matchesHour
+      matches: matchesHour
     });
     
     return matchesHour;
@@ -99,7 +115,14 @@ const CalendarCell = ({
 }
 
 export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks, showFullWeek }: WeeklyCalendarGridProps) {
-  console.log('Scheduled tasks received:', scheduledTasks);
+  console.log('WeeklyCalendarGrid - Received scheduled tasks:', scheduledTasks.map(task => ({
+    id: task.id,
+    title: task.title,
+    date: task.date,
+    start_time: task.start_time,
+    status: task.status
+  })));
+  
   const displayDays = showFullWeek ? weekDays : weekDays.slice(0, 5);
 
   return (
