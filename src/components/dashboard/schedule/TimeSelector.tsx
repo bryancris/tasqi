@@ -30,12 +30,12 @@ export function TimeSelector({
       const hourNum = parseInt(hours);
       if (hourNum >= 12) {
         setStartPeriod("PM");
-        setStartHours(hourNum === 12 ? "12" : String(hourNum - 12).padStart(2, '0'));
+        setStartHours(hourNum === 12 ? "12" : String(hourNum - 12));
       } else {
         setStartPeriod("AM");
-        setStartHours(hourNum === 0 ? "12" : String(hourNum).padStart(2, '0'));
+        setStartHours(hourNum === 0 ? "12" : String(hourNum));
       }
-      setStartMinutes(minutes.padStart(2, '0'));
+      setStartMinutes(minutes);
     }
   }, [startTime]);
 
@@ -45,12 +45,12 @@ export function TimeSelector({
       const hourNum = parseInt(hours);
       if (hourNum >= 12) {
         setEndPeriod("PM");
-        setEndHours(hourNum === 12 ? "12" : String(hourNum - 12).padStart(2, '0'));
+        setEndHours(hourNum === 12 ? "12" : String(hourNum - 12));
       } else {
         setEndPeriod("AM");
-        setEndHours(hourNum === 0 ? "12" : String(hourNum).padStart(2, '0'));
+        setEndHours(hourNum === 0 ? "12" : String(hourNum));
       }
-      setEndMinutes(minutes.padStart(2, '0'));
+      setEndMinutes(minutes);
     }
   }, [endTime]);
 
@@ -72,15 +72,17 @@ export function TimeSelector({
     const cleanValue = value.replace(/\D/g, '');
     
     // Only update if the value is valid (1-12)
-    const num = parseInt(cleanValue);
-    if (num >= 1 && num <= 12) {
-      const paddedValue = num.toString().padStart(2, '0');
+    const num = parseInt(cleanValue) || 0;
+    if (num >= 0 && num <= 12) {
+      const validNum = num === 0 ? 12 : num;
+      const newValue = validNum.toString();
+      
       if (type === 'start') {
-        setStartHours(paddedValue);
-        onStartTimeChange(formatTime(paddedValue, startMinutes, startPeriod));
+        setStartHours(newValue);
+        onStartTimeChange(formatTime(newValue, startMinutes, startPeriod));
       } else {
-        setEndHours(paddedValue);
-        onEndTimeChange(formatTime(paddedValue, endMinutes, endPeriod));
+        setEndHours(newValue);
+        onEndTimeChange(formatTime(newValue, endMinutes, endPeriod));
       }
     }
   };
@@ -89,10 +91,11 @@ export function TimeSelector({
     // Remove any non-digits
     const cleanValue = value.replace(/\D/g, '');
     
-    // Only update if the value is valid (0-59)
-    const num = parseInt(cleanValue);
+    // Parse the number and ensure it's valid
+    const num = parseInt(cleanValue) || 0;
     if (num >= 0 && num <= 59) {
       const paddedValue = num.toString().padStart(2, '0');
+      
       if (type === 'start') {
         setStartMinutes(paddedValue);
         onStartTimeChange(formatTime(startHours, paddedValue, startPeriod));
