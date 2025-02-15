@@ -36,11 +36,11 @@ export async function createTask(supabase: SupabaseClient, userId: string, taskD
       console.log('Creating subtasks:', taskDetails.subtasks);
       
       // Prepare subtasks for insertion
-      const subtasksToCreate = taskDetails.subtasks.map(subtask => ({
+      const subtasksToCreate = taskDetails.subtasks.map((subtask, index) => ({
         task_id: task.id,
         title: subtask.title,
         status: 'pending',
-        position: subtask.position
+        position: index
       }));
 
       console.log('Prepared subtasks for creation:', subtasksToCreate);

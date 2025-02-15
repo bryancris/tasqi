@@ -74,7 +74,10 @@ User message: ${message}
     // Create task if the AI suggests one
     if (result.task?.should_create) {
       console.log('Creating task with details:', result.task);
-      console.log('Subtasks to create:', result.task.subtasks);
+      
+      // Parse time strings if they exist
+      const startTime = result.task.start_time || null;
+      const endTime = result.task.end_time || null;
 
       // Get the next position for the task
       const { data: existingTasks } = await supabase
@@ -86,18 +89,26 @@ User message: ${message}
 
       const nextPosition = existingTasks && existingTasks[0] ? existingTasks[0].position + 1 : 0;
 
+      // Prepare task data
+      const taskData = {
+        title: result.task.title,
+        description: result.task.description || '',
+        status: result.task.is_scheduled ? 'scheduled' : 'unscheduled',
+        date: result.task.date || null,
+        start_time: startTime,
+        end_time: endTime,
+        position: nextPosition,
+        priority: result.task.priority || 'low',
+        user_id: userId,
+        owner_id: userId
+      };
+
+      console.log('Creating task with data:', taskData);
+
       // Insert the main task
       const { data: task, error: taskError } = await supabase
         .from('tasks')
-        .insert({
-          title: result.task.title,
-          description: result.task.description || '',
-          status: result.task.is_scheduled ? 'scheduled' : 'unscheduled',
-          date: result.task.date || new Date().toISOString().split('T')[0],
-          position: nextPosition,
-          user_id: userId,
-          owner_id: userId
-        })
+        .insert(taskData)
         .select()
         .single();
 
@@ -106,9 +117,10 @@ User message: ${message}
         throw taskError;
       }
 
-      // If the task has subtasks, create them
+      console.log('Created task:', task);
+
+      // If the task has subtasks and was created successfully, create them
       if (result.task.subtasks && task) {
-        // Ensure subtasks array is properly formatted
         const formattedSubtasks = result.task.subtasks.map((subtask: any, index: number) => {
           const subtaskTitle = typeof subtask === 'string' ? subtask : subtask.title;
           return {
@@ -119,7 +131,7 @@ User message: ${message}
           };
         });
 
-        console.log('Formatted subtasks for insertion:', formattedSubtasks);
+        console.log('Creating subtasks:', formattedSubtasks);
 
         const { error: subtaskError } = await supabase
           .from('subtasks')
@@ -127,19 +139,6 @@ User message: ${message}
 
         if (subtaskError) {
           console.error('Error creating subtasks:', subtaskError);
-          throw subtaskError;
-        }
-
-        // Verify subtasks were created
-        const { data: createdSubtasks, error: verifyError } = await supabase
-          .from('subtasks')
-          .select('*')
-          .eq('task_id', task.id);
-
-        if (verifyError) {
-          console.error('Error verifying subtasks:', verifyError);
-        } else {
-          console.log('Created subtasks:', createdSubtasks);
         }
       }
     }
