@@ -4,6 +4,8 @@ import { urlBase64ToUint8Array, getVapidPublicKey } from "./vapidUtils";
 import { toast } from "sonner";
 import { FirebaseMessaging } from '@capacitor-firebase/messaging';
 import { Capacitor } from '@capacitor/core';
+import { initializeMessaging } from '@/integrations/firebase/config';
+import { getToken as getFirebaseToken } from 'firebase/messaging';
 
 const isNativePlatform = () => Capacitor.isNativePlatform();
 
@@ -74,9 +76,9 @@ export const setupPushSubscription = async (registration?: ServiceWorkerRegistra
         throw new Error('Permission not granted for push notifications');
       }
 
-      // Get the FCM token
+      // Get the FCM token for native platforms
       const { token } = await FirebaseMessaging.getToken();
-      console.log('FCM Token:', token);
+      console.log('Native FCM Token:', token);
 
       // Set up native notification handlers
       FirebaseMessaging.addListener('notificationReceived', (notification) => {
@@ -101,6 +103,22 @@ export const setupPushSubscription = async (registration?: ServiceWorkerRegistra
       throw new Error('ServiceWorkerRegistration is required for web push notifications');
     }
 
+    // Try to get Firebase messaging token for web platform
+    const messaging = await initializeMessaging();
+    if (messaging) {
+      try {
+        const fcmToken = await getFirebaseToken(messaging, {
+          vapidKey: await getVapidPublicKey()
+        });
+        console.log('Web FCM Token:', fcmToken);
+        await savePushSubscription(fcmToken, 'web');
+        return fcmToken;
+      } catch (error) {
+        console.warn('Failed to get Firebase token, falling back to Web Push:', error);
+      }
+    }
+
+    // Fall back to Web Push API if Firebase is not available
     const existingSubscription = await registration.pushManager.getSubscription();
       
     if (existingSubscription) {
