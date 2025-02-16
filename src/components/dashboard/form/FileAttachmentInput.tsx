@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Upload } from "lucide-react";
+import { Upload, Camera } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -63,16 +63,34 @@ export function FileAttachmentInput({ taskId, isDisabled }: FileAttachmentInputP
         className="hidden"
         id="file-upload"
         disabled={isDisabled || isUploading}
+        accept="image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      />
+      <input
+        type="file"
+        onChange={handleFileUpload}
+        className="hidden"
+        id="camera-upload"
+        disabled={isDisabled || isUploading}
+        accept="image/*"
+        capture="environment"
       />
       <Button
         type="button"
         variant="outline"
         onClick={() => document.getElementById('file-upload')?.click()}
         disabled={isDisabled || isUploading}
-        className="w-full"
+        className="flex-1"
       >
         <Upload className="mr-2 h-4 w-4" />
         {isUploading ? 'Uploading...' : 'Attach File'}
+      </Button>
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => document.getElementById('camera-upload')?.click()}
+        disabled={isDisabled || isUploading}
+      >
+        <Camera className="h-4 w-4" />
       </Button>
     </div>
   );
