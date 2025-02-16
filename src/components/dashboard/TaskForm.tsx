@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +8,7 @@ import { DatePickerInput } from "./form/DatePickerInput";
 import { ShareTaskDialog } from "./ShareTaskDialog";
 import { TimeSelector } from "./schedule/TimeSelector";
 import { SubtaskList, Subtask, SubtaskListHandle } from "./subtasks/SubtaskList";
+import { FileAttachmentInput } from "./form/FileAttachmentInput";
 import { useState, useRef, useEffect } from "react";
 import { Task } from "./TaskBoard";
 import { useChat } from "@/hooks/use-chat";
@@ -202,6 +202,19 @@ export function TaskForm({
           </div>
         </div>
       )}
+
+      <div className="space-y-2">
+        <Label>Attachments</Label>
+        <FileAttachmentInput 
+          taskId={task?.id} 
+          isDisabled={!isEditing && !task?.id}
+        />
+        {!isEditing && !task?.id && (
+          <p className="text-sm text-muted-foreground">
+            Save the task first to add attachments
+          </p>
+        )}
+      </div>
 
       <Button
         type="submit"
