@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +9,7 @@ import { ShareTaskDialog } from "./ShareTaskDialog";
 import { SubtaskList, Subtask } from "./subtasks/SubtaskList";
 import { FileAttachmentInput } from "./form/FileAttachmentInput";
 import { TaskScheduleFields } from "./TaskScheduleFields";
+import { TaskAttachments } from "./form/TaskAttachments";
 import { useState, useEffect } from "react";
 import { Task } from "./TaskBoard";
 import { useChat } from "@/hooks/use-chat";
@@ -189,6 +189,7 @@ export function TaskForm({
             Save the task first to add attachments
           </p>
         )}
+        <TaskAttachments taskId={task?.id} isEditing={isEditing} />
       </div>
 
       <Button
