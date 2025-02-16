@@ -1,9 +1,13 @@
 
 import { useEffect, useState } from "react";
-import { File, Trash2 } from "lucide-react";
+import { File, Trash2, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
 
 interface TaskAttachment {
   id: number;
@@ -20,6 +24,7 @@ interface TaskAttachmentsProps {
 export function TaskAttachments({ taskId, isEditing }: TaskAttachmentsProps) {
   const [attachments, setAttachments] = useState<TaskAttachment[]>([]);
   const [previewUrls, setPreviewUrls] = useState<Record<number, string>>({});
+  const [selectedImage, setSelectedImage] = useState<TaskAttachment | null>(null);
 
   useEffect(() => {
     if (taskId) {
@@ -128,49 +133,75 @@ export function TaskAttachments({ taskId, isEditing }: TaskAttachmentsProps) {
   }
 
   return (
-    <div className="space-y-2">
-      {attachments.map((attachment) => (
-        <div
-          key={attachment.id}
-          className="flex flex-col border rounded-md bg-background overflow-hidden"
-        >
-          {attachment.content_type.startsWith('image/') && previewUrls[attachment.id] && (
-            <div className="relative w-full h-32 bg-gray-100">
-              <img
-                src={previewUrls[attachment.id]}
-                alt={attachment.file_name}
-                className="w-full h-full object-contain"
-              />
-            </div>
-          )}
-          <div className="flex items-center justify-between p-2">
-            <div className="flex items-center gap-2">
-              <File className="h-4 w-4" />
-              <span className="text-sm">{attachment.file_name}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => handleDownload(attachment)}
+    <>
+      <div className="space-y-2">
+        {attachments.map((attachment) => (
+          <div
+            key={attachment.id}
+            className="flex flex-col border rounded-md bg-background overflow-hidden"
+          >
+            {attachment.content_type.startsWith('image/') && previewUrls[attachment.id] && (
+              <div 
+                className="relative w-full h-32 bg-gray-100 cursor-pointer"
+                onClick={() => setSelectedImage(attachment)}
               >
-                Download
-              </Button>
-              {isEditing && (
+                <img
+                  src={previewUrls[attachment.id]}
+                  alt={attachment.file_name}
+                  className="w-full h-full object-contain"
+                />
+              </div>
+            )}
+            <div className="flex items-center justify-between p-2">
+              <div className="flex items-center gap-2">
+                <File className="h-4 w-4" />
+                <span className="text-sm">{attachment.file_name}</span>
+              </div>
+              <div className="flex items-center gap-2">
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={() => handleDelete(attachment)}
+                  onClick={() => handleDownload(attachment)}
                 >
-                  <Trash2 className="h-4 w-4 text-destructive" />
+                  Download
                 </Button>
-              )}
+                {isEditing && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDelete(attachment)}
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
+
+      <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+        <DialogContent className="max-w-4xl p-0">
+          {selectedImage && previewUrls[selectedImage.id] && (
+            <div className="relative">
+              <img
+                src={previewUrls[selectedImage.id]}
+                alt={selectedImage.file_name}
+                className="w-full h-full object-contain max-h-[80vh]"
+              />
+              <Button
+                className="absolute bottom-4 right-4"
+                onClick={() => handleDownload(selectedImage)}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Download
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
