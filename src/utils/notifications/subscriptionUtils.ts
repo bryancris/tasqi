@@ -22,7 +22,7 @@ export const savePushSubscription = async (subscription: PushSubscription | stri
     const subscriptionData = deviceType === 'web' 
       ? {
           ...baseData,
-          device_type: 'web' as const,
+          platform: 'web' as const,
           endpoint: (subscription as PushSubscription).endpoint,
           auth_keys: {
             p256dh: (subscription as PushSubscription).toJSON().keys?.p256dh,
@@ -31,10 +31,10 @@ export const savePushSubscription = async (subscription: PushSubscription | stri
         }
       : {
           ...baseData,
-          device_type: deviceType,
+          platform: deviceType,
           endpoint: '', // Provide empty string as required by the schema
-          fcm_token: subscription as string,
-          device_info: {
+          device_token: subscription as string,
+          metadata: {
             platform: deviceType,
             timestamp: new Date().toISOString()
           }
@@ -44,8 +44,8 @@ export const savePushSubscription = async (subscription: PushSubscription | stri
       .from('push_subscriptions')
       .upsert(subscriptionData, {
         onConflict: deviceType === 'web' 
-          ? 'user_id,endpoint' 
-          : 'user_id,fcm_token'
+          ? 'user_id,platform,endpoint' 
+          : 'user_id,platform,device_token'
       });
 
     if (error) {

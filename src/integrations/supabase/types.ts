@@ -465,10 +465,13 @@ export type Database = {
           auth_keys: Json
           created_at: string
           device_info: Json | null
+          device_token: string | null
           device_type: string | null
           endpoint: string
           fcm_token: string | null
           id: number
+          metadata: Json | null
+          platform: string | null
           updated_at: string
           user_id: string | null
         }
@@ -476,10 +479,13 @@ export type Database = {
           auth_keys: Json
           created_at?: string
           device_info?: Json | null
+          device_token?: string | null
           device_type?: string | null
           endpoint: string
           fcm_token?: string | null
           id?: number
+          metadata?: Json | null
+          platform?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -487,10 +493,13 @@ export type Database = {
           auth_keys?: Json
           created_at?: string
           device_info?: Json | null
+          device_token?: string | null
           device_type?: string | null
           endpoint?: string
           fcm_token?: string | null
           id?: number
+          metadata?: Json | null
+          platform?: string | null
           updated_at?: string
           user_id?: string | null
         }
