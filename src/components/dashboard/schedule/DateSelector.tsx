@@ -1,5 +1,5 @@
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+
+import { DatePickerInput } from "../form/DatePickerInput";
 
 interface DateSelectorProps {
   date: string;
@@ -8,15 +8,9 @@ interface DateSelectorProps {
 
 export function DateSelector({ date, onDateChange }: DateSelectorProps) {
   return (
-    <div className="space-y-2">
-      <Label htmlFor="date">Date</Label>
-      <Input
-        type="date"
-        id="date"
-        value={date}
-        onChange={(e) => onDateChange(e.target.value)}
-        required
-      />
-    </div>
+    <DatePickerInput
+      date={date}
+      onDateChange={onDateChange}
+    />
   );
 }

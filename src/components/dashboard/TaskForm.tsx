@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,10 +7,10 @@ import { Switch } from "@/components/ui/switch";
 import { TaskPriority } from "./TaskBoard";
 import { DatePickerInput } from "./form/DatePickerInput";
 import { ShareTaskDialog } from "./ShareTaskDialog";
-import { TimeSelector } from "./schedule/TimeSelector";
-import { SubtaskList, Subtask, SubtaskListHandle } from "./subtasks/SubtaskList";
+import { SubtaskList, Subtask } from "./subtasks/SubtaskList";
 import { FileAttachmentInput } from "./form/FileAttachmentInput";
-import { useState, useRef, useEffect } from "react";
+import { TaskScheduleFields } from "./TaskScheduleFields";
+import { useState, useEffect } from "react";
 import { Task } from "./TaskBoard";
 import { useChat } from "@/hooks/use-chat";
 import { toast } from "@/components/ui/use-toast";
@@ -92,7 +93,7 @@ export function TaskForm({
               status: 'pending',
               position: index
             }));
-            onSubtasksChange(newSubtasks); // Update the subtasks state
+            onSubtasksChange(newSubtasks);
             
             toast({
               title: "Subtasks Added",
@@ -156,15 +157,6 @@ export function TaskForm({
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Switch
-            id="scheduled"
-            checked={isScheduled}
-            onCheckedChange={onIsScheduledChange}
-          />
-          <Label htmlFor="scheduled">Schedule this task</Label>
-        </div>
-        
-        <div className="flex items-center space-x-2">
-          <Switch
             id="reminder"
             checked={reminderEnabled}
             onCheckedChange={onReminderEnabledChange}
@@ -173,35 +165,18 @@ export function TaskForm({
         </div>
       </div>
 
-      {isScheduled && (
-        <div className="space-y-4">
-          <DatePickerInput
-            date={date}
-            onDateChange={onDateChange}
-          />
-
-          <TimeSelector
-            startTime={startTime}
-            endTime={endTime}
-            onStartTimeChange={onStartTimeChange}
-            onEndTimeChange={onEndTimeChange}
-          />
-
-          <div className="space-y-2">
-            <Label htmlFor="priority">Priority</Label>
-            <select
-              id="priority"
-              value={priority}
-              onChange={(e) => onPriorityChange(e.target.value as TaskPriority)}
-              className="w-full rounded-md border border-input bg-background px-3 py-2"
-            >
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-            </select>
-          </div>
-        </div>
-      )}
+      <TaskScheduleFields
+        isScheduled={isScheduled}
+        date={date}
+        startTime={startTime}
+        endTime={endTime}
+        priority={priority}
+        onIsScheduledChange={onIsScheduledChange}
+        onDateChange={onDateChange}
+        onStartTimeChange={onStartTimeChange}
+        onEndTimeChange={onEndTimeChange}
+        onPriorityChange={onPriorityChange}
+      />
 
       <div className="space-y-2">
         <Label>Attachments</Label>
