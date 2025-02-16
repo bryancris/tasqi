@@ -1,15 +1,12 @@
+
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { TaskPriority } from "./TaskBoard";
-import { DatePickerInput } from "./form/DatePickerInput";
 import { ShareTaskDialog } from "./ShareTaskDialog";
 import { SubtaskList, Subtask } from "./subtasks/SubtaskList";
-import { FileAttachmentInput } from "./form/FileAttachmentInput";
 import { TaskScheduleFields } from "./TaskScheduleFields";
-import { TaskAttachments } from "./form/TaskAttachments";
+import { TaskBasicFields } from "./form/TaskBasicFields";
+import { TaskNotificationFields } from "./form/TaskNotificationFields";
+import { TaskAttachmentFields } from "./form/TaskAttachmentFields";
 import { useState, useEffect } from "react";
 import { Task } from "./TaskBoard";
 import { useChat } from "@/hooks/use-chat";
@@ -79,13 +76,11 @@ export function TaskForm({
           const taskData = e.detail.task;
           console.log('Processing task data:', taskData);
 
-          // Update basic task details
           onTitleChange(taskData.title || '');
           onDescriptionChange(taskData.description || '');
           onIsScheduledChange(!!taskData.is_scheduled);
           if (taskData.date) onDateChange(taskData.date);
 
-          // Process subtasks
           if (taskData.subtasks && Array.isArray(taskData.subtasks)) {
             console.log('Setting subtasks:', taskData.subtasks);
             const newSubtasks = taskData.subtasks.map((subtask: any, index: number) => ({
@@ -125,45 +120,24 @@ export function TaskForm({
       }}
       className="p-4 space-y-4"
     >
-      <div className="space-y-2">
-        <Label htmlFor="title">Title</Label>
-        <Input
-          id="title"
-          value={title}
-          onChange={(e) => onTitleChange(e.target.value)}
-          placeholder="Task title"
-          required
-        />
-      </div>
+      <TaskBasicFields
+        title={title}
+        description={description}
+        onTitleChange={onTitleChange}
+        onDescriptionChange={onDescriptionChange}
+      />
 
       <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
-        <Textarea
-          id="description"
-          value={description}
-          onChange={(e) => onDescriptionChange(e.target.value)}
-          placeholder="Task description"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label>Subtasks</Label>
         <SubtaskList 
           subtasks={subtasks} 
           onSubtasksChange={onSubtasksChange}
         />
       </div>
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="reminder"
-            checked={reminderEnabled}
-            onCheckedChange={onReminderEnabledChange}
-          />
-          <Label htmlFor="reminder">Enable notifications</Label>
-        </div>
-      </div>
+      <TaskNotificationFields
+        reminderEnabled={reminderEnabled}
+        onReminderEnabledChange={onReminderEnabledChange}
+      />
 
       <TaskScheduleFields
         isScheduled={isScheduled}
@@ -178,19 +152,7 @@ export function TaskForm({
         onPriorityChange={onPriorityChange}
       />
 
-      <div className="space-y-2">
-        <Label>Attachments</Label>
-        <FileAttachmentInput 
-          taskId={task?.id} 
-          isDisabled={!isEditing && !task?.id}
-        />
-        {!isEditing && !task?.id && (
-          <p className="text-sm text-muted-foreground">
-            Save the task first to add attachments
-          </p>
-        )}
-        <TaskAttachments taskId={task?.id} isEditing={isEditing} />
-      </div>
+      <TaskAttachmentFields task={task} isEditing={isEditing} />
 
       <Button
         type="submit"
