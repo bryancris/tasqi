@@ -1,20 +1,11 @@
 
 import { useEffect, useState } from "react";
-import { File, Trash2, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
-
-interface TaskAttachment {
-  id: number;
-  file_name: string;
-  file_path: string;
-  content_type: string;
-}
+import { TaskAttachment } from "./types";
+import { AttachmentPreview } from "./attachment/AttachmentPreview";
+import { AttachmentActions } from "./attachment/AttachmentActions";
+import { AttachmentDialog } from "./attachment/AttachmentDialog";
 
 interface TaskAttachmentsProps {
   taskId?: number;
@@ -143,87 +134,28 @@ export function TaskAttachments({ taskId, isEditing }: TaskAttachmentsProps) {
             {(attachment.content_type.startsWith('image/') || 
               attachment.content_type === 'application/pdf') && 
               previewUrls[attachment.id] && (
-              <div 
-                className="relative w-full h-32 bg-gray-100 cursor-pointer overflow-hidden"
+              <AttachmentPreview
+                attachment={attachment}
+                previewUrl={previewUrls[attachment.id]}
                 onClick={() => setSelectedFile(attachment)}
-              >
-                {attachment.content_type.startsWith('image/') ? (
-                  <img
-                    src={previewUrls[attachment.id]}
-                    alt={attachment.file_name}
-                    className="w-full h-full object-contain"
-                  />
-                ) : (
-                  <iframe
-                    src={`${previewUrls[attachment.id]}#toolbar=0&navpanes=0`}
-                    className="w-full h-full"
-                    title={attachment.file_name}
-                    style={{ border: 'none' }}
-                  />
-                )}
-              </div>
+              />
             )}
-            <div className="flex items-center justify-between p-2">
-              <div className="flex items-center gap-2">
-                <File className="h-4 w-4" />
-                <span className="text-sm">{attachment.file_name}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleDownload(attachment)}
-                >
-                  Download
-                </Button>
-                {isEditing && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDelete(attachment)}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                )}
-              </div>
-            </div>
+            <AttachmentActions
+              attachment={attachment}
+              isEditing={isEditing}
+              onDownload={handleDownload}
+              onDelete={handleDelete}
+            />
           </div>
         ))}
       </div>
 
-      <Dialog open={!!selectedFile} onOpenChange={() => setSelectedFile(null)}>
-        <DialogContent className="max-w-4xl p-0">
-          {selectedFile && previewUrls[selectedFile.id] && (
-            <div className="relative">
-              <div className="w-full h-[80vh]">
-                {selectedFile.content_type.startsWith('image/') ? (
-                  <img
-                    src={previewUrls[selectedFile.id]}
-                    alt={selectedFile.file_name}
-                    className="w-full h-full object-contain"
-                  />
-                ) : (
-                  <iframe
-                    src={`${previewUrls[selectedFile.id]}#toolbar=0&navpanes=0`}
-                    className="w-full h-full"
-                    title={selectedFile.file_name}
-                    style={{ border: 'none' }}
-                  />
-                )}
-              </div>
-              <Button
-                className="absolute bottom-4 right-4"
-                onClick={() => handleDownload(selectedFile)}
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Download
-              </Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <AttachmentDialog
+        attachment={selectedFile}
+        previewUrl={selectedFile ? previewUrls[selectedFile.id] : undefined}
+        onClose={() => setSelectedFile(null)}
+        onDownload={handleDownload}
+      />
     </>
   );
 }
