@@ -8,11 +8,15 @@ const getFirebaseConfig = async () => {
   const { data, error } = await supabase
     .from('app_settings')
     .select('firebase_config')
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error('Error fetching Firebase config:', error);
     throw error;
+  }
+
+  if (!data?.firebase_config) {
+    throw new Error('Firebase configuration not found in app settings');
   }
 
   return data.firebase_config;

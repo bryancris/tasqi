@@ -12,6 +12,7 @@ export type Database = {
       app_settings: {
         Row: {
           created_at: string
+          firebase_config: Json | null
           id: number
           updated_at: string
           vapid_private_key: string | null
@@ -19,6 +20,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          firebase_config?: Json | null
           id?: number
           updated_at?: string
           vapid_private_key?: string | null
@@ -26,6 +28,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          firebase_config?: Json | null
           id?: number
           updated_at?: string
           vapid_private_key?: string | null
