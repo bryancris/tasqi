@@ -20,9 +20,17 @@ export function FileAttachmentInput({ taskId, isDisabled }: FileAttachmentInputP
     try {
       setIsUploading(true);
 
-      // Upload file to storage
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error('You must be logged in to upload files');
+        return;
+      }
+
+      // Upload file to storage with user ID in path
       const fileExt = file.name.split('.').pop();
-      const filePath = `${crypto.randomUUID()}.${fileExt}`;
+      const filePath = `${user.id}/${crypto.randomUUID()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('task-attachments')
