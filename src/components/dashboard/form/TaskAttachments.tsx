@@ -19,11 +19,16 @@ interface TaskAttachmentsProps {
 
 export function TaskAttachments({ taskId, isEditing }: TaskAttachmentsProps) {
   const [attachments, setAttachments] = useState<TaskAttachment[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<Record<number, string>>({});
 
   useEffect(() => {
     if (taskId) {
       loadAttachments();
     }
+    // Cleanup preview URLs on unmount
+    return () => {
+      Object.values(previewUrls).forEach(url => URL.revokeObjectURL(url));
+    };
   }, [taskId]);
 
   const loadAttachments = async () => {
@@ -36,9 +41,31 @@ export function TaskAttachments({ taskId, isEditing }: TaskAttachmentsProps) {
       if (error) throw error;
       
       setAttachments(data || []);
+
+      // Load previews for image attachments
+      data?.forEach(async (attachment) => {
+        if (attachment.content_type.startsWith('image/')) {
+          loadImagePreview(attachment);
+        }
+      });
     } catch (error) {
       console.error('Error loading attachments:', error);
       toast.error('Failed to load attachments');
+    }
+  };
+
+  const loadImagePreview = async (attachment: TaskAttachment) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('task-attachments')
+        .download(attachment.file_path);
+
+      if (error) throw error;
+
+      const url = URL.createObjectURL(data);
+      setPreviewUrls(prev => ({ ...prev, [attachment.id]: url }));
+    } catch (error) {
+      console.error('Error loading image preview:', error);
     }
   };
 
@@ -50,7 +77,6 @@ export function TaskAttachments({ taskId, isEditing }: TaskAttachmentsProps) {
 
       if (error) throw error;
 
-      // Create a download link and trigger it
       const url = URL.createObjectURL(data);
       const a = document.createElement('a');
       a.href = url;
@@ -67,14 +93,12 @@ export function TaskAttachments({ taskId, isEditing }: TaskAttachmentsProps) {
 
   const handleDelete = async (attachment: TaskAttachment) => {
     try {
-      // Delete from storage
       const { error: storageError } = await supabase.storage
         .from('task-attachments')
         .remove([attachment.file_path]);
 
       if (storageError) throw storageError;
 
-      // Delete from database
       const { error: dbError } = await supabase
         .from('task_attachments')
         .delete()
@@ -82,7 +106,15 @@ export function TaskAttachments({ taskId, isEditing }: TaskAttachmentsProps) {
 
       if (dbError) throw dbError;
 
-      // Refresh attachments list
+      // Clean up preview URL if it exists
+      if (previewUrls[attachment.id]) {
+        URL.revokeObjectURL(previewUrls[attachment.id]);
+        setPreviewUrls(prev => {
+          const { [attachment.id]: _, ...rest } = prev;
+          return rest;
+        });
+      }
+
       loadAttachments();
       toast.success('Attachment deleted successfully');
     } catch (error) {
@@ -100,31 +132,42 @@ export function TaskAttachments({ taskId, isEditing }: TaskAttachmentsProps) {
       {attachments.map((attachment) => (
         <div
           key={attachment.id}
-          className="flex items-center justify-between p-2 border rounded-md bg-background"
+          className="flex flex-col border rounded-md bg-background overflow-hidden"
         >
-          <div className="flex items-center gap-2">
-            <File className="h-4 w-4" />
-            <span className="text-sm">{attachment.file_name}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => handleDownload(attachment)}
-            >
-              Download
-            </Button>
-            {isEditing && (
+          {attachment.content_type.startsWith('image/') && previewUrls[attachment.id] && (
+            <div className="relative w-full h-32 bg-gray-100">
+              <img
+                src={previewUrls[attachment.id]}
+                alt={attachment.file_name}
+                className="w-full h-full object-contain"
+              />
+            </div>
+          )}
+          <div className="flex items-center justify-between p-2">
+            <div className="flex items-center gap-2">
+              <File className="h-4 w-4" />
+              <span className="text-sm">{attachment.file_name}</span>
+            </div>
+            <div className="flex items-center gap-2">
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={() => handleDelete(attachment)}
+                onClick={() => handleDownload(attachment)}
               >
-                <Trash2 className="h-4 w-4 text-destructive" />
+                Download
               </Button>
-            )}
+              {isEditing && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleDelete(attachment)}
+                >
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       ))}
