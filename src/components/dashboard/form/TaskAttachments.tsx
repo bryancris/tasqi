@@ -24,7 +24,7 @@ interface TaskAttachmentsProps {
 export function TaskAttachments({ taskId, isEditing }: TaskAttachmentsProps) {
   const [attachments, setAttachments] = useState<TaskAttachment[]>([]);
   const [previewUrls, setPreviewUrls] = useState<Record<number, string>>({});
-  const [selectedImage, setSelectedImage] = useState<TaskAttachment | null>(null);
+  const [selectedFile, setSelectedFile] = useState<TaskAttachment | null>(null);
 
   useEffect(() => {
     if (taskId) {
@@ -47,10 +47,10 @@ export function TaskAttachments({ taskId, isEditing }: TaskAttachmentsProps) {
       
       setAttachments(data || []);
 
-      // Load previews for image attachments
+      // Load previews for image and PDF attachments
       data?.forEach(async (attachment) => {
-        if (attachment.content_type.startsWith('image/')) {
-          loadImagePreview(attachment);
+        if (attachment.content_type.startsWith('image/') || attachment.content_type === 'application/pdf') {
+          loadFilePreview(attachment);
         }
       });
     } catch (error) {
@@ -59,7 +59,7 @@ export function TaskAttachments({ taskId, isEditing }: TaskAttachmentsProps) {
     }
   };
 
-  const loadImagePreview = async (attachment: TaskAttachment) => {
+  const loadFilePreview = async (attachment: TaskAttachment) => {
     try {
       const { data, error } = await supabase.storage
         .from('task-attachments')
@@ -70,7 +70,7 @@ export function TaskAttachments({ taskId, isEditing }: TaskAttachmentsProps) {
       const url = URL.createObjectURL(data);
       setPreviewUrls(prev => ({ ...prev, [attachment.id]: url }));
     } catch (error) {
-      console.error('Error loading image preview:', error);
+      console.error('Error loading file preview:', error);
     }
   };
 
@@ -132,6 +132,27 @@ export function TaskAttachments({ taskId, isEditing }: TaskAttachmentsProps) {
     return null;
   }
 
+  const renderPreview = (attachment: TaskAttachment) => {
+    if (attachment.content_type.startsWith('image/')) {
+      return (
+        <img
+          src={previewUrls[attachment.id]}
+          alt={attachment.file_name}
+          className="w-full h-full object-contain"
+        />
+      );
+    } else if (attachment.content_type === 'application/pdf') {
+      return (
+        <iframe
+          src={`${previewUrls[attachment.id]}#toolbar=0&navpanes=0`}
+          className="w-full h-full"
+          title={attachment.file_name}
+        />
+      );
+    }
+    return null;
+  };
+
   return (
     <>
       <div className="space-y-2">
@@ -140,16 +161,14 @@ export function TaskAttachments({ taskId, isEditing }: TaskAttachmentsProps) {
             key={attachment.id}
             className="flex flex-col border rounded-md bg-background overflow-hidden"
           >
-            {attachment.content_type.startsWith('image/') && previewUrls[attachment.id] && (
+            {(attachment.content_type.startsWith('image/') || 
+              attachment.content_type === 'application/pdf') && 
+              previewUrls[attachment.id] && (
               <div 
                 className="relative w-full h-32 bg-gray-100 cursor-pointer"
-                onClick={() => setSelectedImage(attachment)}
+                onClick={() => setSelectedFile(attachment)}
               >
-                <img
-                  src={previewUrls[attachment.id]}
-                  alt={attachment.file_name}
-                  className="w-full h-full object-contain"
-                />
+                {renderPreview(attachment)}
               </div>
             )}
             <div className="flex items-center justify-between p-2">
@@ -182,18 +201,16 @@ export function TaskAttachments({ taskId, isEditing }: TaskAttachmentsProps) {
         ))}
       </div>
 
-      <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+      <Dialog open={!!selectedFile} onOpenChange={() => setSelectedFile(null)}>
         <DialogContent className="max-w-4xl p-0">
-          {selectedImage && previewUrls[selectedImage.id] && (
+          {selectedFile && previewUrls[selectedFile.id] && (
             <div className="relative">
-              <img
-                src={previewUrls[selectedImage.id]}
-                alt={selectedImage.file_name}
-                className="w-full h-full object-contain max-h-[80vh]"
-              />
+              <div className="w-full h-[80vh]">
+                {renderPreview(selectedFile)}
+              </div>
               <Button
                 className="absolute bottom-4 right-4"
-                onClick={() => handleDownload(selectedImage)}
+                onClick={() => handleDownload(selectedFile)}
               >
                 <Download className="mr-2 h-4 w-4" />
                 Download
