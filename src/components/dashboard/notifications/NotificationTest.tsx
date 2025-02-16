@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { showNotification } from "@/utils/notifications/notificationUtils";
 
 export function NotificationTest() {
   const handleTestNotification = async () => {
@@ -85,13 +86,44 @@ export function NotificationTest() {
     }
   };
 
+  const handleTestTaskNotification = async () => {
+    try {
+      // Create a mock task for testing
+      const mockTask = {
+        id: 999,
+        title: "Test Task Reminder",
+        start_time: "14:00",
+        date: new Date().toISOString().split('T')[0],
+        reminder_enabled: true
+      };
+
+      // Use the showNotification function to test a task reminder
+      await showNotification(mockTask, 'reminder');
+      
+      console.log("Task notification sent successfully");
+      toast.success("Test task notification sent!");
+    } catch (error) {
+      console.error("Error sending task notification:", error);
+      toast.error("Failed to send task notification: " + (error as Error).message);
+    }
+  };
+
   return (
-    <Button 
-      variant="outline"
-      onClick={handleTestNotification}
-      className="text-sm"
-    >
-      Test Notification
-    </Button>
+    <div className="space-x-4">
+      <Button 
+        variant="outline"
+        onClick={handleTestNotification}
+        className="text-sm"
+      >
+        Test Basic Notification
+      </Button>
+      <Button 
+        variant="outline"
+        onClick={handleTestTaskNotification}
+        className="text-sm"
+      >
+        Test Task Reminder
+      </Button>
+    </div>
   );
 }
