@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { File, Trash2, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -128,10 +127,6 @@ export function TaskAttachments({ taskId, isEditing }: TaskAttachmentsProps) {
     }
   };
 
-  if (!taskId || attachments.length === 0) {
-    return null;
-  }
-
   const renderPreview = (attachment: TaskAttachment) => {
     if (attachment.content_type.startsWith('image/')) {
       return (
@@ -147,11 +142,16 @@ export function TaskAttachments({ taskId, isEditing }: TaskAttachmentsProps) {
           src={`${previewUrls[attachment.id]}#toolbar=0&navpanes=0`}
           className="w-full h-full"
           title={attachment.file_name}
+          style={{ border: 'none' }}
         />
       );
     }
     return null;
   };
+
+  if (!taskId || attachments.length === 0) {
+    return null;
+  }
 
   return (
     <>
@@ -206,7 +206,20 @@ export function TaskAttachments({ taskId, isEditing }: TaskAttachmentsProps) {
           {selectedFile && previewUrls[selectedFile.id] && (
             <div className="relative">
               <div className="w-full h-[80vh]">
-                {renderPreview(selectedFile)}
+                {selectedFile.content_type.startsWith('image/') ? (
+                  <img
+                    src={previewUrls[selectedFile.id]}
+                    alt={selectedFile.file_name}
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <iframe
+                    src={`${previewUrls[selectedFile.id]}#toolbar=0&navpanes=0`}
+                    className="w-full h-full"
+                    title={selectedFile.file_name}
+                    style={{ border: 'none' }}
+                  />
+                )}
               </div>
               <Button
                 className="absolute bottom-4 right-4"
