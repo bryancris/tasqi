@@ -1,10 +1,10 @@
 
-import { initializeApp } from 'firebase/app';
+import { initializeApp, FirebaseOptions } from 'firebase/app';
 import { getMessaging, isSupported } from 'firebase/messaging';
 import { supabase } from '../supabase/client';
 
 // Get Firebase config from Supabase app settings
-const getFirebaseConfig = async () => {
+const getFirebaseConfig = async (): Promise<FirebaseOptions> => {
   const { data, error } = await supabase
     .from('app_settings')
     .select('firebase_config')
@@ -19,7 +19,15 @@ const getFirebaseConfig = async () => {
     throw new Error('Firebase configuration not found in app settings');
   }
 
-  return data.firebase_config;
+  // Type assertion to ensure the config matches FirebaseOptions
+  const config = data.firebase_config as FirebaseOptions;
+
+  // Validate required fields
+  if (!config.apiKey || !config.projectId || !config.messagingSenderId) {
+    throw new Error('Invalid Firebase configuration: missing required fields');
+  }
+
+  return config;
 };
 
 // Initialize Firebase with async config
