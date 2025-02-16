@@ -1,23 +1,42 @@
 
 import { initializeApp } from 'firebase/app';
 import { getMessaging, isSupported } from 'firebase/messaging';
+import { supabase } from '../supabase/client';
 
-const firebaseConfig = {
-  // Your web app's Firebase configuration
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
+// Get Firebase config from Supabase app settings
+const getFirebaseConfig = async () => {
+  const { data, error } = await supabase
+    .from('app_settings')
+    .select('firebase_config')
+    .single();
+
+  if (error) {
+    console.error('Error fetching Firebase config:', error);
+    throw error;
+  }
+
+  return data.firebase_config;
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// Initialize Firebase with async config
+export const initializeFirebase = async () => {
+  try {
+    const firebaseConfig = await getFirebaseConfig();
+    return initializeApp(firebaseConfig);
+  } catch (error) {
+    console.error('Error initializing Firebase:', error);
+    return null;
+  }
+};
 
 // Initialize Firebase Cloud Messaging
 export const initializeMessaging = async () => {
   try {
+    const app = await initializeFirebase();
+    if (!app) {
+      throw new Error('Firebase app not initialized');
+    }
+
     if (await isSupported()) {
       const messaging = getMessaging(app);
       return messaging;
@@ -29,5 +48,3 @@ export const initializeMessaging = async () => {
     return null;
   }
 };
-
-export default app;
