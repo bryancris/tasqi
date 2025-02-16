@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { File, Trash2, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -127,28 +128,6 @@ export function TaskAttachments({ taskId, isEditing }: TaskAttachmentsProps) {
     }
   };
 
-  const renderPreview = (attachment: TaskAttachment) => {
-    if (attachment.content_type.startsWith('image/')) {
-      return (
-        <img
-          src={previewUrls[attachment.id]}
-          alt={attachment.file_name}
-          className="w-full h-full object-contain"
-        />
-      );
-    } else if (attachment.content_type === 'application/pdf') {
-      return (
-        <iframe
-          src={`${previewUrls[attachment.id]}#toolbar=0&navpanes=0`}
-          className="w-full h-full"
-          title={attachment.file_name}
-          style={{ border: 'none' }}
-        />
-      );
-    }
-    return null;
-  };
-
   if (!taskId || attachments.length === 0) {
     return null;
   }
@@ -165,10 +144,23 @@ export function TaskAttachments({ taskId, isEditing }: TaskAttachmentsProps) {
               attachment.content_type === 'application/pdf') && 
               previewUrls[attachment.id] && (
               <div 
-                className="relative w-full h-32 bg-gray-100 cursor-pointer"
+                className="relative w-full h-32 bg-gray-100 cursor-pointer overflow-hidden"
                 onClick={() => setSelectedFile(attachment)}
               >
-                {renderPreview(attachment)}
+                {attachment.content_type.startsWith('image/') ? (
+                  <img
+                    src={previewUrls[attachment.id]}
+                    alt={attachment.file_name}
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <iframe
+                    src={`${previewUrls[attachment.id]}#toolbar=0&navpanes=0`}
+                    className="w-full h-full"
+                    title={attachment.file_name}
+                    style={{ border: 'none' }}
+                  />
+                )}
               </div>
             )}
             <div className="flex items-center justify-between p-2">
