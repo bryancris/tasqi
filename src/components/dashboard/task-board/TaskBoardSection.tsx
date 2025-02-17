@@ -5,7 +5,6 @@ import { DndContext, MouseSensor, TouchSensor, useSensor, useSensors, DragEndEve
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { startOfDay, isAfter } from "date-fns";
 import { TaskCard } from "../TaskCard";
-import { NotificationTest } from "../notifications/NotificationTest";
 import { TaskLegend } from "../TaskLegend";
 import { QueryObserverResult } from "@tanstack/react-query";
 
@@ -63,7 +62,6 @@ export function TaskBoardSection({ tasks, onDragEnd, onComplete }: TaskBoardSect
       <CardHeader className="flex-none pb-4 border-b bg-white">
         <div className="flex items-center justify-between">
           <CardTitle className="text-2xl font-semibold">Task Board</CardTitle>
-          <NotificationTest />
         </div>
         <TaskLegend />
       </CardHeader>
