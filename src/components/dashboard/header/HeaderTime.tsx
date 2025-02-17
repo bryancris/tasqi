@@ -21,8 +21,7 @@ export function HeaderTime() {
   return (
     <div className="flex items-center gap-2">
       <h1 className="text-[#6366F1] font-semibold text-2xl">Tasqi</h1>
-      <span className="text-sm text-[#333333]">{currentTime}</span>
-      <span className="text-sm text-[#333333]">{currentDate}</span>
+      <span className="text-sm text-[#333333] whitespace-nowrap">{currentTime} {currentDate}</span>
     </div>
   );
 }
