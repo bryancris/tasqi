@@ -120,45 +120,47 @@ export function TaskForm({
         e.preventDefault();
         onSubmit();
       }}
-      className="relative h-full"
+      className="flex flex-col h-full"
     >
-      <div className={`p-4 space-y-4 ${isMobile ? 'pb-32' : ''} overflow-y-auto h-full`}>
-        <TaskBasicFields
-          title={title}
-          description={description}
-          onTitleChange={onTitleChange}
-          onDescriptionChange={onDescriptionChange}
-        />
-
-        <div className="space-y-2">
-          <SubtaskList 
-            subtasks={subtasks} 
-            onSubtasksChange={onSubtasksChange}
+      <div className="flex-1 overflow-y-auto">
+        <div className={`p-4 space-y-4 ${isMobile ? 'pb-28' : ''}`}>
+          <TaskBasicFields
+            title={title}
+            description={description}
+            onTitleChange={onTitleChange}
+            onDescriptionChange={onDescriptionChange}
           />
+
+          <div className="space-y-2">
+            <SubtaskList 
+              subtasks={subtasks} 
+              onSubtasksChange={onSubtasksChange}
+            />
+          </div>
+
+          <TaskNotificationFields
+            reminderEnabled={reminderEnabled}
+            onReminderEnabledChange={onReminderEnabledChange}
+          />
+
+          <TaskScheduleFields
+            isScheduled={isScheduled}
+            date={date}
+            startTime={startTime}
+            endTime={endTime}
+            priority={priority}
+            onIsScheduledChange={onIsScheduledChange}
+            onDateChange={onDateChange}
+            onStartTimeChange={onStartTimeChange}
+            onEndTimeChange={onEndTimeChange}
+            onPriorityChange={onPriorityChange}
+          />
+
+          <TaskAttachmentFields task={task} isEditing={isEditing} />
         </div>
-
-        <TaskNotificationFields
-          reminderEnabled={reminderEnabled}
-          onReminderEnabledChange={onReminderEnabledChange}
-        />
-
-        <TaskScheduleFields
-          isScheduled={isScheduled}
-          date={date}
-          startTime={startTime}
-          endTime={endTime}
-          priority={priority}
-          onIsScheduledChange={onIsScheduledChange}
-          onDateChange={onDateChange}
-          onStartTimeChange={onStartTimeChange}
-          onEndTimeChange={onEndTimeChange}
-          onPriorityChange={onPriorityChange}
-        />
-
-        <TaskAttachmentFields task={task} isEditing={isEditing} />
       </div>
 
-      <div className={`${isMobile ? 'fixed bottom-0 left-0 right-0 p-4 bg-white border-t z-50' : 'mt-4 p-4'}`}>
+      <div className={`${isMobile ? 'sticky bottom-0 left-0 right-0 p-4 bg-white border-t z-50' : 'p-4'}`}>
         <Button
           type="submit"
           className="w-full"
