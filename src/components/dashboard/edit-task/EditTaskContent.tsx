@@ -54,7 +54,7 @@ export function EditTaskContent({
   onDelete,
 }: EditTaskContentProps) {
   return (
-    <div className="overflow-y-auto h-[calc(100vh-80px)]">
+    <div className="overflow-y-auto h-[calc(100vh-80px)] scrollbar-hide">
       <TaskForm
         title={title}
         description={description}
