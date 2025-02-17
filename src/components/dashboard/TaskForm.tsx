@@ -120,9 +120,9 @@ export function TaskForm({
         e.preventDefault();
         onSubmit();
       }}
-      className={`p-4 space-y-4 ${isMobile ? 'mb-20' : ''}`}
+      className="relative h-full"
     >
-      <div className={`space-y-4 ${isMobile ? 'pb-24' : ''}`}>
+      <div className={`p-4 space-y-4 ${isMobile ? 'pb-32' : ''} overflow-y-auto h-full`}>
         <TaskBasicFields
           title={title}
           description={description}
@@ -158,7 +158,7 @@ export function TaskForm({
         <TaskAttachmentFields task={task} isEditing={isEditing} />
       </div>
 
-      <div className={`${isMobile ? 'fixed bottom-0 left-0 right-0 p-4 bg-white border-t z-50' : ''}`}>
+      <div className={`${isMobile ? 'fixed bottom-0 left-0 right-0 p-4 bg-white border-t z-50' : 'mt-4 p-4'}`}>
         <Button
           type="submit"
           className="w-full"
