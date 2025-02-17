@@ -1,6 +1,5 @@
 
 import { useClock } from "@/hooks/use-clock";
-import { Moon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export function HeaderTime() {
@@ -22,7 +21,6 @@ export function HeaderTime() {
   return (
     <div className="flex flex-col items-start space-y-1">
       <div className="flex items-center space-x-2">
-        {!isDay && <Moon className="h-5 w-5 text-blue-400" />}
         <h1 className="text-[#6366F1] font-semibold text-2xl">Tasqi</h1>
       </div>
       <p className="text-sm text-[#333333] pl-7">
