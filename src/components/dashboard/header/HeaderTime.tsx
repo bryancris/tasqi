@@ -19,7 +19,7 @@ export function HeaderTime() {
   }, []);
 
   return (
-    <div className="flex flex-col items-start">
+    <div className="flex items-baseline gap-2">
       <h1 className="text-[#6366F1] font-semibold text-2xl">Tasqi</h1>
       <p className="text-sm text-[#333333]">
         {currentTime} {currentDate}
