@@ -5,7 +5,6 @@ import { TaskCard } from "./TaskCard";
 import { DndContext, MouseSensor, TouchSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { startOfDay, isAfter } from "date-fns";
-import { AddTaskDrawer } from "./AddTaskDrawer";
 
 export interface MobileTaskViewProps {
   tasks: Task[];
@@ -63,37 +62,29 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
     .map(task => task.id);
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Add Task Button - Fixed at the bottom */}
-      <div className="fixed bottom-[80px] left-0 right-0 px-4 z-50 pb-2 bg-gradient-to-t from-[#F1F0FB] via-[#F1F0FB] to-transparent pt-4">
-        <AddTaskDrawer />
-      </div>
-
-      {/* Task List - With padding at the bottom to prevent button overlap */}
-      <div className="flex-1 pb-[140px]">
-        <Card className="h-full border-none shadow-none bg-transparent">
-          <CardHeader className="pb-3 px-1">
-            <CardTitle className="text-2xl font-semibold">Task Board</CardTitle>
-          </CardHeader>
-          <CardContent className="p-1">
-            <DndContext sensors={sensors} onDragEnd={onDragEnd}>
-              <SortableContext items={draggableTaskIds} strategy={verticalListSortingStrategy}>
-                <div className="flex flex-col gap-[1px]">
-                  {sortedTasks.map((task, index) => (
-                    <TaskCard
-                      key={task.id}
-                      task={task}
-                      index={index}
-                      isDraggable={task.status !== 'completed'}
-                      onComplete={onComplete}
-                    />
-                  ))}
-                </div>
-              </SortableContext>
-            </DndContext>
-          </CardContent>
-        </Card>
-      </div>
+    <div className="h-[calc(100vh-144px)] overflow-hidden">
+      <Card className="h-full border-none shadow-none bg-transparent">
+        <CardHeader className="pb-3 px-1">
+          <CardTitle className="text-2xl font-semibold">Task Board</CardTitle>
+        </CardHeader>
+        <CardContent className="overflow-y-auto h-[calc(100%-5rem)] p-1">
+          <DndContext sensors={sensors} onDragEnd={onDragEnd}>
+            <SortableContext items={draggableTaskIds} strategy={verticalListSortingStrategy}>
+              <div className="flex flex-col gap-[1px]">
+                {sortedTasks.map((task, index) => (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    index={index}
+                    isDraggable={task.status !== 'completed'}
+                    onComplete={onComplete}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        </CardContent>
+      </Card>
     </div>
   );
 }
