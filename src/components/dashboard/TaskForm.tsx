@@ -120,43 +120,45 @@ export function TaskForm({
         e.preventDefault();
         onSubmit();
       }}
-      className={`p-4 space-y-4 ${isMobile ? 'pb-24' : ''}`}
+      className={`p-4 space-y-4 ${isMobile ? 'mb-20' : ''}`}
     >
-      <TaskBasicFields
-        title={title}
-        description={description}
-        onTitleChange={onTitleChange}
-        onDescriptionChange={onDescriptionChange}
-      />
-
-      <div className="space-y-2">
-        <SubtaskList 
-          subtasks={subtasks} 
-          onSubtasksChange={onSubtasksChange}
+      <div className={`space-y-4 ${isMobile ? 'pb-24' : ''}`}>
+        <TaskBasicFields
+          title={title}
+          description={description}
+          onTitleChange={onTitleChange}
+          onDescriptionChange={onDescriptionChange}
         />
+
+        <div className="space-y-2">
+          <SubtaskList 
+            subtasks={subtasks} 
+            onSubtasksChange={onSubtasksChange}
+          />
+        </div>
+
+        <TaskNotificationFields
+          reminderEnabled={reminderEnabled}
+          onReminderEnabledChange={onReminderEnabledChange}
+        />
+
+        <TaskScheduleFields
+          isScheduled={isScheduled}
+          date={date}
+          startTime={startTime}
+          endTime={endTime}
+          priority={priority}
+          onIsScheduledChange={onIsScheduledChange}
+          onDateChange={onDateChange}
+          onStartTimeChange={onStartTimeChange}
+          onEndTimeChange={onEndTimeChange}
+          onPriorityChange={onPriorityChange}
+        />
+
+        <TaskAttachmentFields task={task} isEditing={isEditing} />
       </div>
 
-      <TaskNotificationFields
-        reminderEnabled={reminderEnabled}
-        onReminderEnabledChange={onReminderEnabledChange}
-      />
-
-      <TaskScheduleFields
-        isScheduled={isScheduled}
-        date={date}
-        startTime={startTime}
-        endTime={endTime}
-        priority={priority}
-        onIsScheduledChange={onIsScheduledChange}
-        onDateChange={onDateChange}
-        onStartTimeChange={onStartTimeChange}
-        onEndTimeChange={onEndTimeChange}
-        onPriorityChange={onPriorityChange}
-      />
-
-      <TaskAttachmentFields task={task} isEditing={isEditing} />
-
-      <div className={`${isMobile ? 'fixed bottom-0 left-0 right-0 p-4 bg-white border-t' : ''}`}>
+      <div className={`${isMobile ? 'fixed bottom-0 left-0 right-0 p-4 bg-white border-t z-50' : ''}`}>
         <Button
           type="submit"
           className="w-full"
