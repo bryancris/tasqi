@@ -11,6 +11,7 @@ import { useState, useEffect } from "react";
 import { Task } from "./TaskBoard";
 import { useChat } from "@/hooks/use-chat";
 import { toast } from "@/components/ui/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface TaskFormProps {
   title: string;
@@ -64,6 +65,7 @@ export function TaskForm({
   const [showShareDialog, setShowShareDialog] = useState(false);
   const { message, setMessage } = useChat();
   const [processingAIResponse, setProcessingAIResponse] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const handleAIResponse = (e: CustomEvent<any>) => {
@@ -118,7 +120,7 @@ export function TaskForm({
         e.preventDefault();
         onSubmit();
       }}
-      className="p-4 space-y-4"
+      className={`p-4 space-y-4 ${isMobile ? 'pb-24' : ''}`}
     >
       <TaskBasicFields
         title={title}
@@ -154,13 +156,15 @@ export function TaskForm({
 
       <TaskAttachmentFields task={task} isEditing={isEditing} />
 
-      <Button
-        type="submit"
-        className="w-full"
-        disabled={isLoading || processingAIResponse}
-      >
-        {isLoading || processingAIResponse ? "Loading..." : isEditing ? "Update Task" : "Create Task"}
-      </Button>
+      <div className={`${isMobile ? 'fixed bottom-0 left-0 right-0 p-4 bg-white border-t' : ''}`}>
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={isLoading || processingAIResponse}
+        >
+          {isLoading || processingAIResponse ? "Loading..." : isEditing ? "Update Task" : "Create Task"}
+        </Button>
+      </div>
 
       {task && (
         <ShareTaskDialog
