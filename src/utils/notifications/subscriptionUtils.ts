@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { urlBase64ToUint8Array, getVapidPublicKey } from "./vapidUtils";
 import { toast } from "sonner";
@@ -7,7 +6,11 @@ import { Capacitor } from '@capacitor/core';
 import { initializeMessaging } from '@/integrations/firebase/config';
 import { getToken as getFirebaseToken } from 'firebase/messaging';
 
-const isNativePlatform = () => Capacitor.isNativePlatform();
+const isNativePlatform = () => {
+  const isNative = Capacitor.isNativePlatform();
+  console.log('Is native platform?', isNative, 'Current platform:', Capacitor.getPlatform());
+  return isNative;
+};
 
 export const savePushSubscription = async (subscription: PushSubscription | string, deviceType: 'web' | 'android' | 'ios' = 'web') => {
   try {
@@ -16,7 +19,9 @@ export const savePushSubscription = async (subscription: PushSubscription | stri
       throw new Error('User must be logged in to save push subscription');
     }
 
-    console.log(`Saving ${deviceType} push subscription for user ${session.user.id}`);
+    console.log(`[Push Subscription] Attempting to save ${deviceType} subscription`);
+    console.log(`[Push Subscription] Platform detected: ${Capacitor.getPlatform()}`);
+    console.log(`[Push Subscription] Token/Subscription:`, subscription);
 
     const baseData = {
       user_id: session.user.id,
@@ -38,13 +43,15 @@ export const savePushSubscription = async (subscription: PushSubscription | stri
           platform: deviceType,
           endpoint: '', // Provide empty string as required by the schema
           device_token: subscription as string,
+          device_type: deviceType, // Explicitly set device_type
           metadata: {
             platform: deviceType,
+            capacitorPlatform: Capacitor.getPlatform(),
             timestamp: new Date().toISOString()
           }
         };
 
-    console.log('Saving subscription data:', JSON.stringify(subscriptionData, null, 2));
+    console.log('[Push Subscription] Saving data:', JSON.stringify(subscriptionData, null, 2));
 
     const { error } = await supabase
       .from('push_subscriptions')
@@ -55,13 +62,13 @@ export const savePushSubscription = async (subscription: PushSubscription | stri
       });
 
     if (error) {
-      console.error('Error saving push subscription:', error);
+      console.error('[Push Subscription] Error saving subscription:', error);
       throw error;
     }
 
-    console.log(`✅ ${deviceType.toUpperCase()} push subscription saved successfully`);
+    console.log(`[Push Subscription] ✅ ${deviceType.toUpperCase()} subscription saved successfully`);
   } catch (error) {
-    console.error('Error in savePushSubscription:', error);
+    console.error('[Push Subscription] Error in savePushSubscription:', error);
     toast.error('Failed to save push subscription');
     throw error;
   }
@@ -71,12 +78,13 @@ export const setupPushSubscription = async (registration?: ServiceWorkerRegistra
   try {
     // Check if we're on a native platform
     if (isNativePlatform()) {
-      console.log('Setting up native push notifications...');
+      console.log('[Push Setup] Setting up native push notifications...');
+      console.log('[Push Setup] Current platform:', Capacitor.getPlatform());
       
       try {
         // Request permission for native platforms
         const { receive } = await FirebaseMessaging.requestPermissions();
-        console.log('Push notification permission status:', receive);
+        console.log('[Push Setup] Permission status:', receive);
         
         if (receive !== 'granted') {
           throw new Error('Permission not granted for push notifications');
@@ -84,25 +92,29 @@ export const setupPushSubscription = async (registration?: ServiceWorkerRegistra
 
         // Get the FCM token for native platforms
         const { token } = await FirebaseMessaging.getToken();
-        console.log('Native FCM Token:', token);
+        console.log('[Push Setup] Native FCM Token received:', token?.slice(0, 10) + '...');
 
         // Set up native notification handlers
         FirebaseMessaging.addListener('notificationReceived', (notification) => {
-          console.log('Push notification received:', notification);
+          console.log('[Push Notification] Received:', notification);
         });
 
         FirebaseMessaging.addListener('notificationActionPerformed', (action) => {
-          console.log('Push notification action:', action);
+          console.log('[Push Notification] Action performed:', action);
         });
 
-        // Save the FCM token
+        // Save the FCM token with the correct platform
         const platform = Capacitor.getPlatform();
-        await savePushSubscription(token, platform as 'android' | 'ios');
+        if (platform !== 'android' && platform !== 'ios') {
+          throw new Error(`Unexpected platform: ${platform}`);
+        }
+        
+        await savePushSubscription(token, platform);
         
         toast.success('Push notifications enabled successfully');
         return token;
       } catch (error) {
-        console.error('Native push notification setup error:', error);
+        console.error('[Push Setup] Native setup error:', error);
         toast.error('Failed to set up push notifications. Please check app permissions.');
         throw error;
       }
