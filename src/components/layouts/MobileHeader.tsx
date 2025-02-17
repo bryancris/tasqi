@@ -2,7 +2,7 @@
 import { useNavigate } from "react-router-dom";
 import { HeaderUserMenu } from "@/components/dashboard/header/HeaderUserMenu";
 import { HeaderNotifications } from "@/components/dashboard/header/HeaderNotifications";
-import { TestTube } from "lucide-react";
+import { TestTube, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { setupPushSubscription } from "@/utils/notifications/subscriptionUtils";
 import { toast } from "sonner";
@@ -31,6 +31,14 @@ export function MobileHeader() {
             <Button
               variant="ghost"
               size="icon"
+              onClick={() => navigate('/dashboard/add-task')}
+              className="h-8 w-8"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={handleTestNotifications}
               className="h-8 w-8"
             >
@@ -44,3 +52,4 @@ export function MobileHeader() {
     </header>
   );
 }
+
