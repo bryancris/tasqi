@@ -16,6 +16,8 @@ export const savePushSubscription = async (subscription: PushSubscription | stri
       throw new Error('User must be logged in to save push subscription');
     }
 
+    console.log(`Saving ${deviceType} push subscription for user ${session.user.id}`);
+
     const baseData = {
       user_id: session.user.id,
       auth_keys: {} // Provide empty object as default for auth_keys
@@ -41,6 +43,8 @@ export const savePushSubscription = async (subscription: PushSubscription | stri
             timestamp: new Date().toISOString()
           }
         };
+
+    console.log('Saving subscription data:', JSON.stringify(subscriptionData, null, 2));
 
     const { error } = await supabase
       .from('push_subscriptions')
@@ -69,31 +73,39 @@ export const setupPushSubscription = async (registration?: ServiceWorkerRegistra
     if (isNativePlatform()) {
       console.log('Setting up native push notifications...');
       
-      // Request permission for native platforms
-      const { receive } = await FirebaseMessaging.requestPermissions();
-      
-      if (receive !== 'granted') {
-        throw new Error('Permission not granted for push notifications');
+      try {
+        // Request permission for native platforms
+        const { receive } = await FirebaseMessaging.requestPermissions();
+        console.log('Push notification permission status:', receive);
+        
+        if (receive !== 'granted') {
+          throw new Error('Permission not granted for push notifications');
+        }
+
+        // Get the FCM token for native platforms
+        const { token } = await FirebaseMessaging.getToken();
+        console.log('Native FCM Token:', token);
+
+        // Set up native notification handlers
+        FirebaseMessaging.addListener('notificationReceived', (notification) => {
+          console.log('Push notification received:', notification);
+        });
+
+        FirebaseMessaging.addListener('notificationActionPerformed', (action) => {
+          console.log('Push notification action:', action);
+        });
+
+        // Save the FCM token
+        const platform = Capacitor.getPlatform();
+        await savePushSubscription(token, platform as 'android' | 'ios');
+        
+        toast.success('Push notifications enabled successfully');
+        return token;
+      } catch (error) {
+        console.error('Native push notification setup error:', error);
+        toast.error('Failed to set up push notifications. Please check app permissions.');
+        throw error;
       }
-
-      // Get the FCM token for native platforms
-      const { token } = await FirebaseMessaging.getToken();
-      console.log('Native FCM Token:', token);
-
-      // Set up native notification handlers
-      FirebaseMessaging.addListener('notificationReceived', (notification) => {
-        console.log('Push notification received:', notification);
-      });
-
-      FirebaseMessaging.addListener('notificationActionPerformed', (action) => {
-        console.log('Push notification action:', action);
-      });
-
-      // Save the FCM token
-      const platform = Capacitor.getPlatform();
-      await savePushSubscription(token, platform as 'android' | 'ios');
-      
-      return token;
     }
     
     // Web platform setup
