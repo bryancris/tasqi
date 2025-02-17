@@ -1,232 +1,172 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { corsHeaders } from '../_shared/cors.ts'
 
-import webpush from "npm:web-push"
-import { createClient } from "npm:@supabase/supabase-js"
-import { Application, Router } from "npm:@supabase/functions-js"
-import { initializeApp, cert } from "npm:firebase-admin/app"
-import { getMessaging } from "npm:firebase-admin/messaging"
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
+const FIREBASE_ADMIN_CONFIG = JSON.parse(Deno.env.get('FIREBASE_ADMIN_CONFIG') || '{}');
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+interface PushEvent {
+  type: 'task_reminder' | 'task_shared' | 'task_status_changed';
+  task_id: number;
+  user_id: string;
+  metadata: {
+    title: string;
+    date?: string;
+    start_time?: string;
+    end_time?: string;
+    [key: string]: any;
+  };
 }
 
-// Initialize Supabase client
-const supabaseUrl = Deno.env.get('SUPABASE_URL') as string
-const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') as string
-const supabase = createClient(supabaseUrl, supabaseKey)
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
 
-// Initialize Firebase Admin
-const firebaseConfig = JSON.parse(Deno.env.get('FIREBASE_ADMIN_CONFIG') || '{}')
-const firebaseApp = initializeApp({
-  credential: cert(firebaseConfig)
-})
-
-// Configure Web Push
-const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY')
-const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY')
-
-if (vapidPublicKey && vapidPrivateKey) {
-  webpush.setVapidDetails(
-    'mailto:support@tasqi.app',
-    vapidPublicKey,
-    vapidPrivateKey
-  )
-}
-
-async function processNotificationEvent(event: any) {
   try {
-    console.log('Processing notification event:', event)
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const event: PushEvent = await req.json();
     
+    console.log('Received push notification event:', JSON.stringify(event, null, 2));
+
     // Get user's push subscriptions
     const { data: subscriptions, error: subError } = await supabase
       .from('push_subscriptions')
       .select('*')
-      .eq('user_id', event.user_id)
+      .eq('user_id', event.user_id);
 
     if (subError) {
-      throw new Error(`Failed to fetch push subscriptions: ${subError.message}`)
+      throw subError;
     }
 
-    if (!subscriptions?.length) {
-      console.log('No push subscriptions found for user:', event.user_id)
-      return
+    console.log(`Found ${subscriptions?.length || 0} subscriptions for user ${event.user_id}`);
+
+    if (!subscriptions || subscriptions.length === 0) {
+      console.log('No push subscriptions found for user');
+      return new Response(
+        JSON.stringify({ message: 'No push subscriptions found' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    // Get task details
-    const { data: task, error: taskError } = await supabase
-      .from('tasks')
-      .select('*')
-      .eq('id', event.task_id)
-      .single()
+    // Initialize Firebase Admin if we have native subscriptions
+    const hasNativeSubscriptions = subscriptions.some(sub => 
+      sub.platform === 'android' || sub.platform === 'ios'
+    );
 
-    if (taskError) {
-      throw new Error(`Failed to fetch task: ${taskError.message}`)
-    }
-
-    // Prepare notification content based on event type
-    let title: string
-    let body: string
-
-    switch (event.event_type) {
-      case 'task_reminder':
-        title = `Reminder: ${task.title}`
-        body = task.start_time 
-          ? `Task due at ${task.start_time}`
-          : 'Task due today'
-        break
-      case 'task_shared':
-        title = 'New Shared Task'
-        body = `A task has been shared with you: ${task.title}`
-        break
-      case 'task_status_changed':
-        const { old_status, new_status } = event.metadata
-        title = 'Task Status Updated'
-        body = `${task.title} changed from ${old_status} to ${new_status}`
-        break
-      default:
-        title = 'Task Update'
-        body = `Update for task: ${task.title}`
-    }
-
-    // Send notifications to all subscriptions
-    const notificationPromises = subscriptions.map(async (sub: any) => {
+    let firebaseAdmin;
+    if (hasNativeSubscriptions) {
+      console.log('Initializing Firebase Admin for native notifications');
+      const { initializeApp, credential } = await import('https://esm.sh/firebase-admin@11.10.1/app');
+      const { getMessaging } = await import('https://esm.sh/firebase-admin@11.10.1/messaging');
+      
       try {
-        if (sub.platform === 'web') {
-          // Send Web Push notification
-          const pushSubscription = {
-            endpoint: sub.endpoint,
-            keys: sub.auth_keys
+        firebaseAdmin = initializeApp({
+          credential: credential.cert(FIREBASE_ADMIN_CONFIG)
+        }, 'push-notification-function');
+      } catch (error) {
+        if (error.code !== 'app/duplicate-app') {
+          throw error;
+        }
+        console.log('Firebase app already initialized');
+      }
+    }
+
+    const title = 'Task Reminder';
+    let body = '';
+    
+    switch (event.type) {
+      case 'task_reminder':
+        body = `Reminder: "${event.metadata.title}" ${
+          event.metadata.start_time 
+            ? `starts at ${event.metadata.start_time}` 
+            : 'is due today'
+        }`;
+        break;
+      case 'task_shared':
+        body = `A task has been shared with you: "${event.metadata.title}"`;
+        break;
+      case 'task_status_changed':
+        body = `Task "${event.metadata.title}" status changed to ${event.metadata.new_status}`;
+        break;
+    }
+
+    console.log('Preparing to send notification:', { title, body });
+
+    // Send to each subscription
+    for (const subscription of subscriptions) {
+      try {
+        if (subscription.platform === 'android' || subscription.platform === 'ios') {
+          if (!firebaseAdmin) {
+            console.error('Firebase Admin not initialized for native notification');
+            continue;
           }
+
+          console.log(`Sending FCM notification to ${subscription.platform} device:`, subscription.device_token);
           
-          await webpush.sendNotification(pushSubscription, JSON.stringify({
-            title,
-            body,
-            icon: '/pwa-192x192.png',
-            badge: '/pwa-192x192.png',
-            data: {
-              url: `${supabaseUrl}/dashboard`,
-              taskId: task.id
-            }
-          }))
-          console.log('Web Push notification sent successfully')
-        } else {
-          // Send Firebase Cloud Message
           const message = {
-            token: sub.device_token,
+            token: subscription.device_token,
             notification: {
               title,
               body,
             },
-            data: {
-              taskId: task.id.toString(),
-              type: event.event_type
-            },
             android: {
+              priority: 'high',
               notification: {
-                icon: 'ic_notification',
-                color: '#4A90E2'
-              }
+                channelId: 'task_reminders',
+                priority: 'high',
+                defaultSound: true,
+                defaultVibrateTimings: true,
+              },
             },
             apns: {
               payload: {
                 aps: {
-                  'mutable-content': 1,
-                  'content-available': 1
-                }
-              }
-            }
-          }
-          
-          await getMessaging().send(message)
-          console.log('Firebase notification sent successfully')
+                  sound: 'default',
+                  badge: 1,
+                },
+              },
+            },
+          };
+
+          const { getMessaging } = await import('https://esm.sh/firebase-admin@11.10.1/messaging');
+          const response = await getMessaging().send(message);
+          console.log('Successfully sent FCM message:', response);
+        } else {
+          console.log('Sending web push notification');
+          const payload = JSON.stringify({
+            title: title,
+            body: body,
+          });
+  
+          await fetch(subscription.endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: payload,
+          });
+  
+          console.log('Web push notification sent');
         }
       } catch (error) {
-        console.error('Error sending notification:', error)
-        // Don't throw here, we want to try other subscriptions
-      }
-    })
-
-    await Promise.all(notificationPromises)
-
-    // Update the notification event as processed
-    const { error: updateError } = await supabase
-      .from('notification_events')
-      .update({ 
-        processed_at: new Date().toISOString(),
-        status: 'completed'
-      })
-      .eq('id', event.id)
-
-    if (updateError) {
-      throw new Error(`Failed to update notification event: ${updateError.message}`)
-    }
-
-  } catch (error) {
-    console.error('Error processing notification:', error)
-    
-    // Update error count and status
-    await supabase
-      .from('notification_events')
-      .update({ 
-        error_count: (event.error_count || 0) + 1,
-        last_error: error.message,
-        status: 'failed'
-      })
-      .eq('id', event.id)
-    
-    throw error
-  }
-}
-
-// Process all pending notifications
-async function processPendingNotifications(req: Request) {
-  try {
-    const { data: events, error } = await supabase
-      .from('notification_events')
-      .select('*')
-      .is('processed_at', null)
-      .eq('status', 'pending')
-      .order('created_at', { ascending: true })
-      .limit(10)
-
-    if (error) {
-      throw new Error(`Failed to fetch notification events: ${error.message}`)
-    }
-
-    console.log(`Processing ${events?.length || 0} pending notifications`)
-
-    if (events && events.length > 0) {
-      for (const event of events) {
-        await processNotificationEvent(event)
+        console.error(`Error sending to subscription ${subscription.id}:`, error);
       }
     }
 
-    return new Response(JSON.stringify({ 
-      success: true,
-      processed: events?.length || 0 
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
-    })
-
+    return new Response(
+      JSON.stringify({ success: true }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
   } catch (error) {
-    console.error('Error processing notifications:', error)
-    return new Response(JSON.stringify({ 
-      error: error.message 
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500,
-    })
+    console.error('Error in push notification function:', error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { 
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    );
   }
-}
-
-// Handle CORS preflight requests
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: corsHeaders
-    })
-  }
-
-  return processPendingNotifications(req)
-})
+});
