@@ -12,6 +12,8 @@ import { Task } from "./TaskBoard";
 import { useChat } from "@/hooks/use-chat";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { setupPushSubscription } from "@/utils/notifications/subscriptionUtils";
+import { Capacitor } from '@capacitor/core';
 
 interface TaskFormProps {
   title: string;
@@ -66,6 +68,25 @@ export function TaskForm({
   const { message, setMessage } = useChat();
   const [processingAIResponse, setProcessingAIResponse] = useState(false);
   const isMobile = useIsMobile();
+
+  // Handle reminder toggle
+  const handleReminderToggle = async (enabled: boolean) => {
+    try {
+      if (enabled && Capacitor.isNativePlatform()) {
+        // Set up push notifications when enabling reminders
+        await setupPushSubscription();
+      }
+      onReminderEnabledChange(enabled);
+    } catch (error) {
+      console.error('Error setting up notifications:', error);
+      toast({
+        title: "Error",
+        description: "Failed to set up notifications. Please check app permissions.",
+        variant: "destructive",
+      });
+      onReminderEnabledChange(false);
+    }
+  };
 
   useEffect(() => {
     const handleAIResponse = (e: CustomEvent<any>) => {
@@ -140,7 +161,7 @@ export function TaskForm({
 
           <TaskNotificationFields
             reminderEnabled={reminderEnabled}
-            onReminderEnabledChange={onReminderEnabledChange}
+            onReminderEnabledChange={handleReminderToggle}
           />
 
           <TaskScheduleFields
