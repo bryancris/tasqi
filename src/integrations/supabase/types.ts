@@ -236,6 +236,45 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_events: {
+        Row: {
+          created_at: string
+          error_count: number | null
+          event_type: Database["public"]["Enums"]["notification_event_type"]
+          id: number
+          last_error: string | null
+          metadata: Json | null
+          processed_at: string | null
+          status: string | null
+          task_id: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_count?: number | null
+          event_type: Database["public"]["Enums"]["notification_event_type"]
+          id?: never
+          last_error?: string | null
+          metadata?: Json | null
+          processed_at?: string | null
+          status?: string | null
+          task_id: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          error_count?: number | null
+          event_type?: Database["public"]["Enums"]["notification_event_type"]
+          id?: never
+          last_error?: string | null
+          metadata?: Json | null
+          processed_at?: string | null
+          status?: string | null
+          task_id?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
@@ -1163,6 +1202,11 @@ export type Database = {
         | "milliliters"
         | "liters"
       message_type: "text" | "file"
+      notification_event_type:
+        | "task_reminder"
+        | "task_shared"
+        | "task_status_changed"
+        | "task_assignment"
       org_role: "admin" | "member"
       subtask_status: "pending" | "completed"
       task_priority: "low" | "medium" | "high"
