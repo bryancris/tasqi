@@ -5,6 +5,9 @@ import { TaskCard } from "./TaskCard";
 import { DndContext, MouseSensor, TouchSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { startOfDay, isAfter } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { TimelineSection } from "./timeline/TimelineSection";
 
 export interface MobileTaskViewProps {
   tasks: Task[];
@@ -15,6 +18,7 @@ export interface MobileTaskViewProps {
 }
 
 export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, onComplete }: MobileTaskViewProps) {
+  const [view, setView] = useState<'board' | 'timeline'>('board');
   const todayStart = startOfDay(new Date());
 
   const sensors = useSensors(
@@ -35,20 +39,16 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
     return task.completed_at && isAfter(new Date(task.completed_at), todayStart);
   };
 
-  // Modified filtering logic to show all unscheduled and today's scheduled tasks
   const sortedTasks = [...tasks]
     .filter(task => {
-      // Always show unscheduled tasks
       if (task.status === 'unscheduled') {
         return true;
       }
       
-      // For completed tasks, check if they were completed today
       if (task.status === 'completed') {
         return shouldShowCompletedTask(task);
       }
       
-      // For scheduled tasks, show all of them
       return task.status === 'scheduled';
     })
     .sort((a, b) => {
@@ -65,24 +65,43 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
     <div className="h-[calc(100vh-144px)] overflow-hidden">
       <Card className="h-full border-none shadow-none bg-transparent">
         <CardHeader className="pb-3 px-1">
-          <CardTitle className="text-2xl font-semibold">Task Board</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-2xl font-semibold">
+              {view === 'board' ? 'Task Board' : 'Timeline'}
+            </CardTitle>
+            <Button
+              variant="ghost"
+              onClick={() => setView(view === 'board' ? 'timeline' : 'board')}
+              className="text-base font-medium text-gray-600"
+            >
+              Switch to {view === 'board' ? 'Timeline' : 'Board'}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="overflow-y-auto h-[calc(100%-5rem)] p-1">
-          <DndContext sensors={sensors} onDragEnd={onDragEnd}>
-            <SortableContext items={draggableTaskIds} strategy={verticalListSortingStrategy}>
-              <div className="flex flex-col gap-[1px]">
-                {sortedTasks.map((task, index) => (
-                  <TaskCard
-                    key={task.id}
-                    task={task}
-                    index={index}
-                    isDraggable={task.status !== 'completed'}
-                    onComplete={onComplete}
-                  />
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
+          {view === 'board' ? (
+            <DndContext sensors={sensors} onDragEnd={onDragEnd}>
+              <SortableContext items={draggableTaskIds} strategy={verticalListSortingStrategy}>
+                <div className="flex flex-col gap-[1px]">
+                  {sortedTasks.map((task, index) => (
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      index={index}
+                      isDraggable={task.status !== 'completed'}
+                      onComplete={onComplete}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          ) : (
+            <TimelineSection 
+              tasks={tasks}
+              selectedDate={selectedDate}
+              onDateChange={onDateChange}
+            />
+          )}
         </CardContent>
       </Card>
     </div>
