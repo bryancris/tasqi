@@ -85,7 +85,10 @@ export const setupPushSubscription = async () => {
     
     const messaging = await initializeMessaging();
     if (!messaging) {
-      throw new Error('Failed to initialize Firebase Messaging');
+      const error = new Error('Failed to initialize Firebase Messaging. Please ensure Firebase is properly configured in app settings.');
+      console.error('[Push Setup] Error:', error);
+      toast.error(error.message);
+      throw error;
     }
 
     try {
@@ -93,6 +96,7 @@ export const setupPushSubscription = async () => {
       console.log('[Push Setup] Web FCM Token received');
       
       await savePushSubscription(fcmToken);
+      toast.success('Push notifications enabled successfully');
       return fcmToken;
     } catch (error) {
       console.error('[Push Setup] Error getting FCM token:', error);
@@ -101,7 +105,11 @@ export const setupPushSubscription = async () => {
     }
   } catch (error) {
     console.error('Error in setupPushSubscription:', error);
-    toast.error('Failed to setup push notifications');
+    if (error instanceof Error) {
+      toast.error(error.message);
+    } else {
+      toast.error('Failed to setup push notifications');
+    }
     throw error;
   }
 };

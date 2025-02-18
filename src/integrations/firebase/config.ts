@@ -7,7 +7,8 @@ import { supabase } from '../supabase/client';
 const getFirebaseConfig = async (): Promise<FirebaseOptions> => {
   const { data, error } = await supabase
     .from('app_settings')
-    .select('firebase_config')
+    .select('value')
+    .eq('key', 'firebase_config')
     .maybeSingle();
 
   if (error) {
@@ -15,16 +16,22 @@ const getFirebaseConfig = async (): Promise<FirebaseOptions> => {
     throw error;
   }
 
-  if (!data?.firebase_config) {
-    throw new Error('Firebase configuration not found in app settings');
+  if (!data?.value) {
+    console.error('Firebase configuration not found in app settings');
+    throw new Error('Firebase configuration not found in app settings. Please add it to the app_settings table.');
   }
 
   // Type assertion to ensure the config matches FirebaseOptions
-  const config = data.firebase_config as FirebaseOptions;
+  const config = data.value as FirebaseOptions;
 
   // Validate required fields
-  if (!config.apiKey || !config.projectId || !config.messagingSenderId) {
-    throw new Error('Invalid Firebase configuration: missing required fields');
+  const requiredFields = ['apiKey', 'projectId', 'messagingSenderId'];
+  const missingFields = requiredFields.filter(field => !config[field]);
+  
+  if (missingFields.length > 0) {
+    const errorMsg = `Invalid Firebase configuration: missing required fields: ${missingFields.join(', ')}`;
+    console.error(errorMsg);
+    throw new Error(errorMsg);
   }
 
   return config;
