@@ -7,11 +7,10 @@ import { TaskScheduleFields } from "../TaskScheduleFields";
 import { TaskBasicFields } from "./TaskBasicFields";
 import { TaskNotificationFields } from "./TaskNotificationFields";
 import { TaskAttachmentFields } from "./TaskAttachmentFields";
-import { TaskFormButtons } from "./TaskFormButtons";
 import { useState, useEffect } from "react";
 import { Task } from "../TaskBoard";
 import { useChat } from "@/hooks/use-chat";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { setupPushSubscription } from "@/utils/notifications/subscriptionUtils";
 import { checkNotificationPermission } from "@/utils/notifications/notificationUtils";
@@ -86,13 +85,17 @@ export function TaskForm({
       onReminderEnabledChange(enabled);
     } catch (error) {
       console.error('Error setting up notifications:', error);
-      toast({
-        title: "Error",
-        description: "Failed to set up notifications. Please check browser permissions.",
-        variant: "destructive",
-      });
+      toast("Failed to set up notifications. Please check browser permissions.");
       onReminderEnabledChange(false);
     }
+  };
+
+  const handleIsScheduledChange = (value: boolean) => {
+    if (!value && reminderEnabled) {
+      toast("Notifications disabled as task is no longer scheduled");
+      onReminderEnabledChange(false);
+    }
+    onIsScheduledChange(value);
   };
 
   useEffect(() => {
@@ -115,18 +118,11 @@ export function TaskForm({
             }));
             onSubtasksChange(newSubtasks);
             
-            toast({
-              title: "Subtasks Added",
-              description: `Added ${newSubtasks.length} subtasks to your task.`,
-            });
+            toast(`Added ${newSubtasks.length} subtasks to your task.`);
           }
         } catch (error) {
           console.error('Error processing AI response:', error);
-          toast({
-            title: "Error",
-            description: "Failed to process AI response",
-            variant: "destructive",
-          });
+          toast("Failed to process AI response");
         } finally {
           setProcessingAIResponse(false);
         }
@@ -161,24 +157,26 @@ export function TaskForm({
             />
           </div>
 
-          <TaskNotificationFields
-            reminderEnabled={reminderEnabled}
-            reminderTime={reminderTime}
-            onReminderEnabledChange={handleReminderToggle}
-            onReminderTimeChange={onReminderTimeChange}
-          />
-
           <TaskScheduleFields
             isScheduled={isScheduled}
             date={date}
             startTime={startTime}
             endTime={endTime}
             priority={priority}
-            onIsScheduledChange={onIsScheduledChange}
+            onIsScheduledChange={handleIsScheduledChange}
             onDateChange={onDateChange}
             onStartTimeChange={onStartTimeChange}
             onEndTimeChange={onEndTimeChange}
             onPriorityChange={onPriorityChange}
+          />
+
+          <TaskNotificationFields
+            reminderEnabled={reminderEnabled}
+            reminderTime={reminderTime}
+            isScheduled={isScheduled}
+            onReminderEnabledChange={handleReminderToggle}
+            onReminderTimeChange={onReminderTimeChange}
+            onIsScheduledChange={onIsScheduledChange}
           />
 
           <TaskAttachmentFields task={task} isEditing={isEditing} />
@@ -186,7 +184,13 @@ export function TaskForm({
       </div>
 
       <div className={`${isMobile ? 'sticky bottom-0 left-0 right-0 p-4 bg-white border-t z-50' : 'p-4'}`}>
-        <TaskFormButtons isLoading={isLoading || processingAIResponse} isEditing={isEditing} />
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={isLoading || processingAIResponse}
+        >
+          {isLoading || processingAIResponse ? "Loading..." : isEditing ? "Update Task" : "Create Task"}
+        </Button>
       </div>
 
       {task && (
