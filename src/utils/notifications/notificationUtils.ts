@@ -1,19 +1,6 @@
 
-import { FirebaseMessaging } from '@capacitor-firebase/messaging';
-import { Capacitor } from '@capacitor/core';
-
-const isNativePlatform = () => Capacitor.isNativePlatform();
-
 export const showNotification = async (task: any, type: 'reminder' | 'shared' = 'reminder') => {
   try {
-    if (isNativePlatform()) {
-      // For native platforms, notifications are handled automatically by Firebase
-      // when they arrive. We don't need to manually show them.
-      console.log('Native notifications are handled by Firebase automatically');
-      return;
-    }
-
-    // Web platform notifications
     if (!('Notification' in window)) {
       console.error('❌ Notifications not supported');
       return;
@@ -80,14 +67,8 @@ export const showNotification = async (task: any, type: 'reminder' | 'shared' = 
   }
 };
 
-// Add a helper function to check and request permissions
 export const checkNotificationPermission = async () => {
   try {
-    if (isNativePlatform()) {
-      const { receive } = await FirebaseMessaging.requestPermissions();
-      return receive === 'granted';
-    }
-
     if (!('Notification' in window)) {
       console.error('❌ Notifications not supported');
       return false;
