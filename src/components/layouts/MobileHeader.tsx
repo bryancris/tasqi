@@ -13,36 +13,18 @@ export function MobileHeader() {
     console.log('🔊 Starting sound test...');
     
     try {
-      // First check if the audio file exists
       const response = await fetch('/notification-sound.mp3');
       if (!response.ok) {
         throw new Error(`Audio file not found: ${response.status}`);
       }
-      console.log('✅ Audio file exists');
       
-      // Create audio context
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      console.log('✅ Audio context created');
-      
-      // Fetch and decode the audio file
       const arrayBuffer = await response.arrayBuffer();
-      console.log('✅ Audio file loaded into buffer');
-      
-      // Decode the audio data
       const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-      console.log('✅ Audio buffer decoded');
-      
-      // Create a buffer source node
       const source = audioContext.createBufferSource();
       source.buffer = audioBuffer;
-      
-      // Connect to destination (speakers)
       source.connect(audioContext.destination);
-      console.log('✅ Audio source connected to speakers');
-      
-      // Start playing
       source.start(0);
-      console.log('✅ Audio playback started');
       
       toast.success('Playing notification sound');
     } catch (error) {
@@ -54,14 +36,8 @@ export function MobileHeader() {
   const handleTestNotifications = async () => {
     try {
       console.log('Testing notifications setup...');
-      
-      // First test push subscription
       await setupPushSubscription();
-      console.log('✅ Push subscription completed');
-      
-      // Then try to play sound
-      await playSound();
-      
+      await playSound(); // Add sound playback here
       toast.success('Push notifications test completed');
     } catch (error) {
       console.error('Test notification error:', error);

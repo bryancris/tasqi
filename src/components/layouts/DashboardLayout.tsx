@@ -44,6 +44,7 @@ export function DashboardLayout({ children, onViewChange, selectedDate, onDateCh
     try {
       console.log('Testing notifications setup...');
       await setupPushSubscription();
+      await playSound(); // Add sound playback here
       toast.success('Push notifications test completed');
     } catch (error) {
       console.error('Test notification error:', error);
