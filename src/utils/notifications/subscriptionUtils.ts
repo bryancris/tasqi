@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { urlBase64ToUint8Array, getVapidPublicKey } from "./vapidUtils";
 import { toast } from "sonner";
