@@ -71,6 +71,25 @@ const checkNotificationPermission = async () => {
   }
 };
 
+const registerServiceWorker = async () => {
+  try {
+    if ('serviceWorker' in navigator) {
+      const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+        scope: '/'
+      });
+      
+      // Wait for the service worker to be ready
+      await navigator.serviceWorker.ready;
+      console.log('Service Worker registered successfully:', registration);
+      return registration;
+    }
+    throw new Error('Service Worker not supported in this browser');
+  } catch (error) {
+    console.error('Service Worker registration failed:', error);
+    throw error;
+  }
+};
+
 export const setupPushSubscription = async () => {
   try {
     console.log('[Push Setup] Setting up web push notifications...');
@@ -81,6 +100,10 @@ export const setupPushSubscription = async () => {
       // Don't throw here, just return null to prevent error cascading
       return null;
     }
+
+    // Register service worker first
+    await registerServiceWorker();
+    console.log('✅ Service Worker registered and ready');
     
     const messaging = await initializeMessaging();
     if (!messaging) {
@@ -91,7 +114,9 @@ export const setupPushSubscription = async () => {
     }
 
     try {
-      const fcmToken = await getFirebaseToken(messaging);
+      const fcmToken = await getFirebaseToken(messaging, {
+        vapidKey: 'BPYfG5p8YrAG9bsK0YeJ5YrXKcAy9wcm2LhQIHzJODbVW6gJnQUtlOsJA_XPtX4hC46QqLshhkTQ9HJxcOkIZXc'
+      });
       console.log('[Push Setup] Web FCM Token received');
       
       await savePushSubscription(fcmToken);
