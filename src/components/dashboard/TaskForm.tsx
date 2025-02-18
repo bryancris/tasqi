@@ -13,6 +13,7 @@ import { useChat } from "@/hooks/use-chat";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { setupPushSubscription } from "@/utils/notifications/subscriptionUtils";
+import { checkNotificationPermission } from "@/utils/notifications/notificationUtils";
 
 interface TaskFormProps {
   title: string;
@@ -72,7 +73,11 @@ export function TaskForm({
   const handleReminderToggle = async (enabled: boolean) => {
     try {
       if (enabled) {
-        // Set up web push notifications when enabling reminders
+        // Check notification permission and set up web push
+        const hasPermission = await checkNotificationPermission();
+        if (!hasPermission) {
+          throw new Error("Notification permission denied");
+        }
         await setupPushSubscription();
       }
       onReminderEnabledChange(enabled);
