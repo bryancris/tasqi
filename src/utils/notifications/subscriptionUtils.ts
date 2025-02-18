@@ -95,8 +95,10 @@ const registerServiceWorker = async () => {
     if (registration.installing) {
       console.log('⏳ Waiting for Service Worker to be installed...');
       await new Promise((resolve) => {
-        registration.installing?.addEventListener('statechange', (e) => {
-          if (e.target?.state === 'activated') {
+        const installingWorker = registration.installing;
+        installingWorker?.addEventListener('statechange', (e) => {
+          const sw = e.target as ServiceWorker;
+          if (sw.state === 'activated') {
             resolve(true);
           }
         });
