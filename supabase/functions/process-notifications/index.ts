@@ -11,34 +11,44 @@ const firebaseConfig = JSON.parse(Deno.env.get('FIREBASE_ADMIN_CONFIG')!);
 
 async function getFCMToken(userId: string): Promise<string | null> {
   try {
+    console.log('Fetching FCM token for user:', userId);
     const { data, error } = await supabase
       .from('profiles')
-      .select('fcm_token')
+      .select('fcm_token, email')
       .eq('id', userId)
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching FCM token:', error);
+      throw error;
+    }
+    
+    console.log('FCM token result:', {
+      email: data?.email,
+      hasToken: !!data?.fcm_token
+    });
+    
     return data?.fcm_token || null;
   } catch (error) {
-    console.error('Error fetching FCM token:', error);
+    console.error('Error in getFCMToken:', error);
     return null;
   }
 }
 
 async function getAccessToken(): Promise<string> {
   try {
+    console.log('Getting Firebase access token...');
     const { privateKey, clientEmail } = firebaseConfig;
     const now = Math.floor(Date.now() / 1000);
     const oneHourFromNow = now + 3600;
 
-    // Create JWT header
+    // Create JWT header and claim
     const header = {
       alg: 'RS256',
       typ: 'JWT',
       kid: privateKey.replace(/\\n/g, '\n'),
     };
 
-    // Create JWT claim
     const claim = {
       iss: clientEmail,
       sub: clientEmail,
@@ -70,7 +80,7 @@ async function getAccessToken(): Promise<string> {
 
     const jwt = `${headerEncoded}.${claimEncoded}.${btoa(String.fromCharCode(...new Uint8Array(signature)))}`;
 
-    // Exchange JWT for access token
+    console.log('Getting access token with JWT...');
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -78,84 +88,118 @@ async function getAccessToken(): Promise<string> {
     });
 
     if (!tokenResponse.ok) {
-      throw new Error('Failed to get access token');
+      const errorText = await tokenResponse.text();
+      console.error('Token response error:', errorText);
+      throw new Error(`Failed to get access token: ${errorText}`);
     }
 
     const tokenData = await tokenResponse.json();
+    console.log('Successfully obtained access token');
     return tokenData.access_token;
   } catch (error) {
-    console.error('Error getting access token:', error);
+    console.error('Error in getAccessToken:', error);
     throw error;
   }
 }
 
 async function sendFCMNotification(fcmToken: string, notification: any) {
   try {
+    console.log('Sending FCM notification:', {
+      taskId: notification.task_id,
+      type: notification.event_type,
+      metadata: notification.metadata
+    });
+
     const accessToken = await getAccessToken();
     const url = `https://fcm.googleapis.com/v1/projects/${firebaseConfig.projectId}/messages:send`;
     
+    const messageData = {
+      message: {
+        token: fcmToken,
+        notification: {
+          title: notification.metadata.title || 'Task Reminder',
+          body: `Task due ${notification.metadata.start_time ? `at ${notification.metadata.start_time}` : 'today'}`,
+        },
+        data: {
+          type: notification.event_type,
+          taskId: notification.task_id.toString(),
+          click_action: 'FLUTTER_NOTIFICATION_CLICK',
+        },
+        webpush: {
+          headers: {
+            Urgency: 'high',
+          },
+          notification: {
+            requireInteraction: true,
+            icon: '/pwa-192x192.png',
+            badge: '/pwa-192x192.png',
+            vibrate: [200, 100, 200],
+          },
+        },
+        android: {
+          priority: 'high',
+          notification: {
+            sound: 'default',
+            priority: 'max',
+            defaultSound: true,
+          },
+        },
+      },
+    };
+
+    console.log('FCM request payload:', JSON.stringify(messageData, null, 2));
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${accessToken}`,
       },
-      body: JSON.stringify({
-        message: {
-          token: fcmToken,
-          notification: {
-            title: notification.metadata.title || 'Task Reminder',
-            body: `Task due ${notification.metadata.start_time ? `at ${notification.metadata.start_time}` : 'today'}`,
-          },
-          data: {
-            type: 'task_reminder',
-            taskId: notification.task_id.toString(),
-            click_action: 'FLUTTER_NOTIFICATION_CLICK',
-          },
-          webpush: {
-            headers: {
-              Urgency: 'high',
-            },
-            notification: {
-              requireInteraction: true,
-              icon: '/pwa-192x192.png',
-              badge: '/pwa-192x192.png',
-              vibrate: [200, 100, 200],
-            },
-          },
-        },
-      }),
+      body: JSON.stringify(messageData),
     });
 
     if (!response.ok) {
-      throw new Error(`FCM request failed: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('FCM response error:', errorText);
+      throw new Error(`FCM request failed: ${errorText}`);
     }
 
-    return await response.json();
+    const result = await response.json();
+    console.log('FCM notification sent successfully:', result);
+    return result;
   } catch (error) {
-    console.error('Error sending FCM notification:', error);
+    console.error('Error in sendFCMNotification:', error);
     throw error;
   }
 }
 
 async function processNotifications() {
   try {
-    // Get current time in UTC
-    const now = new Date();
+    console.log('Starting notification processing...');
     
-    // Get pending notification events that are due
+    // Get pending notification events
     const { data: notifications, error } = await supabase
       .from('notification_events')
       .select('*')
       .eq('status', 'pending')
       .order('created_at', { ascending: true });
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching notifications:', error);
+      throw error;
+    }
 
     console.log(`Found ${notifications?.length || 0} pending notifications`);
 
     // Process each notification
     for (const notification of notifications || []) {
+      console.log('Processing notification:', {
+        id: notification.id,
+        type: notification.event_type,
+        userId: notification.user_id,
+        taskId: notification.task_id
+      });
+
       try {
         const fcmToken = await getFCMToken(notification.user_id);
         
@@ -176,7 +220,10 @@ async function processNotifications() {
           })
           .eq('id', notification.id);
 
-        if (updateError) throw updateError;
+        if (updateError) {
+          console.error('Error updating notification status:', updateError);
+          throw updateError;
+        }
 
         console.log(`Successfully processed notification ${notification.id}`);
       } catch (error) {
@@ -208,6 +255,7 @@ Deno.serve(async (req) => {
   }
 
   try {
+    console.log('Processing notifications endpoint called');
     const result = await processNotifications();
     
     return new Response(JSON.stringify(result), {
@@ -215,7 +263,7 @@ Deno.serve(async (req) => {
       status: 200,
     });
   } catch (error) {
-    console.error('Error processing notifications:', error);
+    console.error('Error in request handler:', error);
     
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
