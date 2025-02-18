@@ -1,3 +1,4 @@
+
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { useTaskNotifications } from "@/hooks/use-task-notifications";
 import { useState } from "react";
@@ -12,6 +13,10 @@ export default function Dashboard() {
     <DashboardLayout 
       selectedDate={selectedDate}
       onDateChange={setSelectedDate}
-    />
+    >
+      <div className="p-4">
+        {/* Dashboard content goes here */}
+      </div>
+    </DashboardLayout>
   );
 }
