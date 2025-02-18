@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { TaskPriority } from "./TaskBoard";
 import { ShareTaskDialog } from "./ShareTaskDialog";
@@ -24,6 +23,7 @@ interface TaskFormProps {
   endTime: string;
   priority: TaskPriority;
   reminderEnabled: boolean;
+  reminderTime: number;
   subtasks: Subtask[];
   isLoading: boolean;
   isEditing?: boolean;
@@ -36,6 +36,7 @@ interface TaskFormProps {
   onEndTimeChange: (value: string) => void;
   onPriorityChange: (value: TaskPriority) => void;
   onReminderEnabledChange: (value: boolean) => void;
+  onReminderTimeChange: (value: number) => void;
   onSubtasksChange: (subtasks: Subtask[]) => void;
   onSubmit: () => void;
 }
@@ -49,6 +50,7 @@ export function TaskForm({
   endTime,
   priority,
   reminderEnabled,
+  reminderTime,
   subtasks,
   isLoading,
   isEditing = false,
@@ -61,6 +63,7 @@ export function TaskForm({
   onEndTimeChange,
   onPriorityChange,
   onReminderEnabledChange,
+  onReminderTimeChange,
   onSubtasksChange,
   onSubmit,
 }: TaskFormProps) {
@@ -69,11 +72,9 @@ export function TaskForm({
   const [processingAIResponse, setProcessingAIResponse] = useState(false);
   const isMobile = useIsMobile();
 
-  // Handle reminder toggle
   const handleReminderToggle = async (enabled: boolean) => {
     try {
       if (enabled) {
-        // Check notification permission and set up web push
         const hasPermission = await checkNotificationPermission();
         if (!hasPermission) {
           throw new Error("Notification permission denied");
@@ -165,7 +166,9 @@ export function TaskForm({
 
           <TaskNotificationFields
             reminderEnabled={reminderEnabled}
+            reminderTime={reminderTime}
             onReminderEnabledChange={handleReminderToggle}
+            onReminderTimeChange={onReminderTimeChange}
           />
 
           <TaskScheduleFields

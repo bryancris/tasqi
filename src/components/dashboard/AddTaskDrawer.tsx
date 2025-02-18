@@ -31,6 +31,7 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
   const [endTime, setEndTime] = useState("");
   const [priority, setPriority] = useState<TaskPriority>("low");
   const [reminderEnabled, setReminderEnabled] = useState(false);
+  const [reminderTime, setReminderTime] = useState(15);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
@@ -92,10 +93,11 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
         endTime: isScheduled && endTime ? endTime : null,
         priority,
         reminderEnabled,
+        reminderTime,
         subtasks
       };
 
-      const newTask = await createTask(taskData);
+      await createTask(taskData);
 
       toast({
         title: "Success",
@@ -110,6 +112,7 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
       setEndTime("");
       setPriority("low");
       setReminderEnabled(false);
+      setReminderTime(15);
       setSubtasks([]);
       setIsOpen(false);
 
@@ -166,6 +169,7 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
             endTime={endTime}
             priority={priority}
             reminderEnabled={reminderEnabled}
+            reminderTime={reminderTime}
             subtasks={subtasks}
             isLoading={isLoading}
             onTitleChange={setTitle}
@@ -176,6 +180,7 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
             onEndTimeChange={setEndTime}
             onPriorityChange={setPriority}
             onReminderEnabledChange={setReminderEnabled}
+            onReminderTimeChange={setReminderTime}
             onSubtasksChange={setSubtasks}
             onSubmit={handleSubmit}
           />

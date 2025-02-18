@@ -11,6 +11,7 @@ interface CreateTaskParams {
   endTime: string | null;
   priority: TaskPriority;
   reminderEnabled: boolean;
+  reminderTime: number;
 }
 
 export const createTask = async ({
@@ -22,6 +23,7 @@ export const createTask = async ({
   endTime,
   priority,
   reminderEnabled,
+  reminderTime,
 }: CreateTaskParams) => {
   const { data: user } = await supabase.auth.getUser();
   if (!user.user) throw new Error("User not authenticated");
@@ -44,9 +46,10 @@ export const createTask = async ({
     priority,
     position: nextPosition,
     reminder_enabled: reminderEnabled,
+    reminder_time: reminderTime,
     user_id: user.user.id,
-    owner_id: user.user.id, // Add the owner_id field
-    shared: false // Initialize shared as false
+    owner_id: user.user.id,
+    shared: false
   });
 
   if (error) throw error;
