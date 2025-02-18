@@ -91,7 +91,7 @@ export function MobileHeader() {
               className="h-8 w-8 flex items-center justify-center"
               title="Test Sound"
             >
-              <Volume2 className="h-5 w-5 text-foreground" />
+              <Volume2 className="h-5 w-5" />
             </Button>
             <Button
               variant="ghost"
@@ -100,7 +100,7 @@ export function MobileHeader() {
               className="h-8 w-8 flex items-center justify-center"
               title="Test Notifications"
             >
-              <TestTube className="h-5 w-5 text-foreground" />
+              <TestTube className="h-5 w-5" />
             </Button>
             <HeaderNotifications />
             <HeaderUserMenu />
