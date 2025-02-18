@@ -93,6 +93,14 @@ export function TaskForm({
     }
   };
 
+  const handleIsScheduledChange = (value: boolean) => {
+    if (!value && reminderEnabled) {
+      toast.info("Notifications disabled as task is no longer scheduled");
+      onReminderEnabledChange(false);
+    }
+    onIsScheduledChange(value);
+  };
+
   useEffect(() => {
     const handleAIResponse = (e: CustomEvent<any>) => {
       console.log('AI Response received in TaskForm:', e.detail);
@@ -164,24 +172,26 @@ export function TaskForm({
             />
           </div>
 
-          <TaskNotificationFields
-            reminderEnabled={reminderEnabled}
-            reminderTime={reminderTime}
-            onReminderEnabledChange={handleReminderToggle}
-            onReminderTimeChange={onReminderTimeChange}
-          />
-
           <TaskScheduleFields
             isScheduled={isScheduled}
             date={date}
             startTime={startTime}
             endTime={endTime}
             priority={priority}
-            onIsScheduledChange={onIsScheduledChange}
+            onIsScheduledChange={handleIsScheduledChange}
             onDateChange={onDateChange}
             onStartTimeChange={onStartTimeChange}
             onEndTimeChange={onEndTimeChange}
             onPriorityChange={onPriorityChange}
+          />
+
+          <TaskNotificationFields
+            reminderEnabled={reminderEnabled}
+            reminderTime={reminderTime}
+            isScheduled={isScheduled}
+            onReminderEnabledChange={handleReminderToggle}
+            onReminderTimeChange={onReminderTimeChange}
+            onIsScheduledChange={onIsScheduledChange}
           />
 
           <TaskAttachmentFields task={task} isEditing={isEditing} />

@@ -8,12 +8,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from "sonner";
 
 interface TaskNotificationFieldsProps {
   reminderEnabled: boolean;
   reminderTime: number;
+  isScheduled: boolean;
   onReminderEnabledChange: (value: boolean) => void;
   onReminderTimeChange: (value: number) => void;
+  onIsScheduledChange: (value: boolean) => void;
 }
 
 const REMINDER_TIME_OPTIONS = [
@@ -27,19 +30,40 @@ const REMINDER_TIME_OPTIONS = [
 export function TaskNotificationFields({
   reminderEnabled,
   reminderTime,
+  isScheduled,
   onReminderEnabledChange,
   onReminderTimeChange,
+  onIsScheduledChange,
 }: TaskNotificationFieldsProps) {
+  const handleReminderToggle = (enabled: boolean) => {
+    if (enabled && !isScheduled) {
+      // Automatically enable scheduling when notifications are turned on
+      onIsScheduledChange(true);
+      onReminderEnabledChange(enabled);
+      toast.info("Task scheduling enabled for notifications");
+    } else {
+      onReminderEnabledChange(enabled);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="reminder"
-            checked={reminderEnabled}
-            onCheckedChange={onReminderEnabledChange}
-          />
-          <Label htmlFor="reminder">Enable notifications</Label>
+        <div className="space-y-2">
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="reminder"
+              checked={reminderEnabled}
+              onCheckedChange={handleReminderToggle}
+              disabled={!isScheduled}
+            />
+            <Label htmlFor="reminder">Enable notifications</Label>
+          </div>
+          {!isScheduled && (
+            <p className="text-sm text-muted-foreground">
+              Schedule the task to enable notifications
+            </p>
+          )}
         </div>
       </div>
 
