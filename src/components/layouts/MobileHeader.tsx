@@ -13,15 +13,39 @@ export function MobileHeader() {
     try {
       console.log('Testing notifications setup...');
       
-      // Test sound playback
+      // Test sound playback with more detailed logging
+      console.log('Creating Audio object...');
       const audio = new Audio('/notification-sound.mp3');
+      
+      // Add event listeners for debugging
+      audio.addEventListener('canplaythrough', () => {
+        console.log('✅ Audio file loaded and ready to play');
+      });
+      
+      audio.addEventListener('error', (e) => {
+        console.error('❌ Audio error:', e);
+        toast.error('Error loading notification sound');
+      });
+
+      audio.addEventListener('playing', () => {
+        console.log('✅ Audio is now playing');
+      });
+
+      audio.addEventListener('ended', () => {
+        console.log('✅ Audio finished playing');
+      });
+
+      console.log('Setting volume to 0.5...');
       audio.volume = 0.5;
       
+      console.log('Attempting to play sound...');
       const playPromise = audio.play();
+      
       if (playPromise !== undefined) {
         playPromise
           .then(() => {
-            console.log('✅ Notification sound played successfully');
+            console.log('✅ Play promise resolved successfully');
+            toast.success('Notification sound played');
           })
           .catch(error => {
             console.error('❌ Error playing notification sound:', error);
