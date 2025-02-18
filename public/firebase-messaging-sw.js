@@ -1,45 +1,73 @@
 
+// Give the service worker access to Firebase Messaging.
+// Note that you can only use Firebase Messaging here. Other Firebase libraries
+// are not available in the service worker.
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
 
-// Initialize the Firebase app in the service worker
+// Initialize the Firebase app in the service worker by passing in
+// your app's Firebase config object.
 firebase.initializeApp({
   apiKey: "AIzaSyBdJAQtaj5bMUmJPiGKmH-viT6vPZOITMU",
   authDomain: "tasqi-6101c.firebaseapp.com",
   projectId: "tasqi-6101c",
-  storageBucket: "tasqi-6101c.firebasestorage.app",
+  storageBucket: "tasqi-6101c.firebaseapp.com",
   messagingSenderId: "369755737068",
-  appId: "1:369755737068:web:d423408214cbc339c7cec9",
-  measurementId: "G-P2C0W0QSLP"
+  appId: "1:369755737068:web:d423408214cbc339c7cec9"
 });
 
+// Retrieve an instance of Firebase Messaging so that it can handle background messages.
 const messaging = firebase.messaging();
 
-// Handle background messages
 messaging.onBackgroundMessage((payload) => {
   console.log('[Firebase Messaging SW] Received background message:', payload);
 
-  const notificationTitle = payload.notification.title;
+  const notificationTitle = payload.notification?.title || 'New Notification';
   const notificationOptions = {
-    body: payload.notification.body,
+    body: payload.notification?.body,
     icon: '/pwa-192x192.png',
     badge: '/pwa-192x192.png',
-    data: payload.data
+    data: payload.data,
+    tag: 'task-notification',
+    requireInteraction: true
   };
 
-  self.registration.showNotification(notificationTitle, notificationOptions);
+  return self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-// Handle notification click
+self.addEventListener('install', (event) => {
+  console.log('[Service Worker] Installing Service Worker...', event);
+  event.waitUntil(self.skipWaiting());
+});
+
+self.addEventListener('activate', (event) => {
+  console.log('[Service Worker] Activating Service Worker...', event);
+  event.waitUntil(self.clients.claim());
+});
+
 self.addEventListener('notificationclick', (event) => {
   console.log('[Service Worker] Notification click received:', event);
   
   event.notification.close();
   
-  if (event.notification.data && event.notification.data.url) {
-    // Open the dashboard when notification is clicked
-    event.waitUntil(
-      clients.openWindow(event.notification.data.url)
-    );
-  }
+  // This looks to see if the current is already open and
+  // focuses if it is
+  event.waitUntil(
+    clients.matchAll({
+      type: "window",
+      includeUncontrolled: true
+    })
+    .then((clientList) => {
+      if (clientList.length > 0) {
+        let client = clientList[0];
+        for (let i = 0; i < clientList.length; i++) {
+          if (clientList[i].focused) {
+            client = clientList[i];
+          }
+        }
+        return client.focus();
+      }
+      return clients.openWindow('/dashboard');
+    })
+  );
 });
