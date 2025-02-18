@@ -27,22 +27,20 @@ export default function Dashboard() {
       case 'weekly':
         return (
           <WeeklyCalendar 
-            selectedDate={selectedDate}
-            onDateChange={setSelectedDate}
+            initialDate={selectedDate}
           />
         );
       case 'calendar':
         return (
           <Calendar 
-            selectedDate={selectedDate}
-            onDateChange={setSelectedDate}
+            initialDate={selectedDate}
+            onDateSelect={setSelectedDate}
           />
         );
       case 'yearly':
         return (
           <YearlyCalendar 
-            selectedDate={selectedDate}
-            onDateChange={setSelectedDate}
+            onDateSelect={setSelectedDate}
           />
         );
       default:
