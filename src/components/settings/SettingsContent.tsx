@@ -5,7 +5,9 @@ import { toast } from "sonner";
 import { AppearanceSettings } from "./appearance/AppearanceSettings";
 import { CalendarSettings } from "./calendar/CalendarSettings";
 import { TaskSharingSettings } from "./task-sharing/TaskSharingSettings";
+import { ProfileSettings } from "./profile/ProfileSettings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { UserRound } from "lucide-react";
 
 export function SettingsContent() {
   const [startHour, setStartHour] = useState<string>("8");
@@ -50,8 +52,15 @@ export function SettingsContent() {
 
   return (
     <div className="space-y-8 bg-white p-6 rounded-lg shadow-sm">
-      <Tabs defaultValue="appearance" className="w-full">
+      <Tabs defaultValue="profile" className="w-full">
         <TabsList className="w-full mb-6 bg-[#E5DEFF] p-1.5">
+          <TabsTrigger 
+            value="profile" 
+            className="flex-1 gap-2 bg-[#E5DEFF] data-[state=active]:bg-[#8B5CF6] data-[state=active]:text-white text-[#8B5CF6]"
+          >
+            <UserRound className="w-4 h-4" />
+            Profile
+          </TabsTrigger>
           <TabsTrigger 
             value="appearance" 
             className="flex-1 bg-[#F2D9FF] data-[state=active]:bg-[#D946EF] data-[state=active]:text-white text-[#D946EF]"
@@ -71,6 +80,10 @@ export function SettingsContent() {
             Task Sharing
           </TabsTrigger>
         </TabsList>
+        
+        <TabsContent value="profile">
+          <ProfileSettings />
+        </TabsContent>
         
         <TabsContent value="appearance">
           <AppearanceSettings />
