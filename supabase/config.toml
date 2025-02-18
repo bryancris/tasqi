@@ -1,5 +1,9 @@
 
 project_id = "mcwlzrikidzgxexnccju"
-
-[functions.text-to-voice]
+[api]
+enabled = true
+[api.cors]
+enabled = true
+[functions]
+[functions.process-notifications]
 verify_jwt = false
