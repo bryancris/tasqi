@@ -46,13 +46,18 @@ export function useTaskNotifications() {
         const timeUntilTask = taskDateTime.getTime() - now.getTime();
         const minutesUntilTask = timeUntilTask / (1000 * 60);
 
-        // If task is within notification threshold and hasn't been notified
-        if (minutesUntilTask <= NOTIFICATION_THRESHOLD_MINUTES && minutesUntilTask > 0) {
+        // Only notify if:
+        // 1. Task is within notification threshold (15 minutes)
+        // 2. Task hasn't started yet (positive minutes)
+        // 3. We're approaching the task time (not after it)
+        if (minutesUntilTask <= NOTIFICATION_THRESHOLD_MINUTES && 
+            minutesUntilTask > 0) {
           showNotification(task)
             .then(() => {
               console.log('✅ Notification sent for task:', task.title);
               console.log('🕒 Task time:', formatInTimeZone(taskDateTime, userTimeZone, 'yyyy-MM-dd HH:mm:ss'));
               console.log('🌍 User timezone:', userTimeZone);
+              console.log('⏰ Minutes until task:', minutesUntilTask);
               notifiedTasksRef.current.add(task.id);
             })
             .catch(error => {
