@@ -2,7 +2,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { corsHeaders } from '../_shared/cors.ts';
 
-// Initialize Supabase client with service role key
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const supabase = createClient(supabaseUrl, supabaseKey);
@@ -37,12 +36,10 @@ async function getFCMToken(userId: string): Promise<string | null> {
 
 async function getAccessToken(): Promise<string> {
   try {
-    console.log('Getting Firebase access token...');
     const { privateKey, clientEmail } = firebaseConfig;
     const now = Math.floor(Date.now() / 1000);
     const oneHourFromNow = now + 3600;
 
-    // Create JWT header and claim
     const header = {
       alg: 'RS256',
       typ: 'JWT',
@@ -58,7 +55,6 @@ async function getAccessToken(): Promise<string> {
       scope: 'https://www.googleapis.com/auth/firebase.messaging',
     };
 
-    // Sign JWT
     const encoder = new TextEncoder();
     const keyData = encoder.encode(privateKey.replace(/\\n/g, '\n'));
     const key = await crypto.subtle.importKey(
@@ -80,7 +76,6 @@ async function getAccessToken(): Promise<string> {
 
     const jwt = `${headerEncoded}.${claimEncoded}.${btoa(String.fromCharCode(...new Uint8Array(signature)))}`;
 
-    console.log('Getting access token with JWT...');
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -88,13 +83,10 @@ async function getAccessToken(): Promise<string> {
     });
 
     if (!tokenResponse.ok) {
-      const errorText = await tokenResponse.text();
-      console.error('Token response error:', errorText);
-      throw new Error(`Failed to get access token: ${errorText}`);
+      throw new Error(`Failed to get access token: ${await tokenResponse.text()}`);
     }
 
     const tokenData = await tokenResponse.json();
-    console.log('Successfully obtained access token');
     return tokenData.access_token;
   } catch (error) {
     console.error('Error in getAccessToken:', error);
@@ -134,7 +126,12 @@ async function sendFCMNotification(fcmToken: string, notification: any) {
             icon: '/pwa-192x192.png',
             badge: '/pwa-192x192.png',
             vibrate: [200, 100, 200],
+            sound: '/notification-sound.mp3', // Add sound URL
+            silent: false
           },
+          fcm_options: {
+            link: `${supabaseUrl}/dashboard`
+          }
         },
         android: {
           priority: 'high',
@@ -147,8 +144,6 @@ async function sendFCMNotification(fcmToken: string, notification: any) {
       },
     };
 
-    console.log('FCM request payload:', JSON.stringify(messageData, null, 2));
-
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -159,9 +154,7 @@ async function sendFCMNotification(fcmToken: string, notification: any) {
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('FCM response error:', errorText);
-      throw new Error(`FCM request failed: ${errorText}`);
+      throw new Error(`FCM request failed: ${await response.text()}`);
     }
 
     const result = await response.json();
