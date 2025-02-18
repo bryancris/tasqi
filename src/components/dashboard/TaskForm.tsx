@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { TaskPriority } from "./TaskBoard";
 import { ShareTaskDialog } from "./ShareTaskDialog";
@@ -9,7 +10,7 @@ import { TaskAttachmentFields } from "./form/TaskAttachmentFields";
 import { useState, useEffect } from "react";
 import { Task } from "./TaskBoard";
 import { useChat } from "@/hooks/use-chat";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { setupPushSubscription } from "@/utils/notifications/subscriptionUtils";
 import { checkNotificationPermission } from "@/utils/notifications/notificationUtils";
@@ -95,7 +96,10 @@ export function TaskForm({
 
   const handleIsScheduledChange = (value: boolean) => {
     if (!value && reminderEnabled) {
-      toast.info("Notifications disabled as task is no longer scheduled");
+      toast({
+        title: "Notifications Disabled",
+        description: "Notifications disabled as task is no longer scheduled"
+      });
       onReminderEnabledChange(false);
     }
     onIsScheduledChange(value);
