@@ -13,54 +13,18 @@ export function MobileHeader() {
     try {
       console.log('Testing notifications setup...');
       
-      // Test sound playback with more detailed logging
-      console.log('Creating Audio object...');
+      // Create and play audio
       const audio = new Audio('/notification-sound.mp3');
-      
-      // Add event listeners for debugging
-      audio.addEventListener('canplaythrough', () => {
-        console.log('✅ Audio file loaded and ready to play');
-      });
-      
-      audio.addEventListener('error', (e) => {
-        console.error('❌ Audio error:', e);
-        toast.error('Error loading notification sound');
-      });
-
-      audio.addEventListener('playing', () => {
-        console.log('✅ Audio is now playing');
-      });
-
-      audio.addEventListener('ended', () => {
-        console.log('✅ Audio finished playing');
-      });
-
-      console.log('Setting volume to 0.5...');
       audio.volume = 0.5;
       
-      // First, check if we can play audio
-      if (document.documentElement.requestFullscreen) {
-        try {
-          // Try to play sound immediately after a user interaction
-          console.log('Attempting to play sound...');
-          const playPromise = audio.play();
-          
-          if (playPromise !== undefined) {
-            playPromise
-              .then(() => {
-                console.log('✅ Play promise resolved successfully');
-                toast.success('Notification sound played');
-              })
-              .catch(error => {
-                console.error('❌ Error playing notification sound:', error);
-                // This might happen if the user hasn't interacted with the page yet
-                toast.error('Please click somewhere on the page first to enable sound');
-              });
-          }
-        } catch (error) {
-          console.error('Audio playback error:', error);
-          toast.error('Please enable sound in your browser settings');
-        }
+      // Simple play attempt
+      try {
+        await audio.play();
+        console.log('✅ Sound played successfully');
+        toast.success('Notification sound played');
+      } catch (error) {
+        console.error('❌ Sound playback error:', error);
+        toast.error('Click somewhere on the page first to enable sound');
       }
 
       await setupPushSubscription();

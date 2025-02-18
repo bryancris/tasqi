@@ -91,3 +91,4 @@ export const checkNotificationPermission = async () => {
     return false;
   }
 };
+
