@@ -35,6 +35,7 @@ export interface Task {
   updated_at?: string;
   completed_at?: string | null;
   reminder_enabled?: boolean;
+  reminder_time?: number;
   reschedule_count?: number;
   shared?: boolean;
   assignees?: string[];
