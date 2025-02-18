@@ -1,7 +1,7 @@
 
 import { HeaderUserMenu } from "@/components/dashboard/header/HeaderUserMenu";
 import { HeaderNotifications } from "@/components/dashboard/header/HeaderNotifications";
-import { TestTube } from "lucide-react";
+import { TestTube, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { setupPushSubscription } from "@/utils/notifications/subscriptionUtils";
 import { toast } from "sonner";
@@ -10,22 +10,44 @@ import { AddTaskDrawer } from "@/components/dashboard/AddTaskDrawer";
 
 export function MobileHeader() {
   const playSound = async () => {
-    console.log('Attempting to play sound...');
+    console.log('🔊 Starting sound test...');
+    
     try {
-      const audio = new Audio();
-      audio.src = '/notification-sound.mp3';
-      audio.volume = 1.0; // Set to full volume for testing
+      // First check if the audio file exists
+      const response = await fetch('/notification-sound.mp3');
+      if (!response.ok) {
+        throw new Error(`Audio file not found: ${response.status}`);
+      }
+      console.log('✅ Audio file exists');
       
-      // Load the audio file
-      await audio.load();
-      console.log('Audio loaded, attempting to play...');
+      // Create audio context
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      console.log('✅ Audio context created');
       
-      const playResult = await audio.play();
-      console.log('Play initiated:', playResult);
-      toast.success('Sound should play now');
+      // Fetch and decode the audio file
+      const arrayBuffer = await response.arrayBuffer();
+      console.log('✅ Audio file loaded into buffer');
+      
+      // Decode the audio data
+      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+      console.log('✅ Audio buffer decoded');
+      
+      // Create a buffer source node
+      const source = audioContext.createBufferSource();
+      source.buffer = audioBuffer;
+      
+      // Connect to destination (speakers)
+      source.connect(audioContext.destination);
+      console.log('✅ Audio source connected to speakers');
+      
+      // Start playing
+      source.start(0);
+      console.log('✅ Audio playback started');
+      
+      toast.success('Playing notification sound');
     } catch (error) {
-      console.error('Sound playback failed:', error);
-      toast.error('Failed to play sound - check console');
+      console.error('❌ Sound playback failed:', error);
+      toast.error(`Failed to play sound: ${error.message}`);
     }
   };
 
@@ -33,11 +55,13 @@ export function MobileHeader() {
     try {
       console.log('Testing notifications setup...');
       
-      // Try to play sound first
+      // First test push subscription
+      await setupPushSubscription();
+      console.log('✅ Push subscription completed');
+      
+      // Then try to play sound
       await playSound();
       
-      // Then handle push subscription
-      await setupPushSubscription();
       toast.success('Push notifications test completed');
     } catch (error) {
       console.error('Test notification error:', error);
@@ -63,8 +87,18 @@ export function MobileHeader() {
             <Button
               variant="ghost"
               size="icon"
+              onClick={playSound}
+              className="h-8 w-8"
+              title="Test Sound"
+            >
+              <Volume2 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={handleTestNotifications}
               className="h-8 w-8"
+              title="Test Notifications"
             >
               <TestTube className="h-4 w-4" />
             </Button>
