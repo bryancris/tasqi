@@ -88,19 +88,19 @@ export function MobileHeader() {
               variant="ghost"
               size="icon"
               onClick={playSound}
-              className="h-8 w-8"
+              className="h-8 w-8 flex items-center justify-center"
               title="Test Sound"
             >
-              <Volume2 className="h-4 w-4" />
+              <Volume2 className="h-5 w-5 text-foreground" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
               onClick={handleTestNotifications}
-              className="h-8 w-8"
+              className="h-8 w-8 flex items-center justify-center"
               title="Test Notifications"
             >
-              <TestTube className="h-4 w-4" />
+              <TestTube className="h-5 w-5 text-foreground" />
             </Button>
             <HeaderNotifications />
             <HeaderUserMenu />
