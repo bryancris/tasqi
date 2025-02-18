@@ -11,26 +11,26 @@ export type Database = {
     Tables: {
       app_settings: {
         Row: {
-          created_at: string
+          created_at: string | null
           firebase_config: Json | null
           id: number
-          updated_at: string
+          updated_at: string | null
           vapid_private_key: string | null
           vapid_public_key: string | null
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           firebase_config?: Json | null
           id?: number
-          updated_at?: string
+          updated_at?: string | null
           vapid_private_key?: string | null
           vapid_public_key?: string | null
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           firebase_config?: Json | null
           id?: number
-          updated_at?: string
+          updated_at?: string | null
           vapid_private_key?: string | null
           vapid_public_key?: string | null
         }
