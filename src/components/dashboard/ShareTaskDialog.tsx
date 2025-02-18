@@ -37,6 +37,11 @@ export function ShareTaskDialog({ task, open, onOpenChange }: ShareTaskDialogPro
         currentUserId: currentUser.id,
       });
 
+      // Show success toast and play notification sound
+      const audio = new Audio('/notification-sound.mp3');
+      audio.volume = 0.5;
+      await audio.play();
+      
       toast.success('Task shared successfully');
       onOpenChange(false);
     } catch (error) {

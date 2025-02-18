@@ -54,7 +54,7 @@ export function HeaderNotifications() {
         .from('notifications')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(10); // Limit the number of notifications to prevent performance issues
+        .limit(10);
 
       if (error) {
         console.error('Error fetching notifications:', error);
@@ -64,7 +64,7 @@ export function HeaderNotifications() {
 
       return data;
     },
-    enabled: !!currentUserId // Only run query when we have a user ID
+    enabled: !!currentUserId
   });
 
   // Play notification sound function
@@ -150,8 +150,9 @@ export function HeaderNotifications() {
         },
         async (payload: any) => {
           console.log('New shared task received:', payload);
-          // Play sound when a new task is shared
+          // Play sound and show toast when a new task is shared
           await playNotificationSound();
+          toast.success('New task shared with you!');
         }
       )
       .subscribe((status) => {
