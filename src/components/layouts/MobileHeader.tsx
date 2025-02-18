@@ -9,24 +9,34 @@ import { HeaderTime } from "@/components/dashboard/header/HeaderTime";
 import { AddTaskDrawer } from "@/components/dashboard/AddTaskDrawer";
 
 export function MobileHeader() {
+  const playSound = async () => {
+    console.log('Attempting to play sound...');
+    try {
+      const audio = new Audio();
+      audio.src = '/notification-sound.mp3';
+      audio.volume = 1.0; // Set to full volume for testing
+      
+      // Load the audio file
+      await audio.load();
+      console.log('Audio loaded, attempting to play...');
+      
+      const playResult = await audio.play();
+      console.log('Play initiated:', playResult);
+      toast.success('Sound should play now');
+    } catch (error) {
+      console.error('Sound playback failed:', error);
+      toast.error('Failed to play sound - check console');
+    }
+  };
+
   const handleTestNotifications = async () => {
     try {
       console.log('Testing notifications setup...');
       
-      // Create and play audio
-      const audio = new Audio('/notification-sound.mp3');
-      audio.volume = 0.5;
+      // Try to play sound first
+      await playSound();
       
-      // Simple play attempt
-      try {
-        await audio.play();
-        console.log('✅ Sound played successfully');
-        toast.success('Notification sound played');
-      } catch (error) {
-        console.error('❌ Sound playback error:', error);
-        toast.error('Click somewhere on the page first to enable sound');
-      }
-
+      // Then handle push subscription
       await setupPushSubscription();
       toast.success('Push notifications test completed');
     } catch (error) {
