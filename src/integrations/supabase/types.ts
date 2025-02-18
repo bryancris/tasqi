@@ -492,19 +492,28 @@ export type Database = {
           created_at: string
           email: string
           fcm_token: string | null
+          first_name: string | null
           id: string
+          last_name: string | null
+          updated_at: string | null
         }
         Insert: {
           created_at?: string
           email: string
           fcm_token?: string | null
+          first_name?: string | null
           id: string
+          last_name?: string | null
+          updated_at?: string | null
         }
         Update: {
           created_at?: string
           email?: string
           fcm_token?: string | null
+          first_name?: string | null
           id?: string
+          last_name?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
