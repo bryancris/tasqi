@@ -13,7 +13,6 @@ import { useChat } from "@/hooks/use-chat";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { setupPushSubscription } from "@/utils/notifications/subscriptionUtils";
-import { Capacitor } from '@capacitor/core';
 
 interface TaskFormProps {
   title: string;
@@ -72,8 +71,8 @@ export function TaskForm({
   // Handle reminder toggle
   const handleReminderToggle = async (enabled: boolean) => {
     try {
-      if (enabled && Capacitor.isNativePlatform()) {
-        // Set up push notifications when enabling reminders
+      if (enabled) {
+        // Set up web push notifications when enabling reminders
         await setupPushSubscription();
       }
       onReminderEnabledChange(enabled);
@@ -81,7 +80,7 @@ export function TaskForm({
       console.error('Error setting up notifications:', error);
       toast({
         title: "Error",
-        description: "Failed to set up notifications. Please check app permissions.",
+        description: "Failed to set up notifications. Please check browser permissions.",
         variant: "destructive",
       });
       onReminderEnabledChange(false);
