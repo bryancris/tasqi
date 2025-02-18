@@ -38,20 +38,29 @@ export function MobileHeader() {
       console.log('Setting volume to 0.5...');
       audio.volume = 0.5;
       
-      console.log('Attempting to play sound...');
-      const playPromise = audio.play();
-      
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => {
-            console.log('✅ Play promise resolved successfully');
-            toast.success('Notification sound played');
-          })
-          .catch(error => {
-            console.error('❌ Error playing notification sound:', error);
-            // This might happen if the user hasn't interacted with the page yet
-            toast.error('Please interact with the page first to enable sound');
-          });
+      // First, check if we can play audio
+      if (document.documentElement.requestFullscreen) {
+        try {
+          // Try to play sound immediately after a user interaction
+          console.log('Attempting to play sound...');
+          const playPromise = audio.play();
+          
+          if (playPromise !== undefined) {
+            playPromise
+              .then(() => {
+                console.log('✅ Play promise resolved successfully');
+                toast.success('Notification sound played');
+              })
+              .catch(error => {
+                console.error('❌ Error playing notification sound:', error);
+                // This might happen if the user hasn't interacted with the page yet
+                toast.error('Please click somewhere on the page first to enable sound');
+              });
+          }
+        } catch (error) {
+          console.error('Audio playback error:', error);
+          toast.error('Please enable sound in your browser settings');
+        }
       }
 
       await setupPushSubscription();
