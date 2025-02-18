@@ -1,12 +1,9 @@
 
 // Give the service worker access to Firebase Messaging.
-// Note that you can only use Firebase Messaging here. Other Firebase libraries
-// are not available in the service worker.
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
 
-// Initialize the Firebase app in the service worker by passing in
-// your app's Firebase config object.
+// Initialize the Firebase app in the service worker
 firebase.initializeApp({
   apiKey: "AIzaSyBdJAQtaj5bMUmJPiGKmH-viT6vPZOITMU",
   authDomain: "tasqi-6101c.firebaseapp.com",
@@ -50,8 +47,6 @@ self.addEventListener('notificationclick', (event) => {
   
   event.notification.close();
   
-  // This looks to see if the current is already open and
-  // focuses if it is
   event.waitUntil(
     clients.matchAll({
       type: "window",

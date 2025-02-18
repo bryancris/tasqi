@@ -24,8 +24,8 @@ const getFirebaseConfig = async (): Promise<FirebaseOptions> => {
   const config = data.firebase_config as FirebaseOptions;
 
   // Validate required fields
-  const requiredFields = ['apiKey', 'projectId', 'messagingSenderId'];
-  const missingFields = requiredFields.filter(field => !config[field]);
+  const requiredFields = ['apiKey', 'projectId', 'messagingSenderId', 'appId'];
+  const missingFields = requiredFields.filter(field => !config[field as keyof FirebaseOptions]);
   
   if (missingFields.length > 0) {
     const errorMsg = `Invalid Firebase configuration: missing required fields: ${missingFields.join(', ')}`;
@@ -40,6 +40,10 @@ const getFirebaseConfig = async (): Promise<FirebaseOptions> => {
 export const initializeFirebase = async () => {
   try {
     const firebaseConfig = await getFirebaseConfig();
+    console.log('Initializing Firebase with config:', { 
+      projectId: firebaseConfig.projectId,
+      messagingSenderId: firebaseConfig.messagingSenderId
+    });
     return initializeApp(firebaseConfig);
   } catch (error) {
     console.error('Error initializing Firebase:', error);
@@ -50,17 +54,21 @@ export const initializeFirebase = async () => {
 // Initialize Firebase Cloud Messaging
 export const initializeMessaging = async () => {
   try {
+    // Check if messaging is supported first
+    const isMessagingSupported = await isSupported();
+    if (!isMessagingSupported) {
+      console.log('Firebase messaging is not supported in this browser');
+      return null;
+    }
+
     const app = await initializeFirebase();
     if (!app) {
       throw new Error('Firebase app not initialized');
     }
 
-    if (await isSupported()) {
-      const messaging = getMessaging(app);
-      return messaging;
-    }
-    console.log('Firebase messaging is not supported in this browser');
-    return null;
+    const messaging = getMessaging(app);
+    console.log('Firebase Messaging initialized successfully');
+    return messaging;
   } catch (error) {
     console.error('Error initializing Firebase messaging:', error);
     return null;
