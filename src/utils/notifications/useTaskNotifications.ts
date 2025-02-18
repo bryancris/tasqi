@@ -1,4 +1,5 @@
-import { useEffect, useCallback, useRef } from 'react';
+
+import { useEffect, useCallback, useRef, useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { showNotification, checkNotificationPermission } from './notificationUtils';
 import { setupPushSubscription } from './subscriptionUtils';
@@ -52,17 +53,6 @@ export const checkAndNotifyUpcomingTasks = async (userId: string) => {
       // Calculate notification window (5 minutes before the task)
       const notificationTime = addMinutes(taskDateTime, -5);
       
-      console.log('Task timing check:', {
-        taskId: task.id,
-        taskTitle: task.title,
-        taskDateTime: taskDateTime.toISOString(),
-        notificationTime: notificationTime.toISOString(),
-        currentTime: now.toISOString(),
-        shouldNotify: isAfter(now, notificationTime) && isBefore(now, taskDateTime),
-        reminderEnabled: task.reminder_enabled,
-        status: task.status
-      });
-
       // Notify if we're within the 5-minute window before the task
       if (isAfter(now, notificationTime) && isBefore(now, taskDateTime)) {
         console.log('🔔 Sending notification for task:', task.title);
@@ -77,6 +67,8 @@ export const checkAndNotifyUpcomingTasks = async (userId: string) => {
 
 export const useTaskNotifications = () => {
   const checkIntervalRef = useRef<NodeJS.Timeout>();
+  const initializationAttemptedRef = useRef(false);
+  const [isInitializing, setIsInitializing] = useState(false);
   const { session } = useAuth();
 
   const startNotificationCheck = useCallback(() => {
@@ -100,9 +92,17 @@ export const useTaskNotifications = () => {
 
   useEffect(() => {
     const initializeNotifications = async () => {
+      // Prevent multiple initialization attempts
+      if (initializationAttemptedRef.current || isInitializing) {
+        return;
+      }
+
       try {
+        setIsInitializing(true);
+        initializationAttemptedRef.current = true;
+
         if (!('serviceWorker' in navigator)) {
-          toast.error('Service Worker is not supported in this browser');
+          console.log('Service Worker is not supported');
           return;
         }
 
@@ -114,7 +114,7 @@ export const useTaskNotifications = () => {
         // Check and request notification permission
         const permissionGranted = await checkNotificationPermission();
         if (!permissionGranted) {
-          toast.error('Please enable notifications to receive task reminders');
+          console.log('Notification permission not granted');
           return;
         }
 
@@ -124,26 +124,33 @@ export const useTaskNotifications = () => {
           scope: '/'
         });
 
-        // Wait for the service worker to be ready
-        await navigator.serviceWorker.ready;
-        console.log('✅ Service worker activated:', registration.active?.state);
+        // Set up push subscription with a timeout
+        const setupPromise = Promise.race([
+          setupPushSubscription(registration),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Push subscription setup timed out')), 10000)
+          )
+        ]);
 
-        // Set up push subscription
-        await setupPushSubscription(registration);
+        await setupPromise;
         
         // Start checking for tasks
         startNotificationCheck();
 
-        toast.success('Task notifications enabled successfully');
+        console.log('✅ Notifications initialized successfully');
       } catch (error) {
         console.error('Error initializing notifications:', error);
-        toast.error('Failed to initialize notifications');
+        if (error instanceof Error) {
+          console.error('Error details:', error.message);
+        }
+      } finally {
+        setIsInitializing(false);
       }
     };
 
     // Initialize notifications when user session is available
-    if (session?.user?.id) {
-      initializeNotifications();
+    if (session?.user?.id && !initializationAttemptedRef.current) {
+      void initializeNotifications();
     }
 
     return () => {

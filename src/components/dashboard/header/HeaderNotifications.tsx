@@ -48,10 +48,13 @@ export function HeaderNotifications() {
   const { data: notifications = [] } = useQuery<Notification[]>({
     queryKey: ['notifications'],
     queryFn: async () => {
+      if (!currentUserId) return [];
+
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(10); // Limit the number of notifications to prevent performance issues
 
       if (error) {
         console.error('Error fetching notifications:', error);
@@ -60,7 +63,8 @@ export function HeaderNotifications() {
       }
 
       return data;
-    }
+    },
+    enabled: !!currentUserId // Only run query when we have a user ID
   });
 
   // Play notification sound function
