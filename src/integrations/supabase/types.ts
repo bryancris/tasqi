@@ -883,6 +883,7 @@ export type Database = {
           position: number
           priority: Database["public"]["Enums"]["task_priority"] | null
           reminder_enabled: boolean | null
+          reminder_time: number | null
           reschedule_count: number | null
           shared: boolean | null
           start_time: string | null
@@ -905,6 +906,7 @@ export type Database = {
           position: number
           priority?: Database["public"]["Enums"]["task_priority"] | null
           reminder_enabled?: boolean | null
+          reminder_time?: number | null
           reschedule_count?: number | null
           shared?: boolean | null
           start_time?: string | null
@@ -927,6 +929,7 @@ export type Database = {
           position?: number
           priority?: Database["public"]["Enums"]["task_priority"] | null
           reminder_enabled?: boolean | null
+          reminder_time?: number | null
           reschedule_count?: number | null
           shared?: boolean | null
           start_time?: string | null

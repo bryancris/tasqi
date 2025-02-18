@@ -15,6 +15,7 @@ interface EditTaskContentProps {
   endTime: string;
   priority: TaskPriority;
   reminderEnabled: boolean;
+  reminderTime: number;
   subtasks: Subtask[];
   isLoading: boolean;
   onTitleChange: (value: string) => void;
@@ -25,6 +26,7 @@ interface EditTaskContentProps {
   onEndTimeChange: (value: string) => void;
   onPriorityChange: (value: TaskPriority) => void;
   onReminderEnabledChange: (value: boolean) => void;
+  onReminderTimeChange: (value: number) => void;
   onSubtasksChange: (subtasks: Subtask[]) => void;
   onSubmit: () => void;
   onDelete: () => Promise<void>;
@@ -40,6 +42,7 @@ export function EditTaskContent({
   endTime,
   priority,
   reminderEnabled,
+  reminderTime,
   subtasks,
   isLoading,
   onTitleChange,
@@ -50,6 +53,7 @@ export function EditTaskContent({
   onEndTimeChange,
   onPriorityChange,
   onReminderEnabledChange,
+  onReminderTimeChange,
   onSubtasksChange,
   onSubmit,
   onDelete,
@@ -68,6 +72,7 @@ export function EditTaskContent({
           endTime={endTime}
           priority={priority}
           reminderEnabled={reminderEnabled}
+          reminderTime={reminderTime}
           subtasks={subtasks}
           isLoading={isLoading}
           isEditing={true}
@@ -80,6 +85,7 @@ export function EditTaskContent({
           onEndTimeChange={onEndTimeChange}
           onPriorityChange={onPriorityChange}
           onReminderEnabledChange={onReminderEnabledChange}
+          onReminderTimeChange={onReminderTimeChange}
           onSubtasksChange={onSubtasksChange}
           onSubmit={onSubmit}
         />
