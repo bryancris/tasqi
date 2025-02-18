@@ -53,6 +53,7 @@ export function ProfileSettings() {
         .from('profiles')
         .upsert({
           id: session.user.id,
+          email: session.user.email || "", // Add the required email field
           first_name: firstName,
           last_name: lastName,
           updated_at: new Date().toISOString(),
