@@ -1,16 +1,14 @@
 
-import { useNavigate } from "react-router-dom";
 import { HeaderUserMenu } from "@/components/dashboard/header/HeaderUserMenu";
 import { HeaderNotifications } from "@/components/dashboard/header/HeaderNotifications";
-import { TestTube, Plus } from "lucide-react";
+import { TestTube } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { setupPushSubscription } from "@/utils/notifications/subscriptionUtils";
 import { toast } from "sonner";
 import { HeaderTime } from "@/components/dashboard/header/HeaderTime";
+import { AddTaskDrawer } from "@/components/dashboard/AddTaskDrawer";
 
 export function MobileHeader() {
-  const navigate = useNavigate();
-
   const handleTestNotifications = async () => {
     try {
       console.log('Testing notifications setup...');
@@ -28,14 +26,15 @@ export function MobileHeader() {
         <div className="flex h-full items-center justify-between gap-4">
           <HeaderTime />
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate('/dashboard/add-task')}
-              className="h-8 w-8"
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
+            <AddTaskDrawer>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+              >
+                <span className="text-lg font-semibold">+</span>
+              </Button>
+            </AddTaskDrawer>
             <Button
               variant="ghost"
               size="icon"
@@ -52,4 +51,3 @@ export function MobileHeader() {
     </header>
   );
 }
-
