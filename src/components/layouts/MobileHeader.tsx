@@ -12,6 +12,24 @@ export function MobileHeader() {
   const handleTestNotifications = async () => {
     try {
       console.log('Testing notifications setup...');
+      
+      // Test sound playback
+      const audio = new Audio('/notification-sound.mp3');
+      audio.volume = 0.5;
+      
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            console.log('✅ Notification sound played successfully');
+          })
+          .catch(error => {
+            console.error('❌ Error playing notification sound:', error);
+            // This might happen if the user hasn't interacted with the page yet
+            toast.error('Please interact with the page first to enable sound');
+          });
+      }
+
       await setupPushSubscription();
       toast.success('Push notifications test completed');
     } catch (error) {
