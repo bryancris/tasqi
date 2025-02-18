@@ -277,6 +277,7 @@ export type Database = {
       }
       notifications: {
         Row: {
+          body: string | null
           created_at: string
           id: number
           message: string
@@ -288,6 +289,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          body?: string | null
           created_at?: string
           id?: number
           message: string
@@ -299,6 +301,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          body?: string | null
           created_at?: string
           id?: number
           message?: string
@@ -488,16 +491,19 @@ export type Database = {
         Row: {
           created_at: string
           email: string
+          fcm_token: string | null
           id: string
         }
         Insert: {
           created_at?: string
           email: string
+          fcm_token?: string | null
           id: string
         }
         Update: {
           created_at?: string
           email?: string
+          fcm_token?: string | null
           id?: string
         }
         Relationships: []

@@ -1,6 +1,5 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { urlBase64ToUint8Array, getVapidPublicKey } from "./vapidUtils";
 import { toast } from "sonner";
 import { FirebaseMessaging } from '@capacitor-firebase/messaging';
 import { Capacitor } from '@capacitor/core';
@@ -13,61 +12,27 @@ const isNativePlatform = () => {
   return isNative;
 };
 
-export const savePushSubscription = async (subscription: PushSubscription | string, deviceType: 'web' | 'android' | 'ios' = 'web') => {
+export const savePushSubscription = async (fcmToken: string) => {
   try {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) {
       throw new Error('User must be logged in to save push subscription');
     }
 
-    console.log(`[Push Subscription] Attempting to save ${deviceType} subscription`);
-    console.log(`[Push Subscription] Platform detected: ${Capacitor.getPlatform()}`);
-    console.log(`[Push Subscription] Token/Subscription:`, subscription);
+    console.log('[Push Subscription] Saving FCM token:', fcmToken);
 
-    const baseData = {
-      user_id: session.user.id,
-      auth_keys: {} // Provide empty object as default for auth_keys
-    };
-
-    const subscriptionData = deviceType === 'web' 
-      ? {
-          ...baseData,
-          platform: 'web' as const,
-          endpoint: (subscription as PushSubscription).endpoint,
-          auth_keys: {
-            p256dh: (subscription as PushSubscription).toJSON().keys?.p256dh,
-            auth: (subscription as PushSubscription).toJSON().keys?.auth
-          }
-        }
-      : {
-          ...baseData,
-          platform: deviceType,
-          endpoint: '', // Provide empty string as required by the schema
-          device_token: subscription as string,
-          device_type: deviceType, // Explicitly set device_type
-          metadata: {
-            platform: deviceType,
-            capacitorPlatform: Capacitor.getPlatform(),
-            timestamp: new Date().toISOString()
-          }
-        };
-
-    console.log('[Push Subscription] Saving data:', JSON.stringify(subscriptionData, null, 2));
-
+    // Update the FCM token in the profiles table
     const { error } = await supabase
-      .from('push_subscriptions')
-      .upsert(subscriptionData, {
-        onConflict: deviceType === 'web' 
-          ? 'user_id,platform,endpoint' 
-          : 'user_id,platform,device_token'
-      });
+      .from('profiles')
+      .update({ fcm_token: fcmToken })
+      .eq('id', session.user.id);
 
     if (error) {
-      console.error('[Push Subscription] Error saving subscription:', error);
+      console.error('[Push Subscription] Error saving FCM token:', error);
       throw error;
     }
 
-    console.log(`[Push Subscription] ✅ ${deviceType.toUpperCase()} subscription saved successfully`);
+    console.log('✅ FCM token saved successfully');
   } catch (error) {
     console.error('[Push Subscription] Error in savePushSubscription:', error);
     toast.error('Failed to save push subscription');
@@ -75,12 +40,11 @@ export const savePushSubscription = async (subscription: PushSubscription | stri
   }
 };
 
-export const setupPushSubscription = async (registration?: ServiceWorkerRegistration) => {
+export const setupPushSubscription = async () => {
   try {
     // Check if we're on a native platform
     if (isNativePlatform()) {
       console.log('[Push Setup] Setting up native push notifications...');
-      console.log('[Push Setup] Current platform:', Capacitor.getPlatform());
       
       try {
         // Request permission for native platforms
@@ -93,8 +57,11 @@ export const setupPushSubscription = async (registration?: ServiceWorkerRegistra
 
         // Get the FCM token for native platforms
         const { token } = await FirebaseMessaging.getToken();
-        console.log('[Push Setup] Native FCM Token received:', token?.slice(0, 10) + '...');
+        console.log('[Push Setup] Native FCM Token received');
 
+        // Save the FCM token
+        await savePushSubscription(token);
+        
         // Set up native notification handlers
         FirebaseMessaging.addListener('notificationReceived', (notification) => {
           console.log('[Push Notification] Received:', notification);
@@ -104,70 +71,34 @@ export const setupPushSubscription = async (registration?: ServiceWorkerRegistra
           console.log('[Push Notification] Action performed:', action);
         });
 
-        // Save the FCM token with the correct platform
-        const platform = Capacitor.getPlatform();
-        if (platform !== 'android' && platform !== 'ios') {
-          throw new Error(`Unexpected platform: ${platform}`);
-        }
-        
-        await savePushSubscription(token, platform);
-        
         toast.success('Push notifications enabled successfully');
         return token;
       } catch (error) {
         console.error('[Push Setup] Native setup error:', error);
-        toast.error('Failed to set up push notifications. Please check app permissions.');
+        toast.error('Failed to set up push notifications');
         throw error;
       }
     }
     
     // Web platform setup
-    console.log('Setting up web push subscription...');
+    console.log('[Push Setup] Setting up web push notifications...');
     
-    if (!registration) {
-      throw new Error('ServiceWorkerRegistration is required for web push notifications');
-    }
-
-    // Try to get Firebase messaging token for web platform
     const messaging = await initializeMessaging();
-    if (messaging) {
-      try {
-        const fcmToken = await getFirebaseToken(messaging, {
-          vapidKey: await getVapidPublicKey()
-        });
-        console.log('Web FCM Token:', fcmToken);
-        await savePushSubscription(fcmToken, 'web');
-        return fcmToken;
-      } catch (error) {
-        console.warn('Failed to get Firebase token, falling back to Web Push:', error);
-      }
+    if (!messaging) {
+      throw new Error('Failed to initialize Firebase Messaging');
     }
 
-    // Fall back to Web Push API if Firebase is not available
-    const existingSubscription = await registration.pushManager.getSubscription();
+    try {
+      const fcmToken = await getFirebaseToken(messaging);
+      console.log('[Push Setup] Web FCM Token received');
       
-    if (existingSubscription) {
-      console.log('Using existing web push subscription');
-      await savePushSubscription(existingSubscription);
-      return existingSubscription;
+      await savePushSubscription(fcmToken);
+      return fcmToken;
+    } catch (error) {
+      console.error('[Push Setup] Error getting FCM token:', error);
+      toast.error('Failed to set up push notifications');
+      throw error;
     }
-
-    const vapidPublicKey = await getVapidPublicKey();
-    if (!vapidPublicKey) {
-      throw new Error('VAPID public key not found in app settings');
-    }
-
-    console.log('Creating new web push subscription...');
-    const subscribeOptions = {
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
-    };
-    
-    const subscription = await registration.pushManager.subscribe(subscribeOptions);
-    console.log('✅ Web push notification subscription created:', subscription);
-    
-    await savePushSubscription(subscription);
-    return subscription;
   } catch (error) {
     console.error('Error in setupPushSubscription:', error);
     toast.error('Failed to setup push notifications');
