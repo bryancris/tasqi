@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { TaskPriority } from "./TaskBoard";
 import { ShareTaskDialog } from "./ShareTaskDialog";
@@ -85,21 +84,14 @@ export function TaskForm({
       onReminderEnabledChange(enabled);
     } catch (error) {
       console.error('Error setting up notifications:', error);
-      toast({
-        title: "Error",
-        description: "Failed to set up notifications. Please check browser permissions.",
-        variant: "destructive",
-      });
+      toast("Failed to set up notifications. Please check browser permissions.");
       onReminderEnabledChange(false);
     }
   };
 
   const handleIsScheduledChange = (value: boolean) => {
     if (!value && reminderEnabled) {
-      toast({
-        title: "Notifications Disabled",
-        description: "Notifications disabled as task is no longer scheduled"
-      });
+      toast("Notifications disabled as task is no longer scheduled");
       onReminderEnabledChange(false);
     }
     onIsScheduledChange(value);
@@ -130,18 +122,11 @@ export function TaskForm({
             }));
             onSubtasksChange(newSubtasks);
             
-            toast({
-              title: "Subtasks Added",
-              description: `Added ${newSubtasks.length} subtasks to your task.`,
-            });
+            toast(`Added ${newSubtasks.length} subtasks to your task.`);
           }
         } catch (error) {
           console.error('Error processing AI response:', error);
-          toast({
-            title: "Error",
-            description: "Failed to process AI response",
-            variant: "destructive",
-          });
+          toast("Failed to process AI response");
         } finally {
           setProcessingAIResponse(false);
         }
