@@ -16,6 +16,28 @@ interface WeeklyCalendarGridProps {
   showFullWeek: boolean;
 }
 
+const getTaskPosition = (task: Task, timeSlot: { hour: number }) => {
+  if (!task.start_time || !task.end_time) return null;
+
+  const [startHour, startMinute] = task.start_time.split(':').map(Number);
+  const [endHour, endMinute] = task.end_time.split(':').map(Number);
+
+  // Calculate position and height
+  const startMinuteOffset = startHour === timeSlot.hour ? startMinute : 0;
+  const endMinuteOffset = endHour === timeSlot.hour ? endMinute : 60;
+  
+  const height = ((endMinuteOffset - startMinuteOffset) / 60) * 100;
+  const top = (startMinuteOffset / 60) * 100;
+
+  return {
+    height: `${height}%`,
+    top: `${top}%`,
+    position: 'absolute' as const,
+    left: '1px',
+    right: '1px',
+  };
+};
+
 const CalendarCell = ({ 
   day, 
   timeSlot, 
@@ -40,35 +62,15 @@ const CalendarCell = ({
     }
   });
 
+  // Filter tasks that start or end in this hour slot
   const tasksForThisSlot = tasks.filter(task => {
-    if (!task.date || !task.start_time || task.status !== 'scheduled') {
-      console.log('Filtering task:', task.id, {
-        date: task.date,
-        startTime: task.start_time,
-        status: task.status
-      });
-      return false;
-    }
+    if (!task.date || !task.start_time || task.status !== 'scheduled') return false;
     
-    // Compare dates
     const taskDate = format(parseISO(task.date), 'yyyy-MM-dd');
-    const dateMatches = taskDate === formattedDate;
+    if (taskDate !== formattedDate) return false;
 
-    // Compare hours
-    const taskStartHour = parseInt(task.start_time.split(':')[0], 10);
-    const hourMatches = taskStartHour === timeSlot.hour;
-
-    console.log('Task slot check:', {
-      taskId: task.id,
-      taskDate,
-      formattedDate,
-      dateMatches,
-      taskStartHour,
-      slotHour: timeSlot.hour,
-      hourMatches
-    });
-
-    return dateMatches && hourMatches;
+    const [taskStartHour] = task.start_time.split(':').map(Number);
+    return taskStartHour === timeSlot.hour;
   });
 
   console.log('Tasks for slot:', {
@@ -97,23 +99,31 @@ const CalendarCell = ({
       {/* 30-minute marker */}
       <div className="absolute left-0 right-0 top-1/2 border-t border-[#403E43]/30" />
       
-      {tasksForThisSlot.map((task) => (
-        <div 
-          key={task.id} 
-          className="absolute inset-0 p-0.5"
-        >
-          <WeeklyTaskCard
-            task={task}
-            dragHandleProps={{
-              'data-dnd-draggable': true,
-              'data-dnd-draggable-id': task.id
+      {tasksForThisSlot.map((task, index) => {
+        const position = getTaskPosition(task, timeSlot);
+        if (!position) return null;
+
+        return (
+          <div 
+            key={task.id} 
+            style={{
+              ...position,
+              zIndex: index + 1
             }}
-          />
-        </div>
-      ))}
+          >
+            <WeeklyTaskCard
+              task={task}
+              dragHandleProps={{
+                'data-dnd-draggable': true,
+                'data-dnd-draggable-id': task.id
+              }}
+            />
+          </div>
+        );
+      })}
     </div>
   );
-}
+};
 
 export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks, showFullWeek }: WeeklyCalendarGridProps) {
   const displayDays = showFullWeek ? weekDays : weekDays.slice(0, 5);
