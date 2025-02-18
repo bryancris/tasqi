@@ -24,6 +24,7 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
   const [endTime, setEndTime] = useState(task.end_time || "");
   const [priority, setPriority] = useState(task.priority || "low");
   const [reminderEnabled, setReminderEnabled] = useState(task.reminder_enabled || false);
+  const [reminderTime, setReminderTime] = useState(task.reminder_time || 15);
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
@@ -85,6 +86,7 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
         date: isScheduled && date ? date : null,
         priority,
         reminder_enabled: reminderEnabled,
+        reminder_time: reminderTime,
       } as const;
 
       if (isScheduled && startTime && startTime.trim() !== '') {
@@ -169,6 +171,7 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
             endTime={endTime}
             priority={priority}
             reminderEnabled={reminderEnabled}
+            reminderTime={reminderTime}
             subtasks={subtasks}
             isLoading={isLoading}
             onTitleChange={setTitle}
@@ -179,6 +182,7 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
             onEndTimeChange={setEndTime}
             onPriorityChange={setPriority}
             onReminderEnabledChange={setReminderEnabled}
+            onReminderTimeChange={setReminderTime}
             onSubtasksChange={setSubtasks}
             onSubmit={handleSubmit}
             onDelete={handleDelete}
