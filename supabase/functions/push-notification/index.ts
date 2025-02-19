@@ -40,12 +40,16 @@ async function getFCMToken(userId: string): Promise<string | null> {
 
 async function sendFCMNotification(fcmToken: string, notification: any) {
   try {
-    const url = `https://fcm.googleapis.com/v1/projects/${firebaseConfig.project_id}/messages:send`
+    const accessToken = await getAccessToken();
+    const url = `https://fcm.googleapis.com/v1/projects/${firebaseConfig.project_id}/messages:send`;
+    
+    console.log('Sending FCM notification with token:', fcmToken);
+    
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${await getAccessToken()}`,
+        Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({
         message: {
@@ -60,95 +64,124 @@ async function sendFCMNotification(fcmToken: string, notification: any) {
           },
         },
       }),
-    })
+    });
 
     if (!response.ok) {
-      throw new Error(`FCM request failed: ${response.statusText}`)
+      const errorText = await response.text();
+      throw new Error(`FCM request failed: ${response.status} - ${errorText}`);
     }
 
-    return await response.json()
+    const result = await response.json();
+    console.log('FCM notification sent successfully:', result);
+    return result;
   } catch (error) {
-    console.error('Error sending FCM notification:', error)
-    throw error
+    console.error('Error sending FCM notification:', error);
+    throw error;
   }
 }
 
 async function getAccessToken(): Promise<string> {
   try {
-    const response = await fetch('https://oauth2.googleapis.com/token', {
+    const now = Math.floor(Date.now() / 1000);
+    const oneHourFromNow = now + 3600;
+
+    const jwtHeader = {
+      alg: 'RS256',
+      typ: 'JWT',
+      kid: firebaseConfig.private_key_id
+    };
+
+    const jwtClaim = {
+      iss: firebaseConfig.client_email,
+      scope: 'https://www.googleapis.com/auth/firebase.messaging',
+      aud: 'https://oauth2.googleapis.com/token',
+      exp: oneHourFromNow,
+      iat: now,
+    };
+
+    // Create the JWT using the Web Crypto API
+    const encoder = new TextEncoder();
+    const headerData = encoder.encode(JSON.stringify(jwtHeader));
+    const claimData = encoder.encode(JSON.stringify(jwtClaim));
+    
+    const privateKey = firebaseConfig.private_key.replace(/\\n/g, '\n');
+    const keyData = await crypto.subtle.importKey(
+      'pkcs8',
+      str2ab(atob(privateKey.replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----|\n/g, ''))),
+      {
+        name: 'RSASSA-PKCS1-v1_5',
+        hash: 'SHA-256',
+      },
+      false,
+      ['sign']
+    );
+
+    const signature = await crypto.subtle.sign(
+      { name: 'RSASSA-PKCS1-v1_5' },
+      keyData,
+      new Uint8Array([...headerData, ...claimData])
+    );
+
+    const jwt = `${btoa(JSON.stringify(jwtHeader))}.${btoa(JSON.stringify(jwtClaim))}.${btoa(String.fromCharCode.apply(null, new Uint8Array(signature)))}`;
+
+    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: JSON.stringify({
+      body: new URLSearchParams({
         grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-        assertion: createJWT(),
+        assertion: jwt,
       }),
-    })
+    });
 
-    if (!response.ok) {
-      throw new Error('Failed to get access token')
+    if (!tokenResponse.ok) {
+      throw new Error('Failed to get access token');
     }
 
-    const data = await response.json()
-    return data.access_token
+    const data = await tokenResponse.json();
+    return data.access_token;
   } catch (error) {
-    console.error('Error getting access token:', error)
-    throw error
+    console.error('Error getting access token:', error);
+    throw error;
   }
 }
 
-function createJWT(): string {
-  const now = Math.floor(Date.now() / 1000)
-  const oneHourFromNow = now + 3600
-
-  const header = {
-    alg: 'RS256',
-    typ: 'JWT',
+// Helper function to convert string to ArrayBuffer
+function str2ab(str: string): ArrayBuffer {
+  const buf = new ArrayBuffer(str.length);
+  const bufView = new Uint8Array(buf);
+  for (let i = 0, strLen = str.length; i < strLen; i++) {
+    bufView[i] = str.charCodeAt(i);
   }
-
-  const claim = {
-    iss: firebaseConfig.client_email,
-    scope: 'https://www.googleapis.com/auth/firebase.messaging',
-    aud: 'https://oauth2.googleapis.com/token',
-    exp: oneHourFromNow,
-    iat: now,
-  }
-
-  // This is a simplified JWT creation - in production, use a proper JWT library
-  const encodedHeader = btoa(JSON.stringify(header))
-  const encodedClaim = btoa(JSON.stringify(claim))
-  const signature = 'dummy_signature' // In production, properly sign this
-
-  return `${encodedHeader}.${encodedClaim}.${signature}`
+  return buf;
 }
 
 Deno.serve(async (req) => {
-  // Handle CORS
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const payload: NotificationPayload = await req.json()
-    console.log('Received notification payload:', payload)
+    const payload: NotificationPayload = await req.json();
+    console.log('Received notification payload:', payload);
 
-    const fcmToken = await getFCMToken(payload.record.user_id)
+    const fcmToken = await getFCMToken(payload.record.user_id);
     if (!fcmToken) {
-      throw new Error('No FCM token found for user')
+      throw new Error('No FCM token found for user');
     }
 
-    const result = await sendFCMNotification(fcmToken, payload.record)
+    const result = await sendFCMNotification(fcmToken, payload.record);
     
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
-    })
+    });
   } catch (error) {
-    console.error('Error processing notification:', error)
+    console.error('Error processing notification:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
-    })
+    });
   }
-})
+});

@@ -26,7 +26,13 @@ messaging.onBackgroundMessage((payload) => {
     badge: '/pwa-192x192.png',
     data: payload.data,
     tag: 'task-notification',
-    requireInteraction: true
+    requireInteraction: true,
+    actions: [
+      {
+        action: 'view',
+        title: 'View Task'
+      }
+    ]
   };
 
   return self.registration.showNotification(notificationTitle, notificationOptions);
@@ -47,22 +53,24 @@ self.addEventListener('notificationclick', (event) => {
   
   event.notification.close();
   
-  event.waitUntil(
-    clients.matchAll({
-      type: "window",
-      includeUncontrolled: true
-    })
-    .then((clientList) => {
-      if (clientList.length > 0) {
-        let client = clientList[0];
-        for (let i = 0; i < clientList.length; i++) {
-          if (clientList[i].focused) {
-            client = clientList[i];
+  if (event.action === 'view') {
+    event.waitUntil(
+      clients.matchAll({
+        type: "window",
+        includeUncontrolled: true
+      })
+      .then((clientList) => {
+        if (clientList.length > 0) {
+          let client = clientList[0];
+          for (let i = 0; i < clientList.length; i++) {
+            if (clientList[i].focused) {
+              client = clientList[i];
+            }
           }
+          return client.focus();
         }
-        return client.focus();
-      }
-      return clients.openWindow('/dashboard');
-    })
-  );
+        return clients.openWindow('/dashboard');
+      })
+    );
+  }
 });
