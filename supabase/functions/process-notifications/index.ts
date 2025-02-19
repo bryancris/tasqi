@@ -40,7 +40,21 @@ serve(async (req) => {
       try {
         if (event.event_type === 'task_reminder') {
           const metadata = event.metadata
-          const taskDate = new Date(`${metadata.date}T${metadata.start_time}`)
+          
+          // Get user's timezone
+          const { data: userSettings } = await supabase
+            .from('user_settings')
+            .select('timezone')
+            .eq('user_id', event.user_id)
+            .single()
+          
+          const userTimezone = userSettings?.timezone || 'UTC'
+          
+          // Create date with proper timezone handling
+          const [hours, minutes] = metadata.start_time.split(':').map(Number)
+          const taskDate = new Date(metadata.date)
+          taskDate.setHours(hours, minutes, 0, 0)
+          
           const reminderTime = metadata.reminder_time || 15 // Default to 15 minutes if not set
           
           // Calculate when the notification should be sent
@@ -51,9 +65,12 @@ serve(async (req) => {
           console.log('Reminder minutes:', reminderTime)
           console.log('Notification time:', notificationTime.toISOString())
           console.log('Current time:', now.toISOString())
+          console.log('User timezone:', userTimezone)
 
           // Check if it's time to send the notification
-          if (now >= notificationTime && now <= taskDate) {
+          // Add a 30-second buffer to avoid missing notifications
+          const timeDiff = Math.abs(now.getTime() - notificationTime.getTime())
+          if (timeDiff <= 30000) { // Within 30 seconds of notification time
             // Get user's FCM token
             const { data: profile } = await supabase
               .from('profiles')
@@ -62,6 +79,14 @@ serve(async (req) => {
               .single()
 
             if (profile?.fcm_token) {
+              // Format times in user's timezone
+              const timeFormatter = new Intl.DateTimeFormat('en-US', {
+                hour: 'numeric',
+                minute: 'numeric',
+                hour12: true,
+                timeZone: userTimezone
+              })
+
               // Call the push-notification function
               const pushResponse = await fetch(
                 `${Deno.env.get('SUPABASE_URL')}/functions/v1/push-notification`,
@@ -74,7 +99,7 @@ serve(async (req) => {
                   body: JSON.stringify({
                     token: profile.fcm_token,
                     title: `Reminder: ${metadata.title}`,
-                    body: `Task starts ${reminderTime} minutes from now at ${metadata.start_time}`,
+                    body: `Task starts in ${reminderTime} minutes at ${timeFormatter.format(taskDate)}`,
                     data: {
                       type: 'task_reminder',
                       taskId: event.task_id.toString(),
