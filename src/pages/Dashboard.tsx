@@ -1,8 +1,7 @@
-
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { useTaskNotifications } from "@/hooks/use-task-notifications";
 import { useCalendarView } from "@/hooks/use-calendar-view";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TaskBoard } from "@/components/dashboard/TaskBoard";
 import { WeeklyCalendar } from "@/components/dashboard/WeeklyCalendar";
 import { Calendar } from "@/components/dashboard/Calendar";
@@ -18,7 +17,11 @@ export default function Dashboard() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const { view, changeView } = useCalendarView();
   const isMobile = useIsMobile();
-  console.log("Dashboard isMobile:", isMobile); // Debug log
+  
+  // Force recheck mobile status on mount
+  useEffect(() => {
+    console.log("Dashboard mounted, isMobile:", isMobile);
+  }, [isMobile]);
 
   const renderView = () => {
     switch (view) {
@@ -58,7 +61,9 @@ export default function Dashboard() {
     }
   };
 
+  // If mobile, render mobile layout
   if (isMobile) {
+    console.log("Rendering mobile dashboard layout");
     return (
       <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#F1F0FB] to-[#E5DEFF]">
         <MobileHeader />
@@ -70,6 +75,8 @@ export default function Dashboard() {
     );
   }
 
+  // Otherwise render desktop layout
+  console.log("Rendering desktop dashboard layout");
   return (
     <DashboardLayout 
       selectedDate={selectedDate}
