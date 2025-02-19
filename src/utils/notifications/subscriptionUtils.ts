@@ -74,16 +74,19 @@ const registerServiceWorker = async () => {
   }
 
   try {
+    console.log('[Push Setup] Registering service worker...');
     const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
-      scope: '/'
+      scope: '/',
+      type: 'module'
     });
     
     // Wait for the service worker to be ready
     if (registration.installing) {
-      console.log('Service worker installing');
+      console.log('[Push Setup] Service worker installing...');
       await new Promise(resolve => {
         registration.installing?.addEventListener('statechange', (e) => {
           if ((e.target as ServiceWorker).state === 'activated') {
+            console.log('[Push Setup] Service worker activated');
             resolve(true);
           }
         });
@@ -119,7 +122,7 @@ export const setupPushSubscription = async () => {
 
     console.log('[Push Setup] Getting FCM token...');
     const fcmToken = await getToken(messaging, {
-      vapidKey: 'BPYfG5p8YrAG9bsK0YeJ5YrXKcAy9wcm2LhQIHzJODbVW6gJnQUtlOsJA_XPtX4hC46QqLshhkTQ9HJxcOkIZXc',
+      vapidKey: 'BJZ6tqQupAynUEEzG1BLkVBF6_uRTkGgNMPF31bEPYnfn6kG-4hFxn1n1Roz6Ys2-Ihy0SYDSAl-I8r0O2-YhKA',
       serviceWorkerRegistration: swRegistration
     }).catch(error => {
       console.error('Error getting FCM token:', error);
