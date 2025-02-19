@@ -39,7 +39,10 @@ export function TaskNotificationFields({
     if (enabled && !isScheduled) {
       // Automatically enable scheduling when notifications are turned on
       onIsScheduledChange(true);
-      onReminderEnabledChange(enabled);
+      // Delay the reminder enable to ensure scheduling is set first
+      setTimeout(() => {
+        onReminderEnabledChange(enabled);
+      }, 0);
       toast.info("Task scheduling enabled for notifications");
     } else {
       onReminderEnabledChange(enabled);
