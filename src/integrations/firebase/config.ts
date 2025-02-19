@@ -12,6 +12,7 @@ const firebaseConfig: FirebaseOptions = {
 };
 
 let firebaseApp: any = null;
+let messagingInstance: any = null;
 
 // Initialize Firebase with static config
 export const initializeFirebase = async () => {
@@ -37,6 +38,11 @@ export const initializeFirebase = async () => {
 // Initialize Firebase Cloud Messaging
 export const initializeMessaging = async () => {
   try {
+    if (messagingInstance) {
+      console.log('Firebase Messaging already initialized, returning existing instance');
+      return messagingInstance;
+    }
+
     // Check if messaging is supported first
     const isMessagingSupported = await isSupported();
     if (!isMessagingSupported) {
@@ -49,9 +55,9 @@ export const initializeMessaging = async () => {
       throw new Error('Firebase app not initialized');
     }
 
-    const messaging = getMessaging(app);
+    messagingInstance = getMessaging(app);
     console.log('Firebase Messaging initialized successfully');
-    return messaging;
+    return messagingInstance;
   } catch (error) {
     console.error('Error initializing Firebase messaging:', error);
     return null;
