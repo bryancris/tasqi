@@ -1,19 +1,19 @@
-
-import { Button } from "@/components/ui/button";
-import { TaskPriority } from "./TaskBoard";
 import { ShareTaskDialog } from "./ShareTaskDialog";
-import { SubtaskList, Subtask } from "./subtasks/SubtaskList";
 import { TaskScheduleFields } from "./TaskScheduleFields";
 import { TaskBasicFields } from "./form/TaskBasicFields";
 import { TaskNotificationFields } from "./form/TaskNotificationFields";
 import { TaskAttachmentFields } from "./form/TaskAttachmentFields";
+import { FormSection } from "./form/sections/FormSection";
+import { FormSubmitButton } from "./form/sections/FormSubmitButton";
+import { SubtasksSection } from "./form/sections/SubtasksSection";
 import { useState, useEffect } from "react";
-import { Task } from "./TaskBoard";
+import { Task, TaskPriority } from "./TaskBoard";
 import { useChat } from "@/hooks/use-chat";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { setupPushSubscription } from "@/utils/notifications/subscriptionUtils";
 import { checkNotificationPermission } from "@/utils/notifications/notificationUtils";
+import { Subtask } from "./subtasks/SubtaskList";
 
 interface TaskFormProps {
   title: string;
@@ -176,26 +176,21 @@ export function TaskForm({
     >
       <div className="flex-1 overflow-y-auto">
         <div className={`p-4 space-y-6 ${isMobile ? 'pb-28' : ''}`}>
-          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-sm border border-[#9b87f5]/20">
+          <FormSection>
             <TaskBasicFields
               title={title}
               description={description}
               onTitleChange={onTitleChange}
               onDescriptionChange={onDescriptionChange}
             />
-          </div>
+          </FormSection>
 
-          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-sm border border-[#9b87f5]/20 space-y-4">
-            <h3 className="text-sm font-medium text-[#8B5CF6]">Subtasks</h3>
-            <div className="space-y-2">
-              <SubtaskList 
-                subtasks={subtasks} 
-                onSubtasksChange={onSubtasksChange}
-              />
-            </div>
-          </div>
+          <SubtasksSection 
+            subtasks={subtasks}
+            onSubtasksChange={onSubtasksChange}
+          />
 
-          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-sm border border-[#9b87f5]/20">
+          <FormSection>
             <TaskNotificationFields
               reminderEnabled={reminderEnabled}
               reminderTime={reminderTime}
@@ -203,9 +198,9 @@ export function TaskForm({
               onReminderEnabledChange={handleReminderToggle}
               onReminderTimeChange={onReminderTimeChange}
             />
-          </div>
+          </FormSection>
 
-          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-sm border border-[#9b87f5]/20">
+          <FormSection>
             <TaskScheduleFields
               isScheduled={isScheduled}
               date={date}
@@ -218,23 +213,20 @@ export function TaskForm({
               onEndTimeChange={onEndTimeChange}
               onPriorityChange={onPriorityChange}
             />
-          </div>
+          </FormSection>
 
-          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-sm border border-[#9b87f5]/20">
+          <FormSection>
             <TaskAttachmentFields task={task} isEditing={isEditing} />
-          </div>
+          </FormSection>
         </div>
       </div>
 
-      <div className={`${isMobile ? 'sticky bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-sm border-t border-[#9b87f5]/20 z-50' : 'p-4'}`}>
-        <Button
-          type="submit"
-          className="w-full bg-gradient-to-r from-[#9b87f5] to-[#8B5CF6] hover:from-[#8B5CF6] hover:to-[#7C3AED] text-white shadow-sm transition-all duration-200"
-          disabled={isLoading || processingAIResponse}
-        >
-          {isLoading || processingAIResponse ? "Loading..." : isEditing ? "Update Task" : "Create Task"}
-        </Button>
-      </div>
+      <FormSubmitButton 
+        isLoading={isLoading}
+        processingAIResponse={processingAIResponse}
+        isEditing={isEditing}
+        isMobile={isMobile}
+      />
 
       {task && (
         <ShareTaskDialog
