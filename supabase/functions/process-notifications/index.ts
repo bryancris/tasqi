@@ -41,6 +41,9 @@ serve(async (req) => {
         if (event.event_type === 'task_reminder') {
           const metadata = event.metadata
           
+          // Debug log to check metadata content
+          console.log('Event metadata:', JSON.stringify(metadata, null, 2))
+          
           // Get user's timezone
           const { data: userSettings } = await supabase
             .from('user_settings')
@@ -55,11 +58,11 @@ serve(async (req) => {
           const taskDate = new Date(metadata.date)
           taskDate.setHours(hours, minutes, 0, 0)
           
-          // Use the reminder_time from metadata, no default fallback
-          const reminderTime = metadata.reminder_time
+          // Convert reminder_time to number and validate
+          const reminderTime = Number(metadata.reminder_time)
           
-          if (!reminderTime) {
-            console.log('No reminder time set for task:', metadata.title)
+          if (isNaN(reminderTime) || reminderTime <= 0) {
+            console.log('Invalid reminder time for task:', metadata.title, 'Reminder time:', metadata.reminder_time)
             processedEvents.push(event.id)
             continue
           }
@@ -67,12 +70,16 @@ serve(async (req) => {
           // Calculate notification time exactly
           const notificationTime = new Date(taskDate.getTime() - (reminderTime * 60 * 1000))
           
+          // Debug logs for timing
           console.log('Task:', metadata.title)
+          console.log('Task date:', metadata.date)
+          console.log('Task start_time:', metadata.start_time)
           console.log('Task time:', taskDate.toISOString())
           console.log('Reminder minutes:', reminderTime)
           console.log('Notification time:', notificationTime.toISOString())
           console.log('Current time:', now.toISOString())
           console.log('User timezone:', userTimezone)
+          console.log('Time difference (ms):', now.getTime() - notificationTime.getTime())
 
           // Stricter time comparison - must be within 15 seconds of exact notification time
           const timeDiff = now.getTime() - notificationTime.getTime()
