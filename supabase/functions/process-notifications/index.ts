@@ -1,266 +1,140 @@
 
-import { createClient } from '@supabase/supabase-js';
-import { corsHeaders } from '../_shared/cors.ts';
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.0'
 
-const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-const firebaseConfig = JSON.parse(Deno.env.get('FIREBASE_ADMIN_CONFIG')!);
-
-async function getFCMToken(userId: string): Promise<string | null> {
-  try {
-    console.log('Fetching FCM token for user:', userId);
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('fcm_token, email')
-      .eq('id', userId)
-      .single();
-
-    if (error) {
-      console.error('Error fetching FCM token:', error);
-      throw error;
-    }
-    
-    console.log('FCM token result:', {
-      email: data?.email,
-      hasToken: !!data?.fcm_token
-    });
-    
-    return data?.fcm_token || null;
-  } catch (error) {
-    console.error('Error in getFCMToken:', error);
-    return null;
-  }
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-async function getAccessToken(): Promise<string> {
-  try {
-    const { privateKey, clientEmail } = firebaseConfig;
-    const now = Math.floor(Date.now() / 1000);
-    const oneHourFromNow = now + 3600;
-
-    const header = {
-      alg: 'RS256',
-      typ: 'JWT',
-      kid: privateKey.replace(/\\n/g, '\n'),
-    };
-
-    const claim = {
-      iss: clientEmail,
-      sub: clientEmail,
-      aud: 'https://oauth2.googleapis.com/token',
-      iat: now,
-      exp: oneHourFromNow,
-      scope: 'https://www.googleapis.com/auth/firebase.messaging',
-    };
-
-    const encoder = new TextEncoder();
-    const keyData = encoder.encode(privateKey.replace(/\\n/g, '\n'));
-    const key = await crypto.subtle.importKey(
-      'pkcs8',
-      keyData,
-      { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
-      false,
-      ['sign']
-    );
-
-    const headerEncoded = btoa(JSON.stringify(header));
-    const claimEncoded = btoa(JSON.stringify(claim));
-    const signatureInput = `${headerEncoded}.${claimEncoded}`;
-    const signature = await crypto.subtle.sign(
-      'RSASSA-PKCS1-v1_5',
-      key,
-      encoder.encode(signatureInput)
-    );
-
-    const jwt = `${headerEncoded}.${claimEncoded}.${btoa(String.fromCharCode(...new Uint8Array(signature)))}`;
-
-    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
-    });
-
-    if (!tokenResponse.ok) {
-      throw new Error(`Failed to get access token: ${await tokenResponse.text()}`);
-    }
-
-    const tokenData = await tokenResponse.json();
-    return tokenData.access_token;
-  } catch (error) {
-    console.error('Error in getAccessToken:', error);
-    throw error;
+serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders })
   }
-}
 
-async function sendFCMNotification(fcmToken: string, notification: any) {
   try {
-    console.log('Sending FCM notification:', {
-      taskId: notification.task_id,
-      type: notification.event_type,
-      metadata: notification.metadata
-    });
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
 
-    const accessToken = await getAccessToken();
-    const url = `https://fcm.googleapis.com/v1/projects/${firebaseConfig.projectId}/messages:send`;
-    
-    const messageData = {
-      message: {
-        token: fcmToken,
-        notification: {
-          title: notification.metadata.title || 'Task Reminder',
-          body: `Task due ${notification.metadata.start_time ? `at ${notification.metadata.start_time}` : 'today'}`,
-        },
-        data: {
-          type: notification.event_type,
-          taskId: notification.task_id.toString(),
-          click_action: 'FLUTTER_NOTIFICATION_CLICK',
-        },
-        webpush: {
-          headers: {
-            Urgency: 'high',
-          },
-          notification: {
-            requireInteraction: true,
-            icon: '/pwa-192x192.png',
-            badge: '/pwa-192x192.png',
-            vibrate: [200, 100, 200],
-            sound: '/notification-sound.mp3', // Add sound URL
-            silent: false
-          },
-          fcm_options: {
-            link: `${supabaseUrl}/dashboard`
-          }
-        },
-        android: {
-          priority: 'high',
-          notification: {
-            sound: 'default',
-            priority: 'max',
-            defaultSound: true,
-          },
-        },
-      },
-    };
+    console.log('Processing notifications...')
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify(messageData),
-    });
-
-    if (!response.ok) {
-      throw new Error(`FCM request failed: ${await response.text()}`);
-    }
-
-    const result = await response.json();
-    console.log('FCM notification sent successfully:', result);
-    return result;
-  } catch (error) {
-    console.error('Error in sendFCMNotification:', error);
-    throw error;
-  }
-}
-
-async function processNotifications() {
-  try {
-    console.log('Starting notification processing...');
-    
-    // Get pending notification events
-    const { data: notifications, error } = await supabase
+    // Get all pending notification events
+    const { data: events, error: eventsError } = await supabase
       .from('notification_events')
       .select('*')
       .eq('status', 'pending')
-      .order('created_at', { ascending: true });
-
-    if (error) {
-      console.error('Error fetching notifications:', error);
-      throw error;
+    
+    if (eventsError) {
+      throw eventsError
     }
 
-    console.log(`Found ${notifications?.length || 0} pending notifications`);
+    console.log(`Found ${events?.length || 0} pending notifications`)
 
-    // Process each notification
-    for (const notification of notifications || []) {
-      console.log('Processing notification:', {
-        id: notification.id,
-        type: notification.event_type,
-        userId: notification.user_id,
-        taskId: notification.task_id
-      });
+    const now = new Date()
+    const processedEvents = []
 
+    for (const event of events) {
       try {
-        const fcmToken = await getFCMToken(notification.user_id);
-        
-        if (!fcmToken) {
-          console.error(`No FCM token found for user ${notification.user_id}`);
-          continue;
+        if (event.event_type === 'task_reminder') {
+          const metadata = event.metadata
+          const taskDate = new Date(`${metadata.date}T${metadata.start_time}`)
+          const reminderTime = metadata.reminder_time || 15 // Default to 15 minutes if not set
+          
+          // Calculate when the notification should be sent
+          const notificationTime = new Date(taskDate.getTime() - (reminderTime * 60 * 1000))
+          
+          console.log('Task:', metadata.title)
+          console.log('Task time:', taskDate.toISOString())
+          console.log('Reminder minutes:', reminderTime)
+          console.log('Notification time:', notificationTime.toISOString())
+          console.log('Current time:', now.toISOString())
+
+          // Check if it's time to send the notification
+          if (now >= notificationTime && now <= taskDate) {
+            // Get user's FCM token
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('fcm_token')
+              .eq('id', event.user_id)
+              .single()
+
+            if (profile?.fcm_token) {
+              // Call the push-notification function
+              const pushResponse = await fetch(
+                `${Deno.env.get('SUPABASE_URL')}/functions/v1/push-notification`,
+                {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+                  },
+                  body: JSON.stringify({
+                    token: profile.fcm_token,
+                    title: `Reminder: ${metadata.title}`,
+                    body: `Task starts ${reminderTime} minutes from now at ${metadata.start_time}`,
+                    data: {
+                      type: 'task_reminder',
+                      taskId: event.task_id.toString(),
+                    },
+                  }),
+                }
+              )
+
+              if (!pushResponse.ok) {
+                throw new Error(`Failed to send push notification: ${pushResponse.statusText}`)
+              }
+
+              console.log(`✅ Notification sent for task: ${metadata.title}`)
+              processedEvents.push(event.id)
+            } else {
+              console.log(`❌ No FCM token found for user: ${event.user_id}`)
+              processedEvents.push(event.id)
+            }
+          }
         }
-
-        // Send the notification
-        await sendFCMNotification(fcmToken, notification);
-
-        // Update notification status to processed
-        const { error: updateError } = await supabase
-          .from('notification_events')
-          .update({ 
-            status: 'processed',
-            processed_at: new Date().toISOString()
-          })
-          .eq('id', notification.id);
-
-        if (updateError) {
-          console.error('Error updating notification status:', updateError);
-          throw updateError;
-        }
-
-        console.log(`Successfully processed notification ${notification.id}`);
       } catch (error) {
-        console.error(`Error processing notification ${notification.id}:`, error);
-        
-        // Update notification status to failed
-        await supabase
-          .from('notification_events')
-          .update({ 
-            status: 'failed',
-            error: error.message
-          })
-          .eq('id', notification.id);
+        console.error(`Error processing event ${event.id}:`, error)
+        // Mark failed events as processed to avoid repeated failures
+        processedEvents.push(event.id)
       }
     }
 
-    return { success: true, processed: notifications?.length || 0 };
-  } catch (error) {
-    console.error('Error in processNotifications:', error);
-    throw error;
-  }
-}
+    // Update processed events
+    if (processedEvents.length > 0) {
+      const { error: updateError } = await supabase
+        .from('notification_events')
+        .update({ status: 'processed' })
+        .in('id', processedEvents)
 
-// Handle incoming requests
-Deno.serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+      if (updateError) {
+        throw updateError
+      }
 
-  try {
-    console.log('Processing notifications endpoint called');
-    const result = await processNotifications();
-    
-    return new Response(JSON.stringify(result), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
-    });
+      console.log(`✅ Marked ${processedEvents.length} events as processed`)
+    }
+
+    return new Response(
+      JSON.stringify({ 
+        message: `Processed ${processedEvents.length} notifications`,
+        processedEvents 
+      }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      },
+    )
+
   } catch (error) {
-    console.error('Error in request handler:', error);
-    
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500,
-    });
+    console.error('Error processing notifications:', error)
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      },
+    )
   }
-});
+})
