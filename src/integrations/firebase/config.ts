@@ -34,7 +34,13 @@ export const initializeFirebase = async () => {
 // Initialize Firebase Cloud Messaging
 export const initializeMessaging = async () => {
   try {
-    // Check if messaging is supported first
+    // Register service worker first
+    if ('serviceWorker' in navigator) {
+      const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+      console.log('Service Worker registered with scope:', registration.scope);
+    }
+
+    // Check if messaging is supported
     const isMessagingSupported = await isSupported();
     if (!isMessagingSupported) {
       console.log('Firebase messaging is not supported in this browser');
@@ -59,7 +65,8 @@ export const initializeMessaging = async () => {
 export const getFCMToken = async (messaging: any) => {
   try {
     const currentToken = await getToken(messaging, {
-      vapidKey: "BPYfG5p8YrAG9bsK0YeJ5YrXKcAy9wcm2LhQIHzJODbVW6gJnQUtlOsJA_XPtX4hC46QqLshhkTQ9HJxcOkIZXc"
+      vapidKey: "BPYfG5p8YrAG9bsK0YeJ5YrXKcAy9wcm2LhQIHzJODbVW6gJnQUtlOsJA_XPtX4hC46QqLshhkTQ9HJxcOkIZXc",
+      serviceWorkerRegistration: await navigator.serviceWorker.getRegistration()
     });
 
     if (currentToken) {
