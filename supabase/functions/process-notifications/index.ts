@@ -55,9 +55,16 @@ serve(async (req) => {
           const taskDate = new Date(metadata.date)
           taskDate.setHours(hours, minutes, 0, 0)
           
-          const reminderTime = metadata.reminder_time || 15 // Default to 15 minutes if not set
+          // Use the reminder_time from metadata, no default fallback
+          const reminderTime = metadata.reminder_time
           
-          // Calculate when the notification should be sent
+          if (!reminderTime) {
+            console.log('No reminder time set for task:', metadata.title)
+            processedEvents.push(event.id)
+            continue
+          }
+
+          // Calculate notification time exactly
           const notificationTime = new Date(taskDate.getTime() - (reminderTime * 60 * 1000))
           
           console.log('Task:', metadata.title)
@@ -67,10 +74,9 @@ serve(async (req) => {
           console.log('Current time:', now.toISOString())
           console.log('User timezone:', userTimezone)
 
-          // Check if it's time to send the notification
-          // Add a 30-second buffer to avoid missing notifications
-          const timeDiff = Math.abs(now.getTime() - notificationTime.getTime())
-          if (timeDiff <= 30000) { // Within 30 seconds of notification time
+          // Stricter time comparison - must be within 15 seconds of exact notification time
+          const timeDiff = now.getTime() - notificationTime.getTime()
+          if (timeDiff >= 0 && timeDiff <= 15000) { // Within 15 seconds after notification time
             // Get user's FCM token
             const { data: profile } = await supabase
               .from('profiles')
