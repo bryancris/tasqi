@@ -75,7 +75,8 @@ const registerServiceWorker = async () => {
 
   try {
     const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-    console.log('✅ Service Worker already registered and active');
+    console.log('✅ Service Worker registered:', registration);
+    await registration.update();
     return registration;
   } catch (error) {
     console.error('❌ Service Worker registration failed:', error);
@@ -102,12 +103,9 @@ export const setupPushSubscription = async () => {
       throw new Error('Failed to initialize Firebase Messaging');
     }
 
-    // Use your actual VAPID key here
-    const vapidKey = 'BPYfG5p8YrAG9bsK0YeJ5YrXKcAy9wcm2LhQIHzJODbVW6gJnQUtlOsJA_XPtX4hC46QqLshhkTQ9HJxcOkIZXc';
-    console.log('[Push Setup] Getting FCM token with VAPID key...');
-
+    console.log('[Push Setup] Getting FCM token...');
     const fcmToken = await getToken(messaging, {
-      vapidKey,
+      vapidKey: 'BPYfG5p8YrAG9bsK0YeJ5YrXKcAy9wcm2LhQIHzJODbVW6gJnQUtlOsJA_XPtX4hC46QqLshhkTQ9HJxcOkIZXc',
       serviceWorkerRegistration: swRegistration
     });
 
