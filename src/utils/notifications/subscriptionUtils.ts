@@ -102,6 +102,7 @@ export const setupPushSubscription = async () => {
       throw new Error('Failed to initialize Firebase Messaging');
     }
 
+    // Use your actual VAPID key here
     const vapidKey = 'BPYfG5p8YrAG9bsK0YeJ5YrXKcAy9wcm2LhQIHzJODbVW6gJnQUtlOsJA_XPtX4hC46QqLshhkTQ9HJxcOkIZXc';
     console.log('[Push Setup] Getting FCM token with VAPID key...');
 

@@ -6,19 +6,28 @@ const firebaseConfig: FirebaseOptions = {
   apiKey: "AIzaSyBdJAQtaj5bMUmJPiGKmH-viT6vPZOITMU",
   authDomain: "tasqi-6101c.firebaseapp.com",
   projectId: "tasqi-6101c",
-  storageBucket: "tasqi-6101c.firebaseapp.com",
+  storageBucket: "tasqi-6101c.appspot.com",
   messagingSenderId: "369755737068",
   appId: "1:369755737068:web:d423408214cbc339c7cec9"
 };
 
+let firebaseApp: any = null;
+
 // Initialize Firebase with static config
 export const initializeFirebase = async () => {
   try {
+    if (firebaseApp) {
+      console.log('Firebase already initialized, returning existing instance');
+      return firebaseApp;
+    }
+
     console.log('Initializing Firebase with config:', { 
       projectId: firebaseConfig.projectId,
       messagingSenderId: firebaseConfig.messagingSenderId
     });
-    return initializeApp(firebaseConfig);
+
+    firebaseApp = initializeApp(firebaseConfig);
+    return firebaseApp;
   } catch (error) {
     console.error('Error initializing Firebase:', error);
     return null;
