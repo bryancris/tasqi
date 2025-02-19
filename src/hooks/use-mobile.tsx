@@ -4,16 +4,18 @@ import { useState, useEffect } from "react";
 const MOBILE_BREAKPOINT = 768;
 
 export function useIsMobile() {
-  const [isMobile, setIsMobile] = useState<boolean>(
-    typeof window !== 'undefined' ? window.innerWidth < MOBILE_BREAKPOINT : false
-  );
+  const [isMobile, setIsMobile] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth < MOBILE_BREAKPOINT;
+  });
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const checkMobile = () => {
-      const mobile = window.innerWidth < MOBILE_BREAKPOINT;
-      console.log("Window width:", window.innerWidth, "Is mobile:", mobile);
+      const width = window.innerWidth;
+      const mobile = width < MOBILE_BREAKPOINT;
+      console.log("Window width:", width, "Is mobile:", mobile);
       setIsMobile(mobile);
     };
 

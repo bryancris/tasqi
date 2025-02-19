@@ -62,9 +62,9 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
     .map(task => task.id);
 
   return (
-    <div className="h-[calc(100vh-144px)] overflow-hidden">
+    <div className="h-[calc(100vh-144px)] overflow-hidden px-4">
       <Card className="h-full border-none shadow-none bg-transparent">
-        <CardHeader className="pb-3 px-1">
+        <CardHeader className="pb-3 px-0">
           <div className="flex items-center justify-between">
             <CardTitle className="text-2xl font-semibold">
               {view === 'board' ? 'Task Board' : 'Timeline'}
@@ -78,11 +78,11 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="overflow-y-auto h-[calc(100%-5rem)] p-1">
+        <CardContent className="overflow-y-auto h-[calc(100%-5rem)] p-0">
           {view === 'board' ? (
             <DndContext sensors={sensors} onDragEnd={onDragEnd}>
               <SortableContext items={draggableTaskIds} strategy={verticalListSortingStrategy}>
-                <div className="flex flex-col gap-[1px]">
+                <div className="flex flex-col gap-2">
                   {sortedTasks.map((task, index) => (
                     <TaskCard
                       key={task.id}
