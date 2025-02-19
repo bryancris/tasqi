@@ -71,19 +71,24 @@ export function TaskForm({
   const { message, setMessage } = useChat();
   const [processingAIResponse, setProcessingAIResponse] = useState(false);
   const isMobile = useIsMobile();
+  const [fcmStatus, setFcmStatus] = useState<'loading' | 'ready' | 'error'>('loading');
 
   const handleReminderToggle = async (enabled: boolean) => {
     try {
       if (enabled) {
+        setFcmStatus('loading');
         const hasPermission = await checkNotificationPermission();
         if (!hasPermission) {
+          setFcmStatus('error');
           throw new Error("Notification permission denied");
         }
         await setupPushSubscription();
+        setFcmStatus('ready');
       }
       onReminderEnabledChange(enabled);
     } catch (error) {
       console.error('Error setting up notifications:', error);
+      setFcmStatus('error');
       toast({
         title: "Error",
         description: "Failed to set up notifications. Please check browser permissions.",
@@ -92,6 +97,26 @@ export function TaskForm({
       onReminderEnabledChange(false);
     }
   };
+
+  useEffect(() => {
+    const checkInitialFcmStatus = async () => {
+      try {
+        setFcmStatus('loading');
+        const hasPermission = await checkNotificationPermission();
+        if (!hasPermission) {
+          setFcmStatus('error');
+          return;
+        }
+        await setupPushSubscription();
+        setFcmStatus('ready');
+      } catch (error) {
+        console.error('Error checking FCM status:', error);
+        setFcmStatus('error');
+      }
+    };
+
+    checkInitialFcmStatus();
+  }, []);
 
   useEffect(() => {
     const handleAIResponse = (e: CustomEvent<any>) => {
@@ -167,6 +192,7 @@ export function TaskForm({
           <TaskNotificationFields
             reminderEnabled={reminderEnabled}
             reminderTime={reminderTime}
+            fcmStatus={fcmStatus}
             onReminderEnabledChange={handleReminderToggle}
             onReminderTimeChange={onReminderTimeChange}
           />
