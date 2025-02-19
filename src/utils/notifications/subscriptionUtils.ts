@@ -3,23 +3,41 @@ import { toast } from "sonner";
 import { initializeMessaging } from '@/integrations/firebase/config';
 import { getToken } from 'firebase/messaging';
 
-export const savePushSubscription = async (fcmToken: string) => {
+export const savePushSubscription = async (fcmToken: string, platform: 'web' | 'android' | 'ios' = 'web') => {
   try {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session?.user) {
       throw new Error('User must be logged in to save push subscription');
     }
 
-    console.log('[Push Subscription] Saving FCM token:', fcmToken);
+    console.log(`[Push Subscription] Saving FCM token for ${platform}:`, fcmToken);
 
-    const { error } = await supabase
+    // Save to push_device_tokens table
+    const { error: tokenError } = await supabase
+      .from('push_device_tokens')
+      .upsert({
+        user_id: session.user.id,
+        token: fcmToken,
+        platform,
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'user_id,token'
+      });
+
+    if (tokenError) {
+      console.error('[Push Subscription] Error saving device token:', tokenError);
+      throw tokenError;
+    }
+
+    // Keep the legacy storage in profiles table for backward compatibility
+    const { error: profileError } = await supabase
       .from('profiles')
       .update({ fcm_token: fcmToken })
       .eq('id', session.user.id);
 
-    if (error) {
-      console.error('[Push Subscription] Error saving FCM token:', error);
-      throw error;
+    if (profileError) {
+      console.error('[Push Subscription] Error updating profile FCM token:', profileError);
+      throw profileError;
     }
 
     console.log('✅ FCM token saved successfully');
@@ -78,7 +96,6 @@ const registerServiceWorker = async () => {
       scope: '/',
     });
     
-    // Wait for the service worker to be ready
     if (registration.installing) {
       console.log('[Push Setup] Service worker installing...');
       await new Promise(resolve => {
@@ -132,7 +149,7 @@ export const setupPushSubscription = async () => {
     }
 
     console.log('✅ FCM token received successfully');
-    await savePushSubscription(fcmToken);
+    await savePushSubscription(fcmToken, 'web');
     toast.success('Push notifications enabled successfully');
     return fcmToken;
   } catch (error) {

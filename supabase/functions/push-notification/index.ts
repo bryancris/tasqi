@@ -7,20 +7,74 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+interface AndroidConfig {
+  notification: {
+    title: string;
+    body: string;
+    click_action?: string;
+    icon?: string;
+  };
+  data?: Record<string, string>;
+}
+
+interface WebConfig {
+  notification: {
+    title: string;
+    body: string;
+    icon?: string;
+    click_action?: string;
+  };
+  webpush: {
+    fcm_options: {
+      link?: string;
+    };
+  };
+}
+
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    const { token, title, body, data } = await req.json()
+    const { token, title, body, data, platform = 'web' } = await req.json()
 
     if (!token) {
       throw new Error('FCM token is required')
     }
 
-    console.log('📱 Sending push notification:', { title, body, data })
+    console.log(`📱 Sending ${platform} push notification:`, { title, body, data })
+
+    let message: AndroidConfig | WebConfig;
+
+    if (platform === 'android') {
+      message = {
+        notification: {
+          title,
+          body,
+          icon: '/lovable-uploads/98b0b439-cc30-41da-8912-7786e473fb9a.png',
+        },
+        data: {
+          ...data,
+          click_action: 'FLUTTER_NOTIFICATION_CLICK'
+        }
+      };
+    } else {
+      // Web configuration
+      message = {
+        notification: {
+          title,
+          body,
+          icon: '/lovable-uploads/98b0b439-cc30-41da-8912-7786e473fb9a.png',
+          click_action: 'https://app.tasqi.com'
+        },
+        webpush: {
+          fcm_options: {
+            link: 'https://app.tasqi.com'
+          }
+        }
+      };
+    }
 
     const response = await fetch('https://fcm.googleapis.com/fcm/send', {
       method: 'POST',
@@ -30,13 +84,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         to: token,
-        notification: {
-          title,
-          body,
-          icon: '/lovable-uploads/98b0b439-cc30-41da-8912-7786e473fb9a.png',
-          click_action: 'https://app.tasqi.com'
-        },
-        data: data || {}
+        ...message
       })
     });
 
@@ -69,3 +117,4 @@ serve(async (req) => {
     );
   }
 })
+
