@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { TaskPriority } from "./TaskBoard";
 import { ShareTaskDialog } from "./ShareTaskDialog";
@@ -171,53 +172,64 @@ export function TaskForm({
         e.preventDefault();
         onSubmit();
       }}
-      className="flex flex-col h-full"
+      className="flex flex-col h-full bg-gradient-to-br from-[#F1F0FB] to-[#E5DEFF]"
     >
       <div className="flex-1 overflow-y-auto">
-        <div className={`p-4 space-y-4 ${isMobile ? 'pb-28' : ''}`}>
-          <TaskBasicFields
-            title={title}
-            description={description}
-            onTitleChange={onTitleChange}
-            onDescriptionChange={onDescriptionChange}
-          />
-
-          <div className="space-y-2">
-            <SubtaskList 
-              subtasks={subtasks} 
-              onSubtasksChange={onSubtasksChange}
+        <div className={`p-4 space-y-6 ${isMobile ? 'pb-28' : ''}`}>
+          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-sm border border-[#9b87f5]/20">
+            <TaskBasicFields
+              title={title}
+              description={description}
+              onTitleChange={onTitleChange}
+              onDescriptionChange={onDescriptionChange}
             />
           </div>
 
-          <TaskNotificationFields
-            reminderEnabled={reminderEnabled}
-            reminderTime={reminderTime}
-            fcmStatus={fcmStatus}
-            onReminderEnabledChange={handleReminderToggle}
-            onReminderTimeChange={onReminderTimeChange}
-          />
+          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-sm border border-[#9b87f5]/20 space-y-4">
+            <h3 className="text-sm font-medium text-[#8B5CF6]">Subtasks</h3>
+            <div className="space-y-2">
+              <SubtaskList 
+                subtasks={subtasks} 
+                onSubtasksChange={onSubtasksChange}
+              />
+            </div>
+          </div>
 
-          <TaskScheduleFields
-            isScheduled={isScheduled}
-            date={date}
-            startTime={startTime}
-            endTime={endTime}
-            priority={priority}
-            onIsScheduledChange={onIsScheduledChange}
-            onDateChange={onDateChange}
-            onStartTimeChange={onStartTimeChange}
-            onEndTimeChange={onEndTimeChange}
-            onPriorityChange={onPriorityChange}
-          />
+          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-sm border border-[#9b87f5]/20">
+            <TaskNotificationFields
+              reminderEnabled={reminderEnabled}
+              reminderTime={reminderTime}
+              fcmStatus={fcmStatus}
+              onReminderEnabledChange={handleReminderToggle}
+              onReminderTimeChange={onReminderTimeChange}
+            />
+          </div>
 
-          <TaskAttachmentFields task={task} isEditing={isEditing} />
+          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-sm border border-[#9b87f5]/20">
+            <TaskScheduleFields
+              isScheduled={isScheduled}
+              date={date}
+              startTime={startTime}
+              endTime={endTime}
+              priority={priority}
+              onIsScheduledChange={onIsScheduledChange}
+              onDateChange={onDateChange}
+              onStartTimeChange={onStartTimeChange}
+              onEndTimeChange={onEndTimeChange}
+              onPriorityChange={onPriorityChange}
+            />
+          </div>
+
+          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-sm border border-[#9b87f5]/20">
+            <TaskAttachmentFields task={task} isEditing={isEditing} />
+          </div>
         </div>
       </div>
 
-      <div className={`${isMobile ? 'sticky bottom-0 left-0 right-0 p-4 bg-white border-t z-50' : 'p-4'}`}>
+      <div className={`${isMobile ? 'sticky bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-sm border-t border-[#9b87f5]/20 z-50' : 'p-4'}`}>
         <Button
           type="submit"
-          className="w-full"
+          className="w-full bg-gradient-to-r from-[#9b87f5] to-[#8B5CF6] hover:from-[#8B5CF6] hover:to-[#7C3AED] text-white shadow-sm transition-all duration-200"
           disabled={isLoading || processingAIResponse}
         >
           {isLoading || processingAIResponse ? "Loading..." : isEditing ? "Update Task" : "Create Task"}
