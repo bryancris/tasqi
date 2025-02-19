@@ -43,7 +43,7 @@ serve(async (req) => {
           
           console.log('Event metadata:', JSON.stringify(metadata, null, 2))
           
-          // Parse task date and time
+          // Parse task date and time precisely
           const [hours, minutes] = metadata.start_time.split(':').map(Number)
           const taskDate = new Date(metadata.date)
           taskDate.setHours(hours, minutes, 0, 0)
@@ -57,7 +57,7 @@ serve(async (req) => {
             continue
           }
 
-          // Calculate when the notification should be sent
+          // Calculate exact notification time (X minutes before task time)
           const notificationTime = new Date(taskDate.getTime() - (reminderTime * 60 * 1000))
           
           // Debug logs
@@ -69,15 +69,16 @@ serve(async (req) => {
           console.log('Notification time:', notificationTime.toISOString())
           console.log('Current time:', now.toISOString())
           
-          // Calculate time until notification should be sent
+          // Calculate time remaining until notification
           const timeUntilNotification = notificationTime.getTime() - now.getTime()
           console.log('Time until notification (ms):', timeUntilNotification)
           
-          // Only send notification if we're within the correct window
-          // The notification should only be sent if:
-          // 1. The current time is after or equal to the notification time
-          // 2. We haven't passed more than 15 seconds after the notification time
-          if (timeUntilNotification <= 0 && timeUntilNotification > -15000) {
+          // Only send notification if it's exactly time (within a 5-second window)
+          // This ensures we don't send notifications too early
+          const isNotificationTime = Math.abs(timeUntilNotification) <= 5000; // 5-second window
+          
+          if (isNotificationTime) {
+            console.log('⏰ Sending notification - within 5-second window of exact notification time')
             const { data: profile } = await supabase
               .from('profiles')
               .select('fcm_token')
@@ -122,7 +123,7 @@ serve(async (req) => {
               processedEvents.push(event.id)
             }
           } else {
-            console.log(`Skipping notification - not within time window. Time until notification: ${timeUntilNotification}ms`)
+            console.log(`⏳ Not notification time yet. Waiting... (${Math.floor(timeUntilNotification / 1000)}s remaining)`)
           }
         }
       } catch (error) {
