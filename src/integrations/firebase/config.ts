@@ -1,6 +1,6 @@
 
-import { initializeApp, FirebaseOptions } from 'firebase/app';
-import { getMessaging, isSupported } from 'firebase/messaging';
+import { initializeApp, FirebaseOptions, getApp } from 'firebase/app';
+import { getMessaging, isSupported, getToken } from 'firebase/messaging';
 
 const firebaseConfig: FirebaseOptions = {
   apiKey: "AIzaSyBdJAQtaj5bMUmJPiGKmH-viT6vPZOITMU",
@@ -11,23 +11,24 @@ const firebaseConfig: FirebaseOptions = {
   appId: "1:369755737068:web:d423408214cbc339c7cec9"
 };
 
-let firebaseApp: any = null;
 let messagingInstance: any = null;
 
 // Initialize Firebase with static config
 export const initializeFirebase = async () => {
   try {
-    if (firebaseApp) {
+    let firebaseApp;
+    
+    try {
+      firebaseApp = getApp();
       console.log('Firebase already initialized, returning existing instance');
-      return firebaseApp;
+    } catch {
+      console.log('Initializing Firebase with config:', { 
+        projectId: firebaseConfig.projectId,
+        messagingSenderId: firebaseConfig.messagingSenderId
+      });
+      firebaseApp = initializeApp(firebaseConfig);
     }
-
-    console.log('Initializing Firebase with config:', { 
-      projectId: firebaseConfig.projectId,
-      messagingSenderId: firebaseConfig.messagingSenderId
-    });
-
-    firebaseApp = initializeApp(firebaseConfig);
+    
     return firebaseApp;
   } catch (error) {
     console.error('Error initializing Firebase:', error);
