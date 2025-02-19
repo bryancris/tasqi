@@ -1,5 +1,4 @@
 
-import { Button } from "@/components/ui/button";
 import { TaskPriority } from "../TaskBoard";
 import { ShareTaskDialog } from "../ShareTaskDialog";
 import { SubtaskList, Subtask } from "../subtasks/SubtaskList";
@@ -7,13 +6,13 @@ import { TaskScheduleFields } from "../TaskScheduleFields";
 import { TaskBasicFields } from "./TaskBasicFields";
 import { TaskNotificationFields } from "./TaskNotificationFields";
 import { TaskAttachmentFields } from "./TaskAttachmentFields";
-import { useState, useEffect } from "react";
+import { TaskFormFooter } from "./TaskFormFooter";
+import { useState } from "react";
 import { Task } from "../TaskBoard";
 import { useChat } from "@/hooks/use-chat";
-import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { setupPushSubscription } from "@/utils/notifications/subscriptionUtils";
-import { checkNotificationPermission } from "@/utils/notifications/notificationUtils";
+import { useFcmStatus } from "@/hooks/use-fcm-status";
+import { useAiTaskResponse } from "@/hooks/use-ai-task-response";
 
 interface TaskFormProps {
   title: string;
@@ -70,101 +69,16 @@ export function TaskForm({
 }: TaskFormProps) {
   const [showShareDialog, setShowShareDialog] = useState(false);
   const { message, setMessage } = useChat();
-  const [processingAIResponse, setProcessingAIResponse] = useState(false);
   const isMobile = useIsMobile();
-  const [fcmStatus, setFcmStatus] = useState<'loading' | 'ready' | 'error'>('loading');
-
-  const handleReminderToggle = async (enabled: boolean) => {
-    try {
-      if (enabled) {
-        setFcmStatus('loading');
-        const hasPermission = await checkNotificationPermission();
-        if (!hasPermission) {
-          setFcmStatus('error');
-          throw new Error("Notification permission denied");
-        }
-        await setupPushSubscription();
-        setFcmStatus('ready');
-      }
-      onReminderEnabledChange(enabled);
-    } catch (error) {
-      console.error('Error setting up notifications:', error);
-      setFcmStatus('error');
-      toast({
-        title: "Error",
-        description: "Failed to set up notifications. Please check browser permissions.",
-        variant: "destructive",
-      });
-      onReminderEnabledChange(false);
-    }
-  };
-
-  useEffect(() => {
-    const checkInitialFcmStatus = async () => {
-      try {
-        setFcmStatus('loading');
-        const hasPermission = await checkNotificationPermission();
-        if (!hasPermission) {
-          setFcmStatus('error');
-          return;
-        }
-        await setupPushSubscription();
-        setFcmStatus('ready');
-      } catch (error) {
-        console.error('Error checking FCM status:', error);
-        setFcmStatus('error');
-      }
-    };
-
-    checkInitialFcmStatus();
-  }, []);
-
-  useEffect(() => {
-    const handleAIResponse = (e: CustomEvent<any>) => {
-      console.log('AI Response received in TaskForm:', e.detail);
-      
-      if (e.detail?.task) {
-        setProcessingAIResponse(true);
-        
-        try {
-          const taskData = e.detail.task;
-          console.log('Processing task data:', taskData);
-
-          onTitleChange(taskData.title || '');
-          onDescriptionChange(taskData.description || '');
-          onIsScheduledChange(!!taskData.is_scheduled);
-          if (taskData.date) onDateChange(taskData.date);
-
-          if (taskData.subtasks && Array.isArray(taskData.subtasks)) {
-            console.log('Setting subtasks:', taskData.subtasks);
-            const newSubtasks = taskData.subtasks.map((subtask: any, index: number) => ({
-              title: subtask.title,
-              status: 'pending',
-              position: index
-            }));
-            onSubtasksChange(newSubtasks);
-            
-            toast({
-              title: "Subtasks Added",
-              description: `Added ${newSubtasks.length} subtasks to your task.`,
-            });
-          }
-        } catch (error) {
-          console.error('Error processing AI response:', error);
-          toast({
-            title: "Error",
-            description: "Failed to process AI response",
-            variant: "destructive",
-          });
-        } finally {
-          setProcessingAIResponse(false);
-        }
-      }
-    };
-
-    window.addEventListener('ai-response', handleAIResponse as EventListener);
-    return () => window.removeEventListener('ai-response', handleAIResponse as EventListener);
-  }, [onTitleChange, onDescriptionChange, onIsScheduledChange, onDateChange, onSubtasksChange]);
+  
+  const { fcmStatus, handleReminderToggle } = useFcmStatus();
+  const { processingAIResponse } = useAiTaskResponse({
+    onTitleChange,
+    onDescriptionChange,
+    onIsScheduledChange,
+    onDateChange,
+    onSubtasksChange,
+  });
 
   return (
     <form
@@ -194,7 +108,7 @@ export function TaskForm({
             reminderEnabled={reminderEnabled}
             reminderTime={reminderTime}
             fcmStatus={fcmStatus}
-            onReminderEnabledChange={handleReminderToggle}
+            onReminderEnabledChange={(enabled) => handleReminderToggle(enabled, onReminderEnabledChange)}
             onReminderTimeChange={onReminderTimeChange}
           />
 
@@ -215,15 +129,12 @@ export function TaskForm({
         </div>
       </div>
 
-      <div className={`${isMobile ? 'sticky bottom-0 left-0 right-0 p-4 bg-white border-t z-50' : 'p-4'}`}>
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={isLoading || processingAIResponse}
-        >
-          {isLoading || processingAIResponse ? "Loading..." : isEditing ? "Update Task" : "Create Task"}
-        </Button>
-      </div>
+      <TaskFormFooter
+        isLoading={isLoading}
+        processingAIResponse={processingAIResponse}
+        isEditing={isEditing}
+        isMobile={isMobile}
+      />
 
       {task && (
         <ShareTaskDialog
