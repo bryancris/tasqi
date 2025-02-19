@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { initializeMessaging } from '@/integrations/firebase/config';
@@ -121,7 +120,7 @@ export const setupPushSubscription = async () => {
 
     console.log('[Push Setup] Getting FCM token...');
     const fcmToken = await getToken(messaging, {
-      vapidKey: 'BJZ6tqQupAynUEEzG1BLkVBF6_uRTkGgNMPF31bEPYnfn6kG-4hFxn1n1Roz6Ys2-Ihy0SYDSAl-I8r0O2-YhKA',
+      vapidKey: 'BDkZH-EjmuThUI1kagyO9Oi5kjR8Ake8joSnREFu7hUXQzZSSMYLcYZ_RAlTDk2l0F7Mq6avwAoGQOaFt9y5RaI',
       serviceWorkerRegistration: swRegistration
     }).catch(error => {
       console.error('Error getting FCM token:', error);
