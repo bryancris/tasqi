@@ -1,6 +1,7 @@
 
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Select,
   SelectContent,
@@ -12,6 +13,7 @@ import {
 interface TaskNotificationFieldsProps {
   reminderEnabled: boolean;
   reminderTime: number;
+  fcmStatus: 'loading' | 'ready' | 'error';
   onReminderEnabledChange: (value: boolean) => void;
   onReminderTimeChange: (value: number) => void;
 }
@@ -27,6 +29,7 @@ const REMINDER_TIME_OPTIONS = [
 export function TaskNotificationFields({
   reminderEnabled,
   reminderTime,
+  fcmStatus,
   onReminderEnabledChange,
   onReminderTimeChange,
 }: TaskNotificationFieldsProps) {
@@ -38,12 +41,18 @@ export function TaskNotificationFields({
             id="reminder"
             checked={reminderEnabled}
             onCheckedChange={onReminderEnabledChange}
+            disabled={fcmStatus !== 'ready'}
           />
-          <Label htmlFor="reminder">Enable notifications</Label>
+          <Label htmlFor="reminder" className="flex items-center gap-2">
+            Enable notifications
+            {fcmStatus === 'loading' && (
+              <Spinner className="w-4 h-4" />
+            )}
+          </Label>
         </div>
       </div>
 
-      {reminderEnabled && (
+      {reminderEnabled && fcmStatus === 'ready' && (
         <div className="flex items-center space-x-2">
           <Label htmlFor="reminderTime">Notify me</Label>
           <Select
@@ -61,8 +70,4 @@ export function TaskNotificationFields({
               ))}
             </SelectContent>
           </Select>
-        </div>
-      )}
-    </div>
-  );
-}
+        
