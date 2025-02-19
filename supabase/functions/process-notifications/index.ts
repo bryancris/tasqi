@@ -41,24 +41,14 @@ serve(async (req) => {
         if (event.event_type === 'task_reminder') {
           const metadata = event.metadata
           
-          // Debug log to check metadata content
           console.log('Event metadata:', JSON.stringify(metadata, null, 2))
           
-          // Get user's timezone
-          const { data: userSettings } = await supabase
-            .from('user_settings')
-            .select('timezone')
-            .eq('user_id', event.user_id)
-            .single()
-          
-          const userTimezone = userSettings?.timezone || 'UTC'
-          
-          // Create date with proper timezone handling
+          // Parse task date and time
           const [hours, minutes] = metadata.start_time.split(':').map(Number)
           const taskDate = new Date(metadata.date)
           taskDate.setHours(hours, minutes, 0, 0)
           
-          // Convert reminder_time to number and validate
+          // Convert reminder_time to number
           const reminderTime = Number(metadata.reminder_time)
           
           if (isNaN(reminderTime) || reminderTime <= 0) {
@@ -67,10 +57,10 @@ serve(async (req) => {
             continue
           }
 
-          // Calculate notification time exactly
+          // Calculate when the notification should be sent
           const notificationTime = new Date(taskDate.getTime() - (reminderTime * 60 * 1000))
           
-          // Debug logs for timing
+          // Debug logs
           console.log('Task:', metadata.title)
           console.log('Task date:', metadata.date)
           console.log('Task start_time:', metadata.start_time)
@@ -78,13 +68,16 @@ serve(async (req) => {
           console.log('Reminder minutes:', reminderTime)
           console.log('Notification time:', notificationTime.toISOString())
           console.log('Current time:', now.toISOString())
-          console.log('User timezone:', userTimezone)
-          console.log('Time difference (ms):', now.getTime() - notificationTime.getTime())
-
-          // Stricter time comparison - must be within 15 seconds of exact notification time
-          const timeDiff = now.getTime() - notificationTime.getTime()
-          if (timeDiff >= 0 && timeDiff <= 15000) { // Within 15 seconds after notification time
-            // Get user's FCM token
+          
+          // Calculate time until notification should be sent
+          const timeUntilNotification = notificationTime.getTime() - now.getTime()
+          console.log('Time until notification (ms):', timeUntilNotification)
+          
+          // Only send notification if we're within the correct window
+          // The notification should only be sent if:
+          // 1. The current time is after or equal to the notification time
+          // 2. We haven't passed more than 15 seconds after the notification time
+          if (timeUntilNotification <= 0 && timeUntilNotification > -15000) {
             const { data: profile } = await supabase
               .from('profiles')
               .select('fcm_token')
@@ -92,15 +85,12 @@ serve(async (req) => {
               .single()
 
             if (profile?.fcm_token) {
-              // Format times in user's timezone
               const timeFormatter = new Intl.DateTimeFormat('en-US', {
                 hour: 'numeric',
                 minute: 'numeric',
-                hour12: true,
-                timeZone: userTimezone
+                hour12: true
               })
 
-              // Call the push-notification function
               const pushResponse = await fetch(
                 `${Deno.env.get('SUPABASE_URL')}/functions/v1/push-notification`,
                 {
@@ -131,11 +121,12 @@ serve(async (req) => {
               console.log(`❌ No FCM token found for user: ${event.user_id}`)
               processedEvents.push(event.id)
             }
+          } else {
+            console.log(`Skipping notification - not within time window. Time until notification: ${timeUntilNotification}ms`)
           }
         }
       } catch (error) {
         console.error(`Error processing event ${event.id}:`, error)
-        // Mark failed events as processed to avoid repeated failures
         processedEvents.push(event.id)
       }
     }
