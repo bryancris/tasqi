@@ -1,3 +1,4 @@
+
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { useTaskNotifications } from "@/hooks/use-task-notifications";
 import { useCalendarView } from "@/hooks/use-calendar-view";
@@ -11,16 +12,17 @@ import { MobileHeader } from "@/components/layouts/MobileHeader";
 import { MobileFooter } from "@/components/layouts/MobileFooter";
 
 export default function Dashboard() {
-  // Initialize task notifications
   useTaskNotifications();
-  
   const [selectedDate, setSelectedDate] = useState(new Date());
   const { view, changeView } = useCalendarView();
   const isMobile = useIsMobile();
-  
-  // Force recheck mobile status on mount
+
   useEffect(() => {
-    console.log("Dashboard mounted, isMobile:", isMobile);
+    // Force reflow on mobile status change
+    document.body.style.minHeight = '100vh';
+    setTimeout(() => {
+      document.body.style.minHeight = '';
+    }, 0);
   }, [isMobile]);
 
   const renderView = () => {
@@ -61,9 +63,7 @@ export default function Dashboard() {
     }
   };
 
-  // If mobile, render mobile layout
-  if (isMobile) {
-    console.log("Rendering mobile dashboard layout");
+  if (window.innerWidth <= 768) {  // Force check actual window width
     return (
       <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#F1F0FB] to-[#E5DEFF]">
         <MobileHeader />
@@ -75,8 +75,6 @@ export default function Dashboard() {
     );
   }
 
-  // Otherwise render desktop layout
-  console.log("Rendering desktop dashboard layout");
   return (
     <DashboardLayout 
       selectedDate={selectedDate}

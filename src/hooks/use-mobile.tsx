@@ -5,64 +5,41 @@ const MOBILE_BREAKPOINT = 768;
 
 export function useIsMobile() {
   const [isMobile, setIsMobile] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
+    if (typeof window === 'undefined') return true; // Default to mobile first
     
-    // Check if device is mobile using multiple methods
-    const userAgent = window.navigator.userAgent.toLowerCase();
+    // Use a more aggressive mobile detection approach
     const width = window.innerWidth;
-    const isMobileDevice = Boolean(
-      userAgent.match(/android|webos|iphone|ipad|ipod|blackberry|windows phone/i) ||
-      'ontouchstart' in window ||
-      window.matchMedia('(max-width: 768px)').matches ||
-      width <= MOBILE_BREAKPOINT
-    );
-    
-    console.log("Initial mobile check:", {
-      width,
-      userAgent,
-      isMobileDevice,
-      mediaQuery: window.matchMedia('(max-width: 768px)').matches
-    });
-    
-    return isMobileDevice;
+    return width <= MOBILE_BREAKPOINT;
   });
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const checkMobile = () => {
-      const userAgent = window.navigator.userAgent.toLowerCase();
       const width = window.innerWidth;
-      const isMobileDevice = Boolean(
-        userAgent.match(/android|webos|iphone|ipad|ipod|blackberry|windows phone/i) ||
-        'ontouchstart' in window ||
-        window.matchMedia('(max-width: 768px)').matches ||
-        width <= MOBILE_BREAKPOINT
-      );
+      const shouldBeMobile = width <= MOBILE_BREAKPOINT;
       
-      console.log("Mobile check on resize:", {
+      console.log("Mobile check:", {
         width,
-        userAgent,
-        isMobileDevice,
-        mediaQuery: window.matchMedia('(max-width: 768px)').matches
+        shouldBeMobile,
+        currentState: isMobile
       });
       
-      setIsMobile(isMobileDevice);
+      if (shouldBeMobile !== isMobile) {
+        setIsMobile(shouldBeMobile);
+      }
     };
 
-    // Check immediately
+    // Check immediately and on every resize
     checkMobile();
-
-    // Add event listeners for both resize and orientation change
     window.addEventListener('resize', checkMobile);
     window.addEventListener('orientationchange', checkMobile);
 
-    // Cleanup
     return () => {
       window.removeEventListener('resize', checkMobile);
       window.removeEventListener('orientationchange', checkMobile);
     };
-  }, []);
+  }, [isMobile]);
 
   return isMobile;
 }
