@@ -1,6 +1,6 @@
 
-import { initializeApp, FirebaseOptions, getApp } from 'firebase/app';
-import { getMessaging, isSupported, getToken } from 'firebase/messaging';
+import { initializeApp, FirebaseOptions } from 'firebase/app';
+import { getMessaging, isSupported } from 'firebase/messaging';
 
 const firebaseConfig: FirebaseOptions = {
   apiKey: "AIzaSyBdJAQtaj5bMUmJPiGKmH-viT6vPZOITMU",
@@ -18,13 +18,7 @@ export const initializeFirebase = async () => {
       projectId: firebaseConfig.projectId,
       messagingSenderId: firebaseConfig.messagingSenderId
     });
-
-    // Check if Firebase app is already initialized
-    try {
-      return getApp();
-    } catch {
-      return initializeApp(firebaseConfig);
-    }
+    return initializeApp(firebaseConfig);
   } catch (error) {
     console.error('Error initializing Firebase:', error);
     return null;
@@ -34,13 +28,7 @@ export const initializeFirebase = async () => {
 // Initialize Firebase Cloud Messaging
 export const initializeMessaging = async () => {
   try {
-    // Register service worker first
-    if ('serviceWorker' in navigator) {
-      const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-      console.log('Service Worker registered with scope:', registration.scope);
-    }
-
-    // Check if messaging is supported
+    // Check if messaging is supported first
     const isMessagingSupported = await isSupported();
     if (!isMessagingSupported) {
       console.log('Firebase messaging is not supported in this browser');
@@ -57,27 +45,6 @@ export const initializeMessaging = async () => {
     return messaging;
   } catch (error) {
     console.error('Error initializing Firebase messaging:', error);
-    return null;
-  }
-};
-
-// Get FCM token with proper VAPID key
-export const getFCMToken = async (messaging: any) => {
-  try {
-    const currentToken = await getToken(messaging, {
-      vapidKey: "BPYfG5p8YrAG9bsK0YeJ5YrXKcAy9wcm2LhQIHzJODbVW6gJnQUtlOsJA_XPtX4hC46QqLshhkTQ9HJxcOkIZXc",
-      serviceWorkerRegistration: await navigator.serviceWorker.getRegistration()
-    });
-
-    if (currentToken) {
-      console.log('FCM token obtained successfully');
-      return currentToken;
-    } else {
-      console.log('No registration token available');
-      return null;
-    }
-  } catch (error) {
-    console.error('Error getting FCM token:', error);
     return null;
   }
 };

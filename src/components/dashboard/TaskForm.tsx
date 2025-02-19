@@ -9,7 +9,7 @@ import { TaskAttachmentFields } from "./form/TaskAttachmentFields";
 import { useState, useEffect } from "react";
 import { Task } from "./TaskBoard";
 import { useChat } from "@/hooks/use-chat";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { setupPushSubscription } from "@/utils/notifications/subscriptionUtils";
 import { checkNotificationPermission } from "@/utils/notifications/notificationUtils";
@@ -84,17 +84,13 @@ export function TaskForm({
       onReminderEnabledChange(enabled);
     } catch (error) {
       console.error('Error setting up notifications:', error);
-      toast("Failed to set up notifications. Please check browser permissions.");
+      toast({
+        title: "Error",
+        description: "Failed to set up notifications. Please check browser permissions.",
+        variant: "destructive",
+      });
       onReminderEnabledChange(false);
     }
-  };
-
-  const handleIsScheduledChange = (value: boolean) => {
-    if (!value && reminderEnabled) {
-      toast("Notifications disabled as task is no longer scheduled");
-      onReminderEnabledChange(false);
-    }
-    onIsScheduledChange(value);
   };
 
   useEffect(() => {
@@ -122,11 +118,18 @@ export function TaskForm({
             }));
             onSubtasksChange(newSubtasks);
             
-            toast(`Added ${newSubtasks.length} subtasks to your task.`);
+            toast({
+              title: "Subtasks Added",
+              description: `Added ${newSubtasks.length} subtasks to your task.`,
+            });
           }
         } catch (error) {
           console.error('Error processing AI response:', error);
-          toast("Failed to process AI response");
+          toast({
+            title: "Error",
+            description: "Failed to process AI response",
+            variant: "destructive",
+          });
         } finally {
           setProcessingAIResponse(false);
         }
@@ -161,26 +164,24 @@ export function TaskForm({
             />
           </div>
 
+          <TaskNotificationFields
+            reminderEnabled={reminderEnabled}
+            reminderTime={reminderTime}
+            onReminderEnabledChange={handleReminderToggle}
+            onReminderTimeChange={onReminderTimeChange}
+          />
+
           <TaskScheduleFields
             isScheduled={isScheduled}
             date={date}
             startTime={startTime}
             endTime={endTime}
             priority={priority}
-            onIsScheduledChange={handleIsScheduledChange}
+            onIsScheduledChange={onIsScheduledChange}
             onDateChange={onDateChange}
             onStartTimeChange={onStartTimeChange}
             onEndTimeChange={onEndTimeChange}
             onPriorityChange={onPriorityChange}
-          />
-
-          <TaskNotificationFields
-            reminderEnabled={reminderEnabled}
-            reminderTime={reminderTime}
-            isScheduled={isScheduled}
-            onReminderEnabledChange={handleReminderToggle}
-            onReminderTimeChange={onReminderTimeChange}
-            onIsScheduledChange={onIsScheduledChange}
           />
 
           <TaskAttachmentFields task={task} isEditing={isEditing} />
