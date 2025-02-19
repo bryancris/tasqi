@@ -79,8 +79,8 @@ enabled = false
 [auth.external.workos]
 enabled = false
 
-[functions]
-verify_jwt = false
-[functions.process-notifications]
+[functions.push-notification]
 verify_jwt = false
 
+[functions.process-notifications]
+verify_jwt = false
