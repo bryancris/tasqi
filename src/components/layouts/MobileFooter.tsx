@@ -19,7 +19,6 @@ export function MobileFooter() {
   const [isChatOpen, setIsChatOpen] = useState(false);
 
   const handleNavigation = (path: string) => {
-    // Close chat if open when navigating
     if (isChatOpen) {
       setIsChatOpen(false);
     }

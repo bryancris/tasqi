@@ -7,6 +7,7 @@ import { MobileFooter } from "@/components/layouts/MobileFooter";
 
 const Settings = () => {
   const isMobile = useIsMobile();
+  console.log("Is Mobile in Settings:", isMobile); // Added for debugging
 
   if (isMobile) {
     return (

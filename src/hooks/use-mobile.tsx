@@ -6,7 +6,10 @@ const MOBILE_BREAKPOINT = 768;
 export function useIsMobile() {
   const [isMobile, setIsMobile] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
-    return window.innerWidth < MOBILE_BREAKPOINT;
+    const width = window.innerWidth;
+    const mobile = width < MOBILE_BREAKPOINT;
+    console.log("Initial window width:", width, "Is mobile:", mobile);
+    return mobile;
   });
 
   useEffect(() => {
@@ -15,26 +18,19 @@ export function useIsMobile() {
     const checkMobile = () => {
       const width = window.innerWidth;
       const mobile = width < MOBILE_BREAKPOINT;
-      console.log("Window width:", width, "Is mobile:", mobile);
+      console.log("Window width changed:", width, "Is mobile:", mobile);
       setIsMobile(mobile);
     };
 
     // Initial check
     checkMobile();
 
-    // Add event listener with debounce
-    let timeoutId: NodeJS.Timeout;
-    const handleResize = () => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(checkMobile, 100);
-    };
-
-    window.addEventListener('resize', handleResize);
+    // Add event listener
+    window.addEventListener('resize', checkMobile);
 
     // Cleanup
     return () => {
-      window.removeEventListener('resize', handleResize);
-      clearTimeout(timeoutId);
+      window.removeEventListener('resize', checkMobile);
     };
   }, []);
 

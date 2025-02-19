@@ -37,7 +37,7 @@ export function MobileHeader() {
     try {
       console.log('Testing notifications setup...');
       await setupPushSubscription();
-      await playSound(); // Add sound playback here
+      await playSound();
       toast.success('Push notifications test completed');
     } catch (error) {
       console.error('Test notification error:', error);
