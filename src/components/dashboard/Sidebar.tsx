@@ -19,7 +19,7 @@ export function Sidebar({ onViewChange, selectedDate, onDateChange }: SidebarPro
       <div className="p-4 border-b">
         <HeaderTime />
       </div>
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto scrollbar-hide p-4">
         <AddTaskDrawer>
           <Button
             className="w-full bg-[#2ECC71] hover:bg-[#27AE60] text-white mb-4"
@@ -38,7 +38,7 @@ export function Sidebar({ onViewChange, selectedDate, onDateChange }: SidebarPro
               mode="single"
               selected={selectedDate}
               onSelect={(date) => date && onDateChange(date)}
-              className="w-full"
+              className="w-full rounded-lg"
             />
           </div>
           <BottomControls />
