@@ -7,7 +7,6 @@ import { TaskScheduleFields } from "../TaskScheduleFields";
 import { TaskBasicFields } from "./TaskBasicFields";
 import { TaskNotificationFields } from "./TaskNotificationFields";
 import { TaskAttachmentFields } from "./TaskAttachmentFields";
-import { TaskFormButtons } from "./TaskFormButtons";
 import { useState, useEffect } from "react";
 import { Task } from "../TaskBoard";
 import { useChat } from "@/hooks/use-chat";
@@ -73,19 +72,24 @@ export function TaskForm({
   const { message, setMessage } = useChat();
   const [processingAIResponse, setProcessingAIResponse] = useState(false);
   const isMobile = useIsMobile();
+  const [fcmStatus, setFcmStatus] = useState<'loading' | 'ready' | 'error'>('loading');
 
   const handleReminderToggle = async (enabled: boolean) => {
     try {
       if (enabled) {
+        setFcmStatus('loading');
         const hasPermission = await checkNotificationPermission();
         if (!hasPermission) {
+          setFcmStatus('error');
           throw new Error("Notification permission denied");
         }
         await setupPushSubscription();
+        setFcmStatus('ready');
       }
       onReminderEnabledChange(enabled);
     } catch (error) {
       console.error('Error setting up notifications:', error);
+      setFcmStatus('error');
       toast({
         title: "Error",
         description: "Failed to set up notifications. Please check browser permissions.",
@@ -96,18 +100,43 @@ export function TaskForm({
   };
 
   useEffect(() => {
+    const checkInitialFcmStatus = async () => {
+      try {
+        setFcmStatus('loading');
+        const hasPermission = await checkNotificationPermission();
+        if (!hasPermission) {
+          setFcmStatus('error');
+          return;
+        }
+        await setupPushSubscription();
+        setFcmStatus('ready');
+      } catch (error) {
+        console.error('Error checking FCM status:', error);
+        setFcmStatus('error');
+      }
+    };
+
+    checkInitialFcmStatus();
+  }, []);
+
+  useEffect(() => {
     const handleAIResponse = (e: CustomEvent<any>) => {
+      console.log('AI Response received in TaskForm:', e.detail);
+      
       if (e.detail?.task) {
         setProcessingAIResponse(true);
         
         try {
           const taskData = e.detail.task;
+          console.log('Processing task data:', taskData);
+
           onTitleChange(taskData.title || '');
           onDescriptionChange(taskData.description || '');
           onIsScheduledChange(!!taskData.is_scheduled);
           if (taskData.date) onDateChange(taskData.date);
 
           if (taskData.subtasks && Array.isArray(taskData.subtasks)) {
+            console.log('Setting subtasks:', taskData.subtasks);
             const newSubtasks = taskData.subtasks.map((subtask: any, index: number) => ({
               title: subtask.title,
               status: 'pending',
@@ -164,6 +193,7 @@ export function TaskForm({
           <TaskNotificationFields
             reminderEnabled={reminderEnabled}
             reminderTime={reminderTime}
+            fcmStatus={fcmStatus}
             onReminderEnabledChange={handleReminderToggle}
             onReminderTimeChange={onReminderTimeChange}
           />
@@ -186,7 +216,13 @@ export function TaskForm({
       </div>
 
       <div className={`${isMobile ? 'sticky bottom-0 left-0 right-0 p-4 bg-white border-t z-50' : 'p-4'}`}>
-        <TaskFormButtons isLoading={isLoading || processingAIResponse} isEditing={isEditing} />
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={isLoading || processingAIResponse}
+        >
+          {isLoading || processingAIResponse ? "Loading..." : isEditing ? "Update Task" : "Create Task"}
+        </Button>
       </div>
 
       {task && (
