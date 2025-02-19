@@ -32,16 +32,6 @@ messaging.onBackgroundMessage((payload) => {
   return self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-self.addEventListener('install', (event) => {
-  console.log('[Service Worker] Installing Service Worker...', event);
-  event.waitUntil(self.skipWaiting());
-});
-
-self.addEventListener('activate', (event) => {
-  console.log('[Service Worker] Activating Service Worker...', event);
-  event.waitUntil(self.clients.claim());
-});
-
 self.addEventListener('notificationclick', (event) => {
   console.log('[Service Worker] Notification click received:', event);
   
