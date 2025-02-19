@@ -2,7 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { initializeMessaging } from '@/integrations/firebase/config';
-import { getToken as getFirebaseToken } from 'firebase/messaging';
+import { getToken } from 'firebase/messaging';
 
 export const savePushSubscription = async (fcmToken: string) => {
   try {
@@ -74,29 +74,8 @@ const registerServiceWorker = async () => {
   }
 
   try {
-    const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
-      scope: '/'
-    });
-    
-    if (registration.active) {
-      console.log('✅ Service Worker already registered and active');
-      return registration;
-    }
-
-    // Wait for the service worker to be ready
-    await new Promise<void>((resolve) => {
-      if (registration.installing) {
-        registration.installing.addEventListener('statechange', (e) => {
-          if ((e.target as ServiceWorker).state === 'activated') {
-            resolve();
-          }
-        });
-      } else {
-        resolve();
-      }
-    });
-
-    console.log('✅ Service Worker registered successfully');
+    const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+    console.log('✅ Service Worker already registered and active');
     return registration;
   } catch (error) {
     console.error('❌ Service Worker registration failed:', error);
@@ -126,7 +105,7 @@ export const setupPushSubscription = async () => {
     const vapidKey = 'BPYfG5p8YrAG9bsK0YeJ5YrXKcAy9wcm2LhQIHzJODbVW6gJnQUtlOsJA_XPtX4hC46QqLshhkTQ9HJxcOkIZXc';
     console.log('[Push Setup] Getting FCM token with VAPID key...');
 
-    const fcmToken = await getFirebaseToken(messaging, {
+    const fcmToken = await getToken(messaging, {
       vapidKey,
       serviceWorkerRegistration: swRegistration
     });
