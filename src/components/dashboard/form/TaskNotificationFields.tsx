@@ -70,4 +70,9 @@ export function TaskNotificationFields({
               ))}
             </SelectContent>
           </Select>
-        
+        </div>
+      )}
+    </div>
+  );
+}
+
