@@ -77,7 +77,6 @@ const registerServiceWorker = async () => {
     console.log('[Push Setup] Registering service worker...');
     const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
       scope: '/',
-      type: 'module'
     });
     
     // Wait for the service worker to be ready

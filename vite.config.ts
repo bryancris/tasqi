@@ -75,8 +75,7 @@ export default defineConfig(({ mode }) => ({
         ]
       },
       devOptions: {
-        enabled: true,
-        type: 'module'
+        enabled: true
       }
     })
   ].filter(Boolean),
@@ -88,8 +87,7 @@ export default defineConfig(({ mode }) => ({
   build: {
     rollupOptions: {
       input: {
-        main: path.resolve(__dirname, 'index.html'),
-        'firebase-messaging-sw': path.resolve(__dirname, 'public/firebase-messaging-sw.js')
+        main: path.resolve(__dirname, 'index.html')
       }
     }
   }
