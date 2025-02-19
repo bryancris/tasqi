@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { useState } from "react";
 
 interface TaskNotificationFieldsProps {
   reminderEnabled: boolean;
@@ -35,18 +36,26 @@ export function TaskNotificationFields({
   onReminderTimeChange,
   onIsScheduledChange,
 }: TaskNotificationFieldsProps) {
+  const [showTimeSelect, setShowTimeSelect] = useState(false);
+
   const handleReminderToggle = (enabled: boolean) => {
     if (enabled && !isScheduled) {
       // Automatically enable scheduling when notifications are turned on
       onIsScheduledChange(true);
-      // Delay the reminder enable to ensure scheduling is set first
-      setTimeout(() => {
-        onReminderEnabledChange(enabled);
-      }, 0);
-      toast.info("Task scheduling enabled for notifications");
-    } else {
+      setShowTimeSelect(true);
+      toast.info("Please select when you'd like to be notified");
+    } else if (!enabled) {
       onReminderEnabledChange(enabled);
+      setShowTimeSelect(false);
     }
+  };
+
+  const handleTimeSelection = (value: string) => {
+    const timeValue = Number(value);
+    onReminderTimeChange(timeValue);
+    onReminderEnabledChange(true);
+    setShowTimeSelect(false);
+    toast.success(`Notifications will be sent ${REMINDER_TIME_OPTIONS.find(opt => opt.value === timeValue)?.label}`);
   };
 
   return (
@@ -56,7 +65,7 @@ export function TaskNotificationFields({
           <div className="flex items-center space-x-2">
             <Switch
               id="reminder"
-              checked={reminderEnabled}
+              checked={reminderEnabled || showTimeSelect}
               onCheckedChange={handleReminderToggle}
               disabled={!isScheduled}
             />
@@ -70,12 +79,12 @@ export function TaskNotificationFields({
         </div>
       </div>
 
-      {reminderEnabled && (
+      {(reminderEnabled || showTimeSelect) && (
         <div className="flex items-center space-x-2">
           <Label htmlFor="reminderTime">Notify me</Label>
           <Select
             value={reminderTime.toString()}
-            onValueChange={(value) => onReminderTimeChange(Number(value))}
+            onValueChange={handleTimeSelection}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select time" />
