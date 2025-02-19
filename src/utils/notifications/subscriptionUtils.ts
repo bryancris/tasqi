@@ -13,7 +13,6 @@ export const savePushSubscription = async (fcmToken: string) => {
 
     console.log('[Push Subscription] Saving FCM token:', fcmToken);
 
-    // Update the FCM token in the profiles table
     const { error } = await supabase
       .from('profiles')
       .update({ fcm_token: fcmToken })
@@ -37,13 +36,11 @@ const checkNotificationPermission = async () => {
     throw new Error('This browser does not support notifications');
   }
 
-  // Check if permission is already granted
   if (Notification.permission === 'granted') {
     console.log('✅ Notification permission already granted');
     return true;
   }
 
-  // Check if permission is denied (blocked)
   if (Notification.permission === 'denied') {
     const message = 'Notifications are blocked. Please enable them in your browser settings to receive task reminders.';
     console.log('[Push Setup] Notifications blocked:', message);
@@ -61,7 +58,6 @@ const checkNotificationPermission = async () => {
     return false;
   }
 
-  // Request permission if not yet asked
   try {
     const permission = await Notification.requestPermission();
     console.log('📱 Notification permission result:', permission);
@@ -78,34 +74,29 @@ const registerServiceWorker = async () => {
   }
 
   try {
-    // First check if service worker is already registered
-    const existingRegistration = await navigator.serviceWorker.getRegistration();
-    if (existingRegistration?.active) {
-      console.log('✅ Service Worker already registered and active');
-      return existingRegistration;
-    }
-
-    // If not registered or not active, register it
-    console.log('🔄 Registering Service Worker...');
     const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
       scope: '/'
     });
-
-    // Wait for the service worker to be ready
-    if (registration.installing) {
-      console.log('⏳ Waiting for Service Worker to be installed...');
-      await new Promise((resolve) => {
-        const installingWorker = registration.installing;
-        installingWorker?.addEventListener('statechange', (e) => {
-          const sw = e.target as ServiceWorker;
-          if (sw.state === 'activated') {
-            resolve(true);
-          }
-        });
-      });
+    
+    if (registration.active) {
+      console.log('✅ Service Worker already registered and active');
+      return registration;
     }
 
-    console.log('✅ Service Worker registered and activated successfully');
+    // Wait for the service worker to be ready
+    await new Promise<void>((resolve) => {
+      if (registration.installing) {
+        registration.installing.addEventListener('statechange', (e) => {
+          if ((e.target as ServiceWorker).state === 'activated') {
+            resolve();
+          }
+        });
+      } else {
+        resolve();
+      }
+    });
+
+    console.log('✅ Service Worker registered successfully');
     return registration;
   } catch (error) {
     console.error('❌ Service Worker registration failed:', error);
@@ -117,15 +108,13 @@ export const setupPushSubscription = async () => {
   try {
     console.log('[Push Setup] Setting up web push notifications...');
     
-    // First check notification permission
     const isPermissionGranted = await checkNotificationPermission();
     if (!isPermissionGranted) {
       return null;
     }
 
-    // Register service worker first and wait for it to be ready
-    const registration = await registerServiceWorker();
-    if (!registration) {
+    const swRegistration = await registerServiceWorker();
+    if (!swRegistration) {
       throw new Error('Failed to register service worker');
     }
 
@@ -134,31 +123,29 @@ export const setupPushSubscription = async () => {
       throw new Error('Failed to initialize Firebase Messaging');
     }
 
-    try {
-      const fcmToken = await getFirebaseToken(messaging, {
-        serviceWorkerRegistration: registration,
-        vapidKey: 'BPYfG5p8YrAG9bsK0YeJ5YrXKcAy9wcm2LhQIHzJODbVW6gJnQUtlOsJA_XPtX4hC46QqLshhkTQ9HJxcOkIZXc'
-      });
+    const vapidKey = 'BPYfG5p8YrAG9bsK0YeJ5YrXKcAy9wcm2LhQIHzJODbVW6gJnQUtlOsJA_XPtX4hC46QqLshhkTQ9HJxcOkIZXc';
+    console.log('[Push Setup] Getting FCM token with VAPID key...');
 
-      if (!fcmToken) {
-        throw new Error('Failed to get FCM token');
-      }
+    const fcmToken = await getFirebaseToken(messaging, {
+      vapidKey,
+      serviceWorkerRegistration: swRegistration
+    });
 
-      console.log('✅ FCM token received successfully');
-      await savePushSubscription(fcmToken);
-      toast.success('Push notifications enabled successfully');
-      return fcmToken;
-    } catch (error) {
-      if (error instanceof Error && error.message.includes('permission-blocked')) {
-        toast.error('Please enable notifications in your browser settings to receive task reminders');
-        return null;
-      }
-      
-      throw error;
+    if (!fcmToken) {
+      throw new Error('Failed to get FCM token');
     }
+
+    console.log('✅ FCM token received successfully');
+    await savePushSubscription(fcmToken);
+    toast.success('Push notifications enabled successfully');
+    return fcmToken;
   } catch (error) {
     console.error('Error in setupPushSubscription:', error);
-    toast.error(error instanceof Error ? error.message : 'Failed to setup push notifications');
+    if (error instanceof Error) {
+      toast.error(error.message);
+    } else {
+      toast.error('Failed to setup push notifications');
+    }
     return null;
   }
 };
