@@ -89,7 +89,10 @@ export function TaskForm({
         
         setFcmStatus('ready');
         onReminderEnabledChange(true);
-        toast.success('Notifications enabled successfully');
+        toast({
+          title: "Success",
+          description: "Notifications enabled successfully",
+        });
       } else {
         onReminderEnabledChange(false);
       }
@@ -98,11 +101,11 @@ export function TaskForm({
       setFcmStatus('error');
       onReminderEnabledChange(false);
       
-      if (error instanceof Error) {
-        toast.error(error.message);
-      } else {
-        toast.error('Failed to setup notifications. Please check browser permissions.');
-      }
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : 'Failed to setup notifications. Please check browser permissions.',
+        variant: "destructive",
+      });
     }
   };
 
