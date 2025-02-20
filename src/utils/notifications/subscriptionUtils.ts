@@ -4,8 +4,16 @@ import { toast } from "sonner";
 import { initializeMessaging } from '@/integrations/firebase/config';
 import { getToken } from 'firebase/messaging';
 import { getAndSaveToken } from './tokenManagement';
+import { isTwinrEnvironment, detectPlatform } from './platformDetection';
 
 const checkNotificationPermission = async () => {
+  // If we're in the Twinr environment, we'll use its native notification system
+  if (isTwinrEnvironment()) {
+    console.log('✅ Using Twinr notification system');
+    return true;
+  }
+
+  // For web browsers
   if (!('Notification' in window)) {
     throw new Error('This browser does not support notifications');
   }
@@ -45,7 +53,26 @@ const checkNotificationPermission = async () => {
 export const setupPushSubscription = async () => {
   try {
     console.log('[Push Setup] Setting up push notifications...');
-    
+    const platform = detectPlatform();
+    console.log('Detected platform:', platform);
+
+    // If we're in Twinr environment, use its native token fetch
+    if (isTwinrEnvironment()) {
+      try {
+        console.log('Fetching Twinr push token...');
+        const token = await (window as any).twinr_push_token_fetch();
+        if (token) {
+          console.log('✅ Twinr push token received');
+          return token;
+        }
+        throw new Error('Failed to get Twinr push token');
+      } catch (error) {
+        console.error('Error getting Twinr push token:', error);
+        throw new Error('Failed to setup native push notifications');
+      }
+    }
+
+    // For web platform
     const isPermissionGranted = await checkNotificationPermission();
     if (!isPermissionGranted) {
       return null;
