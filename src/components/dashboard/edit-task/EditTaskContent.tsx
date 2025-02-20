@@ -62,7 +62,7 @@ export function EditTaskContent({
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] overflow-hidden">
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 overflow-y-auto">
         <TaskForm
           title={title}
           description={description}
