@@ -1,10 +1,8 @@
+
 import { Task } from "./TaskBoard";
-import { getPriorityColor } from "@/utils/taskColors";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { format, isSameDay, parseISO, startOfDay, addDays, subDays } from "date-fns";
-import { useState } from "react";
+import { format, isSameDay, parseISO } from "date-fns";
 import { EditTaskDrawer } from "./EditTaskDrawer";
+import { useState } from "react";
 
 interface TimelineSlotProps {
   time: string;
@@ -13,126 +11,61 @@ interface TimelineSlotProps {
   onDateChange: (date: Date) => void;
 }
 
-// Separate TaskContent component to handle task rendering
-const TaskContent = ({ task }: { task: Task }) => {
-  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
+export function TimelineSlot({ time, tasks, selectedDate }: TimelineSlotProps) {
+  const [editTask, setEditTask] = useState<Task | null>(null);
 
-  return (
-    <>
-      <div
-        key={task.id}
-        onClick={() => setIsEditDrawerOpen(true)}
-        className={`p-2 rounded-lg text-white ${getPriorityColor(task.priority)}`}
-      >
-        <p className="font-medium">{task.title}</p>
-        {task.start_time && task.end_time && (
-          <p className="text-sm opacity-90">{`${task.start_time} - ${task.end_time}`}</p>
-        )}
-      </div>
-      <EditTaskDrawer 
-        task={task} 
-        open={isEditDrawerOpen} 
-        onOpenChange={setIsEditDrawerOpen} 
-      />
-    </>
-  );
-};
+  // Filter tasks that match this time slot
+  const slotTasks = tasks.filter(task => {
+    if (!task.start_time || !task.date) return false;
+    
+    const taskDate = parseISO(task.date);
+    const taskHour = task.start_time.split(':')[0];
+    const slotHour = time.split(':')[0];
+    
+    console.log('Checking task for slot:', {
+      taskTitle: task.title,
+      taskTime: task.start_time,
+      slotTime: time,
+      taskHour,
+      slotHour,
+      matches: taskHour === slotHour && isSameDay(taskDate, selectedDate)
+    });
 
-// Separate TimeSlotContent component
-const TimeSlotContent = ({ time, tasks }: { time: string; tasks: Task[] }) => {
-  if (tasks.length === 0) {
-    return (
-      <div className="flex items-start gap-4">
-        <div className="w-16 text-sm text-gray-500">{time}</div>
-        <div className="flex-1 min-h-[2rem] border-l-2 border-gray-100"></div>
-      </div>
-    );
-  }
+    return taskHour === slotHour && isSameDay(taskDate, selectedDate);
+  });
 
   return (
     <div className="flex items-start gap-4">
       <div className="w-16 text-sm text-gray-500">{time}</div>
       <div className="flex-1 space-y-2">
-        {tasks.map((task) => (
-          <TaskContent key={task.id} task={task} />
+        {slotTasks.map((task) => (
+          <div
+            key={task.id}
+            onClick={() => setEditTask(task)}
+            className={`p-2 rounded-lg text-white cursor-pointer transition-all hover:brightness-110 ${
+              task.priority === 'high'
+                ? 'bg-red-500'
+                : task.priority === 'medium'
+                ? 'bg-yellow-500'
+                : 'bg-blue-500'
+            }`}
+          >
+            <p className="font-medium">{task.title}</p>
+            {task.start_time && task.end_time && (
+              <p className="text-sm opacity-90">
+                {task.start_time} - {task.end_time}
+              </p>
+            )}
+          </div>
         ))}
+        {editTask && (
+          <EditTaskDrawer
+            task={editTask}
+            open={!!editTask}
+            onOpenChange={() => setEditTask(null)}
+          />
+        )}
       </div>
     </div>
   );
-};
-
-// Date selector component
-const DateSelector = ({ selectedDate, onDateChange }: { selectedDate: Date; onDateChange: (date: Date) => void }) => {
-  const handlePreviousDay = () => {
-    const newDate = subDays(selectedDate, 1);
-    onDateChange(newDate);
-  };
-
-  const handleNextDay = () => {
-    const newDate = addDays(selectedDate, 1);
-    onDateChange(newDate);
-  };
-
-  return (
-    <div className="flex items-center justify-between px-4 py-2 bg-white rounded-lg shadow-sm mb-4">
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={handlePreviousDay}
-        className="h-8 w-8"
-      >
-        <ChevronLeft className="h-4 w-4" />
-      </Button>
-      
-      <div className="flex flex-col items-center">
-        <span className="text-sm font-medium">
-          {format(selectedDate, "MMMM d, yyyy")}
-        </span>
-        <span className="text-xs text-muted-foreground">
-          Daily
-        </span>
-      </div>
-
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={handleNextDay}
-        className="h-8 w-8"
-      >
-        <ChevronRight className="h-4 w-4" />
-      </Button>
-    </div>
-  );
-};
-
-export function TimelineSlot({ time, tasks, selectedDate, onDateChange }: TimelineSlotProps) {
-  // Filter tasks for the selected date AND time slot
-  const filteredTasks = tasks.filter(task => {
-    if (!task.date || !task.start_time) return false;
-    
-    const taskDate = parseISO(task.date);
-    const isMatchingDate = isSameDay(taskDate, selectedDate);
-    const isMatchingTime = task.start_time.startsWith(time.split(':')[0]);
-    
-    return isMatchingDate && isMatchingTime;
-  });
-
-  // Render date selector only for the first time slot
-  if (time === "09:00") {
-    return (
-      <TimeSlotContent time={time} tasks={filteredTasks} />
-    );
-  }
-
-  // Special case for 08:00 to include the date selector
-  if (time === "08:00") {
-    return (
-      <div className="space-y-4">
-        <DateSelector selectedDate={selectedDate} onDateChange={onDateChange} />
-        <TimeSlotContent time={time} tasks={filteredTasks} />
-      </div>
-    );
-  }
-
-  return <TimeSlotContent time={time} tasks={filteredTasks} />;
 }

@@ -1,8 +1,10 @@
+
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TimelineSlot } from "../TimelineSlot";
 import { Task } from "../TaskBoard";
 import { supabase } from "@/integrations/supabase/client";
+import { format, isSameDay, parseISO } from "date-fns";
 
 interface TimelineSectionProps {
   tasks: Task[];
@@ -47,10 +49,21 @@ export function TimelineSection({ tasks, selectedDate, onDateChange }: TimelineS
     }
   );
 
-  // Get all scheduled tasks for the timeline (not filtered by date)
-  const allScheduledTasks = tasks.filter(task => 
-    task.status === 'scheduled'
-  );
+  // Filter tasks for the selected date and that are scheduled
+  const scheduledTasks = tasks.filter(task => {
+    if (task.status !== 'scheduled' || !task.date) return false;
+    
+    const taskDate = parseISO(task.date);
+    console.log('Comparing dates:', {
+      taskDate: format(taskDate, 'yyyy-MM-dd'),
+      selectedDate: format(selectedDate, 'yyyy-MM-dd'),
+      isSame: isSameDay(taskDate, selectedDate)
+    });
+    
+    return isSameDay(taskDate, selectedDate);
+  });
+
+  console.log('Scheduled tasks for timeline:', scheduledTasks);
 
   return (
     <Card>
@@ -63,7 +76,7 @@ export function TimelineSection({ tasks, selectedDate, onDateChange }: TimelineS
             <TimelineSlot 
               key={timeSlot} 
               time={timeSlot} 
-              tasks={allScheduledTasks}
+              tasks={scheduledTasks}
               selectedDate={selectedDate}
               onDateChange={onDateChange}
             />
