@@ -1,8 +1,8 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { initializeMessaging } from '@/integrations/firebase/config';
 import { getToken } from 'firebase/messaging';
+import { getAndSaveToken } from './tokenManagement';
 
 export const savePushSubscription = async (fcmToken: string, platform: 'web' | 'android' | 'ios' = 'web') => {
   try {
@@ -11,7 +11,7 @@ export const savePushSubscription = async (fcmToken: string, platform: 'web' | '
       throw new Error('User must be logged in to save push subscription');
     }
 
-    console.log(`[Push Subscription] Saving FCM token for ${platform}:`, fcmToken);
+    console.log(`[Push Subscription] Saving token for ${platform}`);
 
     // Get browser/device info
     const deviceInfo = {
@@ -27,8 +27,9 @@ export const savePushSubscription = async (fcmToken: string, platform: 'web' | '
         user_id: session.user.id,
         token: fcmToken,
         platform,
+        token_source: 'fcm',
         updated_at: new Date().toISOString(),
-        app_version: '1.0.0', // Update with actual app version
+        app_version: '1.0.0',
         os_version: platform === 'web' ? navigator.userAgent : undefined,
         metadata: deviceInfo,
         notification_settings: {
@@ -56,7 +57,7 @@ export const savePushSubscription = async (fcmToken: string, platform: 'web' | '
       throw profileError;
     }
 
-    console.log('✅ FCM token saved successfully');
+    console.log('✅ Token saved successfully');
   } catch (error) {
     console.error('[Push Subscription] Error in savePushSubscription:', error);
     toast.error('Failed to save push subscription');
@@ -134,40 +135,20 @@ const registerServiceWorker = async () => {
 
 export const setupPushSubscription = async () => {
   try {
-    console.log('[Push Setup] Setting up web push notifications...');
+    console.log('[Push Setup] Setting up push notifications...');
     
     const isPermissionGranted = await checkNotificationPermission();
     if (!isPermissionGranted) {
       return null;
     }
 
-    const swRegistration = await registerServiceWorker();
-    if (!swRegistration) {
-      throw new Error('Failed to register service worker');
+    const tokenResponse = await getAndSaveToken();
+    if (tokenResponse) {
+      toast.success('Push notifications enabled successfully');
+      return tokenResponse.token;
     }
 
-    const messaging = await initializeMessaging();
-    if (!messaging) {
-      throw new Error('Failed to initialize Firebase Messaging');
-    }
-
-    console.log('[Push Setup] Getting FCM token...');
-    const fcmToken = await getToken(messaging, {
-      vapidKey: 'BDkZH-EjmuThUI1kagyO9Oi5kjR8Ake8joSnREFu7hUXQzZSSMYLcYZ_RAlTDk2l0F7Mq6avwAoGQOaFt9y5RaI',
-      serviceWorkerRegistration: swRegistration
-    }).catch(error => {
-      console.error('Error getting FCM token:', error);
-      throw error;
-    });
-
-    if (!fcmToken) {
-      throw new Error('Failed to get FCM token');
-    }
-
-    console.log('✅ FCM token received successfully');
-    await savePushSubscription(fcmToken, 'web');
-    toast.success('Push notifications enabled successfully');
-    return fcmToken;
+    return null;
   } catch (error) {
     console.error('Error in setupPushSubscription:', error);
     if (error instanceof Error) {

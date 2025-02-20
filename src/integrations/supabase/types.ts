@@ -548,7 +548,9 @@ export type Database = {
           notification_settings: Json | null
           os_version: string | null
           platform: string
+          platform_details: Json | null
           token: string
+          token_source: string | null
           updated_at: string
           user_id: string
         }
@@ -562,7 +564,9 @@ export type Database = {
           notification_settings?: Json | null
           os_version?: string | null
           platform: string
+          platform_details?: Json | null
           token: string
+          token_source?: string | null
           updated_at?: string
           user_id: string
         }
@@ -576,7 +580,9 @@ export type Database = {
           notification_settings?: Json | null
           os_version?: string | null
           platform?: string
+          platform_details?: Json | null
           token?: string
+          token_source?: string | null
           updated_at?: string
           user_id?: string
         }
