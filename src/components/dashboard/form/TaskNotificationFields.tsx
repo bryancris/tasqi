@@ -11,6 +11,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useEffect } from "react";
+import { setupPushSubscription } from "@/utils/notifications/subscriptionUtils";
+import { detectPlatform } from "@/utils/notifications/platformDetection";
 
 interface TaskNotificationFieldsProps {
   reminderEnabled: boolean;
@@ -43,25 +45,27 @@ export function TaskNotificationFields({
   }, [fcmStatus, reminderEnabled, onReminderEnabledChange]);
 
   const handleToggle = async (enabled: boolean) => {
-    if (!('Notification' in window)) {
-      toast.error("Your browser doesn't support notifications");
+    if (!enabled) {
+      onReminderEnabledChange(false);
       return;
     }
 
-    if (Notification.permission === 'denied') {
-      toast.error("Please enable notifications in your browser settings", {
-        duration: 5000,
-        action: {
-          label: "How to enable",
-          onClick: () => {
-            window.open('https://support.google.com/chrome/answer/3220216?hl=en', '_blank');
-          }
-        }
-      });
-      return;
-    }
+    try {
+      console.log('[Notifications] Setting up notifications...');
+      const platform = detectPlatform();
+      console.log('[Notifications] Detected platform:', platform);
 
-    onReminderEnabledChange(enabled);
+      const token = await setupPushSubscription();
+      if (token) {
+        onReminderEnabledChange(true);
+      } else {
+        console.log('[Notifications] Failed to get notification token');
+        onReminderEnabledChange(false);
+      }
+    } catch (error) {
+      console.error('[Notifications] Error setting up notifications:', error);
+      onReminderEnabledChange(false);
+    }
   };
 
   return (
