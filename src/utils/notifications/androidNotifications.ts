@@ -1,13 +1,13 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { savePushSubscription } from "./subscriptionUtils";
+import { setupPushSubscription } from "./subscriptionUtils";
 import { toast } from "sonner";
 
 export const registerAndroidToken = async (fcmToken: string, deviceId?: string) => {
   try {
     console.log('[Android Push] Registering FCM token:', { fcmToken, deviceId });
     
-    await savePushSubscription(fcmToken, 'android');
+    await setupPushSubscription();
     
     console.log('✅ Android FCM token registered successfully');
     return true;

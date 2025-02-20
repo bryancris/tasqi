@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react';
-import { getAndSaveToken } from '@/utils/notifications/tokenManagement';
+import { setupPushSubscription } from '@/utils/notifications/subscriptionUtils';
 import { isTwinrEnvironment } from '@/utils/notifications/platformDetection';
 
 export function useFCMStatus() {
@@ -14,7 +14,6 @@ export function useFCMStatus() {
         setIsLoading(true);
         setError(null);
 
-        // Log environment detection
         const isTwinr = isTwinrEnvironment();
         console.log('🔍 Environment Check:', {
           isTwinrEnvironment: isTwinr,
@@ -22,11 +21,9 @@ export function useFCMStatus() {
           platform: navigator.platform
         });
 
-        const tokenResponse = await getAndSaveToken();
-        console.log('📱 Token Response:', {
-          success: !!tokenResponse,
-          platform: tokenResponse?.platform,
-          source: tokenResponse?.source
+        const tokenResponse = await setupPushSubscription();
+        console.log('📱 Token setup response:', {
+          success: !!tokenResponse
         });
 
         setIsEnabled(!!tokenResponse);
