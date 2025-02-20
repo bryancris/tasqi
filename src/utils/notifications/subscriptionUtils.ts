@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { initializeMessaging } from '@/integrations/firebase/config';
@@ -12,6 +13,13 @@ export const savePushSubscription = async (fcmToken: string, platform: 'web' | '
 
     console.log(`[Push Subscription] Saving FCM token for ${platform}:`, fcmToken);
 
+    // Get browser/device info
+    const deviceInfo = {
+      userAgent: navigator.userAgent,
+      platform: navigator.platform,
+      language: navigator.language,
+    };
+
     // Save to push_device_tokens table
     const { error: tokenError } = await supabase
       .from('push_device_tokens')
@@ -19,7 +27,15 @@ export const savePushSubscription = async (fcmToken: string, platform: 'web' | '
         user_id: session.user.id,
         token: fcmToken,
         platform,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        app_version: '1.0.0', // Update with actual app version
+        os_version: platform === 'web' ? navigator.userAgent : undefined,
+        metadata: deviceInfo,
+        notification_settings: {
+          task_reminders: true,
+          task_updates: true,
+          task_sharing: true
+        }
       }, {
         onConflict: 'user_id,token'
       });

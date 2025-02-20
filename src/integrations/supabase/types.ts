@@ -239,6 +239,10 @@ export type Database = {
       notification_events: {
         Row: {
           created_at: string
+          delivery_attempts: number | null
+          delivery_platform: string | null
+          delivery_status: string | null
+          device_token_id: number | null
           error_count: number | null
           event_type: Database["public"]["Enums"]["notification_event_type"]
           id: number
@@ -251,6 +255,10 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          delivery_attempts?: number | null
+          delivery_platform?: string | null
+          delivery_status?: string | null
+          device_token_id?: number | null
           error_count?: number | null
           event_type: Database["public"]["Enums"]["notification_event_type"]
           id?: never
@@ -263,6 +271,10 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          delivery_attempts?: number | null
+          delivery_platform?: string | null
+          delivery_status?: string | null
+          device_token_id?: number | null
           error_count?: number | null
           event_type?: Database["public"]["Enums"]["notification_event_type"]
           id?: never
@@ -273,7 +285,15 @@ export type Database = {
           task_id?: number
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "notification_events_device_token_id_fkey"
+            columns: ["device_token_id"]
+            isOneToOne: false
+            referencedRelation: "push_device_tokens"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {
@@ -519,30 +539,42 @@ export type Database = {
       }
       push_device_tokens: {
         Row: {
+          app_version: string | null
           created_at: string
           device_id: string | null
           id: number
+          last_notification_time: string | null
           metadata: Json | null
+          notification_settings: Json | null
+          os_version: string | null
           platform: string
           token: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          app_version?: string | null
           created_at?: string
           device_id?: string | null
           id?: number
+          last_notification_time?: string | null
           metadata?: Json | null
+          notification_settings?: Json | null
+          os_version?: string | null
           platform: string
           token: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          app_version?: string | null
           created_at?: string
           device_id?: string | null
           id?: number
+          last_notification_time?: string | null
           metadata?: Json | null
+          notification_settings?: Json | null
+          os_version?: string | null
           platform?: string
           token?: string
           updated_at?: string
