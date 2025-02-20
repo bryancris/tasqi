@@ -1,94 +1,58 @@
+import { Task } from "@/components/dashboard/TaskBoard";
+import { detectPlatform, isTwinrEnvironment } from "./platformDetection";
 
-export const showNotification = async (task: any, type: 'reminder' | 'shared' = 'reminder') => {
+export async function showNotification(task: Task, type: 'reminder' | 'shared' = 'reminder') {
   try {
+    console.log('🔔 Showing notification:', {
+      taskId: task.id,
+      type,
+      title: task.title,
+      platform: detectPlatform()
+    });
+
+    if (isTwinrEnvironment()) {
+      // Log Twinr notification attempt
+      console.log('📱 Using Twinr notification system');
+      // Assuming Twinr has a notification method
+      await (window as any).twinr_show_notification({
+        title: type === 'reminder' ? 'Task Reminder' : 'Task Shared',
+        body: task.title,
+        data: { taskId: task.id, type }
+      });
+      return true;
+    }
+
+    // Web notifications
     if (!('Notification' in window)) {
-      console.error('❌ Notifications not supported');
-      return;
-    }
-
-    if (!('serviceWorker' in navigator)) {
-      console.error('❌ Service Worker not supported');
-      return;
-    }
-
-    let permission = Notification.permission;
-
-    if (permission !== 'granted') {
-      console.log('📱 Requesting notification permission...');
-      permission = await Notification.requestPermission();
-      
-      if (permission !== 'granted') {
-        console.error('❌ Notification permission not granted');
-        return;
-      }
-    }
-
-    console.log('🔔 Notification permission:', permission);
-
-    const registration = await navigator.serviceWorker.ready;
-    console.log('✅ Service worker ready, attempting to show notification');
-
-    const title = type === 'shared' ? 'New Shared Task' : task.title;
-    const body = type === 'shared' 
-      ? `A task has been shared with you: ${task.title}`
-      : `Task due ${task.start_time ? `at ${task.start_time}` : 'today'}`;
-
-    const options = {
-      body,
-      icon: '/pwa-192x192.png',
-      badge: '/pwa-192x192.png',
-      tag: `task-${task.id}-${type}`,
-      renotify: true,
-      requireInteraction: true,
-      silent: false,
-      vibrate: [200, 100, 200],
-      data: {
-        url: window.location.origin + '/dashboard',
-        taskId: task.id,
-        type: type === 'shared' ? 'task_share' : 'task_reminder'
-      }
-    };
-
-    await registration.showNotification(title, options);
-    console.log('✅ Notification sent successfully for task:', task.title);
-
-    // Play notification sound if supported
-    try {
-      const audio = new Audio('/notification-sound.mp3');
-      audio.volume = 0.5;
-      await audio.play();
-    } catch (error) {
-      console.warn('Could not play notification sound:', error);
-    }
-
-  } catch (error) {
-    console.error('Error showing notification:', error);
-    throw error;
-  }
-};
-
-export const checkNotificationPermission = async () => {
-  try {
-    if (!('Notification' in window)) {
-      console.error('❌ Notifications not supported');
+      console.warn('❌ Notifications not supported in this browser');
       return false;
     }
 
     if (Notification.permission === 'granted') {
-      console.log('✅ Notification permission already granted');
+      const notification = new Notification(
+        type === 'reminder' ? 'Task Reminder' : 'Task Shared',
+        {
+          body: task.title,
+          icon: '/favicon.ico',
+          badge: '/favicon.ico',
+          tag: `task-${task.id}`,
+          data: { taskId: task.id, type }
+        }
+      );
+
+      notification.onclick = function() {
+        console.log('🔔 Notification clicked:', task.id);
+        window.focus();
+        // Add navigation logic here if needed
+      };
+
       return true;
     }
 
-    if (Notification.permission !== 'denied') {
-      const permission = await Notification.requestPermission();
-      console.log('📱 Notification permission result:', permission);
-      return permission === 'granted';
-    }
-
+    console.warn('⚠️ Notification permission not granted');
     return false;
   } catch (error) {
-    console.error('Error checking notification permission:', error);
+    console.error('❌ Error showing notification:', error);
     return false;
   }
-};
-
+}

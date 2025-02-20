@@ -1,58 +1,46 @@
 
-import { useState, useEffect } from "react";
-import { checkNotificationPermission } from "@/utils/notifications/notificationUtils";
-import { setupPushSubscription } from "@/utils/notifications/subscriptionUtils";
-import { toast } from "@/components/ui/use-toast";
+import { useEffect, useState } from 'react';
+import { getAndSaveToken } from '@/utils/notifications/tokenManagement';
+import { isTwinrEnvironment } from '@/utils/notifications/platformDetection';
 
-export type FcmStatus = 'loading' | 'ready' | 'error';
-
-export function useFcmStatus() {
-  const [fcmStatus, setFcmStatus] = useState<FcmStatus>('loading');
-
-  const checkInitialFcmStatus = async () => {
-    try {
-      setFcmStatus('loading');
-      const hasPermission = await checkNotificationPermission();
-      if (!hasPermission) {
-        setFcmStatus('error');
-        return;
-      }
-      await setupPushSubscription();
-      setFcmStatus('ready');
-    } catch (error) {
-      console.error('Error checking FCM status:', error);
-      setFcmStatus('error');
-    }
-  };
-
-  const handleReminderToggle = async (enabled: boolean, onReminderEnabledChange: (enabled: boolean) => void) => {
-    try {
-      if (enabled) {
-        setFcmStatus('loading');
-        const hasPermission = await checkNotificationPermission();
-        if (!hasPermission) {
-          setFcmStatus('error');
-          throw new Error("Notification permission denied");
-        }
-        await setupPushSubscription();
-        setFcmStatus('ready');
-      }
-      onReminderEnabledChange(enabled);
-    } catch (error) {
-      console.error('Error setting up notifications:', error);
-      setFcmStatus('error');
-      toast({
-        title: "Error",
-        description: "Failed to set up notifications. Please check browser permissions.",
-        variant: "destructive",
-      });
-      onReminderEnabledChange(false);
-    }
-  };
+export function useFCMStatus() {
+  const [isEnabled, setIsEnabled] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    checkInitialFcmStatus();
+    async function checkStatus() {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // Log environment detection
+        const isTwinr = isTwinrEnvironment();
+        console.log('🔍 Environment Check:', {
+          isTwinrEnvironment: isTwinr,
+          userAgent: navigator.userAgent,
+          platform: navigator.platform
+        });
+
+        const tokenResponse = await getAndSaveToken();
+        console.log('📱 Token Response:', {
+          success: !!tokenResponse,
+          platform: tokenResponse?.platform,
+          source: tokenResponse?.source
+        });
+
+        setIsEnabled(!!tokenResponse);
+      } catch (err) {
+        console.error('❌ Push notification setup failed:', err);
+        setError(err instanceof Error ? err.message : 'Failed to setup push notifications');
+        setIsEnabled(false);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    checkStatus();
   }, []);
 
-  return { fcmStatus, handleReminderToggle };
+  return { isEnabled, isLoading, error };
 }
