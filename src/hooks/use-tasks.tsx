@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "@/components/dashboard/TaskBoard";
-import { startOfDay, endOfDay } from "date-fns";
+import { startOfDay, endOfDay, isToday } from "date-fns";
 import { useEffect, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -33,21 +33,29 @@ export function useTasks() {
 
     console.log('Fetched tasks:', tasks?.length);
 
-    // Keep all scheduled tasks regardless of date, and filter completed tasks for today
+    // Filter tasks based on conditions:
+    // 1. All unscheduled tasks
+    // 2. Only today's scheduled tasks
+    // 3. Only today's completed tasks
     return (tasks || []).filter((task) => {
+      // Keep all unscheduled tasks
+      if (task.status === 'unscheduled') {
+        return true;
+      }
+      
+      // For completed tasks, only show if completed today
       if (task.status === 'completed') {
         return task.completed_at && 
                new Date(task.completed_at) >= todayStart && 
                new Date(task.completed_at) <= todayEnd;
       }
       
-      // Always show scheduled tasks
-      if (task.status === 'scheduled') {
-        return true;
+      // For scheduled tasks, only show if scheduled for today
+      if (task.status === 'scheduled' && task.date) {
+        return isToday(new Date(task.date));
       }
       
-      // Always show unscheduled tasks
-      return task.status === 'unscheduled';
+      return false;
     }) as Task[];
   };
 
