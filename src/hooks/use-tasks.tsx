@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "@/components/dashboard/TaskBoard";
@@ -14,9 +15,8 @@ export function useTasks() {
     const todayStart = startOfDay(today);
     const todayEnd = endOfDay(today);
 
-    console.log('Fetching tasks for date:', today.toISOString());
+    console.log('Fetching tasks for today:', today.toISOString());
 
-    // Fetch all tasks regardless of date
     const { data: tasks, error: tasksError } = await supabase
       .from('tasks')
       .select(`
@@ -31,28 +31,25 @@ export function useTasks() {
       throw tasksError;
     }
 
-    console.log('Fetched tasks:', tasks?.length);
-
-    // Filter tasks based on conditions:
+    // Filter tasks for TaskBoard:
     // 1. All unscheduled tasks
-    // 2. All scheduled tasks (for timeline to work)
-    // 3. Only today's completed tasks
+    // 2. Today's scheduled tasks
+    // 3. Today's completed tasks
     return (tasks || []).filter((task) => {
-      // Keep all unscheduled tasks
       if (task.status === 'unscheduled') {
         return true;
       }
+
+      const taskDate = task.date ? parseISO(task.date) : null;
       
-      // For completed tasks, only show if completed today
+      if (task.status === 'scheduled' && taskDate) {
+        return isToday(taskDate);
+      }
+      
       if (task.status === 'completed') {
         return task.completed_at && 
                new Date(task.completed_at) >= todayStart && 
                new Date(task.completed_at) <= todayEnd;
-      }
-      
-      // Keep all scheduled tasks
-      if (task.status === 'scheduled') {
-        return true;
       }
       
       return false;
@@ -63,6 +60,12 @@ export function useTasks() {
     console.log('Invalidating tasks query...');
     void queryClient.invalidateQueries({ 
       queryKey: ['tasks'],
+      exact: true,
+      refetchType: 'active'
+    });
+    // Also invalidate timeline tasks
+    void queryClient.invalidateQueries({ 
+      queryKey: ['timeline-tasks'],
       exact: true,
       refetchType: 'active'
     });
@@ -136,7 +139,7 @@ export function useTasks() {
     queryKey: ['tasks'],
     queryFn: fetchTasks,
     staleTime: 0,
-    gcTime: 0, // Don't cache at all
+    gcTime: 0,
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     refetchOnReconnect: true,

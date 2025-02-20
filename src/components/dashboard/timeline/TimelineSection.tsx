@@ -8,6 +8,7 @@ import { format, isSameDay, parseISO } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DateSelector } from "../schedule/DateSelector";
+import { useTimelineTasks } from "@/hooks/use-timeline-tasks";
 
 interface TimelineSectionProps {
   tasks: Task[];
@@ -15,9 +16,10 @@ interface TimelineSectionProps {
   onDateChange: (date: Date) => void;
 }
 
-export function TimelineSection({ tasks, selectedDate, onDateChange }: TimelineSectionProps) {
+export function TimelineSection({ selectedDate, onDateChange }: TimelineSectionProps) {
   const [startHour, setStartHour] = useState(8);
   const [endHour, setEndHour] = useState(17);
+  const { tasks } = useTimelineTasks();
 
   useEffect(() => {
     const loadUserSettings = async () => {
@@ -52,10 +54,9 @@ export function TimelineSection({ tasks, selectedDate, onDateChange }: TimelineS
     }
   );
 
-  // Filter tasks for the selected date and that are scheduled
+  // Filter tasks for the selected date
   const scheduledTasks = tasks.filter(task => {
-    if (task.status !== 'scheduled' || !task.date) return false;
-    
+    if (!task.date) return false;
     const taskDate = parseISO(task.date);
     return isSameDay(taskDate, selectedDate);
   });
