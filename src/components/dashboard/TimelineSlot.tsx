@@ -3,6 +3,7 @@ import { Task } from "./TaskBoard";
 import { format, isSameDay, parseISO } from "date-fns";
 import { EditTaskDrawer } from "./EditTaskDrawer";
 import { useState } from "react";
+import { getPriorityColor } from "@/utils/taskColors";
 
 interface TimelineSlotProps {
   time: string;
@@ -22,15 +23,6 @@ export function TimelineSlot({ time, tasks, selectedDate }: TimelineSlotProps) {
     const taskHour = task.start_time.split(':')[0];
     const slotHour = time.split(':')[0];
     
-    console.log('Checking task for slot:', {
-      taskTitle: task.title,
-      taskTime: task.start_time,
-      slotTime: time,
-      taskHour,
-      slotHour,
-      matches: taskHour === slotHour && isSameDay(taskDate, selectedDate)
-    });
-
     return taskHour === slotHour && isSameDay(taskDate, selectedDate);
   });
 
@@ -43,11 +35,9 @@ export function TimelineSlot({ time, tasks, selectedDate }: TimelineSlotProps) {
             key={task.id}
             onClick={() => setEditTask(task)}
             className={`p-2 rounded-lg text-white cursor-pointer transition-all hover:brightness-110 ${
-              task.priority === 'high'
-                ? 'bg-red-500'
-                : task.priority === 'medium'
-                ? 'bg-yellow-500'
-                : 'bg-blue-500'
+              task.status === 'completed' 
+                ? 'bg-[#8E9196]'
+                : getPriorityColor(task.priority).replace('bg-', '')
             }`}
           >
             <p className="font-medium">{task.title}</p>
