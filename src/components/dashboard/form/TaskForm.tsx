@@ -1,18 +1,10 @@
 
-import { useFCMStatus } from "@/hooks/use-fcm-status";
-import { TaskPriority } from "../TaskBoard";
+import { Task, TaskPriority } from "../TaskBoard";
 import { ShareTaskDialog } from "../ShareTaskDialog";
-import { SubtaskList, Subtask } from "../subtasks/SubtaskList";
-import { TaskScheduleFields } from "../TaskScheduleFields";
-import { TaskBasicFields } from "./TaskBasicFields";
-import { TaskNotificationFields } from "./TaskNotificationFields";
-import { TaskAttachmentFields } from "./TaskAttachmentFields";
+import { Subtask } from "../subtasks/SubtaskList";
+import { TaskFormContent } from "./task-form/TaskFormContent";
 import { TaskFormFooter } from "./TaskFormFooter";
-import { useState } from "react";
-import { Task } from "../TaskBoard";
-import { useChat } from "@/hooks/use-chat";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useAiTaskResponse } from "@/hooks/use-ai-task-response";
+import { useTaskForm } from "@/hooks/use-task-form";
 
 interface TaskFormProps {
   title: string;
@@ -67,16 +59,23 @@ export function TaskForm({
   onSubtasksChange,
   onSubmit,
 }: TaskFormProps) {
-  const [showShareDialog, setShowShareDialog] = useState(false);
-  const { message, setMessage } = useChat();
-  const isMobile = useIsMobile();
-  
-  const { fcmStatus, handleReminderToggle } = useFCMStatus();
-  const { processingAIResponse } = useAiTaskResponse({
+  const {
+    showShareDialog,
+    setShowShareDialog,
+    isMobile,
+    fcmStatus,
+    handleReminderToggle,
+    processingAIResponse,
+  } = useTaskForm({
     onTitleChange,
     onDescriptionChange,
     onIsScheduledChange,
     onDateChange,
+    onStartTimeChange,
+    onEndTimeChange,
+    onPriorityChange,
+    onReminderEnabledChange,
+    onReminderTimeChange,
     onSubtasksChange,
   });
 
@@ -88,46 +87,33 @@ export function TaskForm({
       }}
       className="flex flex-col h-full"
     >
-      <div className="flex-1 overflow-y-auto">
-        <div className={`p-4 space-y-4 ${isMobile ? 'pb-28' : ''}`}>
-          <TaskBasicFields
-            title={title}
-            description={description}
-            onTitleChange={onTitleChange}
-            onDescriptionChange={onDescriptionChange}
-          />
-
-          <div className="space-y-2">
-            <SubtaskList 
-              subtasks={subtasks} 
-              onSubtasksChange={onSubtasksChange}
-            />
-          </div>
-
-          <TaskNotificationFields
-            reminderEnabled={reminderEnabled}
-            reminderTime={reminderTime}
-            fcmStatus={fcmStatus}
-            onReminderEnabledChange={(enabled) => handleReminderToggle(enabled, onReminderEnabledChange)}
-            onReminderTimeChange={onReminderTimeChange}
-          />
-
-          <TaskScheduleFields
-            isScheduled={isScheduled}
-            date={date}
-            startTime={startTime}
-            endTime={endTime}
-            priority={priority}
-            onIsScheduledChange={onIsScheduledChange}
-            onDateChange={onDateChange}
-            onStartTimeChange={onStartTimeChange}
-            onEndTimeChange={onEndTimeChange}
-            onPriorityChange={onPriorityChange}
-          />
-
-          <TaskAttachmentFields task={task} isEditing={isEditing} />
-        </div>
-      </div>
+      <TaskFormContent
+        title={title}
+        description={description}
+        isScheduled={isScheduled}
+        date={date}
+        startTime={startTime}
+        endTime={endTime}
+        priority={priority}
+        reminderEnabled={reminderEnabled}
+        reminderTime={reminderTime}
+        subtasks={subtasks}
+        task={task}
+        isEditing={isEditing}
+        isMobile={isMobile}
+        fcmStatus={fcmStatus}
+        onTitleChange={onTitleChange}
+        onDescriptionChange={onDescriptionChange}
+        onIsScheduledChange={onIsScheduledChange}
+        onDateChange={onDateChange}
+        onStartTimeChange={onStartTimeChange}
+        onEndTimeChange={onEndTimeChange}
+        onPriorityChange={onPriorityChange}
+        onReminderEnabledChange={onReminderEnabledChange}
+        onReminderTimeChange={onReminderTimeChange}
+        onSubtasksChange={onSubtasksChange}
+        handleReminderToggle={handleReminderToggle}
+      />
 
       <TaskFormFooter
         isLoading={isLoading}
