@@ -63,7 +63,7 @@ export function TaskFormContent({
   handleReminderToggle,
 }: TaskFormContentProps) {
   return (
-    <div className="p-4 space-y-6">
+    <div className="p-4 space-y-4">
       <FormSection>
         <TaskBasicFields
           title={title}

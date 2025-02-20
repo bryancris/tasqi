@@ -85,9 +85,9 @@ export function TaskForm({
         e.preventDefault();
         onSubmit();
       }}
-      className="flex flex-col h-full relative bg-gradient-to-br from-[#F1F0FB] to-[#E5DEFF] overflow-hidden"
+      className="flex flex-col h-[calc(100vh-4rem)] md:h-full relative bg-gradient-to-br from-[#F1F0FB] to-[#E5DEFF]"
     >
-      <div className="flex-1 overflow-y-auto pb-24 md:pb-0">
+      <div className="flex-1 overflow-y-auto pb-20 md:pb-0 overscroll-contain">
         <TaskFormContent
           title={title}
           description={description}
@@ -117,7 +117,7 @@ export function TaskForm({
         />
       </div>
 
-      <div className="absolute bottom-0 left-0 right-0">
+      <div className="absolute bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-gray-200">
         <TaskFormFooter
           isLoading={isLoading}
           processingAIResponse={processingAIResponse}
