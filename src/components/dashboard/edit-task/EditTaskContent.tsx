@@ -61,8 +61,8 @@ export function EditTaskContent({
   const isMobile = useIsMobile();
 
   return (
-    <div className={`${isMobile ? 'h-[calc(100vh-5rem)] pb-20' : 'h-[calc(100vh-80px)]'} overflow-y-auto scrollbar-hide`}>
-      <div className="space-y-6">
+    <div className="flex flex-col h-[calc(100vh-4rem)] overflow-hidden">
+      <div className="flex-1 min-h-0">
         <TaskForm
           title={title}
           description={description}
@@ -89,13 +89,15 @@ export function EditTaskContent({
           onSubtasksChange={onSubtasksChange}
           onSubmit={onSubmit}
         />
-        <div className="mt-6">
+      </div>
+      {isMobile && (
+        <div className="p-4 bg-white border-t border-gray-200">
           <DeleteTaskAlert 
             isLoading={isLoading} 
             onDelete={onDelete}
           />
         </div>
-      </div>
+      )}
     </div>
   );
 }
