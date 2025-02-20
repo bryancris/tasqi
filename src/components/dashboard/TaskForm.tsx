@@ -103,9 +103,9 @@ export function TaskForm({
         e.preventDefault();
         onSubmit();
       }}
-      className="h-full flex flex-col"
+      className="flex flex-col h-full max-h-[calc(100vh-4rem)]"
     >
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto pb-20">
         <TaskFormContent
           title={title}
           description={description}
@@ -134,7 +134,7 @@ export function TaskForm({
         />
       </div>
 
-      <div className="sticky bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-gray-200">
+      <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-gray-200 z-10">
         <FormSubmitButton 
           isLoading={isLoading}
           processingAIResponse={processingAIResponse}
