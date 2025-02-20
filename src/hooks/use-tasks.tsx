@@ -36,16 +36,19 @@ export function useTasks() {
     // 2. Today's scheduled tasks
     // 3. Today's completed tasks
     return (tasks || []).filter((task) => {
+      // Always show unscheduled tasks
       if (task.status === 'unscheduled') {
         return true;
       }
 
       const taskDate = task.date ? parseISO(task.date) : null;
       
+      // Only show scheduled tasks for today
       if (task.status === 'scheduled' && taskDate) {
         return isToday(taskDate);
       }
       
+      // Only show tasks completed today
       if (task.status === 'completed') {
         return task.completed_at && 
                new Date(task.completed_at) >= todayStart && 

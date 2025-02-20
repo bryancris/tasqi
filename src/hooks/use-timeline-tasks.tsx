@@ -2,12 +2,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "@/components/dashboard/TaskBoard";
-import { isSameDay, parseISO } from "date-fns";
 import { toast } from "sonner";
 
 export function useTimelineTasks() {
   const fetchTasks = async () => {
-    // Fetch all scheduled tasks for timeline view
+    // Fetch ALL scheduled tasks for timeline view
     const { data: tasks, error: tasksError } = await supabase
       .from('tasks')
       .select(`
