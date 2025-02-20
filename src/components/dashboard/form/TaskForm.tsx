@@ -1,3 +1,5 @@
+
+import { useFCMStatus } from "@/hooks/use-fcm-status";
 import { TaskPriority } from "../TaskBoard";
 import { ShareTaskDialog } from "../ShareTaskDialog";
 import { SubtaskList, Subtask } from "../subtasks/SubtaskList";
@@ -10,7 +12,6 @@ import { useState } from "react";
 import { Task } from "../TaskBoard";
 import { useChat } from "@/hooks/use-chat";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useFCMStatus } from "@/hooks/use-fcm-status";
 import { useAiTaskResponse } from "@/hooks/use-ai-task-response";
 
 interface TaskFormProps {
