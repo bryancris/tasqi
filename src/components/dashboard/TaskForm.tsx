@@ -1,3 +1,4 @@
+
 import { ShareTaskDialog } from "./ShareTaskDialog";
 import { TaskScheduleFields } from "./TaskScheduleFields";
 import { TaskBasicFields } from "./form/TaskBasicFields";
@@ -12,7 +13,6 @@ import { useChat } from "@/hooks/use-chat";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { setupPushSubscription } from "@/utils/notifications/subscriptionUtils";
-import { checkNotificationPermission } from "@/utils/notifications/notificationUtils";
 import { Subtask } from "./subtasks/SubtaskList";
 
 interface TaskFormProps {
@@ -78,11 +78,6 @@ export function TaskForm({
     try {
       if (enabled) {
         setFcmStatus('loading');
-        const hasPermission = await checkNotificationPermission();
-        if (!hasPermission) {
-          setFcmStatus('error');
-          throw new Error("Notification permission denied");
-        }
         await setupPushSubscription();
         setFcmStatus('ready');
       }
@@ -103,11 +98,6 @@ export function TaskForm({
     const checkInitialFcmStatus = async () => {
       try {
         setFcmStatus('loading');
-        const hasPermission = await checkNotificationPermission();
-        if (!hasPermission) {
-          setFcmStatus('error');
-          return;
-        }
         await setupPushSubscription();
         setFcmStatus('ready');
       } catch (error) {
