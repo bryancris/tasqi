@@ -161,10 +161,10 @@ export function TaskForm({
         e.preventDefault();
         onSubmit();
       }}
-      className="flex flex-col h-full relative"
+      className="h-full flex flex-col"
     >
-      <div className="flex-1 overflow-y-auto bg-gradient-to-br from-[#F1F0FB] to-[#E5DEFF]">
-        <div className="p-4 space-y-6 pb-32">
+      <div className="flex-1 overflow-y-auto">
+        <div className="min-h-full bg-gradient-to-br from-[#F1F0FB] to-[#E5DEFF] p-4 space-y-6 pb-24">
           <FormSection>
             <TaskBasicFields
               title={title}
@@ -210,7 +210,7 @@ export function TaskForm({
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-gray-200">
+      <div className="sticky bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-gray-200 mt-auto">
         <FormSubmitButton 
           isLoading={isLoading}
           processingAIResponse={processingAIResponse}

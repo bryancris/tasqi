@@ -61,8 +61,8 @@ export function EditTaskContent({
   const isMobile = useIsMobile();
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] overflow-hidden">
-      <div className="flex-1 overflow-y-auto">
+    <div className="h-full flex flex-col overflow-hidden">
+      <div className="flex-1 min-h-0">
         <TaskForm
           title={title}
           description={description}
