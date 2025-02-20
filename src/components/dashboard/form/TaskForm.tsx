@@ -85,42 +85,46 @@ export function TaskForm({
         e.preventDefault();
         onSubmit();
       }}
-      className="flex flex-col h-full"
+      className="flex flex-col h-full relative bg-gradient-to-br from-[#F1F0FB] to-[#E5DEFF] overflow-hidden"
     >
-      <TaskFormContent
-        title={title}
-        description={description}
-        isScheduled={isScheduled}
-        date={date}
-        startTime={startTime}
-        endTime={endTime}
-        priority={priority}
-        reminderEnabled={reminderEnabled}
-        reminderTime={reminderTime}
-        subtasks={subtasks}
-        task={task}
-        isEditing={isEditing}
-        isMobile={isMobile}
-        fcmStatus={fcmStatus}
-        onTitleChange={onTitleChange}
-        onDescriptionChange={onDescriptionChange}
-        onIsScheduledChange={onIsScheduledChange}
-        onDateChange={onDateChange}
-        onStartTimeChange={onStartTimeChange}
-        onEndTimeChange={onEndTimeChange}
-        onPriorityChange={onPriorityChange}
-        onReminderEnabledChange={onReminderEnabledChange}
-        onReminderTimeChange={onReminderTimeChange}
-        onSubtasksChange={onSubtasksChange}
-        handleReminderToggle={handleReminderToggle}
-      />
+      <div className="flex-1 overflow-y-auto pb-24 md:pb-0">
+        <TaskFormContent
+          title={title}
+          description={description}
+          isScheduled={isScheduled}
+          date={date}
+          startTime={startTime}
+          endTime={endTime}
+          priority={priority}
+          reminderEnabled={reminderEnabled}
+          reminderTime={reminderTime}
+          subtasks={subtasks}
+          task={task}
+          isEditing={isEditing}
+          isMobile={isMobile}
+          fcmStatus={fcmStatus}
+          onTitleChange={onTitleChange}
+          onDescriptionChange={onDescriptionChange}
+          onIsScheduledChange={onIsScheduledChange}
+          onDateChange={onDateChange}
+          onStartTimeChange={onStartTimeChange}
+          onEndTimeChange={onEndTimeChange}
+          onPriorityChange={onPriorityChange}
+          onReminderEnabledChange={onReminderEnabledChange}
+          onReminderTimeChange={onReminderTimeChange}
+          onSubtasksChange={onSubtasksChange}
+          handleReminderToggle={handleReminderToggle}
+        />
+      </div>
 
-      <TaskFormFooter
-        isLoading={isLoading}
-        processingAIResponse={processingAIResponse}
-        isEditing={isEditing}
-        isMobile={isMobile}
-      />
+      <div className="absolute bottom-0 left-0 right-0">
+        <TaskFormFooter
+          isLoading={isLoading}
+          processingAIResponse={processingAIResponse}
+          isEditing={isEditing}
+          isMobile={isMobile}
+        />
+      </div>
 
       {task && (
         <ShareTaskDialog

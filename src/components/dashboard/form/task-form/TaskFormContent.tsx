@@ -5,6 +5,7 @@ import { TaskAttachmentFields } from "../TaskAttachmentFields";
 import { TaskScheduleFields } from "../../TaskScheduleFields";
 import { SubtaskList, Subtask } from "../../subtasks/SubtaskList";
 import { Task, TaskPriority } from "../../TaskBoard";
+import { FormSection } from "../sections/FormSection";
 
 interface TaskFormContentProps {
   title: string;
@@ -62,22 +63,24 @@ export function TaskFormContent({
   handleReminderToggle,
 }: TaskFormContentProps) {
   return (
-    <div className="flex-1 overflow-y-auto">
-      <div className={`p-4 space-y-4 ${isMobile ? 'pb-28' : ''}`}>
+    <div className="p-4 space-y-6">
+      <FormSection>
         <TaskBasicFields
           title={title}
           description={description}
           onTitleChange={onTitleChange}
           onDescriptionChange={onDescriptionChange}
         />
+      </FormSection>
 
-        <div className="space-y-2">
-          <SubtaskList 
-            subtasks={subtasks} 
-            onSubtasksChange={onSubtasksChange}
-          />
-        </div>
+      <FormSection>
+        <SubtaskList 
+          subtasks={subtasks} 
+          onSubtasksChange={onSubtasksChange}
+        />
+      </FormSection>
 
+      <FormSection>
         <TaskNotificationFields
           reminderEnabled={reminderEnabled}
           reminderTime={reminderTime}
@@ -85,7 +88,9 @@ export function TaskFormContent({
           onReminderEnabledChange={(enabled) => handleReminderToggle(enabled, onReminderEnabledChange)}
           onReminderTimeChange={onReminderTimeChange}
         />
+      </FormSection>
 
+      <FormSection>
         <TaskScheduleFields
           isScheduled={isScheduled}
           date={date}
@@ -98,9 +103,11 @@ export function TaskFormContent({
           onEndTimeChange={onEndTimeChange}
           onPriorityChange={onPriorityChange}
         />
+      </FormSection>
 
+      <FormSection>
         <TaskAttachmentFields task={task} isEditing={isEditing} />
-      </div>
+      </FormSection>
     </div>
   );
 }
