@@ -34,11 +34,11 @@ export function TimelineSlot({ time, tasks, selectedDate }: TimelineSlotProps) {
           <div
             key={task.id}
             onClick={() => setEditTask(task)}
-            className={`p-2 rounded-lg text-white cursor-pointer transition-all hover:brightness-110 ${
+            className={`${
               task.status === 'completed' 
                 ? 'bg-[#8E9196]'
-                : getPriorityColor(task.priority).replace('bg-', '')
-            }`}
+                : getPriorityColor(task.priority)
+            } p-2 rounded-lg text-white cursor-pointer transition-all hover:brightness-110`}
           >
             <p className="font-medium">{task.title}</p>
             {task.start_time && task.end_time && (
