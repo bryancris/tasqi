@@ -162,10 +162,10 @@ export function TaskForm({
         e.preventDefault();
         onSubmit();
       }}
-      className="flex flex-col h-full bg-gradient-to-br from-[#F1F0FB] to-[#E5DEFF]"
+      className="flex flex-col h-full relative"
     >
-      <div className="flex-1 overflow-y-auto">
-        <div className={`p-4 space-y-6 ${isMobile ? 'pb-28' : ''}`}>
+      <div className="flex-1 overflow-y-auto bg-gradient-to-br from-[#F1F0FB] to-[#E5DEFF]">
+        <div className="p-4 space-y-6 pb-32">
           <FormSection>
             <TaskBasicFields
               title={title}
@@ -190,20 +190,22 @@ export function TaskForm({
             />
           </FormSection>
 
-          <FormSection>
-            <TaskScheduleFields
-              isScheduled={isScheduled}
-              date={date}
-              startTime={startTime}
-              endTime={endTime}
-              priority={priority}
-              onIsScheduledChange={onIsScheduledChange}
-              onDateChange={onDateChange}
-              onStartTimeChange={onStartTimeChange}
-              onEndTimeChange={onEndTimeChange}
-              onPriorityChange={onPriorityChange}
-            />
-          </FormSection>
+          {isScheduled && (
+            <FormSection>
+              <TaskScheduleFields
+                isScheduled={isScheduled}
+                date={date}
+                startTime={startTime}
+                endTime={endTime}
+                priority={priority}
+                onIsScheduledChange={onIsScheduledChange}
+                onDateChange={onDateChange}
+                onStartTimeChange={onStartTimeChange}
+                onEndTimeChange={onEndTimeChange}
+                onPriorityChange={onPriorityChange}
+              />
+            </FormSection>
+          )}
 
           <FormSection>
             <TaskAttachmentFields task={task} isEditing={isEditing} />
@@ -211,12 +213,14 @@ export function TaskForm({
         </div>
       </div>
 
-      <FormSubmitButton 
-        isLoading={isLoading}
-        processingAIResponse={processingAIResponse}
-        isEditing={isEditing}
-        isMobile={isMobile}
-      />
+      <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-gray-200">
+        <FormSubmitButton 
+          isLoading={isLoading}
+          processingAIResponse={processingAIResponse}
+          isEditing={isEditing}
+          isMobile={isMobile}
+        />
+      </div>
 
       {task && (
         <ShareTaskDialog

@@ -43,7 +43,7 @@ export function TaskScheduleFields({
       </div>
 
       {isScheduled && (
-        <div className="space-y-4">
+        <div className="space-y-6 mt-4 animate-in slide-in-from-left">
           <DateSelector date={date} onDateChange={onDateChange} />
           <TimeSelector
             startTime={startTime}
