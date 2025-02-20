@@ -5,6 +5,9 @@ import { TimelineSlot } from "../TimelineSlot";
 import { Task } from "../TaskBoard";
 import { supabase } from "@/integrations/supabase/client";
 import { format, isSameDay, parseISO } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { DateSelector } from "../schedule/DateSelector";
 
 interface TimelineSectionProps {
   tasks: Task[];
@@ -54,21 +57,42 @@ export function TimelineSection({ tasks, selectedDate, onDateChange }: TimelineS
     if (task.status !== 'scheduled' || !task.date) return false;
     
     const taskDate = parseISO(task.date);
-    console.log('Comparing dates:', {
-      taskDate: format(taskDate, 'yyyy-MM-dd'),
-      selectedDate: format(selectedDate, 'yyyy-MM-dd'),
-      isSame: isSameDay(taskDate, selectedDate)
-    });
-    
     return isSameDay(taskDate, selectedDate);
   });
 
-  console.log('Scheduled tasks for timeline:', scheduledTasks);
+  const handlePrevDay = () => {
+    const prevDay = new Date(selectedDate);
+    prevDay.setDate(prevDay.getDate() - 1);
+    onDateChange(prevDay);
+  };
+
+  const handleNextDay = () => {
+    const nextDay = new Date(selectedDate);
+    nextDay.setDate(nextDay.getDate() + 1);
+    onDateChange(nextDay);
+  };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Timeline</CardTitle>
+        <div className="flex items-center justify-between mt-2">
+          <Button variant="ghost" size="icon" onClick={handlePrevDay}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <div className="flex items-center gap-2">
+            <DateSelector 
+              date={format(selectedDate, 'yyyy-MM-dd')}
+              onDateChange={(newDate) => onDateChange(new Date(newDate))}
+            />
+            <div className="text-sm text-muted-foreground">
+              Daily
+            </div>
+          </div>
+          <Button variant="ghost" size="icon" onClick={handleNextDay}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
