@@ -4,6 +4,7 @@ import { TokenResponse, isTwinrEnvironment, detectPlatform } from "./platformDet
 import { getToken } from "firebase/messaging";
 import { initializeMessaging } from "@/integrations/firebase/config";
 import { toast } from "sonner";
+import { Json } from "@/integrations/supabase/types";
 
 export async function getFCMToken(): Promise<string | null> {
   try {
@@ -48,14 +49,29 @@ export async function getTwinrToken(): Promise<string | null> {
 
 export async function saveTokenToSupabase(tokenResponse: TokenResponse): Promise<void> {
   try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) {
+      throw new Error('User must be logged in to save token');
+    }
+
     const { error } = await supabase
       .from('push_device_tokens')
       .upsert({
-        token: tokenResponse.token,
+        user_id: session.user.id,
         platform: tokenResponse.platform,
         token_source: tokenResponse.source,
-        platform_details: tokenResponse.platformDetails || {},
-        updated_at: new Date().toISOString(),
+        platform_details: tokenResponse.platformDetails as Json,
+        metadata: {
+          userAgent: navigator.userAgent,
+          language: navigator.language
+        } as Json,
+        notification_settings: {
+          enabled: true,
+          task_reminders: true,
+          task_updates: true
+        } as Json,
+        token: tokenResponse.token,
+        updated_at: new Date().toISOString()
       }, {
         onConflict: 'token'
       });
