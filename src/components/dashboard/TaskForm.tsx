@@ -67,7 +67,7 @@ export function TaskForm({
   const [showShareDialog, setShowShareDialog] = useState(false);
   const { message, setMessage } = useChat();
   const isMobile = useIsMobile();
-  const [fcmStatus, setFcmStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [fcmStatus, setFcmStatus] = useState<'loading' | 'ready' | 'error'>('ready');
 
   const { processingAIResponse } = useTaskAIResponse({
     onTitleChange,
@@ -81,19 +81,28 @@ export function TaskForm({
     try {
       if (enabled) {
         setFcmStatus('loading');
-        await setupPushSubscription();
+        const subscription = await setupPushSubscription();
+        
+        if (!subscription) {
+          throw new Error('Failed to setup push notifications');
+        }
+        
         setFcmStatus('ready');
+        onReminderEnabledChange(true);
+        toast.success('Notifications enabled successfully');
+      } else {
+        onReminderEnabledChange(false);
       }
-      onReminderEnabledChange(enabled);
     } catch (error) {
       console.error('Error setting up notifications:', error);
       setFcmStatus('error');
-      toast({
-        title: "Error",
-        description: "Failed to set up notifications. Please check browser permissions.",
-        variant: "destructive",
-      });
       onReminderEnabledChange(false);
+      
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error('Failed to setup notifications. Please check browser permissions.');
+      }
     }
   };
 

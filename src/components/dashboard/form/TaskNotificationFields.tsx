@@ -2,6 +2,7 @@
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -9,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useEffect } from "react";
 
 interface TaskNotificationFieldsProps {
   reminderEnabled: boolean;
@@ -33,6 +35,35 @@ export function TaskNotificationFields({
   onReminderEnabledChange,
   onReminderTimeChange,
 }: TaskNotificationFieldsProps) {
+  // Reset the toggle if there's an error
+  useEffect(() => {
+    if (fcmStatus === 'error' && reminderEnabled) {
+      onReminderEnabledChange(false);
+    }
+  }, [fcmStatus, reminderEnabled, onReminderEnabledChange]);
+
+  const handleToggle = async (enabled: boolean) => {
+    if (!('Notification' in window)) {
+      toast.error("Your browser doesn't support notifications");
+      return;
+    }
+
+    if (Notification.permission === 'denied') {
+      toast.error("Please enable notifications in your browser settings", {
+        duration: 5000,
+        action: {
+          label: "How to enable",
+          onClick: () => {
+            window.open('https://support.google.com/chrome/answer/3220216?hl=en', '_blank');
+          }
+        }
+      });
+      return;
+    }
+
+    onReminderEnabledChange(enabled);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -40,8 +71,8 @@ export function TaskNotificationFields({
           <Switch
             id="reminder"
             checked={reminderEnabled}
-            onCheckedChange={onReminderEnabledChange}
-            disabled={fcmStatus !== 'ready'}
+            onCheckedChange={handleToggle}
+            disabled={fcmStatus === 'loading'}
           />
           <Label htmlFor="reminder" className="flex items-center gap-2">
             Enable notifications
