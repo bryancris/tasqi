@@ -61,8 +61,8 @@ export function EditTaskContent({
   const isMobile = useIsMobile();
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
-      <div className="flex-1 min-h-0">
+    <div className="flex flex-col h-[100dvh]">
+      <div className="flex-1 overflow-hidden">
         <TaskForm
           title={title}
           description={description}
@@ -91,7 +91,7 @@ export function EditTaskContent({
         />
       </div>
       {isMobile && (
-        <div className="p-4 bg-white border-t border-gray-200">
+        <div className="bg-white border-t border-gray-200 p-4">
           <DeleteTaskAlert 
             isLoading={isLoading} 
             onDelete={onDelete}

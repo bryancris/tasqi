@@ -134,7 +134,7 @@ export function TaskForm({
         />
       </div>
 
-      <div className="sticky bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-gray-200 mt-auto">
+      <div className="sticky bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-gray-200">
         <FormSubmitButton 
           isLoading={isLoading}
           processingAIResponse={processingAIResponse}

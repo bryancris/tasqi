@@ -62,7 +62,7 @@ export function TaskFormContent({
   handleReminderToggle,
 }: TaskFormContentProps) {
   return (
-    <div className="min-h-full bg-gradient-to-br from-[#F1F0FB] to-[#E5DEFF] p-4 space-y-6 pb-24">
+    <div className="min-h-full bg-gradient-to-br from-[#F1F0FB] to-[#E5DEFF] p-4 space-y-6 pb-32">
       <FormSection>
         <TaskBasicFields
           title={title}
