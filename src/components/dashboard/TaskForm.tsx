@@ -1,4 +1,3 @@
-
 import { ShareTaskDialog } from "./ShareTaskDialog";
 import { TaskScheduleFields } from "./TaskScheduleFields";
 import { TaskBasicFields } from "./form/TaskBasicFields";
@@ -190,22 +189,20 @@ export function TaskForm({
             />
           </FormSection>
 
-          {isScheduled && (
-            <FormSection>
-              <TaskScheduleFields
-                isScheduled={isScheduled}
-                date={date}
-                startTime={startTime}
-                endTime={endTime}
-                priority={priority}
-                onIsScheduledChange={onIsScheduledChange}
-                onDateChange={onDateChange}
-                onStartTimeChange={onStartTimeChange}
-                onEndTimeChange={onEndTimeChange}
-                onPriorityChange={onPriorityChange}
-              />
-            </FormSection>
-          )}
+          <FormSection>
+            <TaskScheduleFields
+              isScheduled={isScheduled}
+              date={date}
+              startTime={startTime}
+              endTime={endTime}
+              priority={priority}
+              onIsScheduledChange={onIsScheduledChange}
+              onDateChange={onDateChange}
+              onStartTimeChange={onStartTimeChange}
+              onEndTimeChange={onEndTimeChange}
+              onPriorityChange={onPriorityChange}
+            />
+          </FormSection>
 
           <FormSection>
             <TaskAttachmentFields task={task} isEditing={isEditing} />
