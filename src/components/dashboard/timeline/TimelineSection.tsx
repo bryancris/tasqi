@@ -80,15 +80,10 @@ export function TimelineSection({ tasks, selectedDate, onDateChange }: TimelineS
           <Button variant="ghost" size="icon" onClick={handlePrevDay}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <div className="flex items-center gap-2">
-            <DateSelector 
-              date={format(selectedDate, 'yyyy-MM-dd')}
-              onDateChange={(newDate) => onDateChange(new Date(newDate))}
-            />
-            <div className="text-sm text-muted-foreground">
-              Daily
-            </div>
-          </div>
+          <DateSelector 
+            date={format(selectedDate, 'yyyy-MM-dd')}
+            onDateChange={(newDate) => onDateChange(new Date(newDate))}
+          />
           <Button variant="ghost" size="icon" onClick={handleNextDay}>
             <ChevronRight className="h-4 w-4" />
           </Button>
