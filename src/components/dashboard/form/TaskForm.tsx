@@ -1,4 +1,3 @@
-
 import { TaskPriority } from "../TaskBoard";
 import { ShareTaskDialog } from "../ShareTaskDialog";
 import { SubtaskList, Subtask } from "../subtasks/SubtaskList";
@@ -11,7 +10,7 @@ import { useState } from "react";
 import { Task } from "../TaskBoard";
 import { useChat } from "@/hooks/use-chat";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useFcmStatus } from "@/hooks/use-fcm-status";
+import { useFCMStatus } from "@/hooks/use-fcm-status";
 import { useAiTaskResponse } from "@/hooks/use-ai-task-response";
 
 interface TaskFormProps {
@@ -71,7 +70,7 @@ export function TaskForm({
   const { message, setMessage } = useChat();
   const isMobile = useIsMobile();
   
-  const { fcmStatus, handleReminderToggle } = useFcmStatus();
+  const { fcmStatus, handleReminderToggle } = useFCMStatus();
   const { processingAIResponse } = useAiTaskResponse({
     onTitleChange,
     onDescriptionChange,
