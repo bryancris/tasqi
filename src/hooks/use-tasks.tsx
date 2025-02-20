@@ -13,18 +13,16 @@ export function useTasks() {
     const today = new Date();
     const todayStart = startOfDay(today);
     const todayEnd = endOfDay(today);
-    const todayDate = today.toISOString().split('T')[0];
 
-    console.log('Fetching tasks for date:', todayDate);
+    console.log('Fetching tasks for date:', today.toISOString());
 
-    // Fetch tasks for today and unscheduled tasks
+    // Fetch all tasks regardless of date
     const { data: tasks, error: tasksError } = await supabase
       .from('tasks')
       .select(`
         *,
         assignments:task_assignments(*)
       `)
-      .or(`status.eq.unscheduled,and(status.eq.scheduled,date.eq.${todayDate}),and(status.eq.scheduled,date.is.null)`)
       .order('position', { ascending: true });
 
     if (tasksError) {
@@ -35,7 +33,7 @@ export function useTasks() {
 
     console.log('Fetched tasks:', tasks?.length);
 
-    // Filter completed tasks to only show today's completed tasks
+    // Keep all scheduled tasks regardless of date, and filter completed tasks for today
     return (tasks || []).filter((task) => {
       if (task.status === 'completed') {
         return task.completed_at && 
@@ -43,16 +41,9 @@ export function useTasks() {
                new Date(task.completed_at) <= todayEnd;
       }
       
+      // Always show scheduled tasks
       if (task.status === 'scheduled') {
-        // Changed filtering logic to show scheduled tasks more reliably
-        if (task.date) {
-          return task.date === todayDate;
-        }
-        // For scheduled tasks without a date (e.g., AI created ones)
-        if (task.start_time) {
-          return true;
-        }
-        return false;
+        return true;
       }
       
       // Always show unscheduled tasks
