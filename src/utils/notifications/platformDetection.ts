@@ -12,14 +12,18 @@ export interface TokenResponse {
 
 // Check if we're running in Twinr's native environment
 export const isTwinrEnvironment = (): boolean => {
-  return typeof window !== 'undefined' && 'twinr_push_token_fetch' in window;
+  try {
+    return !!(window && 'twinr_push_token_fetch' in window);
+  } catch {
+    return false;
+  }
 };
 
 // Detect the current platform
 export const detectPlatform = (): PlatformType => {
   if (isTwinrEnvironment()) {
-    // Use Twinr's built-in platform detection
     const userAgent = navigator.userAgent.toLowerCase();
+    console.log('[Platform Detection] User agent:', userAgent);
     if (userAgent.includes('android')) return 'android';
     if (userAgent.includes('ios')) return 'ios';
   }
