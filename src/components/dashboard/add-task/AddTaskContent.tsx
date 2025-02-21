@@ -56,8 +56,8 @@ export function AddTaskContent({
   const isMobile = useIsMobile();
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-y-auto px-6">
+    <div className="flex flex-col h-[calc(100vh-80px)] bg-gradient-to-b from-purple-50/50 to-white">
+      <div className="flex-1 overflow-y-auto scrollbar-hide pb-20">
         <TaskForm
           title={title}
           description={description}
@@ -74,11 +74,11 @@ export function AddTaskContent({
           onDescriptionChange={onDescriptionChange}
           onIsScheduledChange={onIsScheduledChange}
           onDateChange={onDateChange}
-          onStartTimeChange={onStartTimeChange}
-          onEndTimeChange={onEndTimeChange}
-          onPriorityChange={onPriorityChange}
-          onReminderEnabledChange={onReminderEnabledChange}
-          onReminderTimeChange={onReminderTimeChange}
+          onStartTimeChange={setStartTime}
+          onEndTimeChange={setEndTime}
+          onPriorityChange={setPriority}
+          onReminderEnabledChange={setReminderEnabled}
+          onReminderTimeChange={setReminderTime}
           onSubtasksChange={onSubtasksChange}
           onSubmit={onSubmit}
         />
