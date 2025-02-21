@@ -5,79 +5,101 @@ import { useTasks } from '@/hooks/use-tasks';
 import { Task } from '@/components/dashboard/TaskBoard';
 import { isToday, parseISO, isFuture } from 'date-fns';
 import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
+import { toast } from "sonner";
 
 const NOTIFICATION_CHECK_INTERVAL = 60000; // Check every minute
-const NOTIFICATION_THRESHOLD_MINUTES = 15; // Notify 15 minutes before task
 
 export function useTaskNotifications() {
   const { tasks } = useTasks();
   const notifiedTasksRef = useRef<Set<number>>(new Set());
 
-  const checkForUpcomingTasks = (tasks: Task[]) => {
+  const checkForUpcomingTasks = async (tasks: Task[]) => {
     // Get user's timezone
     const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const now = new Date();
     
-    tasks.forEach(task => {
-      // Skip if task has been notified or doesn't have reminders enabled
-      if (!task.reminder_enabled || notifiedTasksRef.current.has(task.id)) {
-        return;
-      }
-
-      // Only check scheduled tasks with a date and start time
-      if (task.status === 'scheduled' && task.date && task.start_time) {
-        const taskDate = parseISO(task.date);
-        
-        // Only process today's and future tasks
-        if (!isToday(taskDate) && !isFuture(taskDate)) {
-          return;
+    for (const task of tasks) {
+      try {
+        // Skip if task has been notified or doesn't have reminders enabled
+        if (!task.reminder_enabled || notifiedTasksRef.current.has(task.id)) {
+          continue;
         }
 
-        // Convert task time to user's timezone
-        const [hours, minutes] = task.start_time.split(':').map(Number);
-        const taskDateString = formatInTimeZone(taskDate, userTimeZone, 'yyyy-MM-dd');
-        const taskTimeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
-        const taskDateTimeString = `${taskDateString}T${taskTimeString}`;
-        
-        // Create a date object in user's timezone
-        const taskDateTime = toZonedTime(new Date(taskDateTimeString), userTimeZone);
+        // Only check scheduled tasks with a date and start time
+        if (task.status === 'scheduled' && task.date && task.start_time) {
+          const taskDate = parseISO(task.date);
+          
+          // Only process today's and future tasks
+          if (!isToday(taskDate) && !isFuture(taskDate)) {
+            continue;
+          }
 
-        // Calculate time until task
-        const timeUntilTask = taskDateTime.getTime() - now.getTime();
-        const minutesUntilTask = timeUntilTask / (1000 * 60);
+          // Convert task time to user's timezone
+          const [hours, minutes] = task.start_time.split(':').map(Number);
+          const taskDateString = formatInTimeZone(taskDate, userTimeZone, 'yyyy-MM-dd');
+          const taskTimeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
+          const taskDateTimeString = `${taskDateString}T${taskTimeString}`;
+          
+          // Create a date object in user's timezone
+          const taskDateTime = toZonedTime(new Date(taskDateTimeString), userTimeZone);
 
-        // Only notify if:
-        // 1. Task is within notification threshold (15 minutes)
-        // 2. Task hasn't started yet (positive minutes)
-        // 3. We're approaching the task time (not after it)
-        if (minutesUntilTask <= NOTIFICATION_THRESHOLD_MINUTES && 
-            minutesUntilTask > 0) {
-          showNotification(task)
-            .then(() => {
-              console.log('✅ Notification sent for task:', task.title);
-              console.log('🕒 Task time:', formatInTimeZone(taskDateTime, userTimeZone, 'yyyy-MM-dd HH:mm:ss'));
-              console.log('🌍 User timezone:', userTimeZone);
-              console.log('⏰ Minutes until task:', minutesUntilTask);
-              notifiedTasksRef.current.add(task.id);
-            })
-            .catch(error => {
-              console.error('❌ Error showing notification:', error);
+          // Calculate time until task
+          const timeUntilTask = taskDateTime.getTime() - now.getTime();
+          const minutesUntilTask = timeUntilTask / (1000 * 60);
+
+          console.log('📅 Task reminder check:', {
+            taskId: task.id,
+            title: task.title,
+            reminderTime: task.reminder_time,
+            minutesUntilTask,
+            taskDateTime: taskDateTime.toISOString(),
+            now: now.toISOString()
+          });
+
+          // Check if we're within the reminder window (using task's specific reminder time)
+          // Allow for a 30-second buffer to avoid missing notifications
+          const reminderWindowStart = task.reminder_time + 0.5; // Add 30 seconds
+          const reminderWindowEnd = task.reminder_time - 0.5; // Subtract 30 seconds
+          
+          if (minutesUntilTask <= reminderWindowStart && 
+              minutesUntilTask > reminderWindowEnd) {
+            console.log('🔔 Sending reminder for task:', {
+              taskId: task.id,
+              title: task.title,
+              minutesUntilTask,
+              reminderTime: task.reminder_time
             });
+
+            const notificationSent = await showNotification(task);
+            
+            if (notificationSent) {
+              console.log('✅ Reminder notification sent successfully');
+              notifiedTasksRef.current.add(task.id);
+            } else {
+              console.log('❌ Failed to send reminder notification');
+              // Show a fallback toast notification
+              toast.error("Unable to show notification", {
+                description: "Please check your notification permissions"
+              });
+            }
+          }
         }
+      } catch (error) {
+        console.error('Error processing task notification:', error);
       }
-    });
+    }
   };
 
   useEffect(() => {
     // Check immediately on mount or tasks change
     if (tasks.length > 0) {
-      checkForUpcomingTasks(tasks);
+      void checkForUpcomingTasks(tasks);
     }
 
     // Set up interval for regular checks
     const intervalId = setInterval(() => {
       if (tasks.length > 0) {
-        checkForUpcomingTasks(tasks);
+        void checkForUpcomingTasks(tasks);
       }
     }, NOTIFICATION_CHECK_INTERVAL);
 
