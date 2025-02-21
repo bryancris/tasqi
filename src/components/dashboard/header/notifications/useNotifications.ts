@@ -79,19 +79,17 @@ export function useNotifications() {
         },
         async (payload: any) => {
           console.log('📬 New notification received:', payload);
-          console.log('🔍 Comparing user IDs:', {
-            payloadUserId: payload.new.user_id,
-            currentUserId: currentUserId,
-            isMatch: payload.new.user_id === currentUserId
-          });
+          console.log('🔍 Notification type:', payload.new.type);
           
-          // Only process notifications for the current user
           if (payload.new.user_id === currentUserId) {
-            console.log('✅ User IDs match, processing notification');
+            console.log('✅ Processing notification for current user');
             try {
-              // Fetch task details if this is a task-related notification
+              // Play sound for all notifications
+              await playNotificationSound();
+              
+              // Handle task-related notifications
               if (['task_share', 'task_assignment'].includes(payload.new.type) && payload.new.reference_id) {
-                console.log('📋 Processing task notification');
+                console.log(`📋 Processing ${payload.new.type} notification`);
                 try {
                   const { data: task, error } = await supabase
                     .from('tasks')
@@ -101,19 +99,33 @@ export function useNotifications() {
 
                   if (error) throw error;
                   if (task) {
-                    // Show notification with sound for task assignments and shares
-                    await showNotification(task, payload.new.type === 'task_share' ? 'shared' : 'reminder');
+                    // Pass the correct notification type
+                    const notificationType = 
+                      payload.new.type === 'task_share' ? 'shared' :
+                      payload.new.type === 'task_assignment' ? 'assignment' : 'reminder';
+                    
+                    console.log('🔔 Showing notification with type:', notificationType);
+                    await showNotification(task, notificationType);
                     console.log('✅ Task notification shown successfully');
                   }
                 } catch (error) {
                   console.error('❌ Error handling task notification:', error);
                 }
-              } else {
-                // For non-task notifications, show a regular toast
-                toast(payload.new.title, {
-                  description: payload.new.message,
-                });
               }
+
+              // Show toast for all notifications
+              toast(payload.new.title, {
+                description: payload.new.message,
+                action: {
+                  label: "View",
+                  onClick: () => {
+                    // Navigate to dashboard if not already there
+                    if (location.pathname !== '/dashboard') {
+                      window.location.href = '/dashboard';
+                    }
+                  }
+                }
+              });
 
               // Refresh notifications list
               queryClient.invalidateQueries({ queryKey: ['notifications'] });
@@ -134,7 +146,7 @@ export function useNotifications() {
       console.log('🧹 Cleaning up notification subscription');
       supabase.removeChannel(notificationChannel);
     };
-  }, [currentUserId, queryClient]);
+  }, [currentUserId, queryClient, playNotificationSound]);
 
   return { notifications, currentUserId };
 }

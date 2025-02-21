@@ -58,7 +58,7 @@ const playNotificationSound = async () => {
   }
 };
 
-export async function showNotification(task: Task, type: 'reminder' | 'shared' = 'reminder'): Promise<boolean> {
+export async function showNotification(task: Task, type: 'reminder' | 'shared' | 'assignment' = 'reminder'): Promise<boolean> {
   try {
     console.log('🔔 Showing notification:', {
       taskId: task.id,
@@ -76,23 +76,25 @@ export async function showNotification(task: Task, type: 'reminder' | 'shared' =
     // Play notification sound
     await playNotificationSound();
 
+    // Get notification title based on type
+    const notificationTitle = type === 'reminder' ? 'Task Reminder' :
+                            type === 'shared' ? 'Task Shared' :
+                            'New Task Assignment';
+
     // Create and show the notification
-    const notification = new Notification(
-      type === 'reminder' ? 'Task Reminder' : 'Task Shared',
-      {
-        body: task.title,
-        icon: '/favicon.ico',
-        badge: '/favicon.ico',
-        tag: `task-${task.id}`,
-        data: { taskId: task.id, type },
-        requireInteraction: true, // Keep notification visible until user interacts with it
-        silent: false, // Enable native browser sound
-        vibrate: [200, 100, 200], // Vibration pattern for mobile devices
-      }
-    );
+    const notification = new Notification(notificationTitle, {
+      body: task.title,
+      icon: '/favicon.ico',
+      badge: '/favicon.ico',
+      tag: `task-${task.id}`,
+      data: { taskId: task.id, type },
+      requireInteraction: true, // Keep notification visible until user interacts with it
+      silent: false, // Enable native browser sound
+      vibrate: [200, 100, 200], // Vibration pattern for mobile devices
+    });
 
     // Show toast as additional UI feedback
-    toast(type === 'reminder' ? 'Task Reminder' : 'Task Shared', {
+    toast(notificationTitle, {
       description: task.title,
       duration: 8000,
       action: {
@@ -120,7 +122,9 @@ export async function showNotification(task: Task, type: 'reminder' | 'shared' =
   } catch (error) {
     console.error('❌ Error showing notification:', error);
     // Fallback to toast notification
-    toast.error("Task Reminder", {
+    toast.error(type === 'reminder' ? "Task Reminder" : 
+               type === 'shared' ? "Task Shared" :
+               "New Task Assignment", {
       description: task.title,
       duration: 8000,
       action: {
