@@ -18,7 +18,8 @@ async function requestNotificationPermission(): Promise<boolean> {
     if (Notification.permission === 'denied') {
       console.warn('❌ Notification permission denied');
       toast.error("Notification permission denied", {
-        description: "Please enable notifications in your browser settings"
+        description: "Please enable notifications in your browser settings",
+        duration: 5000,
       });
       return false;
     }
@@ -29,16 +30,33 @@ async function requestNotificationPermission(): Promise<boolean> {
     if (permission === 'granted') {
       toast.success("Notifications enabled successfully");
     } else {
-      toast.error("Notification permission denied");
+      toast.error("Notification permission denied", {
+        duration: 5000,
+      });
     }
     
     return permission === 'granted';
   } catch (error) {
     console.error('❌ Error requesting notification permission:', error);
-    toast.error("Failed to request notification permission");
+    toast.error("Failed to request notification permission", {
+      duration: 5000,
+    });
     return false;
   }
 }
+
+// Play notification sound using both native and custom sound
+const playNotificationSound = async () => {
+  try {
+    console.log('🔊 Playing notification sound...');
+    const audio = new Audio('/notification-sound.mp3');
+    audio.volume = 0.5;
+    await audio.play();
+    console.log('✅ Notification sound played successfully');
+  } catch (error) {
+    console.warn('❌ Could not play notification sound:', error);
+  }
+};
 
 export async function showNotification(task: Task, type: 'reminder' | 'shared' = 'reminder'): Promise<boolean> {
   try {
@@ -55,6 +73,9 @@ export async function showNotification(task: Task, type: 'reminder' | 'shared' =
       return false;
     }
 
+    // Play notification sound
+    await playNotificationSound();
+
     // Create and show the notification
     const notification = new Notification(
       type === 'reminder' ? 'Task Reminder' : 'Task Shared',
@@ -64,9 +85,26 @@ export async function showNotification(task: Task, type: 'reminder' | 'shared' =
         badge: '/favicon.ico',
         tag: `task-${task.id}`,
         data: { taskId: task.id, type },
-        requireInteraction: true // Keep notification visible until user interacts with it
+        requireInteraction: true, // Keep notification visible until user interacts with it
+        silent: false, // Enable native browser sound
+        vibrate: [200, 100, 200], // Vibration pattern for mobile devices
       }
     );
+
+    // Show toast as additional UI feedback
+    toast(type === 'reminder' ? 'Task Reminder' : 'Task Shared', {
+      description: task.title,
+      duration: 8000,
+      action: {
+        label: "View",
+        onClick: () => {
+          window.focus();
+          if (location.pathname !== '/dashboard') {
+            window.location.href = '/dashboard';
+          }
+        }
+      }
+    });
 
     // Handle notification click
     notification.onclick = function() {
@@ -82,8 +120,17 @@ export async function showNotification(task: Task, type: 'reminder' | 'shared' =
   } catch (error) {
     console.error('❌ Error showing notification:', error);
     // Fallback to toast notification
-    toast.error("Unable to show notification", {
-      description: task.title
+    toast.error("Task Reminder", {
+      description: task.title,
+      duration: 8000,
+      action: {
+        label: "View",
+        onClick: () => {
+          if (location.pathname !== '/dashboard') {
+            window.location.href = '/dashboard';
+          }
+        }
+      }
     });
     return false;
   }
