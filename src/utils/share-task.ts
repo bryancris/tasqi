@@ -1,6 +1,8 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { showNotification } from "@/utils/notifications/notificationUtils";
+import { useNotificationSound } from "@/components/dashboard/header/notifications/useNotificationSound";
 
 interface ShareTaskParams {
   taskId: number;
@@ -36,6 +38,9 @@ export async function shareTask({
       throw taskError;
     }
 
+    // Create notification sound player
+    const { playNotificationSound } = useNotificationSound();
+
     if (sharingType === 'individual') {
       // Create shared task records and task assignments for each selected user
       const promises = selectedUserIds.map(async (userId) => {
@@ -57,13 +62,13 @@ export async function shareTask({
           throw shareError;
         }
 
-        // 2. Create task assignment record - using the correct column name assigned_by_id
+        // 2. Create task assignment record
         const { error: assignmentError } = await supabase
           .from('task_assignments')
           .insert({
             task_id: taskId,
             assignee_id: userId,
-            assigned_by_id: currentUserId, // Fixed: changed from assigned_by to assigned_by_id
+            assigned_by_id: currentUserId,
             status: taskData.status === 'completed' ? 'completed' : 'pending'
           });
 
@@ -72,7 +77,7 @@ export async function shareTask({
           throw assignmentError;
         }
 
-        // 3. Create notification
+        // 3. Create notification and show it immediately
         const { error: notificationError } = await supabase
           .from('notifications')
           .insert({
@@ -87,6 +92,14 @@ export async function shareTask({
         if (notificationError) {
           console.error('Error creating notification:', notificationError);
           throw notificationError;
+        }
+
+        // 4. Show notification and play sound immediately
+        try {
+          await showNotification(taskData, 'assignment');
+          await playNotificationSound();
+        } catch (error) {
+          console.error('Error showing notification:', error);
         }
 
         return sharedTask;
@@ -142,13 +155,13 @@ export async function shareTask({
 
       if (groupMembers && groupMembers.length > 0) {
         const memberPromises = groupMembers.map(async member => {
-          // Create task assignment for each member - using the correct column name assigned_by_id
+          // Create task assignment for each member
           const { error: assignmentError } = await supabase
             .from('task_assignments')
             .insert({
               task_id: taskId,
               assignee_id: member.trusted_user_id,
-              assigned_by_id: currentUserId, // Fixed: changed from assigned_by to assigned_by_id
+              assigned_by_id: currentUserId,
               status: taskData.status === 'completed' ? 'completed' : 'pending'
             });
 
@@ -157,8 +170,8 @@ export async function shareTask({
             throw assignmentError;
           }
 
-          // Create notification for each member
-          return supabase
+          // Create notification and show it immediately
+          const { error: notificationError } = await supabase
             .from('notifications')
             .insert({
               user_id: member.trusted_user_id,
@@ -168,6 +181,19 @@ export async function shareTask({
               reference_id: taskId.toString(),
               reference_type: 'task'
             });
+
+          if (notificationError) {
+            console.error('Error creating notification:', notificationError);
+            return notificationError;
+          }
+
+          // Show notification and play sound immediately
+          try {
+            await showNotification(taskData, 'assignment');
+            await playNotificationSound();
+          } catch (error) {
+            console.error('Error showing notification:', error);
+          }
         });
 
         await Promise.all(memberPromises);
@@ -182,7 +208,6 @@ export async function shareTask({
       .from('tasks')
       .update({ 
         shared: true,
-        // Ensure we preserve the original status and scheduling
         status: taskData.status,
         date: taskData.date,
         start_time: taskData.start_time,
