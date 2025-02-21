@@ -4,6 +4,7 @@ import { DeleteTaskAlert } from "../DeleteTaskAlert";
 import { Task, TaskPriority } from "../TaskBoard";
 import { Subtask } from "../subtasks/SubtaskList";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Button } from "@/components/ui/button";
 
 interface EditTaskContentProps {
   task: Task;
@@ -61,8 +62,8 @@ export function EditTaskContent({
   const isMobile = useIsMobile();
 
   return (
-    <div className="flex flex-col h-screen">
-      <div className="flex-1 overflow-y-auto">
+    <div className="flex flex-col h-full space-y-4 pt-2">
+      <div className="flex-1 overflow-y-auto px-6">
         <TaskForm
           title={title}
           description={description}
@@ -90,14 +91,23 @@ export function EditTaskContent({
           onSubmit={onSubmit}
         />
       </div>
-      {isMobile && (
-        <div className="bg-white border-t border-gray-200 p-4">
+      
+      <div className="px-6 pb-6">
+        <div className="space-y-4">
+          <Button
+            onClick={onSubmit}
+            disabled={isLoading}
+            className="w-full bg-gradient-to-r from-[#9b87f5] to-[#8B5CF6] hover:from-[#8B5CF6] hover:to-[#7C3AED] text-white"
+          >
+            {isLoading ? "Updating..." : "Update Task"}
+          </Button>
+          
           <DeleteTaskAlert 
             isLoading={isLoading} 
             onDelete={onDelete}
           />
         </div>
-      )}
+      </div>
     </div>
   );
 }
