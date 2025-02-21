@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -138,28 +139,29 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
           </Button>
         )}
       </DrawerTrigger>
-      <DrawerContent className={`${isMobile ? 'h-[90vh] max-h-[90vh] overflow-y-auto' : 'w-[400px]'} ${!isMobile ? 'left-0 right-auto' : ''}`}>
-        <div className={`mx-auto w-full ${isMobile ? 'max-w-full px-4' : 'max-w-sm'}`}>
-          <DrawerHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <DrawerTitle>Add New Task</DrawerTitle>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowShareDialog(true)}
-                >
-                  <Share2 className="h-4 w-4 text-[#0EA5E9]" />
-                </Button>
-              </div>
-              <DrawerClose asChild>
-                <Button variant="ghost" size="icon">
-                  <X className="h-4 w-4" />
-                </Button>
-              </DrawerClose>
+      <DrawerContent className={`${isMobile ? 'h-[90vh] max-h-[90vh]' : 'w-[400px]'} ${!isMobile ? 'left-0 right-auto' : ''}`}>
+        <DrawerHeader className="border-b px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <DrawerTitle>Add New Task</DrawerTitle>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowShareDialog(true)}
+              >
+                <Share2 className="h-4 w-4 text-[#0EA5E9]" />
+              </Button>
             </div>
-          </DrawerHeader>
+            <DrawerClose asChild>
+              <Button variant="ghost" size="icon">
+                <X className="h-4 w-4" />
+              </Button>
+            </DrawerClose>
+          </div>
+        </DrawerHeader>
+        
+        <div className="flex-1 overflow-hidden">
           <TaskForm
             title={title}
             description={description}
