@@ -1,22 +1,9 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { showNotification } from "@/utils/notifications/notificationUtils";
-import { useNotificationSound } from "@/components/dashboard/header/notifications/useNotificationSound";
-
-interface ShareTaskParams {
-  taskId: number;
-  selectedUserIds: string[];
-  selectedGroupId: string;
-  sharingType: "individual" | "group";
-  currentUserId: string;
-}
-
-interface TaskGroupMember {
-  trusted_user_id: string;
-  group_id: number;
-  role: 'admin' | 'member';
-}
+import { ShareTaskParams } from "./task-sharing/types";
+import { shareWithIndividuals } from "./task-sharing/individual-sharing";
+import { shareWithGroup } from "./task-sharing/group-sharing";
 
 export async function shareTask({
   taskId,
@@ -26,7 +13,7 @@ export async function shareTask({
   currentUserId,
 }: ShareTaskParams) {
   try {
-    // First get the task's current status to preserve it
+    // Get the task's current status to preserve it
     const { data: taskData, error: taskError } = await supabase
       .from('tasks')
       .select('*')
@@ -38,74 +25,9 @@ export async function shareTask({
       throw taskError;
     }
 
-    // Create notification sound player
-    const { playNotificationSound } = useNotificationSound();
-
+    // Share based on type
     if (sharingType === 'individual') {
-      // Create shared task records and task assignments for each selected user
-      const promises = selectedUserIds.map(async (userId) => {
-        // 1. Create shared task record
-        const { data: sharedTask, error: shareError } = await supabase
-          .from('shared_tasks')
-          .insert({
-            task_id: taskId,
-            shared_with_user_id: userId,
-            shared_by_user_id: currentUserId,
-            sharing_type: 'individual',
-            status: taskData.status === 'completed' ? 'completed' : 'pending'
-          })
-          .select()
-          .single();
-
-        if (shareError) {
-          console.error('Share task error:', shareError);
-          throw shareError;
-        }
-
-        // 2. Create task assignment record
-        const { error: assignmentError } = await supabase
-          .from('task_assignments')
-          .insert({
-            task_id: taskId,
-            assignee_id: userId,
-            assigned_by_id: currentUserId,
-            status: taskData.status === 'completed' ? 'completed' : 'pending'
-          });
-
-        if (assignmentError) {
-          console.error('Assignment error:', assignmentError);
-          throw assignmentError;
-        }
-
-        // 3. Create notification and show it immediately
-        const { error: notificationError } = await supabase
-          .from('notifications')
-          .insert({
-            user_id: userId,
-            title: 'New Task Assignment',
-            message: `You have been assigned to: ${taskData.title}`,
-            type: 'task_assignment',
-            reference_id: taskId.toString(),
-            reference_type: 'task'
-          });
-
-        if (notificationError) {
-          console.error('Error creating notification:', notificationError);
-          throw notificationError;
-        }
-
-        // 4. Show notification and play sound immediately
-        try {
-          await showNotification(taskData, 'assignment');
-          await playNotificationSound();
-        } catch (error) {
-          console.error('Error showing notification:', error);
-        }
-
-        return sharedTask;
-      });
-
-      const results = await Promise.all(promises);
+      const results = await shareWithIndividuals(taskData, selectedUserIds, currentUserId);
       const errors = results.filter(result => !result);
 
       if (errors.length > 0) {
@@ -119,87 +41,8 @@ export async function shareTask({
       } else {
         toast.success(`Task shared with ${selectedUserIds.length} users`);
       }
-
     } else {
-      // Share with group
-      const groupId = parseInt(selectedGroupId, 10);
-      
-      // 1. Create shared task record for group
-      const { data: sharedTask, error: shareError } = await supabase
-        .from('shared_tasks')
-        .insert({
-          task_id: taskId,
-          group_id: groupId,
-          shared_by_user_id: currentUserId,
-          sharing_type: 'group',
-          status: taskData.status === 'completed' ? 'completed' : 'pending'
-        })
-        .select()
-        .single();
-
-      if (shareError) {
-        console.error('Share with group error:', shareError);
-        throw shareError;
-      }
-
-      // 2. Get group members and create assignments and notifications for each
-      const { data: groupMembers, error: membersError } = await supabase
-        .from('task_group_members')
-        .select('trusted_user_id')
-        .eq('group_id', groupId);
-
-      if (membersError) {
-        console.error('Error fetching group members:', membersError);
-        throw membersError;
-      }
-
-      if (groupMembers && groupMembers.length > 0) {
-        const memberPromises = groupMembers.map(async member => {
-          // Create task assignment for each member
-          const { error: assignmentError } = await supabase
-            .from('task_assignments')
-            .insert({
-              task_id: taskId,
-              assignee_id: member.trusted_user_id,
-              assigned_by_id: currentUserId,
-              status: taskData.status === 'completed' ? 'completed' : 'pending'
-            });
-
-          if (assignmentError) {
-            console.error('Assignment error:', assignmentError);
-            throw assignmentError;
-          }
-
-          // Create notification and show it immediately
-          const { error: notificationError } = await supabase
-            .from('notifications')
-            .insert({
-              user_id: member.trusted_user_id,
-              title: 'New Group Task Assignment',
-              message: `A new task has been shared with your group: ${taskData.title}`,
-              type: 'task_assignment',
-              reference_id: taskId.toString(),
-              reference_type: 'task'
-            });
-
-          if (notificationError) {
-            console.error('Error creating notification:', notificationError);
-            return notificationError;
-          }
-
-          // Show notification and play sound immediately
-          try {
-            await showNotification(taskData, 'assignment');
-            await playNotificationSound();
-          } catch (error) {
-            console.error('Error showing notification:', error);
-          }
-        });
-
-        await Promise.all(memberPromises);
-      }
-
-      // Show success toast
+      await shareWithGroup(taskData, selectedGroupId, currentUserId);
       toast.success('Task shared with group successfully');
     }
 
