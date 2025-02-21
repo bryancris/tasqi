@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "./TaskBoard";
@@ -59,6 +59,9 @@ export function ShareTaskDialog({ task, open, onOpenChange }: ShareTaskDialogPro
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Share Task</DialogTitle>
+          <DialogDescription>
+            Share this task with other users or groups.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 pt-4">
           <TaskSharingForm

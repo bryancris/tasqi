@@ -57,13 +57,13 @@ export async function shareTask({
           throw shareError;
         }
 
-        // 2. Create task assignment record
+        // 2. Create task assignment record - using the correct column name assigned_by_id
         const { error: assignmentError } = await supabase
           .from('task_assignments')
           .insert({
             task_id: taskId,
             assignee_id: userId,
-            assigned_by: currentUserId,
+            assigned_by_id: currentUserId, // Fixed: changed from assigned_by to assigned_by_id
             status: taskData.status === 'completed' ? 'completed' : 'pending'
           });
 
@@ -142,13 +142,13 @@ export async function shareTask({
 
       if (groupMembers && groupMembers.length > 0) {
         const memberPromises = groupMembers.map(async member => {
-          // Create task assignment for each member
+          // Create task assignment for each member - using the correct column name assigned_by_id
           const { error: assignmentError } = await supabase
             .from('task_assignments')
             .insert({
               task_id: taskId,
               assignee_id: member.trusted_user_id,
-              assigned_by: currentUserId,
+              assigned_by_id: currentUserId, // Fixed: changed from assigned_by to assigned_by_id
               status: taskData.status === 'completed' ? 'completed' : 'pending'
             });
 
