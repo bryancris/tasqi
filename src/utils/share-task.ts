@@ -10,6 +10,12 @@ interface ShareTaskParams {
   currentUserId: string;
 }
 
+interface TaskGroupMember {
+  user_id: string;
+  group_id: number;
+  role: 'admin' | 'member';
+}
+
 export async function shareTask({
   taskId,
   selectedUserIds,
@@ -88,11 +94,13 @@ export async function shareTask({
 
     } else {
       // Share with group
+      const groupId = parseInt(selectedGroupId, 10); // Properly convert string to number
+      
       const { data: sharedTask, error: shareError } = await supabase
         .from('shared_tasks')
         .insert({
           task_id: taskId,
-          group_id: parseInt(selectedGroupId),
+          group_id: groupId, // Use the converted number
           shared_by_user_id: currentUserId,
           sharing_type: 'group',
           // Preserve the task's status
@@ -109,8 +117,8 @@ export async function shareTask({
       // Get group members and create notifications for each
       const { data: groupMembers, error: membersError } = await supabase
         .from('task_group_members')
-        .select('user_id')
-        .eq('group_id', selectedGroupId);
+        .select<'task_group_members', TaskGroupMember>('user_id')
+        .eq('group_id', groupId);
 
       if (membersError) {
         console.error('Error fetching group members:', membersError);
@@ -118,7 +126,7 @@ export async function shareTask({
       }
 
       // Create notifications for all group members
-      if (groupMembers) {
+      if (groupMembers && groupMembers.length > 0) {
         const notificationPromises = groupMembers.map(member => 
           supabase
             .from('notifications')
