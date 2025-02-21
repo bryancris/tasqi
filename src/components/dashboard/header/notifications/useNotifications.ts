@@ -80,56 +80,40 @@ export function useNotifications() {
         async (payload: any) => {
           console.log('New notification received:', payload);
           
-          await playNotificationSound();
-          queryClient.invalidateQueries({ queryKey: ['notifications'] });
-          toast(payload.new.title, {
-            description: payload.new.message,
-          });
-          
-          if (payload.new.type === 'task_share' && payload.new.reference_id) {
-            try {
-              const { data: task, error } = await supabase
-                .from('tasks')
-                .select('*')
-                .eq('id', payload.new.reference_id)
-                .single();
+          // Play sound and show notification only for the receiving user
+          if (payload.new.user_id === currentUserId) {
+            await playNotificationSound();
+            queryClient.invalidateQueries({ queryKey: ['notifications'] });
+            toast(payload.new.title, {
+              description: payload.new.message,
+            });
+            
+            if (payload.new.type === 'task_share' && payload.new.reference_id) {
+              try {
+                const { data: task, error } = await supabase
+                  .from('tasks')
+                  .select('*')
+                  .eq('id', payload.new.reference_id)
+                  .single();
 
-              if (error) throw error;
-              if (task) {
-                await showNotification(task, 'shared');
+                if (error) throw error;
+                if (task) {
+                  await showNotification(task, 'shared');
+                }
+              } catch (error) {
+                console.error('Error handling shared task notification:', error);
               }
-            } catch (error) {
-              console.error('Error handling shared task notification:', error);
             }
           }
         }
       )
       .subscribe();
 
-    const sharedTasksChannel = supabase
-      .channel('shared_tasks')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'shared_tasks',
-          filter: `shared_with_user_id=eq.${currentUserId}`
-        },
-        async (payload: any) => {
-          console.log('New shared task received:', payload);
-          await playNotificationSound();
-          toast.success('New task shared with you!');
-        }
-      )
-      .subscribe((status) => {
-        console.log('Shared tasks subscription status:', status);
-      });
+    // No need for separate shared_tasks subscription since we're handling it through notifications
 
     return () => {
       console.log('Cleaning up subscriptions');
       supabase.removeChannel(notificationChannel);
-      supabase.removeChannel(sharedTasksChannel);
     };
   }, [currentUserId, queryClient, playNotificationSound]);
 
