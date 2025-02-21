@@ -1,4 +1,6 @@
 
+export type TaskPriority = "low" | "medium" | "high";
+
 export interface ShareTaskParams {
   taskId: number;
   selectedUserIds: string[];
@@ -21,7 +23,7 @@ export interface TaskData {
   date: string | null;
   start_time: string | null;
   end_time: string | null;
-  priority: string | null;
+  priority: TaskPriority | null;
   position: number;
   user_id: string;
   owner_id: string;
