@@ -32,10 +32,10 @@ export async function shareTask({
 
     if (sharingType === 'individual') {
       // Create shared task records for each selected user
-      const sharedTaskPromises = selectedUserIds.map(userId =>
-        supabase
+      const sharedTaskPromises = selectedUserIds.map(async (userId) => {
+        const { data: sharedTask, error: shareError } = await supabase
           .from('shared_tasks')
-          .upsert({
+          .insert({
             task_id: taskId,
             shared_with_user_id: userId,
             shared_by_user_id: currentUserId,
@@ -44,11 +44,35 @@ export async function shareTask({
             status: taskData.status === 'completed' ? 'completed' : 'pending'
           })
           .select()
-          .single()
-      );
+          .single();
+
+        if (shareError) {
+          console.error('Share task error:', shareError);
+          throw shareError;
+        }
+
+        // Create notification for the shared user
+        const { error: notificationError } = await supabase
+          .from('notifications')
+          .insert({
+            user_id: userId,
+            title: 'New Task Shared With You',
+            message: `A new task has been shared with you: ${taskData.title}`,
+            type: 'task_share',
+            reference_id: taskId.toString(),
+            reference_type: 'task'
+          });
+
+        if (notificationError) {
+          console.error('Error creating notification:', notificationError);
+          throw notificationError;
+        }
+
+        return sharedTask;
+      });
 
       const results = await Promise.all(sharedTaskPromises);
-      const errors = results.filter(result => result.error);
+      const errors = results.filter(result => !result);
 
       if (errors.length > 0) {
         console.error('Share task errors:', errors);
@@ -62,22 +86,11 @@ export async function shareTask({
         toast.success(`Task shared with ${selectedUserIds.length} users`);
       }
 
-      // Send notifications for each shared task
-      await Promise.all(
-        results.map(result => {
-          if (result.data) {
-            return supabase.functions.invoke('send-invitation', {
-              body: { sharedTaskId: result.data.id }
-            });
-          }
-          return Promise.resolve();
-        })
-      );
     } else {
       // Share with group
       const { data: sharedTask, error: shareError } = await supabase
         .from('shared_tasks')
-        .upsert({
+        .insert({
           task_id: taskId,
           group_id: parseInt(selectedGroupId),
           shared_by_user_id: currentUserId,
@@ -93,13 +106,37 @@ export async function shareTask({
         throw shareError;
       }
 
+      // Get group members and create notifications for each
+      const { data: groupMembers, error: membersError } = await supabase
+        .from('task_group_members')
+        .select('user_id')
+        .eq('group_id', selectedGroupId);
+
+      if (membersError) {
+        console.error('Error fetching group members:', membersError);
+        throw membersError;
+      }
+
+      // Create notifications for all group members
+      if (groupMembers) {
+        const notificationPromises = groupMembers.map(member => 
+          supabase
+            .from('notifications')
+            .insert({
+              user_id: member.user_id,
+              title: 'New Group Task Shared',
+              message: `A new task has been shared with your group: ${taskData.title}`,
+              type: 'task_share',
+              reference_id: taskId.toString(),
+              reference_type: 'task'
+            })
+        );
+
+        await Promise.all(notificationPromises);
+      }
+
       // Show success toast
       toast.success('Task shared with group successfully');
-
-      // Send notification for group share
-      await supabase.functions.invoke('send-invitation', {
-        body: { sharedTaskId: sharedTask.id }
-      });
     }
 
     // Update the task's shared status
