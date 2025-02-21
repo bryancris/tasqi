@@ -11,7 +11,7 @@ interface ShareTaskParams {
 }
 
 interface TaskGroupMember {
-  user_id: string;
+  trusted_user_id: string;
   group_id: number;
   role: 'admin' | 'member';
 }
@@ -117,7 +117,7 @@ export async function shareTask({
       // Get group members and create notifications for each
       const { data: groupMembers, error: membersError } = await supabase
         .from('task_group_members')
-        .select('trusted_user_id as user_id')
+        .select('trusted_user_id')
         .eq('group_id', groupId);
 
       if (membersError) {
@@ -131,7 +131,7 @@ export async function shareTask({
           supabase
             .from('notifications')
             .insert({
-              user_id: member.user_id,
+              user_id: member.trusted_user_id,
               title: 'New Group Task Shared',
               message: `A new task has been shared with your group: ${taskData.title}`,
               type: 'task_share',
