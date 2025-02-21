@@ -1,22 +1,22 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@/components/ui/drawer";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetClose,
+} from "@/components/ui/sheet";
 import { X, Share2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { TaskForm } from "./TaskForm";
 import { createTask } from "@/utils/taskUtils";
 import { TaskPriority } from "./TaskBoard";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ShareTaskDialog } from "./ShareTaskDialog";
 import { Subtask } from "./subtasks/SubtaskList";
+import { AddTaskContent } from "./add-task/AddTaskContent";
 
 interface AddTaskDrawerProps {
   children?: React.ReactNode;
@@ -130,21 +130,22 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
   };
 
   return (
-    <Drawer open={isOpen} onOpenChange={setIsOpen}>
-      <DrawerTrigger asChild ref={triggerRef}>
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+      <SheetTrigger asChild ref={triggerRef}>
         {children || (
           <Button className="w-full bg-[#22C55E] hover:bg-[#16A34A] text-white text-base font-semibold py-6">
             + Add a task
           </Button>
         )}
-      </DrawerTrigger>
-      <DrawerContent 
-        className={`fixed left-0 right-auto ${isMobile ? 'h-[90vh]' : 'w-[400px] sm:max-w-[540px]'}`}
+      </SheetTrigger>
+      <SheetContent 
+        side="left" 
+        className="w-[400px] sm:max-w-[540px]"
       >
-        <DrawerHeader className="border-b px-6 py-4">
+        <SheetHeader className="border-b px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <DrawerTitle>Add New Task</DrawerTitle>
+              <SheetTitle>Add New Task</SheetTitle>
               <Button
                 type="button"
                 variant="ghost"
@@ -154,48 +155,44 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
                 <Share2 className="h-4 w-4 text-[#0EA5E9]" />
               </Button>
             </div>
-            <DrawerClose asChild>
+            <SheetClose asChild>
               <Button variant="ghost" size="icon">
                 <X className="h-4 w-4" />
               </Button>
-            </DrawerClose>
+            </SheetClose>
           </div>
-        </DrawerHeader>
+        </SheetHeader>
         
-        <div className="flex flex-col h-full">
-          <div className="flex-1 overflow-y-auto px-6">
-            <TaskForm
-              title={title}
-              description={description}
-              isScheduled={isScheduled}
-              date={date}
-              startTime={startTime}
-              endTime={endTime}
-              priority={priority}
-              reminderEnabled={reminderEnabled}
-              reminderTime={reminderTime}
-              subtasks={subtasks}
-              isLoading={isLoading}
-              onTitleChange={setTitle}
-              onDescriptionChange={setDescription}
-              onIsScheduledChange={setIsScheduled}
-              onDateChange={setDate}
-              onStartTimeChange={setStartTime}
-              onEndTimeChange={setEndTime}
-              onPriorityChange={setPriority}
-              onReminderEnabledChange={setReminderEnabled}
-              onReminderTimeChange={setReminderTime}
-              onSubtasksChange={setSubtasks}
-              onSubmit={handleSubmit}
-            />
-          </div>
-        </div>
-      </DrawerContent>
+        <AddTaskContent
+          title={title}
+          description={description}
+          isScheduled={isScheduled}
+          date={date}
+          startTime={startTime}
+          endTime={endTime}
+          priority={priority}
+          reminderEnabled={reminderEnabled}
+          reminderTime={reminderTime}
+          subtasks={subtasks}
+          isLoading={isLoading}
+          onTitleChange={setTitle}
+          onDescriptionChange={setDescription}
+          onIsScheduledChange={setIsScheduled}
+          onDateChange={setDate}
+          onStartTimeChange={setStartTime}
+          onEndTimeChange={setEndTime}
+          onPriorityChange={setPriority}
+          onReminderEnabledChange={setReminderEnabled}
+          onReminderTimeChange={setReminderTime}
+          onSubtasksChange={setSubtasks}
+          onSubmit={handleSubmit}
+        />
+      </SheetContent>
       <ShareTaskDialog
         task={null}
         open={showShareDialog}
         onOpenChange={setShowShareDialog}
       />
-    </Drawer>
+    </Sheet>
   );
 }
