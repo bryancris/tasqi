@@ -139,7 +139,10 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
           </Button>
         )}
       </DrawerTrigger>
-      <DrawerContent className={`${isMobile ? 'h-[90vh] max-h-[90vh]' : 'w-[400px]'} ${!isMobile ? 'left-0 right-auto' : ''}`}>
+      <DrawerContent 
+        side="left"
+        className={`${isMobile ? 'h-[90vh]' : 'w-[400px] sm:max-w-[540px]'} ${!isMobile ? 'left-0 right-auto' : ''}`}
+      >
         <DrawerHeader className="border-b px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -161,31 +164,33 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
           </div>
         </DrawerHeader>
         
-        <div className="flex-1 overflow-hidden">
-          <TaskForm
-            title={title}
-            description={description}
-            isScheduled={isScheduled}
-            date={date}
-            startTime={startTime}
-            endTime={endTime}
-            priority={priority}
-            reminderEnabled={reminderEnabled}
-            reminderTime={reminderTime}
-            subtasks={subtasks}
-            isLoading={isLoading}
-            onTitleChange={setTitle}
-            onDescriptionChange={setDescription}
-            onIsScheduledChange={setIsScheduled}
-            onDateChange={setDate}
-            onStartTimeChange={setStartTime}
-            onEndTimeChange={setEndTime}
-            onPriorityChange={setPriority}
-            onReminderEnabledChange={setReminderEnabled}
-            onReminderTimeChange={setReminderTime}
-            onSubtasksChange={setSubtasks}
-            onSubmit={handleSubmit}
-          />
+        <div className="flex flex-col h-full">
+          <div className="flex-1 overflow-y-auto px-6">
+            <TaskForm
+              title={title}
+              description={description}
+              isScheduled={isScheduled}
+              date={date}
+              startTime={startTime}
+              endTime={endTime}
+              priority={priority}
+              reminderEnabled={reminderEnabled}
+              reminderTime={reminderTime}
+              subtasks={subtasks}
+              isLoading={isLoading}
+              onTitleChange={setTitle}
+              onDescriptionChange={setDescription}
+              onIsScheduledChange={setIsScheduled}
+              onDateChange={setDate}
+              onStartTimeChange={setStartTime}
+              onEndTimeChange={setEndTime}
+              onPriorityChange={setPriority}
+              onReminderEnabledChange={setReminderEnabled}
+              onReminderTimeChange={setReminderTime}
+              onSubtasksChange={setSubtasks}
+              onSubmit={handleSubmit}
+            />
+          </div>
         </div>
       </DrawerContent>
       <ShareTaskDialog
