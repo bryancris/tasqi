@@ -3,12 +3,9 @@ import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
-  SheetTitle,
   SheetTrigger,
   SheetClose,
 } from "@/components/ui/sheet";
-import { X, Share2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { createTask } from "@/utils/taskUtils";
@@ -17,6 +14,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { ShareTaskDialog } from "./ShareTaskDialog";
 import { Subtask } from "./subtasks/SubtaskList";
 import { AddTaskContent } from "./add-task/AddTaskContent";
+import { AddTaskHeader } from "./add-task/AddTaskHeader";
 
 interface AddTaskDrawerProps {
   children?: React.ReactNode;
@@ -142,27 +140,7 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
         side="left" 
         className="w-[400px] sm:max-w-[540px]"
       >
-        <SheetHeader className="border-b px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <SheetTitle>Add New Task</SheetTitle>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowShareDialog(true)}
-              >
-                <Share2 className="h-4 w-4 text-[#0EA5E9]" />
-              </Button>
-            </div>
-            <SheetClose asChild>
-              <Button variant="ghost" size="icon">
-                <X className="h-4 w-4" />
-              </Button>
-            </SheetClose>
-          </div>
-        </SheetHeader>
-        
+        <AddTaskHeader onShareClick={() => setShowShareDialog(true)} />
         <AddTaskContent
           title={title}
           description={description}
