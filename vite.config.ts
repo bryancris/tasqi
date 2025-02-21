@@ -72,11 +72,17 @@ export default defineConfig(({ mode }) => ({
               }
             }
           }
-        ]
+        ],
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true
       },
       devOptions: {
         enabled: true
-      }
+      },
+      injectRegister: 'auto',
+      strategies: 'generateSW',
+      minify: true
     })
   ].filter(Boolean),
   resolve: {
