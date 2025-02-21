@@ -4,6 +4,7 @@ import { HeaderNotifications } from "@/components/dashboard/header/HeaderNotific
 import { Button } from "@/components/ui/button";
 import { HeaderTime } from "@/components/dashboard/header/HeaderTime";
 import { AddTaskDrawer } from "@/components/dashboard/AddTaskDrawer";
+import { Plus } from "lucide-react";
 
 export function MobileHeader() {
   return (
@@ -14,11 +15,11 @@ export function MobileHeader() {
           <div className="flex items-center gap-2">
             <AddTaskDrawer>
               <Button
-                variant="ghost"
+                variant="outline"
                 size="icon"
-                className="h-8 w-8"
+                className="h-9 w-9 rounded-full border-2 border-purple-400 bg-purple-50 hover:bg-purple-100 hover:border-purple-500"
               >
-                <span className="text-lg font-semibold">+</span>
+                <Plus className="h-5 w-5 text-purple-600" />
               </Button>
             </AddTaskDrawer>
             <HeaderNotifications />
