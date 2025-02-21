@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -140,8 +139,7 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
         )}
       </DrawerTrigger>
       <DrawerContent 
-        side="left"
-        className={`${isMobile ? 'h-[90vh]' : 'w-[400px] sm:max-w-[540px]'} ${!isMobile ? 'left-0 right-auto' : ''}`}
+        className={`fixed left-0 right-auto ${isMobile ? 'h-[90vh]' : 'w-[400px] sm:max-w-[540px]'}`}
       >
         <DrawerHeader className="border-b px-6 py-4">
           <div className="flex items-center justify-between">
