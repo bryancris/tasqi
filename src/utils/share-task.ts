@@ -1,6 +1,7 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ShareTaskParams } from "./task-sharing/types";
+import { ShareTaskParams, TaskData } from "./task-sharing/types";
 import { shareWithIndividuals } from "./task-sharing/individual-sharing";
 import { shareWithGroup } from "./task-sharing/group-sharing";
 
@@ -24,9 +25,15 @@ export async function shareTask({
       throw taskError;
     }
 
+    // Ensure the task data has the correct status type
+    const validatedTaskData: TaskData = {
+      ...taskData,
+      status: taskData.status as TaskData['status']
+    };
+
     // Share based on type
     if (sharingType === 'individual') {
-      const results = await shareWithIndividuals(taskData, selectedUserIds, currentUserId);
+      const results = await shareWithIndividuals(validatedTaskData, selectedUserIds, currentUserId);
       const errors = results.filter(result => !result);
 
       if (errors.length > 0) {
@@ -41,7 +48,7 @@ export async function shareTask({
         toast.success(`Task shared with ${selectedUserIds.length} users`);
       }
     } else {
-      await shareWithGroup(taskData, selectedGroupId, currentUserId);
+      await shareWithGroup(validatedTaskData, selectedGroupId, currentUserId);
       toast.success('Task shared with group successfully');
     }
 
@@ -50,11 +57,11 @@ export async function shareTask({
       .from('tasks')
       .update({ 
         shared: true,
-        status: taskData.status,
-        date: taskData.date,
-        start_time: taskData.start_time,
-        end_time: taskData.end_time,
-        priority: taskData.priority
+        status: validatedTaskData.status,
+        date: validatedTaskData.date,
+        start_time: validatedTaskData.start_time,
+        end_time: validatedTaskData.end_time,
+        priority: validatedTaskData.priority
       })
       .eq('id', taskId);
 

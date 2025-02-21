@@ -17,7 +17,7 @@ export interface TaskData {
   id: number;
   title: string;
   description: string | null;
-  status: string;
+  status: 'completed' | 'scheduled' | 'unscheduled' | 'in_progress' | 'stuck';
   date: string | null;
   start_time: string | null;
   end_time: string | null;
