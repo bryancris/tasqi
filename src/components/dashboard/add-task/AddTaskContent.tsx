@@ -74,11 +74,11 @@ export function AddTaskContent({
           onDescriptionChange={onDescriptionChange}
           onIsScheduledChange={onIsScheduledChange}
           onDateChange={onDateChange}
-          onStartTimeChange={setStartTime}
-          onEndTimeChange={setEndTime}
-          onPriorityChange={setPriority}
-          onReminderEnabledChange={setReminderEnabled}
-          onReminderTimeChange={setReminderTime}
+          onStartTimeChange={onStartTimeChange}
+          onEndTimeChange={onEndTimeChange}
+          onPriorityChange={onPriorityChange}
+          onReminderEnabledChange={onReminderEnabledChange}
+          onReminderTimeChange={onReminderTimeChange}
           onSubtasksChange={onSubtasksChange}
           onSubmit={onSubmit}
         />
