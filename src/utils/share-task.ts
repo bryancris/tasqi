@@ -37,8 +37,9 @@ export async function shareTask({
     }
 
     if (sharingType === 'individual') {
-      // Create shared task records for each selected user
-      const sharedTaskPromises = selectedUserIds.map(async (userId) => {
+      // Create shared task records and task assignments for each selected user
+      const promises = selectedUserIds.map(async (userId) => {
+        // 1. Create shared task record
         const { data: sharedTask, error: shareError } = await supabase
           .from('shared_tasks')
           .insert({
@@ -46,7 +47,6 @@ export async function shareTask({
             shared_with_user_id: userId,
             shared_by_user_id: currentUserId,
             sharing_type: 'individual',
-            // Preserve the task's status
             status: taskData.status === 'completed' ? 'completed' : 'pending'
           })
           .select()
@@ -57,14 +57,29 @@ export async function shareTask({
           throw shareError;
         }
 
-        // Create notification for the shared user
+        // 2. Create task assignment record
+        const { error: assignmentError } = await supabase
+          .from('task_assignments')
+          .insert({
+            task_id: taskId,
+            assignee_id: userId,
+            assigned_by: currentUserId,
+            status: taskData.status === 'completed' ? 'completed' : 'pending'
+          });
+
+        if (assignmentError) {
+          console.error('Assignment error:', assignmentError);
+          throw assignmentError;
+        }
+
+        // 3. Create notification
         const { error: notificationError } = await supabase
           .from('notifications')
           .insert({
             user_id: userId,
-            title: 'New Task Shared With You',
-            message: `A new task has been shared with you: ${taskData.title}`,
-            type: 'task_share',
+            title: 'New Task Assignment',
+            message: `You have been assigned to: ${taskData.title}`,
+            type: 'task_assignment',
             reference_id: taskId.toString(),
             reference_type: 'task'
           });
@@ -77,7 +92,7 @@ export async function shareTask({
         return sharedTask;
       });
 
-      const results = await Promise.all(sharedTaskPromises);
+      const results = await Promise.all(promises);
       const errors = results.filter(result => !result);
 
       if (errors.length > 0) {
@@ -94,16 +109,16 @@ export async function shareTask({
 
     } else {
       // Share with group
-      const groupId = parseInt(selectedGroupId, 10); // Properly convert string to number
+      const groupId = parseInt(selectedGroupId, 10);
       
+      // 1. Create shared task record for group
       const { data: sharedTask, error: shareError } = await supabase
         .from('shared_tasks')
         .insert({
           task_id: taskId,
-          group_id: groupId, // Use the converted number
+          group_id: groupId,
           shared_by_user_id: currentUserId,
           sharing_type: 'group',
-          // Preserve the task's status
           status: taskData.status === 'completed' ? 'completed' : 'pending'
         })
         .select()
@@ -114,7 +129,7 @@ export async function shareTask({
         throw shareError;
       }
 
-      // Get group members and create notifications for each
+      // 2. Get group members and create assignments and notifications for each
       const { data: groupMembers, error: membersError } = await supabase
         .from('task_group_members')
         .select('trusted_user_id')
@@ -125,22 +140,37 @@ export async function shareTask({
         throw membersError;
       }
 
-      // Create notifications for all group members
       if (groupMembers && groupMembers.length > 0) {
-        const notificationPromises = groupMembers.map(member => 
-          supabase
+        const memberPromises = groupMembers.map(async member => {
+          // Create task assignment for each member
+          const { error: assignmentError } = await supabase
+            .from('task_assignments')
+            .insert({
+              task_id: taskId,
+              assignee_id: member.trusted_user_id,
+              assigned_by: currentUserId,
+              status: taskData.status === 'completed' ? 'completed' : 'pending'
+            });
+
+          if (assignmentError) {
+            console.error('Assignment error:', assignmentError);
+            throw assignmentError;
+          }
+
+          // Create notification for each member
+          return supabase
             .from('notifications')
             .insert({
               user_id: member.trusted_user_id,
-              title: 'New Group Task Shared',
+              title: 'New Group Task Assignment',
               message: `A new task has been shared with your group: ${taskData.title}`,
-              type: 'task_share',
+              type: 'task_assignment',
               reference_id: taskId.toString(),
               reference_type: 'task'
-            })
-        );
+            });
+        });
 
-        await Promise.all(notificationPromises);
+        await Promise.all(memberPromises);
       }
 
       // Show success toast
