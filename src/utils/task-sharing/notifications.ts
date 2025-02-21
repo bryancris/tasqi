@@ -1,7 +1,5 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { showNotification } from "@/utils/notifications/notificationUtils";
-import { useNotificationSound } from "@/components/dashboard/header/notifications/useNotificationSound";
 import { TaskData } from "./types";
 
 export async function createTaskAssignmentNotification(
@@ -9,8 +7,6 @@ export async function createTaskAssignmentNotification(
   taskData: TaskData,
   isGroup: boolean = false
 ) {
-  const { playNotificationSound } = useNotificationSound();
-
   // Create notification record
   const { error: notificationError } = await supabase
     .from('notifications')
@@ -26,13 +22,5 @@ export async function createTaskAssignmentNotification(
   if (notificationError) {
     console.error('Error creating notification:', notificationError);
     throw notificationError;
-  }
-
-  // Show notification and play sound
-  try {
-    await showNotification(taskData, 'assignment');
-    await playNotificationSound();
-  } catch (error) {
-    console.error('Error showing notification:', error);
   }
 }
