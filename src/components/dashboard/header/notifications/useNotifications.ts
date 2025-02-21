@@ -58,17 +58,18 @@ export function useNotifications() {
     enabled: !!currentUserId
   });
 
-  // Subscribe to new notifications
+  // Subscribe to new notifications and task assignments
   useEffect(() => {
     if (!currentUserId) {
-      console.log('❌ No current user ID, skipping notification subscription');
+      console.log('❌ No current user ID, skipping subscriptions');
       return;
     }
 
-    console.log('🔔 Setting up notification subscription for user:', currentUserId);
-    
-    const notificationChannel = supabase
-      .channel('notifications')
+    console.log('🔔 Setting up subscriptions for user:', currentUserId);
+
+    // Create channels for both notifications and task assignments
+    const notificationChannel = supabase.channel('notifications-and-tasks')
+      // Listen for new notifications
       .on(
         'postgres_changes',
         {
@@ -79,14 +80,12 @@ export function useNotifications() {
         },
         async (payload: any) => {
           console.log('📬 New notification received:', payload);
-          console.log('🔍 Notification type:', payload.new.type);
           
           if (payload.new.user_id === currentUserId) {
-            console.log('✅ Processing notification for current user');
             try {
               // Play sound for all notifications
               await playNotificationSound();
-              
+
               // Handle task-related notifications
               if (['task_share', 'task_assignment'].includes(payload.new.type) && payload.new.reference_id) {
                 console.log(`📋 Processing ${payload.new.type} notification`);
@@ -99,27 +98,23 @@ export function useNotifications() {
 
                   if (error) throw error;
                   if (task) {
-                    // Pass the correct notification type
                     const notificationType = 
-                      payload.new.type === 'task_share' ? 'shared' :
-                      payload.new.type === 'task_assignment' ? 'assignment' : 'reminder';
+                      payload.new.type === 'task_share' ? 'shared' : 'assignment';
                     
                     console.log('🔔 Showing notification with type:', notificationType);
                     await showNotification(task, notificationType);
-                    console.log('✅ Task notification shown successfully');
                   }
                 } catch (error) {
                   console.error('❌ Error handling task notification:', error);
                 }
               }
 
-              // Show toast for all notifications
+              // Show toast for the notification
               toast(payload.new.title, {
                 description: payload.new.message,
                 action: {
                   label: "View",
                   onClick: () => {
-                    // Navigate to dashboard if not already there
                     if (location.pathname !== '/dashboard') {
                       window.location.href = '/dashboard';
                     }
@@ -129,21 +124,63 @@ export function useNotifications() {
 
               // Refresh notifications list
               queryClient.invalidateQueries({ queryKey: ['notifications'] });
-              
             } catch (error) {
               console.error('❌ Error processing notification:', error);
             }
-          } else {
-            console.log('⏭️ Skipping notification - user ID mismatch');
+          }
+        }
+      )
+      // Listen for task assignments
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'task_assignments',
+          filter: `assignee_id=eq.${currentUserId}`
+        },
+        async (payload: any) => {
+          console.log('📝 New task assignment:', payload);
+          try {
+            // Play sound for new assignments
+            await playNotificationSound();
+
+            // Get the task details
+            const { data: task, error } = await supabase
+              .from('tasks')
+              .select('*')
+              .eq('id', payload.new.task_id)
+              .single();
+
+            if (error) throw error;
+            if (task) {
+              console.log('🔔 Showing assignment notification for task:', task.title);
+              await showNotification(task, 'assignment');
+
+              // Show toast for the assignment
+              toast("New Task Assignment", {
+                description: `You have been assigned to: ${task.title}`,
+                action: {
+                  label: "View",
+                  onClick: () => {
+                    if (location.pathname !== '/dashboard') {
+                      window.location.href = '/dashboard';
+                    }
+                  }
+                }
+              });
+            }
+          } catch (error) {
+            console.error('❌ Error handling task assignment:', error);
           }
         }
       )
       .subscribe((status) => {
-        console.log('📡 Notification subscription status:', status);
+        console.log('📡 Subscription status:', status);
       });
 
     return () => {
-      console.log('🧹 Cleaning up notification subscription');
+      console.log('🧹 Cleaning up subscriptions');
       supabase.removeChannel(notificationChannel);
     };
   }, [currentUserId, queryClient, playNotificationSound]);
