@@ -37,6 +37,22 @@ export function ShareTaskDialog({ task, open, onOpenChange }: ShareTaskDialogPro
         currentUserId: currentUser.id,
       });
       
+      // Create task assignment notifications
+      const notificationPromises = selectedUserIds.map(userId =>
+        supabase
+          .from('notifications')
+          .insert({
+            user_id: userId,
+            title: 'New Task Assignment',
+            message: `You have been assigned to: ${task.title}`,
+            type: 'task_assignment',
+            reference_id: task.id.toString(),
+            reference_type: 'task'
+          })
+      );
+
+      await Promise.all(notificationPromises);
+      
       toast.success('Task shared successfully');
       onOpenChange(false);
     } catch (error) {

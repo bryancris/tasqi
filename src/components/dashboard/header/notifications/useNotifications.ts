@@ -85,23 +85,13 @@ export function useNotifications() {
             isMatch: payload.new.user_id === currentUserId
           });
           
-          // Play sound and show notification only for the receiving user
+          // Only process notifications for the current user
           if (payload.new.user_id === currentUserId) {
-            console.log('✅ User IDs match, playing notification');
+            console.log('✅ User IDs match, processing notification');
             try {
-              await playNotificationSound();
-              console.log('🔊 Notification sound played');
-              
-              queryClient.invalidateQueries({ queryKey: ['notifications'] });
-              
-              // Show toast notification
-              toast(payload.new.title, {
-                description: payload.new.message,
-              });
-              
-              // Handle task share notifications
-              if (payload.new.type === 'task_share' && payload.new.reference_id) {
-                console.log('📋 Processing task share notification');
+              // Fetch task details if this is a task-related notification
+              if (['task_share', 'task_assignment'].includes(payload.new.type) && payload.new.reference_id) {
+                console.log('📋 Processing task notification');
                 try {
                   const { data: task, error } = await supabase
                     .from('tasks')
@@ -111,13 +101,23 @@ export function useNotifications() {
 
                   if (error) throw error;
                   if (task) {
-                    await showNotification(task, 'shared');
+                    // Show notification with sound for task assignments and shares
+                    await showNotification(task, payload.new.type === 'task_share' ? 'shared' : 'reminder');
                     console.log('✅ Task notification shown successfully');
                   }
                 } catch (error) {
-                  console.error('❌ Error handling shared task notification:', error);
+                  console.error('❌ Error handling task notification:', error);
                 }
+              } else {
+                // For non-task notifications, show a regular toast
+                toast(payload.new.title, {
+                  description: payload.new.message,
+                });
               }
+
+              // Refresh notifications list
+              queryClient.invalidateQueries({ queryKey: ['notifications'] });
+              
             } catch (error) {
               console.error('❌ Error processing notification:', error);
             }
@@ -134,7 +134,7 @@ export function useNotifications() {
       console.log('🧹 Cleaning up notification subscription');
       supabase.removeChannel(notificationChannel);
     };
-  }, [currentUserId, queryClient, playNotificationSound]);
+  }, [currentUserId, queryClient]);
 
   return { notifications, currentUserId };
 }
