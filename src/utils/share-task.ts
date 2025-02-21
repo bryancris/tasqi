@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ShareTaskParams } from "./task-sharing/types";
@@ -13,10 +12,10 @@ export async function shareTask({
   currentUserId,
 }: ShareTaskParams) {
   try {
-    // Get the task's current status to preserve it
+    // Get the task's current status to preserve it, now selecting all required fields
     const { data: taskData, error: taskError } = await supabase
       .from('tasks')
-      .select('*')
+      .select('id, title, description, status, date, start_time, end_time, priority, position, user_id, owner_id')
       .eq('id', taskId)
       .single();
 

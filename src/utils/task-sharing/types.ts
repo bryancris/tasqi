@@ -16,9 +16,13 @@ export interface TaskGroupMember {
 export interface TaskData {
   id: number;
   title: string;
+  description: string | null;
   status: string;
   date: string | null;
   start_time: string | null;
   end_time: string | null;
   priority: string | null;
+  position: number;
+  user_id: string;
+  owner_id: string;
 }
