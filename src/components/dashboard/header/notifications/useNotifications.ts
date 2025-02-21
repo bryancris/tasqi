@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useNotificationSound } from "./useNotificationSound";
+import { playNotificationSound } from "@/utils/notifications/soundUtils";
 import { showNotification } from "@/utils/notifications/notificationUtils";
 
 interface Notification {
@@ -21,7 +21,6 @@ interface Notification {
 export function useNotifications() {
   const queryClient = useQueryClient();
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const { playNotificationSound } = useNotificationSound();
 
   // Get current user ID on mount
   useEffect(() => {
@@ -136,7 +135,7 @@ export function useNotifications() {
       console.log('🧹 Cleaning up notification subscription');
       supabase.removeChannel(channel);
     };
-  }, [currentUserId, queryClient, playNotificationSound]);
+  }, [currentUserId, queryClient]);
 
   return { notifications, currentUserId };
 }
