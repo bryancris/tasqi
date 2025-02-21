@@ -10,6 +10,7 @@ import { YearlyCalendar } from "@/components/dashboard/YearlyCalendar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileHeader } from "@/components/layouts/MobileHeader";
 import { MobileFooter } from "@/components/layouts/MobileFooter";
+import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
 
 export default function Dashboard() {
   useTaskNotifications();
@@ -71,6 +72,7 @@ export default function Dashboard() {
           {renderView()}
         </main>
         <MobileFooter />
+        <UpdatePrompt />
       </div>
     );
   }
@@ -84,6 +86,7 @@ export default function Dashboard() {
       <div className="h-full">
         {renderView()}
       </div>
+      <UpdatePrompt />
     </DashboardLayout>
   );
 }

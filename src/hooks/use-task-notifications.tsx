@@ -5,9 +5,8 @@ import { useTasks } from '@/hooks/use-tasks';
 import { Task } from '@/components/dashboard/TaskBoard';
 import { isToday, parseISO, isFuture } from 'date-fns';
 import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
-import { toast } from "sonner";
 
-const NOTIFICATION_CHECK_INTERVAL = 60000; // Check every minute
+const NOTIFICATION_CHECK_INTERVAL = 30000; // Check every 30 seconds
 
 export function useTaskNotifications() {
   const { tasks } = useTasks();
@@ -77,10 +76,6 @@ export function useTaskNotifications() {
               notifiedTasksRef.current.add(task.id);
             } else {
               console.log('❌ Failed to send reminder notification');
-              // Show a fallback toast notification
-              toast.error("Unable to show notification", {
-                description: "Please check your notification permissions"
-              });
             }
           }
         }

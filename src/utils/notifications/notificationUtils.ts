@@ -1,11 +1,13 @@
 
 import { Task } from "@/components/dashboard/TaskBoard";
-import { detectPlatform, isTwinrEnvironment } from "./platformDetection";
+import { isNotificationSupported } from "./platformDetection";
+import { toast } from "sonner";
 
 async function requestNotificationPermission(): Promise<boolean> {
   try {
-    if (!('Notification' in window)) {
+    if (!isNotificationSupported()) {
       console.warn('❌ Notifications not supported in this browser');
+      toast.error("Notifications are not supported in this browser");
       return false;
     }
 
@@ -15,14 +17,25 @@ async function requestNotificationPermission(): Promise<boolean> {
 
     if (Notification.permission === 'denied') {
       console.warn('❌ Notification permission denied');
+      toast.error("Notification permission denied", {
+        description: "Please enable notifications in your browser settings"
+      });
       return false;
     }
 
     const permission = await Notification.requestPermission();
     console.log('🔔 Notification permission status:', permission);
+    
+    if (permission === 'granted') {
+      toast.success("Notifications enabled successfully");
+    } else {
+      toast.error("Notification permission denied");
+    }
+    
     return permission === 'granted';
   } catch (error) {
     console.error('❌ Error requesting notification permission:', error);
+    toast.error("Failed to request notification permission");
     return false;
   }
 }
@@ -32,29 +45,17 @@ export async function showNotification(task: Task, type: 'reminder' | 'shared' =
     console.log('🔔 Showing notification:', {
       taskId: task.id,
       type,
-      title: task.title,
-      platform: detectPlatform()
+      title: task.title
     });
 
-    if (isTwinrEnvironment()) {
-      // Log Twinr notification attempt
-      console.log('📱 Using Twinr notification system');
-      // Assuming Twinr has a notification method
-      await (window as any).twinr_show_notification({
-        title: type === 'reminder' ? 'Task Reminder' : 'Task Shared',
-        body: task.title,
-        data: { taskId: task.id, type }
-      });
-      return true;
-    }
-
-    // Web notifications
+    // Request permission if needed
     const permissionGranted = await requestNotificationPermission();
     if (!permissionGranted) {
       console.warn('⚠️ Notification permission not granted');
       return false;
     }
 
+    // Create and show the notification
     const notification = new Notification(
       type === 'reminder' ? 'Task Reminder' : 'Task Shared',
       {
@@ -67,15 +68,23 @@ export async function showNotification(task: Task, type: 'reminder' | 'shared' =
       }
     );
 
+    // Handle notification click
     notification.onclick = function() {
       console.log('🔔 Notification clicked:', task.id);
       window.focus();
-      // Add navigation logic here if needed
+      // Navigate to the task if needed
+      if (location.pathname !== '/dashboard') {
+        window.location.href = '/dashboard';
+      }
     };
 
     return true;
   } catch (error) {
     console.error('❌ Error showing notification:', error);
+    // Fallback to toast notification
+    toast.error("Unable to show notification", {
+      description: task.title
+    });
     return false;
   }
 }
