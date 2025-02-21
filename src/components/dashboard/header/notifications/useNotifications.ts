@@ -25,10 +25,13 @@ export function useNotifications() {
   // Get current user ID on mount
   useEffect(() => {
     const getCurrentUser = async () => {
+      console.log('🔄 Getting current user...');
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        console.log('📱 Current user ID:', user.id);
+        console.log('✅ Current user found:', user.id);
         setCurrentUserId(user.id);
+      } else {
+        console.log('❌ No current user found');
       }
     };
     getCurrentUser();
@@ -38,8 +41,12 @@ export function useNotifications() {
   const { data: notifications = [] } = useQuery<Notification[]>({
     queryKey: ['notifications'],
     queryFn: async () => {
-      if (!currentUserId) return [];
+      if (!currentUserId) {
+        console.log('❌ Cannot fetch notifications: No current user ID');
+        return [];
+      }
 
+      console.log('🔄 Fetching notifications for user:', currentUserId);
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
@@ -48,11 +55,12 @@ export function useNotifications() {
         .limit(10);
 
       if (error) {
-        console.error('Error fetching notifications:', error);
+        console.error('❌ Error fetching notifications:', error);
         toast.error('Failed to load notifications');
         return [];
       }
 
+      console.log('✅ Fetched notifications:', data?.length || 0, 'notifications');
       return data;
     },
     enabled: !!currentUserId
@@ -61,7 +69,7 @@ export function useNotifications() {
   // Subscribe to new notifications
   useEffect(() => {
     if (!currentUserId) {
-      console.log('❌ No current user ID, skipping subscriptions');
+      console.log('❌ No current user ID, skipping notification subscription');
       return;
     }
 
@@ -78,15 +86,21 @@ export function useNotifications() {
         },
         async (payload: any) => {
           console.log('📬 New notification received:', payload);
+          console.log('📦 Notification data:', payload.new);
           
           try {
-            // Always play sound for new notifications
-            console.log('🔊 Playing notification sound...');
-            await playNotificationSound();
+            // Always attempt to play sound for new notifications
+            console.log('🔊 Attempting to play notification sound...');
+            try {
+              await playNotificationSound();
+              console.log('✅ Notification sound played successfully');
+            } catch (soundError) {
+              console.error('❌ Error playing notification sound:', soundError);
+            }
 
             const notificationData = payload.new;
             
-            // Show system notification
+            // Show system notification for task assignments
             if (notificationData.type === 'task_assignment') {
               console.log('📋 Processing task assignment notification');
               try {
@@ -96,10 +110,15 @@ export function useNotifications() {
                   .eq('id', notificationData.reference_id)
                   .single();
 
-                if (error) throw error;
+                if (error) {
+                  console.error('❌ Error fetching task details:', error);
+                  throw error;
+                }
+                
                 if (task) {
                   console.log('🔔 Showing task notification:', task.title);
                   await showNotification(task, 'assignment');
+                  console.log('✅ Task notification shown successfully');
                 }
               } catch (error) {
                 console.error('❌ Error fetching task details:', error);
@@ -107,6 +126,7 @@ export function useNotifications() {
             }
 
             // Show toast notification
+            console.log('🔔 Showing toast notification');
             toast(notificationData.title, {
               description: notificationData.message,
               duration: 5000,
@@ -121,7 +141,9 @@ export function useNotifications() {
             });
 
             // Update notifications list
+            console.log('🔄 Invalidating notifications query cache');
             queryClient.invalidateQueries({ queryKey: ['notifications'] });
+            
           } catch (error) {
             console.error('❌ Error processing notification:', error);
           }
