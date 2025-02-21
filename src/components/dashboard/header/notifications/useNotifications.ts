@@ -44,6 +44,7 @@ export function useNotifications() {
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
+        .eq('user_id', currentUserId)
         .order('created_at', { ascending: false })
         .limit(10);
 
@@ -58,18 +59,16 @@ export function useNotifications() {
     enabled: !!currentUserId
   });
 
-  // Subscribe to new notifications and task assignments
+  // Subscribe to new notifications
   useEffect(() => {
     if (!currentUserId) {
       console.log('❌ No current user ID, skipping subscriptions');
       return;
     }
 
-    console.log('🔔 Setting up subscriptions for user:', currentUserId);
+    console.log('🔔 Setting up notification subscription for user:', currentUserId);
 
-    // Create channels for both notifications and task assignments
-    const notificationChannel = supabase.channel('notifications-and-tasks')
-      // Listen for new notifications
+    const channel = supabase.channel('notifications-channel')
       .on(
         'postgres_changes',
         {
@@ -81,107 +80,61 @@ export function useNotifications() {
         async (payload: any) => {
           console.log('📬 New notification received:', payload);
           
-          if (payload.new.user_id === currentUserId) {
-            try {
-              // Play sound for all notifications
-              await playNotificationSound();
-
-              // Handle task-related notifications
-              if (['task_share', 'task_assignment'].includes(payload.new.type) && payload.new.reference_id) {
-                console.log(`📋 Processing ${payload.new.type} notification`);
-                try {
-                  const { data: task, error } = await supabase
-                    .from('tasks')
-                    .select('*')
-                    .eq('id', payload.new.reference_id)
-                    .single();
-
-                  if (error) throw error;
-                  if (task) {
-                    const notificationType = 
-                      payload.new.type === 'task_share' ? 'shared' : 'assignment';
-                    
-                    console.log('🔔 Showing notification with type:', notificationType);
-                    await showNotification(task, notificationType);
-                  }
-                } catch (error) {
-                  console.error('❌ Error handling task notification:', error);
-                }
-              }
-
-              // Show toast for the notification
-              toast(payload.new.title, {
-                description: payload.new.message,
-                action: {
-                  label: "View",
-                  onClick: () => {
-                    if (location.pathname !== '/dashboard') {
-                      window.location.href = '/dashboard';
-                    }
-                  }
-                }
-              });
-
-              // Refresh notifications list
-              queryClient.invalidateQueries({ queryKey: ['notifications'] });
-            } catch (error) {
-              console.error('❌ Error processing notification:', error);
-            }
-          }
-        }
-      )
-      // Listen for task assignments
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'task_assignments',
-          filter: `assignee_id=eq.${currentUserId}`
-        },
-        async (payload: any) => {
-          console.log('📝 New task assignment:', payload);
           try {
-            // Play sound for new assignments
+            // Always play sound for new notifications
+            console.log('🔊 Playing notification sound...');
             await playNotificationSound();
 
-            // Get the task details
-            const { data: task, error } = await supabase
-              .from('tasks')
-              .select('*')
-              .eq('id', payload.new.task_id)
-              .single();
+            const notificationData = payload.new;
+            
+            // Show system notification
+            if (notificationData.type === 'task_assignment') {
+              console.log('📋 Processing task assignment notification');
+              try {
+                const { data: task, error } = await supabase
+                  .from('tasks')
+                  .select('*')
+                  .eq('id', notificationData.reference_id)
+                  .single();
 
-            if (error) throw error;
-            if (task) {
-              console.log('🔔 Showing assignment notification for task:', task.title);
-              await showNotification(task, 'assignment');
+                if (error) throw error;
+                if (task) {
+                  console.log('🔔 Showing task notification:', task.title);
+                  await showNotification(task, 'assignment');
+                }
+              } catch (error) {
+                console.error('❌ Error fetching task details:', error);
+              }
+            }
 
-              // Show toast for the assignment
-              toast("New Task Assignment", {
-                description: `You have been assigned to: ${task.title}`,
-                action: {
-                  label: "View",
-                  onClick: () => {
-                    if (location.pathname !== '/dashboard') {
-                      window.location.href = '/dashboard';
-                    }
+            // Show toast notification
+            toast(notificationData.title, {
+              description: notificationData.message,
+              duration: 5000,
+              action: {
+                label: "View",
+                onClick: () => {
+                  if (location.pathname !== '/dashboard') {
+                    window.location.href = '/dashboard';
                   }
                 }
-              });
-            }
+              }
+            });
+
+            // Update notifications list
+            queryClient.invalidateQueries({ queryKey: ['notifications'] });
           } catch (error) {
-            console.error('❌ Error handling task assignment:', error);
+            console.error('❌ Error processing notification:', error);
           }
         }
       )
       .subscribe((status) => {
-        console.log('📡 Subscription status:', status);
+        console.log('📡 Notification subscription status:', status);
       });
 
     return () => {
-      console.log('🧹 Cleaning up subscriptions');
-      supabase.removeChannel(notificationChannel);
+      console.log('🧹 Cleaning up notification subscription');
+      supabase.removeChannel(channel);
     };
   }, [currentUserId, queryClient, playNotificationSound]);
 
