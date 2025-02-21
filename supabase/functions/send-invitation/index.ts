@@ -30,6 +30,8 @@ async function initializeSupabase() {
 }
 
 async function fetchSharedTaskDetails(supabase: any, sharedTaskId: string): Promise<SharedTaskDetails> {
+  console.log('📋 Fetching shared task details for ID:', sharedTaskId);
+  
   const { data: sharedTask, error: sharedTaskError } = await supabase
     .from('shared_tasks')
     .select(`
@@ -42,7 +44,7 @@ async function fetchSharedTaskDetails(supabase: any, sharedTaskId: string): Prom
     .single();
 
   if (sharedTaskError) {
-    console.error('Error fetching shared task:', sharedTaskError);
+    console.error('❌ Error fetching shared task:', sharedTaskError);
     throw new Error(`Failed to fetch shared task details: ${sharedTaskError.message}`);
   }
 
@@ -50,12 +52,14 @@ async function fetchSharedTaskDetails(supabase: any, sharedTaskId: string): Prom
     throw new Error('Shared task not found');
   }
 
-  console.log('Fetched shared task details:', sharedTask);
+  console.log('✅ Fetched shared task details:', sharedTask);
   return sharedTask;
 }
 
 async function createNotification(supabase: any, sharedTask: SharedTaskDetails) {
   try {
+    console.log('📬 Creating notification for user:', sharedTask.shared_with_user_id);
+    
     const { error: notificationError } = await supabase
       .from('notifications')
       .insert({
@@ -68,78 +72,34 @@ async function createNotification(supabase: any, sharedTask: SharedTaskDetails) 
       });
 
     if (notificationError) {
-      console.error('Error creating notification:', notificationError);
+      console.error('❌ Error creating notification:', notificationError);
       throw new Error('Failed to create notification');
     }
 
-    console.log('Notification created successfully');
+    console.log('✅ Notification created successfully');
   } catch (error) {
-    console.error('Error in createNotification:', error);
+    console.error('❌ Error in createNotification:', error);
     throw error;
-  }
-}
-
-async function sendPushNotification(supabase: any, sharedTask: SharedTaskDetails) {
-  try {
-    const { data: pushSubscription, error: subscriptionError } = await supabase
-      .from('push_subscriptions')
-      .select('*')
-      .eq('user_id', sharedTask.shared_with_user_id)
-      .single();
-
-    if (subscriptionError) {
-      console.log('No push subscription found for user');
-      return;
-    }
-
-    if (pushSubscription) {
-      const response = await fetch(
-        `${Deno.env.get('SUPABASE_URL')}/functions/v1/push-notification`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
-          },
-          body: JSON.stringify({
-            subscription: {
-              endpoint: pushSubscription.endpoint,
-              keys: pushSubscription.auth_keys
-            },
-            title: 'New Shared Task',
-            message: `${sharedTask.shared_by.email} has shared "${sharedTask.tasks.title}" with you`
-          })
-        }
-      );
-
-      if (!response.ok) {
-        console.error('Push notification failed:', await response.text());
-        throw new Error(`Failed to send push notification: ${response.statusText}`);
-      }
-
-      console.log('Push notification sent successfully');
-    }
-  } catch (error) {
-    console.error('Error in sendPushNotification:', error);
-    // Don't throw here as push notifications are not critical
   }
 }
 
 async function updateSharedTaskStatus(supabase: any, sharedTaskId: string) {
   try {
+    console.log('📝 Updating shared task status for ID:', sharedTaskId);
+    
     const { error: updateError } = await supabase
       .from('shared_tasks')
       .update({ notification_sent: true })
       .eq('id', sharedTaskId);
 
     if (updateError) {
-      console.error('Error updating shared task status:', updateError);
+      console.error('❌ Error updating shared task status:', updateError);
       throw new Error(`Failed to update shared task status: ${updateError.message}`);
     }
 
-    console.log('Successfully updated shared task status');
+    console.log('✅ Successfully updated shared task status');
   } catch (error) {
-    console.error('Error in updateSharedTaskStatus:', error);
+    console.error('❌ Error in updateSharedTaskStatus:', error);
     throw error;
   }
 }
@@ -153,7 +113,7 @@ serve(async (req) => {
   try {
     const { sharedTaskId } = await req.json();
     
-    console.log('Starting send-invitation function with sharedTaskId:', sharedTaskId);
+    console.log('🚀 Starting send-invitation function with sharedTaskId:', sharedTaskId);
     
     if (!sharedTaskId) {
       throw new Error('sharedTaskId is required');
@@ -167,11 +127,10 @@ serve(async (req) => {
     // Create notification
     await createNotification(supabase, sharedTask);
     
-    // Try to send push notification (non-critical)
-    await sendPushNotification(supabase, sharedTask);
-    
     // Update shared task status
     await updateSharedTaskStatus(supabase, sharedTaskId);
+
+    console.log('✅ Successfully processed shared task invitation');
 
     return new Response(
       JSON.stringify({ 
@@ -187,9 +146,8 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error processing shared task:', error);
+    console.error('❌ Error processing shared task:', error);
     
-    // Return a more detailed error response
     return new Response(
       JSON.stringify({ 
         error: error.message || 'An unexpected error occurred',
