@@ -117,7 +117,7 @@ export async function shareTask({
       // Get group members and create notifications for each
       const { data: groupMembers, error: membersError } = await supabase
         .from('task_group_members')
-        .select<'task_group_members', TaskGroupMember>('user_id')
+        .select('trusted_user_id as user_id')
         .eq('group_id', groupId);
 
       if (membersError) {
