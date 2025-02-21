@@ -1,8 +1,7 @@
 
 import { useEffect, useState } from 'react';
 import { setupPushSubscription } from '@/utils/notifications/subscriptionUtils';
-import { isTwinrEnvironment } from '@/utils/notifications/platformDetection';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 
 export function useFCMStatus() {
   const [isEnabled, setIsEnabled] = useState<boolean>(false);
@@ -26,11 +25,7 @@ export function useFCMStatus() {
       setError(err instanceof Error ? err.message : 'Failed to setup push notifications');
       setFcmStatus('error');
       setIsEnabled(false);
-      toast({
-        title: "Error",
-        description: "Failed to set up notifications. Please check browser permissions.",
-        variant: "destructive",
-      });
+      toast.error("Failed to set up notifications. Please check browser permissions.");
       callback?.(false);
     }
   };
@@ -42,9 +37,7 @@ export function useFCMStatus() {
         setFcmStatus('loading');
         setError(null);
 
-        const isTwinr = isTwinrEnvironment();
         console.log('🔍 Environment Check:', {
-          isTwinrEnvironment: isTwinr,
           userAgent: navigator.userAgent,
           platform: navigator.platform
         });

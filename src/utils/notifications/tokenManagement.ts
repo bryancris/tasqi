@@ -1,10 +1,10 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { TokenResponse, isTwinrEnvironment, detectPlatform } from "./platformDetection";
 import { getToken } from "firebase/messaging";
 import { initializeMessaging } from "@/integrations/firebase/config";
 import { toast } from "sonner";
 import { Json } from "@/integrations/supabase/types";
+import { TokenResponse, detectPlatform } from "./platformDetection";
 
 export async function getFCMToken(): Promise<string | null> {
   try {
@@ -29,27 +29,6 @@ export async function getFCMToken(): Promise<string | null> {
     return token;
   } catch (error) {
     console.error('❌ Error getting FCM token:', error);
-    return null;
-  }
-}
-
-export async function getTwinrToken(): Promise<string | null> {
-  if (!isTwinrEnvironment()) {
-    console.log('ℹ️ Not in Twinr environment, skipping Twinr token fetch');
-    return null;
-  }
-
-  try {
-    console.log('🔄 Fetching Twinr token...');
-    const twinrToken = await (window as any).twinr_push_token_fetch();
-    if (!twinrToken) {
-      console.error('❌ No Twinr token received');
-      return null;
-    }
-    console.log('✅ Twinr token received successfully');
-    return twinrToken;
-  } catch (error) {
-    console.error('❌ Error getting Twinr token:', error);
     return null;
   }
 }
@@ -102,38 +81,20 @@ export async function getAndSaveToken(): Promise<TokenResponse | null> {
   console.log('🔍 Detected platform:', platform);
   
   try {
-    if (isTwinrEnvironment()) {
-      console.log('📱 Using Twinr token system...');
-      const twinrToken = await getTwinrToken();
-      if (twinrToken) {
-        const tokenResponse: TokenResponse = {
-          token: twinrToken,
-          platform,
-          source: 'twinr',
-          platformDetails: {
-            userAgent: navigator.userAgent,
-            language: navigator.language
-          }
-        };
-        await saveTokenToSupabase(tokenResponse);
-        return tokenResponse;
-      }
-    } else {
-      console.log('🌐 Using web FCM system...');
-      const fcmToken = await getFCMToken();
-      if (fcmToken) {
-        const tokenResponse: TokenResponse = {
-          token: fcmToken,
-          platform: 'web',
-          source: 'fcm',
-          platformDetails: {
-            userAgent: navigator.userAgent,
-            language: navigator.language
-          }
-        };
-        await saveTokenToSupabase(tokenResponse);
-        return tokenResponse;
-      }
+    console.log('🌐 Using web FCM system...');
+    const fcmToken = await getFCMToken();
+    if (fcmToken) {
+      const tokenResponse: TokenResponse = {
+        token: fcmToken,
+        platform: 'web',
+        source: 'fcm',
+        platformDetails: {
+          userAgent: navigator.userAgent,
+          language: navigator.language
+        }
+      };
+      await saveTokenToSupabase(tokenResponse);
+      return tokenResponse;
     }
     
     return null;

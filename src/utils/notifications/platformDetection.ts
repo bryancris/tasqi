@@ -1,5 +1,16 @@
 
+// Simplified platform detection for web-only implementation
 export type PlatformType = 'web';
+
+export interface TokenResponse {
+  token: string;
+  platform: PlatformType;
+  source: 'web' | 'fcm';
+  platformDetails: {
+    userAgent: string;
+    language: string;
+  };
+}
 
 // Platform detection is simplified since we're only supporting web
 export const detectPlatform = (): PlatformType => 'web';
