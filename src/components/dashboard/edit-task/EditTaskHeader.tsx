@@ -10,7 +10,7 @@ interface EditTaskHeaderProps {
 export function EditTaskHeader({
   onShareClick
 }: EditTaskHeaderProps) {
-  return <SheetHeader className="sticky top-0 bg-background z-50 border-b p-4 px-[10px] py-[5px]">
+  return <SheetHeader className="sticky top-0 bg-background z-50 border-b px-[10px] py-[5px]">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <SheetTitle>Edit Task</SheetTitle>
