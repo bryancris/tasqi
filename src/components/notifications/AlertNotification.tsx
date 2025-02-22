@@ -51,12 +51,12 @@ export function AlertNotification({
             'top-[4.5rem]': !isMobile && index === 1,
             'top-[9rem]': !isMobile && index === 2,
             'top-[13.5rem]': !isMobile && index === 3,
-            // Mobile positioning - center in viewport
-            'fixed left-1/2 -translate-x-1/2': isMobile,
-            'top-[25vh]': isMobile && index === 0,
-            'top-[35vh]': isMobile && index === 1,
-            'top-[45vh]': isMobile && index === 2,
-            'top-[55vh]': isMobile && index === 3,
+            // Mobile positioning - center in viewport with safe area padding
+            'fixed left-4 right-4 w-auto max-w-[calc(100%-2rem)]': isMobile,
+            'top-16': isMobile && index === 0,
+            'top-32': isMobile && index === 1,
+            'top-48': isMobile && index === 2,
+            'top-64': isMobile && index === 3,
           },
           type === 'success' && 'border-l-4 border-l-green-500 bg-green-50/50',
           type === 'error' && 'border-l-4 border-l-red-500 bg-red-50/50',
