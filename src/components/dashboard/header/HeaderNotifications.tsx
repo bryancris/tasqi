@@ -41,9 +41,6 @@ export function HeaderNotifications() {
 
       if (error) throw error;
 
-      // Close the dropdown after successful deletion
-      setIsOpen(false);
-
     } catch (error) {
       console.error('Error deleting notification:', error);
       toast.error('Failed to remove notification');

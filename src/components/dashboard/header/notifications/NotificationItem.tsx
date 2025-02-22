@@ -19,11 +19,16 @@ interface NotificationItemProps {
 }
 
 export function NotificationItem({ notification, onClick }: NotificationItemProps) {
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent the dropdown from closing
+    onClick(notification);
+  };
+
   return (
     <DropdownMenuItem
       key={notification.id}
       className={`p-4 cursor-pointer transition-colors hover:bg-accent ${!notification.read ? 'bg-gray-50' : ''}`}
-      onClick={() => onClick(notification)}
+      onClick={handleClick}
     >
       <div>
         <div className="font-medium">{notification.title}</div>
