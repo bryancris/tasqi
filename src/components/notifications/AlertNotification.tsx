@@ -8,20 +8,11 @@ import {
   AlertDialogTitle,
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { AlarmClock, Check, Play, Clock, Edit, X } from "lucide-react";
+import { AlarmClock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
-import { addMinutes, setHours, setMinutes, startOfTomorrow } from "date-fns";
+import { NotificationButtons } from "./notification-buttons";
 
 export interface AlertNotificationProps {
   open: boolean;
@@ -46,85 +37,7 @@ export function AlertNotification({
   index = 0,
 }: AlertNotificationProps) {
   const isMobile = useIsMobile();
-  const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = React.useState<string | null>(null);
-
-  const handleSnooze = async (minutes: number) => {
-    try {
-      setIsLoading('snooze');
-      const reference_id = action?.label === 'Complete Task' ? 
-        parseInt(title.split('-')[0]) : // If it's a task notification
-        null;
-
-      if (!reference_id) {
-        console.error('No task ID found');
-        return;
-      }
-
-      // First, get the current task data
-      const { data: currentTask, error: fetchError } = await supabase
-        .from('tasks')
-        .select('reschedule_count')
-        .eq('id', reference_id)
-        .single();
-
-      if (fetchError) throw fetchError;
-
-      const now = new Date();
-      let newReminderTime: Date;
-
-      if (minutes === 24 * 60) { // Tomorrow
-        newReminderTime = startOfTomorrow();
-        newReminderTime = setHours(newReminderTime, 9); // Set to 9 AM tomorrow
-        newReminderTime = setMinutes(newReminderTime, 0);
-      } else {
-        newReminderTime = addMinutes(now, minutes);
-      }
-
-      // Then update with the incremented reschedule_count
-      const { error: taskError } = await supabase
-        .from('tasks')
-        .update({
-          reminder_time: minutes,
-          reschedule_count: (currentTask?.reschedule_count ?? 0) + 1,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', reference_id);
-
-      if (taskError) throw taskError;
-
-      toast.success(`Task snoozed for ${minutes} minutes`);
-      await queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      onDismiss();
-    } catch (error) {
-      console.error('Error snoozing task:', error);
-      toast.error('Failed to snooze task');
-    } finally {
-      setIsLoading(null);
-    }
-  };
-
-  const handleEdit = async () => {
-    try {
-      const reference_id = action?.label === 'Complete Task' ? 
-        parseInt(title.split('-')[0]) :
-        null;
-
-      if (!reference_id) {
-        console.error('No task ID found');
-        return;
-      }
-
-      // Close the notification first
-      onDismiss();
-
-      // Let the task board handle opening the edit drawer
-      queryClient.setQueryData(['editTaskId'], reference_id);
-    } catch (error) {
-      console.error('Error editing task:', error);
-      toast.error('Failed to open task editor');
-    }
-  };
 
   const handleDone = async () => {
     try {
@@ -141,39 +54,9 @@ export function AlertNotification({
     }
   };
 
-  const handleStart = async () => {
-    try {
-      setIsLoading('start');
-      const reference_id = action?.label === 'Complete Task' ? 
-        parseInt(title.split('-')[0]) :
-        null;
-
-      if (!reference_id) {
-        console.error('No task ID found');
-        return;
-      }
-
-      const { error: taskError } = await supabase
-        .from('tasks')
-        .update({
-          status: 'in_progress',
-          is_tracking: true,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', reference_id);
-
-      if (taskError) throw taskError;
-
-      toast.success('Task started');
-      await queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      onDismiss();
-    } catch (error) {
-      console.error('Error starting task:', error);
-      toast.error('Failed to start task');
-    } finally {
-      setIsLoading(null);
-    }
-  };
+  const referenceId = action?.label === 'Complete Task' ? 
+    parseInt(title.split('-')[0]) : 
+    null;
 
   return (
     <AlertDialog open={open}>
@@ -183,13 +66,11 @@ export function AlertNotification({
           "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
           "bg-white border shadow-lg",
           {
-            // Desktop positioning
             'fixed right-4': !isMobile,
             'top-4': !isMobile && index === 0,
             'top-[4.5rem]': !isMobile && index === 1,
             'top-[9rem]': !isMobile && index === 2,
             'top-[13.5rem]': !isMobile && index === 3,
-            // Mobile positioning
             'fixed left-4 right-4 w-auto max-w-[calc(100%-2rem)]': isMobile,
             'top-16': isMobile && index === 0,
             'top-32': isMobile && index === 1,
@@ -213,72 +94,12 @@ export function AlertNotification({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="flex-row justify-start gap-2 sm:gap-2 mt-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={!!isLoading}
-                className="text-[#6D4AFF] border-[#9b87f5] hover:bg-[#F8F7FF] hover:text-[#6D4AFF]"
-              >
-                <Clock className="h-4 w-4 mr-1" />
-                Snooze
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-56">
-              <DropdownMenuItem onClick={() => handleSnooze(10)}>
-                <Clock className="h-4 w-4 mr-2" />
-                10 minutes
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSnooze(30)}>
-                <Clock className="h-4 w-4 mr-2" />
-                30 minutes
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSnooze(60)}>
-                <Clock className="h-4 w-4 mr-2" />
-                60 minutes
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSnooze(24 * 60)}>
-                <Clock className="h-4 w-4 mr-2" />
-                Tomorrow
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleEdit}>
-                <Edit className="h-4 w-4 mr-2" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={onDismiss}>
-                <X className="h-4 w-4 mr-2" />
-                Dismiss
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!!isLoading}
-            onClick={handleDone}
-            className="text-[#6D4AFF] border-[#9b87f5] hover:bg-[#F8F7FF] hover:text-[#6D4AFF]"
-          >
-            {isLoading === 'done' ? (
-              <div className="h-4 w-4 mr-1 animate-spin rounded-full border-2 border-[#6D4AFF] border-t-transparent" />
-            ) : (
-              <Check className="h-4 w-4 mr-1" />
-            )}
-            Done
-          </Button>
-          <Button
-            size="sm"
-            disabled={!!isLoading}
-            onClick={handleStart}
-            className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white"
-          >
-            {isLoading === 'start' ? (
-              <div className="h-4 w-4 mr-1 animate-spin rounded-full border-2 border-white border-t-transparent" />
-            ) : (
-              <Play className="h-4 w-4 mr-1" />
-            )}
-            Start
-          </Button>
+          <NotificationButtons
+            isLoading={isLoading}
+            referenceId={referenceId}
+            onDismiss={onDismiss}
+            onDone={handleDone}
+          />
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
