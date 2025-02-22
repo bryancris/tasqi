@@ -44,6 +44,7 @@ export function AlertNotification({
         className={cn(
           "max-w-sm m-0 transform-none transition-all duration-300 ease-in-out",
           "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+          "bg-white/95 backdrop-blur-sm border",
           {
             // Desktop positioning
             'fixed right-4': !isMobile,
@@ -58,31 +59,32 @@ export function AlertNotification({
             'top-48': isMobile && index === 2,
             'top-64': isMobile && index === 3,
           },
-          type === 'success' && 'border-l-4 border-l-green-500 bg-green-50/50',
-          type === 'error' && 'border-l-4 border-l-red-500 bg-red-50/50',
-          type === 'warning' && 'border-l-4 border-l-yellow-500 bg-yellow-50/50',
-          type === 'info' && 'border-l-4 border-l-blue-500 bg-blue-50/50'
+          type === 'success' && 'border-l-4 border-l-[#9b87f5] bg-[#E5DEFF]/50',
+          type === 'error' && 'border-l-4 border-l-[#D946EF] bg-[#FFDEE2]/50',
+          type === 'warning' && 'border-l-4 border-l-[#FEC6A1] bg-[#FDE1D3]/50',
+          type === 'info' && 'border-l-4 border-l-[#9b87f5] bg-[#E5DEFF]/50'
         )}
       >
         <AlertDialogHeader>
           <AlertDialogTitle className={cn(
-            type === 'success' && 'text-green-700',
-            type === 'error' && 'text-red-700',
-            type === 'warning' && 'text-yellow-700',
-            type === 'info' && 'text-blue-700'
+            "font-semibold",
+            type === 'success' && 'text-[#7E69AB]',
+            type === 'error' && 'text-[#D946EF]',
+            type === 'warning' && 'text-[#FEC6A1]',
+            type === 'info' && 'text-[#7E69AB]'
           )}>{title}</AlertDialogTitle>
-          <AlertDialogDescription>{message}</AlertDialogDescription>
+          <AlertDialogDescription className="text-[#1A1F2C]/80">{message}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="flex-row justify-end gap-2 sm:gap-0">
           {action && (
             <AlertDialogAction
               onClick={action.onClick}
               className={cn(
-                "px-3 py-2",
-                type === 'success' && 'bg-green-500 hover:bg-green-600',
-                type === 'error' && 'bg-red-500 hover:bg-red-600',
-                type === 'warning' && 'bg-yellow-500 hover:bg-yellow-600',
-                type === 'info' && 'bg-blue-500 hover:bg-blue-600'
+                "px-3 py-2 text-white",
+                type === 'success' && 'bg-[#9b87f5] hover:bg-[#8B5CF6]',
+                type === 'error' && 'bg-[#D946EF] hover:bg-[#D946EF]/90',
+                type === 'warning' && 'bg-[#FEC6A1] hover:bg-[#FEC6A1]/90',
+                type === 'info' && 'bg-[#9b87f5] hover:bg-[#8B5CF6]'
               )}
             >
               {action.label}
@@ -92,7 +94,7 @@ export function AlertNotification({
             variant="ghost"
             size="sm"
             onClick={onDismiss}
-            className="h-auto px-2 hover:bg-gray-100"
+            className="h-auto px-2 hover:bg-[#E5DEFF]/50 text-[#1A1F2C]/60 hover:text-[#1A1F2C]"
           >
             <X className="h-4 w-4" />
           </Button>
