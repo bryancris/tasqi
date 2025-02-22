@@ -8,7 +8,7 @@ import {
   AlertDialogTitle,
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog";
-import { AlarmClock } from "lucide-react";
+import { AlarmClock, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
@@ -56,21 +56,13 @@ export function AlertNotification({
     }
   };
 
-  // Log for debugging
-  console.log('Notification Details:', {
-    title,
-    message,
-    referenceId,
-    actionLabel: action?.label
-  });
-
   return (
     <AlertDialog open={open}>
       <AlertDialogContent
         className={cn(
           "max-w-sm m-0 transform-none transition-all duration-300 ease-in-out",
           "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-          "bg-white border shadow-lg",
+          "bg-white border shadow-lg relative", // Added relative for absolute positioning of close button
           {
             'fixed right-4': !isMobile,
             'top-4': !isMobile && index === 0,
@@ -89,6 +81,13 @@ export function AlertNotification({
           type === 'info' && 'border-l-4 border-l-[#9b87f5] bg-[#F8F7FF]'
         )}
       >
+        <button
+          onClick={onDismiss}
+          className="absolute right-4 top-4 p-1 rounded-full hover:bg-gray-100 transition-colors"
+          aria-label="Close notification"
+        >
+          <X className="h-4 w-4 text-gray-500" />
+        </button>
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2 text-[#6D4AFF]">
             <AlarmClock className="h-5 w-5" />
