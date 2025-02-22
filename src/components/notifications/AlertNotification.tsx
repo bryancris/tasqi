@@ -2,7 +2,6 @@
 import * as React from "react";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogContent,
   AlertDialogFooter,
   AlertDialogHeader,
@@ -62,6 +61,15 @@ export function AlertNotification({
         return;
       }
 
+      // First, get the current task data
+      const { data: currentTask, error: fetchError } = await supabase
+        .from('tasks')
+        .select('reschedule_count')
+        .eq('id', reference_id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
       const now = new Date();
       let newReminderTime: Date;
 
@@ -73,11 +81,12 @@ export function AlertNotification({
         newReminderTime = addMinutes(now, minutes);
       }
 
+      // Then update with the incremented reschedule_count
       const { error: taskError } = await supabase
         .from('tasks')
         .update({
           reminder_time: minutes,
-          reschedule_count: supabase.sql`reschedule_count + 1`,
+          reschedule_count: (currentTask?.reschedule_count ?? 0) + 1,
           updated_at: new Date().toISOString()
         })
         .eq('id', reference_id);
