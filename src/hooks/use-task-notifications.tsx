@@ -46,36 +46,17 @@ export function useTaskNotifications() {
           const timeUntilTask = taskDateTime.getTime() - now.getTime();
           const minutesUntilTask = timeUntilTask / (1000 * 60);
 
-          console.log('📅 Task reminder check:', {
-            taskId: task.id,
-            title: task.title,
-            reminderTime: task.reminder_time,
-            minutesUntilTask,
-            taskDateTime: taskDateTime.toISOString(),
-            now: now.toISOString()
-          });
-
-          // Check if we're within the reminder window (using task's specific reminder time)
-          // Allow for a 30-second buffer to avoid missing notifications
-          const reminderWindowStart = task.reminder_time + 0.5; // Add 30 seconds
-          const reminderWindowEnd = task.reminder_time - 0.5; // Subtract 30 seconds
+          // Check if we're within the reminder window
+          const reminderWindowStart = task.reminder_time + 0.5;
+          const reminderWindowEnd = task.reminder_time - 0.5;
           
           if (minutesUntilTask <= reminderWindowStart && 
               minutesUntilTask > reminderWindowEnd) {
-            console.log('🔔 Sending reminder for task:', {
-              taskId: task.id,
-              title: task.title,
-              minutesUntilTask,
-              reminderTime: task.reminder_time
-            });
-
-            const notificationSent = await showNotification(task);
+            const notificationSent = await showNotification(task, 'reminder');
             
             if (notificationSent) {
               console.log('✅ Reminder notification sent successfully');
               notifiedTasksRef.current.add(task.id);
-            } else {
-              console.log('❌ Failed to send reminder notification');
             }
           }
         }
