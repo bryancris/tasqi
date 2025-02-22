@@ -14,9 +14,10 @@ import {
 export function MobileFooter() {
   const location = useLocation();
   const navigate = useNavigate();
-  const isDaily = location.pathname === "/dashboard";
-  const isWeekly = location.pathname === "/dashboard/weekly";
   const [isChatOpen, setIsChatOpen] = useState(false);
+
+  const isDaily = !location.search.includes('view=');
+  const currentView = new URLSearchParams(location.search).get('view') || 'tasks';
 
   const handleNavigation = (path: string) => {
     if (isChatOpen) {
@@ -49,7 +50,7 @@ export function MobileFooter() {
               <button 
                 className={cn(
                   "flex flex-col items-center p-2",
-                  isWeekly ? "text-[#8B5CF6]" : "text-gray-500 hover:text-[#8B5CF6]"
+                  (currentView === 'weekly' || currentView === 'calendar') ? "text-[#8B5CF6]" : "text-gray-500 hover:text-[#8B5CF6]"
                 )}
               >
                 <Calendar className="h-6 w-6" />
@@ -58,7 +59,7 @@ export function MobileFooter() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="center" className="min-w-[120px] bg-transparent border-none shadow-none">
               <DropdownMenuItem 
-                onClick={() => handleNavigation("/dashboard/weekly")}
+                onClick={() => handleNavigation("/dashboard?view=weekly")}
                 className="flex items-center justify-center gap-2 py-3 relative hover:bg-transparent focus:bg-transparent"
               >
                 <div className="relative">

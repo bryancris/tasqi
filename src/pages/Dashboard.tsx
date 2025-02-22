@@ -64,7 +64,7 @@ export default function Dashboard() {
     }
   };
 
-  if (window.innerWidth <= 768) {  // Force check actual window width
+  if (isMobile) {
     return (
       <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#F1F0FB] to-[#E5DEFF]">
         <MobileHeader />
