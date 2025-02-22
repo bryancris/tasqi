@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Bell } from "lucide-react";
@@ -5,11 +6,11 @@ import { DropdownMenu, DropdownMenuTrigger } from "@/components/ui/dropdown-menu
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { NotificationList } from "./notifications/NotificationList";
-import { useNotifications, useNotifications as useAlertNotifications } from "@/components/notifications/NotificationsManager";
+import { useNotifications, useNotifications as useAlertNotifications, Notification as AlertNotification } from "@/components/notifications/NotificationsManager";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface Notification {
-  id: number;
+  id: string;
   title: string;
   message: string;
   type: string;
