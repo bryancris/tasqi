@@ -19,6 +19,10 @@ import { Button } from "@/components/ui/button";
 import { AlarmClock, Check, Play, Clock, Edit, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { addMinutes, setHours, setMinutes, startOfTomorrow } from "date-fns";
 
 export interface AlertNotificationProps {
   open: boolean;
@@ -43,26 +47,123 @@ export function AlertNotification({
   index = 0,
 }: AlertNotificationProps) {
   const isMobile = useIsMobile();
+  const queryClient = useQueryClient();
+  const [isLoading, setIsLoading] = React.useState<string | null>(null);
 
-  const handleSnooze = (minutes: number) => {
-    console.log('Snoozing for', minutes, 'minutes');
-    // Implementation for snooze functionality would go here
-  };
+  const handleSnooze = async (minutes: number) => {
+    try {
+      setIsLoading('snooze');
+      const reference_id = action?.label === 'Complete Task' ? 
+        parseInt(title.split('-')[0]) : // If it's a task notification
+        null;
 
-  const handleEdit = () => {
-    console.log('Edit task');
-    // Implementation for edit functionality would go here
-  };
+      if (!reference_id) {
+        console.error('No task ID found');
+        return;
+      }
 
-  const handleDone = () => {
-    if (action?.onClick) {
-      action.onClick();
+      const now = new Date();
+      let newReminderTime: Date;
+
+      if (minutes === 24 * 60) { // Tomorrow
+        newReminderTime = startOfTomorrow();
+        newReminderTime = setHours(newReminderTime, 9); // Set to 9 AM tomorrow
+        newReminderTime = setMinutes(newReminderTime, 0);
+      } else {
+        newReminderTime = addMinutes(now, minutes);
+      }
+
+      const { error: taskError } = await supabase
+        .from('tasks')
+        .update({
+          reminder_time: minutes,
+          reschedule_count: supabase.sql`reschedule_count + 1`,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', reference_id);
+
+      if (taskError) throw taskError;
+
+      toast.success(`Task snoozed for ${minutes} minutes`);
+      await queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      onDismiss();
+    } catch (error) {
+      console.error('Error snoozing task:', error);
+      toast.error('Failed to snooze task');
+    } finally {
+      setIsLoading(null);
     }
   };
 
-  const handleStart = () => {
-    console.log('Start task');
-    // Implementation for start functionality would go here
+  const handleEdit = async () => {
+    try {
+      const reference_id = action?.label === 'Complete Task' ? 
+        parseInt(title.split('-')[0]) :
+        null;
+
+      if (!reference_id) {
+        console.error('No task ID found');
+        return;
+      }
+
+      // Close the notification first
+      onDismiss();
+
+      // Let the task board handle opening the edit drawer
+      queryClient.setQueryData(['editTaskId'], reference_id);
+    } catch (error) {
+      console.error('Error editing task:', error);
+      toast.error('Failed to open task editor');
+    }
+  };
+
+  const handleDone = async () => {
+    try {
+      setIsLoading('done');
+      if (action?.onClick) {
+        await action.onClick();
+      }
+      onDismiss();
+    } catch (error) {
+      console.error('Error completing task:', error);
+      toast.error('Failed to complete task');
+    } finally {
+      setIsLoading(null);
+    }
+  };
+
+  const handleStart = async () => {
+    try {
+      setIsLoading('start');
+      const reference_id = action?.label === 'Complete Task' ? 
+        parseInt(title.split('-')[0]) :
+        null;
+
+      if (!reference_id) {
+        console.error('No task ID found');
+        return;
+      }
+
+      const { error: taskError } = await supabase
+        .from('tasks')
+        .update({
+          status: 'in_progress',
+          is_tracking: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', reference_id);
+
+      if (taskError) throw taskError;
+
+      toast.success('Task started');
+      await queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      onDismiss();
+    } catch (error) {
+      console.error('Error starting task:', error);
+      toast.error('Failed to start task');
+    } finally {
+      setIsLoading(null);
+    }
   };
 
   return (
@@ -108,6 +209,7 @@ export function AlertNotification({
               <Button
                 variant="outline"
                 size="sm"
+                disabled={!!isLoading}
                 className="text-[#6D4AFF] border-[#9b87f5] hover:bg-[#F8F7FF] hover:text-[#6D4AFF]"
               >
                 <Clock className="h-4 w-4 mr-1" />
@@ -144,18 +246,28 @@ export function AlertNotification({
           <Button
             variant="outline"
             size="sm"
+            disabled={!!isLoading}
             onClick={handleDone}
             className="text-[#6D4AFF] border-[#9b87f5] hover:bg-[#F8F7FF] hover:text-[#6D4AFF]"
           >
-            <Check className="h-4 w-4 mr-1" />
+            {isLoading === 'done' ? (
+              <div className="h-4 w-4 mr-1 animate-spin rounded-full border-2 border-[#6D4AFF] border-t-transparent" />
+            ) : (
+              <Check className="h-4 w-4 mr-1" />
+            )}
             Done
           </Button>
           <Button
             size="sm"
+            disabled={!!isLoading}
             onClick={handleStart}
             className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white"
           >
-            <Play className="h-4 w-4 mr-1" />
+            {isLoading === 'start' ? (
+              <div className="h-4 w-4 mr-1 animate-spin rounded-full border-2 border-white border-t-transparent" />
+            ) : (
+              <Play className="h-4 w-4 mr-1" />
+            )}
             Start
           </Button>
         </AlertDialogFooter>
