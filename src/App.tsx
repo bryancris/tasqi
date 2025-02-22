@@ -2,8 +2,7 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "next-themes";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -27,16 +26,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UpdatePasswordForm } from "@/components/auth/UpdatePasswordForm";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-
-// Initialize QueryClient outside of the component
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
 
 const UpdatePasswordPage = () => {
   useEffect(() => {
@@ -83,123 +72,121 @@ const UpdatePasswordPage = () => {
 };
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <BrowserRouter>
-      <AuthProvider>
-        <ThemeProvider defaultTheme="system" enableSystem>
-          <TooltipProvider>
-            <NotificationsProvider>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
-                <Route
-                  path="/dashboard"
-                  element={
-                    <ProtectedRoute>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/weekly"
-                  element={
-                    <ProtectedRoute>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/dashboard/settings"
-                  element={
-                    <ProtectedRoute>
-                      <Settings />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/notes"
-                  element={
-                    <ProtectedRoute>
-                      <Notes />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/analytics"
-                  element={
-                    <ProtectedRoute>
-                      <Analytics />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/self-care"
-                  element={
-                    <ProtectedRoute>
-                      <SelfCare />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/self-care/physical-wellness"
-                  element={
-                    <ProtectedRoute>
-                      <PhysicalWellness />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/self-care/mental-wellbeing"
-                  element={
-                    <ProtectedRoute>
-                      <MentalWellbeing />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/self-care/personal-growth"
-                  element={
-                    <ProtectedRoute>
-                      <PersonalGrowth />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/self-care/social-connections"
-                  element={
-                    <ProtectedRoute>
-                      <SocialConnections />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/self-care/daily-rituals"
-                  element={
-                    <ProtectedRoute>
-                      <DailyRituals />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/self-care/emotional-care"
-                  element={
-                    <ProtectedRoute>
-                      <EmotionalCare />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-              <Toaster />
-              <Sonner />
-              <UpdatePrompt />
-            </NotificationsProvider>
-          </TooltipProvider>
-        </ThemeProvider>
-      </AuthProvider>
-    </BrowserRouter>
-  </QueryClientProvider>
+  <BrowserRouter>
+    <AuthProvider>
+      <ThemeProvider defaultTheme="system" enableSystem>
+        <TooltipProvider>
+          <NotificationsProvider>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/weekly"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/settings"
+                element={
+                  <ProtectedRoute>
+                    <Settings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/notes"
+                element={
+                  <ProtectedRoute>
+                    <Notes />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/analytics"
+                element={
+                  <ProtectedRoute>
+                    <Analytics />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/self-care"
+                element={
+                  <ProtectedRoute>
+                    <SelfCare />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/self-care/physical-wellness"
+                element={
+                  <ProtectedRoute>
+                    <PhysicalWellness />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/self-care/mental-wellbeing"
+                element={
+                  <ProtectedRoute>
+                    <MentalWellbeing />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/self-care/personal-growth"
+                element={
+                  <ProtectedRoute>
+                    <PersonalGrowth />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/self-care/social-connections"
+                element={
+                  <ProtectedRoute>
+                    <SocialConnections />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/self-care/daily-rituals"
+                element={
+                  <ProtectedRoute>
+                    <DailyRituals />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/self-care/emotional-care"
+                element={
+                  <ProtectedRoute>
+                    <EmotionalCare />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <Toaster />
+            <Sonner />
+            <UpdatePrompt />
+          </NotificationsProvider>
+        </TooltipProvider>
+      </ThemeProvider>
+    </AuthProvider>
+  </BrowserRouter>
 );
 
 export default App;
