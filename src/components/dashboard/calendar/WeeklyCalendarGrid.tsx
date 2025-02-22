@@ -22,7 +22,6 @@ const getTaskPosition = (task: Task, timeSlot: { hour: number }) => {
   const [startHour, startMinute] = task.start_time.split(':').map(Number);
   const [endHour, endMinute] = task.end_time.split(':').map(Number);
 
-  // Calculate position and height
   const startMinuteOffset = startHour === timeSlot.hour ? startMinute : 0;
   const endMinuteOffset = endHour === timeSlot.hour ? endMinute : 60;
   
@@ -62,7 +61,6 @@ const CalendarCell = ({
     }
   });
 
-  // Filter tasks that start or end in this hour slot
   const tasksForThisSlot = tasks.filter(task => {
     if (!task.date || !task.start_time || task.status !== 'scheduled') return false;
     
@@ -73,31 +71,17 @@ const CalendarCell = ({
     return taskStartHour === timeSlot.hour;
   });
 
-  console.log('Tasks for slot:', {
-    date: formattedDate,
-    hour: timeSlot.hour,
-    count: tasksForThisSlot.length,
-    tasks: tasksForThisSlot
-  });
-
   return (
     <div
       ref={setNodeRef}
       className={cn(
         "relative h-[60px] min-h-[60px]",
-        "border-[#403E43]",
-        {
-          "border-l": !isFirstColumn,
-          "border-r": true,
-          "border-t": true,
-          "border-b": isLastRow,
-        },
         isOver && "bg-blue-50/50",
         "transition-colors duration-200"
       )}
     >
       {/* 30-minute marker */}
-      <div className="absolute left-0 right-0 top-1/2 border-t border-[#403E43]/30" />
+      <div className="absolute left-0 right-0 top-1/2 border-t border-[#403E43]/20" />
       
       {tasksForThisSlot.map((task, index) => {
         const position = getTaskPosition(task, timeSlot);
@@ -128,14 +112,11 @@ const CalendarCell = ({
 export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks, showFullWeek }: WeeklyCalendarGridProps) {
   const displayDays = showFullWeek ? weekDays : weekDays.slice(0, 5);
   
-  console.log('WeeklyCalendarGrid - Scheduled tasks:', scheduledTasks);
-
   return (
     <div className="relative bg-white rounded-lg shadow-sm overflow-hidden">
       <div className={cn(
         "grid",
         showFullWeek ? "grid-cols-[auto_repeat(7,1fr)]" : "grid-cols-[auto_repeat(5,1fr)]",
-        "border border-[#403E43]"
       )}>
         {/* Header */}
         <div className="bg-[#B2E3EA] p-4 border-r border-[#403E43]" /> {/* Time column header spacer */}
@@ -155,16 +136,28 @@ export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks, showFu
         ))}
 
         {/* Time slots and cells */}
-        {timeSlots.map((timeSlot, rowIndex) => {
-          const rowKey = `row-${timeSlot.hour}`;
-          return (
-            <div key={rowKey} className="contents">
-              <div className="w-20 px-4 py-3 text-right text-sm text-slate-500 bg-[#B2E3EA] border-r border-[#403E43]">
-                {timeSlot.display}
-              </div>
-              {displayDays.map((day, colIndex) => (
+        {timeSlots.map((timeSlot, rowIndex) => (
+          <React.Fragment key={`row-${timeSlot.hour}`}>
+            <div 
+              className={cn(
+                "w-20 px-4 py-3 text-right text-sm text-slate-500",
+                "bg-[#B2E3EA] border-r border-[#403E43]",
+                rowIndex === timeSlots.length - 1 && "rounded-bl-lg"
+              )}
+            >
+              {timeSlot.display}
+            </div>
+            {displayDays.map((day, colIndex) => (
+              <div 
+                key={`${day.toISOString()}-${timeSlot.hour}`}
+                className={cn(
+                  "border-r border-b border-[#403E43]",
+                  colIndex === displayDays.length - 1 && "border-r-0",
+                  rowIndex === timeSlots.length - 1 && colIndex === displayDays.length - 1 && "rounded-br-lg",
+                  "relative"
+                )}
+              >
                 <CalendarCell
-                  key={`${day.toISOString()}-${timeSlot.hour}`}
                   day={day}
                   timeSlot={timeSlot}
                   tasks={scheduledTasks}
@@ -172,10 +165,10 @@ export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks, showFu
                   isLastColumn={colIndex === displayDays.length - 1}
                   isFirstColumn={colIndex === 0}
                 />
-              ))}
-            </div>
-          );
-        })}
+              </div>
+            ))}
+          </React.Fragment>
+        ))}
       </div>
     </div>
   );
