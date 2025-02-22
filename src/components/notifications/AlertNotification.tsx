@@ -44,7 +44,7 @@ export function AlertNotification({
         className={cn(
           "max-w-sm m-0 transform-none transition-all duration-300 ease-in-out",
           "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-          "bg-white/95 backdrop-blur-sm border",
+          "bg-white border shadow-lg",
           {
             // Desktop positioning
             'fixed right-4': !isMobile,
@@ -59,21 +59,21 @@ export function AlertNotification({
             'top-48': isMobile && index === 2,
             'top-64': isMobile && index === 3,
           },
-          type === 'success' && 'border-l-4 border-l-[#9b87f5] bg-[#E5DEFF]/50',
-          type === 'error' && 'border-l-4 border-l-[#D946EF] bg-[#FFDEE2]/50',
-          type === 'warning' && 'border-l-4 border-l-[#FEC6A1] bg-[#FDE1D3]/50',
-          type === 'info' && 'border-l-4 border-l-[#9b87f5] bg-[#E5DEFF]/50'
+          type === 'success' && 'border-l-4 border-l-[#9b87f5] bg-[#F8F7FF]',
+          type === 'error' && 'border-l-4 border-l-[#D946EF] bg-[#FFF5F9]',
+          type === 'warning' && 'border-l-4 border-l-[#FEC6A1] bg-[#FFFAF5]',
+          type === 'info' && 'border-l-4 border-l-[#9b87f5] bg-[#F8F7FF]'
         )}
       >
         <AlertDialogHeader>
           <AlertDialogTitle className={cn(
             "font-semibold",
-            type === 'success' && 'text-[#7E69AB]',
+            type === 'success' && 'text-[#6D4AFF]',
             type === 'error' && 'text-[#D946EF]',
-            type === 'warning' && 'text-[#FEC6A1]',
-            type === 'info' && 'text-[#7E69AB]'
+            type === 'warning' && 'text-[#F97316]',
+            type === 'info' && 'text-[#6D4AFF]'
           )}>{title}</AlertDialogTitle>
-          <AlertDialogDescription className="text-[#1A1F2C]/80">{message}</AlertDialogDescription>
+          <AlertDialogDescription className="text-[#1A1F2C]">{message}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="flex-row justify-end gap-2 sm:gap-0">
           {action && (
@@ -83,7 +83,7 @@ export function AlertNotification({
                 "px-3 py-2 text-white",
                 type === 'success' && 'bg-[#9b87f5] hover:bg-[#8B5CF6]',
                 type === 'error' && 'bg-[#D946EF] hover:bg-[#D946EF]/90',
-                type === 'warning' && 'bg-[#FEC6A1] hover:bg-[#FEC6A1]/90',
+                type === 'warning' && 'bg-[#FEC6A1] hover:bg-[#F97316]',
                 type === 'info' && 'bg-[#9b87f5] hover:bg-[#8B5CF6]'
               )}
             >
@@ -94,7 +94,7 @@ export function AlertNotification({
             variant="ghost"
             size="sm"
             onClick={onDismiss}
-            className="h-auto px-2 hover:bg-[#E5DEFF]/50 text-[#1A1F2C]/60 hover:text-[#1A1F2C]"
+            className="h-auto px-2 hover:bg-[#F8F7FF] text-[#1A1F2C]/60 hover:text-[#1A1F2C]"
           >
             <X className="h-4 w-4" />
           </Button>
