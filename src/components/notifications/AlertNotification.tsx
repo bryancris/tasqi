@@ -54,14 +54,28 @@ export function AlertNotification({
     }
   };
 
-  // Extract task ID by taking all numbers from the title
-  const referenceId = action?.label === 'Complete Task' ? 
-    parseInt(title.match(/\d+/)?.[0] ?? '') || null : 
-    null;
+  // Extract task ID by taking all numbers from the title and message
+  const referenceId = React.useMemo(() => {
+    // First try to find numbers in the title
+    const titleMatch = title.match(/\d+/);
+    if (titleMatch) {
+      return parseInt(titleMatch[0]);
+    }
+    // If no numbers in title, try the message
+    const messageMatch = message.match(/\d+/);
+    if (messageMatch) {
+      return parseInt(messageMatch[0]);
+    }
+    return null;
+  }, [title, message]);
 
   // Log for debugging
-  console.log('Title:', title);
-  console.log('Extracted reference ID:', referenceId);
+  console.log('Notification Details:', {
+    title,
+    message,
+    extractedId: referenceId,
+    actionLabel: action?.label
+  });
 
   return (
     <AlertDialog open={open}>
@@ -91,7 +105,7 @@ export function AlertNotification({
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2 text-[#6D4AFF]">
             <AlarmClock className="h-5 w-5" />
-            Task Reminder
+            {title}
           </AlertDialogTitle>
           <AlertDialogDescription className="space-y-1">
             <div className="font-medium text-[#1A1F2C]">{message}</div>
