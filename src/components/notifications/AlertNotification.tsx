@@ -54,9 +54,14 @@ export function AlertNotification({
     }
   };
 
+  // Extract task ID by taking all numbers from the title
   const referenceId = action?.label === 'Complete Task' ? 
-    parseInt(title.split('-')[0]) : 
+    parseInt(title.match(/\d+/)?.[0] ?? '') || null : 
     null;
+
+  // Log for debugging
+  console.log('Title:', title);
+  console.log('Extracted reference ID:', referenceId);
 
   return (
     <AlertDialog open={open}>
