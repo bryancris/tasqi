@@ -1,21 +1,10 @@
 
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
-
-interface Notification {
-  id: number;
-  title: string;
-  message: string;
-  type: string;
-  read: boolean;
-  created_at: string;
-  reference_id: string | null;
-  reference_type: string | null;
-  user_id: string;
-}
+import { Notification } from "@/components/notifications/NotificationsManager";
 
 interface NotificationItemProps {
   notification: Notification;
-  onClick: (notification: Notification) => void;
+  onClick: (notification: Notification) => Promise<void>;
 }
 
 export function NotificationItem({ notification, onClick }: NotificationItemProps) {

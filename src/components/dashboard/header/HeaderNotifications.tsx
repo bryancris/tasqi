@@ -6,20 +6,8 @@ import { DropdownMenu, DropdownMenuTrigger } from "@/components/ui/dropdown-menu
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { NotificationList } from "./notifications/NotificationList";
-import { useNotifications, useNotifications as useAlertNotifications, Notification as AlertNotification } from "@/components/notifications/NotificationsManager";
+import { useNotifications, useNotifications as useAlertNotifications, Notification } from "@/components/notifications/NotificationsManager";
 import { useQueryClient } from "@tanstack/react-query";
-
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  type: string;
-  read: boolean;
-  created_at: string;
-  reference_id: string | null;
-  reference_type: string | null;
-  user_id: string;
-}
 
 export function HeaderNotifications() {
   const navigate = useNavigate();
