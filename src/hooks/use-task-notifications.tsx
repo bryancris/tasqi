@@ -76,7 +76,7 @@ export function useTaskNotifications() {
       // Play notification sound
       await playNotificationSound();
 
-      // Show in-app notification
+      // Show in-app notification with explicit task ID reference
       showNotification({
         title: type === 'reminder' ? 'Task Reminder' :
                type === 'shared' ? 'Task Shared' :
@@ -84,6 +84,8 @@ export function useTaskNotifications() {
         message: task.title,
         type: 'info',
         persistent: true,
+        reference_id: task.id.toString(), // Explicitly pass the task ID
+        reference_type: 'task',
         action: {
           label: 'Complete Task',
           onClick: () => void handleTaskComplete(task)
