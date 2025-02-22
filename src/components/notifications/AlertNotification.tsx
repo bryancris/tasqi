@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export interface AlertNotificationProps {
   open: boolean;
@@ -35,18 +36,27 @@ export function AlertNotification({
   onDismiss,
   index = 0,
 }: AlertNotificationProps) {
+  const isMobile = useIsMobile();
+
   return (
     <AlertDialog open={open}>
       <AlertDialogContent
         className={cn(
-          "fixed right-4 max-w-sm m-0 transform-none transition-all duration-300 ease-in-out",
+          "max-w-sm m-0 transform-none transition-all duration-300 ease-in-out",
           "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-          "data-[state=closed]:slide-out-to-right-4 data-[state=open]:slide-in-from-right-4",
           {
-            'top-4': index === 0,
-            'top-[4.5rem]': index === 1,
-            'top-[9rem]': index === 2,
-            'top-[13.5rem]': index === 3,
+            // Desktop positioning
+            'fixed right-4': !isMobile,
+            'top-4': !isMobile && index === 0,
+            'top-[4.5rem]': !isMobile && index === 1,
+            'top-[9rem]': !isMobile && index === 2,
+            'top-[13.5rem]': !isMobile && index === 3,
+            // Mobile positioning - center in viewport
+            'fixed left-1/2 -translate-x-1/2': isMobile,
+            'top-[25vh]': isMobile && index === 0,
+            'top-[35vh]': isMobile && index === 1,
+            'top-[45vh]': isMobile && index === 2,
+            'top-[55vh]': isMobile && index === 3,
           },
           type === 'success' && 'border-l-4 border-l-green-500 bg-green-50/50',
           type === 'error' && 'border-l-4 border-l-red-500 bg-red-50/50',
