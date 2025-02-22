@@ -1,8 +1,8 @@
 
 import { Task } from "@/components/dashboard/TaskBoard";
 import { isNotificationSupported } from "./platformDetection";
-import { useNotifications } from "@/components/notifications/NotificationsManager";
 
+// Separate browser notification handling
 async function requestNotificationPermission(): Promise<boolean> {
   try {
     if (!isNotificationSupported()) {
@@ -29,7 +29,7 @@ async function requestNotificationPermission(): Promise<boolean> {
 }
 
 // Play notification sound using both native and custom sound
-const playNotificationSound = async () => {
+export const playNotificationSound = async () => {
   try {
     console.log('🔊 Playing notification sound...');
     const audio = new Audio('/notification-sound.mp3');
@@ -41,29 +41,20 @@ const playNotificationSound = async () => {
   }
 };
 
-export async function showNotification(task: Task, type: 'reminder' | 'shared' | 'assignment' = 'reminder'): Promise<boolean> {
+// Show browser notification
+export async function showBrowserNotification(task: Task, type: 'reminder' | 'shared' | 'assignment' = 'reminder'): Promise<boolean> {
   try {
-    console.log('🔔 Showing notification:', {
-      taskId: task.id,
-      type,
-      title: task.title
-    });
-
-    // Get notification title based on type
-    const notificationTitle = type === 'reminder' ? 'Task Reminder' :
-                            type === 'shared' ? 'Task Shared' :
-                            'New Task Assignment';
-
     // Only show native browser notification if the window is not focused
     if (!document.hasFocus()) {
-      // Request permission if needed
       const permissionGranted = await requestNotificationPermission();
       if (!permissionGranted) {
-        console.warn('⚠️ Notification permission not granted');
         return false;
       }
 
-      // Create and show the native notification
+      const notificationTitle = type === 'reminder' ? 'Task Reminder' :
+                              type === 'shared' ? 'Task Shared' :
+                              'New Task Assignment';
+
       const notification = new Notification(notificationTitle, {
         body: task.title,
         icon: '/favicon.ico',
@@ -75,7 +66,6 @@ export async function showNotification(task: Task, type: 'reminder' | 'shared' |
         vibrate: [200, 100, 200],
       });
 
-      // Handle notification click
       notification.onclick = function() {
         console.log('🔔 Notification clicked:', task.id);
         window.focus();
@@ -83,30 +73,12 @@ export async function showNotification(task: Task, type: 'reminder' | 'shared' |
           window.location.href = '/dashboard';
         }
       };
+
+      return true;
     }
-
-    // Play notification sound
-    await playNotificationSound();
-
-    // Show in-app notification using AlertNotification
-    const { showNotification } = useNotifications();
-    showNotification({
-      title: notificationTitle,
-      message: task.title,
-      type: 'info',
-      action: {
-        label: 'View Task',
-        onClick: () => {
-          if (location.pathname !== '/dashboard') {
-            window.location.href = '/dashboard';
-          }
-        }
-      }
-    });
-
-    return true;
+    return false;
   } catch (error) {
-    console.error('❌ Error showing notification:', error);
+    console.error('❌ Error showing browser notification:', error);
     return false;
   }
 }
