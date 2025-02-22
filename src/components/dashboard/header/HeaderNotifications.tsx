@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Bell } from "lucide-react";
@@ -6,9 +5,8 @@ import { DropdownMenu, DropdownMenuTrigger } from "@/components/ui/dropdown-menu
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { NotificationList } from "./notifications/NotificationList";
-import { useNotifications } from "@/hooks/use-notifications";
+import { useNotifications, useNotifications as useAlertNotifications } from "@/components/notifications/NotificationsManager";
 import { useQueryClient } from "@tanstack/react-query";
-import { useNotifications as useAlertNotifications } from "@/components/notifications/NotificationsManager";
 
 interface Notification {
   id: number;
@@ -31,13 +29,11 @@ export function HeaderNotifications() {
 
   const handleNotificationClick = async (notification: Notification) => {
     try {
-      // Optimistically update the UI by removing the notification
       queryClient.setQueryData(['notifications'], (oldData: Notification[] | undefined) => {
         if (!oldData) return [];
         return oldData.filter(n => n.id !== notification.id);
       });
 
-      // Show alert notification
       showNotification({
         title: notification.title,
         message: notification.message,
@@ -48,7 +44,6 @@ export function HeaderNotifications() {
         } : undefined
       });
 
-      // Delete the notification
       const { error } = await supabase
         .from('notifications')
         .delete()
@@ -58,9 +53,7 @@ export function HeaderNotifications() {
         throw error;
       }
 
-      // Invalidate and refetch notifications after successful deletion
       await queryClient.invalidateQueries({ queryKey: ['notifications'] });
-
     } catch (error) {
       console.error('Error deleting notification:', error);
       showNotification({
@@ -68,7 +61,6 @@ export function HeaderNotifications() {
         message: 'Failed to remove notification',
         type: 'error'
       });
-      // Revert optimistic update on error
       await queryClient.invalidateQueries({ queryKey: ['notifications'] });
     }
   };
