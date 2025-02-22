@@ -1,6 +1,7 @@
 
 import { DropdownMenuContent } from "@/components/ui/dropdown-menu";
 import { NotificationItem } from "./NotificationItem";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Notification {
   id: number;
@@ -27,13 +28,17 @@ export function NotificationList({ notifications, onNotificationClick }: Notific
           No notifications
         </div>
       ) : (
-        notifications.map((notification) => (
-          <NotificationItem
-            key={notification.id}
-            notification={notification}
-            onClick={onNotificationClick}
-          />
-        ))
+        <ScrollArea className="h-[400px]"> {/* Height for ~5 items */}
+          <div className="px-1"> {/* Add padding to account for scrollbar */}
+            {notifications.map((notification) => (
+              <NotificationItem
+                key={notification.id}
+                notification={notification}
+                onClick={onNotificationClick}
+              />
+            ))}
+          </div>
+        </ScrollArea>
       )}
     </DropdownMenuContent>
   );
