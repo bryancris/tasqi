@@ -12,11 +12,16 @@ export interface Notification {
     label: string;
     onClick: () => void;
   };
+  read: boolean;
+  created_at: string;
+  reference_id: string | null;
+  reference_type: string | null;
+  user_id: string;
 }
 
 interface NotificationsContextType {
   notifications: Notification[];
-  showNotification: (notification: Omit<Notification, 'id'>) => void;
+  showNotification: (notification: Omit<Notification, 'id' | 'read' | 'created_at' | 'reference_id' | 'reference_type' | 'user_id'>) => void;
   dismissNotification: (id: string) => void;
 }
 
@@ -31,9 +36,19 @@ export const useNotifications = () => React.useContext(NotificationsContext);
 export function NotificationsProvider({ children }: { children: React.ReactNode }) {
   const [notifications, setNotifications] = React.useState<Notification[]>([]);
 
-  const showNotification = React.useCallback((notification: Omit<Notification, 'id'>) => {
+  const showNotification = React.useCallback((notification: Omit<Notification, 'id' | 'read' | 'created_at' | 'reference_id' | 'reference_type' | 'user_id'>) => {
     const id = Math.random().toString(36).substr(2, 9);
-    setNotifications(prev => [...prev, { ...notification, id }]);
+    const now = new Date().toISOString();
+    
+    setNotifications(prev => [...prev, { 
+      ...notification, 
+      id,
+      read: false,
+      created_at: now,
+      reference_id: null,
+      reference_type: null,
+      user_id: '', // This should be set with the actual user ID in a real implementation
+    }]);
     void playNotificationSound();
   }, []);
 
