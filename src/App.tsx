@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "next-themes";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
+import { NotificationsProvider } from "@/components/notifications/NotificationsManager";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
@@ -79,111 +79,113 @@ const App = () => (
       <AuthProvider>
         <ThemeProvider defaultTheme="system" enableSystem>
           <TooltipProvider>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/weekly"
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/settings"
-                element={
-                  <ProtectedRoute>
-                    <Settings />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/notes"
-                element={
-                  <ProtectedRoute>
-                    <Notes />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/analytics"
-                element={
-                  <ProtectedRoute>
-                    <Analytics />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/self-care"
-                element={
-                  <ProtectedRoute>
-                    <SelfCare />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/self-care/physical-wellness"
-                element={
-                  <ProtectedRoute>
-                    <PhysicalWellness />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/self-care/mental-wellbeing"
-                element={
-                  <ProtectedRoute>
-                    <MentalWellbeing />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/self-care/personal-growth"
-                element={
-                  <ProtectedRoute>
-                    <PersonalGrowth />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/self-care/social-connections"
-                element={
-                  <ProtectedRoute>
-                    <SocialConnections />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/self-care/daily-rituals"
-                element={
-                  <ProtectedRoute>
-                    <DailyRituals />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/self-care/emotional-care"
-                element={
-                  <ProtectedRoute>
-                    <EmotionalCare />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <Toaster />
-            <Sonner />
-            <UpdatePrompt />
+            <NotificationsProvider>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/weekly"
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/dashboard/settings"
+                  element={
+                    <ProtectedRoute>
+                      <Settings />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/notes"
+                  element={
+                    <ProtectedRoute>
+                      <Notes />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/analytics"
+                  element={
+                    <ProtectedRoute>
+                      <Analytics />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/self-care"
+                  element={
+                    <ProtectedRoute>
+                      <SelfCare />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/self-care/physical-wellness"
+                  element={
+                    <ProtectedRoute>
+                      <PhysicalWellness />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/self-care/mental-wellbeing"
+                  element={
+                    <ProtectedRoute>
+                      <MentalWellbeing />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/self-care/personal-growth"
+                  element={
+                    <ProtectedRoute>
+                      <PersonalGrowth />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/self-care/social-connections"
+                  element={
+                    <ProtectedRoute>
+                      <SocialConnections />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/self-care/daily-rituals"
+                  element={
+                    <ProtectedRoute>
+                      <DailyRituals />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/self-care/emotional-care"
+                  element={
+                    <ProtectedRoute>
+                      <EmotionalCare />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              <Toaster />
+              <Sonner />
+              <UpdatePrompt />
+            </NotificationsProvider>
           </TooltipProvider>
         </ThemeProvider>
       </AuthProvider>

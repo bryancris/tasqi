@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Bell } from "lucide-react";
 import { DropdownMenu, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { NotificationList } from "./notifications/NotificationList";
-import { useNotifications } from "./notifications/useNotifications";
+import { useNotifications } from "@/hooks/use-notifications";
 import { useQueryClient } from "@tanstack/react-query";
+import { useNotifications as useAlertNotifications } from "@/components/notifications/NotificationsManager";
 
 interface Notification {
   id: number;
@@ -27,6 +27,7 @@ export function HeaderNotifications() {
   const [isOpen, setIsOpen] = useState(false);
   const { notifications } = useNotifications();
   const queryClient = useQueryClient();
+  const { showNotification } = useAlertNotifications();
 
   const handleNotificationClick = async (notification: Notification) => {
     try {
@@ -36,10 +37,16 @@ export function HeaderNotifications() {
         return oldData.filter(n => n.id !== notification.id);
       });
 
-      // If it's a task share notification, navigate to the dashboard
-      if (notification.type === 'task_share' && notification.reference_id) {
-        navigate('/dashboard');
-      }
+      // Show alert notification
+      showNotification({
+        title: notification.title,
+        message: notification.message,
+        type: 'info',
+        action: notification.type === 'task_share' && notification.reference_id ? {
+          label: 'View Task',
+          onClick: () => navigate('/dashboard')
+        } : undefined
+      });
 
       // Delete the notification
       const { error } = await supabase
@@ -56,7 +63,11 @@ export function HeaderNotifications() {
 
     } catch (error) {
       console.error('Error deleting notification:', error);
-      toast.error('Failed to remove notification');
+      showNotification({
+        title: 'Error',
+        message: 'Failed to remove notification',
+        type: 'error'
+      });
       // Revert optimistic update on error
       await queryClient.invalidateQueries({ queryKey: ['notifications'] });
     }
