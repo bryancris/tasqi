@@ -28,21 +28,25 @@ export function HeaderNotifications() {
 
   const handleNotificationClick = async (notification: Notification) => {
     try {
-      // If it's a shared task notification, navigate to the dashboard
+      // If it's a task share notification, navigate to the dashboard
       if (notification.type === 'task_share' && notification.reference_id) {
         navigate('/dashboard');
       }
 
-      // Mark notification as read
+      // Delete the notification
       const { error } = await supabase
         .from('notifications')
-        .update({ read: true })
+        .delete()
         .eq('id', notification.id);
 
       if (error) throw error;
+
+      // Close the dropdown after successful deletion
+      setIsOpen(false);
+
     } catch (error) {
-      console.error('Error handling notification:', error);
-      toast.error('Failed to update notification');
+      console.error('Error deleting notification:', error);
+      toast.error('Failed to remove notification');
     }
   };
 

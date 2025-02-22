@@ -22,7 +22,7 @@ export function NotificationItem({ notification, onClick }: NotificationItemProp
   return (
     <DropdownMenuItem
       key={notification.id}
-      className={`p-4 cursor-pointer ${!notification.read ? 'bg-gray-50' : ''}`}
+      className={`p-4 cursor-pointer transition-colors hover:bg-accent ${!notification.read ? 'bg-gray-50' : ''}`}
       onClick={() => onClick(notification)}
     >
       <div>
