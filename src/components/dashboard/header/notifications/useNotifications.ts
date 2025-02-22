@@ -66,7 +66,7 @@ export function useNotifications() {
     enabled: !!currentUserId
   });
 
-  // Subscribe to new notifications
+  // Subscribe to notifications changes (both new and deleted)
   useEffect(() => {
     if (!currentUserId) {
       console.log('❌ No current user ID, skipping notification subscription');
@@ -79,73 +79,37 @@ export function useNotifications() {
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
           schema: 'public',
           table: 'notifications',
           filter: `user_id=eq.${currentUserId}`
         },
         async (payload: any) => {
-          console.log('📬 New notification received:', payload);
-          console.log('📦 Notification data:', payload.new);
+          console.log('📬 Notification change received:', payload);
           
-          try {
-            // Always attempt to play sound for new notifications
-            console.log('🔊 Attempting to play notification sound...');
+          if (payload.eventType === 'INSERT') {
+            console.log('📦 New notification data:', payload.new);
+            
             try {
-              await playNotificationSound();
-              console.log('✅ Notification sound played successfully');
-            } catch (soundError) {
-              console.error('❌ Error playing notification sound:', soundError);
-            }
-
-            const notificationData = payload.new;
-            
-            // Show system notification for task assignments
-            if (notificationData.type === 'task_assignment') {
-              console.log('📋 Processing task assignment notification');
+              // Play sound for new notifications
+              console.log('🔊 Attempting to play notification sound...');
               try {
-                const { data: task, error } = await supabase
-                  .from('tasks')
-                  .select('*')
-                  .eq('id', notificationData.reference_id)
-                  .single();
-
-                if (error) {
-                  console.error('❌ Error fetching task details:', error);
-                  throw error;
-                }
-                
-                if (task) {
-                  console.log('🔔 Showing task notification:', task.title);
-                  await showNotification(task, 'assignment');
-                  console.log('✅ Task notification shown successfully');
-                }
-              } catch (error) {
-                console.error('❌ Error fetching task details:', error);
+                await playNotificationSound();
+                console.log('✅ Notification sound played successfully');
+              } catch (soundError) {
+                console.error('❌ Error playing notification sound:', soundError);
               }
+
+              // Invalidate query to refresh notifications
+              queryClient.invalidateQueries({ queryKey: ['notifications'] });
+              
+            } catch (error) {
+              console.error('❌ Error processing notification:', error);
             }
-
-            // Show toast notification
-            console.log('🔔 Showing toast notification');
-            toast(notificationData.title, {
-              description: notificationData.message,
-              duration: 5000,
-              action: {
-                label: "View",
-                onClick: () => {
-                  if (location.pathname !== '/dashboard') {
-                    window.location.href = '/dashboard';
-                  }
-                }
-              }
-            });
-
-            // Update notifications list
-            console.log('🔄 Invalidating notifications query cache');
+          } else if (payload.eventType === 'DELETE') {
+            console.log('🗑️ Notification deleted:', payload.old);
+            // Invalidate query to refresh notifications
             queryClient.invalidateQueries({ queryKey: ['notifications'] });
-            
-          } catch (error) {
-            console.error('❌ Error processing notification:', error);
           }
         }
       )
