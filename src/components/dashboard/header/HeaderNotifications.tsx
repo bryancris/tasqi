@@ -27,7 +27,7 @@ export function HeaderNotifications() {
         title: notification.title,
         message: notification.message,
         type: 'info',
-        action: notification.type === 'task_share' && notification.reference_id ? {
+        action: notification.reference_type === 'task_share' && notification.reference_id ? {
           label: 'View Task',
           onClick: () => navigate('/dashboard')
         } : undefined
@@ -36,7 +36,7 @@ export function HeaderNotifications() {
       const { error } = await supabase
         .from('notifications')
         .delete()
-        .eq('id', notification.id);
+        .match({ id: notification.id });  // Using match instead of eq for type safety
 
       if (error) {
         throw error;
