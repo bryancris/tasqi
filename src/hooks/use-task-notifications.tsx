@@ -6,6 +6,9 @@ import { isToday, parseISO, isFuture } from 'date-fns';
 import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
 import { useNotifications } from '@/components/notifications/NotificationsManager';
 import { showBrowserNotification, playNotificationSound } from '@/utils/notifications/notificationUtils';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
 const NOTIFICATION_CHECK_INTERVAL = 30000; // Check every 30 seconds
 
@@ -13,6 +16,51 @@ export function useTaskNotifications() {
   const { tasks } = useTasks();
   const notifiedTasksRef = useRef<Set<number>>(new Set());
   const { showNotification } = useNotifications();
+  const queryClient = useQueryClient();
+
+  const handleTaskComplete = async (task: Task) => {
+    try {
+      const user = (await supabase.auth.getUser()).data.user;
+      if (!user) {
+        toast.error('User not authenticated');
+        return;
+      }
+
+      if (task.shared) {
+        const { error: sharedUpdateError } = await supabase
+          .from('shared_tasks')
+          .update({ status: 'completed' })
+          .eq('task_id', task.id)
+          .eq('shared_with_user_id', user.id);
+
+        if (sharedUpdateError) {
+          console.error('Error completing shared task:', sharedUpdateError);
+          toast.error('Failed to complete task');
+          return;
+        }
+      } else {
+        const { error: updateError } = await supabase
+          .from('tasks')
+          .update({ 
+            status: 'completed',
+            completed_at: new Date().toISOString()
+          })
+          .eq('id', task.id);
+
+        if (updateError) {
+          console.error('Error completing task:', updateError);
+          toast.error('Failed to complete task');
+          return;
+        }
+      }
+
+      toast.success('Task completed');
+      await queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    } catch (error) {
+      console.error('Unexpected error completing task:', error);
+      toast.error('An unexpected error occurred');
+    }
+  };
 
   const showTaskNotification = useCallback(async (task: Task, type: 'reminder' | 'shared' | 'assignment' = 'reminder') => {
     try {
@@ -35,13 +83,10 @@ export function useTaskNotifications() {
                'New Task Assignment',
         message: task.title,
         type: 'info',
+        persistent: true,
         action: {
-          label: 'View Task',
-          onClick: () => {
-            if (location.pathname !== '/dashboard') {
-              window.location.href = '/dashboard';
-            }
-          }
+          label: 'Complete Task',
+          onClick: () => void handleTaskComplete(task)
         }
       });
 
@@ -50,7 +95,7 @@ export function useTaskNotifications() {
       console.error('❌ Error showing notification:', error);
       return false;
     }
-  }, [showNotification]);
+  }, [showNotification, queryClient]);
 
   const checkForUpcomingTasks = useCallback(async (tasks: Task[]) => {
     const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
