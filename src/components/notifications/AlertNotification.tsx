@@ -9,8 +9,14 @@ import {
   AlertDialogTitle,
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { AlarmClock, Check, Play, Clock, Edit, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -38,6 +44,27 @@ export function AlertNotification({
 }: AlertNotificationProps) {
   const isMobile = useIsMobile();
 
+  const handleSnooze = (minutes: number) => {
+    console.log('Snoozing for', minutes, 'minutes');
+    // Implementation for snooze functionality would go here
+  };
+
+  const handleEdit = () => {
+    console.log('Edit task');
+    // Implementation for edit functionality would go here
+  };
+
+  const handleDone = () => {
+    if (action?.onClick) {
+      action.onClick();
+    }
+  };
+
+  const handleStart = () => {
+    console.log('Start task');
+    // Implementation for start functionality would go here
+  };
+
   return (
     <AlertDialog open={open}>
       <AlertDialogContent
@@ -52,7 +79,7 @@ export function AlertNotification({
             'top-[4.5rem]': !isMobile && index === 1,
             'top-[9rem]': !isMobile && index === 2,
             'top-[13.5rem]': !isMobile && index === 3,
-            // Mobile positioning - center in viewport with safe area padding
+            // Mobile positioning
             'fixed left-4 right-4 w-auto max-w-[calc(100%-2rem)]': isMobile,
             'top-16': isMobile && index === 0,
             'top-32': isMobile && index === 1,
@@ -66,37 +93,70 @@ export function AlertNotification({
         )}
       >
         <AlertDialogHeader>
-          <AlertDialogTitle className={cn(
-            "font-semibold",
-            type === 'success' && 'text-[#6D4AFF]',
-            type === 'error' && 'text-[#D946EF]',
-            type === 'warning' && 'text-[#F97316]',
-            type === 'info' && 'text-[#6D4AFF]'
-          )}>{title}</AlertDialogTitle>
-          <AlertDialogDescription className="text-[#1A1F2C]">{message}</AlertDialogDescription>
+          <AlertDialogTitle className="flex items-center gap-2 text-[#6D4AFF]">
+            <AlarmClock className="h-5 w-5" />
+            Task Reminder
+          </AlertDialogTitle>
+          <AlertDialogDescription className="space-y-1">
+            <div className="font-medium text-[#1A1F2C]">{message}</div>
+            <div className="text-sm text-[#1A1F2C]/60">Inbox</div>
+          </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter className="flex-row justify-end gap-2 sm:gap-0">
-          {action && (
-            <AlertDialogAction
-              onClick={action.onClick}
-              className={cn(
-                "px-3 py-2 text-white",
-                type === 'success' && 'bg-[#9b87f5] hover:bg-[#8B5CF6]',
-                type === 'error' && 'bg-[#D946EF] hover:bg-[#D946EF]/90',
-                type === 'warning' && 'bg-[#FEC6A1] hover:bg-[#F97316]',
-                type === 'info' && 'bg-[#9b87f5] hover:bg-[#8B5CF6]'
-              )}
-            >
-              {action.label}
-            </AlertDialogAction>
-          )}
+        <AlertDialogFooter className="flex-row justify-start gap-2 sm:gap-2 mt-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-[#6D4AFF] border-[#9b87f5] hover:bg-[#F8F7FF] hover:text-[#6D4AFF]"
+              >
+                <Clock className="h-4 w-4 mr-1" />
+                Snooze
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56">
+              <DropdownMenuItem onClick={() => handleSnooze(10)}>
+                <Clock className="h-4 w-4 mr-2" />
+                10 minutes
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleSnooze(30)}>
+                <Clock className="h-4 w-4 mr-2" />
+                30 minutes
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleSnooze(60)}>
+                <Clock className="h-4 w-4 mr-2" />
+                60 minutes
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleSnooze(24 * 60)}>
+                <Clock className="h-4 w-4 mr-2" />
+                Tomorrow
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleEdit}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onDismiss}>
+                <X className="h-4 w-4 mr-2" />
+                Dismiss
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
-            onClick={onDismiss}
-            className="h-auto px-2 hover:bg-[#F8F7FF] text-[#1A1F2C]/60 hover:text-[#1A1F2C]"
+            onClick={handleDone}
+            className="text-[#6D4AFF] border-[#9b87f5] hover:bg-[#F8F7FF] hover:text-[#6D4AFF]"
           >
-            <X className="h-4 w-4" />
+            <Check className="h-4 w-4 mr-1" />
+            Done
+          </Button>
+          <Button
+            size="sm"
+            onClick={handleStart}
+            className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white"
+          >
+            <Play className="h-4 w-4 mr-1" />
+            Start
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>
