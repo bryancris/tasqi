@@ -77,6 +77,15 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     const id = Math.random().toString(36).substr(2, 9);
     const now = new Date().toISOString();
 
+    // Extract task ID from the title if it's a task-related notification
+    let reference_id: string | null = null;
+    if (notification.title.toLowerCase().includes('task')) {
+      const match = notification.message.match(/Task (\d+)/);
+      if (match) {
+        reference_id = match[1];
+      }
+    }
+
     // Determine if notification should be persistent
     const isPersistent = notification.type === 'error' || 
                         notification.title.toLowerCase().includes('task reminder') ||
@@ -104,8 +113,8 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
           id,
           read: false,
           created_at: now,
-          reference_id: null,
-          reference_type: null,
+          reference_id,
+          reference_type: 'task',
           user_id: '', // This should be set with the actual user ID in a real implementation
           group,
           persistent: isPersistent,
@@ -117,8 +126,8 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
         id,
         read: false,
         created_at: now,
-        reference_id: null,
-        reference_type: null,
+        reference_id,
+        reference_type: 'task',
         user_id: '', // This should be set with the actual user ID in a real implementation
         group,
         persistent: isPersistent,
@@ -197,6 +206,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
             }
           }}
           index={index}
+          referenceId={notification.reference_id ? parseInt(notification.reference_id) : null}
         />
       ))}
     </NotificationsContext.Provider>

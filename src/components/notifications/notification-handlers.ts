@@ -15,14 +15,20 @@ export const handleSnooze = async (
     return;
   }
 
+  console.log('Snoozing task:', { reference_id, minutes });
+
   // First, get the current task data
   const { data: currentTask, error: fetchError } = await supabase
     .from('tasks')
-    .select('reschedule_count')
+    .select('reschedule_count, date, start_time')
     .eq('id', reference_id)
     .single();
 
-  if (fetchError) throw fetchError;
+  if (fetchError) {
+    console.error('Error fetching task:', fetchError);
+    toast.error('Failed to snooze task');
+    return;
+  }
 
   const now = new Date();
   let newReminderTime: Date;
@@ -35,16 +41,24 @@ export const handleSnooze = async (
     newReminderTime = addMinutes(now, minutes);
   }
 
+  // Format the time as HH:mm
+  const newStartTime = `${String(newReminderTime.getHours()).padStart(2, '0')}:${String(newReminderTime.getMinutes()).padStart(2, '0')}`;
+
   const { error: taskError } = await supabase
     .from('tasks')
     .update({
-      reminder_time: minutes,
+      start_time: newStartTime,
+      date: newReminderTime.toISOString().split('T')[0],
       reschedule_count: (currentTask?.reschedule_count ?? 0) + 1,
       updated_at: new Date().toISOString()
     })
     .eq('id', reference_id);
 
-  if (taskError) throw taskError;
+  if (taskError) {
+    console.error('Error updating task:', taskError);
+    toast.error('Failed to snooze task');
+    return;
+  }
 
   toast.success(`Task snoozed for ${minutes} minutes`);
   await queryClient.invalidateQueries({ queryKey: ['tasks'] });
@@ -84,7 +98,11 @@ export const handleStart = async (
     })
     .eq('id', reference_id);
 
-  if (taskError) throw taskError;
+  if (taskError) {
+    console.error('Error starting task:', taskError);
+    toast.error('Failed to start task');
+    return;
+  }
 
   toast.success('Task started');
   await queryClient.invalidateQueries({ queryKey: ['tasks'] });
