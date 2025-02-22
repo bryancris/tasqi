@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { AlertNotification } from "./AlertNotification";
 import { playNotificationSound } from "@/utils/notifications/soundUtils";
@@ -14,16 +13,16 @@ export interface Notification {
   };
   read: boolean;
   created_at: string;
-  reference_id: string | null;
-  reference_type: string | null;
+  reference_id?: string | null;
+  reference_type?: string | null;
   user_id: string;
-  group?: string; // For grouping similar notifications
-  persistent?: boolean; // New property to control auto-dismissal
+  group?: string;
+  persistent?: boolean;
 }
 
 interface NotificationsContextType {
   notifications: Notification[];
-  showNotification: (notification: Omit<Notification, 'id' | 'read' | 'created_at' | 'reference_id' | 'reference_type' | 'user_id'>) => void;
+  showNotification: (notification: Omit<Notification, 'id' | 'read' | 'created_at' | 'user_id'>) => void;
   dismissNotification: (id: string) => void;
   dismissGroup: (group: string) => void;
 }
@@ -38,7 +37,7 @@ const NotificationsContext = React.createContext<NotificationsContextType>({
 export const useNotifications = () => React.useContext(NotificationsContext);
 
 const MAX_VISIBLE_NOTIFICATIONS = 4;
-const NOTIFICATION_TIMEOUT = 15000; // Increased to 15 seconds for non-persistent notifications
+const NOTIFICATION_TIMEOUT = 15000;
 const STORAGE_KEY = 'persisted_notifications';
 
 export function NotificationsProvider({ children }: { children: React.ReactNode }) {
@@ -47,12 +46,11 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        // Only keep notifications that are less than 24 hours old
         const recent = parsed.filter((n: Notification) => {
           const notifDate = new Date(n.created_at);
           const now = new Date();
           const diff = now.getTime() - notifDate.getTime();
-          return diff < 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+          return diff < 24 * 60 * 60 * 1000;
         });
         return recent.slice(-MAX_VISIBLE_NOTIFICATIONS);
       }
@@ -64,7 +62,6 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
 
   const timeoutRefs = React.useRef<Map<string, NodeJS.Timeout>>(new Map());
 
-  // Persist notifications to localStorage
   React.useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(notifications));
@@ -73,26 +70,15 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     }
   }, [notifications]);
 
-  const showNotification = React.useCallback((notification: Omit<Notification, 'id' | 'read' | 'created_at' | 'reference_id' | 'reference_type' | 'user_id'>) => {
+  const showNotification = React.useCallback((notification: Omit<Notification, 'id' | 'read' | 'created_at' | 'user_id'>) => {
     const id = Math.random().toString(36).substr(2, 9);
     const now = new Date().toISOString();
 
-    // Extract task ID from the title if it's a task-related notification
-    let reference_id: string | null = null;
-    if (notification.title.toLowerCase().includes('task')) {
-      const match = notification.message.match(/Task (\d+)/);
-      if (match) {
-        reference_id = match[1];
-      }
-    }
-
-    // Determine if notification should be persistent
     const isPersistent = notification.type === 'error' || 
                         notification.title.toLowerCase().includes('task reminder') ||
                         notification.persistent === true;
 
     setNotifications(prev => {
-      // Check for similar existing notifications to group
       const existingGroup = prev.find(n => 
         n.title === notification.title && 
         n.type === notification.type &&
@@ -101,7 +87,6 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
 
       const group = existingGroup || Math.random().toString(36).substr(2, 9);
       
-      // If we're at max capacity, remove the oldest notification
       if (prev.length >= MAX_VISIBLE_NOTIFICATIONS) {
         const [oldest, ...rest] = prev;
         if (oldest && timeoutRefs.current.has(oldest.id)) {
@@ -113,9 +98,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
           id,
           read: false,
           created_at: now,
-          reference_id,
-          reference_type: 'task',
-          user_id: '', // This should be set with the actual user ID in a real implementation
+          user_id: '',
           group,
           persistent: isPersistent,
         }];
@@ -126,9 +109,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
         id,
         read: false,
         created_at: now,
-        reference_id,
-        reference_type: 'task',
-        user_id: '', // This should be set with the actual user ID in a real implementation
+        user_id: '',
         group,
         persistent: isPersistent,
       }];
@@ -136,7 +117,6 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
 
     void playNotificationSound();
 
-    // Only set auto-dismiss timeout for non-persistent notifications
     if (!isPersistent) {
       const timeoutId = setTimeout(() => {
         dismissNotification(id);
@@ -150,7 +130,6 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       const notification = prev.find(n => n.id === id);
       if (!notification) return prev;
       
-      // Mark as read instead of removing for persistence
       return prev.map(n => n.id === id ? { ...n, read: true } : n);
     });
     
@@ -165,7 +144,6 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       return prev.map(n => n.group === group ? { ...n, read: true } : n);
     });
     
-    // Clear any timeouts for notifications in this group
     notifications
       .filter(n => n.group === group)
       .forEach(n => {
@@ -176,7 +154,6 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       });
   }, [notifications]);
 
-  // Cleanup timeouts on unmount
   React.useEffect(() => {
     return () => {
       timeoutRefs.current.forEach(timeout => clearTimeout(timeout));
@@ -184,7 +161,6 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     };
   }, []);
 
-  // Filter out read notifications for display
   const visibleNotifications = notifications.filter(n => !n.read);
 
   return (
