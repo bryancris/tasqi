@@ -65,24 +65,26 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
   return (
     <div 
       className={cn(
-        "flex items-start gap-3 p-3 rounded-lg relative",
-        "transition-all duration-200",
-        "shadow-[0_2px_4px_rgba(0,0,0,0.1),0_3px_6px_rgba(0,0,0,0.05)]",
-        "hover:shadow-[0_4px_8px_rgba(0,0,0,0.12),0_6px_12px_rgba(0,0,0,0.08)]",
+        "flex items-start gap-3 p-3 rounded-xl relative",
+        "transition-all duration-300",
+        "shadow-[0_2px_10px_rgba(0,0,0,0.08)]",
+        "hover:shadow-[0_8px_20px_rgba(0,0,0,0.12)]",
+        "hover:-translate-y-1",
         "cursor-pointer",
         getCardColor(),
         task.status === 'completed' ? 'text-white' : '',
         "overflow-hidden",
         "before:content-[''] before:absolute before:inset-0",
-        "before:bg-gradient-to-l before:from-black/20 before:to-transparent",
-        "before:pointer-events-none"
+        "before:bg-gradient-to-br before:from-white/10 before:to-transparent",
+        "before:pointer-events-none",
+        "border border-white/20"
       )}
       onClick={onClick}
       {...dragHandleProps}
     >
       <TaskStatusIndicator 
         status={task.status} 
-        time={timeDisplay}
+        time={getTimeDisplay()}
         rescheduleCount={task.reschedule_count}
         onClick={(e) => {
           e.stopPropagation();
@@ -109,11 +111,11 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
             {extraButton}
           </div>
         </div>
-        {timeDisplay && (
+        {getTimeDisplay() && (
           <p className={cn(
-            "text-sm",
+            "text-sm mt-1",
             task.status === 'completed' ? 'text-white/80' : 'text-gray-500'
-          )}>{timeDisplay}</p>
+          )}>{getTimeDisplay()}</p>
         )}
       </div>
       {task.shared && (

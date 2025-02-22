@@ -55,12 +55,10 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
   const { tasks, refetch } = useTasks();
   const { handleDragEnd } = useTaskReorder(tasks, refetch);
 
-  // Memoize refetch function and preserve its return type
   const memoizedRefetch = useCallback(() => {
     return refetch();
   }, [refetch]);
 
-  // Memoize tasks array to prevent unnecessary re-renders
   const memoizedTasks = useMemo(() => tasks, [tasks]);
 
   if (isMobile) {
@@ -76,12 +74,14 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
   }
 
   return (
-    <DesktopTaskView 
-      tasks={memoizedTasks}
-      selectedDate={selectedDate} 
-      onDateChange={onDateChange}
-      onDragEnd={handleDragEnd}
-      onComplete={memoizedRefetch}
-    />
+    <div className="transition-all duration-300 transform hover:translate-y-[-2px]">
+      <DesktopTaskView 
+        tasks={memoizedTasks}
+        selectedDate={selectedDate} 
+        onDateChange={onDateChange}
+        onDragEnd={handleDragEnd}
+        onComplete={memoizedRefetch}
+      />
+    </div>
   );
 }
