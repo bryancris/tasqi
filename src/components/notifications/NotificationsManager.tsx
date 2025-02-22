@@ -15,11 +15,13 @@ export interface Notification {
 }
 
 interface NotificationsContextType {
+  notifications: Notification[];
   showNotification: (notification: Omit<Notification, 'id'>) => void;
   dismissNotification: (id: string) => void;
 }
 
 const NotificationsContext = React.createContext<NotificationsContextType>({
+  notifications: [],
   showNotification: () => {},
   dismissNotification: () => {},
 });
@@ -40,7 +42,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   }, []);
 
   return (
-    <NotificationsContext.Provider value={{ showNotification, dismissNotification }}>
+    <NotificationsContext.Provider value={{ notifications, showNotification, dismissNotification }}>
       {children}
       {notifications.map((notification) => (
         <AlertNotification
