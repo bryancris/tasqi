@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import { AlertNotification } from "./AlertNotification";
 import { playNotificationSound } from "@/utils/notifications/soundUtils";
@@ -17,6 +18,7 @@ export interface Notification {
   reference_type: string | null;
   user_id: string;
   group?: string; // For grouping similar notifications
+  persistent?: boolean; // New property to control auto-dismissal
 }
 
 interface NotificationsContextType {
@@ -36,7 +38,7 @@ const NotificationsContext = React.createContext<NotificationsContextType>({
 export const useNotifications = () => React.useContext(NotificationsContext);
 
 const MAX_VISIBLE_NOTIFICATIONS = 4;
-const NOTIFICATION_TIMEOUT = 5000; // 5 seconds
+const NOTIFICATION_TIMEOUT = 15000; // Increased to 15 seconds for non-persistent notifications
 const STORAGE_KEY = 'persisted_notifications';
 
 export function NotificationsProvider({ children }: { children: React.ReactNode }) {
@@ -75,6 +77,11 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     const id = Math.random().toString(36).substr(2, 9);
     const now = new Date().toISOString();
 
+    // Determine if notification should be persistent
+    const isPersistent = notification.type === 'error' || 
+                        notification.title.toLowerCase().includes('task reminder') ||
+                        notification.persistent === true;
+
     setNotifications(prev => {
       // Check for similar existing notifications to group
       const existingGroup = prev.find(n => 
@@ -101,6 +108,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
           reference_type: null,
           user_id: '', // This should be set with the actual user ID in a real implementation
           group,
+          persistent: isPersistent,
         }];
       }
       
@@ -113,13 +121,14 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
         reference_type: null,
         user_id: '', // This should be set with the actual user ID in a real implementation
         group,
+        persistent: isPersistent,
       }];
     });
 
     void playNotificationSound();
 
-    // Set auto-dismiss timeout unless it's an error notification
-    if (notification.type !== 'error') {
+    // Only set auto-dismiss timeout for non-persistent notifications
+    if (!isPersistent) {
       const timeoutId = setTimeout(() => {
         dismissNotification(id);
       }, NOTIFICATION_TIMEOUT);
