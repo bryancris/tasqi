@@ -44,7 +44,38 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
         navigateFallback: 'index.html',
-        navigateFallbackAllowlist: [/^\/.*$/], // Match all routes including query parameters
+        navigateFallbackAllowlist: [
+          /^\/$/,
+          /^\/auth/,
+          /^\/dashboard/,
+          /^\/notes/,
+          /^\/settings/,
+          /^\/self-care/,
+          /^\/analytics/
+        ],
+        runtimeCaching: [
+          {
+            urlPattern: ({ url }) => {
+              const paths = [
+                '/', 
+                '/auth',
+                '/dashboard',
+                '/notes',
+                '/settings',
+                '/self-care',
+                '/analytics'
+              ];
+              return paths.some(path => url.pathname.startsWith(path));
+            },
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'app-routes',
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          }
+        ],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true

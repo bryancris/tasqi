@@ -27,19 +27,18 @@ export function CalendarViewProvider({ children }: { children: ReactNode }) {
   const view = getCurrentView();
 
   const changeView = (newView: CalendarView) => {
-    // Use replace instead of push to prevent building up history
     switch (newView) {
       case 'tasks':
-        navigate('/dashboard', { replace: true });
+        navigate('/dashboard');
         break;
       case 'weekly':
-        navigate('/dashboard/weekly', { replace: true });
+        navigate('/dashboard/weekly');
         break;
       case 'calendar':
-        navigate('/dashboard/calendar', { replace: true });
+        navigate('/dashboard/calendar');
         break;
       case 'yearly':
-        navigate('/dashboard/yearly', { replace: true });
+        navigate('/dashboard/yearly');
         break;
     }
   };

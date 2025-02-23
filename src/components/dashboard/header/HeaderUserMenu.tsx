@@ -10,7 +10,7 @@ import {
 import { Settings, LogOut, Download, RefreshCw } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 export function HeaderUserMenu() {
@@ -23,15 +23,14 @@ export function HeaderUserMenu() {
       localStorage.clear();
       sessionStorage.clear();
       
-      // Navigate before signing out to prevent white screen
-      navigate('/');
-      
       // Then attempt to sign out from Supabase
       const { error } = await supabase.auth.signOut();
       if (error && !error.message?.includes('session_not_found')) {
         console.error('Error logging out:', error);
       }
       
+      // Navigate after signing out
+      navigate('/', { replace: true });
       toast.success("Successfully logged out");
     } catch (error) {
       console.error('Logout error:', error);
@@ -74,9 +73,11 @@ export function HeaderUserMenu() {
         <DropdownMenuItem className="flex-col items-start">
           <div className="font-medium">{session?.user.email}</div>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => navigate('/settings')}>
-          <Settings className="mr-2 h-4 w-4" />
-          Settings
+        <DropdownMenuItem asChild>
+          <Link to="/settings" className="w-full flex items-center">
+            <Settings className="mr-2 h-4 w-4" />
+            Settings
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleInstall}>
           <Download className="mr-2 h-4 w-4" />
