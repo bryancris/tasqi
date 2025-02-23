@@ -10,6 +10,7 @@ import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
 import { NotificationsProvider } from "@/components/notifications/NotificationsManager";
 import { CalendarViewProvider } from "@/contexts/CalendarViewContext";
 import { useSupabaseSubscription } from "@/hooks/use-supabase-subscription";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
@@ -28,6 +29,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UpdatePasswordForm } from "@/components/auth/UpdatePasswordForm";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+
+// Create a persistent query client instance
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5000,
+      gcTime: 300000,
+      refetchOnWindowFocus: false,
+      refetchInterval: false,
+    },
+  },
+});
 
 const UpdatePasswordPage = () => {
   useEffect(() => {
@@ -147,20 +160,22 @@ const AppContent = () => {
 };
 
 const App = () => (
-  <BrowserRouter>
-    <AuthProvider>
-      <ThemeProvider defaultTheme="system" enableSystem>
-        <TooltipProvider>
-          <NotificationsProvider>
-            <AppContent />
-            <Toaster />
-            <Sonner />
-            <UpdatePrompt />
-          </NotificationsProvider>
-        </TooltipProvider>
-      </ThemeProvider>
-    </AuthProvider>
-  </BrowserRouter>
+  <QueryClientProvider client={queryClient}>
+    <BrowserRouter>
+      <AuthProvider>
+        <ThemeProvider defaultTheme="system" enableSystem>
+          <TooltipProvider>
+            <NotificationsProvider>
+              <AppContent />
+              <Toaster />
+              <Sonner />
+              <UpdatePrompt />
+            </NotificationsProvider>
+          </TooltipProvider>
+        </ThemeProvider>
+      </AuthProvider>
+    </BrowserRouter>
+  </QueryClientProvider>
 );
 
 export default App;

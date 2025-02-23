@@ -1,69 +1,82 @@
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useContext } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { AuthContext } from '@/contexts/AuthContext';
+
+// Create singleton channels to persist across navigations
+let tasksChannel: ReturnType<typeof supabase.channel> | null = null;
+let notesChannel: ReturnType<typeof supabase.channel> | null = null;
 
 export function useSupabaseSubscription() {
   const queryClient = useQueryClient();
-  const tasksSubscriptionRef = useRef<any>(null);
-  const notesSubscriptionRef = useRef<any>(null);
+  const { session } = useContext(AuthContext);
+  const isInitialized = useRef(false);
 
   useEffect(() => {
-    // Set up tasks subscription
-    if (!tasksSubscriptionRef.current) {
-      const tasksChannel = supabase
-        .channel('tasks-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'tasks'
-          },
-          () => {
-            queryClient.invalidateQueries({ queryKey: ['tasks'] });
-            queryClient.invalidateQueries({ queryKey: ['timeline-tasks'] });
-          }
-        )
-        .subscribe((status) => {
-          console.log('Tasks subscription status:', status);
-        });
+    // Only set up subscriptions if we have a valid session and haven't initialized yet
+    if (!session || isInitialized.current) return;
 
-      tasksSubscriptionRef.current = tasksChannel;
-    }
-
-    // Set up notes subscription
-    if (!notesSubscriptionRef.current) {
-      const notesChannel = supabase
-        .channel('notes-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'notes'
-          },
-          () => {
-            queryClient.invalidateQueries({ queryKey: ['notes'] });
-          }
-        )
-        .subscribe((status) => {
-          console.log('Notes subscription status:', status);
-        });
-
-      notesSubscriptionRef.current = notesChannel;
-    }
-
-    // Cleanup function
-    return () => {
-      if (tasksSubscriptionRef.current) {
-        supabase.removeChannel(tasksSubscriptionRef.current);
-        tasksSubscriptionRef.current = null;
+    const setupSubscriptions = () => {
+      // Set up tasks subscription if not already established
+      if (!tasksChannel) {
+        tasksChannel = supabase
+          .channel('tasks-changes')
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'tasks'
+            },
+            () => {
+              queryClient.invalidateQueries({ queryKey: ['tasks'] });
+              queryClient.invalidateQueries({ queryKey: ['timeline-tasks'] });
+            }
+          )
+          .subscribe((status) => {
+            console.log('Tasks subscription status:', status);
+          });
       }
-      if (notesSubscriptionRef.current) {
-        supabase.removeChannel(notesSubscriptionRef.current);
-        notesSubscriptionRef.current = null;
+
+      // Set up notes subscription if not already established
+      if (!notesChannel) {
+        notesChannel = supabase
+          .channel('notes-changes')
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'notes'
+            },
+            () => {
+              queryClient.invalidateQueries({ queryKey: ['notes'] });
+            }
+          )
+          .subscribe((status) => {
+            console.log('Notes subscription status:', status);
+          });
       }
     };
-  }, [queryClient]);
+
+    setupSubscriptions();
+    isInitialized.current = true;
+
+    // Only clean up subscriptions when the component is truly unmounting
+    return () => {
+      // Check if we're actually unmounting the app (not just navigating)
+      if (window.navigator.userAgent.includes('ReactSnap')) {
+        if (tasksChannel) {
+          supabase.removeChannel(tasksChannel);
+          tasksChannel = null;
+        }
+        if (notesChannel) {
+          supabase.removeChannel(notesChannel);
+          notesChannel = null;
+        }
+        isInitialized.current = false;
+      }
+    };
+  }, [queryClient, session]);
 }
