@@ -23,6 +23,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const authSubscriptionRef = useRef<any>(null);
   const sessionRef = useRef<Session | null>(null);
   const initializingRef = useRef(false);
+  const navigationCountRef = useRef(0);
 
   const handleSignOut = async () => {
     try {
@@ -39,16 +40,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Initialize auth only once
   useEffect(() => {
     const initializeAuth = async () => {
+      // Don't re-initialize if we're just navigating
+      if (navigationCountRef.current > 0) {
+        return;
+      }
+
       if (initializingRef.current) return;
       initializingRef.current = true;
 
       try {
         console.log("Initializing auth...");
         
-        // Check if we're on the password reset flow
         const hash = window.location.hash;
         const searchParams = new URLSearchParams(window.location.search);
         const isRecoveryFlow = hash.includes('type=recovery') || searchParams.get('type') === 'recovery';
@@ -59,7 +63,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           return;
         }
 
-        // Get the initial session
         const { data: { session: initialSession }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -75,9 +78,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           return;
         }
 
-        console.log("Initial session found and valid");
-        setSession(initialSession);
-        sessionRef.current = initialSession;
+        if (sessionRef.current?.access_token !== initialSession.access_token) {
+          console.log("Initial session found and valid");
+          setSession(initialSession);
+          sessionRef.current = initialSession;
+        }
         
       } catch (error) {
         console.error("Error in auth initialization:", error);
@@ -89,33 +94,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     initializeAuth();
+    navigationCountRef.current++; // Increment navigation counter
+
+    return () => {
+      // Cleanup
+    };
   }, []); // Run only once on mount
 
-  // Set up auth state subscription separately
   useEffect(() => {
     if (!authSubscriptionRef.current) {
-      const {
-        data: { subscription },
-      } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
         console.log("Auth state changed:", event, currentSession?.user?.email);
 
-        // Helper to check if session has actually changed
         const hasSessionChanged = (newSession: Session | null) => {
           if (!newSession && !sessionRef.current) return false;
           if (!newSession || !sessionRef.current) return true;
           return newSession.access_token !== sessionRef.current.access_token;
         };
         
+        if (!hasSessionChanged(currentSession)) {
+          return; // Skip if session hasn't actually changed
+        }
+
         switch (event) {
           case 'SIGNED_IN':
-            if (hasSessionChanged(currentSession)) {
-              console.log("User signed in");
-              setSession(currentSession);
-              sessionRef.current = currentSession;
-              if (isInitialAuth) {
-                toast.success("Successfully signed in");
-                setIsInitialAuth(false);
-              }
+            console.log("User signed in");
+            setSession(currentSession);
+            sessionRef.current = currentSession;
+            if (isInitialAuth) {
+              toast.success("Successfully signed in");
+              setIsInitialAuth(false);
             }
             break;
             
@@ -129,31 +137,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             break;
             
           case 'TOKEN_REFRESHED':
-            console.log("Token refreshed");
-            if (currentSession && hasSessionChanged(currentSession)) {
-              setSession(currentSession);
-              sessionRef.current = currentSession;
-            }
-            break;
-            
           case 'USER_UPDATED':
-            console.log("User profile updated");
-            if (hasSessionChanged(currentSession)) {
-              setSession(currentSession);
-              sessionRef.current = currentSession;
-            }
-            break;
-          
           case 'INITIAL_SESSION':
-            console.log("Initial session loaded");
-            if (hasSessionChanged(currentSession)) {
+            if (currentSession) {
               setSession(currentSession);
               sessionRef.current = currentSession;
             }
             break;
             
           case 'PASSWORD_RECOVERY':
-            console.log("Password recovery initiated");
             setSession(null);
             sessionRef.current = null;
             break;
@@ -163,14 +155,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       authSubscriptionRef.current = subscription;
     }
 
-    // Cleanup function
     return () => {
       if (authSubscriptionRef.current) {
         authSubscriptionRef.current.unsubscribe();
         authSubscriptionRef.current = null;
       }
     };
-  }, []); // Run only once on mount
+  }, []); 
 
   return (
     <AuthContext.Provider value={{ session, loading, handleSignOut }}>
