@@ -80,7 +80,7 @@ export function EditTaskContent({
           onTitleChange={onTitleChange}
           onDescriptionChange={onDescriptionChange}
           onIsScheduledChange={onIsScheduledChange}
-          onDateChange={onDateDate}
+          onDateChange={onDateChange}
           onStartTimeChange={onStartTimeChange}
           onEndTimeChange={onEndTimeChange}
           onPriorityChange={onPriorityChange}
