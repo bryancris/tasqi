@@ -1,6 +1,6 @@
 
 import { Home, Calendar, FileText, MessageSquare, Heart, CalendarDays } from "lucide-react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { ChatBubble } from "@/components/chat/ChatBubble";
@@ -14,46 +14,32 @@ import {
 
 export function MobileFooter() {
   const location = useLocation();
-  const navigate = useNavigate();
   const [isChatOpen, setIsChatOpen] = useState(false);
   const { view, changeView } = useCalendarView();
 
-  const handleNavigation = (path: string, clearParams: boolean = false) => {
-    if (isChatOpen) {
-      setIsChatOpen(false);
-    }
-    
-    if (clearParams) {
-      changeView('tasks');
-      navigate(path);
-    } else {
-      const params = new URLSearchParams(location.search);
-      navigate(`${path}${params.toString() ? `?${params.toString()}` : ''}`);
-    }
+  const handleChatToggle = () => {
+    setIsChatOpen(!isChatOpen);
   };
 
   const handleCalendarViewChange = (newView: 'weekly' | 'calendar') => {
     changeView(newView);
   };
 
-  const handleChatToggle = () => {
-    setIsChatOpen(!isChatOpen);
-  };
-
   return (
     <>
       <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-[#F1F0FB] via-[#E5DEFF] to-[#F1F0FB] border-t py-2 px-4 z-50 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
         <div className="flex justify-between items-center">
-          <button 
+          <Link 
+            to="/dashboard"
             className={cn(
               "flex flex-col items-center p-2",
               view === 'tasks' ? "text-[#F97316]" : "text-gray-500"
             )}
-            onClick={() => handleNavigation("/dashboard", true)}
+            onClick={() => changeView('tasks')}
           >
             <Home className="h-6 w-6" />
             <span className="text-xs mt-1">Daily</span>
-          </button>
+          </Link>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -93,13 +79,14 @@ export function MobileFooter() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <button 
+          <Link 
+            to="/notes"
             className="flex flex-col items-center p-2 text-[#D946EF]"
-            onClick={() => handleNavigation("/notes")}
           >
             <FileText className="h-6 w-6" />
             <span className="text-xs mt-1">Notes</span>
-          </button>
+          </Link>
+
           <button 
             className={cn(
               "flex flex-col items-center p-2",
@@ -110,13 +97,14 @@ export function MobileFooter() {
             <MessageSquare className="h-6 w-6" />
             <span className="text-xs mt-1">Chat</span>
           </button>
-          <button 
+
+          <Link 
+            to="/self-care"
             className="flex flex-col items-center p-2 text-[#ea384c]"
-            onClick={() => handleNavigation("/self-care")}
           >
             <Heart className="h-6 w-6" />
             <span className="text-xs mt-1">Self-Care</span>
-          </button>
+          </Link>
         </div>
       </div>
       <ChatBubble isOpen={isChatOpen} onOpenChange={setIsChatOpen} />
