@@ -40,7 +40,7 @@ export default function Dashboard() {
         }
       />
       <Route 
-        path="/weekly" 
+        path="weekly" 
         element={
           <WeeklyCalendar 
             initialDate={selectedDate}
@@ -49,7 +49,7 @@ export default function Dashboard() {
         }
       />
       <Route 
-        path="/calendar" 
+        path="calendar" 
         element={
           <Calendar 
             initialDate={selectedDate}
@@ -59,7 +59,7 @@ export default function Dashboard() {
         }
       />
       <Route 
-        path="/yearly" 
+        path="yearly" 
         element={
           <YearlyCalendar 
             onDateSelect={setSelectedDate}
