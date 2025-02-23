@@ -25,6 +25,11 @@ export function MobileFooter() {
     changeView(newView);
   };
 
+  const handleDailyClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    changeView('tasks');
+  };
+
   return (
     <>
       <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-[#F1F0FB] via-[#E5DEFF] to-[#F1F0FB] border-t py-2 px-4 z-50 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
@@ -35,7 +40,7 @@ export function MobileFooter() {
               "flex flex-col items-center p-2",
               view === 'tasks' ? "text-[#F97316]" : "text-gray-500"
             )}
-            onClick={() => changeView('tasks')}
+            onClick={handleDailyClick}
           >
             <Home className="h-6 w-6" />
             <span className="text-xs mt-1">Daily</span>
@@ -82,6 +87,7 @@ export function MobileFooter() {
           <Link 
             to="/notes"
             className="flex flex-col items-center p-2 text-[#D946EF]"
+            onClick={(e) => e.preventDefault()}
           >
             <FileText className="h-6 w-6" />
             <span className="text-xs mt-1">Notes</span>
@@ -101,6 +107,7 @@ export function MobileFooter() {
           <Link 
             to="/self-care"
             className="flex flex-col items-center p-2 text-[#ea384c]"
+            onClick={(e) => e.preventDefault()}
           >
             <Heart className="h-6 w-6" />
             <span className="text-xs mt-1">Self-Care</span>

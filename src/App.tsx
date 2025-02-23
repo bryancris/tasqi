@@ -1,7 +1,8 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "next-themes";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -68,6 +69,24 @@ const UpdatePasswordPage = () => {
   );
 };
 
+const ProtectedRoutes = () => (
+  <ProtectedRoute>
+    <Routes>
+      <Route path="/dashboard/*" element={<Dashboard />} />
+      <Route path="/notes" element={<Notes />} />
+      <Route path="/analytics" element={<Analytics />} />
+      <Route path="/self-care" element={<SelfCare />} />
+      <Route path="/self-care/physical-wellness" element={<PhysicalWellness />} />
+      <Route path="/self-care/mental-wellbeing" element={<MentalWellbeing />} />
+      <Route path="/self-care/personal-growth" element={<PersonalGrowth />} />
+      <Route path="/self-care/social-connections" element={<SocialConnections />} />
+      <Route path="/self-care/daily-rituals" element={<DailyRituals />} />
+      <Route path="/self-care/emotional-care" element={<EmotionalCare />} />
+      <Route path="/settings" element={<Settings />} />
+    </Routes>
+  </ProtectedRoute>
+);
+
 const App = () => (
   <BrowserRouter>
     <AuthProvider>
@@ -79,86 +98,7 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
-                <Route
-                  path="/dashboard/*"
-                  element={
-                    <ProtectedRoute>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/notes"
-                  element={
-                    <ProtectedRoute>
-                      <Notes />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/analytics"
-                  element={
-                    <ProtectedRoute>
-                      <Analytics />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/self-care"
-                  element={
-                    <ProtectedRoute>
-                      <SelfCare />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/self-care/physical-wellness"
-                  element={
-                    <ProtectedRoute>
-                      <PhysicalWellness />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/self-care/mental-wellbeing"
-                  element={
-                    <ProtectedRoute>
-                      <MentalWellbeing />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/self-care/personal-growth"
-                  element={
-                    <ProtectedRoute>
-                      <PersonalGrowth />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/self-care/social-connections"
-                  element={
-                    <ProtectedRoute>
-                      <SocialConnections />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/self-care/daily-rituals"
-                  element={
-                    <ProtectedRoute>
-                      <DailyRituals />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/self-care/emotional-care"
-                  element={
-                    <ProtectedRoute>
-                      <EmotionalCare />
-                    </ProtectedRoute>
-                  }
-                />
+                <Route path="/*" element={<ProtectedRoutes />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <Toaster />

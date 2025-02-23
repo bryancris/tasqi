@@ -44,6 +44,7 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
         navigateFallback: '/index.html',
+        navigateFallbackAllowlist: [/^\//, /^\/dashboard/, /^\/notes/, /^\/self-care/],
         runtimeCaching: [
           {
             urlPattern: ({ url }) => {
@@ -53,7 +54,7 @@ export default defineConfig(({ mode }) => ({
                      pathname.startsWith('/self-care') ||
                      pathname === '/';
             },
-            handler: 'NetworkFirst',
+            handler: 'StaleWhileRevalidate',
             options: {
               cacheName: 'app-navigation-cache',
               cacheableResponse: {
@@ -95,7 +96,8 @@ export default defineConfig(({ mode }) => ({
         skipWaiting: true
       },
       devOptions: {
-        enabled: true
+        enabled: true,
+        type: 'module'
       },
       injectRegister: 'auto',
       strategies: 'generateSW',
