@@ -43,18 +43,19 @@ export default defineConfig(({ mode }) => ({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
-        navigateFallback: '/index.html',
-        navigateFallbackAllowlist: [/^\//, /^\/dashboard/, /^\/notes/, /^\/self-care/],
+        navigateFallback: 'index.html',
+        navigateFallbackAllowlist: [/^\//, /^\/dashboard/, /^\/notes/, /^\/self-care/, /^\/settings/, /^\/auth/],
         runtimeCaching: [
           {
             urlPattern: ({ url }) => {
-              const pathname = url.pathname;
-              return pathname.startsWith('/dashboard') ||
-                     pathname.startsWith('/notes') ||
-                     pathname.startsWith('/self-care') ||
-                     pathname === '/';
+              return url.pathname.startsWith('/') ||
+                     url.pathname.startsWith('/dashboard') ||
+                     url.pathname.startsWith('/notes') ||
+                     url.pathname.startsWith('/self-care') ||
+                     url.pathname.startsWith('/settings') ||
+                     url.pathname.startsWith('/auth');
             },
-            handler: 'StaleWhileRevalidate',
+            handler: 'NetworkFirst',
             options: {
               cacheName: 'app-navigation-cache',
               cacheableResponse: {
@@ -100,7 +101,11 @@ export default defineConfig(({ mode }) => ({
         type: 'module'
       },
       injectRegister: 'auto',
-      strategies: 'generateSW',
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
+      manifestFilename: 'manifest.webmanifest',
+      base: '/',
       minify: true
     })
   ].filter(Boolean),
