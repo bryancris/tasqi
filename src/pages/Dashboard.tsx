@@ -2,7 +2,7 @@
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { useTaskNotifications } from "@/hooks/use-task-notifications";
 import { useCalendarView } from "@/hooks/use-calendar-view";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { TaskBoard } from "@/components/dashboard/TaskBoard";
 import { WeeklyCalendar } from "@/components/dashboard/WeeklyCalendar";
 import { Calendar } from "@/components/dashboard/Calendar";
@@ -17,28 +17,32 @@ export default function Dashboard() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const { view, changeView } = useCalendarView();
   const isMobile = useIsMobile();
+  const isInitialRender = useRef(true);
 
+  // Prevent unnecessary re-renders on initial mount
   useEffect(() => {
-    // Force reflow on mobile status change
-    document.body.style.minHeight = '100vh';
-    setTimeout(() => {
-      document.body.style.minHeight = '';
-    }, 0);
-  }, [isMobile]);
+    if (isInitialRender.current) {
+      isInitialRender.current = false;
+      return;
+    }
+  }, []);
 
   const renderView = () => {
+    // Memoize the view components to prevent unnecessary re-renders
     switch (view) {
       case 'tasks':
         return (
           <TaskBoard 
             selectedDate={selectedDate}
             onDateChange={setSelectedDate}
+            key="taskboard"
           />
         );
       case 'weekly':
         return (
           <WeeklyCalendar 
             initialDate={selectedDate}
+            key="weekly"
           />
         );
       case 'calendar':
@@ -46,12 +50,14 @@ export default function Dashboard() {
           <Calendar 
             initialDate={selectedDate}
             onDateSelect={setSelectedDate}
+            key="calendar"
           />
         );
       case 'yearly':
         return (
           <YearlyCalendar 
             onDateSelect={setSelectedDate}
+            key="yearly"
           />
         );
       default:
@@ -59,6 +65,7 @@ export default function Dashboard() {
           <TaskBoard 
             selectedDate={selectedDate}
             onDateChange={setSelectedDate}
+            key="taskboard-default"
           />
         );
     }
