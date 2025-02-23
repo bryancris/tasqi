@@ -18,6 +18,7 @@ interface TaskAttachmentFieldsProps {
 
 export function TaskAttachmentFields({ task, isEditing }: TaskAttachmentFieldsProps) {
   const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
+  const [attachmentsKey, setAttachmentsKey] = useState(0); // Add refresh key state
 
   const handleVoiceNoteComplete = async (audioBlob: Blob) => {
     if (!task?.id) {
@@ -55,6 +56,7 @@ export function TaskAttachmentFields({ task, isEditing }: TaskAttachmentFieldsPr
 
       toast.success('Voice note added successfully');
       setShowVoiceRecorder(false);
+      setAttachmentsKey(prev => prev + 1); // Increment the key to force refresh
     } catch (error) {
       console.error('Error saving voice note:', error);
       toast.error('Failed to save voice note');
@@ -93,7 +95,11 @@ export function TaskAttachmentFields({ task, isEditing }: TaskAttachmentFieldsPr
         </p>
       )}
       
-      <TaskAttachments taskId={task?.id} isEditing={isEditing} />
+      <TaskAttachments 
+        taskId={task?.id} 
+        isEditing={isEditing} 
+        key={attachmentsKey} // Add the key prop here
+      />
     </div>
   );
 }
