@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -37,6 +38,7 @@ const queryClient = new QueryClient({
       gcTime: 300000,
       refetchOnWindowFocus: false,
       refetchInterval: false,
+      retry: false
     },
   },
 });
@@ -91,7 +93,6 @@ const AppContent = () => {
       <Route path="/auth" element={<Auth />} />
       <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
       
-      {/* Protected Routes */}
       <Route path="/dashboard/*" element={
         <ProtectedRoute>
           <CalendarViewProvider>
@@ -117,36 +118,43 @@ const AppContent = () => {
           <Analytics />
         </ProtectedRoute>
       } />
+      
       <Route path="/self-care" element={
         <ProtectedRoute>
           <SelfCare />
         </ProtectedRoute>
       } />
+      
       <Route path="/physical-wellness" element={
         <ProtectedRoute>
           <PhysicalWellness />
         </ProtectedRoute>
       } />
+      
       <Route path="/mental-wellbeing" element={
         <ProtectedRoute>
           <MentalWellbeing />
         </ProtectedRoute>
       } />
+      
       <Route path="/personal-growth" element={
         <ProtectedRoute>
           <PersonalGrowth />
         </ProtectedRoute>
       } />
+      
       <Route path="/social-connections" element={
         <ProtectedRoute>
           <SocialConnections />
         </ProtectedRoute>
       } />
+      
       <Route path="/daily-rituals" element={
         <ProtectedRoute>
           <DailyRituals />
         </ProtectedRoute>
       } />
+      
       <Route path="/emotional-care" element={
         <ProtectedRoute>
           <EmotionalCare />
@@ -158,23 +166,40 @@ const AppContent = () => {
   );
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <BrowserRouter>
-      <AuthProvider>
-        <ThemeProvider defaultTheme="system" enableSystem>
-          <TooltipProvider>
-            <NotificationsProvider>
-              <AppContent />
-              <Toaster />
-              <Sonner />
-              <UpdatePrompt />
-            </NotificationsProvider>
-          </TooltipProvider>
-        </ThemeProvider>
-      </AuthProvider>
-    </BrowserRouter>
-  </QueryClientProvider>
-);
+const App = () => {
+  useEffect(() => {
+    // Handle PWA registration and updates
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' })
+          .then(registration => {
+            console.log('SW registered:', registration);
+          })
+          .catch(error => {
+            console.log('SW registration failed:', error);
+          });
+      });
+    }
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <AuthProvider>
+          <ThemeProvider defaultTheme="system" enableSystem>
+            <TooltipProvider>
+              <NotificationsProvider>
+                <AppContent />
+                <Toaster />
+                <Sonner />
+                <UpdatePrompt />
+              </NotificationsProvider>
+            </TooltipProvider>
+          </ThemeProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

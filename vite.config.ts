@@ -15,7 +15,9 @@ export default defineConfig(({ mode }) => ({
     mode === 'development' &&
     componentTagger(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
+      strategies: 'generateSW',
+      injectRegister: 'auto',
       manifest: {
         name: 'TASQI-AI Assistant',
         short_name: 'TASQI-AI',
@@ -44,62 +46,26 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
         navigateFallback: 'index.html',
-        navigateFallbackAllowlist: [/^\/(?:dashboard|notes|settings|analytics|self-care|physical-wellness|mental-wellbeing|personal-growth|social-connections|daily-rituals|emotional-care|auth)(?:\/.*)?$/],
+        navigateFallbackDenylist: [/^\/api/, /\.[a-zA-Z]+$/],
         runtimeCaching: [
           {
-            urlPattern: ({ url }) => {
-              const pathsToCache = [
-                '/',
-                '/dashboard',
-                '/notes',
-                '/settings',
-                '/analytics',
-                '/self-care',
-                '/physical-wellness',
-                '/mental-wellbeing',
-                '/personal-growth',
-                '/social-connections',
-                '/daily-rituals',
-                '/emotional-care',
-                '/auth'
-              ];
-              return pathsToCache.some(path => url.pathname.startsWith(path));
-            },
+            urlPattern: /.*/,
             handler: 'NetworkFirst',
             options: {
-              cacheName: 'app-navigation',
+              cacheName: 'everything',
               cacheableResponse: {
                 statuses: [0, 200]
-              }
-            }
-          },
-          {
-            urlPattern: /\.(js|css|png|jpg|svg|ico)$/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'static-assets',
-              cacheableResponse: {
-                statuses: [0, 200]
-              },
-              expiration: {
-                maxAgeSeconds: 30 * 24 * 60 * 60 // 30 days
               }
             }
           }
         ],
-        skipWaiting: true,
-        clientsClaim: true,
+        sourcemap: true,
         cleanupOutdatedCaches: true
       },
       devOptions: {
         enabled: true,
-        type: 'module',
-        navigateFallback: 'index.html'
-      },
-      strategies: 'injectManifest',
-      srcDir: 'src',
-      filename: 'sw.js',
-      injectRegister: 'auto'
+        type: 'module'
+      }
     })
   ].filter(Boolean),
   resolve: {
