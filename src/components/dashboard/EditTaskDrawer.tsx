@@ -7,11 +7,13 @@ import { Subtask } from "./subtasks/SubtaskList";
 import { ShareTaskDialog } from "./ShareTaskDialog";
 import { EditTaskHeader } from "./edit-task/EditTaskHeader";
 import { EditTaskContent } from "./edit-task/EditTaskContent";
+
 interface EditTaskDrawerProps {
   task: Task;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
 export function EditTaskDrawer({
   task,
   open,
@@ -29,9 +31,11 @@ export function EditTaskDrawer({
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
+
   useEffect(() => {
     loadSubtasks();
   }, [task.id]);
+
   const loadSubtasks = async () => {
     if (!task.id) return;
     try {
@@ -51,6 +55,7 @@ export function EditTaskDrawer({
       toast.error('Failed to load subtasks');
     }
   };
+
   const handleDelete = async () => {
     try {
       const {
@@ -64,6 +69,7 @@ export function EditTaskDrawer({
       toast.error('Failed to delete task');
     }
   };
+
   const handleSubmit = async () => {
     setIsLoading(true);
     try {
@@ -127,15 +133,50 @@ export function EditTaskDrawer({
       setIsLoading(false);
     }
   };
-  return <>
+
+  return (
+    <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="left" onOpenAutoFocus={e => e.preventDefault()} // Prevent auto-focus
-      onPointerDownOutside={e => e.preventDefault()} // Prevent closing on outside click while focused
-      className="w-[400px] sm:max-w-[540px] px-0">
+        <SheetContent 
+          side="left" 
+          className="w-[400px] sm:max-w-[540px]"
+          onOpenAutoFocus={e => e.preventDefault()}
+          onPointerDownOutside={e => e.preventDefault()}
+        >
           <EditTaskHeader onShareClick={() => setShowShareDialog(true)} />
-          <EditTaskContent task={task} title={title} description={description} isScheduled={isScheduled} date={date} startTime={startTime} endTime={endTime} priority={priority} reminderEnabled={reminderEnabled} reminderTime={reminderTime} subtasks={subtasks} isLoading={isLoading} onTitleChange={setTitle} onDescriptionChange={setDescription} onIsScheduledChange={setIsScheduled} onDateChange={setDate} onStartTimeChange={setStartTime} onEndTimeChange={setEndTime} onPriorityChange={setPriority} onReminderEnabledChange={setReminderEnabled} onReminderTimeChange={setReminderTime} onSubtasksChange={setSubtasks} onSubmit={handleSubmit} onDelete={handleDelete} />
+          <EditTaskContent
+            task={task}
+            title={title}
+            description={description}
+            isScheduled={isScheduled}
+            date={date}
+            startTime={startTime}
+            endTime={endTime}
+            priority={priority}
+            reminderEnabled={reminderEnabled}
+            reminderTime={reminderTime}
+            subtasks={subtasks}
+            isLoading={isLoading}
+            onTitleChange={setTitle}
+            onDescriptionChange={setDescription}
+            onIsScheduledChange={setIsScheduled}
+            onDateChange={setDate}
+            onStartTimeChange={setStartTime}
+            onEndTimeChange={setEndTime}
+            onPriorityChange={setPriority}
+            onReminderEnabledChange={setReminderEnabled}
+            onReminderTimeChange={setReminderTime}
+            onSubtasksChange={setSubtasks}
+            onSubmit={handleSubmit}
+            onDelete={handleDelete}
+          />
         </SheetContent>
       </Sheet>
-      <ShareTaskDialog task={task} open={showShareDialog} onOpenChange={setShowShareDialog} />
-    </>;
+      <ShareTaskDialog
+        task={task}
+        open={showShareDialog}
+        onOpenChange={setShowShareDialog}
+      />
+    </>
+  );
 }
