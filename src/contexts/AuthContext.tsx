@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -20,6 +20,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isInitialAuth, setIsInitialAuth] = useState(true);
+  const authSubscriptionRef = useRef<any>(null);
 
   const handleSignOut = async () => {
     try {
@@ -51,6 +52,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           return;
         }
 
+        // Get the initial session
         const { data: { session: initialSession }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -73,68 +75,75 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         await handleSignOut();
       } finally {
         setLoading(false);
-        setIsInitialAuth(false);
       }
     };
 
+    // Initialize auth
     initializeAuth();
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
-      console.log("Auth state changed:", event, currentSession?.user?.email);
-      
-      switch (event) {
-        case 'SIGNED_IN':
-          console.log("User signed in");
-          setSession(currentSession);
-          // Only show toast on initial sign in, not on view changes
-          if (isInitialAuth) {
-            toast.success("Successfully signed in");
-            setIsInitialAuth(false);
-          }
-          break;
-          
-        case 'SIGNED_OUT':
-          console.log("User signed out");
-          setSession(null);
-          if (currentSession === null) {
-            toast.error("Your session has expired. Please sign in again.");
-          }
-          break;
-          
-        case 'TOKEN_REFRESHED':
-          console.log("Token refreshed");
-          if (currentSession) {
-            setSession(currentSession);
-          }
-          break;
-          
-        case 'USER_UPDATED':
-          console.log("User profile updated");
-          setSession(currentSession);
-          break;
+    // Set up auth state subscription
+    if (!authSubscriptionRef.current) {
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+        console.log("Auth state changed:", event, currentSession?.user?.email);
         
-        case 'INITIAL_SESSION':
-          console.log("Initial session loaded");
-          if (currentSession) {
-            setSession(currentSession);
-          } else {
+        switch (event) {
+          case 'SIGNED_IN':
+            if (!session) { // Only update if there's no existing session
+              console.log("User signed in");
+              setSession(currentSession);
+              if (isInitialAuth) {
+                toast.success("Successfully signed in");
+                setIsInitialAuth(false);
+              }
+            }
+            break;
+            
+          case 'SIGNED_OUT':
+            console.log("User signed out");
             setSession(null);
-          }
-          break;
+            if (currentSession === null) {
+              toast.error("Your session has expired. Please sign in again.");
+            }
+            break;
+            
+          case 'TOKEN_REFRESHED':
+            console.log("Token refreshed");
+            if (currentSession) {
+              setSession(currentSession);
+            }
+            break;
+            
+          case 'USER_UPDATED':
+            console.log("User profile updated");
+            setSession(currentSession);
+            break;
           
-        case 'PASSWORD_RECOVERY':
-          console.log("Password recovery initiated");
-          setSession(null);
-          break;
-      }
-    });
+          case 'INITIAL_SESSION':
+            console.log("Initial session loaded");
+            if (!session && currentSession) { // Only update if there's no existing session
+              setSession(currentSession);
+            }
+            break;
+            
+          case 'PASSWORD_RECOVERY':
+            console.log("Password recovery initiated");
+            setSession(null);
+            break;
+        }
+      });
 
+      authSubscriptionRef.current = subscription;
+    }
+
+    // Cleanup function
     return () => {
-      subscription.unsubscribe();
+      if (authSubscriptionRef.current) {
+        authSubscriptionRef.current.unsubscribe();
+      }
     };
-  }, []);
+  }, []); // Remove dependencies to prevent re-initialization
 
   return (
     <AuthContext.Provider value={{ session, loading, handleSignOut }}>
