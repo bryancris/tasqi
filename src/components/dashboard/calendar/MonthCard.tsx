@@ -70,7 +70,7 @@ export function MonthCard({ month, date, selectedDate, onSelect, gradientClass, 
         <div className="mt-1">
           {weeks.map((week, weekIndex) => (
             <div key={`${month}-week-${weekIndex}`} className="grid grid-cols-7 gap-1">
-              {week.map((day, dayIndex) => {
+              {week.map((day) => {
                 const dayTasks = tasks.filter(task => {
                   if (!task.date) return false;
                   return isSameDay(parseISO(task.date), day);
@@ -80,11 +80,11 @@ export function MonthCard({ month, date, selectedDate, onSelect, gradientClass, 
                 const isHovered = hoveredDate && isSameDay(day, hoveredDate);
                 const taskCount = dayTasks.length;
                 const taskIndicatorColor = getTaskIndicatorColor(taskCount);
+                const dayKey = `${month}-day-${format(day, 'yyyy-MM-dd')}`;
                 
                 return (
-                  <div className="relative">
+                  <div key={dayKey} className="relative">
                     <button
-                      key={`${month}-day-${format(day, 'yyyy-MM-dd')}`}
                       onClick={() => handleDateClick(day)}
                       onMouseEnter={() => setHoveredDate(day)}
                       onMouseLeave={() => setHoveredDate(null)}
