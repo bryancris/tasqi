@@ -62,7 +62,7 @@ export function EditTaskContent({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-y-auto px-6">
+      <div className="flex-1 overflow-y-auto -mx-6">
         <TaskForm
           title={title}
           description={description}
@@ -80,7 +80,7 @@ export function EditTaskContent({
           onTitleChange={onTitleChange}
           onDescriptionChange={onDescriptionChange}
           onIsScheduledChange={onIsScheduledChange}
-          onDateChange={onDateChange}
+          onDateChange={onDateDate}
           onStartTimeChange={onStartTimeChange}
           onEndTimeChange={onEndTimeChange}
           onPriorityChange={onPriorityChange}

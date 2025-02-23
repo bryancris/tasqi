@@ -1,3 +1,4 @@
+
 import { FormSection } from "./sections/FormSection";
 import { TaskBasicFields } from "./TaskBasicFields";
 import { SubtasksSection } from "./sections/SubtasksSection";
@@ -6,6 +7,7 @@ import { TaskScheduleFields } from "../TaskScheduleFields";
 import { TaskAttachmentFields } from "./TaskAttachmentFields";
 import { Task, TaskPriority } from "../TaskBoard";
 import { Subtask } from "../subtasks/SubtaskList";
+
 interface TaskFormContentProps {
   title: string;
   description: string;
@@ -32,6 +34,7 @@ interface TaskFormContentProps {
   onSubtasksChange: (subtasks: Subtask[]) => void;
   handleReminderToggle: (enabled: boolean) => Promise<void>;
 }
+
 export function TaskFormContent({
   title,
   description,
@@ -58,23 +61,53 @@ export function TaskFormContent({
   onSubtasksChange,
   handleReminderToggle
 }: TaskFormContentProps) {
-  return <div className="bg-gradient-to-br from-[#F1F0FB] to-[#E5DEFF] p-4 space-y-6 mx-0 px-[5px]">
+  return (
+    <div className="bg-gradient-to-br from-[#F1F0FB] to-[#E5DEFF] p-4 space-y-6 mx-0">
       <FormSection>
-        <TaskBasicFields title={title} description={description} onTitleChange={onTitleChange} onDescriptionChange={onDescriptionChange} />
+        <TaskBasicFields 
+          title={title} 
+          description={description} 
+          onTitleChange={onTitleChange} 
+          onDescriptionChange={onDescriptionChange} 
+        />
       </FormSection>
 
-      <SubtasksSection subtasks={subtasks} onSubtasksChange={onSubtasksChange} />
+      <SubtasksSection 
+        subtasks={subtasks} 
+        onSubtasksChange={onSubtasksChange} 
+      />
 
       <FormSection>
-        <TaskNotificationFields reminderEnabled={reminderEnabled} reminderTime={reminderTime} fcmStatus={fcmStatus} onReminderEnabledChange={handleReminderToggle} onReminderTimeChange={onReminderTimeChange} />
+        <TaskNotificationFields 
+          reminderEnabled={reminderEnabled} 
+          reminderTime={reminderTime} 
+          fcmStatus={fcmStatus} 
+          onReminderEnabledChange={handleReminderToggle} 
+          onReminderTimeChange={onReminderTimeChange} 
+        />
       </FormSection>
 
       <FormSection>
-        <TaskScheduleFields isScheduled={isScheduled} date={date} startTime={startTime} endTime={endTime} priority={priority} onIsScheduledChange={onIsScheduledChange} onDateChange={onDateChange} onStartTimeChange={onStartTimeChange} onEndTimeChange={onEndTimeChange} onPriorityChange={onPriorityChange} />
+        <TaskScheduleFields 
+          isScheduled={isScheduled} 
+          date={date} 
+          startTime={startTime} 
+          endTime={endTime} 
+          priority={priority} 
+          onIsScheduledChange={onIsScheduledChange} 
+          onDateChange={onDateChange} 
+          onStartTimeChange={onStartTimeChange} 
+          onEndTimeChange={onEndTimeChange} 
+          onPriorityChange={onPriorityChange} 
+        />
       </FormSection>
 
       <FormSection>
-        <TaskAttachmentFields task={task} isEditing={isEditing} />
+        <TaskAttachmentFields 
+          task={task} 
+          isEditing={isEditing} 
+        />
       </FormSection>
-    </div>;
+    </div>
+  );
 }
