@@ -1,6 +1,6 @@
 
 import { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,33 +9,37 @@ import { Skeleton } from "@/components/ui/skeleton";
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isChecking, setIsChecking] = useState(true);
   const authChecked = useRef(false);
-  const lastPath = useRef(window.location.pathname);
 
   useEffect(() => {
     const checkAuth = async () => {
-      // Skip check if we've already verified auth and we're just navigating internally
-      if (authChecked.current && lastPath.current !== window.location.pathname) {
-        lastPath.current = window.location.pathname;
+      // Skip check if already authenticated
+      if (session) {
+        setIsChecking(false);
+        authChecked.current = true;
+        return;
+      }
+
+      // Skip recheck if already verified
+      if (authChecked.current) {
         setIsChecking(false);
         return;
       }
 
       try {
         if (!loading) {
-          if (!session) {
-            const { data: { session: currentSession }, error } = await supabase.auth.getSession();
-            
-            if (error || !currentSession) {
-              console.log("No session found, redirecting to auth");
-              toast.error("Please sign in to access this page");
-              navigate("/auth", { replace: true });
-              return;
-            }
+          const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+          
+          if (error || !currentSession) {
+            console.log("No session found, redirecting to auth");
+            toast.error("Please sign in to access this page");
+            navigate("/auth", { replace: true, state: { from: location.pathname } });
+            return;
           }
+          
           authChecked.current = true;
-          lastPath.current = window.location.pathname;
           setIsChecking(false);
         }
       } catch (error) {
@@ -46,15 +50,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     };
 
     checkAuth();
-
-    // Cleanup function
-    return () => {
-      // Don't reset authChecked on internal navigation
-      if (lastPath.current === window.location.pathname) {
-        authChecked.current = false;
-      }
-    };
-  }, [session, loading, navigate]);
+  }, [session, loading, navigate, location]);
 
   if (loading || isChecking) {
     return (
