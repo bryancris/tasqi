@@ -43,42 +43,33 @@ export default defineConfig(({ mode }) => ({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
-        navigateFallback: 'index.html',
-        navigateFallbackDenylist: [/^\/api/],
+        // Disable navigation preload as we're using client-side routing
+        navigationPreload: false,
+        // Basic runtimeCaching setup
         runtimeCaching: [
           {
-            urlPattern: ({ url }) => {
-              return url.pathname.startsWith('/');
-            },
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'app-shell',
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          },
-          {
-            urlPattern: /\.(js|css|png|jpg|jpeg|svg|gif)$/,
+            // Cache static assets
+            urlPattern: /\.(js|css|png|jpg|jpeg|svg|gif|woff2?|ttf|eot)$/,
             handler: 'CacheFirst',
             options: {
               cacheName: 'static-assets',
               expiration: {
                 maxEntries: 100,
                 maxAgeSeconds: 7 * 24 * 60 * 60 // 7 days
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
               }
             }
           }
         ],
+        // Don't precache anything
+        globPatterns: [],
+        // Don't set up any navigation fallback
+        navigateFallback: null,
         skipWaiting: true,
-        clientsClaim: true
+        clientsClaim: true,
+        cleanupOutdatedCaches: true
       },
       devOptions: {
-        enabled: true,
+        enabled: false, // Disable in development
         type: 'module'
       }
     })
