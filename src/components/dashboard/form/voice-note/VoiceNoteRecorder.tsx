@@ -1,8 +1,9 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Mic, Square, PlayCircle, PauseCircle } from "lucide-react";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface VoiceNoteRecorderProps {
   onRecordingComplete: (blob: Blob) => void;
@@ -16,11 +17,38 @@ export function VoiceNoteRecorder({ onRecordingComplete, onCancel }: VoiceNoteRe
   const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
+  const [hasPermission, setHasPermission] = useState(false);
+  const isMobile = useIsMobile();
+
+  useEffect(() => {
+    // Check for microphone permission on component mount
+    checkMicrophonePermission();
+  }, []);
+
+  const checkMicrophonePermission = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(track => track.stop()); // Release the stream
+      setHasPermission(true);
+    } catch (error) {
+      console.error('Microphone permission error:', error);
+      setHasPermission(false);
+    }
+  };
 
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        } 
+      });
+      
+      // Determine the correct mime type based on browser support
+      const mimeType = 'audio/webm';
+      const recorder = new MediaRecorder(stream, { mimeType });
       const chunks: Blob[] = [];
 
       recorder.ondataavailable = (e) => {
@@ -30,14 +58,18 @@ export function VoiceNoteRecorder({ onRecordingComplete, onCancel }: VoiceNoteRe
       };
 
       recorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'audio/webm' });
+        const blob = new Blob(chunks, { type: mimeType });
         const url = URL.createObjectURL(blob);
         setAudioURL(url);
         setAudioChunks(chunks);
         
         // Create audio element for playback
         const audio = new Audio(url);
+        audio.onended = () => setIsPlaying(false);
         setAudioElement(audio);
+
+        // Stop all tracks in the stream
+        stream.getTracks().forEach(track => track.stop());
       };
 
       setMediaRecorder(recorder);
@@ -76,8 +108,26 @@ export function VoiceNoteRecorder({ onRecordingComplete, onCancel }: VoiceNoteRe
     }
   };
 
+  if (!hasPermission) {
+    return (
+      <div className="space-y-4 p-4 text-center">
+        <p className="text-sm text-muted-foreground">
+          Microphone access is required to record voice notes.
+          Please allow microphone access in your browser settings.
+        </p>
+        <Button
+          type="button"
+          variant="default"
+          onClick={checkMicrophonePermission}
+        >
+          Request Microphone Access
+        </Button>
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-4">
+    <div className={`space-y-4 ${isMobile ? 'p-4' : ''}`}>
       <div className="flex items-center gap-2">
         {!audioURL ? (
           <>
@@ -85,7 +135,7 @@ export function VoiceNoteRecorder({ onRecordingComplete, onCancel }: VoiceNoteRe
               type="button"
               variant={isRecording ? "destructive" : "secondary"}
               onClick={isRecording ? stopRecording : startRecording}
-              className="relative"
+              className="relative flex-1"
             >
               {isRecording ? (
                 <>
@@ -102,22 +152,30 @@ export function VoiceNoteRecorder({ onRecordingComplete, onCancel }: VoiceNoteRe
             </Button>
           </>
         ) : (
-          <>
+          <div className="flex items-center gap-2 w-full">
             <Button
               type="button"
               variant="outline"
               onClick={handlePlayPause}
+              className="flex-1"
             >
               {isPlaying ? (
-                <PauseCircle className="h-4 w-4" />
+                <>
+                  <PauseCircle className="h-4 w-4 mr-2" />
+                  Pause
+                </>
               ) : (
-                <PlayCircle className="h-4 w-4" />
+                <>
+                  <PlayCircle className="h-4 w-4 mr-2" />
+                  Play
+                </>
               )}
             </Button>
             <Button
               type="button"
               variant="default"
               onClick={handleSave}
+              className="flex-1"
             >
               Save Voice Note
             </Button>
@@ -128,7 +186,7 @@ export function VoiceNoteRecorder({ onRecordingComplete, onCancel }: VoiceNoteRe
             >
               Cancel
             </Button>
-          </>
+          </div>
         )}
       </div>
     </div>
