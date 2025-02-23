@@ -21,10 +21,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [isInitialAuth, setIsInitialAuth] = useState(true);
   const authSubscriptionRef = useRef<any>(null);
+  const sessionRef = useRef<Session | null>(null);
+  const initializingRef = useRef(false);
 
   const handleSignOut = async () => {
     try {
       setSession(null);
+      sessionRef.current = null;
       localStorage.clear();
       sessionStorage.clear();
       const { error } = await supabase.auth.signOut();
@@ -36,8 +39,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  // Initialize auth only once
   useEffect(() => {
     const initializeAuth = async () => {
+      if (initializingRef.current) return;
+      initializingRef.current = true;
+
       try {
         console.log("Initializing auth...");
         
@@ -64,35 +71,47 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (!initialSession?.user) {
           console.log("No initial session found");
           setSession(null);
+          sessionRef.current = null;
           return;
         }
 
         console.log("Initial session found and valid");
         setSession(initialSession);
+        sessionRef.current = initialSession;
         
       } catch (error) {
         console.error("Error in auth initialization:", error);
         await handleSignOut();
       } finally {
         setLoading(false);
+        initializingRef.current = false;
       }
     };
 
-    // Initialize auth
     initializeAuth();
+  }, []); // Run only once on mount
 
-    // Set up auth state subscription
+  // Set up auth state subscription separately
+  useEffect(() => {
     if (!authSubscriptionRef.current) {
       const {
         data: { subscription },
       } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
         console.log("Auth state changed:", event, currentSession?.user?.email);
+
+        // Helper to check if session has actually changed
+        const hasSessionChanged = (newSession: Session | null) => {
+          if (!newSession && !sessionRef.current) return false;
+          if (!newSession || !sessionRef.current) return true;
+          return newSession.access_token !== sessionRef.current.access_token;
+        };
         
         switch (event) {
           case 'SIGNED_IN':
-            if (!session) { // Only update if there's no existing session
+            if (hasSessionChanged(currentSession)) {
               console.log("User signed in");
               setSession(currentSession);
+              sessionRef.current = currentSession;
               if (isInitialAuth) {
                 toast.success("Successfully signed in");
                 setIsInitialAuth(false);
@@ -103,6 +122,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           case 'SIGNED_OUT':
             console.log("User signed out");
             setSession(null);
+            sessionRef.current = null;
             if (currentSession === null) {
               toast.error("Your session has expired. Please sign in again.");
             }
@@ -110,26 +130,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             
           case 'TOKEN_REFRESHED':
             console.log("Token refreshed");
-            if (currentSession) {
+            if (currentSession && hasSessionChanged(currentSession)) {
               setSession(currentSession);
+              sessionRef.current = currentSession;
             }
             break;
             
           case 'USER_UPDATED':
             console.log("User profile updated");
-            setSession(currentSession);
+            if (hasSessionChanged(currentSession)) {
+              setSession(currentSession);
+              sessionRef.current = currentSession;
+            }
             break;
           
           case 'INITIAL_SESSION':
             console.log("Initial session loaded");
-            if (!session && currentSession) { // Only update if there's no existing session
+            if (hasSessionChanged(currentSession)) {
               setSession(currentSession);
+              sessionRef.current = currentSession;
             }
             break;
             
           case 'PASSWORD_RECOVERY':
             console.log("Password recovery initiated");
             setSession(null);
+            sessionRef.current = null;
             break;
         }
       });
@@ -141,9 +167,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       if (authSubscriptionRef.current) {
         authSubscriptionRef.current.unsubscribe();
+        authSubscriptionRef.current = null;
       }
     };
-  }, []); // Remove dependencies to prevent re-initialization
+  }, []); // Run only once on mount
 
   return (
     <AuthContext.Provider value={{ session, loading, handleSignOut }}>
