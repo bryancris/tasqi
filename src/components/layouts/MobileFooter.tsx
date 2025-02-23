@@ -24,37 +24,29 @@ export function MobileFooter() {
 
   const handleCalendarViewChange = (newView: 'weekly' | 'calendar') => {
     changeView(newView);
-  };
-
-  const handleNavigation = (to: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    if (to === location.pathname) return;
-    navigate(to);
+    navigate('/dashboard');
   };
 
   const handleDailyClick = (e: React.MouseEvent) => {
     e.preventDefault();
     changeView('tasks');
-    if (location.pathname !== '/dashboard') {
-      navigate('/dashboard');
-    }
+    navigate('/dashboard');
   };
 
   return (
     <>
       <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-[#F1F0FB] via-[#E5DEFF] to-[#F1F0FB] border-t py-2 px-4 z-50 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
         <div className="flex justify-between items-center">
-          <Link 
-            to="/dashboard"
+          <button 
+            onClick={handleDailyClick}
             className={cn(
               "flex flex-col items-center p-2",
               view === 'tasks' ? "text-[#F97316]" : "text-gray-500"
             )}
-            onClick={handleDailyClick}
           >
             <Home className="h-6 w-6" />
             <span className="text-xs mt-1">Daily</span>
-          </Link>
+          </button>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -94,34 +86,38 @@ export function MobileFooter() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Link 
-            to="/notes"
-            className="flex flex-col items-center p-2 text-[#D946EF]"
-            onClick={(e) => handleNavigation('/notes', e)}
+          <button 
+            onClick={() => navigate('/notes')}
+            className={cn(
+              "flex flex-col items-center p-2",
+              location.pathname === '/notes' ? "text-[#D946EF]" : "text-gray-500"
+            )}
           >
             <FileText className="h-6 w-6" />
             <span className="text-xs mt-1">Notes</span>
-          </Link>
+          </button>
 
           <button 
+            onClick={handleChatToggle}
             className={cn(
               "flex flex-col items-center p-2",
               isChatOpen ? "text-[#33C3F0]" : "text-gray-500 hover:text-[#33C3F0]"
             )}
-            onClick={handleChatToggle}
           >
             <MessageSquare className="h-6 w-6" />
             <span className="text-xs mt-1">Chat</span>
           </button>
 
-          <Link 
-            to="/self-care"
-            className="flex flex-col items-center p-2 text-[#ea384c]"
-            onClick={(e) => handleNavigation('/self-care', e)}
+          <button 
+            onClick={() => navigate('/self-care')}
+            className={cn(
+              "flex flex-col items-center p-2",
+              location.pathname === '/self-care' ? "text-[#ea384c]" : "text-gray-500"
+            )}
           >
             <Heart className="h-6 w-6" />
             <span className="text-xs mt-1">Self-Care</span>
-          </Link>
+          </button>
         </div>
       </div>
       <ChatBubble isOpen={isChatOpen} onOpenChange={setIsChatOpen} />
