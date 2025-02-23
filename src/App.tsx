@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -27,7 +26,6 @@ import EmotionalCare from "./pages/EmotionalCare";
 import Settings from "./pages/Settings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UpdatePasswordForm } from "@/components/auth/UpdatePasswordForm";
-import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 // Create a persistent query client instance with optimized settings
@@ -167,21 +165,6 @@ const AppContent = () => {
 };
 
 const App = () => {
-  useEffect(() => {
-    // Handle PWA registration and updates
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js', { scope: '/' })
-          .then(registration => {
-            console.log('SW registered:', registration);
-          })
-          .catch(error => {
-            console.log('SW registration failed:', error);
-          });
-      });
-    }
-  }, []);
-
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>

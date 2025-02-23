@@ -15,9 +15,9 @@ export default defineConfig(({ mode }) => ({
     mode === 'development' &&
     componentTagger(),
     VitePWA({
-      registerType: 'prompt',
+      registerType: 'autoUpdate',
       strategies: 'generateSW',
-      injectRegister: 'auto',
+      injectRegister: 'script',
       manifest: {
         name: 'TASQI-AI Assistant',
         short_name: 'TASQI-AI',
@@ -46,25 +46,25 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
         navigateFallback: 'index.html',
-        navigateFallbackDenylist: [/^\/api/, /\.[a-zA-Z]+$/],
+        navigateFallbackDenylist: [/^\/api/],
+        skipWaiting: false,
+        clientsClaim: false,
         runtimeCaching: [
           {
             urlPattern: /.*/,
             handler: 'NetworkFirst',
             options: {
-              cacheName: 'everything',
+              cacheName: 'app-cache',
               cacheableResponse: {
                 statuses: [0, 200]
               }
             }
           }
         ],
-        sourcemap: true,
         cleanupOutdatedCaches: true
       },
       devOptions: {
-        enabled: true,
-        type: 'module'
+        enabled: true
       }
     })
   ].filter(Boolean),
