@@ -22,35 +22,54 @@ export function CalendarViewProvider({ children }: { children: ReactNode }) {
     return 'tasks';
   });
 
-  // Update view based on route changes
   useEffect(() => {
+    console.log('Location changed:', location.pathname);
     const path = location.pathname;
-    if (path.includes('/weekly')) setCurrentView('weekly');
-    else if (path.includes('/calendar')) setCurrentView('calendar');
-    else if (path.includes('/yearly')) setCurrentView('yearly');
-    else if (path.includes('/dashboard')) setCurrentView('tasks');
+    if (path.includes('/weekly')) {
+      setCurrentView('weekly');
+    } else if (path.includes('/calendar')) {
+      setCurrentView('calendar');
+    } else if (path.includes('/yearly')) {
+      setCurrentView('yearly');
+    } else if (path === '/dashboard' || path === '/dashboard/') {
+      setCurrentView('tasks');
+    }
   }, [location.pathname]);
 
   const changeView = useCallback((newView: CalendarView) => {
+    console.log('Changing view to:', newView);
     setCurrentView(newView);
+    
+    let path = '/dashboard';
     switch (newView) {
       case 'tasks':
-        navigate('/dashboard');
+        path = '/dashboard';
         break;
       case 'weekly':
-        navigate('/dashboard/weekly');
+        path = '/dashboard/weekly';
         break;
       case 'calendar':
-        navigate('/dashboard/calendar');
+        path = '/dashboard/calendar';
         break;
       case 'yearly':
-        navigate('/dashboard/yearly');
+        path = '/dashboard/yearly';
         break;
     }
+    
+    // Use navigate without replace to maintain history
+    navigate(path, { 
+      replace: false,
+      state: { view: newView }
+    });
   }, [navigate]);
 
+  const value = {
+    view: currentView,
+    changeView
+  };
+
   return (
-    <CalendarViewContext.Provider value={{ view: currentView, changeView }}>
+    <CalendarViewContext.Provider value={value}>
       {children}
     </CalendarViewContext.Provider>
   );

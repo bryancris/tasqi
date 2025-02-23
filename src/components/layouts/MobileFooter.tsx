@@ -20,12 +20,17 @@ export function MobileFooter() {
     setIsChatOpen(!isChatOpen);
   };
 
+  const handleCalendarClick = (e: React.MouseEvent, newView: 'weekly' | 'calendar') => {
+    e.preventDefault();
+    changeView(newView);
+  };
+
   return (
     <>
       <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-[#F1F0FB] via-[#E5DEFF] to-[#F1F0FB] border-t py-2 px-4 z-50 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
         <div className="flex justify-between items-center">
-          <Link 
-            to="/dashboard"
+          <button 
+            onClick={() => changeView('tasks')}
             className={cn(
               "flex flex-col items-center p-2",
               view === 'tasks' ? "text-[#F97316]" : "text-gray-500"
@@ -33,7 +38,7 @@ export function MobileFooter() {
           >
             <Home className="h-6 w-6" />
             <span className="text-xs mt-1">Daily</span>
-          </Link>
+          </button>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -48,8 +53,8 @@ export function MobileFooter() {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="center" className="min-w-[120px] bg-transparent border-none shadow-none">
-              <Link
-                to="/dashboard/weekly"
+              <button
+                onClick={(e) => handleCalendarClick(e, 'weekly')}
                 className="flex items-center justify-center gap-2 py-3 relative hover:bg-transparent focus:bg-transparent w-full"
               >
                 <div className="relative">
@@ -58,9 +63,9 @@ export function MobileFooter() {
                     W
                   </span>
                 </div>
-              </Link>
-              <Link
-                to="/dashboard/calendar"
+              </button>
+              <button
+                onClick={(e) => handleCalendarClick(e, 'calendar')}
                 className="flex items-center justify-center gap-2 py-3 relative hover:bg-transparent focus:bg-transparent w-full"
               >
                 <div className="relative">
@@ -69,7 +74,7 @@ export function MobileFooter() {
                     M
                   </span>
                 </div>
-              </Link>
+              </button>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -103,7 +108,7 @@ export function MobileFooter() {
             )}
           >
             <Heart className="h-6 w-6" />
-            <span className="text-xs mt-1">Self-Care</span>
+            <span className="text-xs mt-1">Daily</span>
           </Link>
         </div>
       </div>
