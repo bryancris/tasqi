@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Task } from "./TaskBoard";
@@ -8,14 +7,16 @@ import { Subtask } from "./subtasks/SubtaskList";
 import { ShareTaskDialog } from "./ShareTaskDialog";
 import { EditTaskHeader } from "./edit-task/EditTaskHeader";
 import { EditTaskContent } from "./edit-task/EditTaskContent";
-
 interface EditTaskDrawerProps {
   task: Task;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
-
-export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps) {
+export function EditTaskDrawer({
+  task,
+  open,
+  onOpenChange
+}: EditTaskDrawerProps) {
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || "");
   const [isScheduled, setIsScheduled] = useState(task.status === "scheduled");
@@ -28,25 +29,19 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
-
   useEffect(() => {
     loadSubtasks();
   }, [task.id]);
-
   const loadSubtasks = async () => {
     if (!task.id) return;
-    
     try {
-      const { data, error } = await supabase
-        .from('subtasks')
-        .select('id, title, status, position, notes')
-        .eq('task_id', task.id)
-        .order('position');
-
+      const {
+        data,
+        error
+      } = await supabase.from('subtasks').select('id, title, status, position, notes').eq('task_id', task.id).order('position');
       if (error) {
         throw error;
       }
-
       if (data) {
         console.log('Loaded subtasks:', data);
         setSubtasks(data);
@@ -56,16 +51,12 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
       toast.error('Failed to load subtasks');
     }
   };
-
   const handleDelete = async () => {
     try {
-      const { error } = await supabase
-        .from('tasks')
-        .delete()
-        .eq('id', task.id);
-
+      const {
+        error
+      } = await supabase.from('tasks').delete().eq('id', task.id);
       if (error) throw error;
-
       toast.success('Task deleted successfully');
       onOpenChange(false);
     } catch (error) {
@@ -73,12 +64,10 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
       toast.error('Failed to delete task');
     }
   };
-
   const handleSubmit = async () => {
     setIsLoading(true);
     try {
       const status = isScheduled ? 'scheduled' as const : 'unscheduled' as const;
-      
       const updateData = {
         title,
         description,
@@ -86,36 +75,29 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
         date: isScheduled && date ? date : null,
         priority,
         reminder_enabled: reminderEnabled,
-        reminder_time: reminderTime,
+        reminder_time: reminderTime
       } as const;
-
       if (isScheduled && startTime && startTime.trim() !== '') {
-        Object.assign(updateData, { start_time: startTime });
+        Object.assign(updateData, {
+          start_time: startTime
+        });
       }
-      
       if (isScheduled && endTime && endTime.trim() !== '') {
-        Object.assign(updateData, { end_time: endTime });
+        Object.assign(updateData, {
+          end_time: endTime
+        });
       }
-
-      const { error: taskError } = await supabase
-        .from('tasks')
-        .update(updateData)
-        .eq('id', task.id);
-
+      const {
+        error: taskError
+      } = await supabase.from('tasks').update(updateData).eq('id', task.id);
       if (taskError) throw taskError;
-
       const existingSubtaskIds = subtasks.filter(st => st.id).map(st => st.id);
-      
       if (existingSubtaskIds.length > 0) {
-        const { error: deleteError } = await supabase
-          .from('subtasks')
-          .delete()
-          .eq('task_id', task.id)
-          .not('id', 'in', `(${existingSubtaskIds.join(',')})`);
-
+        const {
+          error: deleteError
+        } = await supabase.from('subtasks').delete().eq('task_id', task.id).not('id', 'in', `(${existingSubtaskIds.join(',')})`);
         if (deleteError) throw deleteError;
       }
-
       for (const subtask of subtasks) {
         const subtaskData = {
           task_id: task.id,
@@ -124,23 +106,18 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
           position: subtask.position,
           notes: subtask.notes
         };
-
         if (subtask.id) {
-          const { error: updateError } = await supabase
-            .from('subtasks')
-            .update(subtaskData)
-            .eq('id', subtask.id);
-
+          const {
+            error: updateError
+          } = await supabase.from('subtasks').update(subtaskData).eq('id', subtask.id);
           if (updateError) throw updateError;
         } else {
-          const { error: createError } = await supabase
-            .from('subtasks')
-            .insert(subtaskData);
-
+          const {
+            error: createError
+          } = await supabase.from('subtasks').insert(subtaskData);
           if (createError) throw createError;
         }
       }
-
       toast.success('Task updated successfully');
       onOpenChange(false);
     } catch (error) {
@@ -150,50 +127,15 @@ export function EditTaskDrawer({ task, open, onOpenChange }: EditTaskDrawerProps
       setIsLoading(false);
     }
   };
-
-  return (
-    <>
+  return <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent 
-          side="left" 
-          className="w-[400px] sm:max-w-[540px]"
-          onOpenAutoFocus={(e) => e.preventDefault()} // Prevent auto-focus
-          onPointerDownOutside={(e) => e.preventDefault()} // Prevent closing on outside click while focused
-        >
+        <SheetContent side="left" onOpenAutoFocus={e => e.preventDefault()} // Prevent auto-focus
+      onPointerDownOutside={e => e.preventDefault()} // Prevent closing on outside click while focused
+      className="w-[400px] sm:max-w-[540px] px-0">
           <EditTaskHeader onShareClick={() => setShowShareDialog(true)} />
-          <EditTaskContent
-            task={task}
-            title={title}
-            description={description}
-            isScheduled={isScheduled}
-            date={date}
-            startTime={startTime}
-            endTime={endTime}
-            priority={priority}
-            reminderEnabled={reminderEnabled}
-            reminderTime={reminderTime}
-            subtasks={subtasks}
-            isLoading={isLoading}
-            onTitleChange={setTitle}
-            onDescriptionChange={setDescription}
-            onIsScheduledChange={setIsScheduled}
-            onDateChange={setDate}
-            onStartTimeChange={setStartTime}
-            onEndTimeChange={setEndTime}
-            onPriorityChange={setPriority}
-            onReminderEnabledChange={setReminderEnabled}
-            onReminderTimeChange={setReminderTime}
-            onSubtasksChange={setSubtasks}
-            onSubmit={handleSubmit}
-            onDelete={handleDelete}
-          />
+          <EditTaskContent task={task} title={title} description={description} isScheduled={isScheduled} date={date} startTime={startTime} endTime={endTime} priority={priority} reminderEnabled={reminderEnabled} reminderTime={reminderTime} subtasks={subtasks} isLoading={isLoading} onTitleChange={setTitle} onDescriptionChange={setDescription} onIsScheduledChange={setIsScheduled} onDateChange={setDate} onStartTimeChange={setStartTime} onEndTimeChange={setEndTime} onPriorityChange={setPriority} onReminderEnabledChange={setReminderEnabled} onReminderTimeChange={setReminderTime} onSubtasksChange={setSubtasks} onSubmit={handleSubmit} onDelete={handleDelete} />
         </SheetContent>
       </Sheet>
-      <ShareTaskDialog
-        task={task}
-        open={showShareDialog}
-        onOpenChange={setShowShareDialog}
-      />
-    </>
-  );
+      <ShareTaskDialog task={task} open={showShareDialog} onOpenChange={setShowShareDialog} />
+    </>;
 }
