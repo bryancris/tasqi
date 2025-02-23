@@ -1,5 +1,5 @@
 
-import { createContext, useContext, ReactNode, useCallback, useEffect } from 'react';
+import { createContext, useContext, ReactNode, useCallback, useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 export type CalendarView = 'tasks' | 'calendar' | 'yearly' | 'weekly';
@@ -14,43 +14,43 @@ const CalendarViewContext = createContext<CalendarViewContextType | undefined>(u
 export function CalendarViewProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
-
-  // Determine the current view based on the route
-  const getCurrentView = useCallback((): CalendarView => {
+  const [currentView, setCurrentView] = useState<CalendarView>(() => {
     const path = location.pathname;
     if (path.includes('/weekly')) return 'weekly';
     if (path.includes('/calendar')) return 'calendar';
     if (path.includes('/yearly')) return 'yearly';
     return 'tasks';
-  }, [location.pathname]);
+  });
 
   // Update view based on route changes
   useEffect(() => {
-    getCurrentView();
-  }, [getCurrentView]);
+    const path = location.pathname;
+    if (path.includes('/weekly')) setCurrentView('weekly');
+    else if (path.includes('/calendar')) setCurrentView('calendar');
+    else if (path.includes('/yearly')) setCurrentView('yearly');
+    else if (path.includes('/dashboard')) setCurrentView('tasks');
+  }, [location.pathname]);
 
   const changeView = useCallback((newView: CalendarView) => {
-    const currentSearch = new URLSearchParams(location.search).toString();
-    const searchSuffix = currentSearch ? `?${currentSearch}` : '';
-
+    setCurrentView(newView);
     switch (newView) {
       case 'tasks':
-        navigate(`/dashboard${searchSuffix}`, { replace: true });
+        navigate('/dashboard');
         break;
       case 'weekly':
-        navigate(`/dashboard/weekly${searchSuffix}`, { replace: true });
+        navigate('/dashboard/weekly');
         break;
       case 'calendar':
-        navigate(`/dashboard/calendar${searchSuffix}`, { replace: true });
+        navigate('/dashboard/calendar');
         break;
       case 'yearly':
-        navigate(`/dashboard/yearly${searchSuffix}`, { replace: true });
+        navigate('/dashboard/yearly');
         break;
     }
-  }, [navigate, location.search]);
+  }, [navigate]);
 
   return (
-    <CalendarViewContext.Provider value={{ view: getCurrentView(), changeView }}>
+    <CalendarViewContext.Provider value={{ view: currentView, changeView }}>
       {children}
     </CalendarViewContext.Provider>
   );
