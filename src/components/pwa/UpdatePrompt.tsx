@@ -16,12 +16,6 @@ export function UpdatePrompt() {
         setRegistration(reg);
       });
 
-      // Listen for new service worker installation
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        // New service worker has taken control, reload the page
-        window.location.reload();
-      });
-
       // Check for updates every hour
       const interval = setInterval(() => {
         if (registration) {
@@ -66,6 +60,13 @@ export function UpdatePrompt() {
     if (registration && registration.waiting) {
       // Send message to service worker to skip waiting and activate new version
       registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+      
+      // Only reload the page when user clicks the update button
+      registration.waiting.addEventListener('statechange', (event) => {
+        if ((event.target as ServiceWorker).state === 'activated') {
+          window.location.reload();
+        }
+      });
     }
   };
 

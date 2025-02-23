@@ -43,27 +43,44 @@ export default defineConfig(({ mode }) => ({
         ]
       },
       workbox: {
-        // Disable navigation preload as we're using client-side routing
-        navigationPreload: false,
-        // Basic runtimeCaching setup
+        // Enable navigation preload
+        navigationPreload: true,
+        // Configure runtime caching
         runtimeCaching: [
+          {
+            // Cache page navigations
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'pages-cache',
+              networkTimeoutSeconds: 3,
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
           {
             // Cache static assets
             urlPattern: /\.(js|css|png|jpg|jpeg|svg|gif|woff2?|ttf|eot)$/,
             handler: 'CacheFirst',
             options: {
-              cacheName: 'static-assets',
+              cacheName: 'assets-cache',
               expiration: {
                 maxEntries: 100,
                 maxAgeSeconds: 7 * 24 * 60 * 60 // 7 days
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
               }
             }
           }
         ],
-        // Don't precache anything
-        globPatterns: [],
-        // Don't set up any navigation fallback
-        navigateFallback: null,
+        // Ensure the SPA works offline
+        navigateFallback: 'index.html',
+        // Don't precache unnecessary assets
+        globPatterns: ['index.html'],
+        // Skip URLs starting with /api
+        navigateFallbackDenylist: [/^\/api/],
         skipWaiting: true,
         clientsClaim: true,
         cleanupOutdatedCaches: true
