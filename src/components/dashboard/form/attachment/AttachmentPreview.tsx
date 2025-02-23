@@ -1,5 +1,8 @@
 
 import { TaskAttachment } from "../types";
+import { Button } from "@/components/ui/button";
+import { PlayCircle, PauseCircle } from "lucide-react";
+import { useState, useRef } from "react";
 
 interface AttachmentPreviewProps {
   attachment: TaskAttachment;
@@ -8,6 +11,50 @@ interface AttachmentPreviewProps {
 }
 
 export function AttachmentPreview({ attachment, previewUrl, onClick }: AttachmentPreviewProps) {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const handlePlayPause = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!audioRef.current) return;
+
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+    }
+    setIsPlaying(!isPlaying);
+  };
+
+  if (attachment.content_type.startsWith('audio/')) {
+    return (
+      <div 
+        className="relative w-full p-4 bg-gray-100 cursor-pointer flex items-center justify-between"
+        onClick={onClick}
+      >
+        <audio
+          ref={audioRef}
+          src={previewUrl}
+          onEnded={() => setIsPlaying(false)}
+          className="hidden"
+        />
+        <span className="text-sm text-gray-600">{attachment.file_name}</span>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={handlePlayPause}
+        >
+          {isPlaying ? (
+            <PauseCircle className="h-4 w-4" />
+          ) : (
+            <PlayCircle className="h-4 w-4" />
+          )}
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div 
       className="relative w-full h-32 bg-gray-100 cursor-pointer overflow-hidden"
