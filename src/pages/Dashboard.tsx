@@ -11,6 +11,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileHeader } from "@/components/layouts/MobileHeader";
 import { MobileFooter } from "@/components/layouts/MobileFooter";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 export default function Dashboard() {
   useTaskNotifications();
@@ -27,56 +28,56 @@ export default function Dashboard() {
     }
   }, []);
 
-  const renderView = () => {
-    // Memoize the view components to prevent unnecessary re-renders
-    switch (view) {
-      case 'tasks':
-        return (
+  const renderContent = () => (
+    <Routes>
+      <Route 
+        path="/" 
+        element={
           <TaskBoard 
             selectedDate={selectedDate}
             onDateChange={setSelectedDate}
             key="taskboard"
           />
-        );
-      case 'weekly':
-        return (
+        }
+      />
+      <Route 
+        path="/weekly" 
+        element={
           <WeeklyCalendar 
             initialDate={selectedDate}
             key="weekly"
           />
-        );
-      case 'calendar':
-        return (
+        }
+      />
+      <Route 
+        path="/calendar" 
+        element={
           <Calendar 
             initialDate={selectedDate}
             onDateSelect={setSelectedDate}
             key="calendar"
           />
-        );
-      case 'yearly':
-        return (
+        }
+      />
+      <Route 
+        path="/yearly" 
+        element={
           <YearlyCalendar 
             onDateSelect={setSelectedDate}
             key="yearly"
           />
-        );
-      default:
-        return (
-          <TaskBoard 
-            selectedDate={selectedDate}
-            onDateChange={setSelectedDate}
-            key="taskboard-default"
-          />
-        );
-    }
-  };
+        }
+      />
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+    </Routes>
+  );
 
   if (isMobile) {
     return (
       <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#F1F0FB] to-[#E5DEFF]">
         <MobileHeader />
         <main className="flex-1 overflow-y-auto mt-[72px] mb-[64px]">
-          {renderView()}
+          {renderContent()}
         </main>
         <MobileFooter />
         <UpdatePrompt />
@@ -91,7 +92,7 @@ export default function Dashboard() {
       onViewChange={changeView}
     >
       <div className="h-full">
-        {renderView()}
+        {renderContent()}
       </div>
       <UpdatePrompt />
     </DashboardLayout>

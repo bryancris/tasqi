@@ -51,12 +51,11 @@ export default defineConfig(({ mode }) => ({
       },
       devOptions: {
         enabled: true,
-        type: 'module'
+        type: 'module',
+        navigateFallback: 'index.html'
       },
       injectRegister: 'auto',
-      strategies: 'injectManifest',
-      srcDir: 'src',
-      filename: 'sw.js',
+      strategies: 'generateSW',
       manifestFilename: 'manifest.webmanifest',
       base: '/',
       minify: true
