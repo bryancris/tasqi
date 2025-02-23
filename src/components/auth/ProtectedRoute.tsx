@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -10,25 +10,28 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
   const navigate = useNavigate();
   const [isChecking, setIsChecking] = useState(true);
-  const [hasCheckedOnce, setHasCheckedOnce] = useState(false);
+  const authChecked = useRef(false);
 
   useEffect(() => {
     const checkAuth = async () => {
+      // Skip check if we've already verified auth
+      if (authChecked.current) {
+        setIsChecking(false);
+        return;
+      }
+
       try {
         if (!loading) {
           if (!session) {
-            // Only check session if we haven't validated auth yet
-            if (!hasCheckedOnce) {
-              const { data: { session: currentSession }, error } = await supabase.auth.getSession();
-              
-              if (error || !currentSession) {
-                console.log("No session found, redirecting to auth");
-                toast.error("Please sign in to access this page");
-                navigate("/auth");
-              }
-              setHasCheckedOnce(true);
+            const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+            
+            if (error || !currentSession) {
+              console.log("No session found, redirecting to auth");
+              toast.error("Please sign in to access this page");
+              navigate("/auth");
             }
           }
+          authChecked.current = true;
           setIsChecking(false);
         }
       } catch (error) {
@@ -39,7 +42,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     };
 
     checkAuth();
-  }, [session, loading, navigate, hasCheckedOnce]);
+  }, [session, loading, navigate]);
 
   if (loading || isChecking) {
     return (
