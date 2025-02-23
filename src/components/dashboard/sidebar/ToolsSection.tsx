@@ -4,6 +4,7 @@ import { PenLine, BarChart2, Zap, MessageSquare } from "lucide-react";
 import { ChatBubble } from "@/components/chat/ChatBubble";
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 export function ToolsSection() {
   const [isChatOpen, setIsChatOpen] = useState(false);
