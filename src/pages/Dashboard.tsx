@@ -30,7 +30,7 @@ export default function Dashboard() {
   const renderContent = () => (
     <Routes>
       <Route 
-        path="/dashboard" 
+        path="/" 
         element={
           <TaskBoard 
             selectedDate={selectedDate}
@@ -40,7 +40,7 @@ export default function Dashboard() {
         }
       />
       <Route 
-        path="/dashboard/weekly" 
+        path="weekly" 
         element={
           <WeeklyCalendar 
             initialDate={selectedDate}
@@ -49,7 +49,7 @@ export default function Dashboard() {
         }
       />
       <Route 
-        path="/dashboard/calendar" 
+        path="calendar" 
         element={
           <Calendar 
             initialDate={selectedDate}
@@ -59,7 +59,7 @@ export default function Dashboard() {
         }
       />
       <Route 
-        path="/dashboard/yearly" 
+        path="yearly" 
         element={
           <YearlyCalendar 
             onDateSelect={setSelectedDate}
