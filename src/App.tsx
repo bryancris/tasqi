@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -79,65 +78,26 @@ const AppContent = () => {
       <Route path="/auth" element={<Auth />} />
       <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
       
-      {/* Protected Routes */}
-      <Route path="/dashboard/*" element={
+      {/* Protected Routes under /dashboard */}
+      <Route path="/dashboard" element={
         <ProtectedRoute>
-          <Dashboard />
+          <CalendarViewProvider>
+            <Dashboard />
+          </CalendarViewProvider>
         </ProtectedRoute>
-      } />
+      }>
+        <Route path="notes" element={<Notes />} />
+        <Route path="settings" element={<Settings />} />
+        <Route path="analytics" element={<Analytics />} />
+        <Route path="self-care" element={<SelfCare />} />
+        <Route path="physical-wellness" element={<PhysicalWellness />} />
+        <Route path="mental-wellbeing" element={<MentalWellbeing />} />
+        <Route path="personal-growth" element={<PersonalGrowth />} />
+        <Route path="social-connections" element={<SocialConnections />} />
+        <Route path="daily-rituals" element={<DailyRituals />} />
+        <Route path="emotional-care" element={<EmotionalCare />} />
+      </Route>
       
-      <Route path="/notes" element={
-        <ProtectedRoute>
-          <Notes />
-        </ProtectedRoute>
-      } />
-      
-      <Route path="/settings" element={
-        <ProtectedRoute>
-          <Settings />
-        </ProtectedRoute>
-      } />
-      
-      <Route path="/analytics" element={
-        <ProtectedRoute>
-          <Analytics />
-        </ProtectedRoute>
-      } />
-      <Route path="/self-care" element={
-        <ProtectedRoute>
-          <SelfCare />
-        </ProtectedRoute>
-      } />
-      <Route path="/self-care/physical-wellness" element={
-        <ProtectedRoute>
-          <PhysicalWellness />
-        </ProtectedRoute>
-      } />
-      <Route path="/self-care/mental-wellbeing" element={
-        <ProtectedRoute>
-          <MentalWellbeing />
-        </ProtectedRoute>
-      } />
-      <Route path="/self-care/personal-growth" element={
-        <ProtectedRoute>
-          <PersonalGrowth />
-        </ProtectedRoute>
-      } />
-      <Route path="/self-care/social-connections" element={
-        <ProtectedRoute>
-          <SocialConnections />
-        </ProtectedRoute>
-      } />
-      <Route path="/self-care/daily-rituals" element={
-        <ProtectedRoute>
-          <DailyRituals />
-        </ProtectedRoute>
-      } />
-      <Route path="/self-care/emotional-care" element={
-        <ProtectedRoute>
-          <EmotionalCare />
-        </ProtectedRoute>
-      } />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
@@ -149,12 +109,10 @@ const App = () => (
       <ThemeProvider defaultTheme="system" enableSystem>
         <TooltipProvider>
           <NotificationsProvider>
-            <CalendarViewProvider>
-              <AppContent />
-              <Toaster />
-              <Sonner />
-              <UpdatePrompt />
-            </CalendarViewProvider>
+            <AppContent />
+            <Toaster />
+            <Sonner />
+            <UpdatePrompt />
           </NotificationsProvider>
         </TooltipProvider>
       </ThemeProvider>

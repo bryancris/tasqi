@@ -30,7 +30,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
             if (error || !currentSession) {
               console.log("No session found, redirecting to auth");
               toast.error("Please sign in to access this page");
-              navigate("/auth");
+              navigate("/auth", { replace: true });
               return;
             }
           }
@@ -41,7 +41,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       } catch (error) {
         console.error("Auth check error:", error);
         toast.error("Authentication error. Please try again.");
-        navigate("/auth");
+        navigate("/auth", { replace: true });
       }
     };
 

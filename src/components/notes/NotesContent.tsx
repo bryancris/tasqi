@@ -24,8 +24,8 @@ export function NotesContent() {
       if (error) throw error;
       return data as Note[];
     },
-    staleTime: 5000, // Prevent excessive refetches
-    gcTime: 300000, // Keep unused data for 5 minutes
+    staleTime: 5000,
+    gcTime: 300000,
     refetchOnWindowFocus: false,
     refetchInterval: false,
   });
