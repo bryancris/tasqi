@@ -1,6 +1,6 @@
 
 import { Home, Calendar, FileText, MessageSquare, Heart, CalendarDays } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { ChatBubble } from "@/components/chat/ChatBubble";
@@ -13,6 +13,7 @@ import {
 
 export function MobileFooter() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isChatOpen, setIsChatOpen] = useState(false);
   const { view } = useCalendarView();
 
@@ -20,18 +21,18 @@ export function MobileFooter() {
     setIsChatOpen(!isChatOpen);
   };
 
-  // Preserve query parameters when navigating
-  const getUrlWithCurrentParams = (path: string) => {
-    const currentSearch = location.search;
-    return `${path}${currentSearch}`;
+  const handleNavigation = (path: string) => {
+    navigate(path, {
+      replace: true // Use replace to prevent building up history
+    });
   };
 
   return (
     <>
       <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-[#F1F0FB] via-[#E5DEFF] to-[#F1F0FB] border-t py-2 px-4 z-50 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
         <div className="flex justify-between items-center">
-          <Link 
-            to="/dashboard"
+          <button 
+            onClick={() => handleNavigation("/dashboard")}
             className={cn(
               "flex flex-col items-center p-2",
               view === 'tasks' ? "text-[#F97316]" : "text-gray-500"
@@ -39,7 +40,7 @@ export function MobileFooter() {
           >
             <Home className="h-6 w-6" />
             <span className="text-xs mt-1">Daily</span>
-          </Link>
+          </button>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -54,9 +55,9 @@ export function MobileFooter() {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="center" className="min-w-[120px] bg-transparent border-none shadow-none">
-              <Link 
-                to="/dashboard/weekly"
-                className="flex items-center justify-center gap-2 py-3 relative hover:bg-transparent focus:bg-transparent"
+              <button 
+                onClick={() => handleNavigation("/dashboard/weekly")}
+                className="flex items-center justify-center gap-2 py-3 relative hover:bg-transparent focus:bg-transparent w-full"
               >
                 <div className="relative">
                   <CalendarDays className="h-7 w-7 text-[#AAAAAA]" />
@@ -64,10 +65,10 @@ export function MobileFooter() {
                     W
                   </span>
                 </div>
-              </Link>
-              <Link 
-                to="/dashboard/calendar"
-                className="flex items-center justify-center gap-2 py-3 relative hover:bg-transparent focus:bg-transparent"
+              </button>
+              <button 
+                onClick={() => handleNavigation("/dashboard/calendar")}
+                className="flex items-center justify-center gap-2 py-3 relative hover:bg-transparent focus:bg-transparent w-full"
               >
                 <div className="relative">
                   <Calendar className="h-7 w-7 text-[#AAAAAA]" />
@@ -75,12 +76,12 @@ export function MobileFooter() {
                     M
                   </span>
                 </div>
-              </Link>
+              </button>
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Link 
-            to="/notes"
+          <button 
+            onClick={() => handleNavigation("/notes")}
             className={cn(
               "flex flex-col items-center p-2",
               location.pathname === '/notes' ? "text-[#D946EF]" : "text-gray-500"
@@ -88,7 +89,7 @@ export function MobileFooter() {
           >
             <FileText className="h-6 w-6" />
             <span className="text-xs mt-1">Notes</span>
-          </Link>
+          </button>
 
           <button 
             onClick={handleChatToggle}
@@ -101,8 +102,8 @@ export function MobileFooter() {
             <span className="text-xs mt-1">Chat</span>
           </button>
 
-          <Link 
-            to="/self-care"
+          <button 
+            onClick={() => handleNavigation("/self-care")}
             className={cn(
               "flex flex-col items-center p-2",
               location.pathname === '/self-care' ? "text-[#ea384c]" : "text-gray-500"
@@ -110,7 +111,7 @@ export function MobileFooter() {
           >
             <Heart className="h-6 w-6" />
             <span className="text-xs mt-1">Self-Care</span>
-          </Link>
+          </button>
         </div>
       </div>
       <ChatBubble isOpen={isChatOpen} onOpenChange={setIsChatOpen} />

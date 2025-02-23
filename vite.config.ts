@@ -15,8 +15,11 @@ export default defineConfig(({ mode }) => ({
     mode === 'development' &&
     componentTagger(),
     VitePWA({
-      registerType: 'autoUpdate',
-      strategies: 'generateSW',
+      registerType: 'prompt',
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
+      manifestFilename: 'manifest.json',
       manifest: {
         name: 'TASQI-AI Assistant',
         short_name: 'TASQI-AI',
@@ -42,32 +45,68 @@ export default defineConfig(({ mode }) => ({
           }
         ]
       },
+      injectRegister: 'script',
+      devOptions: {
+        enabled: false,
+        type: 'module'
+      },
       workbox: {
-        // Enable navigation preload
-        navigationPreload: true,
-        // Configure runtime caching
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
+        sourcemap: true,
         runtimeCaching: [
           {
-            // Cache page navigations
-            urlPattern: ({ request }) => request.mode === 'navigate',
-            handler: 'NetworkFirst',
+            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+            handler: 'CacheFirst',
             options: {
-              cacheName: 'pages-cache',
-              networkTimeoutSeconds: 3,
+              cacheName: 'google-fonts-cache',
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
+              },
               cacheableResponse: {
                 statuses: [0, 200]
               }
             }
           },
           {
-            // Cache static assets
-            urlPattern: /\.(js|css|png|jpg|jpeg|svg|gif|woff2?|ttf|eot)$/,
+            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
             handler: 'CacheFirst',
             options: {
-              cacheName: 'assets-cache',
+              cacheName: 'gstatic-fonts-cache',
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
+            urlPattern: /\.(?:png|jpg|jpeg|svg|gif)$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'images-cache',
               expiration: {
                 maxEntries: 100,
-                maxAgeSeconds: 7 * 24 * 60 * 60 // 7 days
+                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
+            urlPattern: new RegExp('^https://.*'),
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-cache',
+              networkTimeoutSeconds: 10,
+              expiration: {
+                maxEntries: 200,
+                maxAgeSeconds: 60 * 60 // 1 hour
               },
               cacheableResponse: {
                 statuses: [0, 200]
@@ -75,19 +114,8 @@ export default defineConfig(({ mode }) => ({
             }
           }
         ],
-        // Ensure the SPA works offline
-        navigateFallback: 'index.html',
-        // Don't precache unnecessary assets
-        globPatterns: ['index.html'],
-        // Skip URLs starting with /api
-        navigateFallbackDenylist: [/^\/api/],
-        skipWaiting: true,
-        clientsClaim: true,
-        cleanupOutdatedCaches: true
-      },
-      devOptions: {
-        enabled: false, // Disable in development
-        type: 'module'
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/api/]
       }
     })
   ].filter(Boolean),
