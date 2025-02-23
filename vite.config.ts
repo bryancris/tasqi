@@ -45,53 +45,6 @@ export default defineConfig(({ mode }) => ({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
         navigateFallback: 'index.html',
         navigateFallbackAllowlist: [/^\//, /^\/dashboard/, /^\/notes/, /^\/self-care/, /^\/settings/, /^\/auth/],
-        runtimeCaching: [
-          {
-            urlPattern: ({ url }) => {
-              return url.pathname.startsWith('/') ||
-                     url.pathname.startsWith('/dashboard') ||
-                     url.pathname.startsWith('/notes') ||
-                     url.pathname.startsWith('/self-care') ||
-                     url.pathname.startsWith('/settings') ||
-                     url.pathname.startsWith('/auth');
-            },
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'app-navigation-cache',
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          },
-          {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts-cache',
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          },
-          {
-            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'gstatic-fonts-cache',
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          }
-        ],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true
