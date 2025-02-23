@@ -44,13 +44,26 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
         navigateFallback: 'index.html',
-        navigateFallbackDenylist: [/^\/api/], // Exclude API routes
+        navigateFallbackAllowlist: [/^\/(?:dashboard|notes|settings|analytics|self-care|physical-wellness|mental-wellbeing|personal-growth|social-connections|daily-rituals|emotional-care|auth)(?:\/.*)?$/],
         runtimeCaching: [
           {
             urlPattern: ({ url }) => {
-              return url.pathname.startsWith('/') && 
-                     !url.pathname.startsWith('/api') && 
-                     !url.pathname.match(/\.(js|css|png|jpg|svg|ico)$/);
+              const pathsToCache = [
+                '/',
+                '/dashboard',
+                '/notes',
+                '/settings',
+                '/analytics',
+                '/self-care',
+                '/physical-wellness',
+                '/mental-wellbeing',
+                '/personal-growth',
+                '/social-connections',
+                '/daily-rituals',
+                '/emotional-care',
+                '/auth'
+              ];
+              return pathsToCache.some(path => url.pathname.startsWith(path));
             },
             handler: 'NetworkFirst',
             options: {
@@ -74,15 +87,19 @@ export default defineConfig(({ mode }) => ({
             }
           }
         ],
-        cleanupOutdatedCaches: true,
+        skipWaiting: true,
         clientsClaim: true,
-        skipWaiting: true
+        cleanupOutdatedCaches: true
       },
       devOptions: {
         enabled: true,
         type: 'module',
         navigateFallback: 'index.html'
-      }
+      },
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
+      injectRegister: 'auto'
     })
   ].filter(Boolean),
   resolve: {

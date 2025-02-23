@@ -15,8 +15,8 @@ export function useSupabaseSubscription() {
   const isComponentMounted = useRef(true);
 
   useEffect(() => {
-    // Only set up subscriptions if we have a valid session and haven't initialized globally
-    if (!session || isGloballyInitialized) return;
+    // Only set up subscriptions if we have a valid session
+    if (!session) return;
 
     const setupSubscriptions = () => {
       // Set up tasks subscription if not already established
@@ -37,9 +37,7 @@ export function useSupabaseSubscription() {
               }
             }
           )
-          .subscribe((status) => {
-            console.log('Tasks subscription status:', status);
-          });
+          .subscribe();
       }
 
       // Set up notes subscription if not already established
@@ -59,20 +57,20 @@ export function useSupabaseSubscription() {
               }
             }
           )
-          .subscribe((status) => {
-            console.log('Notes subscription status:', status);
-          });
+          .subscribe();
       }
     };
 
-    setupSubscriptions();
-    isGloballyInitialized = true;
+    if (!isGloballyInitialized) {
+      setupSubscriptions();
+      isGloballyInitialized = true;
+    }
 
     return () => {
       isComponentMounted.current = false;
       
-      // Only clean up subscriptions when the app is truly unmounting
-      if (window.navigator.userAgent.includes('ReactSnap')) {
+      // Only clean up subscriptions when the window is actually closing
+      const handleBeforeUnload = () => {
         if (tasksChannel) {
           supabase.removeChannel(tasksChannel);
           tasksChannel = null;
@@ -82,7 +80,12 @@ export function useSupabaseSubscription() {
           notesChannel = null;
         }
         isGloballyInitialized = false;
-      }
+      };
+
+      window.addEventListener('beforeunload', handleBeforeUnload);
+      return () => {
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+      };
     };
   }, [queryClient, session]);
 }
