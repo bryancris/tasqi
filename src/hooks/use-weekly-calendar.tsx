@@ -5,26 +5,30 @@ import { Task } from "@/components/dashboard/TaskBoard";
 import { format, parseISO, startOfDay, endOfDay } from "date-fns";
 import { useToast } from "./use-toast";
 import { DragEndEvent } from "@dnd-kit/core";
+import { useMemo } from "react";
 
 export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date[]) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: tasks = [] } = useQuery({
-    queryKey: ['tasks', format(weekStart, 'yyyy-MM-dd'), format(weekEnd, 'yyyy-MM-dd')],
-    queryFn: async () => {
-      const startDate = format(startOfDay(weekStart), 'yyyy-MM-dd');
-      const endDate = format(endOfDay(weekEnd), 'yyyy-MM-dd');
+  // Memoize date strings for stable query keys
+  const queryDates = useMemo(() => ({
+    start: format(startOfDay(weekStart), 'yyyy-MM-dd'),
+    end: format(endOfDay(weekEnd), 'yyyy-MM-dd')
+  }), [weekStart, weekEnd]);
 
+  const { data: tasks = [] } = useQuery({
+    queryKey: ['weekly-tasks', queryDates.start, queryDates.end],
+    queryFn: async () => {
       console.log('Fetching tasks for weekly calendar...', {
-        weekStart: startDate,
-        weekEnd: endDate
+        weekStart: queryDates.start,
+        weekEnd: queryDates.end
       });
 
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
-        .or(`and(status.eq.scheduled,date.gte.${startDate},date.lte.${endDate}),status.eq.unscheduled`)
+        .or(`and(status.eq.scheduled,date.gte.${queryDates.start},date.lte.${queryDates.end}),status.eq.unscheduled`)
         .order('date', { ascending: true })
         .order('start_time', { ascending: true });
       
@@ -35,39 +39,43 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
       
       console.log('Fetched tasks for weekly calendar:', data);
       return data as Task[];
-    }
+    },
+    staleTime: 30000, // Consider data fresh for 30 seconds
+    gcTime: 5 * 60 * 1000, // Keep unused data for 5 minutes
   });
 
-  // Filter tasks for the weekly calendar
-  const scheduledTasks = tasks?.filter(task => {
-    if (!task.date || !task.start_time || task.status !== 'scheduled') {
-      console.log('Filtering out task:', task.id, {
-        hasDate: !!task.date,
-        hasStartTime: !!task.start_time,
-        status: task.status
+  // Memoize filtered tasks to prevent unnecessary recalculations
+  const scheduledTasks = useMemo(() => {
+    return tasks?.filter(task => {
+      if (!task.date || !task.start_time || task.status !== 'scheduled') {
+        console.log('Filtering out task:', task.id, {
+          hasDate: !!task.date,
+          hasStartTime: !!task.start_time,
+          status: task.status
+        });
+        return false;
+      }
+
+      const taskDate = parseISO(task.date);
+      const isWithinWeek = taskDate >= startOfDay(weekStart) && taskDate <= endOfDay(weekEnd);
+
+      console.log('Task date check:', {
+        taskId: task.id,
+        taskDate: format(taskDate, 'yyyy-MM-dd'),
+        weekStart: format(weekStart, 'yyyy-MM-dd'),
+        weekEnd: format(weekEnd, 'yyyy-MM-dd'),
+        isWithinWeek
       });
-      return false;
-    }
 
-    const taskDate = parseISO(task.date);
-    const isWithinWeek = taskDate >= startOfDay(weekStart) && taskDate <= endOfDay(weekEnd);
-
-    console.log('Task date check:', {
-      taskId: task.id,
-      taskDate: format(taskDate, 'yyyy-MM-dd'),
-      weekStart: format(weekStart, 'yyyy-MM-dd'),
-      weekEnd: format(weekEnd, 'yyyy-MM-dd'),
-      isWithinWeek
-    });
-
-    return isWithinWeek;
-  }) ?? [];
+      return isWithinWeek;
+    }) ?? [];
+  }, [tasks, weekStart, weekEnd]);
 
   console.log('Final filtered scheduled tasks:', scheduledTasks);
 
-  const unscheduledTasks = tasks?.filter(task => 
-    task.status === 'unscheduled'
-  ) ?? [];
+  const unscheduledTasks = useMemo(() => {
+    return tasks?.filter(task => task.status === 'unscheduled') ?? [];
+  }, [tasks]);
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -116,7 +124,7 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
         if (error) throw error;
       }
 
-      await queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      await queryClient.invalidateQueries({ queryKey: ['weekly-tasks'] });
 
       toast({
         title: "Task updated",

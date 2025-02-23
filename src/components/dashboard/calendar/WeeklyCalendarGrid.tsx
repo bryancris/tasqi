@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Task } from "../TaskBoard";
-import { format, parseISO } from "date-fns";
+import { format, isSameDay, parseISO } from "date-fns";
 import { useDroppable } from "@dnd-kit/core";
 import { WeeklyTaskCard } from "../task-card/WeeklyTaskCard";
 import { cn } from "@/lib/utils";
@@ -122,7 +122,7 @@ export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks, showFu
         <div className="bg-[#B2E3EA] p-4 border-r border-[#403E43]" /> {/* Time column header spacer */}
         {displayDays.map((day, index) => (
           <div
-            key={day.toISOString()}
+            key={format(day, 'yyyy-MM-dd')}
             className={cn(
               "px-2 py-4 text-center",
               "bg-[#B2E3EA]",
@@ -137,7 +137,7 @@ export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks, showFu
 
         {/* Time slots and cells */}
         {timeSlots.map((timeSlot, rowIndex) => (
-          <React.Fragment key={`row-${timeSlot.hour}`}>
+          <React.Fragment key={timeSlot.hour}>
             <div 
               className={cn(
                 "w-20 px-4 py-3 text-right text-sm text-slate-500",
@@ -149,7 +149,7 @@ export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks, showFu
             </div>
             {displayDays.map((day, colIndex) => (
               <div 
-                key={`${day.toISOString()}-${timeSlot.hour}`}
+                key={`${format(day, 'yyyy-MM-dd')}-${timeSlot.hour}`}
                 className={cn(
                   "border-r border-b border-[#403E43]",
                   colIndex === displayDays.length - 1 && "border-r-0",
