@@ -66,26 +66,26 @@ export function useSupabaseSubscription() {
       isGloballyInitialized = true;
     }
 
+    // Handle cleanup when component unmounts
+    const handleBeforeUnload = () => {
+      if (tasksChannel) {
+        supabase.removeChannel(tasksChannel);
+        tasksChannel = null;
+      }
+      if (notesChannel) {
+        supabase.removeChannel(notesChannel);
+        notesChannel = null;
+      }
+      isGloballyInitialized = false;
+    };
+
+    // Add beforeunload listener
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    // Cleanup function that removes the event listener
     return () => {
       isComponentMounted.current = false;
-      
-      // Only clean up subscriptions when the window is actually closing
-      const handleBeforeUnload = () => {
-        if (tasksChannel) {
-          supabase.removeChannel(tasksChannel);
-          tasksChannel = null;
-        }
-        if (notesChannel) {
-          supabase.removeChannel(notesChannel);
-          notesChannel = null;
-        }
-        isGloballyInitialized = false;
-      };
-
-      window.addEventListener('beforeunload', handleBeforeUnload);
-      return () => {
-        window.removeEventListener('beforeunload', handleBeforeUnload);
-      };
+      window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [queryClient, session]);
 }
