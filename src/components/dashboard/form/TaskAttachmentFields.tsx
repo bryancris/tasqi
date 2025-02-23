@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Mic } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { format } from "date-fns";
 
 interface TaskAttachmentFieldsProps {
   task?: Task;
@@ -25,8 +26,9 @@ export function TaskAttachmentFields({ task, isEditing }: TaskAttachmentFieldsPr
     }
 
     try {
-      // Generate a unique filename
-      const filename = `voice-note-${Date.now()}.webm`;
+      // Format the current date and time
+      const formattedDateTime = format(new Date(), "yyyy-MM-dd_HH-mm-ss");
+      const filename = `Voice Note ${formattedDateTime}.webm`;
       const filePath = `${task.id}/${filename}`;
 
       // Upload to storage
