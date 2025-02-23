@@ -11,8 +11,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileHeader } from "@/components/layouts/MobileHeader";
 import { MobileFooter } from "@/components/layouts/MobileFooter";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
-import { Routes, Route, Navigate, Outlet } from "react-router-dom";
-import Settings from "./Settings";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 export default function Dashboard() {
   useTaskNotifications();
@@ -41,7 +40,7 @@ export default function Dashboard() {
         }
       />
       <Route 
-        path="weekly" 
+        path="/weekly" 
         element={
           <WeeklyCalendar 
             initialDate={selectedDate}
@@ -50,7 +49,7 @@ export default function Dashboard() {
         }
       />
       <Route 
-        path="calendar" 
+        path="/calendar" 
         element={
           <Calendar 
             initialDate={selectedDate}
@@ -60,7 +59,7 @@ export default function Dashboard() {
         }
       />
       <Route 
-        path="yearly" 
+        path="/yearly" 
         element={
           <YearlyCalendar 
             onDateSelect={setSelectedDate}
@@ -68,7 +67,6 @@ export default function Dashboard() {
           />
         }
       />
-      <Route path="settings" element={<Settings />} />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );

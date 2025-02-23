@@ -79,19 +79,24 @@ const AppContent = () => {
       <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
       
       {/* Protected Routes */}
-      <Route path="/dashboard/*" element={
+      <Route path="/dashboard" element={
         <ProtectedRoute>
           <Dashboard />
         </ProtectedRoute>
-      }>
-        <Route path="settings" element={<Settings />} />
-      </Route>
+      } />
       
       <Route path="/notes" element={
         <ProtectedRoute>
           <Notes />
         </ProtectedRoute>
       } />
+      
+      <Route path="/settings" element={
+        <ProtectedRoute>
+          <Settings />
+        </ProtectedRoute>
+      } />
+      
       <Route path="/analytics" element={
         <ProtectedRoute>
           <Analytics />
