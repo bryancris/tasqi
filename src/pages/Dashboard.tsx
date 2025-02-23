@@ -11,7 +11,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileHeader } from "@/components/layouts/MobileHeader";
 import { MobileFooter } from "@/components/layouts/MobileFooter";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, Outlet } from "react-router-dom";
+import Settings from "./Settings";
 
 export default function Dashboard() {
   useTaskNotifications();
@@ -20,7 +21,6 @@ export default function Dashboard() {
   const isMobile = useIsMobile();
   const isInitialRender = useRef(true);
 
-  // Prevent unnecessary re-renders on initial mount
   useEffect(() => {
     if (isInitialRender.current) {
       isInitialRender.current = false;
@@ -41,7 +41,7 @@ export default function Dashboard() {
         }
       />
       <Route 
-        path="/weekly" 
+        path="weekly" 
         element={
           <WeeklyCalendar 
             initialDate={selectedDate}
@@ -50,7 +50,7 @@ export default function Dashboard() {
         }
       />
       <Route 
-        path="/calendar" 
+        path="calendar" 
         element={
           <Calendar 
             initialDate={selectedDate}
@@ -60,7 +60,7 @@ export default function Dashboard() {
         }
       />
       <Route 
-        path="/yearly" 
+        path="yearly" 
         element={
           <YearlyCalendar 
             onDateSelect={setSelectedDate}
@@ -68,6 +68,7 @@ export default function Dashboard() {
           />
         }
       />
+      <Route path="settings" element={<Settings />} />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
   );

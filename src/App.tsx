@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -71,7 +70,7 @@ const UpdatePasswordPage = () => {
 };
 
 const AppContent = () => {
-  useSupabaseSubscription(); // Add the subscription hook here
+  useSupabaseSubscription();
 
   return (
     <Routes>
@@ -84,7 +83,10 @@ const AppContent = () => {
         <ProtectedRoute>
           <Dashboard />
         </ProtectedRoute>
-      } />
+      }>
+        <Route path="settings" element={<Settings />} />
+      </Route>
+      
       <Route path="/notes" element={
         <ProtectedRoute>
           <Notes />
@@ -128,11 +130,6 @@ const AppContent = () => {
       <Route path="/self-care/emotional-care" element={
         <ProtectedRoute>
           <EmotionalCare />
-        </ProtectedRoute>
-      } />
-      <Route path="/settings" element={
-        <ProtectedRoute>
-          <Settings />
         </ProtectedRoute>
       } />
       <Route path="*" element={<NotFound />} />
