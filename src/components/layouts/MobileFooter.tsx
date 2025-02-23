@@ -1,6 +1,6 @@
 
 import { Home, Calendar, FileText, MessageSquare, Heart, CalendarDays } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { ChatBubble } from "@/components/chat/ChatBubble";
@@ -14,6 +14,7 @@ import {
 
 export function MobileFooter() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isChatOpen, setIsChatOpen] = useState(false);
   const { view, changeView } = useCalendarView();
 
@@ -25,9 +26,18 @@ export function MobileFooter() {
     changeView(newView);
   };
 
+  const handleNavigation = (to: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    if (to === location.pathname) return;
+    navigate(to);
+  };
+
   const handleDailyClick = (e: React.MouseEvent) => {
     e.preventDefault();
     changeView('tasks');
+    if (location.pathname !== '/dashboard') {
+      navigate('/dashboard');
+    }
   };
 
   return (
@@ -87,7 +97,7 @@ export function MobileFooter() {
           <Link 
             to="/notes"
             className="flex flex-col items-center p-2 text-[#D946EF]"
-            onClick={(e) => e.preventDefault()}
+            onClick={(e) => handleNavigation('/notes', e)}
           >
             <FileText className="h-6 w-6" />
             <span className="text-xs mt-1">Notes</span>
@@ -107,7 +117,7 @@ export function MobileFooter() {
           <Link 
             to="/self-care"
             className="flex flex-col items-center p-2 text-[#ea384c]"
-            onClick={(e) => e.preventDefault()}
+            onClick={(e) => handleNavigation('/self-care', e)}
           >
             <Heart className="h-6 w-6" />
             <span className="text-xs mt-1">Self-Care</span>
