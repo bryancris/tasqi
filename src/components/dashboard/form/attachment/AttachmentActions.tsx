@@ -23,14 +23,16 @@ export function AttachmentActions({
         <span className="text-sm">{attachment.file_name}</span>
       </div>
       <div className="flex items-center gap-2">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => onDownload(attachment)}
-        >
-          Download
-        </Button>
+        {!attachment.content_type.startsWith('audio/') && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => onDownload(attachment)}
+          >
+            Download
+          </Button>
+        )}
         {isEditing && (
           <Button
             type="button"

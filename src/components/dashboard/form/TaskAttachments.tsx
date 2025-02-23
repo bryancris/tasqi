@@ -38,9 +38,11 @@ export function TaskAttachments({ taskId, isEditing }: TaskAttachmentsProps) {
       
       setAttachments(data || []);
 
-      // Load previews for image and PDF attachments
+      // Load previews for image, PDF, and audio attachments
       data?.forEach(async (attachment) => {
-        if (attachment.content_type.startsWith('image/') || attachment.content_type === 'application/pdf') {
+        if (attachment.content_type.startsWith('image/') || 
+            attachment.content_type === 'application/pdf' ||
+            attachment.content_type.startsWith('audio/')) {
           loadFilePreview(attachment);
         }
       });
@@ -132,7 +134,8 @@ export function TaskAttachments({ taskId, isEditing }: TaskAttachmentsProps) {
             className="flex flex-col border rounded-md bg-background overflow-hidden"
           >
             {(attachment.content_type.startsWith('image/') || 
-              attachment.content_type === 'application/pdf') && 
+              attachment.content_type === 'application/pdf' ||
+              attachment.content_type.startsWith('audio/')) && 
               previewUrls[attachment.id] && (
               <AttachmentPreview
                 attachment={attachment}
