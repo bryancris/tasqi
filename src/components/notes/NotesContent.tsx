@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+
+import { useState, useRef, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DictateNoteDialog } from "./DictateNoteDialog";
@@ -10,6 +11,42 @@ import { Note } from "./types";
 export function NotesContent() {
   const [isDictateDialogOpen, setIsDictateDialogOpen] = useState(false);
   const isMobile = useIsMobile();
+  const queryClient = useQueryClient();
+  const subscriptionRef = useRef<any>(null);
+
+  // Set up real-time subscription
+  useEffect(() => {
+    if (subscriptionRef.current) return; // Prevent multiple subscriptions
+
+    const channel = supabase
+      .channel('notes-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notes'
+        },
+        () => {
+          // Invalidate and refetch on any notes change
+          queryClient.invalidateQueries({ queryKey: ["notes"] });
+        }
+      )
+      .subscribe((status) => {
+        console.log('Notes subscription status:', status);
+      });
+
+    subscriptionRef.current = channel;
+
+    // Cleanup subscription only when component unmounts
+    return () => {
+      console.log('Cleaning up notes subscription...');
+      if (subscriptionRef.current) {
+        supabase.removeChannel(subscriptionRef.current);
+        subscriptionRef.current = null;
+      }
+    };
+  }, [queryClient]);
 
   const { data: notes, isLoading } = useQuery({
     queryKey: ["notes"],
@@ -22,6 +59,7 @@ export function NotesContent() {
       if (error) throw error;
       return data as Note[];
     },
+    staleTime: 1000, // Prevent excessive refetches
   });
 
   return (
@@ -32,8 +70,7 @@ export function NotesContent() {
         open={isDictateDialogOpen}
         onOpenChange={setIsDictateDialogOpen}
         onNoteCreated={() => {
-          // This will trigger a refetch of the notes
-          // No need to manually invalidate the query here as it's handled by the dialog
+          queryClient.invalidateQueries({ queryKey: ["notes"] });
         }}
       />
     </div>

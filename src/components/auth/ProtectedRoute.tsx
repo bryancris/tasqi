@@ -11,11 +11,13 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const [isChecking, setIsChecking] = useState(true);
   const authChecked = useRef(false);
+  const lastPath = useRef(window.location.pathname);
 
   useEffect(() => {
     const checkAuth = async () => {
-      // Skip check if we've already verified auth
-      if (authChecked.current) {
+      // Skip check if we've already verified auth and we're just navigating internally
+      if (authChecked.current && lastPath.current !== window.location.pathname) {
+        lastPath.current = window.location.pathname;
         setIsChecking(false);
         return;
       }
@@ -29,9 +31,11 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
               console.log("No session found, redirecting to auth");
               toast.error("Please sign in to access this page");
               navigate("/auth");
+              return;
             }
           }
           authChecked.current = true;
+          lastPath.current = window.location.pathname;
           setIsChecking(false);
         }
       } catch (error) {
@@ -42,6 +46,14 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     };
 
     checkAuth();
+
+    // Cleanup function
+    return () => {
+      // Don't reset authChecked on internal navigation
+      if (lastPath.current === window.location.pathname) {
+        authChecked.current = false;
+      }
+    };
   }, [session, loading, navigate]);
 
   if (loading || isChecking) {
