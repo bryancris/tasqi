@@ -27,7 +27,6 @@ export function MobileFooter() {
         <div className="flex justify-between items-center">
           <Link 
             to="/dashboard"
-            onClick={() => changeView('tasks')}
             className={cn(
               "flex flex-col items-center p-2",
               view === 'tasks' ? "text-[#F97316]" : "text-gray-500"
@@ -50,32 +49,28 @@ export function MobileFooter() {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="center" className="min-w-[120px] bg-transparent border-none shadow-none">
-              <DropdownMenuItem 
-                onClick={() => {
-                  changeView('weekly');
-                }}
+              <Link 
+                to="/dashboard/weekly"
                 className="flex items-center justify-center gap-2 py-3 relative hover:bg-transparent focus:bg-transparent"
               >
-                <Link to="/dashboard/weekly" className="relative">
+                <div className="relative">
                   <CalendarDays className="h-7 w-7 text-[#AAAAAA]" />
                   <span className="absolute top-[55%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs font-bold text-[#8B5CF6]">
                     W
                   </span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={() => {
-                  changeView('calendar');
-                }}
+                </div>
+              </Link>
+              <Link 
+                to="/dashboard/calendar"
                 className="flex items-center justify-center gap-2 py-3 relative hover:bg-transparent focus:bg-transparent"
               >
-                <Link to="/dashboard" className="relative">
+                <div className="relative">
                   <Calendar className="h-7 w-7 text-[#AAAAAA]" />
                   <span className="absolute top-[55%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-xs font-bold text-[#8B5CF6]">
                     M
                   </span>
-                </Link>
-              </DropdownMenuItem>
+                </div>
+              </Link>
             </DropdownMenuContent>
           </DropdownMenu>
 
