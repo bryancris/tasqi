@@ -1,16 +1,14 @@
 
-import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { CalendarView } from '@/contexts/CalendarViewContext';
 
-export type CalendarView = 'tasks' | 'calendar' | 'yearly' | 'weekly';
+export type { CalendarView };
 
 export function useCalendarView(initialView: CalendarView = 'tasks') {
-  const [view, setView] = useState<CalendarView>(initialView);
   const navigate = useNavigate();
 
   const changeView = (newView: CalendarView) => {
-    setView(newView);
-    // Use proper route-based navigation instead of URL parameters
+    // Use replace instead of push to prevent building up history
     switch (newView) {
       case 'tasks':
         navigate('/dashboard', { replace: true });
@@ -27,19 +25,5 @@ export function useCalendarView(initialView: CalendarView = 'tasks') {
     }
   };
 
-  // Handle initial route matching
-  useEffect(() => {
-    const path = window.location.pathname;
-    if (path.includes('/weekly')) {
-      setView('weekly');
-    } else if (path.includes('/calendar')) {
-      setView('calendar');
-    } else if (path.includes('/yearly')) {
-      setView('yearly');
-    } else {
-      setView('tasks');
-    }
-  }, []);
-
-  return { view, changeView };
+  return { view: initialView, changeView };
 }
