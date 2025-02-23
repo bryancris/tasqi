@@ -1,7 +1,7 @@
 
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { useTaskNotifications } from "@/hooks/use-task-notifications";
-import { useCalendarView } from "@/hooks/use-calendar-view";
+import { useCalendarView } from "@/contexts/CalendarViewContext";
 import { useState, useEffect, useRef } from "react";
 import { TaskBoard } from "@/components/dashboard/TaskBoard";
 import { WeeklyCalendar } from "@/components/dashboard/WeeklyCalendar";

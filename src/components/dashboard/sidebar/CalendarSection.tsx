@@ -1,7 +1,7 @@
 
 import { CalendarDays } from "lucide-react";
 import { CalendarViewButton } from "./calendar/CalendarViewButton";
-import { useCalendarView, CalendarView } from "@/hooks/use-calendar-view";
+import { useCalendarView, CalendarView } from "@/contexts/CalendarViewContext";
 
 interface CalendarSectionProps {
   onViewChange?: (view: CalendarView) => void;

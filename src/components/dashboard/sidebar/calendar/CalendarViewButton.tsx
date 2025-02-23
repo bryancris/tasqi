@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { CalendarView } from "@/hooks/use-calendar-view";
+import { CalendarView } from "@/contexts/CalendarViewContext";
 
 interface CalendarViewButtonProps {
   view: CalendarView;
