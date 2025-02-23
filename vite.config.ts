@@ -16,10 +16,7 @@ export default defineConfig(({ mode }) => ({
     componentTagger(),
     VitePWA({
       registerType: 'autoUpdate',
-      strategies: 'injectManifest',
-      srcDir: 'src',
-      filename: 'sw.js',
-      injectRegister: 'script',
+      strategies: 'generateSW',
       manifest: {
         name: 'TASQI-AI Assistant',
         short_name: 'TASQI-AI',
@@ -47,19 +44,16 @@ export default defineConfig(({ mode }) => ({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
-        navigateFallback: '/index.html',
+        navigateFallback: 'index.html',
         navigateFallbackDenylist: [/^\/api/],
         runtimeCaching: [
           {
-            urlPattern: new RegExp('^https://.*'),
+            urlPattern: ({ url }) => {
+              return url.pathname.startsWith('/');
+            },
             handler: 'NetworkFirst',
             options: {
-              cacheName: 'external-resources',
-              networkTimeoutSeconds: 10,
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 24 * 60 * 60 // 24 hours
-              },
+              cacheName: 'app-shell',
               cacheableResponse: {
                 statuses: [0, 200]
               }
@@ -69,7 +63,7 @@ export default defineConfig(({ mode }) => ({
             urlPattern: /\.(js|css|png|jpg|jpeg|svg|gif)$/,
             handler: 'CacheFirst',
             options: {
-              cacheName: 'assets-cache',
+              cacheName: 'static-assets',
               expiration: {
                 maxEntries: 100,
                 maxAgeSeconds: 7 * 24 * 60 * 60 // 7 days
@@ -80,7 +74,6 @@ export default defineConfig(({ mode }) => ({
             }
           }
         ],
-        cleanupOutdatedCaches: true,
         skipWaiting: true,
         clientsClaim: true
       },
