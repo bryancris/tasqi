@@ -19,6 +19,7 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isInitialAuth, setIsInitialAuth] = useState(true);
 
   const handleSignOut = async () => {
     try {
@@ -72,6 +73,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         await handleSignOut();
       } finally {
         setLoading(false);
+        setIsInitialAuth(false);
       }
     };
 
@@ -86,7 +88,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         case 'SIGNED_IN':
           console.log("User signed in");
           setSession(currentSession);
-          toast.success("Successfully signed in");
+          // Only show toast on initial sign in, not on view changes
+          if (isInitialAuth) {
+            toast.success("Successfully signed in");
+            setIsInitialAuth(false);
+          }
           break;
           
         case 'SIGNED_OUT':

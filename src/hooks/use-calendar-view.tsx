@@ -17,32 +17,26 @@ export function useCalendarView(initialView: CalendarView = 'tasks') {
       return;
     }
 
-    // Explicitly handle view state based on URL parameters
-    const viewParam = searchParams.get('view');
-    
-    // Reset to tasks view when no view parameter is present
-    if (!viewParam) {
+    // Handle URL parameters without triggering navigation
+    const viewParam = searchParams.get('view') as CalendarView;
+    if (viewParam && ['tasks', 'calendar', 'yearly', 'weekly'].includes(viewParam)) {
+      setView(viewParam);
+    } else if (!viewParam) {
       setView('tasks');
-      return;
     }
-
-    // Set view only for valid view parameters
-    if (['tasks', 'calendar', 'yearly', 'weekly'].includes(viewParam)) {
-      setView(viewParam as CalendarView);
-    }
-  }, [searchParams, location.pathname]);
+  }, [location.pathname, searchParams]);
 
   const changeView = (newView: CalendarView) => {
-    if (newView === 'tasks') {
-      // For tasks view, clear all parameters
-      navigate('/dashboard');
-    } else {
-      // For other views, set the view parameter
-      const params = new URLSearchParams(searchParams);
-      params.set('view', newView);
-      navigate(`/dashboard?${params.toString()}`);
-    }
     setView(newView);
+    // Update URL without causing a refresh
+    const params = new URLSearchParams(searchParams);
+    if (newView === 'tasks') {
+      params.delete('view');
+      navigate('/dashboard', { replace: true });
+    } else {
+      params.set('view', newView);
+      navigate(`/dashboard?${params.toString()}`, { replace: true });
+    }
   };
 
   return { view, changeView };

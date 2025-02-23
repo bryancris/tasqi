@@ -10,18 +10,23 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
   const navigate = useNavigate();
   const [isChecking, setIsChecking] = useState(true);
+  const [hasCheckedOnce, setHasCheckedOnce] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
         if (!loading) {
           if (!session) {
-            const { data: { session: currentSession }, error } = await supabase.auth.getSession();
-            
-            if (error || !currentSession) {
-              console.log("No session found, redirecting to auth");
-              toast.error("Please sign in to access this page");
-              navigate("/auth");
+            // Only check session if we haven't validated auth yet
+            if (!hasCheckedOnce) {
+              const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+              
+              if (error || !currentSession) {
+                console.log("No session found, redirecting to auth");
+                toast.error("Please sign in to access this page");
+                navigate("/auth");
+              }
+              setHasCheckedOnce(true);
             }
           }
           setIsChecking(false);
@@ -34,7 +39,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     };
 
     checkAuth();
-  }, [session, loading, navigate]);
+  }, [session, loading, navigate, hasCheckedOnce]);
 
   if (loading || isChecking) {
     return (
