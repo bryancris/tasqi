@@ -10,7 +10,7 @@ type AuthContextType = {
   handleSignOut: () => Promise<void>;
 };
 
-const AuthContext = createContext<AuthContextType>({
+export const AuthContext = createContext<AuthContextType>({
   session: null,
   loading: true,
   handleSignOut: async () => {},
@@ -61,10 +61,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     };
 
-    // Setup initial auth state
     setupAuth();
 
-    // Subscribe to auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
       if (!isSubscribed) return;
 
@@ -95,12 +93,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     });
 
-    // Cleanup subscription on unmount
     return () => {
       isSubscribed = false;
       subscription.unsubscribe();
     };
-  }, [isInitialAuth]); // Only depends on isInitialAuth flag
+  }, [isInitialAuth]);
 
   return (
     <AuthContext.Provider value={{ session, loading, handleSignOut }}>

@@ -1,8 +1,8 @@
 
-import { useEffect, useRef, useContext } from 'react';
+import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { AuthContext } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Create singleton channels to persist across navigations
 let tasksChannel: ReturnType<typeof supabase.channel> | null = null;
@@ -10,7 +10,7 @@ let notesChannel: ReturnType<typeof supabase.channel> | null = null;
 
 export function useSupabaseSubscription() {
   const queryClient = useQueryClient();
-  const { session } = useContext(AuthContext);
+  const { session } = useAuth();
   const isInitialized = useRef(false);
 
   useEffect(() => {
