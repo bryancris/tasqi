@@ -1,9 +1,8 @@
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -11,45 +10,19 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isChecking, setIsChecking] = useState(true);
-  const authChecked = useRef(false);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      // Skip check if already authenticated
-      if (session) {
-        setIsChecking(false);
-        authChecked.current = true;
-        return;
+    if (!loading) {
+      if (!session) {
+        console.log("No session found, redirecting to auth");
+        toast.error("Please sign in to access this page");
+        navigate("/auth", { 
+          replace: true, 
+          state: { from: location.pathname } 
+        });
       }
-
-      // Skip recheck if already verified
-      if (authChecked.current) {
-        setIsChecking(false);
-        return;
-      }
-
-      try {
-        if (!loading) {
-          const { data: { session: currentSession }, error } = await supabase.auth.getSession();
-          
-          if (error || !currentSession) {
-            console.log("No session found, redirecting to auth");
-            toast.error("Please sign in to access this page");
-            navigate("/auth", { replace: true, state: { from: location.pathname } });
-            return;
-          }
-          
-          authChecked.current = true;
-          setIsChecking(false);
-        }
-      } catch (error) {
-        console.error("Auth check error:", error);
-        toast.error("Authentication error. Please try again.");
-        navigate("/auth", { replace: true });
-      }
-    };
-
-    checkAuth();
+      setIsChecking(false);
+    }
   }, [session, loading, navigate, location]);
 
   if (loading || isChecking) {
