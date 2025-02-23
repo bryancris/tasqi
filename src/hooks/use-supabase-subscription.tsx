@@ -7,15 +7,16 @@ import { useAuth } from '@/contexts/AuthContext';
 // Create singleton channels to persist across navigations
 let tasksChannel: ReturnType<typeof supabase.channel> | null = null;
 let notesChannel: ReturnType<typeof supabase.channel> | null = null;
+let isGloballyInitialized = false;
 
 export function useSupabaseSubscription() {
   const queryClient = useQueryClient();
   const { session } = useAuth();
-  const isInitialized = useRef(false);
+  const isComponentMounted = useRef(true);
 
   useEffect(() => {
-    // Only set up subscriptions if we have a valid session and haven't initialized yet
-    if (!session || isInitialized.current) return;
+    // Only set up subscriptions if we have a valid session and haven't initialized globally
+    if (!session || isGloballyInitialized) return;
 
     const setupSubscriptions = () => {
       // Set up tasks subscription if not already established
@@ -30,8 +31,10 @@ export function useSupabaseSubscription() {
               table: 'tasks'
             },
             () => {
-              queryClient.invalidateQueries({ queryKey: ['tasks'] });
-              queryClient.invalidateQueries({ queryKey: ['timeline-tasks'] });
+              if (isComponentMounted.current) {
+                queryClient.invalidateQueries({ queryKey: ['tasks'] });
+                queryClient.invalidateQueries({ queryKey: ['timeline-tasks'] });
+              }
             }
           )
           .subscribe((status) => {
@@ -51,7 +54,9 @@ export function useSupabaseSubscription() {
               table: 'notes'
             },
             () => {
-              queryClient.invalidateQueries({ queryKey: ['notes'] });
+              if (isComponentMounted.current) {
+                queryClient.invalidateQueries({ queryKey: ['notes'] });
+              }
             }
           )
           .subscribe((status) => {
@@ -61,11 +66,12 @@ export function useSupabaseSubscription() {
     };
 
     setupSubscriptions();
-    isInitialized.current = true;
+    isGloballyInitialized = true;
 
-    // Only clean up subscriptions when the component is truly unmounting
     return () => {
-      // Check if we're actually unmounting the app (not just navigating)
+      isComponentMounted.current = false;
+      
+      // Only clean up subscriptions when the app is truly unmounting
       if (window.navigator.userAgent.includes('ReactSnap')) {
         if (tasksChannel) {
           supabase.removeChannel(tasksChannel);
@@ -75,7 +81,7 @@ export function useSupabaseSubscription() {
           supabase.removeChannel(notesChannel);
           notesChannel = null;
         }
-        isInitialized.current = false;
+        isGloballyInitialized = false;
       }
     };
   }, [queryClient, session]);

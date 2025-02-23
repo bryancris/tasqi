@@ -44,14 +44,13 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
         navigateFallback: 'index.html',
-        navigateFallbackAllowlist: [/^\/(?:[^?]*)?(?:\?.*)?$/], // Match all routes with optional query parameters
+        navigateFallbackDenylist: [/^\/api/], // Exclude API routes
         runtimeCaching: [
           {
             urlPattern: ({ url }) => {
-              // Match all app routes including query parameters
               return url.pathname.startsWith('/') && 
-                     !url.pathname.startsWith('/_') && // Exclude internal routes
-                     !url.pathname.match(/\.(js|css|png|jpg|svg|ico)$/); // Exclude static assets
+                     !url.pathname.startsWith('/api') && 
+                     !url.pathname.match(/\.(js|css|png|jpg|svg|ico)$/);
             },
             handler: 'NetworkFirst',
             options: {
@@ -83,12 +82,7 @@ export default defineConfig(({ mode }) => ({
         enabled: true,
         type: 'module',
         navigateFallback: 'index.html'
-      },
-      injectRegister: 'auto',
-      strategies: 'generateSW',
-      manifestFilename: 'manifest.webmanifest',
-      base: '/',
-      minify: true
+      }
     })
   ].filter(Boolean),
   resolve: {
