@@ -9,6 +9,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
 import { NotificationsProvider } from "@/components/notifications/NotificationsManager";
 import { CalendarViewProvider } from "@/contexts/CalendarViewContext";
+import { useSupabaseSubscription } from "@/hooks/use-supabase-subscription";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
@@ -69,6 +70,76 @@ const UpdatePasswordPage = () => {
   );
 };
 
+const AppContent = () => {
+  useSupabaseSubscription(); // Add the subscription hook here
+
+  return (
+    <Routes>
+      <Route path="/" element={<Index />} />
+      <Route path="/auth" element={<Auth />} />
+      <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
+      
+      {/* Protected Routes */}
+      <Route path="/dashboard/*" element={
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/notes" element={
+        <ProtectedRoute>
+          <Notes />
+        </ProtectedRoute>
+      } />
+      <Route path="/analytics" element={
+        <ProtectedRoute>
+          <Analytics />
+        </ProtectedRoute>
+      } />
+      <Route path="/self-care" element={
+        <ProtectedRoute>
+          <SelfCare />
+        </ProtectedRoute>
+      } />
+      <Route path="/self-care/physical-wellness" element={
+        <ProtectedRoute>
+          <PhysicalWellness />
+        </ProtectedRoute>
+      } />
+      <Route path="/self-care/mental-wellbeing" element={
+        <ProtectedRoute>
+          <MentalWellbeing />
+        </ProtectedRoute>
+      } />
+      <Route path="/self-care/personal-growth" element={
+        <ProtectedRoute>
+          <PersonalGrowth />
+        </ProtectedRoute>
+      } />
+      <Route path="/self-care/social-connections" element={
+        <ProtectedRoute>
+          <SocialConnections />
+        </ProtectedRoute>
+      } />
+      <Route path="/self-care/daily-rituals" element={
+        <ProtectedRoute>
+          <DailyRituals />
+        </ProtectedRoute>
+      } />
+      <Route path="/self-care/emotional-care" element={
+        <ProtectedRoute>
+          <EmotionalCare />
+        </ProtectedRoute>
+      } />
+      <Route path="/settings" element={
+        <ProtectedRoute>
+          <Settings />
+        </ProtectedRoute>
+      } />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+};
+
 const App = () => (
   <BrowserRouter>
     <AuthProvider>
@@ -76,69 +147,7 @@ const App = () => (
         <TooltipProvider>
           <NotificationsProvider>
             <CalendarViewProvider>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
-                
-                {/* Protected Routes */}
-                <Route path="/dashboard/*" element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                } />
-                <Route path="/notes" element={
-                  <ProtectedRoute>
-                    <Notes />
-                  </ProtectedRoute>
-                } />
-                <Route path="/analytics" element={
-                  <ProtectedRoute>
-                    <Analytics />
-                  </ProtectedRoute>
-                } />
-                <Route path="/self-care" element={
-                  <ProtectedRoute>
-                    <SelfCare />
-                  </ProtectedRoute>
-                } />
-                <Route path="/self-care/physical-wellness" element={
-                  <ProtectedRoute>
-                    <PhysicalWellness />
-                  </ProtectedRoute>
-                } />
-                <Route path="/self-care/mental-wellbeing" element={
-                  <ProtectedRoute>
-                    <MentalWellbeing />
-                  </ProtectedRoute>
-                } />
-                <Route path="/self-care/personal-growth" element={
-                  <ProtectedRoute>
-                    <PersonalGrowth />
-                  </ProtectedRoute>
-                } />
-                <Route path="/self-care/social-connections" element={
-                  <ProtectedRoute>
-                    <SocialConnections />
-                  </ProtectedRoute>
-                } />
-                <Route path="/self-care/daily-rituals" element={
-                  <ProtectedRoute>
-                    <DailyRituals />
-                  </ProtectedRoute>
-                } />
-                <Route path="/self-care/emotional-care" element={
-                  <ProtectedRoute>
-                    <EmotionalCare />
-                  </ProtectedRoute>
-                } />
-                <Route path="/settings" element={
-                  <ProtectedRoute>
-                    <Settings />
-                  </ProtectedRoute>
-                } />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              <AppContent />
               <Toaster />
               <Sonner />
               <UpdatePrompt />

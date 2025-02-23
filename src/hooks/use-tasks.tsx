@@ -3,13 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "@/components/dashboard/TaskBoard";
 import { startOfDay, endOfDay, isToday, parseISO } from "date-fns";
-import { useEffect, useCallback } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
 import { toast } from "sonner";
 
 export function useTasks() {
-  const queryClient = useQueryClient();
-
   const fetchTasks = async () => {
     const today = new Date();
     const todayStart = startOfDay(today);
@@ -59,94 +56,18 @@ export function useTasks() {
     }) as Task[];
   };
 
-  const invalidateTasksQuery = useCallback(() => {
-    console.log('Invalidating tasks query...');
-    void queryClient.invalidateQueries({ 
-      queryKey: ['tasks'],
-      exact: true,
-      refetchType: 'active'
-    });
-    // Also invalidate timeline tasks
-    void queryClient.invalidateQueries({ 
-      queryKey: ['timeline-tasks'],
-      exact: true,
-      refetchType: 'active'
-    });
-  }, [queryClient]);
-
-  // Set up real-time subscription
-  useEffect(() => {
-    console.log('Setting up real-time subscription...');
-    let isSubscribed = true;
-
-    const channel = supabase
-      .channel('tasks-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
-          schema: 'public',
-          table: 'tasks'
-        },
-        (payload) => {
-          console.log('Task changed:', payload);
-          if (isSubscribed) {
-            invalidateTasksQuery();
-          }
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'task_assignments'
-        },
-        (payload) => {
-          console.log('Task assignment changed:', payload);
-          if (isSubscribed) {
-            invalidateTasksQuery();
-          }
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'subtasks'
-        },
-        (payload) => {
-          console.log('Subtask changed:', payload);
-          if (isSubscribed) {
-            invalidateTasksQuery();
-          }
-        }
-      )
-      .subscribe((status) => {
-        console.log('Subscription status:', status);
-        if (status === 'SUBSCRIBED') {
-          console.log('Successfully subscribed to real-time changes');
-        }
-      });
-
-    // Cleanup subscription on unmount
-    return () => {
-      console.log('Cleaning up real-time subscription...');
-      isSubscribed = false;
-      supabase.removeChannel(channel);
-    };
-  }, [invalidateTasksQuery]);
-
   const { data: tasks = [], refetch } = useQuery({
     queryKey: ['tasks'],
     queryFn: fetchTasks,
-    staleTime: 0,
-    gcTime: 0,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    refetchOnReconnect: true,
+    staleTime: 5000, // Only refetch after 5 seconds
+    gcTime: 300000, // Keep unused data for 5 minutes
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+    refetchInterval: false, // Don't refetch on interval
   });
 
-  return { tasks, refetch };
+  const memoizedRefetch = useCallback(() => {
+    return refetch();
+  }, [refetch]);
+
+  return { tasks, refetch: memoizedRefetch };
 }
