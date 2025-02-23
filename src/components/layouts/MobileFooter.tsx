@@ -8,17 +8,22 @@ import { useCalendarView } from "@/hooks/use-calendar-view";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
 export function MobileFooter() {
   const location = useLocation();
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const { view, changeView } = useCalendarView();
+  const { view } = useCalendarView();
 
   const handleChatToggle = () => {
     setIsChatOpen(!isChatOpen);
+  };
+
+  // Preserve query parameters when navigating
+  const getUrlWithCurrentParams = (path: string) => {
+    const currentSearch = location.search;
+    return `${path}${currentSearch}`;
   };
 
   return (
@@ -26,7 +31,7 @@ export function MobileFooter() {
       <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-[#F1F0FB] via-[#E5DEFF] to-[#F1F0FB] border-t py-2 px-4 z-50 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
         <div className="flex justify-between items-center">
           <Link 
-            to="/dashboard"
+            to={getUrlWithCurrentParams("/dashboard")}
             className={cn(
               "flex flex-col items-center p-2",
               view === 'tasks' ? "text-[#F97316]" : "text-gray-500"
@@ -50,7 +55,7 @@ export function MobileFooter() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="center" className="min-w-[120px] bg-transparent border-none shadow-none">
               <Link 
-                to="/dashboard/weekly"
+                to={getUrlWithCurrentParams("/dashboard/weekly")}
                 className="flex items-center justify-center gap-2 py-3 relative hover:bg-transparent focus:bg-transparent"
               >
                 <div className="relative">
@@ -61,7 +66,7 @@ export function MobileFooter() {
                 </div>
               </Link>
               <Link 
-                to="/dashboard/calendar"
+                to={getUrlWithCurrentParams("/dashboard/calendar")}
                 className="flex items-center justify-center gap-2 py-3 relative hover:bg-transparent focus:bg-transparent"
               >
                 <div className="relative">
@@ -75,7 +80,7 @@ export function MobileFooter() {
           </DropdownMenu>
 
           <Link 
-            to="/notes"
+            to={getUrlWithCurrentParams("/notes")}
             className={cn(
               "flex flex-col items-center p-2",
               location.pathname === '/notes' ? "text-[#D946EF]" : "text-gray-500"
@@ -97,7 +102,7 @@ export function MobileFooter() {
           </button>
 
           <Link 
-            to="/self-care"
+            to={getUrlWithCurrentParams("/self-care")}
             className={cn(
               "flex flex-col items-center p-2",
               location.pathname === '/self-care' ? "text-[#ea384c]" : "text-gray-500"

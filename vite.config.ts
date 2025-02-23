@@ -44,15 +44,33 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
         navigateFallback: 'index.html',
-        navigateFallbackAllowlist: [/^\/.*$/], // Match all routes including query parameters
+        navigateFallbackAllowlist: [/^\/(?:[^?]*)?(?:\?.*)?$/], // Match all routes with optional query parameters
         runtimeCaching: [
           {
-            urlPattern: ({ url }) => true, // Match all navigation requests
+            urlPattern: ({ url }) => {
+              // Match all app routes including query parameters
+              return url.pathname.startsWith('/') && 
+                     !url.pathname.startsWith('/_') && // Exclude internal routes
+                     !url.pathname.match(/\.(js|css|png|jpg|svg|ico)$/); // Exclude static assets
+            },
             handler: 'NetworkFirst',
             options: {
               cacheName: 'app-navigation',
               cacheableResponse: {
                 statuses: [0, 200]
+              }
+            }
+          },
+          {
+            urlPattern: /\.(js|css|png|jpg|svg|ico)$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'static-assets',
+              cacheableResponse: {
+                statuses: [0, 200]
+              },
+              expiration: {
+                maxAgeSeconds: 30 * 24 * 60 * 60 // 30 days
               }
             }
           }
