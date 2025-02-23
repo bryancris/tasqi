@@ -19,11 +19,17 @@ export function MobileFooter() {
   const isDaily = !location.search.includes('view=');
   const currentView = new URLSearchParams(location.search).get('view') || 'tasks';
 
-  const handleNavigation = (path: string) => {
+  const handleNavigation = (path: string, clearParams: boolean = false) => {
     if (isChatOpen) {
       setIsChatOpen(false);
     }
-    navigate(path);
+    
+    if (clearParams) {
+      navigate(path);
+    } else {
+      const params = new URLSearchParams(location.search);
+      navigate(`${path}${params.toString() ? `?${params.toString()}` : ''}`);
+    }
   };
 
   const handleChatToggle = () => {
@@ -39,7 +45,7 @@ export function MobileFooter() {
               "flex flex-col items-center p-2",
               isDaily ? "text-[#F97316]" : "text-gray-500"
             )}
-            onClick={() => handleNavigation("/dashboard")}
+            onClick={() => handleNavigation("/dashboard", true)}
           >
             <Home className="h-6 w-6" />
             <span className="text-xs mt-1">Daily</span>
