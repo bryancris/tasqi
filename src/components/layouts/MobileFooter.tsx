@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { ChatBubble } from "@/components/chat/ChatBubble";
+import { useCalendarView } from "@/hooks/use-calendar-view";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,9 +16,7 @@ export function MobileFooter() {
   const location = useLocation();
   const navigate = useNavigate();
   const [isChatOpen, setIsChatOpen] = useState(false);
-
-  const isDaily = !location.search.includes('view=');
-  const currentView = new URLSearchParams(location.search).get('view') || 'tasks';
+  const { view, changeView } = useCalendarView();
 
   const handleNavigation = (path: string, clearParams: boolean = false) => {
     if (isChatOpen) {
@@ -25,11 +24,16 @@ export function MobileFooter() {
     }
     
     if (clearParams) {
+      changeView('tasks');
       navigate(path);
     } else {
       const params = new URLSearchParams(location.search);
       navigate(`${path}${params.toString() ? `?${params.toString()}` : ''}`);
     }
+  };
+
+  const handleCalendarViewChange = (newView: 'weekly' | 'calendar') => {
+    changeView(newView);
   };
 
   const handleChatToggle = () => {
@@ -43,7 +47,7 @@ export function MobileFooter() {
           <button 
             className={cn(
               "flex flex-col items-center p-2",
-              isDaily ? "text-[#F97316]" : "text-gray-500"
+              view === 'tasks' ? "text-[#F97316]" : "text-gray-500"
             )}
             onClick={() => handleNavigation("/dashboard", true)}
           >
@@ -56,7 +60,7 @@ export function MobileFooter() {
               <button 
                 className={cn(
                   "flex flex-col items-center p-2",
-                  (currentView === 'weekly' || currentView === 'calendar') ? "text-[#8B5CF6]" : "text-gray-500 hover:text-[#8B5CF6]"
+                  (view === 'weekly' || view === 'calendar') ? "text-[#8B5CF6]" : "text-gray-500 hover:text-[#8B5CF6]"
                 )}
               >
                 <Calendar className="h-6 w-6" />
@@ -65,7 +69,7 @@ export function MobileFooter() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="center" className="min-w-[120px] bg-transparent border-none shadow-none">
               <DropdownMenuItem 
-                onClick={() => handleNavigation("/dashboard?view=weekly")}
+                onClick={() => handleCalendarViewChange('weekly')}
                 className="flex items-center justify-center gap-2 py-3 relative hover:bg-transparent focus:bg-transparent"
               >
                 <div className="relative">
@@ -76,7 +80,7 @@ export function MobileFooter() {
                 </div>
               </DropdownMenuItem>
               <DropdownMenuItem 
-                onClick={() => handleNavigation("/dashboard?view=calendar")}
+                onClick={() => handleCalendarViewChange('calendar')}
                 className="flex items-center justify-center gap-2 py-3 relative hover:bg-transparent focus:bg-transparent"
               >
                 <div className="relative">

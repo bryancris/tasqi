@@ -17,18 +17,32 @@ export function useCalendarView(initialView: CalendarView = 'tasks') {
       return;
     }
 
-    // Handle query parameter based routes
+    // Explicitly handle view state based on URL parameters
     const viewParam = searchParams.get('view');
-    if (viewParam && ['tasks', 'calendar', 'yearly', 'weekly'].includes(viewParam)) {
+    
+    // Reset to tasks view when no view parameter is present
+    if (!viewParam) {
+      setView('tasks');
+      return;
+    }
+
+    // Set view only for valid view parameters
+    if (['tasks', 'calendar', 'yearly', 'weekly'].includes(viewParam)) {
       setView(viewParam as CalendarView);
     }
   }, [searchParams, location.pathname]);
 
   const changeView = (newView: CalendarView) => {
-    // Standardize all navigation to use query parameters
-    const params = new URLSearchParams(searchParams);
-    params.set('view', newView);
-    navigate(`/dashboard?${params.toString()}`);
+    if (newView === 'tasks') {
+      // For tasks view, clear all parameters
+      navigate('/dashboard');
+    } else {
+      // For other views, set the view parameter
+      const params = new URLSearchParams(searchParams);
+      params.set('view', newView);
+      navigate(`/dashboard?${params.toString()}`);
+    }
+    setView(newView);
   };
 
   return { view, changeView };
