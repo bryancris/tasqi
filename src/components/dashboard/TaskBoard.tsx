@@ -4,7 +4,7 @@ import { DesktopTaskView } from "./DesktopTaskView";
 import { MobileTaskView } from "./MobileTaskView";
 import { useTasks } from "@/hooks/use-tasks";
 import { useTaskReorder } from "@/hooks/use-task-reorder";
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useEffect } from 'react';
 import { Subtask } from "./subtasks/SubtaskList";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -56,6 +56,13 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
   const { tasks, refetch, isLoading } = useTasks();
   const { handleDragEnd } = useTaskReorder(tasks, refetch);
 
+  useEffect(() => {
+    console.log("TaskBoard mounted");
+    console.log("Is mobile:", isMobile);
+    console.log("Is loading:", isLoading);
+    console.log("Tasks count:", tasks.length);
+  }, [isMobile, isLoading, tasks.length]);
+
   const memoizedRefetch = useCallback(() => {
     return refetch();
   }, [refetch]);
@@ -64,16 +71,16 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Skeleton className="h-[calc(100vh-12rem)] w-full rounded-lg" />
-        <Skeleton className="h-[calc(100vh-12rem)] w-full hidden md:block rounded-lg" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
+        <Skeleton className="h-full w-full rounded-lg" />
+        <Skeleton className="h-full w-full hidden md:block rounded-lg" />
       </div>
     );
   }
 
   if (isMobile) {
     return (
-      <div className="h-[calc(100vh-12rem)]">
+      <div className="h-full">
         <MobileTaskView 
           tasks={memoizedTasks}
           selectedDate={selectedDate} 
@@ -86,7 +93,7 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
   }
 
   return (
-    <div className="h-[calc(100vh-12rem)]">
+    <div className="h-full">
       <DesktopTaskView 
         tasks={memoizedTasks}
         selectedDate={selectedDate} 

@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Outlet } from "react-router-dom";
 import { MobileHeader } from "./MobileHeader";
 import { MobileFooter } from "./MobileFooter";
@@ -12,15 +12,17 @@ export function DashboardLayout() {
   const isMobile = useIsMobile();
   const { selectedDate, setSelectedDate } = useCalendarView();
 
+  useEffect(() => {
+    console.log("DashboardLayout mounted");
+  }, []);
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-50">
       {isMobile ? (
         <>
           <MobileHeader />
-          <main className="pb-16 pt-[72px]">
-            <div className="container mx-auto px-4">
-              <Outlet />
-            </div>
+          <main className="flex-1 pb-16 pt-[72px]">
+            <Outlet />
           </main>
           <MobileFooter />
         </>
@@ -30,12 +32,12 @@ export function DashboardLayout() {
             selectedDate={selectedDate}
             onDateChange={setSelectedDate}
           />
-          <main className="flex-1 overflow-y-auto relative">
+          <div className="flex-1 flex flex-col overflow-hidden">
             <DesktopHeader />
-            <div className="container mx-auto p-6">
+            <main className="flex-1 overflow-y-auto bg-gray-50">
               <Outlet />
-            </div>
-          </main>
+            </main>
+          </div>
         </div>
       )}
     </div>

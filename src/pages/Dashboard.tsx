@@ -1,4 +1,5 @@
 
+import { useEffect } from "react";
 import { useTaskNotifications } from "@/hooks/use-task-notifications";
 import { TaskBoard } from "@/components/dashboard/TaskBoard";
 import { WeeklyCalendar } from "@/components/dashboard/WeeklyCalendar";
@@ -10,22 +11,25 @@ export default function Dashboard() {
   useTaskNotifications();
   const { view, selectedDate, setSelectedDate } = useCalendarView();
 
+  useEffect(() => {
+    console.log("Dashboard mounted, view:", view);
+    console.log("Selected date:", selectedDate);
+  }, [view, selectedDate]);
+
   return (
-    <main className="flex-1 overflow-y-auto bg-gray-50">
-      <div className="container mx-auto p-4">
-        {view === 'weekly' ? (
-          <WeeklyCalendar initialDate={selectedDate} />
-        ) : view === 'monthly' ? (
-          <Calendar initialDate={selectedDate} onDateSelect={setSelectedDate} />
-        ) : view === 'yearly' ? (
-          <YearlyCalendar onDateSelect={setSelectedDate} />
-        ) : (
-          <TaskBoard 
-            selectedDate={selectedDate}
-            onDateChange={setSelectedDate}
-          />
-        )}
-      </div>
-    </main>
+    <div className="w-full h-full p-4">
+      {view === 'weekly' ? (
+        <WeeklyCalendar initialDate={selectedDate} />
+      ) : view === 'monthly' ? (
+        <Calendar initialDate={selectedDate} onDateSelect={setSelectedDate} />
+      ) : view === 'yearly' ? (
+        <YearlyCalendar onDateSelect={setSelectedDate} />
+      ) : (
+        <TaskBoard 
+          selectedDate={selectedDate}
+          onDateChange={setSelectedDate}
+        />
+      )}
+    </div>
   );
 }
