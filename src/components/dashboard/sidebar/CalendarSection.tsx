@@ -25,7 +25,7 @@ export function CalendarSection() {
           label="Weekly"
         />
         <CalendarViewButton
-          view="calendar"
+          view="monthly"
           currentView={view}
           label="Monthly"
         />
