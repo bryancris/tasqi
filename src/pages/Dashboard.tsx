@@ -3,6 +3,7 @@ import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { useTaskNotifications } from "@/hooks/use-task-notifications";
 import { useCalendarView } from "@/contexts/CalendarViewContext";
 import { useState, useEffect, useRef } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { TaskBoard } from "@/components/dashboard/TaskBoard";
 import { WeeklyCalendar } from "@/components/dashboard/WeeklyCalendar";
 import { Calendar } from "@/components/dashboard/Calendar";
@@ -26,41 +27,38 @@ export default function Dashboard() {
     }
   }, []);
 
-  const renderContent = () => {
-    switch (view) {
-      case 'tasks':
-        return (
+  const renderCalendarView = () => {
+    return (
+      <Routes>
+        <Route path="/" element={
           <TaskBoard 
             selectedDate={selectedDate}
             onDateChange={setSelectedDate}
             key="taskboard"
           />
-        );
-      case 'weekly':
-        return (
+        } />
+        <Route path="weekly" element={
           <WeeklyCalendar 
             initialDate={selectedDate}
             key="weekly"
           />
-        );
-      case 'calendar':
-        return (
+        } />
+        <Route path="calendar" element={
           <Calendar 
             initialDate={selectedDate}
             onDateSelect={setSelectedDate}
             key="calendar"
           />
-        );
-      case 'yearly':
-        return (
+        } />
+        <Route path="yearly" element={
           <YearlyCalendar 
             onDateSelect={setSelectedDate}
             key="yearly"
           />
-        );
-      default:
-        return null;
-    }
+        } />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
+    );
   };
 
   if (isMobile) {
@@ -68,7 +66,7 @@ export default function Dashboard() {
       <div className="flex flex-col min-h-screen bg-gradient-to-b from-[#F1F0FB] to-[#E5DEFF]">
         <MobileHeader />
         <main className="flex-1 overflow-y-auto mt-[72px] mb-[64px]">
-          {renderContent()}
+          {renderCalendarView()}
         </main>
         <MobileFooter />
         <UpdatePrompt />
@@ -83,7 +81,7 @@ export default function Dashboard() {
       onViewChange={changeView}
     >
       <div className="h-full">
-        {renderContent()}
+        {renderCalendarView()}
       </div>
       <UpdatePrompt />
     </DashboardLayout>
