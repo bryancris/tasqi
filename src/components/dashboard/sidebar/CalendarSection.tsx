@@ -1,21 +1,10 @@
 
 import { CalendarDays } from "lucide-react";
 import { CalendarViewButton } from "./calendar/CalendarViewButton";
-import { useCalendarView, CalendarView } from "@/contexts/CalendarViewContext";
+import { useCalendarView } from "@/contexts/CalendarViewContext";
 
-interface CalendarSectionProps {
-  onViewChange?: (view: CalendarView) => void;
-}
-
-export function CalendarSection({ onViewChange }: CalendarSectionProps) {
-  const { view, changeView } = useCalendarView();
-
-  const handleViewChange = (newView: CalendarView) => {
-    changeView(newView);
-    if (onViewChange) {
-      onViewChange(newView);
-    }
-  };
+export function CalendarSection() {
+  const { view } = useCalendarView();
 
   return (
     <div className="space-y-2">
@@ -29,25 +18,21 @@ export function CalendarSection({ onViewChange }: CalendarSectionProps) {
           view="tasks"
           currentView={view}
           label="Daily"
-          onClick={handleViewChange}
         />
         <CalendarViewButton
           view="weekly"
           currentView={view}
           label="Weekly"
-          onClick={handleViewChange}
         />
         <CalendarViewButton
           view="calendar"
           currentView={view}
           label="Monthly"
-          onClick={handleViewChange}
         />
         <CalendarViewButton
           view="yearly"
           currentView={view}
           label="Yearly"
-          onClick={handleViewChange}
         />
       </div>
     </div>

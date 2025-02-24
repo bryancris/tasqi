@@ -1,18 +1,16 @@
 
 import { createContext, useContext, ReactNode } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 export type CalendarView = 'tasks' | 'calendar' | 'yearly' | 'weekly';
 
 interface CalendarViewContextType {
   view: CalendarView;
-  changeView: (view: CalendarView) => void;
 }
 
 const CalendarViewContext = createContext<CalendarViewContextType | undefined>(undefined);
 
 export function CalendarViewProvider({ children }: { children: ReactNode }) {
-  const navigate = useNavigate();
   const location = useLocation();
 
   const getCurrentView = (): CalendarView => {
@@ -23,19 +21,8 @@ export function CalendarViewProvider({ children }: { children: ReactNode }) {
     return 'tasks';
   };
 
-  const changeView = (newView: CalendarView) => {
-    const paths = {
-      tasks: '/dashboard',
-      weekly: '/dashboard/weekly',
-      calendar: '/dashboard/monthly',
-      yearly: '/dashboard/yearly'
-    };
-    navigate(paths[newView], { replace: true });
-  };
-
   const value = {
-    view: getCurrentView(),
-    changeView
+    view: getCurrentView()
   };
 
   return (
