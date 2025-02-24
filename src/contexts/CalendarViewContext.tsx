@@ -36,7 +36,7 @@ export function CalendarViewProvider({ children }: { children: ReactNode }) {
     if (location.pathname === '/') {
       navigate('/dashboard/tasks', { replace: true });
     } else {
-      const path = `/dashboard/${newView}`;
+      const path = `/dashboard/${newView === 'tasks' ? '' : newView}`;
       navigate(path, { replace: true });
     }
   }, [navigate, location.pathname]);
