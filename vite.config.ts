@@ -47,8 +47,8 @@ export default defineConfig(({ mode }) => ({
           }
         ],
         cleanupOutdatedCaches: true,
-        clientsClaim: true,
-        skipWaiting: true
+        skipWaiting: true,
+        clientsClaim: true
       },
       manifest: {
         name: 'TASQI-AI Assistant',
