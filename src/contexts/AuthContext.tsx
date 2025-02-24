@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useEffect, useState, useRef } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -19,50 +19,52 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const initialLoad = useRef(true);
-  const hasToasted = useRef(false);
-
-  const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) console.error("Error signing out:", error);
-    hasToasted.current = false; // Reset toast flag on sign out
-  };
+  const [hasShownToast, setHasShownToast] = useState(false);
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-      initialLoad.current = false;
+    let mounted = true;
+
+    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+      if (mounted) {
+        setSession(initialSession);
+        setLoading(false);
+      }
     });
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      // Only show toast if it's not the initial load and we haven't shown it yet
-      if (event === 'SIGNED_IN' && !initialLoad.current && !hasToasted.current) {
-        toast.success("Successfully signed in");
-        hasToasted.current = true;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, currentSession) => {
+      if (mounted) {
+        if (currentSession && !hasShownToast) {
+          setHasShownToast(true);
+          toast.success("Successfully signed in");
+        }
+        setSession(currentSession);
       }
-      setSession(session);
     });
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
-  }, []); // Empty dependency array
+  }, [hasShownToast]);
 
-  // Memoize the context value to prevent unnecessary re-renders
-  const contextValue = React.useMemo(
-    () => ({
-      session,
-      loading,
-      handleSignOut,
-    }),
-    [session, loading]
-  );
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      setHasShownToast(false);
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
+
+  const value = {
+    session,
+    loading,
+    handleSignOut
+  };
 
   return (
-    <AuthContext.Provider value={contextValue}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

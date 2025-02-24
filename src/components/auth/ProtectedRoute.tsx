@@ -1,5 +1,5 @@
 
-import { useEffect, useCallback } from "react";
+import { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -10,20 +10,23 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleRedirect = useCallback(() => {
-    if (!loading && !session && location.pathname !== '/auth') {
-      console.log('Redirecting to auth page from:', location.pathname);
-      toast.error("Please sign in to access this page");
-      navigate("/auth", { 
-        replace: true,
-        state: { from: location.pathname } 
-      });
-    }
-  }, [session, loading, navigate, location.pathname]);
-
   useEffect(() => {
-    handleRedirect();
-  }, [handleRedirect]);
+    let mounted = true;
+
+    const checkAuth = () => {
+      if (!loading && !session && mounted && location.pathname !== '/auth') {
+        navigate("/auth", { 
+          replace: true,
+          state: { from: location.pathname } 
+        });
+      }
+    };
+
+    checkAuth();
+    return () => {
+      mounted = false;
+    };
+  }, [session, loading, navigate, location.pathname]);
 
   if (loading) {
     return (
@@ -36,5 +39,9 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  return session ? children : null;
+  if (!session) {
+    return null;
+  }
+
+  return <>{children}</>;
 };
