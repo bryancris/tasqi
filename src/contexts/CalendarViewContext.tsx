@@ -17,7 +17,7 @@ export function CalendarViewProvider({ children }: { children: ReactNode }) {
   
   const getCurrentView = useCallback((): CalendarView => {
     const path = location.pathname;
-    if (path === '/dashboard' || path === '/dashboard/tasks' || path.endsWith('/dashboard')) return 'tasks';
+    if (path === '/dashboard' || path === '/dashboard/tasks') return 'tasks';
     if (path.includes('/weekly')) return 'weekly';
     if (path.includes('/monthly')) return 'monthly';
     if (path.includes('/yearly')) return 'yearly';
@@ -26,26 +26,18 @@ export function CalendarViewProvider({ children }: { children: ReactNode }) {
 
   const [view, setInternalView] = useState<CalendarView>(() => getCurrentView());
 
-  useEffect(() => {
-    // If we're at the root dashboard path, navigate to tasks
-    if (location.pathname === '/dashboard') {
-      navigate('/dashboard/tasks', { replace: true });
-    }
-  }, [location.pathname, navigate]);
-
   // Update view when location changes
   useEffect(() => {
     setInternalView(getCurrentView());
   }, [location.pathname, getCurrentView]);
 
   const setView = useCallback((newView: CalendarView) => {
+    setInternalView(newView);
     const targetPath = `/dashboard/${newView === 'tasks' ? 'tasks' : newView}`;
     
     if (location.pathname !== targetPath) {
-      navigate(targetPath, { replace: true });
+      navigate(targetPath);
     }
-    
-    setInternalView(newView);
   }, [navigate, location.pathname]);
 
   const contextValue = useMemo(() => ({
