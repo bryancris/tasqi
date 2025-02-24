@@ -17,7 +17,7 @@ export function DashboardLayout() {
       {isMobile ? (
         <>
           <MobileHeader />
-          <main className="pb-16">
+          <main className="pb-16 pt-[72px]">
             <div className="container mx-auto px-4">
               <Outlet />
             </div>
