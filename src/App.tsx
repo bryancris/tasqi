@@ -95,9 +95,7 @@ const AppContent = () => {
       
       <Route path="/dashboard/*" element={
         <ProtectedRoute>
-          <CalendarViewProvider>
-            <Dashboard />
-          </CalendarViewProvider>
+          <Dashboard />
         </ProtectedRoute>
       } />
       
@@ -174,10 +172,12 @@ const App = () => {
           <ThemeProvider defaultTheme="system" enableSystem>
             <TooltipProvider>
               <NotificationsProvider>
-                <AppContent />
-                <Toaster />
-                <Sonner />
-                <UpdatePrompt />
+                <CalendarViewProvider>
+                  <AppContent />
+                  <Toaster />
+                  <Sonner />
+                  <UpdatePrompt />
+                </CalendarViewProvider>
               </NotificationsProvider>
             </TooltipProvider>
           </ThemeProvider>
