@@ -8,12 +8,11 @@ import { Button } from "@/components/ui/button";
 import { HeaderTime } from "@/components/dashboard/header/HeaderTime";
 
 interface SidebarProps {
-  onViewChange?: (view: 'tasks' | 'calendar' | 'yearly' | 'weekly') => void;
   selectedDate: Date;
   onDateChange: (date: Date) => void;
 }
 
-export function Sidebar({ onViewChange, selectedDate, onDateChange }: SidebarProps) {
+export function Sidebar({ selectedDate, onDateChange }: SidebarProps) {
   return (
     <div className="w-[280px] border-r bg-background h-screen flex flex-col">
       <div className="p-4 border-b">
@@ -28,7 +27,7 @@ export function Sidebar({ onViewChange, selectedDate, onDateChange }: SidebarPro
           </Button>
         </AddTaskDrawer>
         <div className="mt-6">
-          <CalendarSection onViewChange={onViewChange} />
+          <CalendarSection />
         </div>
         <ToolsSection />
         
