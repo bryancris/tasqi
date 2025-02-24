@@ -33,13 +33,13 @@ export function CalendarViewProvider({ children }: { children: ReactNode }) {
 
   const setView = useCallback((newView: CalendarView) => {
     setInternalView(newView);
-    if (location.pathname === '/') {
-      navigate('/dashboard/tasks', { replace: true });
+    const basePath = '/dashboard';
+    if (newView === 'tasks') {
+      navigate(`${basePath}/tasks`);
     } else {
-      const path = `/dashboard/${newView === 'tasks' ? '' : newView}`;
-      navigate(path, { replace: true });
+      navigate(`${basePath}/${newView}`);
     }
-  }, [navigate, location.pathname]);
+  }, [navigate]);
 
   const contextValue = useMemo(() => ({
     view,
