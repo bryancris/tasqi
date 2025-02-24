@@ -11,7 +11,6 @@ import { CalendarViewProvider } from "@/contexts/CalendarViewContext";
 import App from './App.tsx'
 import './index.css'
 
-// Initialize QueryClient with stable configuration
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -19,20 +18,19 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       staleTime: 300000, // 5 minutes
       gcTime: 3600000, // 1 hour
-      refetchOnMount: false,  // Prevent refetching on mount
-      refetchOnReconnect: false, // Prevent refetching on reconnect
+      refetchOnMount: false,
+      refetchOnReconnect: false,
     },
   },
 });
 
-// Create root and render app with proper provider nesting
 const root = document.getElementById("root");
 if (!root) throw new Error('Root element not found');
 
 createRoot(root).render(
   <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+    <BrowserRouter>
+      <QueryClientProvider client={queryClient}>
         <ThemeProvider defaultTheme="system" enableSystem>
           <TooltipProvider>
             <AuthProvider>
@@ -44,7 +42,7 @@ createRoot(root).render(
             </AuthProvider>
           </TooltipProvider>
         </ThemeProvider>
-      </BrowserRouter>
-    </QueryClientProvider>
+      </QueryClientProvider>
+    </BrowserRouter>
   </React.StrictMode>
 );

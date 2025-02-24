@@ -1,24 +1,17 @@
 
 import { useTaskNotifications } from "@/hooks/use-task-notifications";
-import { useState, useMemo } from "react";
 import { TaskBoard } from "@/components/dashboard/TaskBoard";
 import { WeeklyCalendar } from "@/components/dashboard/WeeklyCalendar";
 import { Calendar } from "@/components/dashboard/Calendar";
 import { YearlyCalendar } from "@/components/dashboard/YearlyCalendar";
 import { useLocation } from "react-router-dom";
+import { useState } from "react";
+import { useCalendarView } from "@/contexts/CalendarViewContext";
 
 export default function Dashboard() {
   useTaskNotifications();
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const location = useLocation();
-
-  const view = useMemo(() => {
-    const path = location.pathname;
-    if (path.includes('/weekly')) return 'weekly';
-    if (path.includes('/monthly')) return 'calendar';
-    if (path.includes('/yearly')) return 'yearly';
-    return 'tasks';
-  }, [location.pathname]);
+  const { view } = useCalendarView();
   
   if (!view) {
     return null;
@@ -43,7 +36,7 @@ export default function Dashboard() {
         />
       );
       break;
-    case 'calendar':
+    case 'monthly':
       content = (
         <Calendar 
           initialDate={selectedDate}
