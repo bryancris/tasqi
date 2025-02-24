@@ -1,5 +1,5 @@
 
-import { createContext, useContext, ReactNode, useState, useCallback, useMemo, useEffect } from 'react';
+import { createContext, useContext, ReactNode, useState, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 export type CalendarView = 'tasks' | 'monthly' | 'yearly' | 'weekly';
@@ -18,41 +18,31 @@ export function CalendarViewProvider({ children }: { children: ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
   
-  const getCurrentView = useCallback((): CalendarView => {
-    const path = location.pathname;
-    if (path === '/dashboard' || path === '/dashboard/tasks') return 'tasks';
-    if (path.includes('/weekly')) return 'weekly';
-    if (path.includes('/monthly')) return 'monthly';
-    if (path.includes('/yearly')) return 'yearly';
+  // Simple direct path to view mapping
+  const getViewFromPath = useCallback((): CalendarView => {
+    if (location.pathname.includes('/weekly')) return 'weekly';
+    if (location.pathname.includes('/monthly')) return 'monthly';
+    if (location.pathname.includes('/yearly')) return 'yearly';
     return 'tasks';
   }, [location.pathname]);
 
-  const [view, setInternalView] = useState<CalendarView>('tasks');
-
-  // Update view when location changes
-  useEffect(() => {
-    const newView = getCurrentView();
-    if (view !== newView) {
-      setInternalView(newView);
-    }
-  }, [location.pathname, getCurrentView, view]);
+  const [view, setInternalView] = useState<CalendarView>(getViewFromPath);
 
   const setView = useCallback((newView: CalendarView) => {
+    const targetPath = `/dashboard/${newView}`;
     setInternalView(newView);
-    const targetPath = `/dashboard/${newView === 'tasks' ? 'tasks' : newView}`;
-    
     if (location.pathname !== targetPath) {
       navigate(targetPath, { replace: true });
     }
   }, [navigate, location.pathname]);
 
-  const contextValue = useMemo(() => ({
+  const value = useMemo(() => ({
     view,
     setView
   }), [view, setView]);
 
   return (
-    <CalendarViewContext.Provider value={contextValue}>
+    <CalendarViewContext.Provider value={value}>
       {children}
     </CalendarViewContext.Provider>
   );

@@ -11,48 +11,32 @@ export default function Dashboard() {
   useTaskNotifications();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const { view } = useCalendarView();
-  
-  // Default to tasks view if something goes wrong
-  const currentView = view || 'tasks';
 
-  let content;
-  switch (currentView) {
-    case 'tasks':
-      content = (
-        <TaskBoard 
-          selectedDate={selectedDate}
-          onDateChange={setSelectedDate}
-          key="taskboard"
-        />
-      );
-      break;
+  switch (view) {
     case 'weekly':
-      content = (
+      return (
         <WeeklyCalendar 
           initialDate={selectedDate}
           key="weekly"
         />
       );
-      break;
     case 'monthly':
-      content = (
+      return (
         <Calendar 
           initialDate={selectedDate}
           onDateSelect={setSelectedDate}
           key="calendar"
         />
       );
-      break;
     case 'yearly':
-      content = (
+      return (
         <YearlyCalendar 
           onDateSelect={setSelectedDate}
           key="yearly"
         />
       );
-      break;
     default:
-      content = (
+      return (
         <TaskBoard 
           selectedDate={selectedDate}
           onDateChange={setSelectedDate}
@@ -60,6 +44,4 @@ export default function Dashboard() {
         />
       );
   }
-
-  return <div className="h-full">{content}</div>;
 }
