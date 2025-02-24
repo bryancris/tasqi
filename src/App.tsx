@@ -6,6 +6,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
+import { CalendarViewProvider } from "@/contexts/CalendarViewContext";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Auth from "./pages/Auth";
@@ -68,7 +69,11 @@ const AppRoutes = React.memo(() => (
     <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
     
     <Route element={<ProtectedRoute />}>
-      <Route element={<DashboardLayout />}>
+      <Route element={
+        <CalendarViewProvider>
+          <DashboardLayout />
+        </CalendarViewProvider>
+      }>
         <Route path="dashboard">
           <Route index element={<Navigate to="tasks" replace />} />
           <Route path="tasks" element={<Dashboard />} />
