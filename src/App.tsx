@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -87,17 +88,18 @@ const ProtectedRoutes = () => {
     <ProtectedRoute>
       <CalendarViewProvider>
         <Routes>
-          <Route path="/dashboard/*" element={<Dashboard />} />
-          <Route path="/notes" element={<Notes />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/analytics" element={<Analytics />} />
-          <Route path="/self-care" element={<SelfCare />} />
-          <Route path="/physical-wellness" element={<PhysicalWellness />} />
-          <Route path="/mental-wellbeing" element={<MentalWellbeing />} />
-          <Route path="/personal-growth" element={<PersonalGrowth />} />
-          <Route path="/social-connections" element={<SocialConnections />} />
-          <Route path="/daily-rituals" element={<DailyRituals />} />
-          <Route path="/emotional-care" element={<EmotionalCare />} />
+          <Route path="dashboard/*" element={<Dashboard />} />
+          <Route path="notes" element={<Notes />} />
+          <Route path="settings" element={<Settings />} />
+          <Route path="analytics" element={<Analytics />} />
+          <Route path="self-care" element={<SelfCare />} />
+          <Route path="physical-wellness" element={<PhysicalWellness />} />
+          <Route path="mental-wellbeing" element={<MentalWellbeing />} />
+          <Route path="personal-growth" element={<PersonalGrowth />} />
+          <Route path="social-connections" element={<SocialConnections />} />
+          <Route path="daily-rituals" element={<DailyRituals />} />
+          <Route path="emotional-care" element={<EmotionalCare />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </CalendarViewProvider>
     </ProtectedRoute>
