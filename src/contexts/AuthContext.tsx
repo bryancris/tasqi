@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useRef } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -19,7 +19,7 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isInitialAuth, setIsInitialAuth] = useState(true);
+  const hasShownInitialToast = useRef(false);
 
   const handleSignOut = async () => {
     try {
@@ -36,7 +36,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    let isSubscribed = true;
+    let mounted = true;
 
     const setupAuth = async () => {
       try {
@@ -48,32 +48,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return;
         }
 
-        if (isSubscribed) {
+        if (mounted) {
           setSession(initialSession);
           setLoading(false);
+          
+          if (initialSession && !hasShownInitialToast.current) {
+            toast.success("Successfully signed in");
+            hasShownInitialToast.current = true;
+          }
         }
 
       } catch (error) {
         console.error("Error in auth setup:", error);
-        if (isSubscribed) {
+        if (mounted) {
           setLoading(false);
         }
       }
     };
 
-    setupAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
-      if (!isSubscribed) return;
-
-      console.log("Auth state changed:", event, currentSession?.user?.email);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
+      if (!mounted) return;
 
       switch (event) {
         case 'SIGNED_IN':
-          setSession(currentSession);
-          if (isInitialAuth) {
-            toast.success("Successfully signed in");
-            setIsInitialAuth(false);
+          if (!session) {
+            setSession(currentSession);
           }
           break;
           
@@ -86,18 +85,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           
         case 'TOKEN_REFRESHED':
         case 'USER_UPDATED':
-          if (currentSession) {
+          if (currentSession && JSON.stringify(currentSession) !== JSON.stringify(session)) {
             setSession(currentSession);
           }
           break;
       }
     });
 
+    setupAuth();
+
     return () => {
-      isSubscribed = false;
+      mounted = false;
       subscription.unsubscribe();
     };
-  }, [isInitialAuth]);
+  }, []); // Remove all dependencies from the effect
 
   return (
     <AuthContext.Provider value={{ session, loading, handleSignOut }}>
