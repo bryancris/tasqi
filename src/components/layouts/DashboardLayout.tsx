@@ -6,11 +6,11 @@ import { MobileFooter } from "./MobileFooter";
 import { Sidebar } from "../dashboard/Sidebar";
 import { DesktopHeader } from "./DesktopHeader";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useState } from "react";
+import { useCalendarView } from "@/contexts/CalendarViewContext";
 
 export function DashboardLayout() {
   const isMobile = useIsMobile();
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const { selectedDate, setSelectedDate } = useCalendarView();
 
   return (
     <div className="min-h-screen bg-background">

@@ -4,13 +4,12 @@ import { TaskBoard } from "@/components/dashboard/TaskBoard";
 import { WeeklyCalendar } from "@/components/dashboard/WeeklyCalendar";
 import { Calendar } from "@/components/dashboard/Calendar";
 import { YearlyCalendar } from "@/components/dashboard/YearlyCalendar";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useCalendarView } from "@/contexts/CalendarViewContext";
 
 export default function Dashboard() {
   useTaskNotifications();
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const { view } = useCalendarView();
+  const { view, selectedDate, setSelectedDate } = useCalendarView();
 
   useEffect(() => {
     console.log('Dashboard mounted, current view:', view);

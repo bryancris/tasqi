@@ -7,16 +7,21 @@ export type CalendarView = 'tasks' | 'monthly' | 'yearly' | 'weekly';
 interface CalendarViewContextType {
   view: CalendarView;
   setView: (view: CalendarView) => void;
+  selectedDate: Date;
+  setSelectedDate: (date: Date) => void;
 }
 
 const CalendarViewContext = createContext<CalendarViewContextType>({
   view: 'tasks',
-  setView: () => {}
+  setView: () => {},
+  selectedDate: new Date(),
+  setSelectedDate: () => {}
 });
 
 export function CalendarViewProvider({ children }: { children: ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [view, setCurrentView] = useState<CalendarView>(() => {
     // Initialize with the correct view based on the current path
     const path = location.pathname;
@@ -49,7 +54,7 @@ export function CalendarViewProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <CalendarViewContext.Provider value={{ view, setView }}>
+    <CalendarViewContext.Provider value={{ view, setView, selectedDate, setSelectedDate }}>
       {children}
     </CalendarViewContext.Provider>
   );
