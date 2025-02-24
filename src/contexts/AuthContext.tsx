@@ -19,8 +19,7 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const hasShownToast = useRef(false);
-  const hasInitialized = useRef(false);
+  const initialized = useRef(false);
 
   const handleSignOut = async () => {
     try {
@@ -28,54 +27,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error && !error.message?.includes('session_not_found')) {
         console.error("Error signing out:", error);
       }
-      setSession(null);
-      hasShownToast.current = false;
     } catch (error) {
       console.error("Sign out error:", error);
     }
   };
 
-  // Handle initial session
   useEffect(() => {
-    if (hasInitialized.current) return;
-    hasInitialized.current = true;
+    if (initialized.current) return;
 
-    const initializeAuth = async () => {
-      try {
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
-        setSession(currentSession);
-        
-        if (currentSession && !hasShownToast.current) {
-          toast.success("Successfully signed in");
-          hasShownToast.current = true;
-        }
-      } finally {
-        setLoading(false);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+      setSession(currentSession);
+      
+      if (event === 'SIGNED_IN' && !initialized.current) {
+        toast.success("Successfully signed in");
       }
-    };
-
-    initializeAuth();
-
-    // Set up auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
-      console.log("Auth state changed:", event);
       
       if (event === 'SIGNED_OUT') {
         setSession(null);
-        hasShownToast.current = false;
-      } else if (event === 'SIGNED_IN' && currentSession) {
-        setSession(currentSession);
-        if (!hasShownToast.current) {
-          toast.success("Successfully signed in");
-          hasShownToast.current = true;
-        }
       }
+      
+      setLoading(false);
+    });
+
+    // Initial session check
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      setSession(currentSession);
+      setLoading(false);
+      initialized.current = true;
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, []); // Empty dependency array
+  }, []);
 
   return (
     <AuthContext.Provider value={{ session, loading, handleSignOut }}>
