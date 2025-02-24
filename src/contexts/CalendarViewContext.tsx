@@ -1,5 +1,5 @@
 
-import { createContext, useContext, ReactNode, useState, useCallback, useMemo } from 'react';
+import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 export type CalendarView = 'tasks' | 'monthly' | 'yearly' | 'weekly';
@@ -17,32 +17,30 @@ const CalendarViewContext = createContext<CalendarViewContextType>({
 export function CalendarViewProvider({ children }: { children: ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
-  
-  const getViewFromPath = useCallback((): CalendarView => {
+  const [view, setCurrentView] = useState<CalendarView>('tasks');
+
+  // Update view based on current route
+  useEffect(() => {
     const path = location.pathname;
-    if (path === '/dashboard' || path === '/dashboard/tasks') return 'tasks';
-    if (path.includes('/weekly')) return 'weekly';
-    if (path.includes('/monthly')) return 'monthly';
-    if (path.includes('/yearly')) return 'yearly';
-    return 'tasks';
+    let newView: CalendarView = 'tasks';
+
+    if (path.includes('/weekly')) newView = 'weekly';
+    else if (path.includes('/monthly')) newView = 'monthly';
+    else if (path.includes('/yearly')) newView = 'yearly';
+    else if (path.includes('/tasks') || path === '/dashboard') newView = 'tasks';
+
+    setCurrentView(newView);
   }, [location.pathname]);
 
-  const [view] = useState<CalendarView>(getViewFromPath);
-
-  const setView = useCallback((newView: CalendarView) => {
-    const targetPath = `/dashboard/${newView === 'tasks' ? 'tasks' : newView}`;
+  const setView = (newView: CalendarView) => {
+    const targetPath = `/dashboard/${newView}`;
     if (location.pathname !== targetPath) {
       navigate(targetPath);
     }
-  }, [navigate, location.pathname]);
-
-  const value = useMemo(() => ({
-    view,
-    setView
-  }), [view, setView]);
+  };
 
   return (
-    <CalendarViewContext.Provider value={value}>
+    <CalendarViewContext.Provider value={{ view, setView }}>
       {children}
     </CalendarViewContext.Provider>
   );
