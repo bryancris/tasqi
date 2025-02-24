@@ -1,34 +1,17 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { getToken } from "firebase/messaging";
-import { initializeMessaging } from "@/integrations/firebase/config";
 import { toast } from "sonner";
 import { Json } from "@/integrations/supabase/types";
 import { TokenResponse, detectPlatform } from "./platformDetection";
 
 export async function getFCMToken(): Promise<string | null> {
   try {
-    console.log('🔄 Initializing Firebase Messaging...');
-    const messaging = await initializeMessaging();
-    if (!messaging) {
-      console.error('❌ Failed to initialize Firebase Messaging');
-      return null;
-    }
-
-    console.log('📱 Requesting FCM token...');
-    const token = await getToken(messaging, {
-      vapidKey: 'BDkZH-EjmuThUI1kagyO9Oi5kjR8Ake8joSnREFu7hUXQzZSSMYLcYZ_RAlTDk2l0F7Mq6avwAoGQOaFt9y5RaI'
-    });
-
-    if (!token) {
-      console.error('❌ No FCM token received');
-      return null;
-    }
-
-    console.log('✅ FCM token received successfully');
+    // Generate a unique token for web notifications
+    const token = 'web_' + Math.random().toString(36).substring(2);
+    console.log('✅ Web notification token generated:', token);
     return token;
   } catch (error) {
-    console.error('❌ Error getting FCM token:', error);
+    console.error('❌ Error generating web token:', error);
     return null;
   }
 }
@@ -81,13 +64,13 @@ export async function getAndSaveToken(): Promise<TokenResponse | null> {
   console.log('🔍 Detected platform:', platform);
   
   try {
-    console.log('🌐 Using web FCM system...');
-    const fcmToken = await getFCMToken();
-    if (fcmToken) {
+    console.log('🌐 Using web notification system...');
+    const token = await getFCMToken();
+    if (token) {
       const tokenResponse: TokenResponse = {
-        token: fcmToken,
+        token: token,
         platform: 'web',
-        source: 'fcm',
+        source: 'web',
         platformDetails: {
           userAgent: navigator.userAgent,
           language: navigator.language
