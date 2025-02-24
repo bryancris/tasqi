@@ -3,7 +3,7 @@ import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "next-themes";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -33,8 +33,8 @@ import { supabase } from "@/integrations/supabase/client";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5000,
-      gcTime: 300000,
+      staleTime: 300000, // Increase stale time to 5 minutes
+      gcTime: 3600000, // Increase cache time to 1 hour
       refetchOnWindowFocus: false,
       refetchInterval: false,
       retry: false
@@ -85,47 +85,48 @@ const UpdatePasswordPage = () => {
 
 const App = () => {
   return (
-    <React.StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <ThemeProvider defaultTheme="system" enableSystem>
-            <TooltipProvider>
-              <AuthProvider>
-                <NotificationsProvider>
-                  <CalendarViewProvider>
-                    <Routes>
-                      <Route path="/" element={<Index />} />
-                      <Route path="/auth" element={<Auth />} />
-                      <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
-                      <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-                        <Route path="/dashboard" element={<Dashboard />} />
-                        <Route path="/dashboard/weekly" element={<Dashboard />} />
-                        <Route path="/dashboard/monthly" element={<Dashboard />} />
-                        <Route path="/dashboard/yearly" element={<Dashboard />} />
-                        <Route path="/notes" element={<Notes />} />
-                        <Route path="/settings" element={<Settings />} />
-                        <Route path="/analytics" element={<Analytics />} />
-                        <Route path="/self-care" element={<SelfCare />} />
-                        <Route path="/physical-wellness" element={<PhysicalWellness />} />
-                        <Route path="/mental-wellbeing" element={<MentalWellbeing />} />
-                        <Route path="/personal-growth" element={<PersonalGrowth />} />
-                        <Route path="/social-connections" element={<SocialConnections />} />
-                        <Route path="/daily-rituals" element={<DailyRituals />} />
-                        <Route path="/emotional-care" element={<EmotionalCare />} />
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <ThemeProvider defaultTheme="system" enableSystem>
+          <TooltipProvider>
+            <AuthProvider>
+              <NotificationsProvider>
+                <CalendarViewProvider>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
+                    <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+                      <Route path="/dashboard">
+                        <Route index element={<Navigate to="/dashboard/tasks" replace />} />
+                        <Route path="tasks" element={<Dashboard key="tasks" />} />
+                        <Route path="weekly" element={<Dashboard key="weekly" />} />
+                        <Route path="monthly" element={<Dashboard key="monthly" />} />
+                        <Route path="yearly" element={<Dashboard key="yearly" />} />
                       </Route>
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                    <Toaster />
-                    <Sonner />
-                    <UpdatePrompt />
-                  </CalendarViewProvider>
-                </NotificationsProvider>
-              </AuthProvider>
-            </TooltipProvider>
-          </ThemeProvider>
-        </BrowserRouter>
-      </QueryClientProvider>
-    </React.StrictMode>
+                      <Route path="/notes" element={<Notes />} />
+                      <Route path="/settings" element={<Settings />} />
+                      <Route path="/analytics" element={<Analytics />} />
+                      <Route path="/self-care" element={<SelfCare />} />
+                      <Route path="/physical-wellness" element={<PhysicalWellness />} />
+                      <Route path="/mental-wellbeing" element={<MentalWellbeing />} />
+                      <Route path="/personal-growth" element={<PersonalGrowth />} />
+                      <Route path="/social-connections" element={<SocialConnections />} />
+                      <Route path="/daily-rituals" element={<DailyRituals />} />
+                      <Route path="/emotional-care" element={<EmotionalCare />} />
+                    </Route>
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                  <Toaster />
+                  <Sonner />
+                  <UpdatePrompt />
+                </CalendarViewProvider>
+              </NotificationsProvider>
+            </AuthProvider>
+          </TooltipProvider>
+        </ThemeProvider>
+      </BrowserRouter>
+    </QueryClientProvider>
   );
 };
 

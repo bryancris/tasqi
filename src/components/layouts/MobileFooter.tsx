@@ -1,6 +1,6 @@
 
 import { Home, Calendar, FileText, MessageSquare, Heart, CalendarDays } from "lucide-react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { ChatBubble } from "@/components/chat/ChatBubble";
@@ -13,24 +13,15 @@ import {
 
 export function MobileFooter() {
   const location = useLocation();
-  const navigate = useNavigate();
   const [isChatOpen, setIsChatOpen] = useState(false);
   const { view } = useCalendarView();
-
-  const handleChatToggle = () => {
-    setIsChatOpen(!isChatOpen);
-  };
-
-  const handleCalendarClick = (newView: 'weekly' | 'monthly') => {
-    navigate(`/dashboard/${newView}`, { replace: true });
-  };
 
   return (
     <>
       <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-[#F1F0FB] via-[#E5DEFF] to-[#F1F0FB] border-t py-2 px-4 z-50 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
         <div className="flex justify-between items-center">
-          <button 
-            onClick={() => navigate('/dashboard', { replace: true })}
+          <Link 
+            to="/dashboard/tasks"
             className={cn(
               "flex flex-col items-center p-2",
               view === 'tasks' ? "text-[#F97316]" : "text-gray-500"
@@ -38,7 +29,7 @@ export function MobileFooter() {
           >
             <Home className="h-6 w-6" />
             <span className="text-xs mt-1">Daily</span>
-          </button>
+          </Link>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -53,8 +44,8 @@ export function MobileFooter() {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="center" className="min-w-[120px] bg-transparent border-none shadow-none">
-              <button
-                onClick={() => handleCalendarClick('weekly')}
+              <Link
+                to="/dashboard/weekly"
                 className="flex items-center justify-center gap-2 py-3 relative hover:bg-transparent focus:bg-transparent w-full"
               >
                 <div className="relative">
@@ -63,9 +54,9 @@ export function MobileFooter() {
                     W
                   </span>
                 </div>
-              </button>
-              <button
-                onClick={() => handleCalendarClick('monthly')}
+              </Link>
+              <Link
+                to="/dashboard/monthly"
                 className="flex items-center justify-center gap-2 py-3 relative hover:bg-transparent focus:bg-transparent w-full"
               >
                 <div className="relative">
@@ -74,7 +65,7 @@ export function MobileFooter() {
                     M
                   </span>
                 </div>
-              </button>
+              </Link>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -90,7 +81,7 @@ export function MobileFooter() {
           </Link>
 
           <button 
-            onClick={handleChatToggle}
+            onClick={() => setIsChatOpen(true)}
             className={cn(
               "flex flex-col items-center p-2",
               isChatOpen ? "text-[#33C3F0]" : "text-gray-500 hover:text-[#33C3F0]"
