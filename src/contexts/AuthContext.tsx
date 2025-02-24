@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -19,65 +19,71 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const hasShownToast = useRef(false);
+  const mounted = useRef(true);
 
-  // Single source of truth for auth state
+  // Memoize setAuthState to prevent unnecessary re-renders
   const setAuthState = useCallback((newSession: Session | null) => {
+    if (!mounted.current) return;
+
     setSession(newSession);
-    setIsAuthenticated(!!newSession);
     setLoading(false);
+
+    if (newSession && !hasShownToast.current) {
+      toast.success("Successfully signed in", {
+        id: "auth-success",
+        duration: 3000,
+      });
+      hasShownToast.current = true;
+    }
   }, []);
 
   useEffect(() => {
-    let mounted = true;
-
-    // Initial session check
+    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (mounted) {
+      if (mounted.current) {
         setAuthState(session);
-        
-        // Only show toast on initial auth, not on every re-render
-        if (session && !isAuthenticated) {
-          toast.success("Successfully signed in", {
-            id: "auth-success",
-            duration: 3000,
-          });
-        }
       }
     });
 
-    // Auth state change subscription
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        if (mounted) {
-          setAuthState(session);
-        }
+    // Set up auth state listener
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (mounted.current) {
+        setAuthState(session);
       }
-    );
+    });
 
     return () => {
-      mounted = false;
-      subscription.unsubscribe();
+      mounted.current = false;
+      subscription?.unsubscribe();
     };
-  }, [setAuthState, isAuthenticated]);
+  }, [setAuthState]);
 
   const handleSignOut = useCallback(async () => {
     try {
       await supabase.auth.signOut();
-      setAuthState(null);
+      if (mounted.current) {
+        setSession(null);
+        hasShownToast.current = false; // Reset toast flag on sign out
+      }
     } catch (error) {
       console.error("Error signing out:", error);
     }
-  }, [setAuthState]);
+  }, []);
 
-  const value = {
-    session,
-    loading,
-    handleSignOut,
-  };
+  const contextValue = React.useMemo(
+    () => ({
+      session,
+      loading,
+      handleSignOut,
+    }),
+    [session, loading, handleSignOut]
+  );
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
