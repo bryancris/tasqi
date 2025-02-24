@@ -7,7 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Settings, LogOut, Download, RefreshCw } from "lucide-react";
+import { Settings, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Link, useNavigate } from "react-router-dom";
@@ -38,25 +38,6 @@ export function HeaderUserMenu() {
     }
   };
 
-  const handleInstall = () => {
-    if (typeof window.showInstallPrompt === 'function') {
-      window.showInstallPrompt();
-    }
-  };
-
-  const handleCheckForUpdates = async () => {
-    try {
-      if ('serviceWorker' in navigator) {
-        const registration = await navigator.serviceWorker.ready;
-        await registration.update();
-        toast.success("Checking for updates...");
-      }
-    } catch (error) {
-      console.error('Update check error:', error);
-      toast.error("Failed to check for updates");
-    }
-  };
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -78,14 +59,6 @@ export function HeaderUserMenu() {
             <Settings className="mr-2 h-4 w-4" />
             Settings
           </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleInstall}>
-          <Download className="mr-2 h-4 w-4" />
-          Install App
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleCheckForUpdates}>
-          <RefreshCw className="mr-2 h-4 w-4" />
-          Check for Updates
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />

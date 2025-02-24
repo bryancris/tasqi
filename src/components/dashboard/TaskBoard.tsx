@@ -64,16 +64,16 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-[calc(100vh-10rem)]">
-        <Skeleton className="h-full w-full rounded-lg" />
-        <Skeleton className="h-full w-full hidden md:block rounded-lg" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Skeleton className="h-[calc(100vh-12rem)] w-full rounded-lg" />
+        <Skeleton className="h-[calc(100vh-12rem)] w-full hidden md:block rounded-lg" />
       </div>
     );
   }
 
   if (isMobile) {
     return (
-      <div className="h-[calc(100vh-10rem)]">
+      <div className="h-[calc(100vh-12rem)]">
         <MobileTaskView 
           tasks={memoizedTasks}
           selectedDate={selectedDate} 
@@ -86,7 +86,7 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
   }
 
   return (
-    <div className="h-[calc(100vh-10rem)]">
+    <div className="h-[calc(100vh-12rem)]">
       <DesktopTaskView 
         tasks={memoizedTasks}
         selectedDate={selectedDate} 
