@@ -2,15 +2,9 @@
 import React, { Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { ThemeProvider } from "next-themes";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
-import { NotificationsProvider } from "@/components/notifications/NotificationsManager";
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { CalendarViewProvider } from "@/contexts/CalendarViewContext";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
@@ -29,20 +23,6 @@ import Settings from "./pages/Settings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UpdatePasswordForm } from "@/components/auth/UpdatePasswordForm";
 import { supabase } from "@/integrations/supabase/client";
-
-// Create a persistent QueryClient instance
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
-      refetchOnReconnect: false,
-      retry: false,
-      staleTime: 300000, // 5 minutes
-      gcTime: 3600000, // 1 hour
-    },
-  },
-});
 
 const UpdatePasswordPage = () => {
   React.useEffect(() => {
@@ -112,29 +92,15 @@ const AppRoutes = React.memo(() => (
 
 AppRoutes.displayName = 'AppRoutes';
 
-// Main app component with stable provider configuration
+// Main app component with stable configuration
 const App = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <ThemeProvider defaultTheme="system" enableSystem>
-          <TooltipProvider>
-            <AuthProvider>
-              <NotificationsProvider>
-                <CalendarViewProvider>
-                  <Suspense fallback={null}>
-                    <AppRoutes />
-                  </Suspense>
-                  <Toaster />
-                  <Sonner />
-                  <UpdatePrompt />
-                </CalendarViewProvider>
-              </NotificationsProvider>
-            </AuthProvider>
-          </TooltipProvider>
-        </ThemeProvider>
-      </BrowserRouter>
-    </QueryClientProvider>
+    <Suspense fallback={null}>
+      <AppRoutes />
+      <Toaster />
+      <Sonner />
+      <UpdatePrompt />
+    </Suspense>
   );
 };
 
