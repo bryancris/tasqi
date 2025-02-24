@@ -92,15 +92,21 @@ const AppRoutes = React.memo(() => (
 
 AppRoutes.displayName = 'AppRoutes';
 
-// Main app component with stable configuration
+// Main app component with proper error boundaries and suspense
 const App = () => {
   return (
-    <Suspense fallback={null}>
-      <AppRoutes />
-      <Toaster />
-      <Sonner />
-      <UpdatePrompt />
-    </Suspense>
+    <div className="app-container">
+      <Suspense fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+        </div>
+      }>
+        <AppRoutes />
+        <Toaster />
+        <Sonner />
+        <UpdatePrompt />
+      </Suspense>
+    </div>
   );
 };
 

@@ -20,42 +20,49 @@ export default function Dashboard() {
     return 'tasks';
   }, [location.pathname]);
   
-  const renderView = useMemo(() => {
-    switch (view) {
-      case 'tasks':
-        return (
-          <TaskBoard 
-            selectedDate={selectedDate}
-            onDateChange={setSelectedDate}
-            key="taskboard"
-          />
-        );
-      case 'weekly':
-        return (
-          <WeeklyCalendar 
-            initialDate={selectedDate}
-            key="weekly"
-          />
-        );
-      case 'calendar':
-        return (
-          <Calendar 
-            initialDate={selectedDate}
-            onDateSelect={setSelectedDate}
-            key="calendar"
-          />
-        );
-      case 'yearly':
-        return (
-          <YearlyCalendar 
-            onDateSelect={setSelectedDate}
-            key="yearly"
-          />
-        );
-      default:
-        return null;
-    }
-  }, [view, selectedDate]);
+  if (!view) {
+    return null;
+  }
 
-  return <div className="h-full">{renderView}</div>;
+  let content;
+  switch (view) {
+    case 'tasks':
+      content = (
+        <TaskBoard 
+          selectedDate={selectedDate}
+          onDateChange={setSelectedDate}
+          key="taskboard"
+        />
+      );
+      break;
+    case 'weekly':
+      content = (
+        <WeeklyCalendar 
+          initialDate={selectedDate}
+          key="weekly"
+        />
+      );
+      break;
+    case 'calendar':
+      content = (
+        <Calendar 
+          initialDate={selectedDate}
+          onDateSelect={setSelectedDate}
+          key="calendar"
+        />
+      );
+      break;
+    case 'yearly':
+      content = (
+        <YearlyCalendar 
+          onDateSelect={setSelectedDate}
+          key="yearly"
+        />
+      );
+      break;
+    default:
+      content = null;
+  }
+
+  return <div className="h-full">{content}</div>;
 }
