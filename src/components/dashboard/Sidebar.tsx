@@ -17,9 +17,9 @@ interface SidebarProps {
 export function Sidebar({ selectedDate, onDateChange }: SidebarProps) {
   return (
     <div className="w-[280px] border-r bg-background h-screen flex flex-col">
-      <div className="p-4 border-b flex justify-between items-center">
+      <div className="p-4 border-b flex items-center justify-between">
         <HeaderTime />
-        <div className="flex items-center gap-2">
+        <div className="flex items-center space-x-2">
           <HeaderNotifications />
           <HeaderUserMenu />
         </div>
