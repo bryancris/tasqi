@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useEffect, useState, useRef } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -19,47 +19,29 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const initialized = useRef(false);
 
   const handleSignOut = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error && !error.message?.includes('session_not_found')) {
-        console.error("Error signing out:", error);
-      }
-    } catch (error) {
-      console.error("Sign out error:", error);
-    }
+    const { error } = await supabase.auth.signOut();
+    if (error) console.error("Error signing out:", error);
   };
 
   useEffect(() => {
-    if (initialized.current) return;
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
-      setSession(currentSession);
-      
-      if (event === 'SIGNED_IN' && !initialized.current) {
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && !loading) {
         toast.success("Successfully signed in");
       }
-      
-      if (event === 'SIGNED_OUT') {
-        setSession(null);
-      }
-      
-      setLoading(false);
+      setSession(session);
     });
 
-    // Initial session check
-    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-      setSession(currentSession);
-      setLoading(false);
-      initialized.current = true;
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+    return () => subscription.unsubscribe();
+  }, []); // Empty dependency array
 
   return (
     <AuthContext.Provider value={{ session, loading, handleSignOut }}>
