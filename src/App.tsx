@@ -30,7 +30,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UpdatePasswordForm } from "@/components/auth/UpdatePasswordForm";
 import { supabase } from "@/integrations/supabase/client";
 
-// Create a persistent QueryClient instance with stricter caching
+// Create a persistent QueryClient instance
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -38,56 +38,11 @@ const queryClient = new QueryClient({
       refetchOnMount: false,
       refetchOnReconnect: false,
       retry: false,
-      staleTime: Infinity,
-      gcTime: Infinity,
+      staleTime: 300000, // 5 minutes
+      gcTime: 3600000, // 1 hour
     },
   },
 });
-
-const AppContent = () => {
-  return (
-    <ThemeProvider defaultTheme="system" enableSystem>
-      <TooltipProvider>
-        <AuthProvider>
-          <NotificationsProvider>
-            <CalendarViewProvider>
-              <Suspense fallback={null}>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
-                  <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-                    <Route path="/dashboard">
-                      <Route index element={<Navigate to="/dashboard/tasks" replace />} />
-                      <Route path="tasks" element={<Dashboard />} />
-                      <Route path="weekly" element={<Dashboard />} />
-                      <Route path="monthly" element={<Dashboard />} />
-                      <Route path="yearly" element={<Dashboard />} />
-                    </Route>
-                    <Route path="/notes" element={<Notes />} />
-                    <Route path="/settings" element={<Settings />} />
-                    <Route path="/analytics" element={<Analytics />} />
-                    <Route path="/self-care" element={<SelfCare />} />
-                    <Route path="/physical-wellness" element={<PhysicalWellness />} />
-                    <Route path="/mental-wellbeing" element={<MentalWellbeing />} />
-                    <Route path="/personal-growth" element={<PersonalGrowth />} />
-                    <Route path="/social-connections" element={<SocialConnections />} />
-                    <Route path="/daily-rituals" element={<DailyRituals />} />
-                    <Route path="/emotional-care" element={<EmotionalCare />} />
-                  </Route>
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
-              <Toaster />
-              <Sonner />
-              <UpdatePrompt />
-            </CalendarViewProvider>
-          </NotificationsProvider>
-        </AuthProvider>
-      </TooltipProvider>
-    </ThemeProvider>
-  );
-};
 
 const UpdatePasswordPage = () => {
   React.useEffect(() => {
@@ -101,14 +56,10 @@ const UpdatePasswordPage = () => {
           ?.split('=')[1];
 
         if (accessToken) {
-          const { data, error } = await supabase.auth.setSession({
+          await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: '',
           });
-
-          if (error) {
-            console.error('Error setting session:', error);
-          }
         }
       }
     };
@@ -130,11 +81,58 @@ const UpdatePasswordPage = () => {
   );
 };
 
+// Separate routes component to prevent unnecessary re-renders
+const AppRoutes = React.memo(() => (
+  <Routes>
+    <Route path="/" element={<Index />} />
+    <Route path="/auth" element={<Auth />} />
+    <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
+    <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+      <Route path="/dashboard">
+        <Route index element={<Navigate to="/dashboard/tasks" replace />} />
+        <Route path="tasks" element={<Dashboard />} />
+        <Route path="weekly" element={<Dashboard />} />
+        <Route path="monthly" element={<Dashboard />} />
+        <Route path="yearly" element={<Dashboard />} />
+      </Route>
+      <Route path="/notes" element={<Notes />} />
+      <Route path="/settings" element={<Settings />} />
+      <Route path="/analytics" element={<Analytics />} />
+      <Route path="/self-care" element={<SelfCare />} />
+      <Route path="/physical-wellness" element={<PhysicalWellness />} />
+      <Route path="/mental-wellbeing" element={<MentalWellbeing />} />
+      <Route path="/personal-growth" element={<PersonalGrowth />} />
+      <Route path="/social-connections" element={<SocialConnections />} />
+      <Route path="/daily-rituals" element={<DailyRituals />} />
+      <Route path="/emotional-care" element={<EmotionalCare />} />
+    </Route>
+    <Route path="*" element={<NotFound />} />
+  </Routes>
+));
+
+AppRoutes.displayName = 'AppRoutes';
+
+// Main app component with stable provider configuration
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <AppContent />
+        <ThemeProvider defaultTheme="system" enableSystem>
+          <TooltipProvider>
+            <AuthProvider>
+              <NotificationsProvider>
+                <CalendarViewProvider>
+                  <Suspense fallback={null}>
+                    <AppRoutes />
+                  </Suspense>
+                  <Toaster />
+                  <Sonner />
+                  <UpdatePrompt />
+                </CalendarViewProvider>
+              </NotificationsProvider>
+            </AuthProvider>
+          </TooltipProvider>
+        </ThemeProvider>
       </BrowserRouter>
     </QueryClientProvider>
   );
