@@ -17,36 +17,36 @@ export default function Dashboard() {
     console.log('Current pathname:', window.location.pathname);
   }, [view]);
 
-  try {
-    if (view === 'weekly') {
-      console.log('Rendering WeeklyCalendar');
-      return <WeeklyCalendar initialDate={selectedDate} />;
+  // Render the appropriate component based on the view
+  const renderContent = () => {
+    switch (view) {
+      case 'weekly':
+        console.log('Rendering WeeklyCalendar');
+        return <WeeklyCalendar initialDate={selectedDate} />;
+      
+      case 'monthly':
+        console.log('Rendering Calendar (Monthly)');
+        return <Calendar initialDate={selectedDate} onDateSelect={setSelectedDate} />;
+      
+      case 'yearly':
+        console.log('Rendering YearlyCalendar');
+        return <YearlyCalendar onDateSelect={setSelectedDate} />;
+      
+      default:
+        console.log('Rendering TaskBoard');
+        return (
+          <TaskBoard 
+            selectedDate={selectedDate}
+            onDateChange={setSelectedDate}
+          />
+        );
     }
+  };
 
-    if (view === 'monthly') {
-      console.log('Rendering Calendar (Monthly)');
-      return <Calendar initialDate={selectedDate} onDateSelect={setSelectedDate} />;
-    }
-
-    if (view === 'yearly') {
-      console.log('Rendering YearlyCalendar');
-      return <YearlyCalendar onDateSelect={setSelectedDate} />;
-    }
-
-    // Default to TaskBoard
-    console.log('Rendering TaskBoard');
-    return (
-      <TaskBoard 
-        selectedDate={selectedDate}
-        onDateChange={setSelectedDate}
-      />
-    );
-  } catch (error) {
-    console.error('Error rendering Dashboard:', error);
-    return (
-      <div className="p-4 text-red-500">
-        Error loading dashboard. Please try refreshing the page.
-      </div>
-    );
-  }
+  // Return the content wrapped in an error boundary
+  return (
+    <div className="w-full h-full">
+      {renderContent()}
+    </div>
+  );
 }
