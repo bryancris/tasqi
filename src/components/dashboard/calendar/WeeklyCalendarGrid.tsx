@@ -134,7 +134,7 @@ export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks, showFu
 
         {/* Time slots and cells */}
         {timeSlots.map((timeSlot, rowIndex) => (
-          <React.Fragment key={timeSlot.hour}>
+          <div key={timeSlot.hour} className="contents">
             <div 
               className={cn(
                 "w-20 px-4 py-3 text-right text-sm text-slate-500",
@@ -164,7 +164,7 @@ export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks, showFu
                 />
               </div>
             ))}
-          </React.Fragment>
+          </div>
         ))}
       </div>
     </div>
