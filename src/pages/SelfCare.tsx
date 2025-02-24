@@ -5,13 +5,10 @@ import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileHeader } from "@/components/layouts/MobileHeader";
 import { MobileFooter } from "@/components/layouts/MobileFooter";
-import { useCalendarView } from "@/contexts/CalendarViewContext";
 
-// @fix-navigation: Implement consistent navigation across mobile and desktop views
 const SelfCare = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const isMobile = useIsMobile();
-  const { changeView } = useCalendarView();
 
   if (isMobile) {
     return (
@@ -27,7 +24,6 @@ const SelfCare = () => {
     <DashboardLayout 
       selectedDate={selectedDate} 
       onDateChange={setSelectedDate}
-      onViewChange={changeView}
     >
       <SelfCareContent />
     </DashboardLayout>
