@@ -1,4 +1,3 @@
-
 import React, { Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -68,8 +67,8 @@ const AppRoutes = React.memo(() => (
     <Route path="/auth" element={<Auth />} />
     <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
     <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-      <Route path="/dashboard">
-        <Route index element={<Navigate to="/dashboard/tasks" replace />} />
+      <Route path="/dashboard/*">
+        <Route index element={<Navigate to="tasks" replace />} />
         <Route path="tasks" element={<Dashboard />} />
         <Route path="weekly" element={<Dashboard />} />
         <Route path="monthly" element={<Dashboard />} />
@@ -92,10 +91,9 @@ const AppRoutes = React.memo(() => (
 
 AppRoutes.displayName = 'AppRoutes';
 
-// Main app component with proper error boundaries and suspense
 const App = () => {
   return (
-    <div className="app-container">
+    <div className="min-h-screen bg-background">
       <Suspense fallback={
         <div className="min-h-screen flex items-center justify-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
