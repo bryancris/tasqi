@@ -19,25 +19,32 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [hasShownToast, setHasShownToast] = useState(false);
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    // Get initial session
     let mounted = true;
 
-    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
-      if (mounted) {
-        setSession(initialSession);
-        setLoading(false);
+    const setupAuth = async () => {
+      if (!initialized) {
+        const { data } = await supabase.auth.getSession();
+        if (mounted) {
+          setSession(data.session);
+          setLoading(false);
+          setInitialized(true);
+          
+          if (data.session) {
+            toast.success("Successfully signed in", {
+              id: 'auth-success', // Prevent duplicate toasts
+            });
+          }
+        }
       }
-    });
+    };
+
+    setupAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, currentSession) => {
-      if (mounted) {
-        if (currentSession && !hasShownToast) {
-          setHasShownToast(true);
-          toast.success("Successfully signed in");
-        }
+      if (mounted && initialized) {
         setSession(currentSession);
       }
     });
@@ -46,25 +53,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [hasShownToast]);
+  }, [initialized]);
 
   const handleSignOut = async () => {
     try {
       await supabase.auth.signOut();
-      setHasShownToast(false);
     } catch (error) {
       console.error("Error signing out:", error);
     }
   };
 
-  const value = {
+  const contextValue = React.useMemo(() => ({
     session,
     loading,
     handleSignOut
-  };
+  }), [session, loading]);
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
