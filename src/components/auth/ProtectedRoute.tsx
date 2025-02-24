@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -9,22 +9,18 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    if (!loading) {
-      if (!session && location.pathname !== '/auth') {
-        toast.error("Please sign in to access this page");
-        navigate("/auth", { 
-          replace: true,
-          state: { from: location.pathname } 
-        });
-      }
-      setIsChecking(false);
+    if (!loading && !session && location.pathname !== '/auth') {
+      toast.error("Please sign in to access this page");
+      navigate("/auth", { 
+        replace: true,
+        state: { from: location.pathname } 
+      });
     }
   }, [session, loading, navigate, location.pathname]);
 
-  if (loading || isChecking) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-background">
         <div className="space-y-4 w-[80%] max-w-[800px]">
