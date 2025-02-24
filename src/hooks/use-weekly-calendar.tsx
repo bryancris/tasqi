@@ -1,4 +1,3 @@
-
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "@/components/dashboard/TaskBoard";
@@ -17,7 +16,7 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
   }), [weekStart, weekEnd]);
 
   const { data: tasks = [] } = useQuery({
-    queryKey: ['tasks'], // Use a single key for all task data
+    queryKey: ['tasks'],
     queryFn: async () => {
       console.log('Fetching tasks for weekly calendar...', {
         weekStart: queryDates.start,
@@ -38,7 +37,7 @@ export function useWeeklyCalendar(weekStart: Date, weekEnd: Date, weekDays: Date
       return data as Task[];
     },
     staleTime: Infinity,
-    cacheTime: Infinity,
+    gcTime: Infinity,
   });
 
   const scheduledTasks = useMemo(() => {

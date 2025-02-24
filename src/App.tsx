@@ -33,8 +33,8 @@ import { supabase } from "@/integrations/supabase/client";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: Infinity, // Keep data fresh indefinitely
-      cacheTime: Infinity, // Never garbage collect
+      staleTime: Infinity,
+      gcTime: Infinity,
       refetchOnWindowFocus: false,
       refetchOnMount: false,
       refetchOnReconnect: false,
