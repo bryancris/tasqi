@@ -19,8 +19,8 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const authChecked = useRef(false);
-  const toastShown = useRef(false);
+  const hasShownToast = useRef(false);
+  const hasInitialized = useRef(false);
 
   const handleSignOut = async () => {
     try {
@@ -29,44 +29,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error("Error signing out:", error);
       }
       setSession(null);
-      toastShown.current = false;
+      hasShownToast.current = false;
     } catch (error) {
       console.error("Sign out error:", error);
     }
   };
 
+  // Handle initial session
   useEffect(() => {
-    const setupAuth = async () => {
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
+
+    const initializeAuth = async () => {
       try {
-        const { data: { session: initialSession } } = await supabase.auth.getSession();
-        if (initialSession && !toastShown.current) {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        setSession(currentSession);
+        
+        if (currentSession && !hasShownToast.current) {
           toast.success("Successfully signed in");
-          toastShown.current = true;
+          hasShownToast.current = true;
         }
-        setSession(initialSession);
       } finally {
         setLoading(false);
-        authChecked.current = true;
       }
     };
 
-    if (!authChecked.current) {
-      setupAuth();
-    }
+    initializeAuth();
 
+    // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
+      console.log("Auth state changed:", event);
+      
       if (event === 'SIGNED_OUT') {
         setSession(null);
-        toastShown.current = false;
-      } else if (currentSession) {
+        hasShownToast.current = false;
+      } else if (event === 'SIGNED_IN' && currentSession) {
         setSession(currentSession);
+        if (!hasShownToast.current) {
+          toast.success("Successfully signed in");
+          hasShownToast.current = true;
+        }
       }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, []); // Remove session from dependencies
+  }, []); // Empty dependency array
 
   return (
     <AuthContext.Provider value={{ session, loading, handleSignOut }}>
