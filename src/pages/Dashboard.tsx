@@ -17,36 +17,20 @@ export default function Dashboard() {
     console.log('Current pathname:', window.location.pathname);
   }, [view]);
 
-  // Render the appropriate component based on the view
-  const renderContent = () => {
-    switch (view) {
-      case 'weekly':
-        console.log('Rendering WeeklyCalendar');
-        return <WeeklyCalendar initialDate={selectedDate} />;
-      
-      case 'monthly':
-        console.log('Rendering Calendar (Monthly)');
-        return <Calendar initialDate={selectedDate} onDateSelect={setSelectedDate} />;
-      
-      case 'yearly':
-        console.log('Rendering YearlyCalendar');
-        return <YearlyCalendar onDateSelect={setSelectedDate} />;
-      
-      default:
-        console.log('Rendering TaskBoard');
-        return (
-          <TaskBoard 
-            selectedDate={selectedDate}
-            onDateChange={setSelectedDate}
-          />
-        );
-    }
-  };
-
-  // Return the content wrapped in an error boundary
   return (
-    <div className="w-full h-full">
-      {renderContent()}
+    <div className="w-full h-full bg-background min-h-screen">
+      {view === 'weekly' ? (
+        <WeeklyCalendar initialDate={selectedDate} />
+      ) : view === 'monthly' ? (
+        <Calendar initialDate={selectedDate} onDateSelect={setSelectedDate} />
+      ) : view === 'yearly' ? (
+        <YearlyCalendar onDateSelect={setSelectedDate} />
+      ) : (
+        <TaskBoard 
+          selectedDate={selectedDate}
+          onDateChange={setSelectedDate}
+        />
+      )}
     </div>
   );
 }

@@ -17,7 +17,14 @@ const CalendarViewContext = createContext<CalendarViewContextType>({
 export function CalendarViewProvider({ children }: { children: ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const [view, setCurrentView] = useState<CalendarView>('tasks');
+  const [view, setCurrentView] = useState<CalendarView>(() => {
+    // Initialize with the correct view based on the current path
+    const path = location.pathname;
+    if (path.includes('/weekly')) return 'weekly';
+    if (path.includes('/monthly')) return 'monthly';
+    if (path.includes('/yearly')) return 'yearly';
+    return 'tasks';
+  });
 
   // Update view based on current route
   useEffect(() => {
@@ -33,7 +40,9 @@ export function CalendarViewProvider({ children }: { children: ReactNode }) {
   }, [location.pathname]);
 
   const setView = (newView: CalendarView) => {
-    const targetPath = `/dashboard/${newView}`;
+    if (view === newView) return; // Prevent unnecessary navigation
+    
+    const targetPath = newView === 'tasks' ? '/dashboard/tasks' : `/dashboard/${newView}`;
     if (location.pathname !== targetPath) {
       navigate(targetPath);
     }
