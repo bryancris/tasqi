@@ -33,11 +33,12 @@ import { supabase } from "@/integrations/supabase/client";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 300000, // Increase stale time to 5 minutes
-      gcTime: 3600000, // Increase cache time to 1 hour
+      staleTime: Infinity, // Keep data fresh indefinitely
+      cacheTime: Infinity, // Never garbage collect
       refetchOnWindowFocus: false,
-      refetchInterval: false,
-      retry: false
+      refetchOnMount: false,
+      refetchOnReconnect: false,
+      retry: false,
     },
   },
 });
@@ -99,10 +100,10 @@ const App = () => {
                     <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
                       <Route path="/dashboard">
                         <Route index element={<Navigate to="/dashboard/tasks" replace />} />
-                        <Route path="tasks" element={<Dashboard key="tasks" />} />
-                        <Route path="weekly" element={<Dashboard key="weekly" />} />
-                        <Route path="monthly" element={<Dashboard key="monthly" />} />
-                        <Route path="yearly" element={<Dashboard key="yearly" />} />
+                        <Route path="tasks" element={<Dashboard />} />
+                        <Route path="weekly" element={<Dashboard />} />
+                        <Route path="monthly" element={<Dashboard />} />
+                        <Route path="yearly" element={<Dashboard />} />
                       </Route>
                       <Route path="/notes" element={<Notes />} />
                       <Route path="/settings" element={<Settings />} />
