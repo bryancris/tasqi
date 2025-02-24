@@ -2,7 +2,6 @@
 import { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -11,21 +10,12 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
 
   useEffect(() => {
-    let mounted = true;
-
-    const checkAuth = () => {
-      if (!loading && !session && mounted && location.pathname !== '/auth') {
-        navigate("/auth", { 
-          replace: true,
-          state: { from: location.pathname } 
-        });
-      }
-    };
-
-    checkAuth();
-    return () => {
-      mounted = false;
-    };
+    if (!loading && !session) {
+      navigate("/auth", { 
+        replace: true,
+        state: { from: location.pathname } 
+      });
+    }
   }, [session, loading, navigate, location.pathname]);
 
   if (loading) {

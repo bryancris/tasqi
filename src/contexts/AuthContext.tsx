@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useEffect, useState, useRef } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -19,69 +19,65 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const hasShownToast = useRef(false);
-  const unsubscribe = useRef<(() => void) | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Single source of truth for auth state
+  const setAuthState = useCallback((newSession: Session | null) => {
+    setSession(newSession);
+    setIsAuthenticated(!!newSession);
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
+    let mounted = true;
+
     // Initial session check
-    const initializeAuth = async () => {
-      try {
-        const { data: { session: initialSession } } = await supabase.auth.getSession();
-        setSession(initialSession);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (mounted) {
+        setAuthState(session);
         
-        if (initialSession && !hasShownToast.current) {
-          hasShownToast.current = true;
+        // Only show toast on initial auth, not on every re-render
+        if (session && !isAuthenticated) {
           toast.success("Successfully signed in", {
             id: "auth-success",
+            duration: 3000,
           });
         }
-      } catch (error) {
-        console.error('Auth initialization error:', error);
-      } finally {
-        setLoading(false);
       }
-    };
+    });
 
-    // Set up auth state listener
-    const setupAuthListener = () => {
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        (_event, currentSession) => {
-          setSession(currentSession);
+    // Auth state change subscription
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (mounted) {
+          setAuthState(session);
         }
-      );
-      unsubscribe.current = () => subscription.unsubscribe();
-    };
-
-    initializeAuth();
-    setupAuthListener();
+      }
+    );
 
     return () => {
-      if (unsubscribe.current) {
-        unsubscribe.current();
-      }
+      mounted = false;
+      subscription.unsubscribe();
     };
-  }, []); // Empty dependency array - only run once
+  }, [setAuthState, isAuthenticated]);
 
-  const handleSignOut = async () => {
+  const handleSignOut = useCallback(async () => {
     try {
       await supabase.auth.signOut();
-      hasShownToast.current = false;
+      setAuthState(null);
     } catch (error) {
       console.error("Error signing out:", error);
     }
+  }, [setAuthState]);
+
+  const value = {
+    session,
+    loading,
+    handleSignOut,
   };
 
-  const contextValue = React.useMemo(
-    () => ({
-      session,
-      loading,
-      handleSignOut,
-    }),
-    [session, loading]
-  );
-
   return (
-    <AuthContext.Provider value={contextValue}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
@@ -89,7 +85,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
