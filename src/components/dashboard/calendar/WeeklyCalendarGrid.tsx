@@ -83,17 +83,14 @@ const CalendarCell = ({
       {/* 30-minute marker */}
       <div className="absolute left-0 right-0 top-1/2 border-t border-[#403E43]/20" />
       
-      {tasksForThisSlot.map((task, index) => {
+      {tasksForThisSlot.map((task) => {
         const position = getTaskPosition(task, timeSlot);
         if (!position) return null;
 
         return (
           <div 
             key={task.id} 
-            style={{
-              ...position,
-              zIndex: index + 1
-            }}
+            style={position}
           >
             <WeeklyTaskCard
               task={task}
