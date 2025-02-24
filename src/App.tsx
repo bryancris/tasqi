@@ -70,7 +70,7 @@ const AppRoutes = React.memo(() => (
     <Route element={<ProtectedRoute />}>
       <Route element={<DashboardLayout />}>
         <Route path="dashboard">
-          <Route index element={<Dashboard />} />
+          <Route index element={<Navigate to="tasks" replace />} />
           <Route path="tasks" element={<Dashboard />} />
           <Route path="weekly" element={<Dashboard />} />
           <Route path="monthly" element={<Dashboard />} />
@@ -95,8 +95,6 @@ const AppRoutes = React.memo(() => (
 AppRoutes.displayName = 'AppRoutes';
 
 const App = () => {
-  console.log('App rendering'); // Add debug log
-  
   return (
     <div className="min-h-screen bg-background">
       <Suspense fallback={
