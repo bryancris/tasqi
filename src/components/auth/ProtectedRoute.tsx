@@ -1,6 +1,6 @@
 
 import { useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -33,5 +33,5 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return null;
   }
 
-  return <>{children}</>;
+  return children;
 };
