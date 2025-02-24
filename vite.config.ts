@@ -12,44 +12,10 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
-    mode === 'development' &&
-    componentTagger(),
+    mode === 'development' && componentTagger(),
     VitePWA({
-      registerType: 'autoUpdate',
-      strategies: 'generateSW',
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
-        navigateFallback: '/index.html',
-        navigateFallbackAllowlist: [/^\/dashboard/, /^\/notes/, /^\/self-care/, /^\/settings/],
-        runtimeCaching: [
-          {
-            urlPattern: ({ url }) => {
-              const appRoutes = ['/dashboard', '/notes', '/self-care', '/settings'];
-              return appRoutes.some(route => url.pathname.startsWith(route));
-            },
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'app-routes',
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          },
-          {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts-stylesheets',
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          }
-        ],
-        cleanupOutdatedCaches: true,
-        skipWaiting: true,
-        clientsClaim: true
-      },
+      registerType: 'prompt',
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
         name: 'TASQI-AI Assistant',
         short_name: 'TASQI-AI',
@@ -57,21 +23,18 @@ export default defineConfig(({ mode }) => ({
         theme_color: '#1a1a2e',
         background_color: '#1a1a2e',
         display: 'standalone',
-        orientation: 'any',
         scope: '/',
         start_url: '/',
         icons: [
           {
             src: '/pwa-192x192.png',
             sizes: '192x192',
-            type: 'image/png',
-            purpose: 'any maskable'
+            type: 'image/png'
           },
           {
             src: '/pwa-512x512.png',
             sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any maskable'
+            type: 'image/png'
           }
         ]
       }
@@ -106,7 +69,6 @@ export default defineConfig(({ mode }) => ({
           ]
         }
       }
-    },
-    chunkSizeWarningLimit: 1000
+    }
   }
 }));
