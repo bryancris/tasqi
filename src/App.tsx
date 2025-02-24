@@ -1,8 +1,9 @@
+
 import React, { Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "next-themes";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
@@ -29,19 +30,68 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UpdatePasswordForm } from "@/components/auth/UpdatePasswordForm";
 import { supabase } from "@/integrations/supabase/client";
 
-// Create a client
+// Create a persistent QueryClient instance
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: Infinity,
-      gcTime: Infinity,
       refetchOnWindowFocus: false,
       refetchOnMount: false,
       refetchOnReconnect: false,
-      retry: false
+      retry: false,
+      staleTime: Infinity,
     },
   },
 });
+
+// Wrap the app content to prevent unnecessary remounts
+const AppContent = () => {
+  const location = useLocation();
+
+  return (
+    <ThemeProvider defaultTheme="system" enableSystem>
+      <TooltipProvider>
+        <AuthProvider>
+          <NotificationsProvider>
+            <CalendarViewProvider>
+              <div key={location.pathname}>
+                <Suspense fallback={null}>
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
+                    <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+                      <Route path="/dashboard">
+                        <Route index element={<Navigate to="/dashboard/tasks" replace />} />
+                        <Route path="tasks" element={<Dashboard />} />
+                        <Route path="weekly" element={<Dashboard />} />
+                        <Route path="monthly" element={<Dashboard />} />
+                        <Route path="yearly" element={<Dashboard />} />
+                      </Route>
+                      <Route path="/notes" element={<Notes />} />
+                      <Route path="/settings" element={<Settings />} />
+                      <Route path="/analytics" element={<Analytics />} />
+                      <Route path="/self-care" element={<SelfCare />} />
+                      <Route path="/physical-wellness" element={<PhysicalWellness />} />
+                      <Route path="/mental-wellbeing" element={<MentalWellbeing />} />
+                      <Route path="/personal-growth" element={<PersonalGrowth />} />
+                      <Route path="/social-connections" element={<SocialConnections />} />
+                      <Route path="/daily-rituals" element={<DailyRituals />} />
+                      <Route path="/emotional-care" element={<EmotionalCare />} />
+                    </Route>
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+              </div>
+              <Toaster />
+              <Sonner />
+              <UpdatePrompt />
+            </CalendarViewProvider>
+          </NotificationsProvider>
+        </AuthProvider>
+      </TooltipProvider>
+    </ThemeProvider>
+  );
+};
 
 const UpdatePasswordPage = () => {
   React.useEffect(() => {
@@ -88,46 +138,7 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <ThemeProvider defaultTheme="system" enableSystem>
-          <TooltipProvider>
-            <AuthProvider>
-              <NotificationsProvider>
-                <CalendarViewProvider>
-                  <Suspense fallback={null}>
-                    <Routes>
-                      <Route path="/" element={<Index />} />
-                      <Route path="/auth" element={<Auth />} />
-                      <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
-                      <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-                        <Route path="/dashboard">
-                          <Route index element={<Navigate to="/dashboard/tasks" replace />} />
-                          <Route path="tasks" element={<Dashboard />} />
-                          <Route path="weekly" element={<Dashboard />} />
-                          <Route path="monthly" element={<Dashboard />} />
-                          <Route path="yearly" element={<Dashboard />} />
-                        </Route>
-                        <Route path="/notes" element={<Notes />} />
-                        <Route path="/settings" element={<Settings />} />
-                        <Route path="/analytics" element={<Analytics />} />
-                        <Route path="/self-care" element={<SelfCare />} />
-                        <Route path="/physical-wellness" element={<PhysicalWellness />} />
-                        <Route path="/mental-wellbeing" element={<MentalWellbeing />} />
-                        <Route path="/personal-growth" element={<PersonalGrowth />} />
-                        <Route path="/social-connections" element={<SocialConnections />} />
-                        <Route path="/daily-rituals" element={<DailyRituals />} />
-                        <Route path="/emotional-care" element={<EmotionalCare />} />
-                      </Route>
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </Suspense>
-                  <Toaster />
-                  <Sonner />
-                  <UpdatePrompt />
-                </CalendarViewProvider>
-              </NotificationsProvider>
-            </AuthProvider>
-          </TooltipProvider>
-        </ThemeProvider>
+        <AppContent />
       </BrowserRouter>
     </QueryClientProvider>
   );
