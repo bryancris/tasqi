@@ -7,6 +7,9 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { CalendarViewProvider } from "@/contexts/CalendarViewContext";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { UpdatePasswordForm } from "@/components/auth/UpdatePasswordForm";
+import { supabase } from "@/integrations/supabase/client";
 
 // Lazy load pages
 const Index = React.lazy(() => import("./pages/Index"));
