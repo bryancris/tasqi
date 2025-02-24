@@ -19,6 +19,7 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const hasInitialized = useRef(false);
   const hasShownInitialToast = useRef(false);
 
   const handleSignOut = async () => {
@@ -40,6 +41,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const setupAuth = async () => {
       try {
+        if (hasInitialized.current) return;
+        hasInitialized.current = true;
+
         const { data: { session: initialSession }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -69,15 +73,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
       if (!mounted) return;
 
+      console.log("Auth state change:", event, !!currentSession);
+
       switch (event) {
         case 'SIGNED_IN':
           if (!session) {
             setSession(currentSession);
+            if (!hasShownInitialToast.current) {
+              toast.success("Successfully signed in");
+              hasShownInitialToast.current = true;
+            }
           }
           break;
           
         case 'SIGNED_OUT':
           setSession(null);
+          hasShownInitialToast.current = false;
           if (currentSession === null) {
             toast.error("Your session has expired. Please sign in again.");
           }
@@ -98,7 +109,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []); // Remove all dependencies from the effect
+  }, []); // Remove session dependency to prevent loops
 
   return (
     <AuthContext.Provider value={{ session, loading, handleSignOut }}>
