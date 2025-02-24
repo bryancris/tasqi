@@ -1,8 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { CalendarView } from "@/contexts/CalendarViewContext";
-import { Link, useLocation } from "react-router-dom";
+import { CalendarView, useCalendarView } from "@/contexts/CalendarViewContext";
 
 interface CalendarViewButtonProps {
   view: CalendarView;
@@ -15,13 +14,17 @@ export function CalendarViewButton({
   currentView, 
   label
 }: CalendarViewButtonProps) {
-  const location = useLocation();
+  const { setView } = useCalendarView();
   const isActive = currentView === view;
+
+  const handleClick = () => {
+    setView(view);
+  };
 
   return (
     <Button
       variant="ghost"
-      asChild
+      onClick={handleClick}
       className={cn(
         "w-full justify-start text-base pl-8",
         isActive 
@@ -29,12 +32,7 @@ export function CalendarViewButton({
           : 'text-[#6B7280] hover:bg-[#E5E7EB]'
       )}
     >
-      <Link 
-        to={`/dashboard${view === 'tasks' ? '' : `/${view}`}`}
-        replace
-      >
-        {label}
-      </Link>
+      {label}
     </Button>
   );
 }
