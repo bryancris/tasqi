@@ -9,7 +9,10 @@ interface CalendarViewContextType {
   setView: (view: CalendarView) => void;
 }
 
-const CalendarViewContext = createContext<CalendarViewContextType | undefined>(undefined);
+const CalendarViewContext = createContext<CalendarViewContextType>({
+  view: 'tasks',
+  setView: () => {}
+});
 
 export function CalendarViewProvider({ children }: { children: ReactNode }) {
   const location = useLocation();
@@ -24,19 +27,22 @@ export function CalendarViewProvider({ children }: { children: ReactNode }) {
     return 'tasks';
   }, [location.pathname]);
 
-  const [view, setInternalView] = useState<CalendarView>(() => getCurrentView());
+  const [view, setInternalView] = useState<CalendarView>('tasks');
 
   // Update view when location changes
   useEffect(() => {
-    setInternalView(getCurrentView());
-  }, [location.pathname, getCurrentView]);
+    const newView = getCurrentView();
+    if (view !== newView) {
+      setInternalView(newView);
+    }
+  }, [location.pathname, getCurrentView, view]);
 
   const setView = useCallback((newView: CalendarView) => {
     setInternalView(newView);
     const targetPath = `/dashboard/${newView === 'tasks' ? 'tasks' : newView}`;
     
     if (location.pathname !== targetPath) {
-      navigate(targetPath);
+      navigate(targetPath, { replace: true });
     }
   }, [navigate, location.pathname]);
 
@@ -53,9 +59,5 @@ export function CalendarViewProvider({ children }: { children: ReactNode }) {
 }
 
 export function useCalendarView() {
-  const context = useContext(CalendarViewContext);
-  if (!context) {
-    throw new Error('useCalendarView must be used within a CalendarViewProvider');
-  }
-  return context;
+  return useContext(CalendarViewContext);
 }

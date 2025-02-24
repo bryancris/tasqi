@@ -4,7 +4,6 @@ import { TaskBoard } from "@/components/dashboard/TaskBoard";
 import { WeeklyCalendar } from "@/components/dashboard/WeeklyCalendar";
 import { Calendar } from "@/components/dashboard/Calendar";
 import { YearlyCalendar } from "@/components/dashboard/YearlyCalendar";
-import { useLocation } from "react-router-dom";
 import { useState } from "react";
 import { useCalendarView } from "@/contexts/CalendarViewContext";
 
@@ -13,12 +12,11 @@ export default function Dashboard() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const { view } = useCalendarView();
   
-  if (!view) {
-    return null;
-  }
+  // Default to tasks view if something goes wrong
+  const currentView = view || 'tasks';
 
   let content;
-  switch (view) {
+  switch (currentView) {
     case 'tasks':
       content = (
         <TaskBoard 
@@ -54,7 +52,13 @@ export default function Dashboard() {
       );
       break;
     default:
-      content = null;
+      content = (
+        <TaskBoard 
+          selectedDate={selectedDate}
+          onDateChange={setSelectedDate}
+          key="taskboard"
+        />
+      );
   }
 
   return <div className="h-full">{content}</div>;
