@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -30,6 +30,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UpdatePasswordForm } from "@/components/auth/UpdatePasswordForm";
 import { supabase } from "@/integrations/supabase/client";
 
+// Create a client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -39,6 +40,7 @@ const queryClient = new QueryClient({
       refetchOnMount: false,
       refetchOnReconnect: false,
       retry: false,
+      suspense: false
     },
   },
 });
@@ -93,31 +95,33 @@ const App = () => {
             <AuthProvider>
               <NotificationsProvider>
                 <CalendarViewProvider>
-                  <Routes>
-                    <Route path="/" element={<Index />} />
-                    <Route path="/auth" element={<Auth />} />
-                    <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
-                    <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-                      <Route path="/dashboard">
-                        <Route index element={<Navigate to="/dashboard/tasks" replace />} />
-                        <Route path="tasks" element={<Dashboard />} />
-                        <Route path="weekly" element={<Dashboard />} />
-                        <Route path="monthly" element={<Dashboard />} />
-                        <Route path="yearly" element={<Dashboard />} />
+                  <Suspense fallback={null}>
+                    <Routes>
+                      <Route path="/" element={<Index />} />
+                      <Route path="/auth" element={<Auth />} />
+                      <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
+                      <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+                        <Route path="/dashboard">
+                          <Route index element={<Navigate to="/dashboard/tasks" replace />} />
+                          <Route path="tasks" element={<Dashboard />} />
+                          <Route path="weekly" element={<Dashboard />} />
+                          <Route path="monthly" element={<Dashboard />} />
+                          <Route path="yearly" element={<Dashboard />} />
+                        </Route>
+                        <Route path="/notes" element={<Notes />} />
+                        <Route path="/settings" element={<Settings />} />
+                        <Route path="/analytics" element={<Analytics />} />
+                        <Route path="/self-care" element={<SelfCare />} />
+                        <Route path="/physical-wellness" element={<PhysicalWellness />} />
+                        <Route path="/mental-wellbeing" element={<MentalWellbeing />} />
+                        <Route path="/personal-growth" element={<PersonalGrowth />} />
+                        <Route path="/social-connections" element={<SocialConnections />} />
+                        <Route path="/daily-rituals" element={<DailyRituals />} />
+                        <Route path="/emotional-care" element={<EmotionalCare />} />
                       </Route>
-                      <Route path="/notes" element={<Notes />} />
-                      <Route path="/settings" element={<Settings />} />
-                      <Route path="/analytics" element={<Analytics />} />
-                      <Route path="/self-care" element={<SelfCare />} />
-                      <Route path="/physical-wellness" element={<PhysicalWellness />} />
-                      <Route path="/mental-wellbeing" element={<MentalWellbeing />} />
-                      <Route path="/personal-growth" element={<PersonalGrowth />} />
-                      <Route path="/social-connections" element={<SocialConnections />} />
-                      <Route path="/daily-rituals" element={<DailyRituals />} />
-                      <Route path="/emotional-care" element={<EmotionalCare />} />
-                    </Route>
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </Suspense>
                   <Toaster />
                   <Sonner />
                   <UpdatePrompt />

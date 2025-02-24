@@ -1,5 +1,5 @@
 
-import { createContext, useContext, ReactNode, useState, useCallback } from 'react';
+import { createContext, useContext, ReactNode, useState, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 export type CalendarView = 'tasks' | 'monthly' | 'yearly' | 'weekly';
@@ -15,13 +15,13 @@ export function CalendarViewProvider({ children }: { children: ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const getCurrentView = (): CalendarView => {
+  const getCurrentView = useCallback((): CalendarView => {
     const path = location.pathname;
     if (path.includes('/weekly')) return 'weekly';
     if (path.includes('/monthly')) return 'monthly';
     if (path.includes('/yearly')) return 'yearly';
     return 'tasks';
-  };
+  }, [location.pathname]);
 
   const [view, setInternalView] = useState<CalendarView>(getCurrentView());
 
@@ -31,8 +31,13 @@ export function CalendarViewProvider({ children }: { children: ReactNode }) {
     navigate(path, { replace: true, state: { preserveScroll: true } });
   }, [navigate]);
 
+  const contextValue = useMemo(() => ({
+    view,
+    setView
+  }), [view, setView]);
+
   return (
-    <CalendarViewContext.Provider value={{ view, setView }}>
+    <CalendarViewContext.Provider value={contextValue}>
       {children}
     </CalendarViewContext.Provider>
   );
