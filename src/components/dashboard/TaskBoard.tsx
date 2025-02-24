@@ -6,6 +6,7 @@ import { useTasks } from "@/hooks/use-tasks";
 import { useTaskReorder } from "@/hooks/use-task-reorder";
 import { useCallback, useMemo } from 'react';
 import { Subtask } from "./subtasks/SubtaskList";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export type TaskPriority = "low" | "medium" | "high";
 
@@ -52,7 +53,7 @@ interface TaskBoardProps {
 
 export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
   const isMobile = useIsMobile();
-  const { tasks, refetch } = useTasks();
+  const { tasks, refetch, isLoading } = useTasks();
   const { handleDragEnd } = useTaskReorder(tasks, refetch);
 
   const memoizedRefetch = useCallback(() => {
@@ -60,6 +61,15 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
   }, [refetch]);
 
   const memoizedTasks = useMemo(() => tasks, [tasks]);
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
+        <Skeleton className="h-[600px] w-full" />
+        <Skeleton className="h-[600px] w-full hidden md:block" />
+      </div>
+    );
+  }
 
   if (isMobile) {
     return (
@@ -74,14 +84,12 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
   }
 
   return (
-    <div className="transition-all duration-300 transform hover:translate-y-[-2px]">
-      <DesktopTaskView 
-        tasks={memoizedTasks}
-        selectedDate={selectedDate} 
-        onDateChange={onDateChange}
-        onDragEnd={handleDragEnd}
-        onComplete={memoizedRefetch}
-      />
-    </div>
+    <DesktopTaskView 
+      tasks={memoizedTasks}
+      selectedDate={selectedDate} 
+      onDateChange={onDateChange}
+      onDragEnd={handleDragEnd}
+      onComplete={memoizedRefetch}
+    />
   );
 }

@@ -7,10 +7,7 @@ import { startOfDay, endOfDay, isToday, parseISO } from "date-fns";
 
 export function useTasks() {
   const fetchTasks = async () => {
-    const today = new Date();
-    const todayStart = startOfDay(today);
-    const todayEnd = endOfDay(today);
-
+    console.log('Fetching tasks...');
     const { data: tasks, error: tasksError } = await supabase
       .from('tasks')
       .select(`
@@ -18,7 +15,7 @@ export function useTasks() {
         assignments:task_assignments(*)
       `)
       .order('position', { ascending: true })
-      .abortSignal(AbortSignal.timeout(5000)); // Add timeout to prevent hanging requests
+      .abortSignal(AbortSignal.timeout(5000));
 
     if (tasksError) {
       console.error('Error fetching tasks:', tasksError);
@@ -26,44 +23,20 @@ export function useTasks() {
       throw tasksError;
     }
 
-    // Filter tasks for TaskBoard:
-    // 1. All unscheduled tasks
-    // 2. Today's scheduled tasks
-    // 3. Today's completed tasks
-    return (tasks || []).filter((task) => {
-      // Always show unscheduled tasks
-      if (task.status === 'unscheduled') {
-        return true;
-      }
-
-      const taskDate = task.date ? parseISO(task.date) : null;
-      
-      // Only show scheduled tasks for today
-      if (task.status === 'scheduled' && taskDate) {
-        return isToday(taskDate);
-      }
-      
-      // Only show tasks completed today
-      if (task.status === 'completed') {
-        return task.completed_at && 
-               new Date(task.completed_at) >= todayStart && 
-               new Date(task.completed_at) <= todayEnd;
-      }
-      
-      return false;
-    }) as Task[];
+    console.log('Tasks fetched:', tasks);
+    return (tasks || []) as Task[];
   };
 
-  const { data: tasks = [], refetch } = useQuery({
-    queryKey: ['tasks', startOfDay(new Date()).toISOString()], // Add date to queryKey
+  const { data: tasks = [], refetch, isLoading } = useQuery({
+    queryKey: ['tasks', startOfDay(new Date()).toISOString()],
     queryFn: fetchTasks,
-    staleTime: 300000, // Consider data fresh for 5 minutes
-    gcTime: 3600000, // Keep unused data for 1 hour
-    refetchOnWindowFocus: true, // Only refetch when window regains focus
+    staleTime: 300000,
+    gcTime: 3600000,
+    refetchOnWindowFocus: true,
     refetchOnMount: true,
     refetchOnReconnect: true,
-    retry: 1, // Only retry once on failure
+    retry: 1,
   });
 
-  return { tasks, refetch };
+  return { tasks, refetch, isLoading };
 }

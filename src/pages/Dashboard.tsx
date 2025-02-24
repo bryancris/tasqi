@@ -6,6 +6,7 @@ import { Calendar } from "@/components/dashboard/Calendar";
 import { YearlyCalendar } from "@/components/dashboard/YearlyCalendar";
 import { useEffect } from "react";
 import { useCalendarView } from "@/contexts/CalendarViewContext";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Dashboard() {
   useTaskNotifications();
@@ -17,7 +18,7 @@ export default function Dashboard() {
   }, [view]);
 
   return (
-    <div className="w-full h-full bg-background min-h-screen">
+    <div className="w-full min-h-screen bg-background p-4">
       {view === 'weekly' ? (
         <WeeklyCalendar initialDate={selectedDate} />
       ) : view === 'monthly' ? (
