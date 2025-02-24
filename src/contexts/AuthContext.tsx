@@ -21,6 +21,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const authChecked = useRef(false);
   const toastShown = useRef(false);
+  const initialSetupDone = useRef(false);
 
   const handleSignOut = async () => {
     try {
@@ -39,19 +40,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const setupAuth = async () => {
       try {
         const { data: { session: initialSession } } = await supabase.auth.getSession();
-        setSession(initialSession);
-        
         if (initialSession && !toastShown.current) {
+          setSession(initialSession);
           toast.success("Successfully signed in");
           toastShown.current = true;
         }
       } finally {
         setLoading(false);
         authChecked.current = true;
+        initialSetupDone.current = true;
       }
     };
 
-    if (!authChecked.current) {
+    if (!initialSetupDone.current) {
       setupAuth();
     }
 
@@ -61,13 +62,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         toastShown.current = false;
       } else if (currentSession && !session) {
         setSession(currentSession);
+        if (!toastShown.current) {
+          toast.success("Successfully signed in");
+          toastShown.current = true;
+        }
       }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [session]);
 
   return (
     <AuthContext.Provider value={{ session, loading, handleSignOut }}>
