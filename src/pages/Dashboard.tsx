@@ -1,6 +1,6 @@
 
 import { useTaskNotifications } from "@/hooks/use-task-notifications";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { TaskBoard } from "@/components/dashboard/TaskBoard";
 import { WeeklyCalendar } from "@/components/dashboard/WeeklyCalendar";
 import { Calendar } from "@/components/dashboard/Calendar";
@@ -12,17 +12,15 @@ export default function Dashboard() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const location = useLocation();
 
-  const getCurrentView = () => {
+  const view = useMemo(() => {
     const path = location.pathname;
     if (path.includes('/weekly')) return 'weekly';
     if (path.includes('/monthly')) return 'calendar';
     if (path.includes('/yearly')) return 'yearly';
     return 'tasks';
-  };
-
-  const view = getCurrentView();
+  }, [location.pathname]);
   
-  const renderView = () => {
+  const renderView = useMemo(() => {
     switch (view) {
       case 'tasks':
         return (
@@ -57,7 +55,7 @@ export default function Dashboard() {
       default:
         return null;
     }
-  };
+  }, [view, selectedDate]);
 
-  return <div className="h-full">{renderView()}</div>;
+  return <div className="h-full">{renderView}</div>;
 }

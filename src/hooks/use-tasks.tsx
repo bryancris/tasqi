@@ -2,9 +2,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "@/components/dashboard/TaskBoard";
-import { startOfDay, endOfDay, isToday, parseISO } from "date-fns";
-import { useCallback } from "react";
 import { toast } from "sonner";
+import { startOfDay, endOfDay, isToday, parseISO } from "date-fns";
 
 export function useTasks() {
   const fetchTasks = async () => {
@@ -12,15 +11,14 @@ export function useTasks() {
     const todayStart = startOfDay(today);
     const todayEnd = endOfDay(today);
 
-    console.log('Fetching tasks for today:', today.toISOString());
-
     const { data: tasks, error: tasksError } = await supabase
       .from('tasks')
       .select(`
         *,
         assignments:task_assignments(*)
       `)
-      .order('position', { ascending: true });
+      .order('position', { ascending: true })
+      .abortSignal(AbortSignal.timeout(5000)); // Add timeout to prevent hanging requests
 
     if (tasksError) {
       console.error('Error fetching tasks:', tasksError);
@@ -57,17 +55,15 @@ export function useTasks() {
   };
 
   const { data: tasks = [], refetch } = useQuery({
-    queryKey: ['tasks'],
+    queryKey: ['tasks', startOfDay(new Date()).toISOString()], // Add date to queryKey
     queryFn: fetchTasks,
-    staleTime: 5000, // Only refetch after 5 seconds
-    gcTime: 300000, // Keep unused data for 5 minutes
-    refetchOnWindowFocus: false, // Don't refetch on window focus
-    refetchInterval: false, // Don't refetch on interval
+    staleTime: 300000, // Consider data fresh for 5 minutes
+    gcTime: 3600000, // Keep unused data for 1 hour
+    refetchOnWindowFocus: true, // Only refetch when window regains focus
+    refetchOnMount: true,
+    refetchOnReconnect: true,
+    retry: 1, // Only retry once on failure
   });
 
-  const memoizedRefetch = useCallback(() => {
-    return refetch();
-  }, [refetch]);
-
-  return { tasks, refetch: memoizedRefetch };
+  return { tasks, refetch };
 }

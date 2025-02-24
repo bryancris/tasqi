@@ -6,7 +6,6 @@ import { toast } from "sonner";
 
 export function useTimelineTasks() {
   const fetchTasks = async () => {
-    // Fetch ALL scheduled tasks for timeline view
     const { data: tasks, error: tasksError } = await supabase
       .from('tasks')
       .select(`
@@ -14,7 +13,8 @@ export function useTimelineTasks() {
         assignments:task_assignments(*)
       `)
       .eq('status', 'scheduled')
-      .order('position', { ascending: true });
+      .order('position', { ascending: true })
+      .abortSignal(AbortSignal.timeout(5000));
 
     if (tasksError) {
       console.error('Error fetching timeline tasks:', tasksError);
@@ -28,11 +28,12 @@ export function useTimelineTasks() {
   const { data: tasks = [] } = useQuery({
     queryKey: ['timeline-tasks'],
     queryFn: fetchTasks,
-    staleTime: 0,
-    gcTime: 0,
+    staleTime: 300000, // Consider data fresh for 5 minutes
+    gcTime: 3600000, // Keep unused data for 1 hour
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     refetchOnReconnect: true,
+    retry: 1,
   });
 
   return { tasks };
