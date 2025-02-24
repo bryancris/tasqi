@@ -1,5 +1,5 @@
 
-import React, { StrictMode, useEffect } from "react";
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -43,7 +43,7 @@ const queryClient = new QueryClient({
 });
 
 const UpdatePasswordPage = () => {
-  useEffect(() => {
+  React.useEffect(() => {
     const handlePasswordReset = async () => {
       const hash = window.location.hash;
       if (hash && hash.includes('type=recovery')) {
@@ -85,12 +85,12 @@ const UpdatePasswordPage = () => {
 
 const App = () => {
   return (
-    <StrictMode>
+    <React.StrictMode>
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider defaultTheme="system" enableSystem>
-          <BrowserRouter>
-            <AuthProvider>
-              <TooltipProvider>
+        <BrowserRouter>
+          <ThemeProvider defaultTheme="system" enableSystem>
+            <TooltipProvider>
+              <AuthProvider>
                 <NotificationsProvider>
                   <CalendarViewProvider>
                     <Routes>
@@ -120,12 +120,12 @@ const App = () => {
                     <UpdatePrompt />
                   </CalendarViewProvider>
                 </NotificationsProvider>
-              </TooltipProvider>
-            </AuthProvider>
-          </BrowserRouter>
-        </ThemeProvider>
+              </AuthProvider>
+            </TooltipProvider>
+          </ThemeProvider>
+        </BrowserRouter>
       </QueryClientProvider>
-    </StrictMode>
+    </React.StrictMode>
   );
 };
 
