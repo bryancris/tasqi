@@ -21,8 +21,8 @@ export function MobileFooter() {
     setIsChatOpen(!isChatOpen);
   };
 
-  const handleCalendarClick = (newView: 'weekly' | 'calendar') => {
-    navigate(`/dashboard/${newView === 'calendar' ? 'monthly' : newView}`, { replace: true });
+  const handleCalendarClick = (newView: 'weekly' | 'monthly') => {
+    navigate(`/dashboard/${newView}`, { replace: true });
   };
 
   return (
@@ -45,7 +45,7 @@ export function MobileFooter() {
               <button 
                 className={cn(
                   "flex flex-col items-center p-2",
-                  (view === 'weekly' || view === 'calendar') ? "text-[#8B5CF6]" : "text-gray-500 hover:text-[#8B5CF6]"
+                  (view === 'weekly' || view === 'monthly') ? "text-[#8B5CF6]" : "text-gray-500 hover:text-[#8B5CF6]"
                 )}
               >
                 <Calendar className="h-6 w-6" />
@@ -65,7 +65,7 @@ export function MobileFooter() {
                 </div>
               </button>
               <button
-                onClick={() => handleCalendarClick('calendar')}
+                onClick={() => handleCalendarClick('monthly')}
                 className="flex items-center justify-center gap-2 py-3 relative hover:bg-transparent focus:bg-transparent w-full"
               >
                 <div className="relative">

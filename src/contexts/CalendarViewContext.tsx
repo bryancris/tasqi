@@ -2,7 +2,7 @@
 import { createContext, useContext, ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 
-export type CalendarView = 'tasks' | 'calendar' | 'yearly' | 'weekly';
+export type CalendarView = 'tasks' | 'monthly' | 'yearly' | 'weekly';
 
 interface CalendarViewContextType {
   view: CalendarView;
@@ -16,7 +16,7 @@ export function CalendarViewProvider({ children }: { children: ReactNode }) {
   const getCurrentView = (): CalendarView => {
     const path = location.pathname;
     if (path.includes('/weekly')) return 'weekly';
-    if (path.includes('/monthly')) return 'calendar';
+    if (path.includes('/monthly')) return 'monthly';
     if (path.includes('/yearly')) return 'yearly';
     return 'tasks';
   };
