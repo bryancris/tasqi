@@ -2,10 +2,17 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 
+const Dashboard = () => {
+  return <div className="p-4">Dashboard Page</div>;
+};
+
 const App = () => {
   return (
     <div className="min-h-screen bg-background">
-      <h1>App is working</h1>
+      <Routes>
+        <Route path="/" element={<div>Home Page</div>} />
+        <Route path="/dashboard" element={<Dashboard />} />
+      </Routes>
     </div>
   );
 };
