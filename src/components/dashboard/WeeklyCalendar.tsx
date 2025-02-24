@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, addWeeks, subWeeks } from "date-fns";
 import { CalendarHeader } from "./calendar/CalendarHeader";
 import { WeeklyCalendarGrid } from "./calendar/WeeklyCalendarGrid";
@@ -44,65 +44,70 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
   
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
-  useEffect(() => {
-    const loadUserSettings = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) return;
+  const loadUserSettings = useCallback(async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
 
-        const { data, error } = await supabase
-          .from('user_settings')
-          .select('start_hour, end_hour')
-          .eq('user_id', session.user.id)
-          .single();
+      const { data, error } = await supabase
+        .from('user_settings')
+        .select('start_hour, end_hour')
+        .eq('user_id', session.user.id)
+        .single();
 
-        if (error) {
-          console.error('Error loading settings:', error);
-          return;
-        }
-
-        if (data) {
-          // Ensure we have valid hours
-          const start = Math.max(0, Math.min(23, data.start_hour));
-          const end = Math.max(start + 1, Math.min(24, data.end_hour));
-          setStartHour(start);
-          setEndHour(end);
-        }
-      } catch (error) {
-        console.error('Error in loadUserSettings:', error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load time settings. Using default values."
-        });
+      if (error) {
+        console.error('Error loading settings:', error);
+        return;
       }
-    };
 
-    loadUserSettings();
+      if (data) {
+        const start = Math.max(0, Math.min(23, data.start_hour));
+        const end = Math.max(start + 1, Math.min(24, data.end_hour));
+        setStartHour(start);
+        setEndHour(end);
+      }
+    } catch (error) {
+      console.error('Error in loadUserSettings:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load time settings. Using default values."
+      });
+    }
   }, [toast]);
 
-  // Set up real-time subscription for task updates
   useEffect(() => {
-    const channel = supabase
-      .channel('tasks-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'tasks'
-        },
-        () => {
-          // Invalidate and refetch tasks when changes occur
-          queryClient.invalidateQueries({ queryKey: ['tasks'] });
-        }
-      )
-      .subscribe();
+    let mounted = true;
+
+    if (mounted) {
+      loadUserSettings();
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      mounted = false;
     };
-  }, [queryClient]);
+  }, [loadUserSettings]);
+
+  const {
+    scheduledTasks,
+    unscheduledTasks,
+    visitsPerDay,
+    handleDragEnd
+  } = useWeeklyCalendar(weekStart, weekEnd, weekDays);
+
+  const monthYear = format(currentDate, 'MMMM yyyy');
+
+  const handleNextWeek = useCallback(() => {
+    setCurrentDate(prev => addWeeks(prev, 1));
+  }, []);
+
+  const handlePreviousWeek = useCallback(() => {
+    setCurrentDate(prev => subWeeks(prev, 1));
+  }, []);
+
+  const handleToggleView = useCallback(() => {
+    setShowFullWeek(prev => !prev);
+  }, []);
 
   const timeSlots = Array.from(
     { length: Math.max(1, endHour - startHour + 1) }, 
@@ -114,27 +119,6 @@ export function WeeklyCalendar({ initialDate }: WeeklyCalendarProps) {
       };
     }
   );
-
-  const {
-    scheduledTasks,
-    unscheduledTasks,
-    visitsPerDay,
-    handleDragEnd
-  } = useWeeklyCalendar(weekStart, weekEnd, weekDays);
-
-  const monthYear = format(currentDate, 'MMMM yyyy');
-
-  const handleNextWeek = () => {
-    setCurrentDate(addWeeks(currentDate, 1));
-  };
-
-  const handlePreviousWeek = () => {
-    setCurrentDate(subWeeks(currentDate, 1));
-  };
-
-  const handleToggleView = () => {
-    setShowFullWeek(!showFullWeek);
-  };
 
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
