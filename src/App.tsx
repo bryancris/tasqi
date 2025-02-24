@@ -7,23 +7,22 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
 import { CalendarViewProvider } from "@/contexts/CalendarViewContext";
-import Index from "./pages/Index";
-import Dashboard from "./pages/Dashboard";
-import Auth from "./pages/Auth";
-import NotFound from "./pages/NotFound";
-import Notes from "./pages/Notes";
-import Analytics from "./pages/Analytics";
-import SelfCare from "./pages/SelfCare";
-import PhysicalWellness from "./pages/PhysicalWellness";
-import MentalWellbeing from "./pages/MentalWellbeing";
-import PersonalGrowth from "./pages/PersonalGrowth";
-import SocialConnections from "./pages/SocialConnections";
-import DailyRituals from "./pages/DailyRituals";
-import EmotionalCare from "./pages/EmotionalCare";
-import Settings from "./pages/Settings";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { UpdatePasswordForm } from "@/components/auth/UpdatePasswordForm";
-import { supabase } from "@/integrations/supabase/client";
+
+// Lazy load pages
+const Index = React.lazy(() => import("./pages/Index"));
+const Dashboard = React.lazy(() => import("./pages/Dashboard"));
+const Auth = React.lazy(() => import("./pages/Auth"));
+const NotFound = React.lazy(() => import("./pages/NotFound"));
+const Notes = React.lazy(() => import("./pages/Notes"));
+const Analytics = React.lazy(() => import("./pages/Analytics"));
+const SelfCare = React.lazy(() => import("./pages/SelfCare"));
+const PhysicalWellness = React.lazy(() => import("./pages/PhysicalWellness"));
+const MentalWellbeing = React.lazy(() => import("./pages/MentalWellbeing"));
+const PersonalGrowth = React.lazy(() => import("./pages/PersonalGrowth"));
+const SocialConnections = React.lazy(() => import("./pages/SocialConnections"));
+const DailyRituals = React.lazy(() => import("./pages/DailyRituals"));
+const EmotionalCare = React.lazy(() => import("./pages/EmotionalCare"));
+const Settings = React.lazy(() => import("./pages/Settings"));
 
 const UpdatePasswordPage = () => {
   React.useEffect(() => {
