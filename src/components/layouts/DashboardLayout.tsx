@@ -5,18 +5,34 @@ import { HeaderNotifications } from "@/components/dashboard/header/HeaderNotific
 import { Button } from "@/components/ui/button";
 import { AddTaskDrawer } from "@/components/dashboard/AddTaskDrawer";
 import { Plus } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobileHeader } from "@/components/layouts/MobileHeader";
+import { MobileFooter } from "@/components/layouts/MobileFooter";
+import { Outlet } from "react-router-dom";
+import { useState } from "react";
 
-interface DashboardLayoutProps {
-  children: React.ReactNode;
-  onViewChange?: (view: 'tasks' | 'calendar' | 'yearly' | 'weekly') => void;
-  selectedDate: Date;
-  onDateChange: (date: Date) => void;
-}
+export function DashboardLayout() {
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const isMobile = useIsMobile();
 
-export function DashboardLayout({ children, onViewChange, selectedDate, onDateChange }: DashboardLayoutProps) {
+  if (isMobile) {
+    return (
+      <div className="flex flex-col h-screen bg-gradient-to-b from-[#F1F0FB] to-[#E5DEFF]">
+        <MobileHeader />
+        <main className="flex-1 overflow-y-auto scrollbar-hide p-4 mt-[72px] mb-[64px]">
+          <Outlet />
+        </main>
+        <MobileFooter />
+      </div>
+    );
+  }
+
   return (
     <div className="h-screen flex bg-gradient-to-br from-[#F8F7FF] to-[#F2FCE2]">
-      <Sidebar onViewChange={onViewChange} selectedDate={selectedDate} onDateChange={onDateChange} />
+      <Sidebar
+        selectedDate={selectedDate}
+        onDateChange={setSelectedDate}
+      />
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="h-[72px] border-b border-[#E5DEFF] bg-white/50 backdrop-blur-md supports-[backdrop-filter]:bg-white/30 transition-colors">
           <div className="container h-full">
@@ -37,7 +53,7 @@ export function DashboardLayout({ children, onViewChange, selectedDate, onDateCh
         </header>
         <main className="flex-1 overflow-y-auto p-6 bg-gradient-to-br from-[#F8F7FF]/50 to-[#F2FCE2]/50 backdrop-blur-sm">
           <div className="max-w-7xl mx-auto">
-            {children}
+            <Outlet />
           </div>
         </main>
       </div>
