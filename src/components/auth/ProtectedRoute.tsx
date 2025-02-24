@@ -13,17 +13,16 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     if (!loading) {
-      if (!session) {
-        console.log("No session found, redirecting to auth");
+      if (!session && location.pathname !== '/auth') {
         toast.error("Please sign in to access this page");
         navigate("/auth", { 
-          replace: true, 
+          replace: true,
           state: { from: location.pathname } 
         });
       }
       setIsChecking(false);
     }
-  }, [session, loading, navigate, location]);
+  }, [session, loading, navigate, location.pathname]);
 
   if (loading || isChecking) {
     return (

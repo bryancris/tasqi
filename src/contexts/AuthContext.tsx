@@ -19,84 +19,52 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const hasShownInitialToast = useRef(false);
+  const authChecked = useRef(false);
+  const toastShown = useRef(false);
 
   const handleSignOut = async () => {
     try {
-      setSession(null);
-      localStorage.clear();
-      sessionStorage.clear();
       const { error } = await supabase.auth.signOut();
       if (error && !error.message?.includes('session_not_found')) {
         console.error("Error signing out:", error);
       }
+      setSession(null);
+      toastShown.current = false;
     } catch (error) {
       console.error("Sign out error:", error);
     }
   };
 
   useEffect(() => {
-    let mounted = true;
-
     const setupAuth = async () => {
       try {
-        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        setSession(initialSession);
         
-        if (error) {
-          console.error("Error getting session:", error);
-          if (mounted) {
-            setLoading(false);
-          }
-          return;
+        if (initialSession && !toastShown.current) {
+          toast.success("Successfully signed in");
+          toastShown.current = true;
         }
-
-        if (mounted) {
-          setSession(initialSession);
-          setLoading(false);
-        }
-      } catch (error) {
-        console.error("Error in auth setup:", error);
-        if (mounted) {
-          setLoading(false);
-        }
+      } finally {
+        setLoading(false);
+        authChecked.current = true;
       }
     };
 
+    if (!authChecked.current) {
+      setupAuth();
+    }
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
-      if (!mounted) return;
-
-      console.log("Auth state change:", event, !!currentSession);
-
-      switch (event) {
-        case 'INITIAL_SESSION':
-        case 'SIGNED_IN':
-          if (!session) {
-            setSession(currentSession);
-            if (!hasShownInitialToast.current) {
-              toast.success("Successfully signed in");
-              hasShownInitialToast.current = true;
-            }
-          }
-          break;
-          
-        case 'SIGNED_OUT':
-          setSession(null);
-          hasShownInitialToast.current = false;
-          break;
-          
-        case 'TOKEN_REFRESHED':
-        case 'USER_UPDATED':
-          if (currentSession && JSON.stringify(currentSession) !== JSON.stringify(session)) {
-            setSession(currentSession);
-          }
-          break;
+      if (event === 'SIGNED_OUT') {
+        setSession(null);
+        toastShown.current = false;
+      } else if (currentSession && !session) {
+        setSession(currentSession);
       }
     });
 
-    setupAuth();
-
     return () => {
-      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
