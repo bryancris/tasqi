@@ -102,6 +102,10 @@ const AppRoutes = React.memo(() => (
 AppRoutes.displayName = 'AppRoutes';
 
 const App = () => {
+  useEffect(() => {
+    console.log('App mounted');
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       <Suspense fallback={
