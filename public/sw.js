@@ -1,109 +1,76 @@
 
-// Service Worker for PWA with notification support
-const CACHE_NAME = 'tasqi-v1';
+// Disable workbox logging
+self.__WB_DISABLE_DEV_LOGS = true;
 
-// Cache assets on install
+// This line is required for the build to work - DO NOT REMOVE
+self.__WB_MANIFEST;
+
+// Cache name for our app
+const CACHE_NAME = 'tasqi-cache-v1';
+
+// Only cache essential static assets
+const urlsToCache = [
+  '/',
+  '/index.html',
+  '/manifest.json'
+];
+
+// Install event - cache minimal assets
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll([
-        '/',
-        '/index.html',
-        '/manifest.json',
-        '/favicon.ico',
-        '/notification-sound.mp3'
-      ]);
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache))
   );
 });
 
-// Clean up old caches on activate
+// Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
-        cacheNames
-          .filter((name) => name !== CACHE_NAME)
-          .map((name) => caches.delete(name))
+        cacheNames.map((cache) => {
+          if (cache !== CACHE_NAME) {
+            return caches.delete(cache);
+          }
+        })
       );
     })
   );
+  // Immediately claim clients
+  return self.clients.claim();
 });
 
-// Handle fetch requests
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
-    })
-  );
-});
-
-// Handle push notifications
+// Only handle push notifications, no aggressive caching
 self.addEventListener('push', (event) => {
-  const options = {
-    body: event.data?.text() || 'New notification',
-    icon: '/pwa-192x192.png',
-    badge: '/pwa-192x192.png',
-    vibrate: [200, 100, 200],
-    tag: 'tasqi-notification',
-    renotify: true,
-    actions: [
-      {
-        action: 'open',
-        title: 'Open'
-      },
-      {
-        action: 'close',
-        title: 'Close'
-      }
-    ],
-    data: {
-      url: self.registration.scope
-    }
-  };
-
-  event.waitUntil(
-    self.registration.showNotification('TASQI', options)
-  );
+  if (event.data) {
+    const data = event.data.json();
+    const options = {
+      body: data.body || 'New notification',
+      icon: '/pwa-192x192.png',
+      badge: '/pwa-192x192.png'
+    };
+    
+    event.waitUntil(
+      self.registration.showNotification(data.title || 'New Task', options)
+    );
+  }
 });
 
 // Handle notification clicks
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-
-  if (event.action === 'close') {
-    return;
-  }
-
   event.waitUntil(
     clients.matchAll({ type: 'window' }).then((clientList) => {
-      // If a window tab is already open, focus it
-      for (const client of clientList) {
-        if (client.url === '/' && 'focus' in client) {
-          return client.focus();
+      if (clientList.length > 0) {
+        let client = clientList[0];
+        for (let i = 0; i < clientList.length; i++) {
+          if (clientList[i].focused) {
+            client = clientList[i];
+          }
         }
+        return client.focus();
       }
-      // If no window is open, open a new one
-      if (clients.openWindow) {
-        return clients.openWindow('/dashboard/tasks');
-      }
+      return clients.openWindow('/dashboard');
     })
   );
 });
-
-// Handle notification close
-self.addEventListener('notificationclose', (event) => {
-  console.log('Notification closed', event.notification);
-});
-
-// Play notification sound
-async function playNotificationSound() {
-  try {
-    const audio = new Audio('/notification-sound.mp3');
-    audio.volume = 0.5;
-    await audio.play();
-  } catch (error) {
-    console.error('Failed to play notification sound:', error);
-  }
-}
