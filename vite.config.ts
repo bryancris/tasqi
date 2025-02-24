@@ -48,25 +48,6 @@ export default defineConfig(({ mode }) => ({
         enabled: true,
         type: 'module',
         navigateFallback: 'index.html',
-      },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        cleanupOutdatedCaches: true,
-        clientsClaim: true,
-        skipWaiting: true,
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/.*\.(js|css|ts|tsx)$/,
-            handler: 'StaleWhileRevalidate',
-            options: {
-              cacheName: 'static-resources',
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 24 * 60 * 60 // 24 hours
-              }
-            }
-          }
-        ]
       }
     })
   ].filter(Boolean),
