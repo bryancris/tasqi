@@ -6,8 +6,6 @@ import { BottomControls } from "./sidebar/BottomControls";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { HeaderTime } from "@/components/dashboard/header/HeaderTime";
-import { HeaderNotifications } from "@/components/dashboard/header/HeaderNotifications";
-import { HeaderUserMenu } from "@/components/dashboard/header/HeaderUserMenu";
 
 interface SidebarProps {
   selectedDate: Date;
@@ -17,12 +15,8 @@ interface SidebarProps {
 export function Sidebar({ selectedDate, onDateChange }: SidebarProps) {
   return (
     <div className="w-[280px] border-r bg-background h-screen flex flex-col">
-      <div className="p-4 border-b flex items-center justify-between">
+      <div className="p-4 border-b">
         <HeaderTime />
-        <div className="flex items-center space-x-2">
-          <HeaderNotifications />
-          <HeaderUserMenu />
-        </div>
       </div>
       <div className="flex-1 overflow-y-auto scrollbar-hide p-4">
         <AddTaskDrawer>

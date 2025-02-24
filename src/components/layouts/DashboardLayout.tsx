@@ -4,6 +4,7 @@ import { Outlet } from "react-router-dom";
 import { MobileHeader } from "./MobileHeader";
 import { MobileFooter } from "./MobileFooter";
 import { Sidebar } from "../dashboard/Sidebar";
+import { DesktopHeader } from "./DesktopHeader";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useState } from "react";
 
@@ -29,7 +30,8 @@ export function DashboardLayout() {
             selectedDate={selectedDate}
             onDateChange={setSelectedDate}
           />
-          <main className="flex-1 overflow-y-auto">
+          <main className="flex-1 overflow-y-auto relative">
+            <DesktopHeader />
             <div className="container mx-auto p-6">
               <Outlet />
             </div>
