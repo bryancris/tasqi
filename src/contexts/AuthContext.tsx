@@ -19,7 +19,6 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const hasInitialized = useRef(false);
   const hasShownInitialToast = useRef(false);
 
   const handleSignOut = async () => {
@@ -41,27 +40,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const setupAuth = async () => {
       try {
-        if (hasInitialized.current) return;
-        hasInitialized.current = true;
-
         const { data: { session: initialSession }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error("Error getting session:", error);
-          await handleSignOut();
+          if (mounted) {
+            setLoading(false);
+          }
           return;
         }
 
         if (mounted) {
           setSession(initialSession);
           setLoading(false);
-          
-          if (initialSession && !hasShownInitialToast.current) {
-            toast.success("Successfully signed in");
-            hasShownInitialToast.current = true;
-          }
         }
-
       } catch (error) {
         console.error("Error in auth setup:", error);
         if (mounted) {
@@ -76,6 +68,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log("Auth state change:", event, !!currentSession);
 
       switch (event) {
+        case 'INITIAL_SESSION':
         case 'SIGNED_IN':
           if (!session) {
             setSession(currentSession);
@@ -89,9 +82,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         case 'SIGNED_OUT':
           setSession(null);
           hasShownInitialToast.current = false;
-          if (currentSession === null) {
-            toast.error("Your session has expired. Please sign in again.");
-          }
           break;
           
         case 'TOKEN_REFRESHED':
@@ -109,7 +99,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []); // Remove session dependency to prevent loops
+  }, []);
 
   return (
     <AuthContext.Provider value={{ session, loading, handleSignOut }}>
