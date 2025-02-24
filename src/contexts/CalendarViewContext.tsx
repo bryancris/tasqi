@@ -28,18 +28,21 @@ export function CalendarViewProvider({ children }: { children: ReactNode }) {
 
   // Update view when location changes
   useEffect(() => {
-    setInternalView(getCurrentView());
+    const currentView = getCurrentView();
+    setInternalView(currentView);
   }, [location.pathname, getCurrentView]);
 
   const setView = useCallback((newView: CalendarView) => {
     setInternalView(newView);
-    const basePath = '/dashboard';
-    if (newView === 'tasks') {
-      navigate(`${basePath}/tasks`);
-    } else {
-      navigate(`${basePath}/${newView}`);
+    
+    // Don't navigate if we're already on the correct path
+    const currentPath = location.pathname;
+    const targetPath = `/dashboard/${newView === 'tasks' ? 'tasks' : newView}`;
+    
+    if (currentPath !== targetPath) {
+      navigate(targetPath);
     }
-  }, [navigate]);
+  }, [navigate, location.pathname]);
 
   const contextValue = useMemo(() => ({
     view,
