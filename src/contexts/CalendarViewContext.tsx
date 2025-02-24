@@ -1,5 +1,5 @@
 
-import { createContext, useContext, ReactNode, useState, useCallback, useMemo } from 'react';
+import { createContext, useContext, ReactNode, useState, useCallback, useMemo, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 export type CalendarView = 'tasks' | 'monthly' | 'yearly' | 'weekly';
@@ -14,22 +14,32 @@ const CalendarViewContext = createContext<CalendarViewContextType | undefined>(u
 export function CalendarViewProvider({ children }: { children: ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
-
+  
   const getCurrentView = useCallback((): CalendarView => {
     const path = location.pathname;
+    if (path === '/' || path === '/dashboard' || path === '/dashboard/tasks') return 'tasks';
     if (path.includes('/weekly')) return 'weekly';
     if (path.includes('/monthly')) return 'monthly';
     if (path.includes('/yearly')) return 'yearly';
-    return 'tasks';
+    return 'tasks';  // Default to tasks view
   }, [location.pathname]);
 
   const [view, setInternalView] = useState<CalendarView>(getCurrentView());
 
+  // Update view when location changes
+  useEffect(() => {
+    setInternalView(getCurrentView());
+  }, [location.pathname, getCurrentView]);
+
   const setView = useCallback((newView: CalendarView) => {
     setInternalView(newView);
-    const path = newView === 'tasks' ? '/dashboard/tasks' : `/dashboard/${newView}`;
-    navigate(path, { replace: true, state: { preserveScroll: true } });
-  }, [navigate]);
+    if (location.pathname === '/') {
+      navigate('/dashboard/tasks', { replace: true });
+    } else {
+      const path = `/dashboard/${newView}`;
+      navigate(path, { replace: true });
+    }
+  }, [navigate, location.pathname]);
 
   const contextValue = useMemo(() => ({
     view,
