@@ -22,38 +22,42 @@ export default function Dashboard() {
 
   const view = getCurrentView();
   
-  switch (view) {
-    case 'tasks':
-      return (
-        <TaskBoard 
-          selectedDate={selectedDate}
-          onDateChange={setSelectedDate}
-          key="taskboard"
-        />
-      );
-    case 'weekly':
-      return (
-        <WeeklyCalendar 
-          initialDate={selectedDate}
-          key="weekly"
-        />
-      );
-    case 'calendar':
-      return (
-        <Calendar 
-          initialDate={selectedDate}
-          onDateSelect={setSelectedDate}
-          key="calendar"
-        />
-      );
-    case 'yearly':
-      return (
-        <YearlyCalendar 
-          onDateSelect={setSelectedDate}
-          key="yearly"
-        />
-      );
-    default:
-      return null;
-  }
+  const renderView = () => {
+    switch (view) {
+      case 'tasks':
+        return (
+          <TaskBoard 
+            selectedDate={selectedDate}
+            onDateChange={setSelectedDate}
+            key="taskboard"
+          />
+        );
+      case 'weekly':
+        return (
+          <WeeklyCalendar 
+            initialDate={selectedDate}
+            key="weekly"
+          />
+        );
+      case 'calendar':
+        return (
+          <Calendar 
+            initialDate={selectedDate}
+            onDateSelect={setSelectedDate}
+            key="calendar"
+          />
+        );
+      case 'yearly':
+        return (
+          <YearlyCalendar 
+            onDateSelect={setSelectedDate}
+            key="yearly"
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
+  return <div className="h-full">{renderView()}</div>;
 }

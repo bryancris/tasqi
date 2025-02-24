@@ -17,19 +17,9 @@ export function CalendarViewButton({
   label, 
   onClick 
 }: CalendarViewButtonProps) {
-  const getPath = (view: CalendarView) => {
-    switch (view) {
-      case 'tasks':
-        return '/dashboard';
-      case 'weekly':
-        return '/dashboard/weekly';
-      case 'calendar':
-        return '/dashboard/monthly';
-      case 'yearly':
-        return '/dashboard/yearly';
-      default:
-        return '/dashboard';
-    }
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    onClick(view);
   };
 
   return (
@@ -41,12 +31,9 @@ export function CalendarViewButton({
           ? 'bg-[#D1FAE5] text-[#059669] hover:bg-[#A7F3D0]' 
           : 'text-[#6B7280] hover:bg-[#E5E7EB]'
       )}
-      onClick={() => onClick(view)}
-      asChild
+      onClick={handleClick}
     >
-      <Link to={getPath(view)}>
-        {label}
-      </Link>
+      {label}
     </Button>
   );
 }

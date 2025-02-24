@@ -2,7 +2,6 @@
 import { CalendarDays } from "lucide-react";
 import { CalendarViewButton } from "./calendar/CalendarViewButton";
 import { useCalendarView, CalendarView } from "@/contexts/CalendarViewContext";
-import { useLocation } from "react-router-dom";
 
 interface CalendarSectionProps {
   onViewChange?: (view: CalendarView) => void;
@@ -10,7 +9,6 @@ interface CalendarSectionProps {
 
 export function CalendarSection({ onViewChange }: CalendarSectionProps) {
   const { view, changeView } = useCalendarView();
-  const location = useLocation();
 
   const handleViewChange = (newView: CalendarView) => {
     changeView(newView);
