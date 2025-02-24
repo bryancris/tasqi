@@ -64,32 +64,36 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4">
-        <Skeleton className="h-[600px] w-full" />
-        <Skeleton className="h-[600px] w-full hidden md:block" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-[calc(100vh-10rem)]">
+        <Skeleton className="h-full w-full rounded-lg" />
+        <Skeleton className="h-full w-full hidden md:block rounded-lg" />
       </div>
     );
   }
 
   if (isMobile) {
     return (
-      <MobileTaskView 
+      <div className="h-[calc(100vh-10rem)]">
+        <MobileTaskView 
+          tasks={memoizedTasks}
+          selectedDate={selectedDate} 
+          onDateChange={onDateChange}
+          onDragEnd={handleDragEnd}
+          onComplete={memoizedRefetch}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-[calc(100vh-10rem)]">
+      <DesktopTaskView 
         tasks={memoizedTasks}
         selectedDate={selectedDate} 
         onDateChange={onDateChange}
         onDragEnd={handleDragEnd}
         onComplete={memoizedRefetch}
       />
-    );
-  }
-
-  return (
-    <DesktopTaskView 
-      tasks={memoizedTasks}
-      selectedDate={selectedDate} 
-      onDateChange={onDateChange}
-      onDragEnd={handleDragEnd}
-      onComplete={memoizedRefetch}
-    />
+    </div>
   );
 }

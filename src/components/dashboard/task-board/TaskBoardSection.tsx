@@ -58,17 +58,17 @@ export function TaskBoardSection({ tasks, onDragEnd, onComplete }: TaskBoardSect
     .map(task => task.id);
 
   return (
-    <Card className="flex flex-col h-full overflow-hidden shadow-lg bg-gradient-to-b from-white to-gray-50">
-      <CardHeader className="flex-none pb-4 border-b bg-white">
+    <Card className="flex flex-col h-full overflow-hidden bg-white">
+      <CardHeader className="bg-white border-b px-6 py-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-2xl font-semibold">Task Board</CardTitle>
+          <CardTitle className="text-xl font-semibold">Task Board</CardTitle>
         </div>
         <TaskLegend />
       </CardHeader>
-      <CardContent className="flex-1 overflow-y-auto">
+      <CardContent className="flex-1 overflow-y-auto p-6">
         <DndContext sensors={sensors} onDragEnd={onDragEnd}>
           <SortableContext items={draggableTaskIds} strategy={verticalListSortingStrategy}>
-            <div className="flex flex-col gap-4 min-h-[600px] pb-40 relative">
+            <div className="flex flex-col gap-4">
               {sortedTasks.map((task, index) => (
                 <TaskCard
                   key={task.id}
@@ -78,6 +78,11 @@ export function TaskBoardSection({ tasks, onDragEnd, onComplete }: TaskBoardSect
                   onComplete={onComplete}
                 />
               ))}
+              {sortedTasks.length === 0 && (
+                <div className="text-center text-gray-500 py-8">
+                  No tasks available
+                </div>
+              )}
             </div>
           </SortableContext>
         </DndContext>
