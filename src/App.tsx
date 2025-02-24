@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -30,7 +29,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UpdatePasswordForm } from "@/components/auth/UpdatePasswordForm";
 import { supabase } from "@/integrations/supabase/client";
 
-// Create a persistent query client instance with optimized settings
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -95,7 +93,9 @@ const AppContent = () => {
       
       <Route path="/dashboard/*" element={
         <ProtectedRoute>
-          <Dashboard />
+          <CalendarViewProvider>
+            <Dashboard />
+          </CalendarViewProvider>
         </ProtectedRoute>
       } />
       
@@ -172,12 +172,10 @@ const App = () => {
           <ThemeProvider defaultTheme="system" enableSystem>
             <TooltipProvider>
               <NotificationsProvider>
-                <CalendarViewProvider>
-                  <AppContent />
-                  <Toaster />
-                  <Sonner />
-                  <UpdatePrompt />
-                </CalendarViewProvider>
+                <AppContent />
+                <Toaster />
+                <Sonner />
+                <UpdatePrompt />
               </NotificationsProvider>
             </TooltipProvider>
           </ThemeProvider>
