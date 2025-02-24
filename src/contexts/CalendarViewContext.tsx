@@ -40,7 +40,7 @@ export function CalendarViewProvider({ children }: { children: ReactNode }) {
     const targetPath = `/dashboard/${newView === 'tasks' ? 'tasks' : newView}`;
     
     if (currentPath !== targetPath) {
-      navigate(targetPath);
+      navigate(targetPath, { replace: true });
     }
   }, [navigate, location.pathname]);
 
