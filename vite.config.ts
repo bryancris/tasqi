@@ -66,9 +66,7 @@ export default defineConfig(({ mode }) => ({
               }
             }
           }
-        ],
-        // Disable debug logging in production
-        debug: mode === 'development' ? false : false
+        ]
       }
     })
   ].filter(Boolean),
