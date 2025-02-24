@@ -1,4 +1,3 @@
-
 import React, { Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -66,28 +65,27 @@ const AppRoutes = React.memo(() => (
     <Route path="/" element={<Index />} />
     <Route path="/auth" element={<Auth />} />
     <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
-    <Route path="/dashboard" element={
-      <ProtectedRoute>
-        <DashboardLayout />
-      </ProtectedRoute>
-    }>
-      <Route index element={<Navigate to="tasks" replace />} />
-      <Route path="tasks" element={<Dashboard />} />
-      <Route path="weekly" element={<Dashboard />} />
-      <Route path="monthly" element={<Dashboard />} />
-      <Route path="yearly" element={<Dashboard />} />
-    </Route>
-    <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-      <Route path="/notes" element={<Notes />} />
-      <Route path="/settings" element={<Settings />} />
-      <Route path="/analytics" element={<Analytics />} />
-      <Route path="/self-care" element={<SelfCare />} />
-      <Route path="/physical-wellness" element={<PhysicalWellness />} />
-      <Route path="/mental-wellbeing" element={<MentalWellbeing />} />
-      <Route path="/personal-growth" element={<PersonalGrowth />} />
-      <Route path="/social-connections" element={<SocialConnections />} />
-      <Route path="/daily-rituals" element={<DailyRituals />} />
-      <Route path="/emotional-care" element={<EmotionalCare />} />
+    
+    <Route element={<ProtectedRoute />}>
+      <Route element={<DashboardLayout />}>
+        <Route path="/dashboard">
+          <Route index element={<Navigate to="tasks" replace />} />
+          <Route path="tasks" element={<Dashboard />} />
+          <Route path="weekly" element={<Dashboard />} />
+          <Route path="monthly" element={<Dashboard />} />
+          <Route path="yearly" element={<Dashboard />} />
+        </Route>
+        <Route path="/notes" element={<Notes />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/analytics" element={<Analytics />} />
+        <Route path="/self-care" element={<SelfCare />} />
+        <Route path="/physical-wellness" element={<PhysicalWellness />} />
+        <Route path="/mental-wellbeing" element={<MentalWellbeing />} />
+        <Route path="/personal-growth" element={<PersonalGrowth />} />
+        <Route path="/social-connections" element={<SocialConnections />} />
+        <Route path="/daily-rituals" element={<DailyRituals />} />
+        <Route path="/emotional-care" element={<EmotionalCare />} />
+      </Route>
     </Route>
     <Route path="*" element={<NotFound />} />
   </Routes>
