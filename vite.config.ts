@@ -47,13 +47,28 @@ export default defineConfig(({ mode }) => ({
       devOptions: {
         enabled: true,
         type: 'module',
-        navigateFallback: 'index.html'
+        navigateFallback: 'index.html',
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
-        skipWaiting: true
+        skipWaiting: true,
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/.*\.(js|css|ts|tsx)$/,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'static-resources',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 24 * 60 * 60 // 24 hours
+              }
+            }
+          }
+        ],
+        // Disable debug logging in production
+        debug: mode === 'development' ? false : false
       }
     })
   ].filter(Boolean),
@@ -90,4 +105,3 @@ export default defineConfig(({ mode }) => ({
     chunkSizeWarningLimit: 1000
   }
 }));
-
