@@ -1,10 +1,11 @@
 
 import { HeaderUserMenu } from "@/components/dashboard/header/HeaderUserMenu";
 import { HeaderNotifications } from "@/components/dashboard/header/HeaderNotifications";
-import { Button } from "@/components/ui/button";
 import { HeaderTime } from "@/components/dashboard/header/HeaderTime";
 import { AddTaskDrawer } from "@/components/dashboard/AddTaskDrawer";
-import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Plus, Settings } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export function MobileHeader() {
   return (
@@ -22,6 +23,11 @@ export function MobileHeader() {
                 <Plus className="h-5 w-5 text-purple-600" />
               </Button>
             </AddTaskDrawer>
+            <Link to="/settings">
+              <Button variant="ghost" size="icon" className="h-9 w-9">
+                <Settings className="h-5 w-5" />
+              </Button>
+            </Link>
             <HeaderNotifications />
             <HeaderUserMenu />
           </div>
