@@ -18,21 +18,21 @@ export function CalendarViewProvider({ children }: { children: ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
   
-  // Simple direct path to view mapping
   const getViewFromPath = useCallback((): CalendarView => {
-    if (location.pathname.includes('/weekly')) return 'weekly';
-    if (location.pathname.includes('/monthly')) return 'monthly';
-    if (location.pathname.includes('/yearly')) return 'yearly';
+    const path = location.pathname;
+    if (path === '/dashboard' || path === '/dashboard/tasks') return 'tasks';
+    if (path.includes('/weekly')) return 'weekly';
+    if (path.includes('/monthly')) return 'monthly';
+    if (path.includes('/yearly')) return 'yearly';
     return 'tasks';
   }, [location.pathname]);
 
-  const [view, setInternalView] = useState<CalendarView>(getViewFromPath);
+  const [view] = useState<CalendarView>(getViewFromPath);
 
   const setView = useCallback((newView: CalendarView) => {
-    const targetPath = `/dashboard/${newView}`;
-    setInternalView(newView);
+    const targetPath = `/dashboard/${newView === 'tasks' ? 'tasks' : newView}`;
     if (location.pathname !== targetPath) {
-      navigate(targetPath, { replace: true });
+      navigate(targetPath);
     }
   }, [navigate, location.pathname]);
 
@@ -49,5 +49,9 @@ export function CalendarViewProvider({ children }: { children: ReactNode }) {
 }
 
 export function useCalendarView() {
-  return useContext(CalendarViewContext);
+  const context = useContext(CalendarViewContext);
+  if (!context) {
+    throw new Error('useCalendarView must be used within a CalendarViewProvider');
+  }
+  return context;
 }

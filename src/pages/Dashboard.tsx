@@ -12,36 +12,25 @@ export default function Dashboard() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const { view } = useCalendarView();
 
-  switch (view) {
-    case 'weekly':
-      return (
-        <WeeklyCalendar 
-          initialDate={selectedDate}
-          key="weekly"
-        />
-      );
-    case 'monthly':
-      return (
-        <Calendar 
-          initialDate={selectedDate}
-          onDateSelect={setSelectedDate}
-          key="calendar"
-        />
-      );
-    case 'yearly':
-      return (
-        <YearlyCalendar 
-          onDateSelect={setSelectedDate}
-          key="yearly"
-        />
-      );
-    default:
-      return (
-        <TaskBoard 
-          selectedDate={selectedDate}
-          onDateChange={setSelectedDate}
-          key="taskboard"
-        />
-      );
+  console.log('Current view:', view); // Debug log
+
+  if (view === 'weekly') {
+    return <WeeklyCalendar initialDate={selectedDate} />;
   }
+
+  if (view === 'monthly') {
+    return <Calendar initialDate={selectedDate} onDateSelect={setSelectedDate} />;
+  }
+
+  if (view === 'yearly') {
+    return <YearlyCalendar onDateSelect={setSelectedDate} />;
+  }
+
+  // Default to TaskBoard
+  return (
+    <TaskBoard 
+      selectedDate={selectedDate}
+      onDateChange={setSelectedDate}
+    />
+  );
 }

@@ -1,3 +1,4 @@
+
 import React, { Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -69,7 +70,7 @@ const AppRoutes = React.memo(() => (
     <Route element={<ProtectedRoute />}>
       <Route element={<DashboardLayout />}>
         <Route path="dashboard">
-          <Route index element={<Navigate to="tasks" replace />} />
+          <Route index element={<Dashboard />} />
           <Route path="tasks" element={<Dashboard />} />
           <Route path="weekly" element={<Dashboard />} />
           <Route path="monthly" element={<Dashboard />} />
