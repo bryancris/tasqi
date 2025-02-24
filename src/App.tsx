@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -97,7 +98,10 @@ const App = () => {
                     <Route path="/auth" element={<Auth />} />
                     <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
                     <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-                      <Route path="/dashboard/*" element={<Dashboard />} />
+                      <Route path="/dashboard" element={<Dashboard />} />
+                      <Route path="/dashboard/weekly" element={<Dashboard />} />
+                      <Route path="/dashboard/monthly" element={<Dashboard />} />
+                      <Route path="/dashboard/yearly" element={<Dashboard />} />
                       <Route path="/notes" element={<Notes />} />
                       <Route path="/settings" element={<Settings />} />
                       <Route path="/analytics" element={<Analytics />} />

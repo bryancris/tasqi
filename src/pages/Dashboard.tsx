@@ -1,18 +1,15 @@
 
 import { useTaskNotifications } from "@/hooks/use-task-notifications";
-import { CalendarViewProvider } from "@/contexts/CalendarViewContext";
 import { useState } from "react";
 import { TaskBoard } from "@/components/dashboard/TaskBoard";
 import { WeeklyCalendar } from "@/components/dashboard/WeeklyCalendar";
 import { Calendar } from "@/components/dashboard/Calendar";
 import { YearlyCalendar } from "@/components/dashboard/YearlyCalendar";
-import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
-import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 export default function Dashboard() {
   useTaskNotifications();
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const navigate = useNavigate();
   const location = useLocation();
 
   const getCurrentView = () => {
@@ -23,56 +20,40 @@ export default function Dashboard() {
     return 'tasks';
   };
 
-  const renderContent = () => {
-    const view = getCurrentView();
-    
-    switch (view) {
-      case 'tasks':
-        return (
-          <TaskBoard 
-            selectedDate={selectedDate}
-            onDateChange={setSelectedDate}
-            key="taskboard"
-          />
-        );
-      case 'weekly':
-        return (
-          <WeeklyCalendar 
-            initialDate={selectedDate}
-            key="weekly"
-          />
-        );
-      case 'calendar':
-        return (
-          <Calendar 
-            initialDate={selectedDate}
-            onDateSelect={setSelectedDate}
-            key="calendar"
-          />
-        );
-      case 'yearly':
-        return (
-          <YearlyCalendar 
-            onDateSelect={setSelectedDate}
-            key="yearly"
-          />
-        );
-      default:
-        return null;
-    }
-  };
-
-  return (
-    <CalendarViewProvider>
-      <div className="h-full">
-        <Routes>
-          <Route path="/" element={renderContent()} />
-          <Route path="/weekly" element={renderContent()} />
-          <Route path="/monthly" element={renderContent()} />
-          <Route path="/yearly" element={renderContent()} />
-        </Routes>
-      </div>
-      <UpdatePrompt />
-    </CalendarViewProvider>
-  );
+  const view = getCurrentView();
+  
+  switch (view) {
+    case 'tasks':
+      return (
+        <TaskBoard 
+          selectedDate={selectedDate}
+          onDateChange={setSelectedDate}
+          key="taskboard"
+        />
+      );
+    case 'weekly':
+      return (
+        <WeeklyCalendar 
+          initialDate={selectedDate}
+          key="weekly"
+        />
+      );
+    case 'calendar':
+      return (
+        <Calendar 
+          initialDate={selectedDate}
+          onDateSelect={setSelectedDate}
+          key="calendar"
+        />
+      );
+    case 'yearly':
+      return (
+        <YearlyCalendar 
+          onDateSelect={setSelectedDate}
+          key="yearly"
+        />
+      );
+    default:
+      return null;
+  }
 }
