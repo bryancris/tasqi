@@ -20,8 +20,7 @@ export function MobileFooter() {
     setIsChatOpen(!isChatOpen);
   };
 
-  const handleCalendarClick = (e: React.MouseEvent, newView: 'weekly' | 'calendar') => {
-    e.preventDefault();
+  const handleCalendarClick = (newView: 'weekly' | 'calendar') => {
     changeView(newView);
   };
 
@@ -54,7 +53,7 @@ export function MobileFooter() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="center" className="min-w-[120px] bg-transparent border-none shadow-none">
               <button
-                onClick={(e) => handleCalendarClick(e, 'weekly')}
+                onClick={() => handleCalendarClick('weekly')}
                 className="flex items-center justify-center gap-2 py-3 relative hover:bg-transparent focus:bg-transparent w-full"
               >
                 <div className="relative">
@@ -65,7 +64,7 @@ export function MobileFooter() {
                 </div>
               </button>
               <button
-                onClick={(e) => handleCalendarClick(e, 'calendar')}
+                onClick={() => handleCalendarClick('calendar')}
                 className="flex items-center justify-center gap-2 py-3 relative hover:bg-transparent focus:bg-transparent w-full"
               >
                 <div className="relative">

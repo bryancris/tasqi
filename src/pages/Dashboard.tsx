@@ -11,7 +11,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileHeader } from "@/components/layouts/MobileHeader";
 import { MobileFooter } from "@/components/layouts/MobileFooter";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
-import { Routes, Route, Navigate } from "react-router-dom";
 
 export default function Dashboard() {
   useTaskNotifications();
@@ -27,49 +26,42 @@ export default function Dashboard() {
     }
   }, []);
 
-  const renderContent = () => (
-    <Routes>
-      <Route 
-        path="/" 
-        element={
+  const renderContent = () => {
+    switch (view) {
+      case 'tasks':
+        return (
           <TaskBoard 
             selectedDate={selectedDate}
             onDateChange={setSelectedDate}
             key="taskboard"
           />
-        }
-      />
-      <Route 
-        path="weekly" 
-        element={
+        );
+      case 'weekly':
+        return (
           <WeeklyCalendar 
             initialDate={selectedDate}
             key="weekly"
           />
-        }
-      />
-      <Route 
-        path="calendar" 
-        element={
+        );
+      case 'calendar':
+        return (
           <Calendar 
             initialDate={selectedDate}
             onDateSelect={setSelectedDate}
             key="calendar"
           />
-        }
-      />
-      <Route 
-        path="yearly" 
-        element={
+        );
+      case 'yearly':
+        return (
           <YearlyCalendar 
             onDateSelect={setSelectedDate}
             key="yearly"
           />
-        }
-      />
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
-    </Routes>
-  );
+        );
+      default:
+        return null;
+    }
+  };
 
   if (isMobile) {
     return (
