@@ -1,15 +1,14 @@
 
-import { useEffect } from "react";
+import { StrictMode } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "next-themes";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { UpdatePrompt } from "@/components/pwa/UpdatePrompt";
 import { NotificationsProvider } from "@/components/notifications/NotificationsManager";
-import { useSupabaseSubscription } from "@/hooks/use-supabase-subscription";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { CalendarViewProvider } from "@/contexts/CalendarViewContext";
 import { DashboardLayout } from "@/components/layouts/DashboardLayout";
@@ -86,45 +85,47 @@ const UpdatePasswordPage = () => {
 
 const App = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <AuthProvider>
-          <ThemeProvider defaultTheme="system" enableSystem>
-            <TooltipProvider>
-              <NotificationsProvider>
-                <CalendarViewProvider>
-                  <Routes>
-                    <Route path="/" element={<Index />} />
-                    <Route path="/auth" element={<Auth />} />
-                    <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
-                    <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-                      <Route path="/dashboard" element={<Dashboard />} />
-                      <Route path="/dashboard/weekly" element={<Dashboard />} />
-                      <Route path="/dashboard/monthly" element={<Dashboard />} />
-                      <Route path="/dashboard/yearly" element={<Dashboard />} />
-                      <Route path="/notes" element={<Notes />} />
-                      <Route path="/settings" element={<Settings />} />
-                      <Route path="/analytics" element={<Analytics />} />
-                      <Route path="/self-care" element={<SelfCare />} />
-                      <Route path="/physical-wellness" element={<PhysicalWellness />} />
-                      <Route path="/mental-wellbeing" element={<MentalWellbeing />} />
-                      <Route path="/personal-growth" element={<PersonalGrowth />} />
-                      <Route path="/social-connections" element={<SocialConnections />} />
-                      <Route path="/daily-rituals" element={<DailyRituals />} />
-                      <Route path="/emotional-care" element={<EmotionalCare />} />
-                    </Route>
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                  <Toaster />
-                  <Sonner />
-                  <UpdatePrompt />
-                </CalendarViewProvider>
-              </NotificationsProvider>
-            </TooltipProvider>
-          </ThemeProvider>
-        </AuthProvider>
-      </BrowserRouter>
-    </QueryClientProvider>
+    <StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider defaultTheme="system" enableSystem>
+          <BrowserRouter>
+            <AuthProvider>
+              <TooltipProvider>
+                <NotificationsProvider>
+                  <CalendarViewProvider>
+                    <Routes>
+                      <Route path="/" element={<Index />} />
+                      <Route path="/auth" element={<Auth />} />
+                      <Route path="/auth/update-password" element={<UpdatePasswordPage />} />
+                      <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+                        <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/dashboard/weekly" element={<Dashboard />} />
+                        <Route path="/dashboard/monthly" element={<Dashboard />} />
+                        <Route path="/dashboard/yearly" element={<Dashboard />} />
+                        <Route path="/notes" element={<Notes />} />
+                        <Route path="/settings" element={<Settings />} />
+                        <Route path="/analytics" element={<Analytics />} />
+                        <Route path="/self-care" element={<SelfCare />} />
+                        <Route path="/physical-wellness" element={<PhysicalWellness />} />
+                        <Route path="/mental-wellbeing" element={<MentalWellbeing />} />
+                        <Route path="/personal-growth" element={<PersonalGrowth />} />
+                        <Route path="/social-connections" element={<SocialConnections />} />
+                        <Route path="/daily-rituals" element={<DailyRituals />} />
+                        <Route path="/emotional-care" element={<EmotionalCare />} />
+                      </Route>
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                    <Toaster />
+                    <Sonner />
+                    <UpdatePrompt />
+                  </CalendarViewProvider>
+                </NotificationsProvider>
+              </TooltipProvider>
+            </AuthProvider>
+          </BrowserRouter>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </StrictMode>
   );
 };
 
