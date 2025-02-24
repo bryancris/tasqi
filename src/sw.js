@@ -2,6 +2,9 @@
 // Disable workbox logging
 self.__WB_DISABLE_DEV_LOGS = true;
 
+// This line is required for the build to work - DO NOT REMOVE
+self.__WB_MANIFEST;
+
 // Cache name for our app
 const CACHE_NAME = 'tasqi-cache-v1';
 

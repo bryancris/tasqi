@@ -15,7 +15,10 @@ export default defineConfig(({ mode }) => ({
     mode === 'development' &&
     componentTagger(),
     VitePWA({
-      registerType: 'autoUpdate',
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
+      injectRegister: 'script',
       manifest: {
         name: 'TASQI-AI Assistant',
         short_name: 'TASQI-AI',
@@ -40,44 +43,6 @@ export default defineConfig(({ mode }) => ({
             purpose: 'any maskable'
           }
         ]
-      },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
-        navigateFallback: null,
-        navigateFallbackAllowlist: [],
-        cleanupOutdatedCaches: true,
-        clientsClaim: true,
-        skipWaiting: true,
-        runtimeCaching: [
-          {
-            urlPattern: ({ url }) => {
-              const appRoutes = ['/', '/notes', '/dashboard', '/self-care', '/settings'];
-              return appRoutes.some(route => url.pathname.startsWith(route));
-            },
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'app-routes',
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          },
-          {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts-stylesheets',
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          }
-        ]
-      },
-      devOptions: {
-        enabled: true,
-        type: 'module',
-        navigateFallback: 'index.html'
       }
     })
   ].filter(Boolean),
