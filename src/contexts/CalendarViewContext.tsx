@@ -1,6 +1,5 @@
 
 import { createContext, useContext, ReactNode, useCallback, useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
 
 export type CalendarView = 'tasks' | 'calendar' | 'yearly' | 'weekly';
 
@@ -11,45 +10,19 @@ interface CalendarViewContextType {
 
 const CalendarViewContext = createContext<CalendarViewContextType | undefined>(undefined);
 
-export function CalendarViewProvider({ children }: { children: ReactNode }) {
-  const [currentView, setCurrentView] = useState<CalendarView>('tasks');
-  const navigate = useNavigate();
-  const location = useLocation();
+const STORAGE_KEY = 'calendar-view';
 
-  // Sync route with view state
-  useEffect(() => {
-    const path = location.pathname;
-    if (path.includes('/dashboard/weekly')) {
-      setCurrentView('weekly');
-    } else if (path.includes('/dashboard/calendar')) {
-      setCurrentView('calendar');
-    } else if (path.includes('/dashboard/yearly')) {
-      setCurrentView('yearly');
-    } else if (path.includes('/dashboard')) {
-      setCurrentView('tasks');
-    }
-  }, [location.pathname]);
+export function CalendarViewProvider({ children }: { children: ReactNode }) {
+  const [currentView, setCurrentView] = useState<CalendarView>(() => {
+    const savedView = localStorage.getItem(STORAGE_KEY);
+    return (savedView as CalendarView) || 'tasks';
+  });
 
   const changeView = useCallback((newView: CalendarView) => {
     console.log('Changing view to:', newView);
     setCurrentView(newView);
-    
-    // Navigate to the appropriate route
-    switch (newView) {
-      case 'weekly':
-        navigate('/dashboard/weekly');
-        break;
-      case 'calendar':
-        navigate('/dashboard/calendar');
-        break;
-      case 'yearly':
-        navigate('/dashboard/yearly');
-        break;
-      case 'tasks':
-        navigate('/dashboard');
-        break;
-    }
-  }, [navigate]);
+    localStorage.setItem(STORAGE_KEY, newView);
+  }, []);
 
   const value = {
     view: currentView,
