@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { CalendarView, useCalendarView } from "@/contexts/CalendarViewContext";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 interface CalendarViewButtonProps {
   view: CalendarView;
@@ -17,12 +17,16 @@ export function CalendarViewButton({
 }: CalendarViewButtonProps) {
   const { setView } = useCalendarView();
   const location = useLocation();
+  const navigate = useNavigate();
   
   // Only show as active if we're on a dashboard route and this is the current view
   const isDashboardRoute = location.pathname.startsWith('/dashboard');
   const isActive = isDashboardRoute && currentView === view;
 
   const handleClick = () => {
+    // Always navigate to the appropriate route based on the view
+    const route = view === 'tasks' ? '/dashboard/tasks' : `/dashboard/${view}`;
+    navigate(route);
     setView(view);
   };
 
