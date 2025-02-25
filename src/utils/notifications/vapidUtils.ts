@@ -1,32 +1,19 @@
 
-import { supabase } from "@/integrations/supabase/client";
+import { base64ToUint8Array } from '@/lib/utils';
 
-export const urlBase64ToUint8Array = (base64String: string) => {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding)
-    .replace(/\-/g, '+')
-    .replace(/_/g, '/');
-
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
+export const generateVapidKeys = async () => {
+  try {
+    const response = await fetch('/api/notifications/vapid-keys');
+    if (!response.ok) throw new Error('Failed to fetch VAPID keys');
+    const { publicKey } = await response.json();
+    return publicKey;
+  } catch (error) {
+    console.error('Error fetching VAPID keys:', error);
+    throw error;
   }
-  return outputArray;
 };
 
 export const getVapidPublicKey = async () => {
-  const { data, error } = await supabase
-    .from('app_settings')
-    .select('vapid_public_key')
-    .single();
-
-  if (error) {
-    console.error('Error fetching VAPID key:', error);
-    throw error;
-  }
-
-  return data.vapid_public_key;
+  const vapidPublicKey = await generateVapidKeys();
+  return base64ToUint8Array(vapidPublicKey);
 };
-
