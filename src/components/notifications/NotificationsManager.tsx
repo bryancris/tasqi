@@ -1,6 +1,8 @@
+
 import * as React from "react";
 import { AlertNotification } from "./AlertNotification";
 import { playNotificationSound } from "@/utils/notifications/soundUtils";
+import { showBrowserNotification } from "@/utils/notifications/notificationUtils";
 
 export interface Notification {
   id: string;
@@ -70,13 +72,35 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     }
   }, [notifications]);
 
-  const showNotification = React.useCallback((notification: Omit<Notification, 'id' | 'read' | 'created_at' | 'user_id'>) => {
+  const showNotification = React.useCallback(async (notification: Omit<Notification, 'id' | 'read' | 'created_at' | 'user_id'>) => {
     const id = Math.random().toString(36).substr(2, 9);
     const now = new Date().toISOString();
 
+    // Determine if this is a persistent notification
     const isPersistent = notification.type === 'error' || 
                         notification.title.toLowerCase().includes('task reminder') ||
                         notification.persistent === true;
+
+    // Play notification sound
+    try {
+      await playNotificationSound();
+    } catch (error) {
+      console.error('Error playing notification sound:', error);
+    }
+
+    // Show browser notification if window is not focused
+    if (!document.hasFocus()) {
+      try {
+        await showBrowserNotification({
+          id: parseInt(notification.reference_id || '0'),
+          title: notification.title,
+          description: notification.message,
+          priority: 'high'
+        } as any, 'reminder');
+      } catch (error) {
+        console.error('Error showing browser notification:', error);
+      }
+    }
 
     setNotifications(prev => {
       const existingGroup = prev.find(n => 
@@ -115,8 +139,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       }];
     });
 
-    void playNotificationSound();
-
+    // Set timeout for non-persistent notifications
     if (!isPersistent) {
       const timeoutId = setTimeout(() => {
         dismissNotification(id);

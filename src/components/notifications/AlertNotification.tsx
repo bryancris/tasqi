@@ -62,7 +62,7 @@ export function AlertNotification({
         className={cn(
           "max-w-sm m-0 transform-none transition-all duration-300 ease-in-out",
           "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-          "bg-white border shadow-lg relative", // Added relative for absolute positioning of close button
+          "bg-white border shadow-lg relative",
           {
             'fixed right-4': !isMobile,
             'top-4': !isMobile && index === 0,
