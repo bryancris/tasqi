@@ -57,7 +57,7 @@ export function AddTaskContent({
 
   return (
     <div className="flex flex-col h-[calc(100vh-80px)] bg-gradient-to-b from-purple-50/50 to-white">
-      <div className="flex-1 overflow-y-auto scrollbar-hide pb-20">
+      <div className="flex-1 overflow-y-auto scrollbar-hide pb-20 px-4 sm:px-6 max-w-[540px] w-full mx-auto">
         <TaskForm
           title={title}
           description={description}
