@@ -10,7 +10,7 @@ export function useAudioRecording(onTranscriptionComplete: (text: string) => voi
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const { requestMicrophoneAccess } = useMicrophoneAccess();
   const { toast } = useToast();
-  const recognitionRef = useRef<typeof SpeechRecognition | null>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   const stopRecording = useCallback(() => {
     if (recognitionRef.current) {
@@ -28,13 +28,13 @@ export function useAudioRecording(onTranscriptionComplete: (text: string) => voi
   const { startSilenceDetection, stopSilenceDetection } = useSilenceDetection(stopRecording);
 
   const startNativeRecording = useCallback(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
+    const SpeechRecognitionConstructor = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognitionConstructor) {
       return false;
     }
 
     try {
-      const recognition = new SpeechRecognition();
+      const recognition = new SpeechRecognitionConstructor();
       recognition.continuous = false;
       recognition.interimResults = false;
       recognition.lang = 'en-US';
