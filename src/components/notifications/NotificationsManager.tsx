@@ -1,8 +1,10 @@
-
 import * as React from "react";
 import { AlertNotification } from "./AlertNotification";
 import { playNotificationSound } from "@/utils/notifications/soundUtils";
 import { showBrowserNotification } from "@/utils/notifications/notificationUtils";
+import { useState, useEffect, useCallback } from "react";
+import { OfflineNotificationBanner } from "./OfflineNotificationBanner";
+import { NotificationGroup } from "./NotificationGroup";
 
 export interface Notification {
   id: string;
@@ -43,7 +45,7 @@ const NOTIFICATION_TIMEOUT = 15000;
 const STORAGE_KEY = 'persisted_notifications';
 
 export function NotificationsProvider({ children }: { children: React.ReactNode }) {
-  const [notifications, setNotifications] = React.useState<Notification[]>(() => {
+  const [notifications, setNotifications] = useState<Notification[]>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
@@ -61,6 +63,17 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     }
     return [];
   });
+  const [offlineQueue, setOfflineQueue] = useState<Notification[]>([]);
+  
+  // Group notifications by their group ID
+  const groupedNotifications = notifications.reduce((groups, notification) => {
+    const group = notification.group || 'default';
+    if (!groups[group]) {
+      groups[group] = [];
+    }
+    groups[group].push(notification);
+    return groups;
+  }, {} as Record<string, Notification[]>);
 
   const timeoutRefs = React.useRef<Map<string, NodeJS.Timeout>>(new Map());
 
@@ -72,9 +85,21 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     }
   }, [notifications]);
 
-  const showNotification = React.useCallback(async (notification: Omit<Notification, 'id' | 'read' | 'created_at' | 'user_id'>) => {
+  const showNotification = useCallback(async (notification: Omit<Notification, 'id' | 'read' | 'created_at' | 'user_id'>) => {
     const id = Math.random().toString(36).substr(2, 9);
     const now = new Date().toISOString();
+    
+    // Check if we're offline
+    if (!navigator.onLine) {
+      setOfflineQueue(prev => [...prev, {
+        ...notification,
+        id,
+        read: false,
+        created_at: now,
+        user_id: ''
+      }]);
+      return;
+    }
 
     // Determine if this is a persistent notification
     const isPersistent = notification.type === 'error' || 
@@ -146,9 +171,9 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       }, NOTIFICATION_TIMEOUT);
       timeoutRefs.current.set(id, timeoutId);
     }
-  }, []);
+  }, [dismissNotification]);
 
-  const dismissNotification = React.useCallback((id: string) => {
+  const dismissNotification = useCallback((id: string) => {
     setNotifications(prev => {
       const notification = prev.find(n => n.id === id);
       if (!notification) return prev;
@@ -162,7 +187,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     }
   }, []);
 
-  const dismissGroup = React.useCallback((group: string) => {
+  const dismissGroup = useCallback((group: string) => {
     setNotifications(prev => {
       return prev.map(n => n.group === group ? { ...n, read: true } : n);
     });
@@ -177,35 +202,39 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       });
   }, [notifications]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     return () => {
       timeoutRefs.current.forEach(timeout => clearTimeout(timeout));
       timeoutRefs.current.clear();
     };
   }, []);
 
+  // Handle offline/online state changes
+  useEffect(() => {
+    const handleOnline = async () => {
+      // Process queued notifications when we come back online
+      for (const notification of offlineQueue) {
+        await showNotification(notification);
+      }
+      setOfflineQueue([]);
+    };
+
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [offlineQueue, showNotification]);
+
   const visibleNotifications = notifications.filter(n => !n.read);
 
   return (
     <NotificationsContext.Provider value={{ notifications, showNotification, dismissNotification, dismissGroup }}>
       {children}
-      {visibleNotifications.map((notification, index) => (
-        <AlertNotification
-          key={notification.id}
-          open={true}
-          title={notification.title}
-          message={notification.message}
-          type={notification.type}
-          action={notification.action}
-          onDismiss={() => {
-            if (notification.group) {
-              dismissGroup(notification.group);
-            } else {
-              dismissNotification(notification.id);
-            }
-          }}
-          index={index}
-          referenceId={notification.reference_id ? parseInt(notification.reference_id) : null}
+      <OfflineNotificationBanner />
+      {Object.entries(groupedNotifications).map(([groupId, groupNotifications]) => (
+        <NotificationGroup
+          key={groupId}
+          groupId={groupId}
+          notifications={groupNotifications}
+          onDismissGroup={dismissGroup}
         />
       ))}
     </NotificationsContext.Provider>
