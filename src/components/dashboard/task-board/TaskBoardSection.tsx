@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Task } from "../TaskBoard";
 import { DndContext, MouseSensor, TouchSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { startOfDay, isAfter } from "date-fns";
+import { startOfDay, endOfDay, isToday, parseISO, isSameDay } from "date-fns";
 import { TaskCard } from "../TaskCard";
 import { TaskLegend } from "../TaskLegend";
 import { QueryObserverResult } from "@tanstack/react-query";
@@ -29,27 +29,45 @@ export function TaskBoardSection({ tasks, onDragEnd, onComplete }: TaskBoardSect
     })
   );
 
-  const todayStart = startOfDay(new Date());
+  const today = new Date();
+  const todayStart = startOfDay(today);
+  const todayEnd = endOfDay(today);
 
-  const shouldShowCompletedTask = (task: Task) => {
-    return task.completed_at && isAfter(new Date(task.completed_at), todayStart);
+  const filterTasks = (task: Task) => {
+    // Include unscheduled tasks
+    if (task.status === 'unscheduled') {
+      return true;
+    }
+
+    // Include tasks completed today
+    if (task.status === 'completed' && task.completed_at) {
+      const completedDate = parseISO(task.completed_at);
+      return isSameDay(completedDate, today);
+    }
+
+    // Include scheduled tasks for today
+    if (task.status === 'scheduled' && task.date) {
+      const taskDate = parseISO(task.date);
+      return isSameDay(taskDate, today);
+    }
+
+    // Include in_progress or stuck tasks for today
+    if ((task.status === 'in_progress' || task.status === 'stuck') && task.date) {
+      const taskDate = parseISO(task.date);
+      return isSameDay(taskDate, today);
+    }
+
+    return false;
   };
 
   const sortedTasks = [...tasks]
-    .filter(task => {
-      if (task.status === 'unscheduled') {
-        return true;
-      }
-      
-      if (task.status === 'completed') {
-        return shouldShowCompletedTask(task);
-      }
-      
-      return task.status === 'scheduled';
-    })
+    .filter(filterTasks)
     .sort((a, b) => {
+      // Put completed tasks at the bottom
       if (a.status === 'completed' && b.status !== 'completed') return 1;
       if (a.status !== 'completed' && b.status === 'completed') return -1;
+      
+      // Sort by position for non-completed tasks
       return (a.position || 0) - (b.position || 0);
     });
 
