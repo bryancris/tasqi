@@ -6,7 +6,7 @@ import { NotificationGroup } from "./NotificationGroup";
 import { NotificationsContext } from "./context/NotificationsContext";
 import { useNotificationState } from "./hooks/useNotificationState";
 import { useNotificationHandlers } from "./hooks/useNotificationHandlers";
-import { Notification } from "./types";
+import type { Notification } from "./types";
 
 export { useNotifications } from "./context/NotificationsContext";
 export type { Notification };
@@ -27,7 +27,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   const enableNotifications = async () => {
     setIsLoading(true);
     try {
-      const permission = await Notification.requestPermission();
+      const permission = await window.Notification.requestPermission();
       if (permission === 'granted') {
         setIsSubscribed(true);
         return;
@@ -75,7 +75,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   // Check initial notification permission
   useEffect(() => {
     const checkPermission = async () => {
-      if (Notification.permission === 'granted') {
+      if (window.Notification.permission === 'granted') {
         setIsSubscribed(true);
       }
     };
