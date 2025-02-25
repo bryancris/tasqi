@@ -1,6 +1,6 @@
 
 import { toast } from "sonner";
-import { NotificationData, NotificationSubscription } from "./types";
+import { NotificationData, NotificationSubscription, NotificationAction } from "./types";
 import { ServiceWorkerManager } from "./serviceWorkerManager";
 import { SubscriptionManager } from "./subscriptionManager";
 import { QueueManager } from "./queueManager";
@@ -70,8 +70,7 @@ class NotificationService {
       const audio = new Audio('/notification-sound.mp3');
       await audio.play();
 
-      // Show notification
-      await registration.showNotification(notification.title, {
+      const notificationOptions: NotificationOptions = {
         body: notification.message,
         icon: '/pwa-192x192.png',
         badge: '/pwa-192x192.png',
@@ -85,7 +84,10 @@ class NotificationService {
             title: 'View'
           }
         ]
-      });
+      };
+
+      // Show notification
+      await registration.showNotification(notification.title, notificationOptions);
 
       console.log('✅ PWA notification shown successfully');
     } catch (error) {

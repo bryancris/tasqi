@@ -22,3 +22,16 @@ export interface NotificationQueue {
   timestamp: number;
   retries: number;
 }
+
+// Add NotificationAction type for PWA notifications
+export interface NotificationAction {
+  action: string;
+  title: string;
+}
+
+// Extend NotificationOptions to include actions
+declare global {
+  interface NotificationOptions {
+    actions?: NotificationAction[];
+  }
+}
