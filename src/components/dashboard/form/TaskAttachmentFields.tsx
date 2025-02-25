@@ -18,7 +18,7 @@ interface TaskAttachmentFieldsProps {
 
 export function TaskAttachmentFields({ task, isEditing }: TaskAttachmentFieldsProps) {
   const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
-  const [attachmentsKey, setAttachmentsKey] = useState(0); // Add refresh key state
+  const [attachmentsKey, setAttachmentsKey] = useState(0);
 
   const handleVoiceNoteComplete = async (audioBlob: Blob) => {
     if (!task?.id) {
@@ -27,12 +27,10 @@ export function TaskAttachmentFields({ task, isEditing }: TaskAttachmentFieldsPr
     }
 
     try {
-      // Format the current date and time
       const formattedDateTime = format(new Date(), "yyyy-MM-dd_HH-mm-ss");
       const filename = `Voice Note ${formattedDateTime}.webm`;
       const filePath = `${task.id}/${filename}`;
 
-      // Upload to storage
       const { error: uploadError } = await supabase.storage
         .from('task-attachments')
         .upload(filePath, audioBlob, {
@@ -41,7 +39,6 @@ export function TaskAttachmentFields({ task, isEditing }: TaskAttachmentFieldsPr
 
       if (uploadError) throw uploadError;
 
-      // Save attachment metadata
       const { error: dbError } = await supabase
         .from('task_attachments')
         .insert({
@@ -56,7 +53,7 @@ export function TaskAttachmentFields({ task, isEditing }: TaskAttachmentFieldsPr
 
       toast.success('Voice note added successfully');
       setShowVoiceRecorder(false);
-      setAttachmentsKey(prev => prev + 1); // Increment the key to force refresh
+      setAttachmentsKey(prev => prev + 1);
     } catch (error) {
       console.error('Error saving voice note:', error);
       toast.error('Failed to save voice note');
@@ -76,9 +73,10 @@ export function TaskAttachmentFields({ task, isEditing }: TaskAttachmentFieldsPr
           variant="outline"
           onClick={() => setShowVoiceRecorder(true)}
           disabled={!isEditing && !task?.id}
+          className="flex items-center gap-2 px-4"
         >
-          <Mic className="h-4 w-4 mr-2" />
-          Voice Note
+          <Mic className="h-4 w-4" />
+          <span>Voice Note</span>
         </Button>
       </div>
 
@@ -98,7 +96,7 @@ export function TaskAttachmentFields({ task, isEditing }: TaskAttachmentFieldsPr
       <TaskAttachments 
         taskId={task?.id} 
         isEditing={isEditing} 
-        key={attachmentsKey} // Add the key prop here
+        key={attachmentsKey}
       />
     </div>
   );
