@@ -28,12 +28,24 @@ export async function saveTokenToSupabase(tokenResponse: TokenResponse): Promise
       throw new Error('User must be logged in to save token');
     }
 
+    // First check if this token already exists
+    const { data: existingToken } = await supabase
+      .from('push_device_tokens')
+      .select('id')
+      .eq('token', tokenResponse.token)
+      .single();
+
+    if (existingToken) {
+      console.log('Token already exists, skipping insert');
+      return;
+    }
+
     const { error } = await supabase
       .from('push_device_tokens')
-      .upsert({
+      .insert({
         user_id: session.user.id,
         platform: tokenResponse.platform,
-        token_source: tokenResponse.source,
+        token_source: 'web',
         platform_details: tokenResponse.platformDetails as Json,
         metadata: {
           userAgent: navigator.userAgent,
@@ -46,12 +58,10 @@ export async function saveTokenToSupabase(tokenResponse: TokenResponse): Promise
         } as Json,
         token: tokenResponse.token,
         updated_at: new Date().toISOString()
-      }, {
-        onConflict: 'token'
       });
 
     if (error) throw error;
-    console.log(`✅ ${tokenResponse.source.toUpperCase()} token saved successfully`);
+    console.log(`✅ Web token saved successfully`);
   } catch (error) {
     console.error('❌ Error saving token to Supabase:', error);
     toast.error('Failed to save notification token');

@@ -5,7 +5,7 @@ export type PlatformType = 'web';
 export interface TokenResponse {
   token: string;
   platform: PlatformType;
-  source: 'web' | 'fcm';
+  source: 'web';
   platformDetails: {
     userAgent: string;
     language: string;
