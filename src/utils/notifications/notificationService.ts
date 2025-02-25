@@ -10,6 +10,7 @@ class NotificationService {
   private subManager: SubscriptionManager | null = null;
   private queueManager: QueueManager;
   private periodicSyncInterval = 15; // minutes
+  private initialized = false;
 
   constructor() {
     this.swManager = new ServiceWorkerManager();
@@ -17,7 +18,13 @@ class NotificationService {
   }
 
   async initialize(): Promise<void> {
+    if (this.initialized) {
+      console.log('✅ Notification service already initialized');
+      return;
+    }
+
     try {
+      console.log('🚀 Initializing notification service...');
       const registration = await this.swManager.register();
       
       if (registration) {
@@ -26,8 +33,15 @@ class NotificationService {
         await this.swManager.setupBackgroundSync();
         await this.swManager.setupPeriodicSync(this.periodicSyncInterval);
         await this.queueManager.processNotificationQueue(this.showNotification.bind(this));
+        
+        // Request notification permission if not granted
+        if (Notification.permission !== 'granted') {
+          const permission = await Notification.requestPermission();
+          console.log('📱 Notification permission:', permission);
+        }
       }
       
+      this.initialized = true;
       console.log('✅ Notification service initialized');
     } catch (error) {
       console.error('❌ Failed to initialize notification service:', error);
@@ -42,19 +56,43 @@ class NotificationService {
     return this.subManager.subscribe();
   }
 
-  private async showNotification(notification: NotificationData): Promise<void> {
+  async showNotification(notification: NotificationData): Promise<void> {
+    console.log('🔔 Showing PWA notification:', notification);
+    
     const registration = this.swManager.getRegistration();
-    if (!registration) throw new Error('Service Worker not registered');
+    if (!registration) {
+      console.error('❌ Service Worker not registered');
+      return;
+    }
 
-    await registration.showNotification(notification.title, {
-      body: notification.message,
-      icon: '/pwa-192x192.png',
-      badge: '/pwa-192x192.png',
-      tag: notification.groupId,
-      renotify: true,
-      requireInteraction: notification.priority === 'high',
-      data: notification.data
-    });
+    try {
+      // Play notification sound
+      const audio = new Audio('/notification-sound.mp3');
+      await audio.play();
+
+      // Show notification
+      await registration.showNotification(notification.title, {
+        body: notification.message,
+        icon: '/pwa-192x192.png',
+        badge: '/pwa-192x192.png',
+        tag: notification.groupId,
+        renotify: true,
+        requireInteraction: notification.priority === 'high',
+        data: notification.data,
+        actions: [
+          {
+            action: 'view',
+            title: 'View'
+          }
+        ]
+      });
+
+      console.log('✅ PWA notification shown successfully');
+    } catch (error) {
+      console.error('❌ Error showing PWA notification:', error);
+      // Fallback to toast notification if PWA notification fails
+      toast.error('Failed to show notification');
+    }
   }
 }
 

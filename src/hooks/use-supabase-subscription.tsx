@@ -4,12 +4,27 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { playNotificationSound } from '@/utils/notifications/soundUtils';
 import { useNotifications } from '@/components/notifications/NotificationsManager';
+import { notificationService } from '@/utils/notifications/notificationService';
 
 export function useSupabaseSubscription() {
   const queryClient = useQueryClient();
   const { showNotification } = useNotifications();
 
   useEffect(() => {
+    const initializeNotifications = async () => {
+      try {
+        // Initialize notification service for PWA
+        if ('serviceWorker' in navigator && window.matchMedia('(display-mode: standalone)').matches) {
+          console.log('📱 Initializing PWA notification service...');
+          await notificationService.initialize();
+        }
+      } catch (error) {
+        console.error('❌ Error initializing notification service:', error);
+      }
+    };
+
+    void initializeNotifications();
+
     // Tasks channel
     const tasksChannel = supabase.channel('tasks-changes')
       .on(
@@ -44,26 +59,35 @@ export function useSupabaseSubscription() {
         },
         async (payload) => {
           try {
-            // Play notification sound
-            await playNotificationSound();
-
-            // Show notification popup
-            showNotification({
-              title: payload.new.title,
-              message: payload.new.message,
-              type: 'info',
-              persistent: true,
-              reference_id: payload.new.reference_id,
-              reference_type: 'task_assignment',
-              action: {
-                label: 'View Task',
-                onClick: () => {
-                  // Navigate to task view will be handled by the notification action
-                  console.log('Navigating to task:', payload.new.reference_id);
+            // Handle notifications differently for PWA vs regular web
+            if ('serviceWorker' in navigator && window.matchMedia('(display-mode: standalone)').matches) {
+              // PWA context: Use service worker for notifications
+              await notificationService.showNotification({
+                title: payload.new.title,
+                message: payload.new.message,
+                data: {
+                  reference_id: payload.new.reference_id,
+                  reference_type: 'task_assignment'
                 }
-              }
-            });
-
+              });
+            } else {
+              // Regular web context: Play sound and show in-app notification
+              await playNotificationSound();
+              showNotification({
+                title: payload.new.title,
+                message: payload.new.message,
+                type: 'info',
+                persistent: true,
+                reference_id: payload.new.reference_id,
+                reference_type: 'task_assignment',
+                action: {
+                  label: 'View Task',
+                  onClick: () => {
+                    console.log('Navigating to task:', payload.new.reference_id);
+                  }
+                }
+              });
+            }
           } catch (error) {
             console.error('Error handling task assignment notification:', error);
           }
@@ -79,4 +103,3 @@ export function useSupabaseSubscription() {
     };
   }, [queryClient, showNotification]);
 }
-
