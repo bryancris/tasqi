@@ -56,8 +56,8 @@ export function AddTaskContent({
   const isMobile = useIsMobile();
 
   return (
-    <div className="flex flex-col h-[calc(100vh-80px)] bg-gradient-to-b from-purple-50/50 to-white">
-      <div className="flex-1 overflow-y-auto scrollbar-hide pb-20 px-4 sm:px-6 max-w-[540px] w-full mx-auto">
+    <div className="flex flex-col h-[calc(100vh-80px)]">
+      <div className="flex-1 overflow-y-auto scrollbar-hide pb-20">
         <TaskForm
           title={title}
           description={description}
