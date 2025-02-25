@@ -5,6 +5,8 @@ import { Task, TaskPriority } from "../TaskBoard";
 import { Subtask } from "../subtasks/SubtaskList";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
 
 interface EditTaskContentProps {
   task: Task;
@@ -93,7 +95,16 @@ export function EditTaskContent({
         />
       </div>
       
-      <div className="px-6 pb-6">
+      <div className="px-6 pb-6 space-y-4">
+        <Button 
+          variant="destructive" 
+          className="w-full"
+          onClick={() => setIsDeleteAlertOpen(true)}
+        >
+          <Trash2 className="w-4 h-4 mr-2" />
+          Delete Task
+        </Button>
+        
         <DeleteTaskAlert 
           taskId={task.id}
           open={isDeleteAlertOpen}
