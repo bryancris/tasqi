@@ -6,6 +6,7 @@ import { Sidebar } from "../dashboard/Sidebar";
 import { DesktopHeader } from "./DesktopHeader";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useCalendarView } from "@/contexts/CalendarViewContext";
+import { useSupabaseSubscription } from "@/hooks/use-supabase-subscription";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -14,6 +15,9 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const isMobile = useIsMobile();
   const { selectedDate, setSelectedDate } = useCalendarView();
+  
+  // Initialize Supabase subscriptions
+  useSupabaseSubscription();
 
   useEffect(() => {
     console.log("DashboardLayout mounted");
