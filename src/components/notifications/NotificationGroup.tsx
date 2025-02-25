@@ -4,6 +4,7 @@ import { useNotifications } from "./NotificationsManager";
 import { Bell, Check, AlertTriangle, Info, AlertCircle, X } from "lucide-react";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogTitle } from "../ui/alert-dialog";
 import { useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface NotificationGroupProps {
   groupId: string;
@@ -19,6 +20,7 @@ interface NotificationGroupProps {
 
 export function NotificationGroup({ groupId, notifications, onDismissGroup }: NotificationGroupProps) {
   const [isOpen, setIsOpen] = useState(true);
+  const isMobile = useIsMobile();
 
   const priorityOrder = { high: 0, normal: 1, low: 2 };
   const sortedNotifications = [...notifications].sort((a, b) => {
@@ -46,9 +48,10 @@ export function NotificationGroup({ groupId, notifications, onDismissGroup }: No
   return (
     <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
       <AlertDialogContent className={cn(
-        "max-w-sm m-0 transform-none transition-all duration-300 ease-in-out",
+        "max-w-sm transform-none transition-all duration-300 ease-in-out",
         "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-        "bg-white border shadow-lg"
+        "bg-white border shadow-lg",
+        isMobile ? "fixed left-4 right-4 top-20 m-0 w-auto" : "m-0"
       )}>
         <AlertDialogTitle className="sr-only">Notifications</AlertDialogTitle>
         <AlertDialogDescription className="sr-only">
