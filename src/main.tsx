@@ -2,7 +2,6 @@
 import { createRoot } from 'react-dom/client'
 import React from 'react'
 import { BrowserRouter } from "react-router-dom";
-import { ThemeProvider } from "next-themes";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from './App.tsx'
 import './index.css'
@@ -16,12 +15,10 @@ if (!root) throw new Error('Root element not found');
 createRoot(root).render(
   <React.StrictMode>
     <BrowserRouter>
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-        <QueryClientProvider client={queryClient}>
-          <App />
-          <Toaster />
-        </QueryClientProvider>
-      </ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <App />
+        <Toaster />
+      </QueryClientProvider>
     </BrowserRouter>
   </React.StrictMode>
 );
