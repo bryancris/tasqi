@@ -28,14 +28,17 @@ export async function saveTokenToSupabase(tokenResponse: TokenResponse): Promise
       throw new Error('User must be logged in to save token');
     }
 
-    // First check if this token already exists
-    const { data: existingToken } = await supabase
+    // First check if this token already exists using proper query format
+    const { data: existingTokens, error: queryError } = await supabase
       .from('push_device_tokens')
       .select('id')
-      .eq('token', tokenResponse.token)
-      .single();
+      .eq('token', tokenResponse.token);
 
-    if (existingToken) {
+    if (queryError) {
+      throw queryError;
+    }
+
+    if (existingTokens && existingTokens.length > 0) {
       console.log('Token already exists, skipping insert');
       return;
     }
