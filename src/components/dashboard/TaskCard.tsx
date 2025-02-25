@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Task } from "./TaskBoard";
@@ -26,8 +26,13 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [localTaskStatus, setLocalTaskStatus] = useState(task.status);
+  const [localTask, setLocalTask] = useState(task);
   const queryClient = useQueryClient();
+
+  // Update local task when the prop changes
+  useEffect(() => {
+    setLocalTask(task);
+  }, [task]);
   
   const {
     attributes,
@@ -61,10 +66,10 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
       }
       
       setIsUpdating(true);
-      console.log('Current task status:', task.status);
+      console.log('Current task status:', localTask.status);
       
-      const newStatus = task.status === 'completed' ? 'unscheduled' : 'completed';
-      const completedAt = task.status === 'completed' ? null : new Date().toISOString();
+      const newStatus = localTask.status === 'completed' ? 'unscheduled' : 'completed';
+      const completedAt = localTask.status === 'completed' ? null : new Date().toISOString();
       
       console.log('Updating task to:', { newStatus, completedAt });
 
@@ -75,9 +80,11 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
       }
 
       // Optimistically update local state
-      setLocalTaskStatus(newStatus);
-      task.status = newStatus;
-      task.completed_at = completedAt;
+      setLocalTask(prevTask => ({
+        ...prevTask,
+        status: newStatus,
+        completed_at: completedAt
+      }));
 
       if (task.shared) {
         console.log('Updating shared task');
@@ -93,7 +100,7 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
           console.error('Error updating shared task:', sharedUpdateError);
           toast.error('Failed to update shared task status');
           // Revert local state on error
-          setLocalTaskStatus(task.status);
+          setLocalTask(task);
           return;
         }
       } else {
@@ -110,7 +117,7 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
           console.error('Error updating task:', updateError);
           toast.error('Failed to update task status');
           // Revert local state on error
-          setLocalTaskStatus(task.status);
+          setLocalTask(task);
           return;
         }
       }
@@ -125,7 +132,7 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
       console.error('Unexpected error completing task:', error);
       toast.error('An unexpected error occurred');
       // Revert local state on error
-      setLocalTaskStatus(task.status);
+      setLocalTask(task);
     } finally {
       setIsUpdating(false);
     }
@@ -140,7 +147,7 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
 
   const renderCard = () => {
     const cardProps = {
-      task: { ...task, status: localTaskStatus },
+      task: localTask,
       onClick: handleClick,
       onComplete: handleComplete,
       dragHandleProps
@@ -166,12 +173,12 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
         {renderCard()}
       </div>
       <EditTaskDrawer
-        task={task}
+        task={localTask}
         open={isEditDrawerOpen}
         onOpenChange={setIsEditDrawerOpen}
       />
       <ShareTaskDialog
-        task={task}
+        task={localTask}
         open={isShareDialogOpen}
         onOpenChange={setIsShareDialogOpen}
       />
