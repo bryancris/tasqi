@@ -20,7 +20,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       {isMobile ? (
         <>
           <MobileHeader />
@@ -37,7 +37,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           />
           <div className="flex-1 flex flex-col overflow-hidden">
             <DesktopHeader />
-            <main className="flex-1 overflow-y-auto bg-gray-50">
+            <main className="flex-1 overflow-y-auto bg-[#f8f9fa]">
               {children}
             </main>
           </div>
