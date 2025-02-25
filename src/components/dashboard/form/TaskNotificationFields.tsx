@@ -2,7 +2,6 @@
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
-import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -11,8 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useEffect } from "react";
-import { setupPushSubscription } from "@/utils/notifications/subscriptionUtils";
-import { detectPlatform } from "@/utils/notifications/platformDetection";
+import { useNotifications } from "@/hooks/use-notifications";
 
 interface TaskNotificationFieldsProps {
   reminderEnabled: boolean;
@@ -33,16 +31,17 @@ const REMINDER_TIME_OPTIONS = [
 export function TaskNotificationFields({
   reminderEnabled,
   reminderTime,
-  fcmStatus,
   onReminderEnabledChange,
   onReminderTimeChange,
 }: TaskNotificationFieldsProps) {
-  // Reset the toggle if there's an error
+  const { isSubscribed, isLoading, enableNotifications, disableNotifications } = useNotifications();
+
+  // Reset the toggle if notifications are disabled
   useEffect(() => {
-    if (fcmStatus === 'error' && reminderEnabled) {
+    if (!isSubscribed && reminderEnabled) {
       onReminderEnabledChange(false);
     }
-  }, [fcmStatus, reminderEnabled, onReminderEnabledChange]);
+  }, [isSubscribed, reminderEnabled, onReminderEnabledChange]);
 
   const handleToggle = async (enabled: boolean) => {
     if (!enabled) {
@@ -51,19 +50,12 @@ export function TaskNotificationFields({
     }
 
     try {
-      console.log('[Notifications] Setting up notifications...');
-      const platform = detectPlatform();
-      console.log('[Notifications] Detected platform:', platform);
-
-      const token = await setupPushSubscription();
-      if (token) {
-        onReminderEnabledChange(true);
-      } else {
-        console.log('[Notifications] Failed to get notification token');
-        onReminderEnabledChange(false);
+      if (!isSubscribed) {
+        await enableNotifications();
       }
+      onReminderEnabledChange(true);
     } catch (error) {
-      console.error('[Notifications] Error setting up notifications:', error);
+      console.error('Error toggling notifications:', error);
       onReminderEnabledChange(false);
     }
   };
@@ -76,18 +68,18 @@ export function TaskNotificationFields({
             id="reminder"
             checked={reminderEnabled}
             onCheckedChange={handleToggle}
-            disabled={fcmStatus === 'loading'}
+            disabled={isLoading}
           />
           <Label htmlFor="reminder" className="flex items-center gap-2">
             Enable notifications
-            {fcmStatus === 'loading' && (
+            {isLoading && (
               <Spinner className="w-4 h-4" />
             )}
           </Label>
         </div>
       </div>
 
-      {reminderEnabled && fcmStatus === 'ready' && (
+      {reminderEnabled && isSubscribed && (
         <div className="flex items-center space-x-2">
           <Label htmlFor="reminderTime">Notify me</Label>
           <Select
