@@ -1,6 +1,6 @@
 
 import { Home, Calendar, FileText, MessageSquare, Heart, CalendarDays } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { ChatBubble } from "@/components/chat/ChatBubble";
@@ -13,23 +13,30 @@ import {
 
 export function MobileFooter() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const { view } = useCalendarView();
+  const { view, setView } = useCalendarView();
+
+  const handleDailyClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setView('tasks');
+    navigate('/dashboard/tasks');
+  };
 
   return (
     <>
       <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-[#F1F0FB] via-[#E5DEFF] to-[#F1F0FB] border-t py-2 px-4 z-50 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
         <div className="flex justify-between items-center">
-          <Link 
-            to="/dashboard/tasks"
+          <button
+            onClick={handleDailyClick}
             className={cn(
               "flex flex-col items-center p-2",
-              view === 'tasks' ? "text-[#F97316]" : "text-gray-500"
+              location.pathname.startsWith('/dashboard') && view === 'tasks' ? "text-[#F97316]" : "text-gray-500"
             )}
           >
             <Home className="h-6 w-6" />
             <span className="text-xs mt-1">Daily</span>
-          </Link>
+          </button>
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
