@@ -590,6 +590,7 @@ export type Database = {
       }
       push_subscriptions: {
         Row: {
+          active: boolean | null
           auth_keys: Json
           created_at: string
           device_info: Json | null
@@ -604,6 +605,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          active?: boolean | null
           auth_keys: Json
           created_at?: string
           device_info?: Json | null
@@ -618,6 +620,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          active?: boolean | null
           auth_keys?: Json
           created_at?: string
           device_info?: Json | null
