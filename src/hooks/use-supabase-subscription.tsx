@@ -1,91 +1,82 @@
 
-import { useEffect, useRef } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-
-// Create singleton channels to persist across navigations
-let tasksChannel: ReturnType<typeof supabase.channel> | null = null;
-let notesChannel: ReturnType<typeof supabase.channel> | null = null;
-let isGloballyInitialized = false;
+import { useQueryClient } from '@tanstack/react-query';
+import { playNotificationSound } from '@/utils/notifications/soundUtils';
+import { useNotifications } from '@/components/notifications/NotificationsManager';
 
 export function useSupabaseSubscription() {
   const queryClient = useQueryClient();
-  const { session } = useAuth();
-  const isComponentMounted = useRef(true);
+  const { showNotification } = useNotifications();
 
   useEffect(() => {
-    // Only set up subscriptions if we have a valid session
-    if (!session) return;
+    // Tasks channel
+    const tasksChannel = supabase.channel('tasks-changes')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'tasks' },
+        () => {
+          void queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        }
+      )
+      .subscribe();
 
-    const setupSubscriptions = () => {
-      // Set up tasks subscription if not already established
-      if (!tasksChannel) {
-        tasksChannel = supabase
-          .channel('tasks-changes')
-          .on(
-            'postgres_changes',
-            {
-              event: '*',
-              schema: 'public',
-              table: 'tasks'
-            },
-            () => {
-              if (isComponentMounted.current) {
-                queryClient.invalidateQueries({ queryKey: ['tasks'] });
-                queryClient.invalidateQueries({ queryKey: ['timeline-tasks'] });
+    // Notes channel
+    const notesChannel = supabase.channel('notes-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'notes' },
+        () => {
+          void queryClient.invalidateQueries({ queryKey: ['notes'] });
+        }
+      )
+      .subscribe();
+
+    // Notifications channel
+    const notificationsChannel = supabase.channel('notifications-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: 'type=eq.task_assignment'
+        },
+        async (payload) => {
+          try {
+            // Play notification sound
+            await playNotificationSound();
+
+            // Show notification popup
+            showNotification({
+              title: payload.new.title,
+              message: payload.new.message,
+              type: 'info',
+              persistent: true,
+              reference_id: payload.new.reference_id,
+              reference_type: 'task_assignment',
+              action: {
+                label: 'View Task',
+                onClick: () => {
+                  // Navigate to task view will be handled by the notification action
+                  console.log('Navigating to task:', payload.new.reference_id);
+                }
               }
-            }
-          )
-          .subscribe();
-      }
+            });
 
-      // Set up notes subscription if not already established
-      if (!notesChannel) {
-        notesChannel = supabase
-          .channel('notes-changes')
-          .on(
-            'postgres_changes',
-            {
-              event: '*',
-              schema: 'public',
-              table: 'notes'
-            },
-            () => {
-              if (isComponentMounted.current) {
-                queryClient.invalidateQueries({ queryKey: ['notes'] });
-              }
-            }
-          )
-          .subscribe();
-      }
-    };
+          } catch (error) {
+            console.error('Error handling task assignment notification:', error);
+          }
+        }
+      )
+      .subscribe();
 
-    if (!isGloballyInitialized) {
-      setupSubscriptions();
-      isGloballyInitialized = true;
-    }
-
-    // Handle cleanup when component unmounts
-    const handleBeforeUnload = () => {
-      if (tasksChannel) {
-        supabase.removeChannel(tasksChannel);
-        tasksChannel = null;
-      }
-      if (notesChannel) {
-        supabase.removeChannel(notesChannel);
-        notesChannel = null;
-      }
-      isGloballyInitialized = false;
-    };
-
-    // Add beforeunload listener
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    // Cleanup function that removes the event listener
+    // Cleanup function
     return () => {
-      isComponentMounted.current = false;
-      window.removeEventListener('beforeunload', handleBeforeUnload);
+      void supabase.removeChannel(tasksChannel);
+      void supabase.removeChannel(notesChannel);
+      void supabase.removeChannel(notificationsChannel);
     };
-  }, [queryClient, session]);
+  }, [queryClient, showNotification]);
 }
+
