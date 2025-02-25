@@ -15,7 +15,13 @@ export function FileAttachmentInput({ taskId, isDisabled }: FileAttachmentInputP
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file || !taskId) return;
+    if (!file) return;
+
+    if (!taskId) {
+      toast.error('Please save the task first to upload files');
+      event.target.value = '';
+      return;
+    }
 
     try {
       setIsUploading(true);
@@ -30,7 +36,7 @@ export function FileAttachmentInput({ taskId, isDisabled }: FileAttachmentInputP
 
       // Upload file to storage with user ID in path
       const fileExt = file.name.split('.').pop();
-      const filePath = `${user.id}/${crypto.randomUUID()}.${fileExt}`;
+      const filePath = `${taskId}/${crypto.randomUUID()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('task-attachments')
@@ -63,6 +69,14 @@ export function FileAttachmentInput({ taskId, isDisabled }: FileAttachmentInputP
     }
   };
 
+  const handleButtonClick = (inputId: string) => {
+    if (!taskId) {
+      toast.error('Please save the task first to upload files');
+      return;
+    }
+    document.getElementById(inputId)?.click();
+  };
+
   return (
     <div className="flex items-center gap-2">
       <input
@@ -85,8 +99,7 @@ export function FileAttachmentInput({ taskId, isDisabled }: FileAttachmentInputP
       <Button
         type="button"
         variant="outline"
-        onClick={() => document.getElementById('file-upload')?.click()}
-        disabled={isDisabled || isUploading}
+        onClick={() => handleButtonClick('file-upload')}
         className="flex-1"
       >
         <Upload className="mr-2 h-4 w-4" />
@@ -95,8 +108,7 @@ export function FileAttachmentInput({ taskId, isDisabled }: FileAttachmentInputP
       <Button
         type="button"
         variant="outline"
-        onClick={() => document.getElementById('camera-upload')?.click()}
-        disabled={isDisabled || isUploading}
+        onClick={() => handleButtonClick('camera-upload')}
       >
         <Camera className="h-4 w-4" />
       </Button>
