@@ -4,6 +4,7 @@ import { DeleteTaskAlert } from "../DeleteTaskAlert";
 import { Task, TaskPriority } from "../TaskBoard";
 import { Subtask } from "../subtasks/SubtaskList";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useState } from "react";
 
 interface EditTaskContentProps {
   task: Task;
@@ -59,6 +60,7 @@ export function EditTaskContent({
   onDelete,
 }: EditTaskContentProps) {
   const isMobile = useIsMobile();
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
 
   return (
     <div className="flex flex-col h-full">
@@ -93,7 +95,9 @@ export function EditTaskContent({
       
       <div className="px-6 pb-6">
         <DeleteTaskAlert 
-          isLoading={isLoading} 
+          taskId={task.id}
+          open={isDeleteAlertOpen}
+          onOpenChange={setIsDeleteAlertOpen}
           onDelete={onDelete}
         />
       </div>
