@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Settings, LogOut, Download } from "lucide-react";
+import { Settings, LogOut, Download, RefreshCw } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Link, useNavigate } from "react-router-dom";
@@ -71,6 +71,31 @@ export function HeaderUserMenu() {
     }
   };
 
+  const handleUpdate = async () => {
+    try {
+      // Check if service worker is registered
+      if ('serviceWorker' in navigator) {
+        const registration = await navigator.serviceWorker.ready;
+        
+        // Trigger update check
+        await registration.update();
+        
+        if (registration.waiting) {
+          // If there's a waiting worker, it means an update is available
+          registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+          toast.success('Updating app...');
+          // Reload the page to activate the new version
+          window.location.reload();
+        } else {
+          toast.info('No updates available');
+        }
+      }
+    } catch (error) {
+      console.error('Error updating app:', error);
+      toast.error('Failed to check for updates');
+    }
+  };
+
   const handleLogout = async () => {
     try {
       // Clear all storage first
@@ -121,6 +146,10 @@ export function HeaderUserMenu() {
         <DropdownMenuItem onClick={handleInstall}>
           <Download className="mr-2 h-4 w-4" />
           {isStandalone ? 'Already Installed' : 'Install App'}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleUpdate}>
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Check for Updates
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />
