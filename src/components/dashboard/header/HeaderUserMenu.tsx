@@ -5,7 +5,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -59,12 +58,12 @@ export function HeaderUserMenu() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{userDisplayName}</p>
-            <p className="text-xs leading-none text-muted-foreground">{session?.user.email}</p>
+        <DropdownMenuItem className="px-2 py-2 hover:bg-background cursor-default">
+          <div className="flex flex-col">
+            <span className="font-medium text-sm">{userDisplayName}</span>
+            <span className="text-xs text-muted-foreground">{session?.user.email}</span>
           </div>
-        </DropdownMenuLabel>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link to="/settings" className="w-full flex items-center">
