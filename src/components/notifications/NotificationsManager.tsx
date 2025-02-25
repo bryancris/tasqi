@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import { AlertNotification } from "./AlertNotification";
 import { playNotificationSound } from "@/utils/notifications/soundUtils";
@@ -64,6 +65,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     return [];
   });
   const [offlineQueue, setOfflineQueue] = useState<Notification[]>([]);
+  const timeoutRefs = React.useRef<Map<string, NodeJS.Timeout>>(new Map());
   
   // Group notifications by their group ID
   const groupedNotifications = notifications.reduce((groups, notification) => {
@@ -75,14 +77,41 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     return groups;
   }, {} as Record<string, Notification[]>);
 
-  const timeoutRefs = React.useRef<Map<string, NodeJS.Timeout>>(new Map());
-
   React.useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(notifications));
     } catch (error) {
       console.error('Error persisting notifications:', error);
     }
+  }, [notifications]);
+
+  const dismissNotification = useCallback((id: string) => {
+    setNotifications(prev => {
+      const notification = prev.find(n => n.id === id);
+      if (!notification) return prev;
+      
+      return prev.map(n => n.id === id ? { ...n, read: true } : n);
+    });
+    
+    if (timeoutRefs.current.has(id)) {
+      clearTimeout(timeoutRefs.current.get(id));
+      timeoutRefs.current.delete(id);
+    }
+  }, []);
+
+  const dismissGroup = useCallback((group: string) => {
+    setNotifications(prev => {
+      return prev.map(n => n.group === group ? { ...n, read: true } : n);
+    });
+    
+    notifications
+      .filter(n => n.group === group)
+      .forEach(n => {
+        if (timeoutRefs.current.has(n.id)) {
+          clearTimeout(timeoutRefs.current.get(n.id));
+          timeoutRefs.current.delete(n.id);
+        }
+      });
   }, [notifications]);
 
   const showNotification = useCallback(async (notification: Omit<Notification, 'id' | 'read' | 'created_at' | 'user_id'>) => {
@@ -173,35 +202,6 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     }
   }, [dismissNotification]);
 
-  const dismissNotification = useCallback((id: string) => {
-    setNotifications(prev => {
-      const notification = prev.find(n => n.id === id);
-      if (!notification) return prev;
-      
-      return prev.map(n => n.id === id ? { ...n, read: true } : n);
-    });
-    
-    if (timeoutRefs.current.has(id)) {
-      clearTimeout(timeoutRefs.current.get(id));
-      timeoutRefs.current.delete(id);
-    }
-  }, []);
-
-  const dismissGroup = useCallback((group: string) => {
-    setNotifications(prev => {
-      return prev.map(n => n.group === group ? { ...n, read: true } : n);
-    });
-    
-    notifications
-      .filter(n => n.group === group)
-      .forEach(n => {
-        if (timeoutRefs.current.has(n.id)) {
-          clearTimeout(timeoutRefs.current.get(n.id));
-          timeoutRefs.current.delete(n.id);
-        }
-      });
-  }, [notifications]);
-
   useEffect(() => {
     return () => {
       timeoutRefs.current.forEach(timeout => clearTimeout(timeout));
@@ -222,8 +222,6 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     window.addEventListener('online', handleOnline);
     return () => window.removeEventListener('online', handleOnline);
   }, [offlineQueue, showNotification]);
-
-  const visibleNotifications = notifications.filter(n => !n.read);
 
   return (
     <NotificationsContext.Provider value={{ notifications, showNotification, dismissNotification, dismissGroup }}>
