@@ -1,8 +1,8 @@
 
 import { cn } from "@/lib/utils";
 import { useNotifications } from "./NotificationsManager";
-import { Bell, Check, AlertTriangle, Info, AlertCircle } from "lucide-react";
-import { AlertDialog, AlertDialogContent } from "../ui/alert-dialog";
+import { Bell, Check, AlertTriangle, Info, AlertCircle, X } from "lucide-react";
+import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogTitle } from "../ui/alert-dialog";
 
 interface NotificationGroupProps {
   groupId: string;
@@ -42,6 +42,11 @@ export function NotificationGroup({ groupId, notifications, onDismissGroup }: No
         "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
         "bg-white border shadow-lg"
       )}>
+        <AlertDialogTitle className="sr-only">Notifications</AlertDialogTitle>
+        <AlertDialogDescription className="sr-only">
+          Group of notifications requiring your attention
+        </AlertDialogDescription>
+        
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -50,9 +55,10 @@ export function NotificationGroup({ groupId, notifications, onDismissGroup }: No
             </div>
             <button
               onClick={() => onDismissGroup(groupId)}
-              className="text-gray-500 hover:text-gray-700"
+              className="text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-gray-100 transition-colors"
+              aria-label="Close notifications"
             >
-              Dismiss All
+              <X className="h-5 w-5" />
             </button>
           </div>
 
