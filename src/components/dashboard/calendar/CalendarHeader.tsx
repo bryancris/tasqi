@@ -24,17 +24,17 @@ export function CalendarHeader({
 
   return (
     <div className="flex items-center justify-between w-full">
-      <div className="flex items-center gap-4">
-        <h2 className="text-lg font-semibold text-gray-700">
+      <div className="flex items-center gap-2">
+        <h2 className="text-lg font-semibold text-gray-700 truncate max-w-[120px]">
           {monthYear}
         </h2>
         {showWeekly && onToggleView && (
           <Button
             variant="outline"
             onClick={onToggleView}
-            className={`h-8 text-xs ${isMobile ? 'ml-2' : ''}`}
+            className="h-8 text-xs px-3"
           >
-            {showFullWeek ? '5 Day' : '7 Day'}
+            {showFullWeek ? '7 Day' : '5 Day'}
           </Button>
         )}
       </div>
