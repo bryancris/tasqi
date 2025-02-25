@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -92,12 +93,13 @@ class NotificationService {
       let subscription = await this.swRegistration.pushManager.getSubscription();
       
       if (!subscription) {
-        const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
-        if (!vapidPublicKey) {
-          throw new Error('VAPID public key not found');
+        const { data: vapidConfig, error: vapidError } = await supabase.functions.invoke('get-vapid-key');
+        
+        if (vapidError || !vapidConfig?.publicKey) {
+          throw new Error('Failed to get VAPID configuration');
         }
 
-        const applicationServerKey = this.urlBase64ToUint8Array(vapidPublicKey);
+        const applicationServerKey = this.urlBase64ToUint8Array(vapidConfig.publicKey);
         
         subscription = await this.swRegistration.pushManager.subscribe({
           userVisibleOnly: true,
