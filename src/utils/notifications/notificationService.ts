@@ -27,7 +27,7 @@ class NotificationService {
       });
 
       // Enable background sync if supported
-      if ('sync' in this.swRegistration) {
+      if ('sync' in (this.swRegistration as any)) {
         await this.setupBackgroundSync();
       }
 
@@ -79,12 +79,20 @@ class NotificationService {
         });
       }
 
-      // Store subscription in Supabase
+      const p256dhKey = this.arrayBufferToBase64(subscription.getKey('p256dh'));
+      const authKey = this.arrayBufferToBase64(subscription.getKey('auth'));
+
+      // Store subscription in Supabase using the correct schema
       const { error } = await supabase.from('push_subscriptions').upsert({
         endpoint: subscription.endpoint,
-        p256dh_key: subscription.getKey('p256dh'),
-        auth_key: subscription.getKey('auth'),
-        user_id: (await supabase.auth.getUser()).data.user?.id
+        auth_keys: {
+          p256dh: p256dhKey,
+          auth: authKey
+        },
+        user_id: (await supabase.auth.getUser()).data.user?.id,
+        platform: 'web',
+        device_type: 'web',
+        active: true
       });
 
       if (error) {
@@ -94,8 +102,8 @@ class NotificationService {
       return {
         endpoint: subscription.endpoint,
         keys: {
-          p256dh: this.arrayBufferToBase64(subscription.getKey('p256dh')),
-          auth: this.arrayBufferToBase64(subscription.getKey('auth'))
+          p256dh: p256dhKey,
+          auth: authKey
         }
       };
     } catch (error) {
@@ -107,8 +115,10 @@ class NotificationService {
 
   private async setupBackgroundSync(): Promise<void> {
     try {
-      await this.swRegistration?.sync.register('sync-notifications');
-      console.log('Background sync registered');
+      if ('sync' in (this.swRegistration as any)) {
+        await (this.swRegistration as any).sync.register('sync-notifications');
+        console.log('Background sync registered');
+      }
     } catch (error) {
       console.error('Background sync registration failed:', error);
     }
