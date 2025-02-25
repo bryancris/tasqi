@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Task } from "../TaskBoard";
 import { DndContext, MouseSensor, TouchSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { startOfDay, endOfDay, parseISO, isSameDay } from "date-fns";
+import { startOfDay, parseISO, isSameDay } from "date-fns";
 import { TaskCard } from "../TaskCard";
 import { TaskLegend } from "../TaskLegend";
 import { QueryObserverResult } from "@tanstack/react-query";
@@ -30,7 +30,7 @@ export function TaskBoardSection({ tasks, onDragEnd, onComplete }: TaskBoardSect
     })
   );
 
-  // Get today's date in user's timezone
+  // Get today's date at start of day in local timezone
   const today = startOfDay(new Date());
   
   // Add debugging
@@ -39,6 +39,7 @@ export function TaskBoardSection({ tasks, onDragEnd, onComplete }: TaskBoardSect
     console.log("Total tasks:", tasks.length);
     console.log("Today (ISO):", today.toISOString());
     console.log("Today (Local):", today.toString());
+    console.log("Timezone offset:", today.getTimezoneOffset());
   }, [tasks, today]);
 
   const filterTasks = (task: Task) => {
@@ -59,11 +60,13 @@ export function TaskBoardSection({ tasks, onDragEnd, onComplete }: TaskBoardSect
 
       // For completed tasks, check if completed today
       if (task.status === 'completed' && task.completed_at) {
-        const completedDate = startOfDay(parseISO(task.completed_at));
-        const isCompletedToday = isSameDay(completedDate, today);
+        const completedDate = parseISO(task.completed_at);
+        const localCompletedDate = startOfDay(completedDate);
+        const isCompletedToday = isSameDay(localCompletedDate, today);
         console.log("Completed task check:", {
           task: task.title,
           completedDate: completedDate.toISOString(),
+          localCompletedDate: localCompletedDate.toISOString(),
           today: today.toISOString(),
           isCompletedToday
         });
@@ -72,11 +75,13 @@ export function TaskBoardSection({ tasks, onDragEnd, onComplete }: TaskBoardSect
 
       // For scheduled tasks, check if scheduled for today
       if (task.date) {
-        const taskDate = startOfDay(parseISO(task.date));
-        const isTaskForToday = isSameDay(taskDate, today);
+        const taskDate = parseISO(task.date);
+        const localTaskDate = startOfDay(taskDate);
+        const isTaskForToday = isSameDay(localTaskDate, today);
         console.log("Scheduled task check:", {
           task: task.title,
           taskDate: taskDate.toISOString(),
+          localTaskDate: localTaskDate.toISOString(),
           today: today.toISOString(),
           isTaskForToday
         });
