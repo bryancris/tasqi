@@ -30,11 +30,11 @@ const App = () => {
             <Route path="/dashboard/*" element={
               <DashboardLayout>
                 <Routes>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/tasks" element={<Dashboard />} />
-                  <Route path="/weekly" element={<Dashboard />} />
-                  <Route path="/monthly" element={<Dashboard />} />
-                  <Route path="/yearly" element={<Dashboard />} />
+                  <Route path="" element={<Dashboard />} />
+                  <Route path="tasks" element={<Dashboard />} />
+                  <Route path="weekly" element={<Dashboard />} />
+                  <Route path="monthly" element={<Dashboard />} />
+                  <Route path="yearly" element={<Dashboard />} />
                 </Routes>
               </DashboardLayout>
             } />
