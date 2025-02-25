@@ -125,7 +125,15 @@ class NotificationService {
         platform: 'web',
         device_type: 'web',
         active: true,
-        last_updated: new Date().toISOString()
+        device_info: {
+          userAgent: navigator.userAgent,
+          language: navigator.language
+        },
+        metadata: {
+          timestamp: new Date().toISOString(),
+          browser: navigator.userAgent
+        },
+        updated_at: new Date().toISOString()
       });
 
       if (error) throw error;
