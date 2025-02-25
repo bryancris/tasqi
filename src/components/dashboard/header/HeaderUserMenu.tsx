@@ -20,6 +20,7 @@ export function HeaderUserMenu() {
   const navigate = useNavigate();
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isStandalone, setIsStandalone] = useState(false);
+  const [isChecking, setIsChecking] = useState(false);
   
   // Get user metadata or email for display
   const userDisplayName = session?.user.user_metadata?.full_name || 
@@ -37,6 +38,17 @@ export function HeaderUserMenu() {
     setIsStandalone(window.matchMedia('(display-mode: standalone)').matches);
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    // Check if we just completed an update
+    const checkUpdateComplete = () => {
+      const updateStatus = localStorage.getItem('app_update_status');
+      if (updateStatus === 'updating') {
+        toast.success('Update successfully installed!');
+        localStorage.removeItem('app_update_status');
+      }
+    };
+    
+    checkUpdateComplete();
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -72,7 +84,15 @@ export function HeaderUserMenu() {
   };
 
   const handleUpdate = async () => {
+    if (isChecking) {
+      toast.info('Already checking for updates...');
+      return;
+    }
+
     try {
+      setIsChecking(true);
+      toast.loading('Checking for updates...');
+
       // Check if service worker is registered
       if ('serviceWorker' in navigator) {
         const registration = await navigator.serviceWorker.ready;
@@ -82,17 +102,34 @@ export function HeaderUserMenu() {
         
         if (registration.waiting) {
           // If there's a waiting worker, it means an update is available
-          registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-          toast.success('Updating app...');
-          // Reload the page to activate the new version
-          window.location.reload();
+          toast.success('Update found! Installing...', {
+            duration: 3000,
+          });
+
+          // Store update status
+          localStorage.setItem('app_update_status', 'updating');
+
+          // Wait a moment to show the status
+          setTimeout(() => {
+            registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+            toast.success('Update complete! Restarting app...', {
+              duration: 2000,
+            });
+            
+            // Give users time to see the message before reload
+            setTimeout(() => {
+              window.location.reload();
+            }, 2000);
+          }, 1000);
         } else {
-          toast.info('No updates available');
+          toast.success('Your app is up to date!');
         }
       }
     } catch (error) {
       console.error('Error updating app:', error);
       toast.error('Failed to check for updates');
+    } finally {
+      setIsChecking(false);
     }
   };
 
@@ -147,9 +184,9 @@ export function HeaderUserMenu() {
           <Download className="mr-2 h-4 w-4" />
           {isStandalone ? 'Already Installed' : 'Install App'}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleUpdate}>
-          <RefreshCw className="mr-2 h-4 w-4" />
-          Check for Updates
+        <DropdownMenuItem onClick={handleUpdate} disabled={isChecking}>
+          <RefreshCw className={`mr-2 h-4 w-4 ${isChecking ? 'animate-spin' : ''}`} />
+          {isChecking ? 'Checking for Updates...' : 'Check for Updates'}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />
