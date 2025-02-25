@@ -30,19 +30,26 @@ export function TaskBoardSection({ tasks, onDragEnd, onComplete }: TaskBoardSect
     })
   );
 
-  const today = new Date();
+  // Get today's date in user's timezone
+  const today = startOfDay(new Date());
   
   // Add debugging
   useEffect(() => {
     console.log("TaskBoardSection mounted");
     console.log("Total tasks:", tasks.length);
-    console.log("Today:", today);
+    console.log("Today (ISO):", today.toISOString());
+    console.log("Today (Local):", today.toString());
   }, [tasks, today]);
 
   const filterTasks = (task: Task) => {
     try {
       // Debug each task
-      console.log("Filtering task:", task.title, task.status, task.date);
+      console.log("Filtering task:", {
+        title: task.title,
+        status: task.status,
+        date: task.date,
+        completed_at: task.completed_at
+      });
 
       // Always show unscheduled tasks
       if (task.status === 'unscheduled') {
@@ -52,17 +59,27 @@ export function TaskBoardSection({ tasks, onDragEnd, onComplete }: TaskBoardSect
 
       // For completed tasks, check if completed today
       if (task.status === 'completed' && task.completed_at) {
-        const completedDate = parseISO(task.completed_at);
+        const completedDate = startOfDay(parseISO(task.completed_at));
         const isCompletedToday = isSameDay(completedDate, today);
-        console.log("Completed task check:", task.title, isCompletedToday);
+        console.log("Completed task check:", {
+          task: task.title,
+          completedDate: completedDate.toISOString(),
+          today: today.toISOString(),
+          isCompletedToday
+        });
         return isCompletedToday;
       }
 
       // For scheduled tasks, check if scheduled for today
       if (task.date) {
-        const taskDate = parseISO(task.date);
+        const taskDate = startOfDay(parseISO(task.date));
         const isTaskForToday = isSameDay(taskDate, today);
-        console.log("Scheduled task check:", task.title, isTaskForToday);
+        console.log("Scheduled task check:", {
+          task: task.title,
+          taskDate: taskDate.toISOString(),
+          today: today.toISOString(),
+          isTaskForToday
+        });
         
         // Include if it's for today and either scheduled, in_progress, or stuck
         if (isTaskForToday && ['scheduled', 'in_progress', 'stuck'].includes(task.status)) {
@@ -90,9 +107,14 @@ export function TaskBoardSection({ tasks, onDragEnd, onComplete }: TaskBoardSect
 
   // Debug sorted tasks
   useEffect(() => {
-    console.log("Filtered and sorted tasks:", sortedTasks.length);
-    sortedTasks.forEach(task => {
-      console.log("Task in view:", task.title, task.status, task.date);
+    console.log("Filtered and sorted tasks:", {
+      total: sortedTasks.length,
+      tasks: sortedTasks.map(t => ({
+        title: t.title,
+        status: t.status,
+        date: t.date,
+        completed_at: t.completed_at
+      }))
     });
   }, [sortedTasks]);
 
