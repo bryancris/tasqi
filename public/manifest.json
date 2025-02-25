@@ -11,7 +11,10 @@
   "categories": ["productivity", "utilities"],
   "prefer_related_applications": false,
   "permissions": [
-    "notifications"
+    "notifications",
+    "background-sync",
+    "periodic-background-sync",
+    "wake-lock"
   ],
   "icons": [
     {
@@ -33,5 +36,10 @@
       "url": "/dashboard",
       "description": "View your tasks"
     }
-  ]
+  ],
+  "related_applications": [],
+  "screenshots": [],
+  "dir": "ltr",
+  "lang": "en",
+  "display_override": ["standalone", "window-controls-overlay"]
 }
