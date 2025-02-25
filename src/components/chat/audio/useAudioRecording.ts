@@ -1,3 +1,4 @@
+
 import { useState, useRef, useCallback } from 'react';
 import { useMicrophoneAccess } from './useMicrophoneAccess';
 import { useSilenceDetection } from './useSilenceDetection';
@@ -9,7 +10,7 @@ export function useAudioRecording(onTranscriptionComplete: (text: string) => voi
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const { requestMicrophoneAccess } = useMicrophoneAccess();
   const { toast } = useToast();
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<typeof SpeechRecognition | null>(null);
 
   const stopRecording = useCallback(() => {
     if (recognitionRef.current) {
