@@ -22,27 +22,68 @@ self.addEventListener('notificationclick', (event) => {
   const notification = event.notification;
   notification.close();
 
-  // Default click behavior - open the app
-  const urlToOpen = new URL('/dashboard', self.location.origin).href;
-  
-  event.waitUntil(
-    clients.matchAll({
-      type: 'window',
-      includeUncontrolled: true
-    }).then((windowClients) => {
-      // Check if there is already a window/tab open with the target URL
-      for (var i = 0; i < windowClients.length; i++) {
-        var client = windowClients[i];
-        if (client.url === urlToOpen && 'focus' in client) {
-          return client.focus();
+  // Handle notification actions
+  if (event.action === 'view' && event.notification.data?.reference_id) {
+    const taskId = event.notification.data.reference_id;
+    const urlToOpen = new URL(`/dashboard?task=${taskId}`, self.location.origin).href;
+    
+    event.waitUntil(
+      clients.matchAll({
+        type: 'window',
+        includeUncontrolled: true
+      }).then((windowClients) => {
+        // Check if there is already a window/tab open with the target URL
+        for (var i = 0; i < windowClients.length; i++) {
+          var client = windowClients[i];
+          if ('focus' in client) {
+            client.focus();
+            if (client.url !== urlToOpen) {
+              client.navigate(urlToOpen);
+            }
+            return;
+          }
         }
-      }
-      // If no window/tab is already open, open a new one
-      if (clients.openWindow) {
-        return clients.openWindow(urlToOpen);
-      }
-    })
-  );
+        // If no window/tab is already open, open a new one
+        if (clients.openWindow) {
+          return clients.openWindow(urlToOpen);
+        }
+      })
+    );
+  }
+});
+
+// Handle push notifications
+self.addEventListener('push', (event) => {
+  console.log('Push notification received:', event);
+
+  if (!event.data) {
+    console.log('No notification data received');
+    return;
+  }
+
+  try {
+    const data = event.data.json();
+    const options = {
+      body: data.message,
+      icon: '/pwa-192x192.png',
+      badge: '/pwa-192x192.png',
+      tag: data.groupId || 'default',
+      data: data.data || {},
+      actions: [
+        {
+          action: 'view',
+          title: 'View'
+        }
+      ],
+      requireInteraction: data.priority === 'high'
+    };
+
+    event.waitUntil(
+      self.registration.showNotification(data.title, options)
+    );
+  } catch (error) {
+    console.error('Error handling push notification:', error);
+  }
 });
 
 // Cache static assets

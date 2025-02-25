@@ -11,8 +11,14 @@ export class ServiceWorkerManager {
 
       this.swRegistration = await navigator.serviceWorker.register('/sw.js', {
         scope: '/',
-        updateViaCache: 'none'
+        type: 'module'
       });
+
+      // Request notification permission if not granted
+      if (Notification.permission === 'default') {
+        const permission = await Notification.requestPermission();
+        console.log('📱 Notification permission:', permission);
+      }
 
       if (this.swRegistration.active) {
         this.swRegistration.active.postMessage({ type: 'TAKE_CONTROL' });

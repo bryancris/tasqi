@@ -11,6 +11,7 @@ class NotificationService {
   private queueManager: QueueManager;
   private periodicSyncInterval = 15; // minutes
   private initialized = false;
+  private audioContext: AudioContext | null = null;
 
   constructor() {
     this.swManager = new ServiceWorkerManager();
@@ -34,15 +35,12 @@ class NotificationService {
         await this.swManager.setupPeriodicSync(this.periodicSyncInterval);
         await this.queueManager.processNotificationQueue(this.showNotification.bind(this));
         
-        // Request notification permission if not granted
-        if (Notification.permission !== 'granted') {
-          const permission = await Notification.requestPermission();
-          console.log('📱 Notification permission:', permission);
-        }
+        // Initialize audio context for notification sounds
+        this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        
+        console.log('✅ Notification service initialized');
+        this.initialized = true;
       }
-      
-      this.initialized = true;
-      console.log('✅ Notification service initialized');
     } catch (error) {
       console.error('❌ Failed to initialize notification service:', error);
       throw error;
@@ -56,6 +54,25 @@ class NotificationService {
     return this.subManager.subscribe();
   }
 
+  private async playNotificationSound(): Promise<void> {
+    try {
+      if (!this.audioContext) {
+        this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+
+      const response = await fetch('/notification-sound.mp3');
+      const arrayBuffer = await response.arrayBuffer();
+      const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+      
+      const source = this.audioContext.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(this.audioContext.destination);
+      source.start(0);
+    } catch (error) {
+      console.error('❌ Error playing notification sound:', error);
+    }
+  }
+
   async showNotification(notification: NotificationData): Promise<void> {
     console.log('🔔 Showing PWA notification:', notification);
     
@@ -67,8 +84,7 @@ class NotificationService {
 
     try {
       // Play notification sound
-      const audio = new Audio('/notification-sound.mp3');
-      await audio.play();
+      await this.playNotificationSound();
 
       const notificationOptions: NotificationOptions = {
         body: notification.message,
