@@ -27,17 +27,11 @@ const App = () => {
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="dashboard" element={<DashboardLayout><Dashboard /></DashboardLayout>} />
-            <Route path="dashboard/*" element={
-              <DashboardLayout>
-                <Routes>
-                  <Route path="tasks" element={<Dashboard />} />
-                  <Route path="weekly" element={<Dashboard />} />
-                  <Route path="monthly" element={<Dashboard />} />
-                  <Route path="yearly" element={<Dashboard />} />
-                </Routes>
-              </DashboardLayout>
-            } />
+            <Route path="/dashboard" element={<DashboardLayout><Dashboard /></DashboardLayout>} />
+            <Route path="/dashboard/tasks" element={<DashboardLayout><Dashboard /></DashboardLayout>} />
+            <Route path="/dashboard/weekly" element={<DashboardLayout><Dashboard /></DashboardLayout>} />
+            <Route path="/dashboard/monthly" element={<DashboardLayout><Dashboard /></DashboardLayout>} />
+            <Route path="/dashboard/yearly" element={<DashboardLayout><Dashboard /></DashboardLayout>} />
             <Route path="/notes" element={<DashboardLayout><Notes /></DashboardLayout>} />
             <Route path="/settings" element={<DashboardLayout><Settings /></DashboardLayout>} />
             <Route path="/self-care" element={<DashboardLayout><SelfCare /></DashboardLayout>} />
