@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { useNotifications } from "./NotificationsManager";
 import { Bell, Check, AlertTriangle, Info, AlertCircle, X } from "lucide-react";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogTitle } from "../ui/alert-dialog";
+import { useState } from "react";
 
 interface NotificationGroupProps {
   groupId: string;
@@ -17,6 +18,8 @@ interface NotificationGroupProps {
 }
 
 export function NotificationGroup({ groupId, notifications, onDismissGroup }: NotificationGroupProps) {
+  const [isOpen, setIsOpen] = useState(true);
+
   const priorityOrder = { high: 0, normal: 1, low: 2 };
   const sortedNotifications = [...notifications].sort((a, b) => {
     return (priorityOrder[a.priority || 'normal'] || 1) - (priorityOrder[b.priority || 'normal'] || 1);
@@ -35,8 +38,13 @@ export function NotificationGroup({ groupId, notifications, onDismissGroup }: No
     }
   };
 
+  const handleDismiss = () => {
+    setIsOpen(false);
+    onDismissGroup(groupId);
+  };
+
   return (
-    <AlertDialog open={true}>
+    <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
       <AlertDialogContent className={cn(
         "max-w-sm m-0 transform-none transition-all duration-300 ease-in-out",
         "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
@@ -54,7 +62,7 @@ export function NotificationGroup({ groupId, notifications, onDismissGroup }: No
               <span className="font-medium">Notification Group</span>
             </div>
             <button
-              onClick={() => onDismissGroup(groupId)}
+              onClick={handleDismiss}
               className="text-gray-500 hover:text-gray-700 p-1 rounded-full hover:bg-gray-100 transition-colors"
               aria-label="Close notifications"
             >
