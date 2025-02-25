@@ -1,6 +1,5 @@
 
 import React, { useEffect } from "react";
-import { Outlet } from "react-router-dom";
 import { MobileHeader } from "./MobileHeader";
 import { MobileFooter } from "./MobileFooter";
 import { Sidebar } from "../dashboard/Sidebar";
@@ -8,7 +7,11 @@ import { DesktopHeader } from "./DesktopHeader";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useCalendarView } from "@/contexts/CalendarViewContext";
 
-export function DashboardLayout() {
+interface DashboardLayoutProps {
+  children: React.ReactNode;
+}
+
+export function DashboardLayout({ children }: DashboardLayoutProps) {
   const isMobile = useIsMobile();
   const { selectedDate, setSelectedDate } = useCalendarView();
 
@@ -22,7 +25,7 @@ export function DashboardLayout() {
         <>
           <MobileHeader />
           <main className="flex-1 pb-16 pt-[72px]">
-            <Outlet />
+            {children}
           </main>
           <MobileFooter />
         </>
@@ -35,7 +38,7 @@ export function DashboardLayout() {
           <div className="flex-1 flex flex-col overflow-hidden">
             <DesktopHeader />
             <main className="flex-1 overflow-y-auto bg-gray-50">
-              <Outlet />
+              {children}
             </main>
           </div>
         </div>
