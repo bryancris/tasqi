@@ -5,6 +5,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Settings, LogOut } from "lucide-react";
@@ -16,6 +18,12 @@ import { toast } from "sonner";
 export function HeaderUserMenu() {
   const { session } = useAuth();
   const navigate = useNavigate();
+  
+  // Get user metadata or email for display
+  const userDisplayName = session?.user.user_metadata?.full_name || 
+                         session?.user.user_metadata?.name ||
+                         session?.user.email?.split('@')[0] ||
+                         'User';
 
   const handleLogout = async () => {
     try {
@@ -43,17 +51,21 @@ export function HeaderUserMenu() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
           <Avatar>
-            <AvatarImage src="https://github.com/shadcn.png" />
+            <AvatarImage src={session?.user?.user_metadata?.avatar_url || "https://github.com/shadcn.png"} />
             <AvatarFallback>
-              {session?.user.email?.charAt(0).toUpperCase()}
+              {userDisplayName.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuItem className="flex-col items-start">
-          <div className="font-medium">{session?.user.email}</div>
-        </DropdownMenuItem>
+        <DropdownMenuLabel className="font-normal">
+          <div className="flex flex-col space-y-1">
+            <p className="text-sm font-medium leading-none">{userDisplayName}</p>
+            <p className="text-xs leading-none text-muted-foreground">{session?.user.email}</p>
+          </div>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link to="/settings" className="w-full flex items-center">
             <Settings className="mr-2 h-4 w-4" />
