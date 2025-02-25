@@ -31,6 +31,14 @@ public class MainActivity extends BridgeActivity {
             reminderChannel.setDescription(reminderDescription);
             reminderChannel.enableVibration(true);
             reminderChannel.setVibrationPattern(new long[]{100, 200, 300, 400, 500});
+            // Enable lock screen visibility
+            reminderChannel.setLockscreenVisibility(NotificationManager.VISIBILITY_PUBLIC);
+            // Enable lights
+            reminderChannel.enableLights(true);
+            // Show badge
+            reminderChannel.setShowBadge(true);
+            // Allow notification to bypass Do Not Disturb
+            reminderChannel.setBypassDnd(true);
             
             // Shared Tasks Channel
             CharSequence shareName = "Shared Tasks";
@@ -43,6 +51,14 @@ public class MainActivity extends BridgeActivity {
             shareChannel.setDescription(shareDescription);
             shareChannel.enableVibration(true);
             shareChannel.setVibrationPattern(new long[]{100, 200, 300, 400, 500});
+            // Enable lock screen visibility
+            shareChannel.setLockscreenVisibility(NotificationManager.VISIBILITY_PUBLIC);
+            // Enable lights
+            shareChannel.enableLights(true);
+            // Show badge
+            shareChannel.setShowBadge(true);
+            // Allow notification to bypass Do Not Disturb
+            shareChannel.setBypassDnd(true);
 
             // Register the channels with the system
             NotificationManager notificationManager = getSystemService(NotificationManager.class);
