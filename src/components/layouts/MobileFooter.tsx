@@ -17,10 +17,9 @@ export function MobileFooter() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const { view, setView } = useCalendarView();
 
-  const handleDailyClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setView('tasks');
+  const handleDailyClick = () => {
     navigate('/dashboard/tasks');
+    setView('tasks');
   };
 
   return (
@@ -106,7 +105,7 @@ export function MobileFooter() {
             )}
           >
             <Heart className="h-6 w-6" />
-            <span className="text-xs mt-1">Daily</span>
+            <span className="text-xs mt-1">Self Care</span>
           </Link>
         </div>
       </div>
