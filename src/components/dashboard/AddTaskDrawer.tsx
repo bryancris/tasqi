@@ -102,6 +102,7 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
         description: "Task created successfully",
       });
 
+      // Reset form
       setTitle("");
       setDescription("");
       setIsScheduled(false);
@@ -114,7 +115,8 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
       setSubtasks([]);
       setIsOpen(false);
 
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      // Immediately invalidate and refetch tasks
+      await queryClient.invalidateQueries({ queryKey: ["tasks"] });
     } catch (error) {
       console.error("Error creating task:", error);
       toast({

@@ -14,8 +14,7 @@ export function useTasks() {
         *,
         assignments:task_assignments(*)
       `)
-      .order('position', { ascending: true })
-      .abortSignal(AbortSignal.timeout(5000));
+      .order('position', { ascending: true });
 
     if (tasksError) {
       console.error('Error fetching tasks:', tasksError);
@@ -28,10 +27,9 @@ export function useTasks() {
   };
 
   const { data: tasks = [], refetch, isLoading } = useQuery({
-    queryKey: ['tasks', startOfDay(new Date()).toISOString()],
+    queryKey: ['tasks'],
     queryFn: fetchTasks,
-    staleTime: 300000,
-    gcTime: 3600000,
+    staleTime: 0, // Always consider data stale to ensure fresh data
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     refetchOnReconnect: true,

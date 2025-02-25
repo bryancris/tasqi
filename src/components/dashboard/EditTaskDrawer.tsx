@@ -7,6 +7,7 @@ import { Subtask } from "./subtasks/SubtaskList";
 import { ShareTaskDialog } from "./ShareTaskDialog";
 import { EditTaskHeader } from "./edit-task/EditTaskHeader";
 import { EditTaskContent } from "./edit-task/EditTaskContent";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface EditTaskDrawerProps {
   task: Task;
@@ -31,6 +32,7 @@ export function EditTaskDrawer({
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     loadSubtasks();
@@ -93,10 +95,12 @@ export function EditTaskDrawer({
           end_time: endTime
         });
       }
+      
       const {
         error: taskError
       } = await supabase.from('tasks').update(updateData).eq('id', task.id);
       if (taskError) throw taskError;
+
       const existingSubtaskIds = subtasks.filter(st => st.id).map(st => st.id);
       if (existingSubtaskIds.length > 0) {
         const {
@@ -104,6 +108,7 @@ export function EditTaskDrawer({
         } = await supabase.from('subtasks').delete().eq('task_id', task.id).not('id', 'in', `(${existingSubtaskIds.join(',')})`);
         if (deleteError) throw deleteError;
       }
+      
       for (const subtask of subtasks) {
         const subtaskData = {
           task_id: task.id,
@@ -124,6 +129,10 @@ export function EditTaskDrawer({
           if (createError) throw createError;
         }
       }
+
+      // Immediately invalidate and refetch tasks
+      await queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      
       toast.success('Task updated successfully');
       onOpenChange(false);
     } catch (error) {
