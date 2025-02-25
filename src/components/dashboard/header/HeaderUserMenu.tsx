@@ -21,6 +21,7 @@ export function HeaderUserMenu() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isStandalone, setIsStandalone] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
+  const [installable, setInstallable] = useState(false);
   
   // Get user metadata or email for display
   const userDisplayName = session?.user.user_metadata?.full_name || 
@@ -30,16 +31,42 @@ export function HeaderUserMenu() {
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
+      // Prevent Chrome 67 and earlier from automatically showing the prompt
       e.preventDefault();
+      console.log('👋 Before install prompt event captured');
       setDeferredPrompt(e);
+      setInstallable(true);
     };
 
-    // Check if app is running in standalone mode
-    setIsStandalone(window.matchMedia('(display-mode: standalone)').matches);
+    // Check if app is already installed
+    const checkInstallState = () => {
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+                          (window.navigator as any).standalone === true || // iOS detection
+                          window.location.search.includes('standalone=true');
+      
+      setIsStandalone(isStandalone);
+      console.log('📱 App standalone status:', isStandalone);
 
+      // Check if running on iOS
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+      if (isIOS && !isStandalone) {
+        console.log('🍎 Running on iOS - installation requires manual steps');
+      }
+    };
+
+    // Add event listeners
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', () => {
+      console.log('🎉 PWA installed successfully');
+      setInstallable(false);
+      setIsStandalone(true);
+      toast.success('App installed successfully!');
+    });
 
-    // Check if we just completed an update
+    // Initial checks
+    checkInstallState();
+
+    // Check update status
     const checkUpdateComplete = () => {
       const updateStatus = localStorage.getItem('app_update_status');
       if (updateStatus === 'updating') {
@@ -61,24 +88,48 @@ export function HeaderUserMenu() {
       return;
     }
 
+    // Check if running on iOS
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    if (isIOS) {
+      toast.info(
+        'To install on iOS: tap the share button and select "Add to Home Screen"',
+        { duration: 5000 }
+      );
+      return;
+    }
+
+    // Handle installation for other platforms
     if (!deferredPrompt) {
-      toast.info('Installation not available at this moment. Try opening the app in a supported browser.');
+      console.log('❌ No installation prompt available');
+      toast.info(
+        'Installation not available. Try opening the app in a supported browser like Chrome.',
+        { duration: 5000 }
+      );
       return;
     }
 
     try {
+      console.log('🚀 Triggering install prompt...');
+      toast.loading('Opening install prompt...');
+
       // Show the install prompt
       await deferredPrompt.prompt();
+      
       // Wait for the user to respond to the prompt
       const choiceResult = await deferredPrompt.userChoice;
+      console.log('👆 User choice:', choiceResult.outcome);
       
       if (choiceResult.outcome === 'accepted') {
         toast.success('Installing app...');
+      } else {
+        toast.info('Installation cancelled');
       }
-      // Reset the deferredPrompt for next time
+      
+      // Clear the deferredPrompt for next time
       setDeferredPrompt(null);
+      setInstallable(false);
     } catch (error) {
-      console.error('Error installing app:', error);
+      console.error('❌ Error installing app:', error);
       toast.error('Failed to install app');
     }
   };
@@ -180,7 +231,10 @@ export function HeaderUserMenu() {
             Settings
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleInstall}>
+        <DropdownMenuItem 
+          onClick={handleInstall}
+          disabled={isStandalone || (!installable && !(/iPad|iPhone|iPod/.test(navigator.userAgent)))}
+        >
           <Download className="mr-2 h-4 w-4" />
           {isStandalone ? 'Already Installed' : 'Install App'}
         </DropdownMenuItem>
