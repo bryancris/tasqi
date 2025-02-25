@@ -60,19 +60,26 @@ export function TaskAttachmentFields({ task, isEditing }: TaskAttachmentFieldsPr
     }
   };
 
+  const handleButtonClick = () => {
+    if (!task?.id) {
+      toast.error('Please save the task first to add attachments');
+      return;
+    }
+    setShowVoiceRecorder(true);
+  };
+
   return (
     <div className="space-y-2">
       <Label>Attachments</Label>
       <div className="flex gap-2 mb-4">
         <FileAttachmentInput 
           taskId={task?.id} 
-          isDisabled={!isEditing && !task?.id}
+          isDisabled={!task?.id}
         />
         <Button
           type="button"
           variant="outline"
-          onClick={() => setShowVoiceRecorder(true)}
-          disabled={!isEditing && !task?.id}
+          onClick={handleButtonClick}
           className="flex items-center gap-2 px-4"
         >
           <Mic className="h-4 w-4" />
@@ -87,7 +94,7 @@ export function TaskAttachmentFields({ task, isEditing }: TaskAttachmentFieldsPr
         />
       )}
 
-      {!isEditing && !task?.id && (
+      {!task?.id && (
         <p className="text-sm text-muted-foreground">
           Save the task first to add attachments
         </p>
