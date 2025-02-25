@@ -7,6 +7,9 @@ export const NotificationsContext = React.createContext<NotificationsContextType
   showNotification: () => {},
   dismissNotification: () => {},
   dismissGroup: () => {},
+  isSubscribed: false,
+  isLoading: false,
+  enableNotifications: async () => {},
 });
 
 export const useNotifications = () => React.useContext(NotificationsContext);

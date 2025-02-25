@@ -22,4 +22,7 @@ export interface NotificationsContextType {
   showNotification: (notification: Omit<Notification, 'id' | 'read' | 'created_at' | 'user_id'>) => void;
   dismissNotification: (id: string) => void;
   dismissGroup: (group: string) => void;
+  isSubscribed: boolean;
+  isLoading: boolean;
+  enableNotifications: () => Promise<void>;
 }
