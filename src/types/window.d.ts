@@ -1,28 +1,5 @@
 
-interface BeforeInstallPromptEvent extends Event {
-  readonly platforms: string[];
-  readonly userChoice: Promise<{
-    outcome: 'accepted' | 'dismissed';
-    platform: string;
-  }>;
-  prompt(): Promise<void>;
-}
-
-declare global {
-  interface Window {
-    SpeechRecognition: {
-      new(): SpeechRecognition;
-    };
-    webkitSpeechRecognition: {
-      new(): SpeechRecognition;
-    };
-  }
-  
-  interface WindowEventMap {
-    beforeinstallprompt: BeforeInstallPromptEvent;
-  }
-}
-
+// First declare the base interfaces and classes
 declare class SpeechRecognition extends EventTarget {
   continuous: boolean;
   interimResults: boolean;
@@ -46,6 +23,36 @@ interface SpeechRecognitionEvent {
 
 interface SpeechRecognitionErrorEvent extends Event {
   error: string;
+}
+
+interface BeforeInstallPromptEvent extends Event {
+  readonly platforms: string[];
+  readonly userChoice: Promise<{
+    outcome: 'accepted' | 'dismissed';
+    platform: string;
+  }>;
+  prompt(): Promise<void>;
+}
+
+// Then declare the global namespace
+declare global {
+  // This ensures SpeechRecognition is available in the global scope
+  const SpeechRecognition: {
+    new(): SpeechRecognition;
+  };
+  
+  interface Window {
+    SpeechRecognition: {
+      new(): SpeechRecognition;
+    };
+    webkitSpeechRecognition: {
+      new(): SpeechRecognition;
+    };
+  }
+  
+  interface WindowEventMap {
+    beforeinstallprompt: BeforeInstallPromptEvent;
+  }
 }
 
 export {};
