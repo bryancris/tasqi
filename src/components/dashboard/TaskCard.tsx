@@ -118,8 +118,8 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
       console.log('Task update successful');
       toast.success(newStatus === 'completed' ? 'Task completed' : 'Task uncompleted');
 
-      // Invalidate tasks query to trigger a refresh
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      // Invalidate tasks query to trigger refresh
+      await queryClient.invalidateQueries({ queryKey: ['tasks'] });
 
     } catch (error: any) {
       console.error('Unexpected error completing task:', error);

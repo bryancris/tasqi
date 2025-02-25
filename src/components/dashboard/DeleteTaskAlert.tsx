@@ -8,73 +8,62 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { Loader2, Trash2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface DeleteTaskAlertProps {
-  isLoading: boolean;
-  onDelete: () => Promise<void>;
+  taskId: number;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onDelete?: () => void;
 }
 
-export function DeleteTaskAlert({ isLoading: externalLoading, onDelete }: DeleteTaskAlertProps) {
+export function DeleteTaskAlert({ taskId, open, onOpenChange, onDelete }: DeleteTaskAlertProps) {
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
-  
+  const queryClient = useQueryClient();
+
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
-      await onDelete();
+      const { error } = await supabase.from('tasks').delete().eq('id', taskId);
+      
+      if (error) throw error;
+
+      // Immediately invalidate and refetch tasks
+      await queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      
+      toast.success('Task deleted successfully');
+      onOpenChange(false);
+      onDelete?.();
     } catch (error) {
       console.error('Error deleting task:', error);
+      toast.error('Failed to delete task');
     } finally {
       setIsDeleting(false);
-      setIsOpen(false); // Close the dialog after deletion attempt (success or failure)
     }
   };
 
-  const isLoading = isDeleting || externalLoading;
-
   return (
-    <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
-      <AlertDialogTrigger asChild>
-        <Button 
-          variant="destructive" 
-          className="w-full"
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-          ) : (
-            <Trash2 className="h-4 w-4 mr-2" />
-          )}
-          Delete Task
-        </Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent onOpenAutoFocus={(e) => e.preventDefault()}>
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete the task from your account.
+            This action cannot be undone. This will permanently delete the task and
+            all its data.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction 
+          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
             onClick={handleDelete}
-            className="bg-red-500 hover:bg-red-600"
-            disabled={isLoading}
+            disabled={isDeleting}
+            className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
           >
-            {isLoading ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Deleting...
-              </>
-            ) : (
-              'Delete'
-            )}
+            {isDeleting ? "Deleting..." : "Delete"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
