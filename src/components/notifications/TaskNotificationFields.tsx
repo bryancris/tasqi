@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/select";
 import { useEffect, useState } from "react";
 import { useNotifications } from "../notifications/NotificationsManager";
+import { notificationService } from "@/utils/notifications/notificationService";
+import { toast } from "sonner";
 
 interface TaskNotificationFieldsProps {
   reminderEnabled: boolean;
@@ -38,28 +40,33 @@ export function TaskNotificationFields({
   const { isSubscribed, isLoading, enableNotifications } = useNotifications();
   const [localEnabled, setLocalEnabled] = useState(reminderEnabled);
 
-  // Sync local state with prop
   useEffect(() => {
     setLocalEnabled(reminderEnabled);
   }, [reminderEnabled]);
 
   const handleToggle = async (checked: boolean) => {
-    if (!checked) {
-      setLocalEnabled(false);
-      onReminderEnabledChange(false);
-      return;
-    }
-
     try {
-      if (!isSubscribed) {
-        await enableNotifications();
+      if (checked) {
+        await notificationService.initialize();
+        const subscription = await notificationService.subscribe();
+        
+        if (subscription) {
+          setLocalEnabled(true);
+          onReminderEnabledChange(true);
+          toast.success('Notifications enabled successfully');
+        } else {
+          setLocalEnabled(false);
+          onReminderEnabledChange(false);
+        }
+      } else {
+        setLocalEnabled(false);
+        onReminderEnabledChange(false);
       }
-      setLocalEnabled(true);
-      onReminderEnabledChange(true);
     } catch (error) {
       console.error('Error toggling notifications:', error);
       setLocalEnabled(false);
       onReminderEnabledChange(false);
+      toast.error('Failed to enable notifications');
     }
   };
 
@@ -82,7 +89,7 @@ export function TaskNotificationFields({
         </div>
       </div>
 
-      {localEnabled && isSubscribed && (
+      {localEnabled && (
         <div className="flex items-center space-x-2">
           <Label htmlFor="reminderTime">Notify me</Label>
           <Select

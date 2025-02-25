@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -46,27 +45,21 @@ class NotificationService {
         updateViaCache: 'none'
       });
 
-      // Take control immediately
       if (this.swRegistration.active) {
         this.swRegistration.active.postMessage({ type: 'TAKE_CONTROL' });
       }
 
-      // Load queued notifications from storage
       await this.loadQueuedNotifications();
 
-      // Enable background sync
       if ('sync' in (this.swRegistration as any)) {
         await this.setupBackgroundSync();
       }
 
-      // Enable periodic sync
       if ('periodicSync' in this.swRegistration) {
         await this.setupPeriodicSync();
       }
 
-      // Start processing queued notifications
       this.processNotificationQueue();
-
       console.log('✅ Notification service initialized');
     } catch (error) {
       console.error('❌ Failed to initialize notification service:', error);
@@ -76,7 +69,7 @@ class NotificationService {
 
   async requestPermission(): Promise<boolean> {
     try {
-      const permission = await Notification.requestPermission();
+      const permission = await window.Notification.requestPermission();
       return permission === 'granted';
     } catch (error) {
       console.error('❌ Error requesting notification permission:', error);
@@ -96,32 +89,36 @@ class NotificationService {
         return null;
       }
 
-      // Get existing subscription or create new one
       let subscription = await this.swRegistration.pushManager.getSubscription();
       
       if (!subscription) {
-        const response = await fetch('/api/notifications/vapid-public-key');
-        const vapidPublicKey = await response.text();
+        const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+        if (!vapidPublicKey) {
+          throw new Error('VAPID public key not found');
+        }
+
+        const applicationServerKey = this.urlBase64ToUint8Array(vapidPublicKey);
         
         subscription = await this.swRegistration.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: vapidPublicKey
+          applicationServerKey
         });
       }
 
-      // Schedule subscription renewal
       this.scheduleSubscriptionRenewal(subscription);
 
-      const p256dhKey = this.arrayBufferToBase64(subscription.getKey('p256dh'));
-      const authKey = this.arrayBufferToBase64(subscription.getKey('auth'));
+      const keys = subscription.getKey ? {
+        p256dh: this.arrayBufferToBase64(subscription.getKey('p256dh')),
+        auth: this.arrayBufferToBase64(subscription.getKey('auth'))
+      } : undefined;
 
-      // Store subscription in Supabase
+      if (!keys) {
+        throw new Error('Failed to get subscription keys');
+      }
+
       const { error } = await supabase.from('push_subscriptions').upsert({
         endpoint: subscription.endpoint,
-        auth_keys: {
-          p256dh: p256dhKey,
-          auth: authKey
-        },
+        auth_keys: keys,
         user_id: (await supabase.auth.getUser()).data.user?.id,
         platform: 'web',
         device_type: 'web',
@@ -135,16 +132,29 @@ class NotificationService {
 
       return {
         endpoint: subscription.endpoint,
-        keys: {
-          p256dh: p256dhKey,
-          auth: authKey
-        }
+        keys
       };
     } catch (error) {
       console.error('❌ Failed to subscribe to push notifications:', error);
       toast.error('Failed to enable notifications');
       return null;
     }
+  }
+
+  private urlBase64ToUint8Array(base64String: string): Uint8Array {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+      .replace(/\-/g, '+')
+      .replace(/_/g, '/');
+
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+
+    return outputArray;
   }
 
   private async setupBackgroundSync(): Promise<void> {
@@ -176,13 +186,11 @@ class NotificationService {
   }
 
   private scheduleSubscriptionRenewal(subscription: PushSubscription): void {
-    // Check expiration time if available
     const expirationTime = subscription.expirationTime;
     if (expirationTime) {
-      const timeUntilRenewal = expirationTime - Date.now() - (24 * 60 * 60 * 1000); // Renew 1 day before expiration
+      const timeUntilRenewal = expirationTime - Date.now() - (24 * 60 * 60 * 1000);
       setTimeout(() => this.renewSubscription(), timeUntilRenewal);
     } else {
-      // If no expiration time, check weekly
       setInterval(() => this.renewSubscription(), 7 * 24 * 60 * 60 * 1000);
     }
   }
@@ -210,7 +218,7 @@ class NotificationService {
       
       try {
         await this.showNotification(notification.notification);
-        this.notificationQueue.shift(); // Remove processed notification
+        this.notificationQueue.shift();
         this.saveNotificationQueue();
       } catch (error) {
         console.error('❌ Error processing notification:', error);
@@ -219,7 +227,7 @@ class NotificationService {
           notification.retries++;
           await new Promise(resolve => setTimeout(resolve, this.RETRY_DELAY));
         } else {
-          this.notificationQueue.shift(); // Remove failed notification
+          this.notificationQueue.shift();
           this.saveNotificationQueue();
         }
       }
@@ -241,7 +249,7 @@ class NotificationService {
       body: notification.message,
       icon: '/pwa-192x192.png',
       badge: '/pwa-192x192.png',
-      tag: notification.groupId, // Group notifications
+      tag: notification.groupId,
       renotify: true,
       requireInteraction: notification.priority === 'high',
       data: notification.data
@@ -249,7 +257,8 @@ class NotificationService {
   }
 
   private arrayBufferToBase64(buffer: ArrayBuffer): string {
-    return btoa(String.fromCharCode(...new Uint8Array(buffer)));
+    const binary = String.fromCharCode(...new Uint8Array(buffer));
+    return window.btoa(binary);
   }
 }
 
