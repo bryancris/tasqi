@@ -5,12 +5,14 @@ import { useSilenceDetection } from './useSilenceDetection';
 import { createAudioAnalyser, getAudioMimeType } from './audioUtils';
 import { useToast } from '@/hooks/use-toast';
 
+type SpeechRecognitionInstance = InstanceType<typeof SpeechRecognition>;
+
 export function useAudioRecording(onTranscriptionComplete: (text: string) => void) {
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const { requestMicrophoneAccess } = useMicrophoneAccess();
   const { toast } = useToast();
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
 
   const stopRecording = useCallback(() => {
     if (recognitionRef.current) {
@@ -143,7 +145,7 @@ export function useAudioRecording(onTranscriptionComplete: (text: string) => voi
         variant: "destructive",
       });
     }
-  }, [onTranscriptionComplete, requestMicrophoneAccess, startSilenceDetection, stopSilenceDetection, toast]);
+  }, [onTranscriptionComplete, requestMicrophoneAccess, startSilenceDetection, stopSilenceDetection, toast, startNativeRecording]);
 
   return {
     isRecording,
