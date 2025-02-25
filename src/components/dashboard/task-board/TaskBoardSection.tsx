@@ -3,10 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Task } from "../TaskBoard";
 import { DndContext, MouseSensor, TouchSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { startOfDay, endOfDay, isToday, parseISO, isSameDay } from "date-fns";
+import { startOfDay, endOfDay, parseISO, isSameDay } from "date-fns";
 import { TaskCard } from "../TaskCard";
 import { TaskLegend } from "../TaskLegend";
 import { QueryObserverResult } from "@tanstack/react-query";
+import { useEffect } from "react";
 
 interface TaskBoardSectionProps {
   tasks: Task[];
@@ -30,34 +31,50 @@ export function TaskBoardSection({ tasks, onDragEnd, onComplete }: TaskBoardSect
   );
 
   const today = new Date();
-  const todayStart = startOfDay(today);
-  const todayEnd = endOfDay(today);
+  
+  // Add debugging
+  useEffect(() => {
+    console.log("TaskBoardSection mounted");
+    console.log("Total tasks:", tasks.length);
+    console.log("Today:", today);
+  }, [tasks, today]);
 
   const filterTasks = (task: Task) => {
-    // Include unscheduled tasks
-    if (task.status === 'unscheduled') {
-      return true;
-    }
+    try {
+      // Debug each task
+      console.log("Filtering task:", task.title, task.status, task.date);
 
-    // Include tasks completed today
-    if (task.status === 'completed' && task.completed_at) {
-      const completedDate = parseISO(task.completed_at);
-      return isSameDay(completedDate, today);
-    }
+      // Always show unscheduled tasks
+      if (task.status === 'unscheduled') {
+        console.log("Unscheduled task included:", task.title);
+        return true;
+      }
 
-    // Include scheduled tasks for today
-    if (task.status === 'scheduled' && task.date) {
-      const taskDate = parseISO(task.date);
-      return isSameDay(taskDate, today);
-    }
+      // For completed tasks, check if completed today
+      if (task.status === 'completed' && task.completed_at) {
+        const completedDate = parseISO(task.completed_at);
+        const isCompletedToday = isSameDay(completedDate, today);
+        console.log("Completed task check:", task.title, isCompletedToday);
+        return isCompletedToday;
+      }
 
-    // Include in_progress or stuck tasks for today
-    if ((task.status === 'in_progress' || task.status === 'stuck') && task.date) {
-      const taskDate = parseISO(task.date);
-      return isSameDay(taskDate, today);
-    }
+      // For scheduled tasks, check if scheduled for today
+      if (task.date) {
+        const taskDate = parseISO(task.date);
+        const isTaskForToday = isSameDay(taskDate, today);
+        console.log("Scheduled task check:", task.title, isTaskForToday);
+        
+        // Include if it's for today and either scheduled, in_progress, or stuck
+        if (isTaskForToday && ['scheduled', 'in_progress', 'stuck'].includes(task.status)) {
+          return true;
+        }
+      }
 
-    return false;
+      return false;
+    } catch (error) {
+      console.error("Error filtering task:", error);
+      return false;
+    }
   };
 
   const sortedTasks = [...tasks]
@@ -70,6 +87,14 @@ export function TaskBoardSection({ tasks, onDragEnd, onComplete }: TaskBoardSect
       // Sort by position for non-completed tasks
       return (a.position || 0) - (b.position || 0);
     });
+
+  // Debug sorted tasks
+  useEffect(() => {
+    console.log("Filtered and sorted tasks:", sortedTasks.length);
+    sortedTasks.forEach(task => {
+      console.log("Task in view:", task.title, task.status, task.date);
+    });
+  }, [sortedTasks]);
 
   const draggableTaskIds = sortedTasks
     .filter(task => task.status !== 'completed')
