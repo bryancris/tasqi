@@ -27,10 +27,10 @@ const App = () => {
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/dashboard/*" element={
+            <Route path="dashboard" element={<DashboardLayout><Dashboard /></DashboardLayout>} />
+            <Route path="dashboard/*" element={
               <DashboardLayout>
                 <Routes>
-                  <Route path="" element={<Dashboard />} />
                   <Route path="tasks" element={<Dashboard />} />
                   <Route path="weekly" element={<Dashboard />} />
                   <Route path="monthly" element={<Dashboard />} />
