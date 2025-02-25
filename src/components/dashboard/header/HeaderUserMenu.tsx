@@ -8,21 +8,64 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Settings, LogOut } from "lucide-react";
+import { Settings, LogOut, Download } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useState, useEffect } from "react";
 
 export function HeaderUserMenu() {
   const { session } = useAuth();
   const navigate = useNavigate();
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstallable, setIsInstallable] = useState(false);
   
   // Get user metadata or email for display
   const userDisplayName = session?.user.user_metadata?.full_name || 
                          session?.user.user_metadata?.name ||
                          session?.user.email?.split('@')[0] ||
                          'User';
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setIsInstallable(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    // Check if app is already installed
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsInstallable(false);
+    }
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstall = async () => {
+    if (!deferredPrompt) return;
+
+    try {
+      // Show the install prompt
+      await deferredPrompt.prompt();
+      // Wait for the user to respond to the prompt
+      const choiceResult = await deferredPrompt.userChoice;
+      
+      if (choiceResult.outcome === 'accepted') {
+        toast.success('Installing app...');
+        setIsInstallable(false);
+      }
+      // Reset the deferredPrompt for next time
+      setDeferredPrompt(null);
+    } catch (error) {
+      console.error('Error installing app:', error);
+      toast.error('Failed to install app');
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -71,6 +114,12 @@ export function HeaderUserMenu() {
             Settings
           </Link>
         </DropdownMenuItem>
+        {isInstallable && (
+          <DropdownMenuItem onClick={handleInstall}>
+            <Download className="mr-2 h-4 w-4" />
+            Install App
+          </DropdownMenuItem>
+        )}
         <DropdownMenuItem onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />
           Log out
