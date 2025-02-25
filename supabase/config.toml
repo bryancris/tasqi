@@ -3,7 +3,6 @@ project_id = "mcwlzrikidzgxexnccju"
 
 [api]
 enabled = true
-url = "https://mcwlzrikidzgxexnccju.supabase.co"
 
 [functions]
 [functions.get-vapid-key]
