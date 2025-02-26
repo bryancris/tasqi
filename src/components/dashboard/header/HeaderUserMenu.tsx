@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -194,6 +193,7 @@ export function HeaderUserMenu() {
       const { error } = await supabase.auth.signOut();
       if (error && !error.message?.includes('session_not_found')) {
         console.error('Error logging out:', error);
+        throw error;
       }
       
       // Navigate after signing out
@@ -202,6 +202,7 @@ export function HeaderUserMenu() {
     } catch (error) {
       console.error('Logout error:', error);
       toast.error("Error during logout");
+      navigate('/');
     }
   };
 
