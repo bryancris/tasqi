@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import { Notification } from '../types';
 import { playNotificationSound } from "@/utils/notifications/soundUtils";
 import { showBrowserNotification } from "@/utils/notifications/notificationUtils";
+import { useAuth } from '@/contexts/AuthContext';
 
 const NOTIFICATION_TIMEOUT = 15000;
 
@@ -11,6 +12,9 @@ export function useNotificationHandlers(
   timeoutRefs: React.MutableRefObject<Map<string, NodeJS.Timeout>>,
   setOfflineQueue: React.Dispatch<React.SetStateAction<Notification[]>>
 ) {
+  const { session } = useAuth();
+  const userId = session?.user?.id;
+
   const dismissNotification = useCallback((id: string) => {
     setNotifications(prev => {
       const notification = prev.find(n => n.id === id);
@@ -25,9 +29,7 @@ export function useNotificationHandlers(
   }, [setNotifications]);
 
   const dismissGroup = useCallback((group: string) => {
-    setNotifications(prev => {
-      return prev.map(n => n.group === group ? { ...n, read: true } : n);
-    });
+    setNotifications(prev => prev.map(n => n.group === group ? { ...n, read: true } : n));
     
     setNotifications(current => {
       current
@@ -54,7 +56,7 @@ export function useNotificationHandlers(
         id,
         read: false,
         created_at: now,
-        user_id: ''
+        user_id: userId || ''
       }]);
       return;
     }
@@ -95,12 +97,12 @@ export function useNotificationHandlers(
         id,
         read: false,
         created_at: now,
-        user_id: '',
+        user_id: userId || '',
         group,
         persistent: isPersistent,
       };
       
-      if (prev.length >= 4) {
+      if (prev.length >= MAX_VISIBLE_NOTIFICATIONS) {
         const [oldest, ...rest] = prev;
         if (oldest && timeoutRefs.current.has(oldest.id)) {
           clearTimeout(timeoutRefs.current.get(oldest.id));
@@ -118,7 +120,7 @@ export function useNotificationHandlers(
       }, NOTIFICATION_TIMEOUT);
       timeoutRefs.current.set(id, timeoutId);
     }
-  }, [dismissNotification, setNotifications, setOfflineQueue]);
+  }, [dismissNotification, setNotifications, setOfflineQueue, userId]);
 
   return {
     dismissNotification,
