@@ -17,11 +17,11 @@ export function WeeklyCalendar() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="flex items-center justify-between px-6 py-4 border-b bg-white sticky top-0">
-        <div className="flex items-center gap-4">
-          <h2 className="text-lg font-semibold text-gray-700">
-            {format(currentDate, 'MMMM yyyy')}
-          </h2>
+      <div className="flex items-center justify-center gap-4 py-2">
+        <h2 className="text-lg font-semibold text-gray-700">
+          {format(currentDate, 'MMMM yyyy')}
+        </h2>
+        <div className="flex items-center gap-1">
           <Button
             variant="outline"
             onClick={() => setShowFullWeek(!showFullWeek)}
@@ -29,9 +29,6 @@ export function WeeklyCalendar() {
           >
             {showFullWeek ? '7 Day' : '5 Day'}
           </Button>
-        </div>
-        
-        <div className="flex items-center gap-1">
           <Button
             variant="outline"
             size="icon"
