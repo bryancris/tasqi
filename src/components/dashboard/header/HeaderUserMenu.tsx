@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -227,7 +228,7 @@ export function HeaderUserMenu() {
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link to="/settings" className="w-full flex items-center">
+          <Link to="/dashboard/settings" className="w-full flex items-center">
             <Settings className="mr-2 h-4 w-4" />
             Settings
           </Link>
