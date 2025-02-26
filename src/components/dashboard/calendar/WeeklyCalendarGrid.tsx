@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils";
 import { useTasks } from "@/hooks/use-tasks";
 import { Droppable, Draggable } from "react-beautiful-dnd";
 import { getPriorityColor } from "@/utils/taskColors";
+import { EditTaskDrawer } from "../EditTaskDrawer";
+import { useState } from "react";
 
 interface WeeklyCalendarGridProps {
   currentDate: Date;
@@ -18,6 +20,8 @@ export function WeeklyCalendarGrid({
   showFullWeek,
   className 
 }: WeeklyCalendarGridProps) {
+  const [editTask, setEditTask] = useState<Task | null>(null);
+  
   const weekStart = startOfWeek(currentDate, { weekStartsOn: showFullWeek ? 0 : 1 });
   const weekEnd = showFullWeek 
     ? endOfWeek(currentDate, { weekStartsOn: 0 })
@@ -101,6 +105,11 @@ export function WeeklyCalendarGrid({
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}
                                   {...provided.dragHandleProps}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setEditTask(task);
+                                  }}
                                   className="absolute left-0 right-0 top-0 px-2 py-1.5"
                                   style={{
                                     ...provided.draggableProps.style,
@@ -131,6 +140,14 @@ export function WeeklyCalendarGrid({
           </div>
         </div>
       </div>
+      
+      {editTask && (
+        <EditTaskDrawer
+          task={editTask}
+          open={!!editTask}
+          onOpenChange={(open) => !open && setEditTask(null)}
+        />
+      )}
     </div>
   );
 }
