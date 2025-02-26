@@ -5,8 +5,12 @@ import { HeaderTime } from "@/components/dashboard/header/HeaderTime";
 import { AddTaskDrawer } from "@/components/dashboard/AddTaskDrawer";
 import { Button } from "@/components/ui/button";
 import { Plus, Timer } from "lucide-react";
+import { useState } from "react";
+import { TimerDialog } from "@/components/timer/TimerDialog";
 
 export function MobileHeader() {
+  const [isTimerOpen, setIsTimerOpen] = useState(false);
+
   return (
     <header className="fixed top-0 left-0 right-0 h-[72px] z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container h-full">
@@ -26,9 +30,11 @@ export function MobileHeader() {
               variant="outline"
               size="icon"
               className="h-9 w-9 rounded-full"
+              onClick={() => setIsTimerOpen(true)}
             >
               <Timer className="h-5 w-5" />
             </Button>
+            <TimerDialog isOpen={isTimerOpen} onOpenChange={setIsTimerOpen} />
             <HeaderNotifications />
             <HeaderUserMenu />
           </div>
