@@ -1,3 +1,4 @@
+
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays } from "date-fns";
 import { TimeColumn } from "./TimeColumn";
 import { Task } from "../TaskBoard";
@@ -5,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { useTasks } from "@/hooks/use-tasks";
 import { Droppable, Draggable } from "react-beautiful-dnd";
 import { UnscheduledTasks } from "./UnscheduledTasks";
+import { getPriorityColor } from "@/utils/taskColors";
 
 interface WeeklyCalendarGridProps {
   currentDate: Date;
@@ -68,7 +70,7 @@ export function WeeklyCalendarGrid({
                         className={cn(
                           "relative border-t h-[60px] -mt-[1px] first:mt-0",
                           idx === timeSlots.length - 1 && "border-b",
-                          snapshot.isDraggingOver && "bg-[#E5DEFF]/10"
+                          snapshot.isDraggingOver && "bg-gray-50"
                         )}
                       >
                         {scheduledTasks
@@ -99,9 +101,8 @@ export function WeeklyCalendarGrid({
                                 >
                                   <div 
                                     className={cn(
-                                      "text-sm p-1.5 rounded",
-                                      "bg-[#E5DEFF] border-[#E5DEFF]",
-                                      "hover:bg-[#E5DEFF]/90 transition-colors",
+                                      "text-sm p-1.5 rounded text-white",
+                                      getPriorityColor(task.priority),
                                       "cursor-pointer truncate",
                                       snapshot.isDragging && "shadow-lg"
                                     )}
