@@ -73,6 +73,9 @@ export function WeeklyCalendarGrid({
                           snapshot.isDraggingOver && "bg-gray-50"
                         )}
                       >
+                        {/* 30-minute divider line */}
+                        <div className="absolute left-0 right-0 top-1/2 border-t border-gray-100" />
+                        
                         {scheduledTasks
                           .filter(
                             (task) =>
