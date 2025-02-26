@@ -1,4 +1,3 @@
-
 import { BrowserRouter } from 'react-router-dom';
 import { Routes, Route } from 'react-router-dom';
 import { CalendarViewProvider } from './contexts/CalendarViewContext';
@@ -8,6 +7,9 @@ import { DragDropContext } from 'react-beautiful-dnd';
 import Index from './pages/Index';
 import Auth from './pages/Auth';
 import Settings from './pages/Settings';
+import Notes from './pages/Notes';
+import Analytics from './pages/Analytics';
+import SelfCare from './pages/SelfCare';
 
 function App() {
   const onDragEnd = (result: any) => {
@@ -23,24 +25,20 @@ function App() {
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
-              {/* Settings route needs to be before the wildcard route */}
-              <Route 
-                path="/dashboard/settings" 
-                element={
-                  <DashboardLayout>
-                    <Settings />
-                  </DashboardLayout>
-                }
-              />
-              {/* Wildcard route for all other dashboard paths */}
-              <Route
-                path="/dashboard/*"
-                element={
-                  <DashboardLayout>
-                    <Dashboard />
-                  </DashboardLayout>
-                }
-              />
+              <Route path="/dashboard" element={<DashboardLayout>
+                <Routes>
+                  <Route index element={<Dashboard />} />
+                  <Route path="tasks/*" element={<Dashboard />} />
+                  <Route path="week/*" element={<Dashboard />} />
+                  <Route path="monthly/*" element={<Dashboard />} />
+                  <Route path="yearly/*" element={<Dashboard />} />
+                  
+                  <Route path="settings" element={<Settings />} />
+                  <Route path="notes" element={<Notes />} />
+                  <Route path="analytics" element={<Analytics />} />
+                  <Route path="self-care" element={<SelfCare />} />
+                </Routes>
+              </DashboardLayout>} />
             </Routes>
           </div>
         </DragDropContext>

@@ -25,7 +25,7 @@ export function CalendarViewProvider({ children }: { children: ReactNode }) {
   const [view, setCurrentView] = useState<CalendarView>(() => {
     // Initialize with the correct view based on the current path
     const path = location.pathname;
-    if (path.includes('/weekly')) return 'weekly';
+    if (path.includes('/week')) return 'weekly';
     if (path.includes('/monthly')) return 'monthly';
     if (path.includes('/yearly')) return 'yearly';
     return 'tasks';
@@ -34,12 +34,13 @@ export function CalendarViewProvider({ children }: { children: ReactNode }) {
   // Update view based on current route
   useEffect(() => {
     const path = location.pathname;
+    if (!path.startsWith('/dashboard')) return;
+    
     let newView: CalendarView = 'tasks';
-
-    if (path.includes('/weekly')) newView = 'weekly';
+    if (path.includes('/week')) newView = 'weekly';
     else if (path.includes('/monthly')) newView = 'monthly';
     else if (path.includes('/yearly')) newView = 'yearly';
-    else if (path.includes('/tasks') || path === '/dashboard') newView = 'tasks';
+    else if (path === '/dashboard' || path.includes('/tasks')) newView = 'tasks';
 
     setCurrentView(newView);
   }, [location.pathname]);
@@ -47,7 +48,14 @@ export function CalendarViewProvider({ children }: { children: ReactNode }) {
   const setView = (newView: CalendarView) => {
     if (view === newView) return; // Prevent unnecessary navigation
     
-    const targetPath = newView === 'tasks' ? '/dashboard/tasks' : `/dashboard/${newView}`;
+    const viewToPathMap = {
+      tasks: '/dashboard/tasks',
+      weekly: '/dashboard/week',
+      monthly: '/dashboard/monthly',
+      yearly: '/dashboard/yearly'
+    };
+    
+    const targetPath = viewToPathMap[newView];
     if (location.pathname !== targetPath) {
       navigate(targetPath);
     }
