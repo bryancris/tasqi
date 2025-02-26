@@ -23,14 +23,16 @@ function App() {
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
-              <Route
-                path="/dashboard/*"
-                element={
-                  <DashboardLayout>
-                    <Dashboard />
-                  </DashboardLayout>
-                }
-              />
+              <Route path="/dashboard" element={<DashboardLayout>
+                <Routes>
+                  <Route index element={<Dashboard />} />
+                  <Route path="tasks/*" element={<Dashboard />} />
+                  <Route path="weekly/*" element={<Dashboard />} />
+                  <Route path="monthly/*" element={<Dashboard />} />
+                  <Route path="yearly/*" element={<Dashboard />} />
+                  <Route path="settings" element={<Settings />} />
+                </Routes>
+              </DashboardLayout>} />
             </Routes>
           </div>
         </DragDropContext>
