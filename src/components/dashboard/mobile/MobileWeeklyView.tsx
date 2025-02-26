@@ -32,23 +32,23 @@ export function MobileWeeklyView() {
 
   return (
     <div className="flex flex-col h-full bg-white">
-      {/* Calendar Controls */}
-      <div className="flex items-center justify-between px-4 py-3 border-b bg-[#2A9BB5] sticky top-0 z-10">
-        <h2 className="text-base font-semibold text-white truncate">
+      {/* Calendar Controls - Now with white background */}
+      <div className="flex items-center justify-between px-4 py-3 border-b bg-white sticky top-0 z-10">
+        <h2 className="text-base font-semibold text-gray-700 truncate">
           {format(currentDate, 'MMMM yyyy')}
         </h2>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             onClick={() => setShowFullWeek(!showFullWeek)}
-            className="h-8 text-xs px-2 bg-white/10 hover:bg-white/20 text-white border-white/20"
+            className="h-8 text-xs px-2"
           >
             {showFullWeek ? '7 Day' : '5 Day'}
           </Button>
           <Button
             variant="outline"
             size="icon"
-            className="h-8 w-8 bg-white/10 hover:bg-white/20 text-white border-white/20"
+            className="h-8 w-8"
             onClick={() => setCurrentDate(prev => subWeeks(prev, 1))}
           >
             <ChevronLeft className="h-4 w-4" />
@@ -56,7 +56,7 @@ export function MobileWeeklyView() {
           <Button
             variant="outline"
             size="icon"
-            className="h-8 w-8 bg-white/10 hover:bg-white/20 text-white border-white/20"
+            className="h-8 w-8"
             onClick={() => setCurrentDate(prev => addWeeks(prev, 1))}
           >
             <ChevronRight className="h-4 w-4" />
@@ -88,7 +88,7 @@ export function MobileWeeklyView() {
           <div className="grid" style={{ 
             gridTemplateColumns: `40px repeat(${weekDays.length}, 1fr)` 
           }}>
-            {/* Time Column - Updated with desktop colors */}
+            {/* Time Column */}
             <div className="sticky left-0 z-10 bg-[#2EBDAE]">
               {timeSlots.map((slot, idx) => (
                 <div
