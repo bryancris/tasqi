@@ -145,7 +145,8 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
                     <Share2 className="w-4 h-4 text-white/80 cursor-help relative z-10" />
                   </TooltipTrigger>
                   <TooltipContent 
-                    side="top" 
+                    side="left" 
+                    align="center"
                     className="bg-gray-800 text-white border-gray-700 text-xs z-50"
                     sideOffset={5}
                   >
