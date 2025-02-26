@@ -20,6 +20,7 @@ export function MobileWeeklyView() {
   
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
+  // Optimize time slots for mobile - reduced height and fewer slots
   const timeSlots = Array.from({ length: 12 }, (_, i) => {
     const hour = 8 + i;
     return {
@@ -64,53 +65,53 @@ export function MobileWeeklyView() {
         </div>
       </div>
 
-      {/* Days Header */}
+      {/* Days Header - Compact and responsive */}
       <div className="grid border-b bg-[#E5F6FF]" 
         style={{ 
-          gridTemplateColumns: `60px repeat(${weekDays.length}, minmax(140px, 1fr))` 
+          gridTemplateColumns: `40px repeat(${weekDays.length}, 1fr)` 
         }}>
-        <div className="p-2 text-center border-r" />
+        <div className="p-1 text-center border-r" />
         {weekDays.map((day) => (
-          <div key={day.toISOString()} className="p-2 text-center border-r last:border-r-0">
-            <div className="text-sm font-medium text-gray-700">
+          <div key={day.toISOString()} className="p-1 text-center border-r last:border-r-0">
+            <div className="text-xs font-medium text-gray-700">
               {format(day, 'EEE')}
             </div>
-            <div className="text-sm font-medium text-gray-900">
+            <div className="text-xs font-medium text-gray-900">
               {format(day, 'd')}
             </div>
           </div>
         ))}
       </div>
 
-      {/* Time Grid */}
-      <div className="flex-1 overflow-x-auto overflow-y-auto">
-        <div className="relative min-w-full" style={{ minWidth: `${60 + (weekDays.length * 140)}px` }}>
+      {/* Time Grid - Optimized for mobile */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="min-w-full">
           <div className="grid" style={{ 
-            gridTemplateColumns: `60px repeat(${weekDays.length}, minmax(140px, 1fr))` 
+            gridTemplateColumns: `40px repeat(${weekDays.length}, 1fr)` 
           }}>
-            {/* Time Column */}
+            {/* Time Column - Reduced width */}
             <div className="sticky left-0 z-10 bg-white">
               {timeSlots.map((slot, idx) => (
                 <div
                   key={slot.hour}
                   className={cn(
-                    "flex items-center justify-center border-r border-t h-[60px] -mt-[1px] first:mt-0",
+                    "flex items-center justify-center border-r border-t h-[40px] -mt-[1px] first:mt-0",
                     idx === timeSlots.length - 1 && "border-b"
                   )}
                 >
-                  <span className="text-xs text-gray-500">{slot.display}</span>
+                  <span className="text-[10px] text-gray-500">{slot.display}</span>
                 </div>
               ))}
             </div>
 
-            {/* Day Columns */}
+            {/* Day Columns - Responsive width */}
             {weekDays.map((day) => (
               <div key={day.toISOString()} className="relative border-r last:border-r-0">
                 {timeSlots.map((slot, idx) => (
                   <div
                     key={`${day.toISOString()}-${slot.hour}`}
                     className={cn(
-                      "relative border-t h-[60px] -mt-[1px] first:mt-0",
+                      "relative border-t h-[40px] -mt-[1px] first:mt-0",
                       idx === timeSlots.length - 1 && "border-b"
                     )}
                   >
@@ -124,7 +125,7 @@ export function MobileWeeklyView() {
                           parseInt(task.start_time.split(':')[0]) === slot.hour
                       )
                       .map((task) => (
-                        <div key={task.id} className="absolute inset-x-0 top-0 p-1">
+                        <div key={task.id} className="absolute inset-x-0 top-0 p-0.5">
                           <WeeklyTaskCard task={task} />
                         </div>
                       ))}
