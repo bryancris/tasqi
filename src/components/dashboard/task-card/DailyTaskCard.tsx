@@ -1,11 +1,12 @@
 
-import { memo } from "react";
+import { memo, useEffect, useState } from "react";
 import { Task } from "../TaskBoard";
 import { TaskStatusIndicator } from "../TaskStatusIndicator";
 import { cn } from "@/lib/utils";
 import { getPriorityColor } from "@/utils/taskColors";
 import { Bell, Share2, ArrowRight, Users, Mic } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { supabase } from "@/integrations/supabase/client";
 
 interface DailyTaskCardProps {
   task: Task;
@@ -16,6 +17,30 @@ interface DailyTaskCardProps {
 }
 
 function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, extraButton }: DailyTaskCardProps) {
+  const [assignerName, setAssignerName] = useState<string>("");
+
+  useEffect(() => {
+    const fetchAssignerName = async () => {
+      if (task.assignments?.length) {
+        const assignment = task.assignments[0];
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('first_name, last_name, email')
+          .eq('id', assignment.assigned_by_id)
+          .single();
+
+        if (profile) {
+          const displayName = profile.first_name && profile.last_name 
+            ? `${profile.first_name} ${profile.last_name}`
+            : profile.email;
+          setAssignerName(displayName);
+        }
+      }
+    };
+
+    fetchAssignerName();
+  }, [task.assignments]);
+
   const getTimeDisplay = () => {
     if (task.start_time && task.end_time) {
       const startTime = task.start_time.split(':').slice(0, 2).join(':');
@@ -57,8 +82,7 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
 
   const getAssignerName = () => {
     if (!task.assignments?.length) return "Shared task";
-    const assignment = task.assignments[0]; // Get the first assignment
-    return `Assigned by ${assignment.assigned_by_id}`;
+    return assignerName ? `Assigned by ${assignerName}` : "Loading...";
   };
 
   const getCardColor = () => {
