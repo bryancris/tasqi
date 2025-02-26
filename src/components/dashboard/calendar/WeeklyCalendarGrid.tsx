@@ -1,9 +1,8 @@
+
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays } from "date-fns";
-import { TimeColumn } from "../TimeColumn";
 import { Task } from "../TaskBoard";
-import { DraggableTask } from "../DraggableTask";
-import { useTasks } from "@/hooks/use-tasks";
 import { cn } from "@/lib/utils";
+import { useTasks } from "@/hooks/use-tasks";
 
 interface WeeklyCalendarGridProps {
   currentDate: Date;
@@ -27,7 +26,7 @@ export function WeeklyCalendarGrid({
     const hour = 8 + i;
     return {
       hour,
-      display: `${hour}\nAM`
+      display: `${hour}:00`
     };
   });
 
@@ -38,7 +37,25 @@ export function WeeklyCalendarGrid({
   return (
     <div className={cn("flex-1 overflow-hidden", className)}>
       <div className="relative flex h-full overflow-x-auto overflow-y-auto scrollbar-hide">
-        <TimeColumn timeSlots={timeSlots} />
+        {/* Time column */}
+        <div className="sticky left-0 z-10 w-14 flex-none bg-white">
+          <div className="relative h-full">
+            {timeSlots.map((slot, idx) => (
+              <div
+                key={slot.hour}
+                className={cn(
+                  "flex items-center justify-center border-r border-t text-xs",
+                  "h-[60px] -mt-[1px] first:mt-0",
+                  idx === timeSlots.length - 1 && "border-b"
+                )}
+              >
+                <span>{slot.display}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Day columns */}
         <div className="flex flex-1 overflow-x-auto scrollbar-hide">
           {weekDays.map((day) => (
             <div
@@ -48,7 +65,10 @@ export function WeeklyCalendarGrid({
               {timeSlots.map((slot, idx) => (
                 <div
                   key={`${day.toISOString()}-${slot.hour}`}
-                  className={`relative border-t h-[60px] -mt-[1px] first:mt-0 ${idx === timeSlots.length - 1 ? 'border-b' : ''}`}
+                  className={cn(
+                    "relative border-t h-[60px] -mt-[1px] first:mt-0",
+                    idx === timeSlots.length - 1 && "border-b"
+                  )}
                 >
                   {scheduledTasks
                     .filter(
@@ -60,7 +80,14 @@ export function WeeklyCalendarGrid({
                         parseInt(task.start_time.split(':')[0]) === slot.hour
                     )
                     .map((task) => (
-                      <DraggableTask key={task.id} task={task} />
+                      <div
+                        key={task.id}
+                        className="absolute left-0 right-0 top-0 p-1"
+                      >
+                        <div className="text-xs p-1 bg-blue-100 rounded border border-blue-200 truncate">
+                          {task.title}
+                        </div>
+                      </div>
                     ))}
                 </div>
               ))}
