@@ -16,7 +16,7 @@ export function WeeklyCalendar() {
   };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col h-full overflow-hidden pt-8">
       {/* Calendar Controls Row - Aligned at the same level as sidebar elements */}
       <div className="flex items-center justify-center h-12">
         <div className="flex items-center gap-4">
