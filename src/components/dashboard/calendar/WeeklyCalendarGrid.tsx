@@ -1,171 +1,72 @@
-
-import React from 'react';
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays } from "date-fns";
+import { TimeColumn } from "../TimeColumn";
 import { Task } from "../TaskBoard";
-import { format, isSameDay, parseISO } from "date-fns";
-import { useDroppable } from "@dnd-kit/core";
-import { WeeklyTaskCard } from "../task-card/WeeklyTaskCard";
+import { DraggableTask } from "../DraggableTask";
+import { useTasks } from "@/hooks/use-tasks";
 import { cn } from "@/lib/utils";
 
 interface WeeklyCalendarGridProps {
-  weekDays: Date[];
-  timeSlots: {
-    hour: number;
-    display: string;
-  }[];
-  scheduledTasks: Task[];
+  currentDate: Date;
   showFullWeek: boolean;
+  className?: string;
 }
 
-const getTaskPosition = (task: Task, timeSlot: { hour: number }) => {
-  if (!task.start_time || !task.end_time) return null;
-
-  const [startHour, startMinute] = task.start_time.split(':').map(Number);
-  const [endHour, endMinute] = task.end_time.split(':').map(Number);
-
-  const startMinuteOffset = startHour === timeSlot.hour ? startMinute : 0;
-  const endMinuteOffset = endHour === timeSlot.hour ? endMinute : 60;
+export function WeeklyCalendarGrid({ 
+  currentDate,
+  showFullWeek,
+  className 
+}: WeeklyCalendarGridProps) {
+  const weekStart = startOfWeek(currentDate, { weekStartsOn: showFullWeek ? 0 : 1 });
+  const weekEnd = showFullWeek 
+    ? endOfWeek(currentDate, { weekStartsOn: 0 })
+    : addDays(weekStart, 4);
   
-  const height = ((endMinuteOffset - startMinuteOffset) / 60) * 100;
-  const top = (startMinuteOffset / 60) * 100;
+  const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
-  return {
-    height: `${height}%`,
-    top: `${top}%`,
-    position: 'absolute' as const,
-    left: '1px',
-    right: '1px',
-  };
-};
-
-const CalendarCell = ({ 
-  day, 
-  timeSlot, 
-  tasks,
-  isLastRow,
-  isLastColumn,
-  isFirstColumn
-}: { 
-  day: Date;
-  timeSlot: { hour: number; display: string };
-  tasks: Task[];
-  isLastRow: boolean;
-  isLastColumn: boolean;
-  isFirstColumn: boolean;
-}) => {
-  const formattedDate = format(day, 'yyyy-MM-dd');
-  const { setNodeRef, isOver } = useDroppable({
-    id: `${formattedDate}-${timeSlot.hour}`,
-    data: {
-      date: formattedDate,
-      hour: timeSlot.hour
-    }
+  const timeSlots = Array.from({ length: 12 }, (_, i) => {
+    const hour = 8 + i;
+    return {
+      hour,
+      display: `${hour}\nAM`
+    };
   });
 
-  const tasksForThisSlot = tasks.filter(task => {
-    if (!task.date || !task.start_time || task.status !== 'scheduled') return false;
-    
-    const taskDate = format(parseISO(task.date), 'yyyy-MM-dd');
-    if (taskDate !== formattedDate) return false;
+  const { tasks } = useTasks();
 
-    const [taskStartHour] = task.start_time.split(':').map(Number);
-    return taskStartHour === timeSlot.hour;
-  });
+  const scheduledTasks = tasks.filter(task => task.date && task.start_time);
 
   return (
-    <div
-      ref={setNodeRef}
-      className={cn(
-        "relative h-[60px] min-h-[60px]",
-        isOver && "bg-blue-50/50",
-        "transition-colors duration-200"
-      )}
-    >
-      {/* 30-minute marker */}
-      <div className="absolute left-0 right-0 top-1/2 border-t border-[#403E43]/20" />
-      
-      {tasksForThisSlot.map((task) => {
-        const position = getTaskPosition(task, timeSlot);
-        if (!position) return null;
-
-        return (
-          <div 
-            key={task.id} 
-            style={position}
-          >
-            <WeeklyTaskCard
-              task={task}
-              dragHandleProps={{
-                'data-dnd-draggable': true,
-                'data-dnd-draggable-id': task.id
-              }}
-            />
-          </div>
-        );
-      })}
-    </div>
-  );
-};
-
-export function WeeklyCalendarGrid({ weekDays, timeSlots, scheduledTasks, showFullWeek }: WeeklyCalendarGridProps) {
-  const displayDays = showFullWeek ? weekDays : weekDays.slice(0, 5);
-  
-  return (
-    <div className="relative bg-white rounded-lg shadow-sm overflow-hidden">
-      <div className={cn(
-        "grid",
-        showFullWeek ? "grid-cols-[auto_repeat(7,1fr)]" : "grid-cols-[auto_repeat(5,1fr)]",
-      )}>
-        {/* Header */}
-        <div className="bg-[#B2E3EA] p-4 border-r border-[#403E43]" /> {/* Time column header spacer */}
-        {displayDays.map((day, index) => (
-          <div
-            key={format(day, 'yyyy-MM-dd')}
-            className={cn(
-              "px-2 py-4 text-center",
-              "bg-[#B2E3EA]",
-              "border-r border-[#403E43]",
-              index === displayDays.length - 1 ? "" : "border-r"
-            )}
-          >
-            <div className="font-medium text-slate-900">{format(day, 'EEE')}</div>
-            <div className="text-sm text-slate-500">{format(day, 'd')}</div>
-          </div>
-        ))}
-
-        {/* Time slots and cells */}
-        {timeSlots.map((timeSlot, rowIndex) => (
-          <div key={timeSlot.hour} className="contents">
-            <div 
-              className={cn(
-                "w-20 px-4 py-3 text-right text-sm text-slate-500",
-                "bg-[#B2E3EA] border-r border-[#403E43]",
-                rowIndex === timeSlots.length - 1 && "rounded-bl-lg"
-              )}
+    <div className={cn("flex-1 overflow-hidden", className)}>
+      <div className="relative flex h-full overflow-x-auto overflow-y-auto scrollbar-hide">
+        <TimeColumn timeSlots={timeSlots} />
+        <div className="flex flex-1 overflow-x-auto scrollbar-hide">
+          {weekDays.map((day) => (
+            <div
+              key={day.toISOString()}
+              className="flex-1 min-w-[120px] relative border-r last:border-r-0"
             >
-              {timeSlot.display}
+              {timeSlots.map((slot, idx) => (
+                <div
+                  key={`${day.toISOString()}-${slot.hour}`}
+                  className={`relative border-t h-[60px] -mt-[1px] first:mt-0 ${idx === timeSlots.length - 1 ? 'border-b' : ''}`}
+                >
+                  {scheduledTasks
+                    .filter(
+                      (task) =>
+                        task.date &&
+                        format(new Date(task.date), "yyyy-MM-dd") ===
+                          format(day, "yyyy-MM-dd") &&
+                        task.start_time &&
+                        parseInt(task.start_time.split(':')[0]) === slot.hour
+                    )
+                    .map((task) => (
+                      <DraggableTask key={task.id} task={task} />
+                    ))}
+                </div>
+              ))}
             </div>
-            {displayDays.map((day, colIndex) => (
-              <div 
-                key={`${format(day, 'yyyy-MM-dd')}-${timeSlot.hour}`}
-                className={cn(
-                  "border-r border-b border-[#403E43]",
-                  colIndex === displayDays.length - 1 && "border-r-0",
-                  rowIndex === timeSlots.length - 1 && colIndex === displayDays.length - 1 && "rounded-br-lg",
-                  "relative"
-                )}
-              >
-                <CalendarCell
-                  day={day}
-                  timeSlot={timeSlot}
-                  tasks={scheduledTasks}
-                  isLastRow={rowIndex === timeSlots.length - 1}
-                  isLastColumn={colIndex === displayDays.length - 1}
-                  isFirstColumn={colIndex === 0}
-                />
-              </div>
-            ))}
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
