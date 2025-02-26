@@ -12,7 +12,8 @@ export function useTasks() {
       .from('tasks')
       .select(`
         *,
-        assignments:task_assignments(*)
+        assignments:task_assignments(*),
+        task_attachments(*)
       `)
       .order('position', { ascending: true });
 
