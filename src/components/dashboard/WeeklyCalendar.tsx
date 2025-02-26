@@ -16,7 +16,13 @@ export function WeeklyCalendar() {
   const { tasks } = useTasks();
   const isMobile = useIsMobile();
   
-  const unscheduledTasks = tasks?.filter(task => !task.date || !task.start_time) || [];
+  // Filter unscheduled tasks based on specific criteria
+  const unscheduledTasks = tasks?.filter(task => 
+    task.status === 'unscheduled' && 
+    !task.date && 
+    !task.start_time && 
+    !task.completed_at
+  ) || [];
 
   if (isMobile) {
     return <MobileWeeklyView />;
