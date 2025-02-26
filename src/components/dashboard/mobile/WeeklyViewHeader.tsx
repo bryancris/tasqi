@@ -19,7 +19,7 @@ export function WeeklyViewHeader({
   onToggleView,
 }: WeeklyViewHeaderProps) {
   return (
-    <div className="flex items-center justify-between w-full">
+    <div className="flex items-center justify-between p-4 border-b">
       <div className="flex items-center gap-2">
         <h2 className="text-lg font-semibold text-gray-700 truncate max-w-[120px]">
           {format(currentDate, 'MMMM yyyy')}
@@ -33,7 +33,7 @@ export function WeeklyViewHeader({
         </Button>
       </div>
       
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 pr-2">
         <Button
           variant="outline"
           size="icon"
