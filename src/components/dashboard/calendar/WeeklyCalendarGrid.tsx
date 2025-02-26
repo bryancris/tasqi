@@ -1,4 +1,3 @@
-
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays } from "date-fns";
 import { TimeColumn } from "./TimeColumn";
 import { Task } from "../TaskBoard";
@@ -39,15 +38,13 @@ export function WeeklyCalendarGrid({
 
   return (
     <div className="flex h-full gap-4">
-      {/* Main calendar area with fixed width and horizontal scroll if needed */}
       <div className={cn(
         "flex-1 overflow-hidden border rounded-lg bg-white",
-        "min-w-0", // Allow container to shrink below min-width
+        "min-w-0",
         className
       )}>
         <div className="flex h-full w-full">
           <TimeColumn timeSlots={timeSlots} />
-          {/* Day columns container that fills available space */}
           <div className="flex flex-1 min-w-0 overflow-x-auto">
             {weekDays.map((day) => (
               <div
@@ -71,7 +68,7 @@ export function WeeklyCalendarGrid({
                         className={cn(
                           "relative border-t h-[60px] -mt-[1px] first:mt-0",
                           idx === timeSlots.length - 1 && "border-b",
-                          snapshot.isDraggingOver && "bg-[#E5F6FF]/10"
+                          snapshot.isDraggingOver && "bg-[#E5DEFF]/10"
                         )}
                       >
                         {scheduledTasks
@@ -103,8 +100,8 @@ export function WeeklyCalendarGrid({
                                   <div 
                                     className={cn(
                                       "text-sm p-1.5 rounded",
-                                      "bg-[#E5F6FF] border-[#E5F6FF]",
-                                      "hover:bg-[#E5F6FF]/90 transition-colors",
+                                      "bg-[#E5DEFF] border-[#E5DEFF]",
+                                      "hover:bg-[#E5DEFF]/90 transition-colors",
                                       "cursor-pointer truncate",
                                       snapshot.isDragging && "shadow-lg"
                                     )}
