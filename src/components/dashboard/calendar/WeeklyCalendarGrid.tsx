@@ -54,11 +54,11 @@ export function WeeklyCalendarGrid({
                 )}
               >
                 <div className={cn(
-                  "sticky top-0 z-10 bg-[#E5F6FF] border-b border-gray-200 px-4 py-3",
-                  isSameDay(day, currentDate) && "bg-[#D3E7FD]"
+                  "sticky top-0 z-10 bg-[#2EBDAE] border-b border-gray-200 px-4 py-3",
+                  isSameDay(day, currentDate) && "bg-[#269d90]"
                 )}>
                   <div className={cn(
-                    "text-sm font-medium whitespace-nowrap text-gray-700",
+                    "text-sm font-medium whitespace-nowrap text-white",
                   )}>
                     {format(day, 'EEE d')}
                   </div>
