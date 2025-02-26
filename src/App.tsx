@@ -23,16 +23,24 @@ function App() {
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
-              <Route path="/dashboard" element={<DashboardLayout>
-                <Routes>
-                  <Route index element={<Dashboard />} />
-                  <Route path="tasks/*" element={<Dashboard />} />
-                  <Route path="weekly/*" element={<Dashboard />} />
-                  <Route path="monthly/*" element={<Dashboard />} />
-                  <Route path="yearly/*" element={<Dashboard />} />
-                  <Route path="settings" element={<Settings />} />
-                </Routes>
-              </DashboardLayout>} />
+              {/* Settings route needs to be before the wildcard route */}
+              <Route 
+                path="/dashboard/settings" 
+                element={
+                  <DashboardLayout>
+                    <Settings />
+                  </DashboardLayout>
+                }
+              />
+              {/* Wildcard route for all other dashboard paths */}
+              <Route
+                path="/dashboard/*"
+                element={
+                  <DashboardLayout>
+                    <Dashboard />
+                  </DashboardLayout>
+                }
+              />
             </Routes>
           </div>
         </DragDropContext>
