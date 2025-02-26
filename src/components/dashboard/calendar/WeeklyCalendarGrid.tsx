@@ -39,17 +39,23 @@ export function WeeklyCalendarGrid({
 
   return (
     <div className="flex h-full gap-4">
-      <div className={cn("flex-1 overflow-hidden border rounded-lg bg-white", className)}>
-        <div className="relative flex h-full overflow-x-auto overflow-y-auto scrollbar-hide">
+      {/* Main calendar area with fixed width and horizontal scroll if needed */}
+      <div className={cn(
+        "flex-1 overflow-hidden border rounded-lg bg-white",
+        "min-w-0", // Allow container to shrink below min-width
+        className
+      )}>
+        <div className="flex h-full w-full">
           <TimeColumn timeSlots={timeSlots} />
-          <div className="flex flex-1 overflow-x-auto scrollbar-hide">
+          {/* Day columns container that fills available space */}
+          <div className="flex flex-1 min-w-0 overflow-x-auto">
             {weekDays.map((day) => (
               <div
                 key={day.toISOString()}
-                className="flex-1 min-w-[120px] relative border-r last:border-r-0"
+                className="flex-1 min-w-[100px] relative border-r last:border-r-0"
               >
                 <div className="sticky top-0 z-10 bg-white border-b px-3 py-2">
-                  <div className="text-sm font-medium text-gray-900">
+                  <div className="text-sm font-medium text-gray-900 whitespace-nowrap">
                     {format(day, 'EEE d')}
                   </div>
                 </div>
