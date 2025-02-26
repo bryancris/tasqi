@@ -18,6 +18,7 @@ interface DailyTaskCardProps {
 
 function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, extraButton }: DailyTaskCardProps) {
   const [assignerName, setAssignerName] = useState<string>("");
+  const [assigneeName, setAssigneeName] = useState<string>("");
 
   useEffect(() => {
     const fetchAssignerName = async () => {
@@ -38,7 +39,26 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
       }
     };
 
+    const fetchAssigneeName = async () => {
+      if (task.assignments?.length) {
+        const assignment = task.assignments[0];
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('first_name, last_name, email')
+          .eq('id', assignment.assignee_id)
+          .single();
+
+        if (profile) {
+          const displayName = profile.first_name && profile.last_name 
+            ? `${profile.first_name} ${profile.last_name}`
+            : profile.email;
+          setAssigneeName(displayName);
+        }
+      }
+    };
+
     fetchAssignerName();
+    fetchAssigneeName();
   }, [task.assignments]);
 
   const getTimeDisplay = () => {
@@ -61,10 +81,24 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
     
     if (acceptedAssignments.length === 1) {
       return (
-        <div className="flex items-center gap-1 text-white/80">
-          <ArrowRight className="w-4 h-4" />
-          <span className="text-xs truncate">1 assignee</span>
-        </div>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-1 text-white/80 cursor-help">
+                <ArrowRight className="w-4 h-4" />
+                <span className="text-xs truncate">1 assignee</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent 
+              side="left" 
+              align="center"
+              className="bg-gray-800 text-white border-gray-700 text-xs z-50"
+              sideOffset={5}
+            >
+              {assigneeName ? `Assigned to ${assigneeName}` : "Loading..."}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       );
     }
     
