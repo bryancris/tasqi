@@ -1,5 +1,5 @@
 
-import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, isSameDay } from "date-fns";
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, isSameDay, parseISO } from "date-fns";
 import { TimeColumn } from "./TimeColumn";
 import { Task } from "../TaskBoard";
 import { cn } from "@/lib/utils";
@@ -89,8 +89,7 @@ export function WeeklyCalendarGrid({
                           .filter(
                             (task) =>
                               task.date &&
-                              format(new Date(task.date), "yyyy-MM-dd") ===
-                                format(day, "yyyy-MM-dd") &&
+                              isSameDay(parseISO(task.date), day) &&
                               task.start_time &&
                               parseInt(task.start_time.split(':')[0]) === slot.hour
                           )
