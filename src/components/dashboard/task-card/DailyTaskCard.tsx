@@ -5,6 +5,7 @@ import { TaskStatusIndicator } from "../TaskStatusIndicator";
 import { cn } from "@/lib/utils";
 import { getPriorityColor } from "@/utils/taskColors";
 import { Bell, Share2, ArrowRight, Users, Mic } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
 interface DailyTaskCardProps {
   task: Task;
@@ -52,6 +53,12 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
     }
 
     return null;
+  };
+
+  const getAssignerName = () => {
+    if (!task.assignments?.length) return "Shared task";
+    const assignment = task.assignments[0]; // Get the first assignment
+    return `Assigned by ${assignment.assigned_by_id}`;
   };
 
   const getCardColor = () => {
@@ -108,9 +115,17 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
             {hasVoiceNote && (
               <Mic className="w-4 h-4 text-white/80" />
             )}
-            {/* Always show Share2 icon for shared tasks, regardless of assignments */}
             {task.shared && (
-              <Share2 className="w-4 h-4 text-white/80" />
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Share2 className="w-4 h-4 text-white/80 cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="bg-gray-800 text-white border-gray-700 text-xs">
+                    {getAssignerName()}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
             {renderAssigneeInfo()}
             {extraButton}
