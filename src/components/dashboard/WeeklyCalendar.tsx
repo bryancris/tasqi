@@ -17,40 +17,42 @@ export function WeeklyCalendar() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* Calendar Controls Row - Aligned with sidebar elements */}
-      <div className="h-12 flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-700">
-          {format(currentDate, 'MMMM yyyy')}
-        </h2>
-        <div className="flex items-center gap-1">
-          <Button
-            variant="outline"
-            onClick={() => setShowFullWeek(!showFullWeek)}
-            className="h-8 px-3 text-xs"
-          >
-            {showFullWeek ? '7 Day' : '5 Day'}
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => setCurrentDate(prev => subWeeks(prev, 1))}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => setCurrentDate(prev => addWeeks(prev, 1))}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+      {/* Calendar Controls Row - Aligned at the same level as sidebar elements */}
+      <div className="flex items-center justify-center h-12">
+        <div className="flex items-center gap-4">
+          <h2 className="text-lg font-semibold text-gray-700">
+            {format(currentDate, 'MMMM yyyy')}
+          </h2>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              onClick={() => setShowFullWeek(!showFullWeek)}
+              className="h-8 px-3 text-xs"
+            >
+              {showFullWeek ? '7 Day' : '5 Day'}
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setCurrentDate(prev => subWeeks(prev, 1))}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setCurrentDate(prev => addWeeks(prev, 1))}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Calendar Grid */}
-      <div className="flex-1">
+      <div className="flex-1 mt-4">
         <DragDropContext onDragEnd={handleDragEnd}>
           <WeeklyCalendarGrid 
             currentDate={currentDate}
