@@ -12,12 +12,12 @@ export function ToolsSection() {
 
   return (
     <div className="space-y-2">
-      <Link to="/notes">
+      <Link to="/dashboard/notes">
         <Button 
           variant="ghost" 
           className={cn(
             "w-full justify-start text-base text-[#9333EA] hover:bg-[#E5E7EB]",
-            location.pathname === '/notes' && "bg-[#E5E7EB]"
+            location.pathname === '/dashboard/notes' && "bg-[#E5E7EB]"
           )}
         >
           <PenLine className="mr-2 h-5 w-5" />
@@ -25,12 +25,12 @@ export function ToolsSection() {
         </Button>
       </Link>
       
-      <Link to="/analytics">
+      <Link to="/dashboard/analytics">
         <Button 
           variant="ghost" 
           className={cn(
             "w-full justify-start text-base hover:bg-[#E5E7EB] text-[#FF6B6B]",
-            location.pathname === '/analytics' && "bg-[#E5E7EB]"
+            location.pathname === '/dashboard/analytics' && "bg-[#E5E7EB]"
           )}
         >
           <BarChart2 className="mr-2 h-5 w-5" />
@@ -38,12 +38,12 @@ export function ToolsSection() {
         </Button>
       </Link>
       
-      <Link to="/self-care">
+      <Link to="/dashboard/self-care">
         <Button 
           variant="ghost" 
           className={cn(
             "w-full justify-start text-base text-[#EA580C] hover:bg-[#E5E7EB]",
-            location.pathname === '/self-care' && "bg-[#E5E7EB]"
+            location.pathname === '/dashboard/self-care' && "bg-[#E5E7EB]"
           )}
         >
           <Zap className="mr-2 h-5 w-5" />
