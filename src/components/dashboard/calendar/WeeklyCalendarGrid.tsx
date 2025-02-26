@@ -53,13 +53,14 @@ export function WeeklyCalendarGrid({
                 key={day.toISOString()}
                 className={cn(
                   "flex-1 min-w-[120px] relative border-r border-gray-100 last:border-r-0",
-                  isSameDay(day, currentDate) && "bg-[#E5F6FF]/20"
                 )}
               >
-                <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 py-3">
+                <div className={cn(
+                  "sticky top-0 z-10 bg-[#E5F6FF] border-b border-gray-200 px-4 py-3",
+                  isSameDay(day, currentDate) && "bg-[#D3E7FD]"
+                )}>
                   <div className={cn(
-                    "text-sm font-medium whitespace-nowrap",
-                    isSameDay(day, currentDate) ? "text-blue-500" : "text-gray-600"
+                    "text-sm font-medium whitespace-nowrap text-gray-700",
                   )}>
                     {format(day, 'EEE d')}
                   </div>
@@ -74,7 +75,7 @@ export function WeeklyCalendarGrid({
                         ref={provided.innerRef}
                         {...provided.droppableProps}
                         className={cn(
-                          "relative border-t border-gray-50 h-[60px] -mt-[1px] first:mt-0",
+                          "relative border-t border-gray-50 h-[60px] -mt-[1px] first:mt-0 bg-white",
                           idx === timeSlots.length - 1 && "border-b border-gray-100",
                           snapshot.isDraggingOver && "bg-blue-50/30"
                         )}
