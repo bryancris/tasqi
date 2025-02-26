@@ -5,7 +5,6 @@ import { Task } from "../TaskBoard";
 import { cn } from "@/lib/utils";
 import { useTasks } from "@/hooks/use-tasks";
 import { Droppable, Draggable } from "react-beautiful-dnd";
-import { UnscheduledTasks } from "./UnscheduledTasks";
 import { getPriorityColor } from "@/utils/taskColors";
 
 interface WeeklyCalendarGridProps {
@@ -36,7 +35,6 @@ export function WeeklyCalendarGrid({
 
   const { tasks } = useTasks();
   const scheduledTasks = tasks.filter(task => task.date && task.start_time);
-  const unscheduledTasks = tasks.filter(task => !task.date || !task.start_time);
 
   return (
     <div className="flex h-full gap-4">
@@ -133,7 +131,6 @@ export function WeeklyCalendarGrid({
           </div>
         </div>
       </div>
-      <UnscheduledTasks tasks={unscheduledTasks} />
     </div>
   );
 }
