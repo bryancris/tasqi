@@ -5,13 +5,13 @@ export const getPriorityColor = (priority: TaskPriority | undefined) => {
   // For completed tasks, we want to show gray regardless of priority
   switch (priority) {
     case 'high':
-      return 'bg-[#FF4444]'; // Bright red for high priority
+      return 'bg-[#F87171]'; // More muted red
     case 'medium':
-      return 'bg-[#FF8C42]'; // Bright orange for medium priority
+      return 'bg-[#FB923C]'; // More muted orange
     case 'low':
-      return 'bg-[#2ECC71]'; // Back to green for low priority
+      return 'bg-[#4ADE80]'; // More muted green
     default:
-      return 'bg-[#1EAEDB]'; // Bright blue for unset priority
+      return 'bg-[#60A5FA]'; // More muted blue
   }
 };
 
