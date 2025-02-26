@@ -11,7 +11,7 @@ interface TimeColumnProps {
 export function TimeColumn({ timeSlots }: TimeColumnProps) {
   return (
     <div className="sticky left-0 z-10 w-16 flex-none bg-[#2EBDAE]">
-      <div className="h-[42px] border-b bg-white" /> {/* Header spacer */}
+      <div className="h-[42px] border-b bg-[#2EBDAE]" /> {/* Updated bg-white to bg-[#2EBDAE] */}
       <div className="relative h-full">
         {timeSlots.map((slot, idx) => (
           <div
