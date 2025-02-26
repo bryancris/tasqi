@@ -84,7 +84,6 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
         "cursor-pointer",
         getCardColor(),
         "text-white",
-        "overflow-hidden",
         "before:content-[''] before:absolute before:inset-0",
         "before:bg-gradient-to-br before:from-white/10 before:to-transparent",
         "before:pointer-events-none",
@@ -119,9 +118,13 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Share2 className="w-4 h-4 text-white/80 cursor-help" />
+                    <Share2 className="w-4 h-4 text-white/80 cursor-help relative z-10" />
                   </TooltipTrigger>
-                  <TooltipContent side="top" className="bg-gray-800 text-white border-gray-700 text-xs">
+                  <TooltipContent 
+                    side="top" 
+                    className="bg-gray-800 text-white border-gray-700 text-xs z-50"
+                    sideOffset={5}
+                  >
                     {getAssignerName()}
                   </TooltipContent>
                 </Tooltip>
