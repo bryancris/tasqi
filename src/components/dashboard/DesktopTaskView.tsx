@@ -1,7 +1,7 @@
 
 import { Task } from "./TaskBoard";
 import { TaskBoardSection } from "./task-board/TaskBoardSection";
-import { TimelineSection } from "./timeline/TimelineSection";
+import { DesktopTimelineSection } from "./timeline/DesktopTimelineSection";
 import { DragEndEvent } from "@dnd-kit/core";
 import { QueryObserverResult } from "@tanstack/react-query";
 
@@ -20,8 +20,7 @@ export function DesktopTaskView({ tasks, selectedDate, onDateChange, onDragEnd, 
         <TaskBoardSection tasks={tasks} onDragEnd={onDragEnd} onComplete={onComplete} />
       </div>
       <div className="flex flex-col h-full">
-        <TimelineSection 
-          tasks={tasks} 
+        <DesktopTimelineSection 
           selectedDate={selectedDate} 
           onDateChange={onDateChange} 
         />
