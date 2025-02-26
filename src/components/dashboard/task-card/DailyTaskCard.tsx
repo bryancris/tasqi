@@ -1,3 +1,4 @@
+
 import { memo, useEffect, useState } from "react";
 import { Task } from "../TaskBoard";
 import { TaskStatusIndicator } from "../TaskStatusIndicator";
@@ -22,43 +23,28 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
   const { session } = useAuth();
   const currentUserId = session?.user.id;
 
-  const formatDisplayName = (email: string) => {
-    return email.split('@')[0]; // Get the part before @ symbol
-  };
-
   useEffect(() => {
-    const fetchAssignerName = async () => {
+    const fetchUserName = async (userId: string) => {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('id', userId)
+        .single();
+
+      return profile?.email?.split('@')[0] || 'Unknown';
+    };
+
+    const loadAssignmentNames = async () => {
       if (task.assignments?.length) {
         const assignment = task.assignments[0];
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('email')
-          .eq('id', assignment.assigned_by_id)
-          .single();
-
-        if (profile?.email) {
-          setAssignerName(formatDisplayName(profile.email));
-        }
+        const assignerName = await fetchUserName(assignment.assigned_by_id);
+        const assigneeName = await fetchUserName(assignment.assignee_id);
+        setAssignerName(assignerName);
+        setAssigneeName(assigneeName);
       }
     };
 
-    const fetchAssigneeName = async () => {
-      if (task.assignments?.length) {
-        const assignment = task.assignments[0];
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('email')
-          .eq('id', assignment.assignee_id)
-          .single();
-
-        if (profile?.email) {
-          setAssigneeName(formatDisplayName(profile.email));
-        }
-      }
-    };
-
-    fetchAssignerName();
-    fetchAssigneeName();
+    loadAssignmentNames();
   }, [task.assignments]);
 
   const getTimeDisplay = () => {
@@ -75,44 +61,19 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
   );
 
   const renderAssignmentInfo = () => {
-    if (!task.assignments?.length) {
-      if (task.shared) {
-        return (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex items-center gap-1 text-white/80 cursor-help">
-                  <Share2 className="w-4 h-4" />
-                  <span className="text-xs truncate">Shared</span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent 
-                side="left" 
-                align="center"
-                className="bg-gray-800 text-white border-gray-700 text-xs z-50"
-                sideOffset={5}
-              >
-                Shared task
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        );
-      }
-      return null;
-    }
+    if (!task.assignments?.length) return null;
     
     const assignment = task.assignments[0];
-    const isAssigner = assignment.assigned_by_id === currentUserId;
-    const isAssignee = assignment.assignee_id === currentUserId;
     
-    if (isAssigner) {
+    // If I assigned this task to someone else
+    if (assignment.assigned_by_id === currentUserId) {
       return (
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="flex items-center gap-1 text-white/80 cursor-help">
                 <ArrowRight className="w-4 h-4" />
-                <span className="text-xs truncate">1 assignee</span>
+                <span className="text-xs truncate">Assigned</span>
               </div>
             </TooltipTrigger>
             <TooltipContent 
@@ -127,15 +88,16 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
         </TooltipProvider>
       );
     }
-
-    if (isAssignee) {
+    
+    // If someone assigned this task to me
+    if (assignment.assignee_id === currentUserId) {
       return (
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="flex items-center gap-1 text-white/80 cursor-help">
                 <Share2 className="w-4 h-4" />
-                <span className="text-xs truncate">Assigned</span>
+                <span className="text-xs truncate">From</span>
               </div>
             </TooltipTrigger>
             <TooltipContent 
@@ -144,7 +106,7 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
               className="bg-gray-800 text-white border-gray-700 text-xs z-50"
               sideOffset={5}
             >
-              {assignerName ? `Assigned by ${assignerName}` : "Loading..."}
+              {assignerName ? `From ${assignerName}` : "Loading..."}
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
