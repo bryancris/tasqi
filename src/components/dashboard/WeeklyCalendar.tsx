@@ -5,10 +5,15 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { WeeklyCalendarGrid } from "./calendar/WeeklyCalendarGrid";
 import { DragDropContext, DropResult } from "react-beautiful-dnd";
+import { UnscheduledTasks } from "./calendar/UnscheduledTasks";
+import { useTasks } from "@/hooks/use-tasks";
 
 export function WeeklyCalendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showFullWeek, setShowFullWeek] = useState(true);
+  const { tasks } = useTasks();
+  
+  const unscheduledTasks = tasks?.filter(task => !task.date || !task.start_time) || [];
 
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
@@ -16,9 +21,18 @@ export function WeeklyCalendar() {
   };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden pt-8">
-      {/* Calendar Controls Row - Aligned at the same level as sidebar elements */}
-      <div className="flex items-center justify-center h-12">
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* Header Section (Will contain search bar) */}
+      <div className="h-16 border-b bg-white">
+        {/* Search bar will be added here */}
+      </div>
+
+      {/* Controls Row - Contains calendar controls and unscheduled tasks */}
+      <div className="flex items-center justify-between px-4 h-14 bg-white border-b">
+        {/* Left section - empty to align with Add Task */}
+        <div className="w-[200px]" /> {/* Width matches sidebar Add Task width */}
+
+        {/* Center section - Calendar controls */}
         <div className="flex items-center gap-4">
           <h2 className="text-lg font-semibold text-gray-700">
             {format(currentDate, 'MMMM yyyy')}
@@ -49,17 +63,30 @@ export function WeeklyCalendar() {
             </Button>
           </div>
         </div>
+
+        {/* Right section - Unscheduled Tasks header */}
+        <div className="w-[200px]">
+          <h3 className="text-base font-medium text-gray-700">Unscheduled Tasks</h3>
+        </div>
       </div>
 
-      {/* Calendar Grid */}
-      <div className="flex-1 mt-4">
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <WeeklyCalendarGrid 
-            currentDate={currentDate}
-            showFullWeek={showFullWeek}
-            className="scrollbar-hide"
-          />
-        </DragDropContext>
+      {/* Main Content Area */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Calendar Grid */}
+        <div className="flex-1">
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <WeeklyCalendarGrid 
+              currentDate={currentDate}
+              showFullWeek={showFullWeek}
+              className="scrollbar-hide"
+            />
+          </DragDropContext>
+        </div>
+
+        {/* Unscheduled Tasks Section */}
+        <div className="w-[320px] border-l">
+          <UnscheduledTasks tasks={unscheduledTasks} />
+        </div>
       </div>
     </div>
   );
