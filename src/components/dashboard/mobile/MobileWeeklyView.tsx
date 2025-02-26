@@ -20,7 +20,6 @@ export function MobileWeeklyView() {
   
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
-  // Optimize time slots for mobile - reduced height and fewer slots
   const timeSlots = Array.from({ length: 12 }, (_, i) => {
     const hour = 8 + i;
     return {
@@ -34,22 +33,22 @@ export function MobileWeeklyView() {
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Calendar Controls */}
-      <div className="flex items-center justify-between px-4 py-3 border-b bg-white sticky top-0 z-10">
-        <h2 className="text-base font-semibold text-gray-700 truncate">
+      <div className="flex items-center justify-between px-4 py-3 border-b bg-[#2A9BB5] sticky top-0 z-10">
+        <h2 className="text-base font-semibold text-white truncate">
           {format(currentDate, 'MMMM yyyy')}
         </h2>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             onClick={() => setShowFullWeek(!showFullWeek)}
-            className="h-8 text-xs px-2"
+            className="h-8 text-xs px-2 bg-white/10 hover:bg-white/20 text-white border-white/20"
           >
             {showFullWeek ? '7 Day' : '5 Day'}
           </Button>
           <Button
             variant="outline"
             size="icon"
-            className="h-8 w-8"
+            className="h-8 w-8 bg-white/10 hover:bg-white/20 text-white border-white/20"
             onClick={() => setCurrentDate(prev => subWeeks(prev, 1))}
           >
             <ChevronLeft className="h-4 w-4" />
@@ -57,7 +56,7 @@ export function MobileWeeklyView() {
           <Button
             variant="outline"
             size="icon"
-            className="h-8 w-8"
+            className="h-8 w-8 bg-white/10 hover:bg-white/20 text-white border-white/20"
             onClick={() => setCurrentDate(prev => addWeeks(prev, 1))}
           >
             <ChevronRight className="h-4 w-4" />
@@ -65,46 +64,46 @@ export function MobileWeeklyView() {
         </div>
       </div>
 
-      {/* Days Header - Compact and responsive */}
-      <div className="grid border-b bg-[#E5F6FF]" 
+      {/* Days Header - Updated with desktop colors */}
+      <div className="grid border-b bg-[#2A9BB5] rounded-t-lg" 
         style={{ 
           gridTemplateColumns: `40px repeat(${weekDays.length}, 1fr)` 
         }}>
-        <div className="p-1 text-center border-r" />
+        <div className="p-1 text-center border-r bg-[#2EBDAE]" />
         {weekDays.map((day) => (
           <div key={day.toISOString()} className="p-1 text-center border-r last:border-r-0">
-            <div className="text-xs font-medium text-gray-700">
+            <div className="text-xs font-medium text-white/80">
               {format(day, 'EEE')}
             </div>
-            <div className="text-xs font-medium text-gray-900">
+            <div className="text-xs font-medium text-white">
               {format(day, 'd')}
             </div>
           </div>
         ))}
       </div>
 
-      {/* Time Grid - Optimized for mobile */}
+      {/* Time Grid - Updated with desktop colors */}
       <div className="flex-1 overflow-y-auto">
         <div className="min-w-full">
           <div className="grid" style={{ 
             gridTemplateColumns: `40px repeat(${weekDays.length}, 1fr)` 
           }}>
-            {/* Time Column - Reduced width */}
-            <div className="sticky left-0 z-10 bg-white">
+            {/* Time Column - Updated with desktop colors */}
+            <div className="sticky left-0 z-10 bg-[#2EBDAE]">
               {timeSlots.map((slot, idx) => (
                 <div
                   key={slot.hour}
                   className={cn(
-                    "flex items-center justify-center border-r border-t h-[40px] -mt-[1px] first:mt-0",
+                    "flex items-center justify-center border-r border-t border-white/20 h-[40px] -mt-[1px] first:mt-0",
                     idx === timeSlots.length - 1 && "border-b"
                   )}
                 >
-                  <span className="text-[10px] text-gray-500">{slot.display}</span>
+                  <span className="text-[10px] text-white font-medium">{slot.display}</span>
                 </div>
               ))}
             </div>
 
-            {/* Day Columns - Responsive width */}
+            {/* Day Columns */}
             {weekDays.map((day) => (
               <div key={day.toISOString()} className="relative border-r last:border-r-0">
                 {timeSlots.map((slot, idx) => (
