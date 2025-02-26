@@ -1,4 +1,3 @@
-
 import { memo, useEffect, useState } from "react";
 import { Task } from "../TaskBoard";
 import { TaskStatusIndicator } from "../TaskStatusIndicator";
@@ -23,21 +22,22 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
   const { session } = useAuth();
   const currentUserId = session?.user.id;
 
+  const formatDisplayName = (email: string) => {
+    return email.split('@')[0]; // Get the part before @ symbol
+  };
+
   useEffect(() => {
     const fetchAssignerName = async () => {
       if (task.assignments?.length) {
         const assignment = task.assignments[0];
         const { data: profile } = await supabase
           .from('profiles')
-          .select('first_name, last_name, email')
+          .select('email')
           .eq('id', assignment.assigned_by_id)
           .single();
 
-        if (profile) {
-          const displayName = profile.first_name && profile.last_name 
-            ? `${profile.first_name} ${profile.last_name}`
-            : profile.email;
-          setAssignerName(displayName);
+        if (profile?.email) {
+          setAssignerName(formatDisplayName(profile.email));
         }
       }
     };
@@ -47,15 +47,12 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
         const assignment = task.assignments[0];
         const { data: profile } = await supabase
           .from('profiles')
-          .select('first_name, last_name, email')
+          .select('email')
           .eq('id', assignment.assignee_id)
           .single();
 
-        if (profile) {
-          const displayName = profile.first_name && profile.last_name 
-            ? `${profile.first_name} ${profile.last_name}`
-            : profile.email;
-          setAssigneeName(displayName);
+        if (profile?.email) {
+          setAssigneeName(formatDisplayName(profile.email));
         }
       }
     };
