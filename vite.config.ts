@@ -15,6 +15,7 @@ export default defineConfig(({ mode }) => ({
     mode === 'development' && componentTagger(),
     VitePWA({
       registerType: 'prompt',
+      strategies: 'generateSW',
       includeAssets: ['favicon.ico', 'pwa-192x192.png', 'pwa-512x512.png'],
       manifest: {
         name: 'TASQI-AI Assistant',
@@ -39,14 +40,12 @@ export default defineConfig(({ mode }) => ({
             type: 'image/png',
             purpose: 'any maskable'
           }
-        ],
-        shortcuts: [
-          {
-            name: 'Dashboard',
-            url: '/dashboard',
-            description: 'View your tasks'
-          }
         ]
+      },
+      devOptions: {
+        enabled: true,
+        type: 'module',
+        navigateFallback: 'index.html'
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
@@ -79,10 +78,6 @@ export default defineConfig(({ mode }) => ({
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true
-      },
-      devOptions: {
-        enabled: true,
-        type: 'module'
       }
     })
   ].filter(Boolean),
