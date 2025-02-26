@@ -1,3 +1,4 @@
+
 import { BrowserRouter } from 'react-router-dom';
 import { Routes, Route } from 'react-router-dom';
 import { CalendarViewProvider } from './contexts/CalendarViewContext';
@@ -25,18 +26,16 @@ function App() {
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
-              <Route path="/dashboard" element={<DashboardLayout>
+              <Route path="/dashboard/*" element={<DashboardLayout>
                 <Routes>
-                  <Route index element={<Dashboard />} />
-                  <Route path="tasks/*" element={<Dashboard />} />
-                  <Route path="week/*" element={<Dashboard />} />
-                  <Route path="monthly/*" element={<Dashboard />} />
-                  <Route path="yearly/*" element={<Dashboard />} />
-                  
-                  <Route path="settings" element={<Settings />} />
+                  {/* Non-calendar routes */}
                   <Route path="notes" element={<Notes />} />
+                  <Route path="settings" element={<Settings />} />
                   <Route path="analytics" element={<Analytics />} />
                   <Route path="self-care" element={<SelfCare />} />
+                  
+                  {/* Calendar routes - must be last to handle all other dashboard paths */}
+                  <Route path="*" element={<Dashboard />} />
                 </Routes>
               </DashboardLayout>} />
             </Routes>

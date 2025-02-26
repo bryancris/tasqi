@@ -22,9 +22,21 @@ export function CalendarViewProvider({ children }: { children: ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState(new Date());
+  
+  // List of non-calendar routes
+  const nonCalendarRoutes = ['notes', 'settings', 'analytics', 'self-care'];
+  
+  // Check if current path is a non-calendar route
+  const isNonCalendarRoute = () => {
+    return nonCalendarRoutes.some(route => location.pathname.includes(`/dashboard/${route}`));
+  };
+
   const [view, setCurrentView] = useState<CalendarView>(() => {
     // Initialize with the correct view based on the current path
     const path = location.pathname;
+    // Don't process view for non-calendar routes
+    if (isNonCalendarRoute()) return 'tasks';
+    
     if (path.includes('/week')) return 'weekly';
     if (path.includes('/monthly')) return 'monthly';
     if (path.includes('/yearly')) return 'yearly';
@@ -35,6 +47,7 @@ export function CalendarViewProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const path = location.pathname;
     if (!path.startsWith('/dashboard')) return;
+    if (isNonCalendarRoute()) return;
     
     let newView: CalendarView = 'tasks';
     if (path.includes('/week')) newView = 'weekly';
