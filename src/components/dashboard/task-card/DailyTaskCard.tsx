@@ -7,6 +7,7 @@ import { getPriorityColor } from "@/utils/taskColors";
 import { Bell, Share2, ArrowRight, Users, Mic } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface DailyTaskCardProps {
   task: Task;
@@ -19,6 +20,8 @@ interface DailyTaskCardProps {
 function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, extraButton }: DailyTaskCardProps) {
   const [assignerName, setAssignerName] = useState<string>("");
   const [assigneeName, setAssigneeName] = useState<string>("");
+  const { session } = useAuth();
+  const currentUserId = session?.user.id;
 
   useEffect(() => {
     const fetchAssignerName = async () => {
@@ -77,9 +80,12 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
   const renderAssigneeInfo = () => {
     if (!task.assignments?.length) return null;
     
-    const acceptedAssignments = task.assignments.filter(a => a.status === 'accepted');
+    const assignment = task.assignments[0];
+    const isAssigner = assignment.assigned_by_id === currentUserId;
+    const isAssignee = assignment.assignee_id === currentUserId;
     
-    if (acceptedAssignments.length === 1) {
+    // Show arrow icon when user is the assigner (they assigned the task to someone else)
+    if (isAssigner) {
       return (
         <TooltipProvider>
           <Tooltip>
@@ -101,13 +107,28 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
         </TooltipProvider>
       );
     }
-    
-    if (acceptedAssignments.length > 1) {
+
+    // Show who assigned the task when user is the assignee
+    if (isAssignee) {
       return (
-        <div className="flex items-center gap-1 text-white/80">
-          <Users className="w-4 h-4" />
-          <span className="text-xs">+{acceptedAssignments.length}</span>
-        </div>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-1 text-white/80 cursor-help">
+                <Share2 className="w-4 h-4" />
+                <span className="text-xs truncate">Assigned</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent 
+              side="left" 
+              align="center"
+              className="bg-gray-800 text-white border-gray-700 text-xs z-50"
+              sideOffset={5}
+            >
+              {assignerName ? `Assigned by ${assignerName}` : "Loading..."}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       );
     }
 
@@ -171,23 +192,6 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
             )}
             {hasVoiceNote && (
               <Mic className="w-4 h-4 text-white/80" />
-            )}
-            {task.shared && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Share2 className="w-4 h-4 text-white/80 cursor-help relative z-10" />
-                  </TooltipTrigger>
-                  <TooltipContent 
-                    side="left" 
-                    align="center"
-                    className="bg-gray-800 text-white border-gray-700 text-xs z-50"
-                    sideOffset={5}
-                  >
-                    {getAssignerName()}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
             )}
             {renderAssigneeInfo()}
             {extraButton}
