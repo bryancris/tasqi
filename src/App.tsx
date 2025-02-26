@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import { DashboardLayout } from './components/layouts/DashboardLayout';
 import { DragDropContext } from 'react-beautiful-dnd';
 import Index from './pages/Index';
+import Auth from './pages/Auth';
 
 function App() {
   const onDragEnd = (result: any) => {
@@ -20,6 +21,7 @@ function App() {
           <div className="app">
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<Auth />} />
               <Route
                 path="/dashboard/*"
                 element={
