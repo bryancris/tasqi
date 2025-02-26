@@ -108,7 +108,8 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
             {hasVoiceNote && (
               <Mic className="w-4 h-4 text-white/80" />
             )}
-            {task.shared && !task.assignments?.length && (
+            {/* Always show Share2 icon for shared tasks, regardless of assignments */}
+            {task.shared && (
               <Share2 className="w-4 h-4 text-white/80" />
             )}
             {renderAssigneeInfo()}
