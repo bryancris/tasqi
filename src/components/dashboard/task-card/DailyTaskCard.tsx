@@ -76,7 +76,7 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
         "hover:-translate-y-1",
         "cursor-pointer",
         getCardColor(),
-        task.status === 'completed' ? 'text-white' : '',
+        "text-white",
         "overflow-hidden",
         "before:content-[''] before:absolute before:inset-0",
         "before:bg-gradient-to-br before:from-white/10 before:to-transparent",
@@ -98,15 +98,12 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <h3 className={cn(
-            "font-medium truncate flex-1",
-            task.status === 'completed' ? 'text-white line-through' : 'text-gray-900'
+            "font-medium truncate flex-1 text-white",
+            task.status === 'completed' && "line-through opacity-80"
           )}>{task.title}</h3>
           <div className="flex items-center gap-2">
             {task.reminder_enabled && (
-              <Bell className={cn(
-                "w-4 h-4 shrink-0",
-                task.status === 'completed' ? 'text-white/80' : 'text-gray-500'
-              )} />
+              <Bell className="w-4 h-4 text-white/80 shrink-0" />
             )}
             {hasVoiceNote && (
               <Mic className="w-4 h-4 text-white/80" />
@@ -119,10 +116,7 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
           </div>
         </div>
         {timeDisplay && (
-          <p className={cn(
-            "text-sm mt-1",
-            task.status === 'completed' ? 'text-white/80' : 'text-gray-500'
-          )}>{timeDisplay}</p>
+          <p className="text-sm mt-1 text-white/80">{timeDisplay}</p>
         )}
       </div>
       {task.shared && (
