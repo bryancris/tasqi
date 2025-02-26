@@ -1,52 +1,74 @@
 
-import { Task } from "../TaskBoard";
-import { DayCell } from "./DayCell";
+import { Fragment } from "react";
+import { format } from "date-fns";
+import { ScheduledTask } from "@/types/task";
+import { DraggableTask } from "./DraggableTask";
 import { cn } from "@/lib/utils";
 
-interface TimeSlot {
-  hour: number;
-  display: string;
-}
-
 interface WeeklyTimeGridProps {
-  timeSlots: TimeSlot[];
+  timeSlots: Array<{ hour: number; display: string }>;
   weekDays: Date[];
-  scheduledTasks: Task[];
+  scheduledTasks: ScheduledTask[];
   showFullWeek: boolean;
 }
 
-export function WeeklyTimeGrid({ timeSlots, weekDays, scheduledTasks, showFullWeek }: WeeklyTimeGridProps) {
+export function WeeklyTimeGrid({
+  timeSlots,
+  weekDays,
+  scheduledTasks,
+  showFullWeek,
+}: WeeklyTimeGridProps) {
   return (
-    <div className="flex-1 overflow-y-auto scrollbar-hide">
-      <div className="divide-y divide-gray-300">
-        {timeSlots.map((timeSlot, timeIndex) => (
-          <div 
-            key={timeIndex} 
-            className={`grid ${showFullWeek ? 'grid-cols-8' : 'grid-cols-6'} min-h-[80px] ${
-              timeIndex === timeSlots.length - 1 ? 'rounded-b-lg overflow-hidden' : ''
-            }`}
-          >
-            <div className={cn(
-              "p-1 border-r border-gray-300 relative bg-[#2A9BB5] w-[40px]",
-              timeIndex === timeSlots.length - 1 ? "rounded-bl-lg" : ""
-            )}>
-              <div className="text-xs text-white whitespace-pre-line text-center">
-                {timeSlot.hour}
+    <div className="flex-1 overflow-x-hidden">
+      <div className="relative flex h-full overflow-x-auto overflow-y-auto scrollbar-hide">
+        {/* Time column */}
+        <div className="sticky left-0 z-10 w-14 flex-none bg-white">
+          <div className="relative h-full">
+            {timeSlots.map((slot, idx) => (
+              <div
+                key={slot.hour}
+                className={cn(
+                  "flex items-center justify-center border-r border-t text-xs",
+                  "h-[60px] -mt-[1px] first:mt-0",
+                  idx === timeSlots.length - 1 && "border-b"
+                )}
+              >
+                <span>{format(new Date().setHours(slot.hour), "ha")}</span>
               </div>
-            </div>
-            
-            {weekDays.map((day, dayIndex) => (
-              <DayCell 
-                key={dayIndex}
-                day={day}
-                timeSlot={timeSlot}
-                tasks={scheduledTasks}
-                isLastRow={timeIndex === timeSlots.length - 1}
-                isLastColumn={dayIndex === weekDays.length - 1}
-              />
             ))}
           </div>
-        ))}
+        </div>
+
+        {/* Day columns */}
+        <div className="flex flex-1 overflow-x-auto scrollbar-hide">
+          {weekDays.map((day) => (
+            <div
+              key={day.toISOString()}
+              className="flex-1 min-w-[100px] relative border-r last:border-r-0"
+            >
+              {timeSlots.map((slot, idx) => (
+                <div
+                  key={`${day.toISOString()}-${slot.hour}`}
+                  className={cn(
+                    "relative border-t h-[60px] -mt-[1px] first:mt-0",
+                    idx === timeSlots.length - 1 && "border-b"
+                  )}
+                >
+                  {scheduledTasks
+                    .filter(
+                      (task) =>
+                        format(new Date(task.scheduledAt), "yyyy-MM-dd") ===
+                          format(day, "yyyy-MM-dd") &&
+                        new Date(task.scheduledAt).getHours() === slot.hour
+                    )
+                    .map((task) => (
+                      <DraggableTask key={task.id} task={task} />
+                    ))}
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

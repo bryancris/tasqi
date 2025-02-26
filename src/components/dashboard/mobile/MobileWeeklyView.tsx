@@ -46,7 +46,7 @@ export function MobileWeeklyView() {
   } = useWeeklyCalendar(weekStart, weekEnd, weekDays);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-144px)] bg-white">
+    <div className="flex flex-col h-full overflow-hidden">
       <WeeklyViewHeader
         currentDate={currentDate}
         showFullWeek={showFullWeek}
