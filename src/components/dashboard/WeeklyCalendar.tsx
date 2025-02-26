@@ -70,24 +70,24 @@ export function WeeklyCalendar() {
         </div>
       </div>
 
-      {/* Main Content Area */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Calendar Grid */}
-        <div className="flex-1">
-          <DragDropContext onDragEnd={handleDragEnd}>
+      {/* Main Content Area - Wrapped in a single DragDropContext */}
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <div className="flex flex-1 overflow-hidden">
+          {/* Calendar Grid */}
+          <div className="flex-1">
             <WeeklyCalendarGrid 
               currentDate={currentDate}
               showFullWeek={showFullWeek}
               className="scrollbar-hide"
             />
-          </DragDropContext>
-        </div>
+          </div>
 
-        {/* Unscheduled Tasks Section */}
-        <div className="w-[320px] border-l">
-          <UnscheduledTasks tasks={unscheduledTasks} />
+          {/* Unscheduled Tasks Section */}
+          <div className="w-[320px] border-l">
+            <UnscheduledTasks tasks={unscheduledTasks} />
+          </div>
         </div>
-      </div>
+      </DragDropContext>
     </div>
   );
 }
