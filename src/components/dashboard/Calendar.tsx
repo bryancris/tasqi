@@ -57,13 +57,17 @@ export function Calendar({ initialDate, onDateSelect }: CalendarProps) {
   const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
   return (
-    <div className="w-full max-w-7xl mx-auto animate-fade-in">
-      <CalendarHeader 
-        monthYear={monthYear}
-        onNextMonth={nextMonth}
-        onPreviousMonth={previousMonth}
-      />
+    <div className="w-full max-w-7xl mx-auto space-y-6">
+      {/* Calendar Header properly positioned */}
+      <div className="flex items-center justify-between">
+        <CalendarHeader 
+          monthYear={monthYear}
+          onNextMonth={nextMonth}
+          onPreviousMonth={previousMonth}
+        />
+      </div>
 
+      {/* Calendar Grid */}
       <div className="border rounded-lg bg-gradient-to-br from-white to-gray-50 shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl">
         <div className="grid grid-cols-7 gap-px bg-gradient-to-r from-[#2A9BB5] to-[#1C7A8C] text-white">
           {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
@@ -78,7 +82,6 @@ export function Calendar({ initialDate, onDateSelect }: CalendarProps) {
             const isCurrentMonth = date.getMonth() === currentMonth.getMonth();
             const isToday = new Date().toDateString() === date.toDateString();
             
-            // Filter tasks for this day (only scheduled tasks)
             const dayTasks = tasks.filter(task => {
               if (!task.date || task.status !== 'scheduled') return false;
               const taskDate = parseISO(task.date);

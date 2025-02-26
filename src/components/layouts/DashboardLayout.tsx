@@ -40,8 +40,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             onDateChange={setSelectedDate}
           />
           <div className="flex-1 flex flex-col overflow-hidden">
-            <DesktopHeader />
-            <main className="flex-1 overflow-y-auto bg-[#f8f9fa]">
+            {/* Fixed height header */}
+            <div className="h-[72px] flex-shrink-0 relative bg-background border-b">
+              <DesktopHeader />
+            </div>
+            {/* Main content area with proper padding */}
+            <main className="flex-1 overflow-y-auto bg-[#f8f9fa] p-6">
               {children}
             </main>
           </div>

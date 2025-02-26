@@ -30,12 +30,7 @@ export function WeeklyCalendar() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* Header Section */}
-      <div className="h-16 border-b bg-white">
-        {/* Search bar will be added here */}
-      </div>
-
-      {/* Controls Row */}
+      {/* Controls Row - Now properly positioned below the global header */}
       <div className="flex items-center justify-between px-4 h-14 bg-white border-b">
         <div className="w-[200px]" />
         <div className="flex items-center gap-4">
