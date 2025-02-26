@@ -1,12 +1,19 @@
+
 import { useState } from "react";
 import { format, addWeeks, subWeeks } from 'date-fns';
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { WeeklyCalendarGrid } from "./calendar/WeeklyCalendarGrid";
+import { DragDropContext, DropResult } from "react-beautiful-dnd";
 
 export function WeeklyCalendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showFullWeek, setShowFullWeek] = useState(true);
+
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination) return;
+    console.log('Drag ended:', result);
+  };
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -46,11 +53,13 @@ export function WeeklyCalendar() {
 
       <div className="flex-1 overflow-hidden">
         <div className="h-full flex flex-col">
-          <WeeklyCalendarGrid 
-            currentDate={currentDate}
-            showFullWeek={showFullWeek}
-            className="scrollbar-hide"
-          />
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <WeeklyCalendarGrid 
+              currentDate={currentDate}
+              showFullWeek={showFullWeek}
+              className="scrollbar-hide"
+            />
+          </DragDropContext>
         </div>
       </div>
     </div>
