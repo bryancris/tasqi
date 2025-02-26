@@ -28,7 +28,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       {isMobile ? (
         <>
           <MobileHeader />
-          <main className="flex-1 pb-16 pt-[72px]">
+          <main className="flex-1 pb-16 pt-[72px] scrollbar-hide">
             {children}
           </main>
           <MobileFooter />
