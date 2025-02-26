@@ -6,6 +6,7 @@ import { showBrowserNotification } from "@/utils/notifications/notificationUtils
 import { useAuth } from '@/contexts/AuthContext';
 
 const NOTIFICATION_TIMEOUT = 15000;
+const MAX_VISIBLE_NOTIFICATIONS = 4;
 
 export function useNotificationHandlers(
   setNotifications: React.Dispatch<React.SetStateAction<Notification[]>>,
