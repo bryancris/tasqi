@@ -7,11 +7,14 @@ import { WeeklyCalendarGrid } from "./calendar/WeeklyCalendarGrid";
 import { DragDropContext, DropResult } from "react-beautiful-dnd";
 import { UnscheduledTasks } from "./calendar/UnscheduledTasks";
 import { useTasks } from "@/hooks/use-tasks";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobileWeeklyView } from "./mobile/MobileWeeklyView";
 
 export function WeeklyCalendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showFullWeek, setShowFullWeek] = useState(true);
   const { tasks } = useTasks();
+  const isMobile = useIsMobile();
   
   const unscheduledTasks = tasks?.filter(task => !task.date || !task.start_time) || [];
 
@@ -19,6 +22,10 @@ export function WeeklyCalendar() {
     if (!result.destination) return;
     console.log('Drag ended:', result);
   };
+
+  if (isMobile) {
+    return <MobileWeeklyView />;
+  }
 
   return (
     <div className="flex flex-col h-full overflow-hidden">

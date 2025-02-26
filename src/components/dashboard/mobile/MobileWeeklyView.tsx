@@ -1,29 +1,17 @@
 
 import { useState } from "react";
-import { startOfWeek, endOfWeek, eachDayOfInterval, addDays, addWeeks, subWeeks } from "date-fns";
-import { WeeklyViewHeader } from "./WeeklyViewHeader";
-import { WeeklyDaysHeader } from "./WeeklyDaysHeader";
-import { WeeklyTimeGrid } from "./WeeklyTimeGrid";
-import { DndContext, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
-import { useWeeklyCalendar } from "@/hooks/use-weekly-calendar";
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, addWeeks, subWeeks } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Task } from "../TaskBoard";
+import { WeeklyTaskCard } from "../task-card/WeeklyTaskCard";
+import { cn } from "@/lib/utils";
+import { useTasks } from "@/hooks/use-tasks";
 
 export function MobileWeeklyView() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showFullWeek, setShowFullWeek] = useState(true);
-  
-  const sensors = useSensors(
-    useSensor(MouseSensor, {
-      activationConstraint: {
-        distance: 10,
-      },
-    }),
-    useSensor(TouchSensor, {
-      activationConstraint: {
-        delay: 250,
-        tolerance: 5,
-      },
-    })
-  );
+  const { tasks } = useTasks();
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: showFullWeek ? 0 : 1 });
   const weekEnd = showFullWeek 
@@ -36,36 +24,117 @@ export function MobileWeeklyView() {
     const hour = 8 + i;
     return {
       hour,
-      display: `${hour}\nAM`
+      display: `${hour}:00`
     };
   });
 
-  const {
-    scheduledTasks,
-    handleDragEnd
-  } = useWeeklyCalendar(weekStart, weekEnd, weekDays);
+  const scheduledTasks = tasks?.filter(task => task.date && task.start_time) || [];
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
-      <WeeklyViewHeader
-        currentDate={currentDate}
-        showFullWeek={showFullWeek}
-        onPreviousWeek={() => setCurrentDate(prev => subWeeks(prev, 1))}
-        onNextWeek={() => setCurrentDate(prev => addWeeks(prev, 1))}
-        onToggleView={() => setShowFullWeek(!showFullWeek)}
-      />
-      <WeeklyDaysHeader
-        weekDays={weekDays}
-        showFullWeek={showFullWeek}
-      />
-      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-        <WeeklyTimeGrid
-          timeSlots={timeSlots}
-          weekDays={weekDays}
-          scheduledTasks={scheduledTasks}
-          showFullWeek={showFullWeek}
-        />
-      </DndContext>
+    <div className="flex flex-col h-full bg-white">
+      {/* Calendar Controls */}
+      <div className="flex items-center justify-between px-4 py-3 border-b bg-white sticky top-0 z-10">
+        <h2 className="text-base font-semibold text-gray-700 truncate">
+          {format(currentDate, 'MMMM yyyy')}
+        </h2>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setShowFullWeek(!showFullWeek)}
+            className="h-8 text-xs px-2"
+          >
+            {showFullWeek ? '7 Day' : '5 Day'}
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setCurrentDate(prev => subWeeks(prev, 1))}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setCurrentDate(prev => addWeeks(prev, 1))}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Days Header */}
+      <div className="grid border-b bg-[#E5F6FF]" 
+        style={{ 
+          gridTemplateColumns: `60px repeat(${weekDays.length}, minmax(140px, 1fr))` 
+        }}>
+        <div className="p-2 text-center border-r" />
+        {weekDays.map((day) => (
+          <div key={day.toISOString()} className="p-2 text-center border-r last:border-r-0">
+            <div className="text-sm font-medium text-gray-700">
+              {format(day, 'EEE')}
+            </div>
+            <div className="text-sm font-medium text-gray-900">
+              {format(day, 'd')}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Time Grid */}
+      <div className="flex-1 overflow-x-auto overflow-y-auto">
+        <div className="relative min-w-full" style={{ minWidth: `${60 + (weekDays.length * 140)}px` }}>
+          <div className="grid" style={{ 
+            gridTemplateColumns: `60px repeat(${weekDays.length}, minmax(140px, 1fr))` 
+          }}>
+            {/* Time Column */}
+            <div className="sticky left-0 z-10 bg-white">
+              {timeSlots.map((slot, idx) => (
+                <div
+                  key={slot.hour}
+                  className={cn(
+                    "flex items-center justify-center border-r border-t h-[60px] -mt-[1px] first:mt-0",
+                    idx === timeSlots.length - 1 && "border-b"
+                  )}
+                >
+                  <span className="text-xs text-gray-500">{slot.display}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Day Columns */}
+            {weekDays.map((day) => (
+              <div key={day.toISOString()} className="relative border-r last:border-r-0">
+                {timeSlots.map((slot, idx) => (
+                  <div
+                    key={`${day.toISOString()}-${slot.hour}`}
+                    className={cn(
+                      "relative border-t h-[60px] -mt-[1px] first:mt-0",
+                      idx === timeSlots.length - 1 && "border-b"
+                    )}
+                  >
+                    {scheduledTasks
+                      .filter(
+                        (task) =>
+                          task.date &&
+                          format(new Date(task.date), "yyyy-MM-dd") ===
+                            format(day, "yyyy-MM-dd") &&
+                          task.start_time &&
+                          parseInt(task.start_time.split(':')[0]) === slot.hour
+                      )
+                      .map((task) => (
+                        <div key={task.id} className="absolute inset-x-0 top-0 p-1">
+                          <WeeklyTaskCard task={task} />
+                        </div>
+                      ))}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
