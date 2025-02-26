@@ -1,4 +1,3 @@
-
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DesktopTaskView } from "./DesktopTaskView";
 import { MobileTaskView } from "./MobileTaskView";
@@ -7,6 +6,7 @@ import { useTaskReorder } from "@/hooks/use-task-reorder";
 import { useCallback, useMemo, useEffect } from 'react';
 import { Subtask } from "./subtasks/SubtaskList";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TaskAttachment } from "./form/types";
 
 export type TaskPriority = "low" | "medium" | "high";
 
@@ -44,6 +44,7 @@ export interface Task {
   is_tracking?: boolean;
   time_spent?: number;
   subtasks?: Subtask[];
+  task_attachments?: TaskAttachment[];
 }
 
 interface TaskBoardProps {

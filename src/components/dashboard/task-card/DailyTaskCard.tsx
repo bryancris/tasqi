@@ -4,7 +4,7 @@ import { Task } from "../TaskBoard";
 import { TaskStatusIndicator } from "../TaskStatusIndicator";
 import { cn } from "@/lib/utils";
 import { getPriorityColor } from "@/utils/taskColors";
-import { Bell, Share2, ArrowRight, Users } from "lucide-react";
+import { Bell, Share2, ArrowRight, Users, Mic } from "lucide-react";
 
 interface DailyTaskCardProps {
   task: Task;
@@ -23,6 +23,10 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
     }
     return '';
   };
+
+  const hasVoiceNote = task.task_attachments?.some(
+    attachment => attachment.content_type === 'audio/webm'
+  );
 
   const renderAssigneeInfo = () => {
     if (!task.assignments?.length) return null;
@@ -104,6 +108,9 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
                 task.status === 'completed' ? 'text-white/80' : 'text-gray-500'
               )} />
             )}
+            {hasVoiceNote && (
+              <Mic className="w-4 h-4 text-white/80" />
+            )}
             {task.shared && !task.assignments?.length && (
               <Share2 className="w-4 h-4 text-white/80" />
             )}
@@ -111,11 +118,11 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
             {extraButton}
           </div>
         </div>
-        {getTimeDisplay() && (
+        {timeDisplay && (
           <p className={cn(
             "text-sm mt-1",
             task.status === 'completed' ? 'text-white/80' : 'text-gray-500'
-          )}>{getTimeDisplay()}</p>
+          )}>{timeDisplay}</p>
         )}
       </div>
       {task.shared && (
