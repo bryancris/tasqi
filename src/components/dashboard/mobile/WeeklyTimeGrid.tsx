@@ -1,14 +1,14 @@
 
 import { Fragment } from "react";
 import { format } from "date-fns";
-import { ScheduledTask } from "@/types/task";
+import { Task } from "../TaskBoard";
 import { DraggableTask } from "./DraggableTask";
 import { cn } from "@/lib/utils";
 
 interface WeeklyTimeGridProps {
   timeSlots: Array<{ hour: number; display: string }>;
   weekDays: Date[];
-  scheduledTasks: ScheduledTask[];
+  scheduledTasks: Task[];
   showFullWeek: boolean;
 }
 
@@ -57,9 +57,11 @@ export function WeeklyTimeGrid({
                   {scheduledTasks
                     .filter(
                       (task) =>
-                        format(new Date(task.scheduledAt), "yyyy-MM-dd") ===
+                        task.date &&
+                        format(new Date(task.date), "yyyy-MM-dd") ===
                           format(day, "yyyy-MM-dd") &&
-                        new Date(task.scheduledAt).getHours() === slot.hour
+                        task.start_time &&
+                        parseInt(task.start_time.split(':')[0]) === slot.hour
                     )
                     .map((task) => (
                       <DraggableTask key={task.id} task={task} />
