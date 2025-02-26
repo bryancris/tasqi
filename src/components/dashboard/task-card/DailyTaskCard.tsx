@@ -4,7 +4,7 @@ import { Task } from "../TaskBoard";
 import { TaskStatusIndicator } from "../TaskStatusIndicator";
 import { cn } from "@/lib/utils";
 import { getPriorityColor } from "@/utils/taskColors";
-import { Bell, Share2, ArrowRight, Users, Mic } from "lucide-react";
+import { Bell, Share2, ArrowRight, Mic } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -77,14 +77,37 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
     attachment => attachment.content_type === 'audio/webm'
   );
 
-  const renderAssigneeInfo = () => {
-    if (!task.assignments?.length) return null;
+  const renderAssignmentInfo = () => {
+    if (!task.assignments?.length) {
+      if (task.shared) {
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-1 text-white/80 cursor-help">
+                  <Share2 className="w-4 h-4" />
+                  <span className="text-xs truncate">Shared</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent 
+                side="left" 
+                align="center"
+                className="bg-gray-800 text-white border-gray-700 text-xs z-50"
+                sideOffset={5}
+              >
+                Shared task
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      }
+      return null;
+    }
     
     const assignment = task.assignments[0];
     const isAssigner = assignment.assigned_by_id === currentUserId;
     const isAssignee = assignment.assignee_id === currentUserId;
     
-    // Show arrow icon when user is the assigner (they assigned the task to someone else)
     if (isAssigner) {
       return (
         <TooltipProvider>
@@ -108,7 +131,6 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
       );
     }
 
-    // Show who assigned the task when user is the assignee
     if (isAssignee) {
       return (
         <TooltipProvider>
@@ -188,24 +210,7 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
             {hasVoiceNote && (
               <Mic className="w-4 h-4 text-white/80" />
             )}
-            {task.shared && !task.assignments?.length && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Share2 className="w-4 h-4 text-white/80 cursor-help relative z-10" />
-                  </TooltipTrigger>
-                  <TooltipContent 
-                    side="left" 
-                    align="center"
-                    className="bg-gray-800 text-white border-gray-700 text-xs z-50"
-                    sideOffset={5}
-                  >
-                    Shared task
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-            {renderAssigneeInfo()}
+            {renderAssignmentInfo()}
             {extraButton}
           </div>
         </div>
