@@ -1,3 +1,4 @@
+
 import { createRoot } from 'react-dom/client'
 import React from 'react'
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -8,39 +9,30 @@ import { NotificationsProvider } from '@/components/notifications/NotificationsM
 
 const queryClient = new QueryClient();
 
-// Register service worker
+// Register service worker with error handling
 if ('serviceWorker' in navigator) {
-  // Wait for the page to load
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js', {
-      scope: '/',
-      type: 'module'
-    }).then(registration => {
-      console.log('SW registered:', registration);
-      
-      // Handle updates
-      registration.addEventListener('updatefound', () => {
-        const newWorker = registration.installing;
-        if (newWorker) {
-          newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              // New content is available, trigger update prompt
-              const event = new CustomEvent('updateAvailable');
-              window.dispatchEvent(event);
-            }
-          });
-        }
+    navigator.serviceWorker.register('/sw.js')
+      .then(registration => {
+        console.log('✅ SW registered:', registration);
+        
+        // Handle updates
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          if (newWorker) {
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                // New content is available
+                const event = new CustomEvent('updateAvailable');
+                window.dispatchEvent(event);
+              }
+            });
+          }
+        });
+      })
+      .catch(error => {
+        console.error('❌ SW registration failed:', error);
       });
-    }).catch(error => {
-      console.error('SW registration failed:', error);
-    });
-    
-    // Listen for messages from the service worker
-    navigator.serviceWorker.addEventListener('message', (event) => {
-      if (event.data && event.data.type === 'RELOAD_PAGE') {
-        window.location.reload();
-      }
-    });
   });
 
   // Handle service worker updates

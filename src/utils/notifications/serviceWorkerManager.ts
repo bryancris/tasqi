@@ -5,14 +5,20 @@ export class ServiceWorkerManager {
   async register(): Promise<ServiceWorkerRegistration | null> {
     try {
       if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-        console.warn('Push notifications not supported');
+        console.warn('⚠️ Push notifications not supported');
         return null;
+      }
+
+      // Wait for any existing service workers to become activated
+      if (navigator.serviceWorker.controller) {
+        await navigator.serviceWorker.ready;
       }
 
       this.swRegistration = await navigator.serviceWorker.register('/sw.js', {
         scope: '/',
-        type: 'module'
       });
+
+      console.log('✅ ServiceWorker registered successfully');
 
       // Request notification permission if not granted
       if (Notification.permission === 'default') {
