@@ -12,10 +12,13 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
-    mode === 'development' &&
-    componentTagger(),
+    mode === 'development' && componentTagger(),
     VitePWA({
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
       registerType: 'autoUpdate',
+      injectRegister: 'auto',
       manifest: {
         name: 'TASQI-AI Assistant',
         short_name: 'TASQI-AI',
@@ -25,7 +28,7 @@ export default defineConfig(({ mode }) => ({
         display: 'standalone',
         orientation: 'any',
         scope: '/',
-        start_url: '/',
+        start_url: '/dashboard',
         icons: [
           {
             src: '/pwa-192x192.png',
@@ -39,20 +42,24 @@ export default defineConfig(({ mode }) => ({
             type: 'image/png',
             purpose: 'any maskable'
           }
+        ],
+        shortcuts: [
+          {
+            name: 'Dashboard',
+            url: '/dashboard',
+            description: 'View your tasks'
+          }
         ]
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
-        navigateFallback: null, // Remove the default fallback
-        navigateFallbackAllowlist: [], // Clear the allowlist
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true,
         runtimeCaching: [
           {
             urlPattern: ({ url }) => {
-              // Allow all app routes
-              const appRoutes = ['/', '/notes', '/dashboard', '/self-care', '/settings'];
+              const appRoutes = ['/', '/dashboard', '/notes', '/settings'];
               return appRoutes.some(route => url.pathname.startsWith(route));
             },
             handler: 'NetworkFirst',
@@ -64,27 +71,22 @@ export default defineConfig(({ mode }) => ({
             }
           },
           {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com/,
-            handler: 'CacheFirst',
+            urlPattern: /^https:\/\/mcwlzrikidzgxexnccju\.supabase\.co/,
+            handler: 'NetworkFirst',
             options: {
-              cacheName: 'google-fonts-stylesheets',
+              cacheName: 'api-cache',
               cacheableResponse: {
                 statuses: [0, 200]
-              }
+              },
+              networkTimeoutSeconds: 10
             }
           }
         ]
       },
       devOptions: {
         enabled: true,
-        type: 'module',
-        navigateFallback: 'index.html'
-      },
-      injectRegister: 'auto',
-      strategies: 'generateSW',
-      manifestFilename: 'manifest.webmanifest',
-      base: '/',
-      minify: true
+        type: 'module'
+      }
     })
   ].filter(Boolean),
   resolve: {
@@ -96,7 +98,35 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       input: {
         main: path.resolve(__dirname, 'index.html')
+      },
+      output: {
+        manualChunks: {
+          vendor: [
+            'react',
+            'react-dom',
+            'react-router-dom',
+            '@tanstack/react-query',
+            'date-fns',
+            'lucide-react'
+          ],
+          ui: [
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-dropdown-menu',
+            '@radix-ui/react-select',
+            '@radix-ui/react-toast',
+            '@radix-ui/react-tooltip'
+          ]
+        }
       }
     }
+  },
+  // Add specific handling for service worker MIME type
+  configureServer: ({ middlewares }) => {
+    middlewares.use((req, res, next) => {
+      if (req.url?.endsWith('sw.js')) {
+        res.setHeader('Content-Type', 'application/javascript');
+      }
+      next();
+    });
   }
 }));
