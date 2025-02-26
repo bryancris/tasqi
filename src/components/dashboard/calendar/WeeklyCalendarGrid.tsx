@@ -1,5 +1,5 @@
 
-import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays } from "date-fns";
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, isSameDay } from "date-fns";
 import { TimeColumn } from "./TimeColumn";
 import { Task } from "../TaskBoard";
 import { cn } from "@/lib/utils";
@@ -41,7 +41,7 @@ export function WeeklyCalendarGrid({
   return (
     <div className="flex h-full gap-4">
       <div className={cn(
-        "flex-1 overflow-hidden border rounded-lg bg-white",
+        "flex-1 overflow-hidden border rounded-lg bg-white shadow-sm",
         "min-w-0",
         className
       )}>
@@ -51,10 +51,16 @@ export function WeeklyCalendarGrid({
             {weekDays.map((day) => (
               <div
                 key={day.toISOString()}
-                className="flex-1 min-w-[100px] relative border-r last:border-r-0"
+                className={cn(
+                  "flex-1 min-w-[120px] relative border-r last:border-r-0",
+                  isSameDay(day, currentDate) && "bg-[#E5F6FF]/30"
+                )}
               >
-                <div className="sticky top-0 z-10 bg-white border-b px-3 py-2">
-                  <div className="text-sm font-medium text-gray-900 whitespace-nowrap">
+                <div className="sticky top-0 z-10 bg-white border-b px-4 py-3">
+                  <div className={cn(
+                    "text-sm font-medium whitespace-nowrap",
+                    isSameDay(day, currentDate) ? "text-blue-600" : "text-gray-700"
+                  )}>
                     {format(day, 'EEE d')}
                   </div>
                 </div>
@@ -68,13 +74,13 @@ export function WeeklyCalendarGrid({
                         ref={provided.innerRef}
                         {...provided.droppableProps}
                         className={cn(
-                          "relative border-t h-[60px] -mt-[1px] first:mt-0",
+                          "relative border-t border-gray-100 h-[60px] -mt-[1px] first:mt-0",
                           idx === timeSlots.length - 1 && "border-b",
-                          snapshot.isDraggingOver && "bg-gray-50"
+                          snapshot.isDraggingOver && "bg-blue-50/50"
                         )}
                       >
                         {/* 30-minute divider line */}
-                        <div className="absolute left-0 right-0 top-1/2 border-t border-gray-100" />
+                        <div className="absolute left-0 right-0 top-1/2 border-t border-gray-50" />
                         
                         {scheduledTasks
                           .filter(
@@ -96,7 +102,7 @@ export function WeeklyCalendarGrid({
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}
                                   {...provided.dragHandleProps}
-                                  className="absolute left-0 right-0 top-0 p-1"
+                                  className="absolute left-0 right-0 top-0 px-1.5 py-1"
                                   style={{
                                     ...provided.draggableProps.style,
                                     opacity: snapshot.isDragging ? 0.8 : 1
@@ -104,7 +110,7 @@ export function WeeklyCalendarGrid({
                                 >
                                   <div 
                                     className={cn(
-                                      "text-sm p-1.5 rounded text-white",
+                                      "text-sm px-2 py-1 rounded-md text-white font-medium",
                                       getPriorityColor(task.priority),
                                       "cursor-pointer truncate",
                                       snapshot.isDragging && "shadow-lg"
