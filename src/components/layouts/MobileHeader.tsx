@@ -4,7 +4,7 @@ import { HeaderNotifications } from "@/components/dashboard/header/HeaderNotific
 import { HeaderTime } from "@/components/dashboard/header/HeaderTime";
 import { AddTaskDrawer } from "@/components/dashboard/AddTaskDrawer";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Stopwatch } from "lucide-react";
 
 export function MobileHeader() {
   return (
@@ -22,6 +22,13 @@ export function MobileHeader() {
                 <Plus className="h-5 w-5 text-purple-600" />
               </Button>
             </AddTaskDrawer>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9 rounded-full"
+            >
+              <Stopwatch className="h-5 w-5" />
+            </Button>
             <HeaderNotifications />
             <HeaderUserMenu />
           </div>
