@@ -135,11 +135,6 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
     return null;
   };
 
-  const getAssignerName = () => {
-    if (!task.assignments?.length) return "Shared task";
-    return assignerName ? `Assigned by ${assignerName}` : "Loading...";
-  };
-
   const getCardColor = () => {
     if (task.status === 'completed') {
       return 'bg-[#8E9196]'; // Dark gray for completed tasks
@@ -192,6 +187,23 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
             )}
             {hasVoiceNote && (
               <Mic className="w-4 h-4 text-white/80" />
+            )}
+            {task.shared && !task.assignments?.length && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Share2 className="w-4 h-4 text-white/80 cursor-help relative z-10" />
+                  </TooltipTrigger>
+                  <TooltipContent 
+                    side="left" 
+                    align="center"
+                    className="bg-gray-800 text-white border-gray-700 text-xs z-50"
+                    sideOffset={5}
+                  >
+                    Shared task
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
             {renderAssigneeInfo()}
             {extraButton}
