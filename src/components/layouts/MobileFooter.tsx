@@ -15,11 +15,24 @@ export function MobileFooter() {
   const location = useLocation();
   const navigate = useNavigate();
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const { view, setView } = useCalendarView();
 
   const handleDailyClick = () => {
     navigate('/dashboard/tasks');
     setView('tasks');
+  };
+
+  const handleWeeklyClick = () => {
+    navigate('/dashboard/weekly');
+    setView('weekly');
+    setIsDropdownOpen(false);
+  };
+
+  const handleMonthlyClick = () => {
+    navigate('/dashboard/monthly');
+    setView('monthly');
+    setIsDropdownOpen(false);
   };
 
   return (
@@ -37,7 +50,7 @@ export function MobileFooter() {
             <span className="text-xs mt-1">Daily</span>
           </button>
           
-          <DropdownMenu>
+          <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
             <DropdownMenuTrigger asChild>
               <button 
                 className={cn(
@@ -49,10 +62,10 @@ export function MobileFooter() {
                 <span className="text-xs mt-1">Calendars</span>
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="center" className="min-w-[120px] bg-transparent border-none shadow-none">
-              <Link
-                to="/dashboard/weekly"
-                className="flex items-center justify-center gap-2 py-3 relative hover:bg-transparent focus:bg-transparent w-full"
+            <DropdownMenuContent align="center" className="min-w-[120px] bg-white border shadow-lg">
+              <button
+                onClick={handleWeeklyClick}
+                className="flex items-center justify-center gap-2 py-3 relative hover:bg-gray-50 focus:bg-gray-50 w-full"
               >
                 <div className="relative">
                   <CalendarDays className="h-7 w-7 text-[#AAAAAA]" />
@@ -60,10 +73,10 @@ export function MobileFooter() {
                     W
                   </span>
                 </div>
-              </Link>
-              <Link
-                to="/dashboard/monthly"
-                className="flex items-center justify-center gap-2 py-3 relative hover:bg-transparent focus:bg-transparent w-full"
+              </button>
+              <button
+                onClick={handleMonthlyClick}
+                className="flex items-center justify-center gap-2 py-3 relative hover:bg-gray-50 focus:bg-gray-50 w-full"
               >
                 <div className="relative">
                   <Calendar className="h-7 w-7 text-[#AAAAAA]" />
@@ -71,7 +84,7 @@ export function MobileFooter() {
                     M
                   </span>
                 </div>
-              </Link>
+              </button>
             </DropdownMenuContent>
           </DropdownMenu>
 
