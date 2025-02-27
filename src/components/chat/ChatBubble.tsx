@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { useChat } from "@/hooks/use-chat";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ChatDialog } from "./components/ChatDialog";
-import { MobileChatView } from "./components/MobileChatView";
 import { useNavigate } from "react-router-dom";
 
 interface ChatBubbleProps {
@@ -77,21 +76,16 @@ export function ChatBubble({ isOpen, onOpenChange, variant = 'floating' }: ChatB
     onOpenChange?.(newOpen);
   };
 
+  // On mobile, navigate to the chat page instead of showing the overlay
   if (isMobile) {
-    return (
-      <>
-        {isDialogOpen && (
-          <MobileChatView
-            onClose={() => handleOpenChange(false)}
-            message={message}
-            messages={messages}
-            isLoading={isLoading}
-            onMessageChange={setMessage}
-            onSubmit={handleSubmit}
-          />
-        )}
-      </>
-    );
+    useEffect(() => {
+      if (isDialogOpen) {
+        navigate('/chat');
+        handleOpenChange(false);
+      }
+    }, [isDialogOpen]);
+    
+    return null;
   }
 
   if (variant === 'sidebar') {

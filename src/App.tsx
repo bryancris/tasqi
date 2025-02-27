@@ -11,6 +11,7 @@ import Settings from './pages/Settings';
 import Notes from './pages/Notes';
 import Analytics from './pages/Analytics';
 import SelfCare from './pages/SelfCare';
+import Chat from './pages/Chat';
 
 function App() {
   const onDragEnd = (result: any) => {
@@ -34,6 +35,9 @@ function App() {
                 </DashboardLayout>
               } />
               
+              {/* Add a direct route for /chat */}
+              <Route path="/chat" element={<Chat />} />
+              
               <Route path="/dashboard/*" element={<DashboardLayout>
                 <Routes>
                   {/* Non-calendar routes */}
@@ -41,6 +45,7 @@ function App() {
                   <Route path="settings" element={<Settings />} />
                   <Route path="analytics" element={<Analytics />} />
                   <Route path="self-care" element={<SelfCare />} />
+                  <Route path="chat" element={<Chat />} />
                   
                   {/* Calendar routes - must be last to handle all other dashboard paths */}
                   <Route path="*" element={<Dashboard />} />
