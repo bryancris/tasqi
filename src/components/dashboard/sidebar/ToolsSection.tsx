@@ -9,15 +9,20 @@ import { cn } from "@/lib/utils";
 export function ToolsSection() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const location = useLocation();
+  
+  // Check for both /notes and /dashboard/notes paths
+  const isNotesActive = location.pathname === '/notes' || location.pathname === '/dashboard/notes';
+  const isAnalyticsActive = location.pathname === '/dashboard/analytics';
+  const isSelfCareActive = location.pathname === '/dashboard/self-care';
 
   return (
     <div className="space-y-2">
-      <Link to="/dashboard/notes">
+      <Link to="/notes">
         <Button 
           variant="ghost" 
           className={cn(
             "w-full justify-start text-base text-[#9333EA] hover:bg-[#E5E7EB]",
-            location.pathname === '/dashboard/notes' && "bg-[#E5E7EB]"
+            isNotesActive && "bg-[#E5E7EB]"
           )}
         >
           <PenLine className="mr-2 h-5 w-5" />
@@ -30,7 +35,7 @@ export function ToolsSection() {
           variant="ghost" 
           className={cn(
             "w-full justify-start text-base hover:bg-[#E5E7EB] text-[#FF6B6B]",
-            location.pathname === '/dashboard/analytics' && "bg-[#E5E7EB]"
+            isAnalyticsActive && "bg-[#E5E7EB]"
           )}
         >
           <BarChart2 className="mr-2 h-5 w-5" />
@@ -43,7 +48,7 @@ export function ToolsSection() {
           variant="ghost" 
           className={cn(
             "w-full justify-start text-base text-[#EA580C] hover:bg-[#E5E7EB]",
-            location.pathname === '/dashboard/self-care' && "bg-[#E5E7EB]"
+            isSelfCareActive && "bg-[#E5E7EB]"
           )}
         >
           <Zap className="mr-2 h-5 w-5" />

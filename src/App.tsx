@@ -26,6 +26,14 @@ function App() {
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
+              
+              {/* Add a direct route for /notes */}
+              <Route path="/notes" element={
+                <DashboardLayout>
+                  <Notes />
+                </DashboardLayout>
+              } />
+              
               <Route path="/dashboard/*" element={<DashboardLayout>
                 <Routes>
                   {/* Non-calendar routes */}
