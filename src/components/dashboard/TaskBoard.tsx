@@ -1,3 +1,4 @@
+
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DesktopTaskView } from "./DesktopTaskView";
 import { MobileTaskView } from "./MobileTaskView";
@@ -18,6 +19,18 @@ export interface TaskAssignment {
   status: "pending" | "accepted" | "declined" | "completed";
   created_at: string;
   updated_at: string;
+}
+
+export interface SharedTask {
+  id: number;
+  task_id: number;
+  shared_by_user_id: string;
+  shared_with_user_id: string;
+  sharing_type: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  group_id?: number | null;
 }
 
 export interface Task {
@@ -45,6 +58,7 @@ export interface Task {
   time_spent?: number;
   subtasks?: Subtask[];
   task_attachments?: TaskAttachment[];
+  shared_tasks?: SharedTask[];
 }
 
 interface TaskBoardProps {

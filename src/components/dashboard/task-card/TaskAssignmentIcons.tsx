@@ -20,6 +20,15 @@ export function TaskAssignmentIcons({ task, assignmentInfo }: TaskAssignmentIcon
     currentUserId
   } = assignmentInfo;
 
+  // For debugging
+  console.log("TaskAssignmentIcons - task:", task.id, task.title);
+  console.log("TaskAssignmentIcons - assignmentInfo:", {
+    sharedByUser, 
+    sharedWithUser, 
+    sharedWithName, 
+    sharedByName
+  });
+
   // Check for assignments first
   if (task.assignments?.length) {
     const assignment = task.assignments[0];

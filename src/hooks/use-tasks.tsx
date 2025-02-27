@@ -1,5 +1,4 @@
 
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Task } from "@/components/dashboard/TaskBoard";
@@ -14,7 +13,8 @@ export function useTasks() {
       .select(`
         *,
         assignments:task_assignments(*),
-        task_attachments(*)
+        task_attachments(*),
+        shared_tasks(*)
       `)
       .order('position', { ascending: true });
 
