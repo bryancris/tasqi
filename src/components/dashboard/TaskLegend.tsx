@@ -1,5 +1,5 @@
 
-import { Share2, ArrowRight, Users } from "lucide-react";
+import { Share2, ArrowRight, Users, Mic } from "lucide-react";
 
 export function TaskLegend() {
   return (
@@ -9,8 +9,8 @@ export function TaskLegend() {
         <span>Shared Task</span>
       </div>
       <div className="flex items-center gap-1">
-        <Share2 className="w-3 h-3" />
-        <span>Task Sharing</span>
+        <Mic className="w-3 h-3" />
+        <span>Voice Note</span>
       </div>
       <div className="flex items-center gap-1">
         <ArrowRight className="w-3 h-3" />
