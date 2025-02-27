@@ -8,11 +8,50 @@ import { TaskCardProps } from "./types";
 import { useTaskAssignmentInfo } from "./useTaskAssignmentInfo";
 import { TaskAssignmentIcons } from "./TaskAssignmentIcons";
 import { getTimeDisplay, getCardColor, hasVoiceNote } from "./taskCardUtils";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
 function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, extraButton }: TaskCardProps) {
   const assignmentInfo = useTaskAssignmentInfo(task);
   const timeDisplay = getTimeDisplay(task);
   const hasAudioAttachment = hasVoiceNote(task);
+
+  // Function to determine the tooltip text based on assignment info
+  const getShareTooltipText = () => {
+    const {
+      assignerName,
+      assigneeName,
+      sharedWithUser,
+      sharedByUser,
+      sharedWithName,
+      sharedByName
+    } = assignmentInfo;
+
+    // Check for assignments first
+    if (task.assignments?.length > 0) {
+      const assignment = task.assignments[0];
+      
+      // If current user assigned this task to someone else
+      if (assignment.assigned_by_id === assignmentInfo.currentUserId) {
+        return `Assigned to ${assigneeName || 'someone'}`;
+      }
+      
+      // If task was assigned to current user
+      if (assignment.assignee_id === assignmentInfo.currentUserId) {
+        return `Assigned by ${assignerName || 'someone'}`;
+      }
+    }
+    
+    // Check for shared tasks
+    if (sharedByUser) {
+      return `Shared with ${sharedWithName || 'someone'}`;
+    }
+    
+    if (sharedWithUser) {
+      return `Shared by ${sharedByName || 'someone'}`;
+    }
+    
+    return "Shared task";
+  };
 
   return (
     <div 
@@ -67,7 +106,20 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
         )}
       </div>
       {task.shared && (
-        <div className="w-2 bg-[#8B5CF6] h-full absolute right-0 top-0 rounded-r-xl" />
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="w-2 bg-[#8B5CF6] h-full absolute right-0 top-0 rounded-r-xl cursor-help" />
+            </TooltipTrigger>
+            <TooltipContent 
+              className="bg-gray-800 text-white border-gray-700 text-xs z-50"
+              side="left"
+              sideOffset={5}
+            >
+              {getShareTooltipText()}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       )}
     </div>
   );
