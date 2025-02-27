@@ -67,7 +67,7 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
         )}
       </div>
       {task.shared && (
-        <div className="w-2 bg-[#8B5CF6] h-full absolute right-0 top-0" />
+        <div className="w-2 bg-[#8B5CF6] h-full absolute right-0 top-0 rounded-r-xl" />
       )}
     </div>
   );
