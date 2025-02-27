@@ -43,7 +43,7 @@ export function WeeklyCalendarGrid({
   return (
     <div className="flex h-full gap-4">
       <div className={cn(
-        "flex-1 overflow-hidden border border-gray-200 rounded-lg bg-white shadow-sm",
+        "flex-1 overflow-hidden border border-gray-300 rounded-lg bg-white shadow-sm",
         "min-w-0",
         className
       )}>
@@ -54,11 +54,11 @@ export function WeeklyCalendarGrid({
               <div
                 key={day.toISOString()}
                 className={cn(
-                  "flex-1 min-w-[120px] relative border-r border-gray-100 last:border-r-0",
+                  "flex-1 min-w-[120px] relative border-r border-gray-300 last:border-r-0",
                 )}
               >
                 <div className={cn(
-                  "sticky top-0 z-10 bg-[#2EBDAE] border-b border-gray-200 px-4 py-3",
+                  "sticky top-0 z-10 bg-[#2EBDAE] border-b border-gray-300 px-4 py-3",
                   isSameDay(day, currentDate) && "bg-[#269d90]"
                 )}>
                   <div className={cn(
@@ -77,13 +77,13 @@ export function WeeklyCalendarGrid({
                         ref={provided.innerRef}
                         {...provided.droppableProps}
                         className={cn(
-                          "relative border-t border-gray-50 h-[60px] -mt-[1px] first:mt-0 bg-white",
-                          idx === timeSlots.length - 1 && "border-b border-gray-100",
+                          "relative border-t border-gray-300 h-[60px] -mt-[1px] first:mt-0 bg-white",
+                          idx === timeSlots.length - 1 && "border-b border-gray-300",
                           snapshot.isDraggingOver && "bg-blue-50/30"
                         )}
                       >
                         {/* 30-minute divider line */}
-                        <div className="absolute left-0 right-0 top-1/2 border-t border-gray-50/70" />
+                        <div className="absolute left-0 right-0 top-1/2 border-t border-gray-200" />
                         
                         {scheduledTasks
                           .filter(

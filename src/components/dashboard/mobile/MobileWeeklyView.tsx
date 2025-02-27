@@ -65,13 +65,13 @@ export function MobileWeeklyView() {
       </div>
 
       {/* Days Header - Updated with desktop colors */}
-      <div className="grid border-b bg-[#2A9BB5] rounded-t-lg" 
+      <div className="grid border-b border-gray-300 bg-[#2A9BB5] rounded-t-lg" 
         style={{ 
           gridTemplateColumns: `40px repeat(${weekDays.length}, 1fr)` 
         }}>
-        <div className="p-1 text-center border-r bg-[#2EBDAE]" />
+        <div className="p-1 text-center border-r border-gray-300 bg-[#2EBDAE]" />
         {weekDays.map((day) => (
-          <div key={day.toISOString()} className="p-1 text-center border-r last:border-r-0">
+          <div key={day.toISOString()} className="p-1 text-center border-r border-gray-300 last:border-r-0">
             <div className="text-xs font-medium text-white/80">
               {format(day, 'EEE')}
             </div>
@@ -94,8 +94,8 @@ export function MobileWeeklyView() {
                 <div
                   key={slot.hour}
                   className={cn(
-                    "flex items-center justify-center border-r border-t border-white/20 h-[40px] -mt-[1px] first:mt-0",
-                    idx === timeSlots.length - 1 && "border-b"
+                    "flex items-center justify-center border-r border-t border-gray-300 h-[40px] -mt-[1px] first:mt-0",
+                    idx === timeSlots.length - 1 && "border-b border-gray-300"
                   )}
                 >
                   <span className="text-[10px] text-white font-medium">{slot.display}</span>
@@ -105,13 +105,13 @@ export function MobileWeeklyView() {
 
             {/* Day Columns */}
             {weekDays.map((day) => (
-              <div key={day.toISOString()} className="relative border-r last:border-r-0">
+              <div key={day.toISOString()} className="relative border-r border-gray-300 last:border-r-0">
                 {timeSlots.map((slot, idx) => (
                   <div
                     key={`${day.toISOString()}-${slot.hour}`}
                     className={cn(
-                      "relative border-t h-[40px] -mt-[1px] first:mt-0",
-                      idx === timeSlots.length - 1 && "border-b"
+                      "relative border-t border-gray-300 h-[40px] -mt-[1px] first:mt-0",
+                      idx === timeSlots.length - 1 && "border-b border-gray-300"
                     )}
                   >
                     {scheduledTasks
