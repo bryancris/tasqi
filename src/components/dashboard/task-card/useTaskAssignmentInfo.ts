@@ -39,68 +39,25 @@ export function useTaskAssignmentInfo(task: Task): TaskAssignmentInfo {
     const checkSharedTaskInfo = async () => {
       if (task.shared) {
         console.log("Checking shared task info for task:", task.id, task.title);
-
-        // Check if we have the shared_tasks data directly from the task
-        if (task.shared_tasks && task.shared_tasks.length > 0) {
-          console.log("Using shared_tasks from task data:", task.shared_tasks);
+        
+        // Simplified logic: If I'm the task owner and it's shared, I shared it
+        if (task.user_id === currentUserId) {
+          console.log("Current user is task owner of shared task");
+          setSharedByUser(true);
           
-          // Find a shared task record where current user is the sharer
-          const sharedByMeRecord = task.shared_tasks.find(
-            st => st.shared_by_user_id === currentUserId
-          );
-          
-          // Find a shared task record where current user is the receiver
-          const sharedWithMeRecord = task.shared_tasks.find(
-            st => st.shared_with_user_id === currentUserId
-          );
-          
-          if (sharedByMeRecord) {
-            console.log("Current user shared this task");
-            setSharedByUser(true);
-            const sharedWithUserId = sharedByMeRecord.shared_with_user_id;
-            const name = await fetchUserName(sharedWithUserId);
+          // Get the first shared_task record to find who it's shared with
+          if (task.shared_tasks && task.shared_tasks.length > 0) {
+            const sharedTask = task.shared_tasks[0];
+            const name = await fetchUserName(sharedTask.shared_with_user_id);
             setSharedWithName(name);
-          } else if (sharedWithMeRecord) {
-            console.log("This task was shared with current user");
-            setSharedWithUser(true);
-            const sharedByUserId = sharedWithMeRecord.shared_by_user_id;
-            const name = await fetchUserName(sharedByUserId);
-            setSharedByName(name);
-          } else {
-            console.log("Task is shared but current user not involved directly");
           }
-        } else {
-          console.log("No shared_tasks data in task object, falling back to database query");
-          // Fallback to querying if task.shared_tasks is not available
-          // Check if current user shared this task
-          const { data: outgoingShares } = await supabase
-            .from('shared_tasks')
-            .select('shared_with_user_id')
-            .eq('task_id', task.id)
-            .eq('shared_by_user_id', currentUserId)
-            .limit(1);
-            
-          if (outgoingShares && outgoingShares.length > 0) {
-            setSharedByUser(true);
-            const sharedWithUserId = outgoingShares[0].shared_with_user_id;
-            const name = await fetchUserName(sharedWithUserId);
-            setSharedWithName(name);
-          } else {
-            // Check if task was shared with current user
-            const { data: incomingShares } = await supabase
-              .from('shared_tasks')
-              .select('shared_by_user_id')
-              .eq('task_id', task.id)
-              .eq('shared_with_user_id', currentUserId)
-              .limit(1);
-              
-            if (incomingShares && incomingShares.length > 0) {
-              setSharedWithUser(true);
-              const sharedByUserId = incomingShares[0].shared_by_user_id;
-              const name = await fetchUserName(sharedByUserId);
-              setSharedByName(name);
-            }
-          }
+        } 
+        // If I'm not the owner but the task is shared, it was shared with me
+        else {
+          console.log("Current user is not task owner of shared task");
+          setSharedWithUser(true);
+          const name = await fetchUserName(task.user_id);
+          setSharedByName(name);
         }
       }
     };
