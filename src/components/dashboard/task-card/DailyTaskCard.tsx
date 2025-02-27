@@ -35,7 +35,9 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
       sharedWithName,
       sharedByName,
       assignments: task.assignments,
-      shared_tasks: task.shared_tasks
+      shared_tasks: task.shared_tasks,
+      shared_by_user_id: task.shared_by_user_id,
+      shared_with_user_id: task.shared_with_user_id,
     });
 
     // Check for assignments first
@@ -53,41 +55,37 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
       }
     }
     
-    // Check for shared tasks
-    if (task.shared_tasks?.length > 0) {
-      // If current user shared this task with someone else
-      const sharedByMe = task.shared_tasks.find(st => 
-        st.shared_by_user_id === currentUserId
-      );
-      
-      if (sharedByMe) {
-        return `Shared with ${sharedWithName || 'someone'}`;
-      }
-      
-      // If task was shared with current user
-      const sharedWithMe = task.shared_tasks.find(st => 
-        st.shared_with_user_id === currentUserId
-      );
-      
-      if (sharedWithMe) {
-        return `Shared by ${sharedByName || 'someone'}`;
-      }
-      
-      // If it's a group share
-      if (task.shared_tasks.some(st => st.sharing_type === 'group')) {
-        return "Shared with group";
-      }
+    // If current user shared this task with someone else
+    if (sharedByUser && sharedWithName) {
+      return `Shared with ${sharedWithName}`;
     }
     
-    // Fallback to generic info based on the assignment info hook
-    if (sharedByUser) {
-      return `Shared with ${sharedWithName || 'someone'}`;
+    // If task was shared with current user by someone else
+    if (sharedWithUser && sharedByName) {
+      return `Shared by ${sharedByName}`;
     }
     
-    if (sharedWithUser) {
-      return `Shared by ${sharedByName || 'someone'}`;
+    // If we have direct sharing information but not specifically about current user
+    if (sharedByName && sharedWithName) {
+      return `Shared by ${sharedByName} with ${sharedWithName}`;
     }
     
+    // If we know who shared it but not with whom
+    if (sharedByName) {
+      return `Shared by ${sharedByName}`;
+    }
+    
+    // If we know who it was shared with but not by whom
+    if (sharedWithName) {
+      return `Shared with ${sharedWithName}`;
+    }
+    
+    // Check if it's a group share
+    if (task.shared_tasks?.some?.(st => st.sharing_type === 'group')) {
+      return "Shared with group";
+    }
+    
+    // Generic fallback
     return "Shared task";
   };
 
