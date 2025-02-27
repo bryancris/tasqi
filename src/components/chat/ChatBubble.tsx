@@ -79,7 +79,7 @@ export function ChatBubble({ isOpen, onOpenChange, variant = 'floating' }: ChatB
 
   if (isMobile) {
     return (
-      <div className="fixed bottom-4 right-4 z-50">
+      <div className="fixed bottom-4 right-4 z-40">
         {isDialogOpen && (
           <MobileChatView
             onClose={() => handleOpenChange(false)}

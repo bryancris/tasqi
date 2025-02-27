@@ -111,10 +111,10 @@ export function MobileFooter() {
           </button>
 
           <Link 
-            to="/self-care"
+            to="/dashboard/self-care"
             className={cn(
               "flex flex-col items-center p-2",
-              location.pathname === '/self-care' ? "text-[#ea384c]" : "text-gray-500"
+              location.pathname === '/dashboard/self-care' ? "text-[#ea384c]" : "text-gray-500"
             )}
           >
             <Heart className="h-6 w-6" />
