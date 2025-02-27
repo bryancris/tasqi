@@ -20,6 +20,10 @@ interface DailyTaskCardProps {
 function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, extraButton }: DailyTaskCardProps) {
   const [assignerName, setAssignerName] = useState<string>("");
   const [assigneeName, setAssigneeName] = useState<string>("");
+  const [sharedWithUser, setSharedWithUser] = useState<boolean>(false);
+  const [sharedByUser, setSharedByUser] = useState<boolean>(false);
+  const [sharedWithName, setSharedWithName] = useState<string>("");
+  const [sharedByName, setSharedByName] = useState<string>("");
   const { session } = useAuth();
   const currentUserId = session?.user.id;
 
@@ -44,8 +48,47 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
       }
     };
 
+    const checkSharedTaskInfo = async () => {
+      if (task.shared) {
+        // Check if this user shared the task
+        if (task.user_id === currentUserId) {
+          setSharedByUser(true);
+          
+          // Fetch who the task was shared with
+          const { data: sharedTasks } = await supabase
+            .from('shared_tasks')
+            .select('shared_with_user_id')
+            .eq('task_id', task.id)
+            .eq('shared_by_user_id', currentUserId)
+            .limit(1);
+          
+          if (sharedTasks && sharedTasks.length > 0) {
+            const sharedWithUserId = sharedTasks[0].shared_with_user_id;
+            const name = await fetchUserName(sharedWithUserId);
+            setSharedWithName(name);
+          }
+        } else {
+          // Check if task was shared with this user
+          const { data: sharedTasks } = await supabase
+            .from('shared_tasks')
+            .select('shared_by_user_id')
+            .eq('task_id', task.id)
+            .eq('shared_with_user_id', currentUserId)
+            .limit(1);
+          
+          if (sharedTasks && sharedTasks.length > 0) {
+            setSharedWithUser(true);
+            const sharedByUserId = sharedTasks[0].shared_by_user_id;
+            const name = await fetchUserName(sharedByUserId);
+            setSharedByName(name);
+          }
+        }
+      }
+    };
+
     loadAssignmentNames();
-  }, [task.assignments]);
+    checkSharedTaskInfo();
+  }, [task, currentUserId]);
 
   const getTimeDisplay = () => {
     if (task.start_time && task.end_time) {
@@ -61,43 +104,69 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
   );
 
   const renderAssignmentInfo = () => {
-    if (!task.assignments?.length) return null;
-    
-    const assignment = task.assignments[0];
-    
-    // If I assigned this task to someone else
-    if (assignment.assigned_by_id === currentUserId) {
-      return (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex items-center gap-1 text-white/80 cursor-help">
-                <ArrowRight className="w-4 h-4" />
-                <span className="text-xs truncate">Assigned</span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent 
-              side="left" 
-              align="center"
-              className="bg-gray-800 text-white border-gray-700 text-xs z-50"
-              sideOffset={5}
-            >
-              {assigneeName ? `Assigned to ${assigneeName}` : "Loading..."}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      );
+    // Check for assignments first
+    if (task.assignments?.length) {
+      const assignment = task.assignments[0];
+      
+      // If I assigned this task to someone else
+      if (assignment.assigned_by_id === currentUserId) {
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-1 text-white/80 cursor-help">
+                  <ArrowRight className="w-4 h-4" />
+                  <span className="text-xs truncate">Assigned</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent 
+                side="left" 
+                align="center"
+                className="bg-gray-800 text-white border-gray-700 text-xs z-50"
+                sideOffset={5}
+              >
+                {assigneeName ? `Assigned to ${assigneeName}` : "Loading..."}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      }
+      
+      // If someone assigned this task to me
+      if (assignment.assignee_id === currentUserId) {
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-1 text-white/80 cursor-help">
+                  <Share2 className="w-4 h-4" />
+                  <span className="text-xs truncate">From</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent 
+                side="left" 
+                align="center"
+                className="bg-gray-800 text-white border-gray-700 text-xs z-50"
+                sideOffset={5}
+              >
+                {assignerName ? `From ${assignerName}` : "Loading..."}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+      }
     }
-    
-    // If someone assigned this task to me
-    if (assignment.assignee_id === currentUserId) {
+
+    // Check for shared tasks when there are no assignments
+    // If I shared this task with someone (I'm the owner)
+    if (sharedByUser) {
       return (
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="flex items-center gap-1 text-white/80 cursor-help">
                 <Share2 className="w-4 h-4" />
-                <span className="text-xs truncate">From</span>
+                <span className="text-xs truncate">Shared</span>
               </div>
             </TooltipTrigger>
             <TooltipContent 
@@ -106,7 +175,31 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
               className="bg-gray-800 text-white border-gray-700 text-xs z-50"
               sideOffset={5}
             >
-              {assignerName ? `From ${assignerName}` : "Loading..."}
+              {sharedWithName ? `Shared with ${sharedWithName}` : "Shared task"}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+    
+    // If this task was shared with me
+    if (sharedWithUser) {
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-1 text-white/80 cursor-help">
+                <ArrowRight className="w-4 h-4" />
+                <span className="text-xs truncate">Received</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent 
+              side="left" 
+              align="center"
+              className="bg-gray-800 text-white border-gray-700 text-xs z-50"
+              sideOffset={5}
+            >
+              {sharedByName ? `From ${sharedByName}` : "Received task"}
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
