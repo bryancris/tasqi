@@ -13,8 +13,9 @@ export function MobileChatView({
   onSubmit
 }: MobileChatViewProps) {
   return (
-    <div className="fixed inset-0 bg-background z-40" style={{ top: '72px', bottom: '80px' }}>
-      <div className="flex flex-col h-full">
+    <div className="fixed left-0 right-0 pointer-events-none z-40" 
+         style={{ top: '72px', bottom: '80px' }}>
+      <div className="flex flex-col h-full bg-background pointer-events-auto">
         <MobileChatHeader onClose={onClose} />
         <ChatMessages messages={messages} isLoading={isLoading} />
         <ChatInput 
