@@ -40,24 +40,76 @@ export function useTaskAssignmentInfo(task: Task): TaskAssignmentInfo {
       if (task.shared) {
         console.log("Checking shared task info for task:", task.id, task.title);
         
-        // Simplified logic: If I'm the task owner and it's shared, I shared it
-        if (task.user_id === currentUserId) {
-          console.log("Current user is task owner of shared task");
-          setSharedByUser(true);
+        // We need to check the shared_tasks data to see who shared and who received
+        if (task.shared_tasks && task.shared_tasks.length > 0) {
+          // Find if current user shared this task with someone
+          const sharedByMe = task.shared_tasks.some(
+            st => st.shared_by_user_id === currentUserId
+          );
           
-          // Get the first shared_task record to find who it's shared with
-          if (task.shared_tasks && task.shared_tasks.length > 0) {
-            const sharedTask = task.shared_tasks[0];
-            const name = await fetchUserName(sharedTask.shared_with_user_id);
-            setSharedWithName(name);
+          // Find if this task was shared with the current user
+          const sharedWithMe = task.shared_tasks.some(
+            st => st.shared_with_user_id === currentUserId
+          );
+          
+          if (sharedByMe) {
+            console.log("Current user shared this task with someone");
+            setSharedByUser(true);
+            
+            // Get the name of who we shared with
+            const sharedTask = task.shared_tasks.find(
+              st => st.shared_by_user_id === currentUserId
+            );
+            if (sharedTask) {
+              const name = await fetchUserName(sharedTask.shared_with_user_id);
+              setSharedWithName(name);
+            }
+          } else if (sharedWithMe) {
+            console.log("This task was shared with current user");
+            setSharedWithUser(true);
+            
+            // Get the name of who shared with us
+            const sharedTask = task.shared_tasks.find(
+              st => st.shared_with_user_id === currentUserId
+            );
+            if (sharedTask) {
+              const name = await fetchUserName(sharedTask.shared_by_user_id);
+              setSharedByName(name);
+            }
+          } else {
+            console.log("Task is shared but current user not directly involved");
           }
-        } 
-        // If I'm not the owner but the task is shared, it was shared with me
-        else {
-          console.log("Current user is not task owner of shared task");
-          setSharedWithUser(true);
-          const name = await fetchUserName(task.user_id);
-          setSharedByName(name);
+        } else {
+          // Fallback to database query if shared_tasks not available
+          console.log("No shared_tasks data, querying database");
+          
+          // Check if current user shared this task
+          const { data: outgoing } = await supabase
+            .from('shared_tasks')
+            .select('shared_with_user_id')
+            .eq('task_id', task.id)
+            .eq('shared_by_user_id', currentUserId);
+            
+          if (outgoing && outgoing.length > 0) {
+            console.log("Found outgoing shares from current user");
+            setSharedByUser(true);
+            const name = await fetchUserName(outgoing[0].shared_with_user_id);
+            setSharedWithName(name);
+          } else {
+            // Check if task was shared with current user
+            const { data: incoming } = await supabase
+              .from('shared_tasks')
+              .select('shared_by_user_id')
+              .eq('task_id', task.id)
+              .eq('shared_with_user_id', currentUserId);
+              
+            if (incoming && incoming.length > 0) {
+              console.log("Found incoming shares to current user");
+              setSharedWithUser(true);
+              const name = await fetchUserName(incoming[0].shared_by_user_id);
+              setSharedByName(name);
+            }
+          }
         }
       }
     };
