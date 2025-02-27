@@ -23,25 +23,63 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
       sharedWithUser,
       sharedByUser,
       sharedWithName,
-      sharedByName
+      sharedByName,
+      currentUserId
     } = assignmentInfo;
+
+    console.log("Assignment info for tooltip:", {
+      assignerName,
+      assigneeName,
+      sharedWithUser,
+      sharedByUser,
+      sharedWithName,
+      sharedByName,
+      assignments: task.assignments,
+      shared_tasks: task.shared_tasks
+    });
 
     // Check for assignments first
     if (task.assignments?.length > 0) {
       const assignment = task.assignments[0];
       
       // If current user assigned this task to someone else
-      if (assignment.assigned_by_id === assignmentInfo.currentUserId) {
+      if (assignment.assigned_by_id === currentUserId) {
         return `Assigned to ${assigneeName || 'someone'}`;
       }
       
       // If task was assigned to current user
-      if (assignment.assignee_id === assignmentInfo.currentUserId) {
+      if (assignment.assignee_id === currentUserId) {
         return `Assigned by ${assignerName || 'someone'}`;
       }
     }
     
     // Check for shared tasks
+    if (task.shared_tasks?.length > 0) {
+      // If current user shared this task with someone else
+      const sharedByMe = task.shared_tasks.find(st => 
+        st.shared_by_user_id === currentUserId
+      );
+      
+      if (sharedByMe) {
+        return `Shared with ${sharedWithName || 'someone'}`;
+      }
+      
+      // If task was shared with current user
+      const sharedWithMe = task.shared_tasks.find(st => 
+        st.shared_with_user_id === currentUserId
+      );
+      
+      if (sharedWithMe) {
+        return `Shared by ${sharedByName || 'someone'}`;
+      }
+      
+      // If it's a group share
+      if (task.shared_tasks.some(st => st.sharing_type === 'group')) {
+        return "Shared with group";
+      }
+    }
+    
+    // Fallback to generic info based on the assignment info hook
     if (sharedByUser) {
       return `Shared with ${sharedWithName || 'someone'}`;
     }
