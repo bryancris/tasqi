@@ -1,225 +1,18 @@
 
-import { memo, useEffect, useState } from "react";
+import { memo } from "react";
 import { Task } from "../TaskBoard";
 import { TaskStatusIndicator } from "../TaskStatusIndicator";
 import { cn } from "@/lib/utils";
-import { getPriorityColor } from "@/utils/taskColors";
-import { Bell, Share2, ArrowRight, Mic } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { Bell, Mic } from "lucide-react";
+import { TaskCardProps } from "./types";
+import { useTaskAssignmentInfo } from "./useTaskAssignmentInfo";
+import { TaskAssignmentIcons } from "./TaskAssignmentIcons";
+import { getTimeDisplay, getCardColor, hasVoiceNote } from "./taskCardUtils";
 
-interface DailyTaskCardProps {
-  task: Task;
-  onComplete: () => void;
-  onClick: () => void;
-  dragHandleProps?: any;
-  extraButton?: React.ReactNode;
-}
-
-function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, extraButton }: DailyTaskCardProps) {
-  const [assignerName, setAssignerName] = useState<string>("");
-  const [assigneeName, setAssigneeName] = useState<string>("");
-  const [sharedWithUser, setSharedWithUser] = useState<boolean>(false);
-  const [sharedByUser, setSharedByUser] = useState<boolean>(false);
-  const [sharedWithName, setSharedWithName] = useState<string>("");
-  const [sharedByName, setSharedByName] = useState<string>("");
-  const { session } = useAuth();
-  const currentUserId = session?.user.id;
-
-  useEffect(() => {
-    const fetchUserName = async (userId: string) => {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('id', userId)
-        .single();
-
-      return profile?.email?.split('@')[0] || 'Unknown';
-    };
-
-    const loadAssignmentNames = async () => {
-      if (task.assignments?.length) {
-        const assignment = task.assignments[0];
-        const assignerName = await fetchUserName(assignment.assigned_by_id);
-        const assigneeName = await fetchUserName(assignment.assignee_id);
-        setAssignerName(assignerName);
-        setAssigneeName(assigneeName);
-      }
-    };
-
-    const checkSharedTaskInfo = async () => {
-      if (task.shared) {
-        // Check if this user shared the task
-        if (task.user_id === currentUserId) {
-          setSharedByUser(true);
-          
-          // Fetch who the task was shared with
-          const { data: sharedTasks } = await supabase
-            .from('shared_tasks')
-            .select('shared_with_user_id')
-            .eq('task_id', task.id)
-            .eq('shared_by_user_id', currentUserId)
-            .limit(1);
-          
-          if (sharedTasks && sharedTasks.length > 0) {
-            const sharedWithUserId = sharedTasks[0].shared_with_user_id;
-            const name = await fetchUserName(sharedWithUserId);
-            setSharedWithName(name);
-          }
-        } else {
-          // Check if task was shared with this user
-          const { data: sharedTasks } = await supabase
-            .from('shared_tasks')
-            .select('shared_by_user_id')
-            .eq('task_id', task.id)
-            .eq('shared_with_user_id', currentUserId)
-            .limit(1);
-          
-          if (sharedTasks && sharedTasks.length > 0) {
-            setSharedWithUser(true);
-            const sharedByUserId = sharedTasks[0].shared_by_user_id;
-            const name = await fetchUserName(sharedByUserId);
-            setSharedByName(name);
-          }
-        }
-      }
-    };
-
-    loadAssignmentNames();
-    checkSharedTaskInfo();
-  }, [task, currentUserId]);
-
-  const getTimeDisplay = () => {
-    if (task.start_time && task.end_time) {
-      const startTime = task.start_time.split(':').slice(0, 2).join(':');
-      const endTime = task.end_time.split(':').slice(0, 2).join(':');
-      return `${startTime} - ${endTime}`;
-    }
-    return '';
-  };
-
-  const hasVoiceNote = task.task_attachments?.some(
-    attachment => attachment.content_type === 'audio/webm'
-  );
-
-  const renderAssignmentInfo = () => {
-    // Check for assignments first
-    if (task.assignments?.length) {
-      const assignment = task.assignments[0];
-      
-      // If I assigned this task to someone else
-      if (assignment.assigned_by_id === currentUserId) {
-        return (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex items-center gap-1 text-white/80 cursor-help">
-                  <ArrowRight className="w-4 h-4" />
-                  <span className="text-xs truncate">Assigned</span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent 
-                side="left" 
-                align="center"
-                className="bg-gray-800 text-white border-gray-700 text-xs z-50"
-                sideOffset={5}
-              >
-                {assigneeName ? `Assigned to ${assigneeName}` : "Loading..."}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        );
-      }
-      
-      // If someone assigned this task to me
-      if (assignment.assignee_id === currentUserId) {
-        return (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex items-center gap-1 text-white/80 cursor-help">
-                  <Share2 className="w-4 h-4" />
-                  <span className="text-xs truncate">From</span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent 
-                side="left" 
-                align="center"
-                className="bg-gray-800 text-white border-gray-700 text-xs z-50"
-                sideOffset={5}
-              >
-                {assignerName ? `From ${assignerName}` : "Loading..."}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        );
-      }
-    }
-
-    // Check for shared tasks when there are no assignments
-    // If I shared this task with someone (I'm the owner)
-    if (sharedByUser) {
-      return (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex items-center gap-1 text-white/80 cursor-help">
-                <ArrowRight className="w-4 h-4" />
-                <span className="text-xs truncate">Assigned</span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent 
-              side="left" 
-              align="center"
-              className="bg-gray-800 text-white border-gray-700 text-xs z-50"
-              sideOffset={5}
-            >
-              {sharedWithName ? `Assigned to ${sharedWithName}` : "Shared task"}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      );
-    }
-    
-    // If this task was shared with me
-    if (sharedWithUser) {
-      return (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex items-center gap-1 text-white/80 cursor-help">
-                <Share2 className="w-4 h-4" />
-                <span className="text-xs truncate">From</span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent 
-              side="left" 
-              align="center"
-              className="bg-gray-800 text-white border-gray-700 text-xs z-50"
-              sideOffset={5}
-            >
-              {sharedByName ? `From ${sharedByName}` : "Received task"}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      );
-    }
-
-    return null;
-  };
-
-  const getCardColor = () => {
-    if (task.status === 'completed') {
-      return 'bg-[#8E9196]'; // Dark gray for completed tasks
-    }
-    if (task.status === 'unscheduled') {
-      return 'bg-[#2196F3]';
-    }
-    return getPriorityColor(task.priority);
-  };
-
-  const timeDisplay = getTimeDisplay();
+function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, extraButton }: TaskCardProps) {
+  const assignmentInfo = useTaskAssignmentInfo(task);
+  const timeDisplay = getTimeDisplay(task);
+  const hasAudioAttachment = hasVoiceNote(task);
 
   return (
     <div 
@@ -230,7 +23,7 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
         "hover:shadow-[0_8px_20px_rgba(0,0,0,0.12)]",
         "hover:-translate-y-1",
         "cursor-pointer",
-        getCardColor(),
+        getCardColor(task),
         "text-white",
         "before:content-[''] before:absolute before:inset-0",
         "before:bg-gradient-to-br before:from-white/10 before:to-transparent",
@@ -242,7 +35,7 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
     >
       <TaskStatusIndicator 
         status={task.status} 
-        time={getTimeDisplay()}
+        time={timeDisplay}
         rescheduleCount={task.reschedule_count}
         onClick={(e) => {
           e.stopPropagation();
@@ -259,10 +52,13 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
             {task.reminder_enabled && (
               <Bell className="w-4 h-4 text-white/80 shrink-0" />
             )}
-            {hasVoiceNote && (
+            {hasAudioAttachment && (
               <Mic className="w-4 h-4 text-white/80" />
             )}
-            {renderAssignmentInfo()}
+            <TaskAssignmentIcons 
+              task={task} 
+              assignmentInfo={assignmentInfo} 
+            />
             {extraButton}
           </div>
         </div>
