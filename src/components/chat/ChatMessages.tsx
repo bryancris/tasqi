@@ -1,6 +1,19 @@
+
 import { ChatMessagesProps } from "./types";
+import { useEffect, useRef } from "react";
 
 export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom whenever messages change or when loading state changes
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isLoading]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-[#F1F0FB] to-[#E5DEFF]">
       {messages.map((msg, index) => (
@@ -21,6 +34,8 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
           </div>
         </div>
       )}
+      {/* This empty div serves as a scroll target */}
+      <div ref={messagesEndRef} />
     </div>
   );
 }
