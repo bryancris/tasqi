@@ -165,8 +165,8 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="flex items-center gap-1 text-white/80 cursor-help">
-                <Share2 className="w-4 h-4" />
-                <span className="text-xs truncate">Shared</span>
+                <ArrowRight className="w-4 h-4" />
+                <span className="text-xs truncate">Assigned</span>
               </div>
             </TooltipTrigger>
             <TooltipContent 
@@ -175,7 +175,7 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
               className="bg-gray-800 text-white border-gray-700 text-xs z-50"
               sideOffset={5}
             >
-              {sharedWithName ? `Shared with ${sharedWithName}` : "Shared task"}
+              {sharedWithName ? `Assigned to ${sharedWithName}` : "Shared task"}
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -189,8 +189,8 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
           <Tooltip>
             <TooltipTrigger asChild>
               <div className="flex items-center gap-1 text-white/80 cursor-help">
-                <ArrowRight className="w-4 h-4" />
-                <span className="text-xs truncate">Received</span>
+                <Share2 className="w-4 h-4" />
+                <span className="text-xs truncate">From</span>
               </div>
             </TooltipTrigger>
             <TooltipContent 
