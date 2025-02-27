@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Task } from "../TaskBoard";
 import { supabase } from "@/integrations/supabase/client";
@@ -54,66 +55,7 @@ export function useTaskAssignmentInfo(task: Task): TaskAssignmentInfo {
       if (task.shared) {
         console.log("Checking shared task info for task:", task.id, task.title, task);
         
-        // APPROACH 1: Check if the task has direct properties for shared_by_user_id and shared_with_user_id
-        // This is the most direct information about sharing
-        if (task.shared_by_user_id || task.shared_with_user_id) {
-          console.log("Using direct task properties for sharing info");
-          
-          // Check if current user shared this task with someone
-          if (task.shared_by_user_id === currentUserId) {
-            console.log("Current user shared this task with someone");
-            setSharedByUser(true);
-            
-            if (task.shared_with_user_id) {
-              // If the shared_with_name is already available on the task, use it
-              if (task.shared_with_name) {
-                setSharedWithName(task.shared_with_name);
-              } else {
-                // Otherwise fetch the name
-                const name = await fetchUserName(task.shared_with_user_id);
-                setSharedWithName(name);
-              }
-            }
-          } 
-          // Check if task was shared with current user
-          else if (task.shared_with_user_id === currentUserId) {
-            console.log("This task was shared with current user");
-            setSharedWithUser(true);
-            
-            if (task.shared_by_user_id) {
-              // If the shared_by_name is already available on the task, use it
-              if (task.shared_by_name) {
-                setSharedByName(task.shared_by_name);
-              } else {
-                // Otherwise fetch the name
-                const name = await fetchUserName(task.shared_by_user_id);
-                setSharedByName(name);
-              }
-            }
-          }
-          // Special case: handle if we have the user IDs but not the current user match
-          // This could happen in group sharing
-          else {
-            console.log("Task shared but not directly with/by current user");
-            
-            // If we have shared_by_user_id, fetch and show that name
-            if (task.shared_by_user_id) {
-              const name = await fetchUserName(task.shared_by_user_id);
-              setSharedByName(name);
-            }
-            
-            // If we have shared_with_user_id, fetch and show that name
-            if (task.shared_with_user_id) {
-              const name = await fetchUserName(task.shared_with_user_id);
-              setSharedWithName(name);
-            }
-          }
-          
-          // Exit early since we used the direct properties
-          return;
-        }
-        
-        // APPROACH 2: Check if shared_tasks array is available in the task object
+        // Check if shared_tasks is available in the task object
         if (task.shared_tasks && task.shared_tasks.length > 0) {
           console.log("Using shared_tasks from task object:", task.shared_tasks);
           
@@ -166,8 +108,8 @@ export function useTaskAssignmentInfo(task: Task): TaskAssignmentInfo {
           return;
         }
         
-        // APPROACH 3: If shared_tasks not available in the task object, query the database
-        console.log("No shared task info found directly, querying database");
+        // If shared_tasks not available in the task object, query the database
+        console.log("No shared_tasks in task object, querying database");
         
         const { data: sharedTasks } = await supabase
           .from('shared_tasks')

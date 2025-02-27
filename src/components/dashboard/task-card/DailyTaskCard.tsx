@@ -35,9 +35,7 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
       sharedWithName,
       sharedByName,
       assignments: task.assignments,
-      shared_tasks: task.shared_tasks,
-      shared_by_user_id: task.shared_by_user_id,
-      shared_with_user_id: task.shared_with_user_id,
+      shared_tasks: task.shared_tasks
     });
 
     // Check for assignments first
