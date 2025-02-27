@@ -17,22 +17,37 @@ export function useTaskAssignmentInfo(task: Task): TaskAssignmentInfo {
 
   useEffect(() => {
     const fetchUserName = async (userId: string) => {
+      if (!userId) return 'Unknown';
+      
       const { data: profile } = await supabase
         .from('profiles')
-        .select('email')
+        .select('email, first_name, last_name')
         .eq('id', userId)
         .single();
 
-      return profile?.email?.split('@')[0] || 'Unknown';
+      if (profile) {
+        // Use first name if available, otherwise use email username
+        if (profile.first_name) {
+          return profile.first_name;
+        } else {
+          return profile?.email?.split('@')[0] || 'Unknown';
+        }
+      }
+      
+      return 'Unknown';
     };
 
     const loadAssignmentNames = async () => {
       if (task.assignments?.length) {
         const assignment = task.assignments[0];
-        const assignerName = await fetchUserName(assignment.assigned_by_id);
-        const assigneeName = await fetchUserName(assignment.assignee_id);
-        setAssignerName(assignerName);
-        setAssigneeName(assigneeName);
+        if (assignment.assigned_by_id) {
+          const assignerName = await fetchUserName(assignment.assigned_by_id);
+          setAssignerName(assignerName);
+        }
+        if (assignment.assignee_id) {
+          const assigneeName = await fetchUserName(assignment.assignee_id);
+          setAssigneeName(assigneeName);
+        }
       }
     };
 
@@ -40,15 +55,17 @@ export function useTaskAssignmentInfo(task: Task): TaskAssignmentInfo {
       if (task.shared) {
         console.log("Checking shared task info for task:", task.id, task.title);
         
-        // We need to check the shared_tasks data to see who shared and who received
+        // First check if shared_tasks is available in the task object
         if (task.shared_tasks && task.shared_tasks.length > 0) {
-          // Find if current user shared this task with someone
-          const sharedByMe = task.shared_tasks.some(
+          console.log("Using shared_tasks from task object:", task.shared_tasks);
+          
+          // Check if current user shared this task with someone
+          const sharedByMe = task.shared_tasks.find(
             st => st.shared_by_user_id === currentUserId
           );
           
-          // Find if this task was shared with the current user
-          const sharedWithMe = task.shared_tasks.some(
+          // Check if task was shared with current user
+          const sharedWithMe = task.shared_tasks.find(
             st => st.shared_with_user_id === currentUserId
           );
           
@@ -56,58 +73,63 @@ export function useTaskAssignmentInfo(task: Task): TaskAssignmentInfo {
             console.log("Current user shared this task with someone");
             setSharedByUser(true);
             
-            // Get the name of who we shared with
-            const sharedTask = task.shared_tasks.find(
-              st => st.shared_by_user_id === currentUserId
-            );
-            if (sharedTask) {
-              const name = await fetchUserName(sharedTask.shared_with_user_id);
+            const sharedWithUserId = sharedByMe.shared_with_user_id;
+            if (sharedWithUserId) {
+              const name = await fetchUserName(sharedWithUserId);
               setSharedWithName(name);
             }
           } else if (sharedWithMe) {
             console.log("This task was shared with current user");
             setSharedWithUser(true);
             
-            // Get the name of who shared with us
-            const sharedTask = task.shared_tasks.find(
-              st => st.shared_with_user_id === currentUserId
-            );
-            if (sharedTask) {
-              const name = await fetchUserName(sharedTask.shared_by_user_id);
+            const sharedByUserId = sharedWithMe.shared_by_user_id;
+            if (sharedByUserId) {
+              const name = await fetchUserName(sharedByUserId);
               setSharedByName(name);
             }
-          } else {
-            console.log("Task is shared but current user not directly involved");
           }
         } else {
-          // Fallback to database query if shared_tasks not available
-          console.log("No shared_tasks data, querying database");
+          // If shared_tasks not available in the task object, query the database
+          console.log("shared_tasks not in task object, querying database");
           
-          // Check if current user shared this task
-          const { data: outgoing } = await supabase
+          const { data: sharedTasks } = await supabase
             .from('shared_tasks')
-            .select('shared_with_user_id')
-            .eq('task_id', task.id)
-            .eq('shared_by_user_id', currentUserId);
+            .select('*')
+            .eq('task_id', task.id);
             
-          if (outgoing && outgoing.length > 0) {
-            console.log("Found outgoing shares from current user");
-            setSharedByUser(true);
-            const name = await fetchUserName(outgoing[0].shared_with_user_id);
-            setSharedWithName(name);
-          } else {
-            // Check if task was shared with current user
-            const { data: incoming } = await supabase
-              .from('shared_tasks')
-              .select('shared_by_user_id')
-              .eq('task_id', task.id)
-              .eq('shared_with_user_id', currentUserId);
+          console.log("Shared tasks from query:", sharedTasks);
+          
+          if (sharedTasks && sharedTasks.length > 0) {
+            // Check if current user shared this task
+            const sharedByMe = sharedTasks.find(
+              st => st.shared_by_user_id === currentUserId
+            );
               
-            if (incoming && incoming.length > 0) {
-              console.log("Found incoming shares to current user");
-              setSharedWithUser(true);
-              const name = await fetchUserName(incoming[0].shared_by_user_id);
-              setSharedByName(name);
+            if (sharedByMe) {
+              console.log("Found task shared by current user");
+              setSharedByUser(true);
+              
+              const sharedWithUserId = sharedByMe.shared_with_user_id;
+              if (sharedWithUserId) {
+                const name = await fetchUserName(sharedWithUserId);
+                setSharedWithName(name);
+              }
+            } else {
+              // Check if task was shared with current user
+              const sharedWithMe = sharedTasks.find(
+                st => st.shared_with_user_id === currentUserId
+              );
+                
+              if (sharedWithMe) {
+                console.log("Found task shared with current user");
+                setSharedWithUser(true);
+                
+                const sharedByUserId = sharedWithMe.shared_by_user_id;
+                if (sharedByUserId) {
+                  const name = await fetchUserName(sharedByUserId);
+                  setSharedByName(name);
+                }
+              }
             }
           }
         }
