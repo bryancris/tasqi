@@ -72,8 +72,8 @@ export function DesktopTimelineSection({ selectedDate, onDateChange }: DesktopTi
   };
 
   return (
-    <Card className="h-full">
-      <CardHeader>
+    <Card className="h-full bg-gradient-to-t from-[#E6E9F0] to-[#EEF1F5] border-none shadow-sm">
+      <CardHeader className="bg-white/70 border-b">
         <CardTitle>Timeline</CardTitle>
         <div className="flex items-center justify-between mt-2">
           <Button variant="ghost" size="icon" onClick={handlePrevDay}>
@@ -88,7 +88,7 @@ export function DesktopTimelineSection({ selectedDate, onDateChange }: DesktopTi
           </Button>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="bg-white/50">
         <div className="space-y-4">
           {timeSlots.map((timeSlot) => (
             <TimelineSlot 

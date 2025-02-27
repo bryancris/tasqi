@@ -27,8 +27,8 @@ export function TimelineSlot({ time, tasks, selectedDate }: TimelineSlotProps) {
   });
 
   return (
-    <div className="flex items-start gap-4">
-      <div className="w-16 text-sm text-gray-500">{time}</div>
+    <div className="flex items-start gap-4 p-3 border-b border-gray-100 last:border-0 hover:bg-white/30 rounded-md transition-colors">
+      <div className="w-16 text-sm text-gray-500 font-medium">{time}</div>
       <div className="flex-1 space-y-2">
         {slotTasks.map((task) => (
           <div
@@ -38,7 +38,7 @@ export function TimelineSlot({ time, tasks, selectedDate }: TimelineSlotProps) {
               task.status === 'completed' 
                 ? 'bg-[#8E9196]'
                 : getPriorityColor(task.priority)
-            } p-2 rounded-lg text-white cursor-pointer transition-all hover:brightness-110`}
+            } p-3 rounded-lg text-white cursor-pointer transition-all hover:brightness-110 shadow-sm hover:shadow-md hover:-translate-y-0.5`}
           >
             <p className="font-medium">{task.title}</p>
             {task.start_time && task.end_time && (

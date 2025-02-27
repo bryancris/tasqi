@@ -65,14 +65,14 @@ export function TaskBoardSection({ tasks, onDragEnd, onComplete }: TaskBoardSect
     .map(task => task.id);
 
   return (
-    <Card className="flex flex-col h-full overflow-hidden bg-white shadow-none border-none">
-      <CardHeader className="bg-white border-b px-6 py-4">
+    <Card className="flex flex-col h-full overflow-hidden border-none bg-gradient-to-br from-[#E0EAF5] to-[#F7FAFD] shadow-sm">
+      <CardHeader className="border-b px-6 py-4 bg-white/70">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl font-semibold">Task Board</CardTitle>
         </div>
         <TaskLegend />
       </CardHeader>
-      <CardContent className="flex-1 overflow-y-auto p-6">
+      <CardContent className="flex-1 overflow-y-auto p-6 bg-white/50">
         <DndContext sensors={sensors} onDragEnd={onDragEnd}>
           <SortableContext items={draggableTaskIds} strategy={verticalListSortingStrategy}>
             <div className="flex flex-col gap-4">
