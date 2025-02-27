@@ -38,16 +38,18 @@ export function useTaskAssignmentInfo(task: Task): TaskAssignmentInfo {
 
     const checkSharedTaskInfo = async () => {
       if (task.shared) {
-        // Check if this user shared the task
-        if (task.user_id === currentUserId) {
+        // IMPORTANT FIX: Check if the current user is the owner of the task
+        // This is the key change - we use task.user_id to determine ownership
+        const isOwner = task.user_id === currentUserId;
+        
+        if (isOwner) {
           setSharedByUser(true);
+          console.log("Current user is task owner, should show arrow icon");
           
-          // Fetch who the task was shared with
           const { data: sharedTasks } = await supabase
             .from('shared_tasks')
             .select('shared_with_user_id')
             .eq('task_id', task.id)
-            .eq('shared_by_user_id', currentUserId)
             .limit(1);
           
           if (sharedTasks && sharedTasks.length > 0) {
@@ -56,7 +58,8 @@ export function useTaskAssignmentInfo(task: Task): TaskAssignmentInfo {
             setSharedWithName(name);
           }
         } else {
-          // Check if task was shared with this user
+          console.log("Current user is not task owner, checking if shared with them");
+          // If not the owner, check if the task was shared with the current user
           const { data: sharedTasks } = await supabase
             .from('shared_tasks')
             .select('shared_by_user_id')
