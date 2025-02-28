@@ -90,8 +90,34 @@ export function useTasks() {
         return processedTask as Task;
       });
 
+    // Process owned tasks to ensure they have all required properties
+    const processedOwnedTasks = (ownedTasks || []).map(task => {
+      // Ensure all required properties have default values for owned tasks as well
+      return {
+        ...task,
+        // Required properties with defaults
+        assignees: task.assignees || [],
+        completed_at: task.completed_at || null,
+        created_at: task.created_at || new Date().toISOString(),
+        date: task.date || null,
+        description: task.description || null,
+        end_time: task.end_time || null,
+        owner_id: task.owner_id || task.user_id,
+        position: task.position || 0,
+        priority: task.priority || 'low',
+        is_tracking: task.is_tracking || false,
+        reschedule_count: task.reschedule_count || 0,
+        reminder_enabled: task.reminder_enabled || false,
+        reminder_time: task.reminder_time || 15,
+        start_time: task.start_time || null,
+        time_spent: task.time_spent || 0,
+        updated_at: task.updated_at || new Date().toISOString(),
+        shared_tasks: task.shared_tasks || [] // Ensure shared_tasks is always defined
+      } as Task;
+    });
+
     // Combine owned and shared tasks, ensuring no duplicates
-    const allTasks = [...(ownedTasks || [])];
+    const allTasks = [...processedOwnedTasks];
     
     // Only add shared tasks that aren't already in the owned tasks
     processedSharedTasks.forEach(sharedTask => {
