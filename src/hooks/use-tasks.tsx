@@ -57,8 +57,12 @@ export function useTasks() {
       .filter(st => st.task) // Filter out null tasks
       .map(sharedTask => {
         const task = sharedTask.task;
-        return {
+        
+        // Ensure task has all required properties or set defaults
+        const processedTask = {
           ...task,
+          // Set default values for any required properties that might be missing
+          assignees: task.assignees || [],
           shared: true,
           // Use the status from shared_tasks for shared tasks since that's the authoritative status for this user
           status: sharedTask.status === 'completed' ? 'completed' : 
@@ -66,7 +70,9 @@ export function useTasks() {
           completed_at: sharedTask.status === 'completed' ? new Date().toISOString() : null,
           // Include the shared_tasks record for reference
           shared_tasks: [sharedTask]
-        } as Task;
+        };
+
+        return processedTask as Task;
       });
 
     // Combine owned and shared tasks, ensuring no duplicates
