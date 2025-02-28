@@ -86,6 +86,8 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
         completed_at: completedAt
       }));
 
+      let updateSuccessful = false;
+
       if (task.shared) {
         console.log('Updating shared task');
         const { error: sharedUpdateError } = await supabase
@@ -99,9 +101,9 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
         if (sharedUpdateError) {
           console.error('Error updating shared task:', sharedUpdateError);
           toast.error('Failed to update shared task status');
-          // Revert local state on error
-          setLocalTask(task);
-          return;
+          updateSuccessful = false;
+        } else {
+          updateSuccessful = true;
         }
       } else {
         console.log('Updating owned task');
@@ -116,18 +118,26 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
         if (updateError) {
           console.error('Error updating task:', updateError);
           toast.error('Failed to update task status');
-          // Revert local state on error
-          setLocalTask(task);
-          return;
+          updateSuccessful = false;
+        } else {
+          updateSuccessful = true;
         }
       }
 
-      console.log('Task update successful');
-      toast.success(newStatus === 'completed' ? 'Task completed' : 'Task uncompleted');
+      if (updateSuccessful) {
+        console.log('Task update successful');
+        toast.success(newStatus === 'completed' ? 'Task completed' : 'Task uncompleted');
 
-      // Invalidate tasks query to trigger refresh
-      await queryClient.invalidateQueries({ queryKey: ['tasks'] });
-
+        // Invalidate and refetch tasks to ensure UI consistency
+        await queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        
+        if (onComplete) {
+          await onComplete();
+        }
+      } else {
+        // Revert local state on error
+        setLocalTask(task);
+      }
     } catch (error: any) {
       console.error('Unexpected error completing task:', error);
       toast.error('An unexpected error occurred');
