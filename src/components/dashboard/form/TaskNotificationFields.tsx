@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { useEffect } from "react";
 import { useNotifications } from "@/hooks/use-notifications";
+import { detectPlatform } from "@/utils/notifications/platformDetection";
 
 interface TaskNotificationFieldsProps {
   reminderEnabled: boolean;
@@ -35,6 +36,8 @@ export function TaskNotificationFields({
   onReminderTimeChange,
 }: TaskNotificationFieldsProps) {
   const { isSubscribed, isLoading, enableNotifications, disableNotifications } = useNotifications();
+  const platform = detectPlatform();
+  const isIOSPWA = platform === 'ios-pwa';
 
   // Reset the toggle if notifications are disabled
   useEffect(() => {
@@ -97,6 +100,12 @@ export function TaskNotificationFields({
               ))}
             </SelectContent>
           </Select>
+        </div>
+      )}
+
+      {isIOSPWA && reminderEnabled && (
+        <div className="text-xs text-amber-600 mt-1">
+          Note: iOS notifications work best when the app is open
         </div>
       )}
     </div>
