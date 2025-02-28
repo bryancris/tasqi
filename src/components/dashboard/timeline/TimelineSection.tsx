@@ -76,7 +76,7 @@ export function TimelineSection({ tasks, selectedDate, onDateChange }: TimelineS
 
   return (
     <Card className="bg-white border-none shadow-sm">
-      <CardHeader className="bg-gradient-to-r from-[#2EBDAE] to-[#3E8DE3] border-none">
+      <CardHeader className="bg-[#2EBDAE] border-none">
         <CardTitle className="text-white">Timeline</CardTitle>
         <div className="flex items-center justify-between mt-2">
           <Button 
