@@ -805,6 +805,27 @@ export type Database = {
           },
         ]
       }
+      system_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json
+          id: number
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details: Json
+          id?: number
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json
+          id?: number
+        }
+        Relationships: []
+      }
       task_assignments: {
         Row: {
           assigned_by_id: string | null
