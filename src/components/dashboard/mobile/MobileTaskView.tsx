@@ -87,6 +87,7 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
             </DndContext>
           ) : (
             <TimelineSection 
+              tasks={tasks}
               selectedDate={selectedDate}
               onDateChange={onDateChange}
             />
