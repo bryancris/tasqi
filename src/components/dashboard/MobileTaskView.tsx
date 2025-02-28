@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TaskCard } from "./TaskCard";
 import { DndContext, MouseSensor, TouchSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { startOfDay, isAfter } from "date-fns";
+import { startOfDay, isAfter, parseISO, isSameDay } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { TimelineSection } from "./timeline/TimelineSection";
@@ -41,15 +41,23 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
 
   const sortedTasks = [...tasks]
     .filter(task => {
+      // Always show unscheduled tasks
       if (task.status === 'unscheduled') {
         return true;
       }
       
+      // Show completed tasks from today
       if (task.status === 'completed') {
         return shouldShowCompletedTask(task);
       }
       
-      return task.status === 'scheduled';
+      // For scheduled tasks, check if they match the selected date
+      if (task.status === 'scheduled' || task.status === 'in_progress' || task.status === 'stuck') {
+        if (!task.date) return false;
+        return isSameDay(parseISO(task.date), selectedDate);
+      }
+      
+      return false;
     })
     .sort((a, b) => {
       if (a.status === 'completed' && b.status !== 'completed') return 1;

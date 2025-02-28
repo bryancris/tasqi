@@ -10,11 +10,12 @@ import { QueryObserverResult } from "@tanstack/react-query";
 
 interface TaskBoardSectionProps {
   tasks: Task[];
+  selectedDate: Date; // Added selectedDate prop
   onDragEnd: (event: DragEndEvent) => void;
   onComplete?: () => void | Promise<QueryObserverResult<Task[], Error>>;
 }
 
-export function TaskBoardSection({ tasks, onDragEnd, onComplete }: TaskBoardSectionProps) {
+export function TaskBoardSection({ tasks, selectedDate, onDragEnd, onComplete }: TaskBoardSectionProps) {
   const sensors = useSensors(
     useSensor(MouseSensor, {
       activationConstraint: {
@@ -46,10 +47,18 @@ export function TaskBoardSection({ tasks, onDragEnd, onComplete }: TaskBoardSect
         return shouldShowCompletedTask(task);
       }
       
-      // Show all scheduled tasks (matching mobile view logic)
-      return task.status === 'scheduled' || task.status === 'in_progress' || task.status === 'stuck';
+      // For scheduled, in_progress, and stuck tasks, check the date
+      if (task.status === 'scheduled' || task.status === 'in_progress' || task.status === 'stuck') {
+        // If task has no date, don't show it (should be handled as unscheduled)
+        if (!task.date) return false;
+        
+        // Show tasks that match the selected date
+        return isSameDay(parseISO(task.date), selectedDate);
+      }
+      
+      return false;
     } catch (error) {
-      console.error("Error filtering task:", error);
+      console.error("Error filtering task:", error, task);
       return false;
     }
   };
