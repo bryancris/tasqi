@@ -4,7 +4,7 @@ import { HeaderNotifications } from "@/components/dashboard/header/HeaderNotific
 import { HeaderTime } from "@/components/dashboard/header/HeaderTime";
 import { AddTaskDrawer } from "@/components/dashboard/AddTaskDrawer";
 import { Button } from "@/components/ui/button";
-import { Plus, Timer } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { useState } from "react";
 import { TimerDialog } from "@/components/timer/TimerDialog";
 
@@ -32,7 +32,7 @@ export function MobileHeader() {
               className="h-9 w-9 rounded-full"
               onClick={() => setIsTimerOpen(true)}
             >
-              <Timer className="h-5 w-5" />
+              <Search className="h-5 w-5" />
             </Button>
             <TimerDialog isOpen={isTimerOpen} onOpenChange={setIsTimerOpen} />
             <HeaderNotifications />
