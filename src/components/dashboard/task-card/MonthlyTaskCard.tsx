@@ -4,8 +4,8 @@ import { Task } from "../TaskBoard";
 import { TaskStatusIndicator } from "../TaskStatusIndicator";
 import { cn } from "@/lib/utils";
 import { getPriorityColor } from "@/utils/taskColors";
-import { Bell, Mic, Users } from "lucide-react";
-import { hasVoiceNote } from "./taskCardUtils";
+import { Bell, Mic, Users, Paperclip } from "lucide-react";
+import { hasVoiceNote, hasFileAttachments } from "./taskCardUtils";
 
 interface MonthlyTaskCardProps {
   task: Task;
@@ -27,6 +27,7 @@ function MonthlyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, 
   
   const timeDisplay = getTimeDisplay();
   const hasAudioAttachment = hasVoiceNote(task);
+  const hasFiles = hasFileAttachments(task);
   const isGroupTask = task.shared_tasks?.some(st => st.sharing_type === 'group');
   
   return (
@@ -48,6 +49,9 @@ function MonthlyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, 
           )}
           {hasAudioAttachment && (
             <Mic className="h-3 w-3 text-white" />
+          )}
+          {hasFiles && (
+            <Paperclip className="h-3 w-3 text-white" />
           )}
           {isGroupTask && (
             <Users className="h-3 w-3 text-white" />

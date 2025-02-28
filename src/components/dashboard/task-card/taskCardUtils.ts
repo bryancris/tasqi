@@ -26,3 +26,9 @@ export function hasVoiceNote(task: Task): boolean {
     attachment => attachment.content_type === 'audio/webm'
   );
 }
+
+export function hasFileAttachments(task: Task): boolean {
+  return !!task.task_attachments?.some(
+    attachment => attachment.content_type !== 'audio/webm'
+  );
+}

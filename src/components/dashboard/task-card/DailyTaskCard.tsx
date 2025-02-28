@@ -3,17 +3,18 @@ import { memo } from "react";
 import { Task } from "../TaskBoard";
 import { TaskStatusIndicator } from "../TaskStatusIndicator";
 import { cn } from "@/lib/utils";
-import { Bell, Mic } from "lucide-react";
+import { Bell, Mic, Paperclip } from "lucide-react";
 import { TaskCardProps } from "./types";
 import { useTaskAssignmentInfo } from "./useTaskAssignmentInfo";
 import { TaskAssignmentIcons } from "./TaskAssignmentIcons";
-import { getTimeDisplay, getCardColor, hasVoiceNote } from "./taskCardUtils";
+import { getTimeDisplay, getCardColor, hasVoiceNote, hasFileAttachments } from "./taskCardUtils";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
 function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, extraButton }: TaskCardProps) {
   const assignmentInfo = useTaskAssignmentInfo(task);
   const timeDisplay = getTimeDisplay(task);
   const hasAudioAttachment = hasVoiceNote(task);
+  const hasFiles = hasFileAttachments(task);
 
   // Function to determine the tooltip text based on assignment info
   const getShareTooltipText = () => {
@@ -127,6 +128,9 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
             )}
             {hasAudioAttachment && (
               <Mic className="w-4 h-4 text-white" />
+            )}
+            {hasFiles && (
+              <Paperclip className="w-4 h-4 text-white" />
             )}
             <TaskAssignmentIcons 
               task={task} 

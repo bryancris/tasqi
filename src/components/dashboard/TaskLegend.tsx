@@ -1,5 +1,5 @@
 
-import { Share2, Bell, Users, Mic } from "lucide-react";
+import { Share2, Bell, Users, Mic, Paperclip } from "lucide-react";
 
 export function TaskLegend() {
   return (
@@ -11,6 +11,10 @@ export function TaskLegend() {
       <div className="flex items-center gap-1">
         <Mic className="w-3 h-3 text-[#0EA5E9]" />
         <span>Voice Note</span>
+      </div>
+      <div className="flex items-center gap-1">
+        <Paperclip className="w-3 h-3 text-[#0EA5E9]" />
+        <span>File Attachment</span>
       </div>
       <div className="flex items-center gap-1">
         <Bell className="w-3 h-3 text-[#F97316]" />
