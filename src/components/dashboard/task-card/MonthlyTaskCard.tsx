@@ -5,6 +5,7 @@ import { TaskStatusIndicator } from "../TaskStatusIndicator";
 import { cn } from "@/lib/utils";
 import { getPriorityColor } from "@/utils/taskColors";
 import { Bell, Mic, Users } from "lucide-react";
+import { hasVoiceNote } from "./taskCardUtils";
 
 interface MonthlyTaskCardProps {
   task: Task;
@@ -25,7 +26,7 @@ function MonthlyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, 
   };
   
   const timeDisplay = getTimeDisplay();
-  const hasVoiceNote = !!task.audio_attachment;
+  const hasAudioAttachment = hasVoiceNote(task);
   const isGroupTask = task.shared_tasks?.some(st => st.sharing_type === 'group');
   
   return (
@@ -45,7 +46,7 @@ function MonthlyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, 
           {task.reminder_enabled && (
             <Bell className="h-3 w-3 text-[#F97316]" />
           )}
-          {hasVoiceNote && (
+          {hasAudioAttachment && (
             <Mic className="h-3 w-3 text-[#0EA5E9]" />
           )}
           {isGroupTask && (
