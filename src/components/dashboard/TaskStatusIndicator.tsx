@@ -1,6 +1,7 @@
 
 import { cn } from "@/lib/utils";
 import { Check, CheckCircle, Clock } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface TaskStatusIndicatorProps {
   status: string;
@@ -48,7 +49,25 @@ export function TaskStatusIndicator({ status, time, rescheduleCount = 0, onClick
 
   return (
     <div className="flex items-center justify-center">
-      {renderIcon()}
+      {rescheduleCount > 0 ? (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="relative">
+                {renderIcon()}
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full flex items-center justify-center">
+                  <span className="text-[8px] font-bold text-amber-900">{rescheduleCount > 9 ? '9+' : rescheduleCount}</span>
+                </span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent className="bg-slate-800 text-white border-slate-700">
+              <p>Rescheduled {rescheduleCount} {rescheduleCount === 1 ? 'time' : 'times'}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : (
+        renderIcon()
+      )}
     </div>
   );
 }
