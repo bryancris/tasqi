@@ -44,7 +44,13 @@ export function TaskScheduleFields({
 
       {isScheduled && (
         <div className="space-y-6 mt-4">
-          <DateSelector date={date} onDateChange={onDateChange} />
+          <div className="w-full">
+            <DateSelector 
+              date={date} 
+              onDateChange={onDateChange}
+              className="w-full"
+            />
+          </div>
           <TimeSelector
             startTime={startTime}
             endTime={endTime}

@@ -27,19 +27,25 @@ export function DateSelector({ date, onDateChange, className }: DateSelectorProp
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
-          variant="ghost"
+          variant="outline"
           className={cn(
-            "px-0 font-normal justify-start text-left",
-            "hover:bg-transparent hover:opacity-80 focus:bg-transparent",
+            "w-full justify-start text-left font-normal",
+            !date && "text-muted-foreground",
             className
           )}
         >
+          <CalendarIcon className="mr-2 h-4 w-4" />
           {date 
             ? format(new Date(date), 'MMMM do, yyyy')
             : "Select date"}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0 bg-white border border-gray-100 shadow-lg rounded-lg">
+      <PopoverContent 
+        className="w-auto p-0 bg-white border border-gray-100 shadow-lg rounded-lg" 
+        align="start"
+        sideOffset={4}
+        side="bottom"
+      >
         <Calendar
           mode="single"
           selected={date ? new Date(date) : undefined}
