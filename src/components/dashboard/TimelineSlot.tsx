@@ -5,8 +5,6 @@ import { EditTaskDrawer } from "./EditTaskDrawer";
 import { useState } from "react";
 import { getPriorityColor } from "@/utils/taskColors";
 import { cn } from "@/lib/utils";
-import { AlertCircle } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface TimelineSlotProps {
   time: string;
@@ -60,23 +58,6 @@ export function TimelineSlot({ time, tasks, selectedDate }: TimelineSlotProps) {
           >
             <div className="flex items-center justify-between">
               <p className="font-medium">{task.title}</p>
-              {(task.reschedule_count && task.reschedule_count > 0) && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="ml-2 flex items-center">
-                        <AlertCircle size={16} className="text-amber-200" />
-                        {task.reschedule_count > 1 && (
-                          <span className="ml-1 text-xs text-amber-200">×{task.reschedule_count}</span>
-                        )}
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent className="bg-slate-800 text-white border-slate-700">
-                      <p>Rescheduled {task.reschedule_count} {task.reschedule_count === 1 ? 'time' : 'times'}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
             </div>
             {task.start_time && task.end_time && (
               <p className="text-sm opacity-90">

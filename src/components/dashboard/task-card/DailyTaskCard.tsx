@@ -3,7 +3,7 @@ import { memo } from "react";
 import { Task } from "../TaskBoard";
 import { TaskStatusIndicator } from "../TaskStatusIndicator";
 import { cn } from "@/lib/utils";
-import { AlertCircle, Bell, Mic } from "lucide-react";
+import { Bell, Mic } from "lucide-react";
 import { TaskCardProps } from "./types";
 import { useTaskAssignmentInfo } from "./useTaskAssignmentInfo";
 import { TaskAssignmentIcons } from "./TaskAssignmentIcons";
@@ -109,7 +109,6 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
       <TaskStatusIndicator 
         status={task.status} 
         time={timeDisplay}
-        rescheduleCount={task.reschedule_count}
         onClick={(e) => {
           e.stopPropagation();
           onComplete();
@@ -127,23 +126,6 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
             )}
             {hasAudioAttachment && (
               <Mic className="w-4 h-4 text-[#0EA5E9]" />
-            )}
-            {(task.reschedule_count && task.reschedule_count > 0) && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div className="flex items-center">
-                      <AlertCircle className="w-4 h-4 text-amber-200 shrink-0" />
-                      {task.reschedule_count > 1 && (
-                        <span className="ml-0.5 text-xs text-amber-200">×{task.reschedule_count}</span>
-                      )}
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent className="bg-slate-800 text-white border-slate-700">
-                    <p>Rescheduled {task.reschedule_count} {task.reschedule_count === 1 ? 'time' : 'times'}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
             )}
             <TaskAssignmentIcons 
               task={task} 
