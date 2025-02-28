@@ -6,10 +6,10 @@ import { AddTaskDrawer } from "@/components/dashboard/AddTaskDrawer";
 import { Button } from "@/components/ui/button";
 import { Plus, Search } from "lucide-react";
 import { useState } from "react";
-import { TimerDialog } from "@/components/timer/TimerDialog";
+import { SearchDialog } from "@/components/search/SearchDialog";
 
 export function MobileHeader() {
-  const [isTimerOpen, setIsTimerOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   return (
     <header className="fixed top-0 left-0 right-0 h-[72px] z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -30,11 +30,11 @@ export function MobileHeader() {
               variant="outline"
               size="icon"
               className="h-9 w-9 rounded-full"
-              onClick={() => setIsTimerOpen(true)}
+              onClick={() => setIsSearchOpen(true)}
             >
               <Search className="h-5 w-5" />
             </Button>
-            <TimerDialog isOpen={isTimerOpen} onOpenChange={setIsTimerOpen} />
+            <SearchDialog isOpen={isSearchOpen} onOpenChange={setIsSearchOpen} />
             <HeaderNotifications />
             <HeaderUserMenu />
           </div>
