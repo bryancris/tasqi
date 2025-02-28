@@ -64,21 +64,28 @@ const SheetContent = React.forwardRef<
       onPointerDownOutside={(e) => {
         // Prevent closing the sheet when clicking on calendar or popover elements
         if (e.target instanceof HTMLElement) {
+          // Check for any calendar-related elements
           if (e.target.closest('.rdp') || 
               e.target.closest('.react-calendar') || 
               e.target.closest('.calendar') || 
               e.target.closest('[data-radix-popper-content-wrapper]') ||
               e.target.closest('[data-radix-popup-content]') ||
+              e.target.closest('.DayPicker') ||
+              e.target.closest('.DayPicker-Month') ||
+              e.target.closest('.DayPicker-Day') ||
               document.querySelector('[data-radix-popper-content-wrapper]')?.contains(e.target) ||
               document.querySelector('.z-\\[9999\\]')?.contains(e.target)) {
+            console.log("Preventing sheet close due to calendar interaction");
             e.preventDefault();
+            return;
           }
         }
         
-        // Also check if the clicked element is actually the popover content or its children
+        // Check if the clicked element is part of an open popover
         const popoverElements = document.querySelectorAll('[role="dialog"][data-state="open"]');
         for (const element of popoverElements) {
           if (element.contains(e.target as Node)) {
+            console.log("Preventing sheet close due to popover interaction");
             e.preventDefault();
             return;
           }

@@ -29,17 +29,22 @@ export function DateSelector({ date, onDateChange, className }: DateSelectorProp
   
   const handleSelect = (newDate: Date | undefined) => {
     console.log("Date selected:", newDate);
-    setSelectedDate(newDate);
     
     if (newDate) {
+      setSelectedDate(newDate);
       const formattedDate = format(newDate, 'yyyy-MM-dd');
       console.log("Formatted date to pass to parent:", formattedDate);
+      
+      // Call onDateChange immediately to ensure parent state updates
       onDateChange(formattedDate);
       
-      // Delay closing the popover to allow the state to update
-      setTimeout(() => {
-        setOpen(false);
-      }, 300);
+      // Using requestAnimationFrame to ensure the state has been updated
+      // before closing the popover
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setOpen(false);
+        });
+      });
     }
   };
 
@@ -65,8 +70,8 @@ export function DateSelector({ date, onDateChange, className }: DateSelectorProp
         align="start"
         sideOffset={4}
         side="bottom"
-        onInteractOutside={(e) => {
-          // Prevent outside clicks from closing the popover when clicking on calendar UI elements
+        onInteractOutside={e => {
+          // Don't close the popover when interacting with calendar elements
           if (e.target instanceof HTMLElement) {
             if (e.target.closest('.react-calendar') || 
                 e.target.closest('.rdp') || 
@@ -82,7 +87,7 @@ export function DateSelector({ date, onDateChange, className }: DateSelectorProp
           selected={selectedDate}
           onSelect={handleSelect}
           initialFocus
-          className="bg-white p-3"
+          className="calendar bg-white p-3"
         />
       </PopoverContent>
     </Popover>
