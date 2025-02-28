@@ -7,7 +7,7 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { startOfDay, isAfter } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { MobileTimelineSection } from "../timeline/MobileTimelineSection";
+import { TimelineSection } from "../timeline/MobileTimelineSection";
 
 export interface MobileTaskViewProps {
   tasks: Task[];
@@ -86,7 +86,7 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
               </SortableContext>
             </DndContext>
           ) : (
-            <MobileTimelineSection 
+            <TimelineSection 
               selectedDate={selectedDate}
               onDateChange={onDateChange}
             />
