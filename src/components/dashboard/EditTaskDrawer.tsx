@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Task } from "./TaskBoard";
@@ -72,6 +73,11 @@ export function EditTaskDrawer({
     }
   };
 
+  const handleDateChange = (newDate: string) => {
+    console.log("Date changed in EditTaskDrawer:", newDate);
+    setDate(newDate);
+  };
+
   const handleSubmit = async () => {
     setIsLoading(true);
     try {
@@ -96,6 +102,7 @@ export function EditTaskDrawer({
         });
       }
       
+      console.log("Updating task with data:", updateData);
       const {
         error: taskError
       } = await supabase.from('tasks').update(updateData).eq('id', task.id);
@@ -169,7 +176,7 @@ export function EditTaskDrawer({
             onTitleChange={setTitle}
             onDescriptionChange={setDescription}
             onIsScheduledChange={setIsScheduled}
-            onDateChange={setDate}
+            onDateChange={handleDateChange}
             onStartTimeChange={setStartTime}
             onEndTimeChange={setEndTime}
             onPriorityChange={setPriority}

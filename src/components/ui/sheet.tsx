@@ -1,3 +1,4 @@
+
 import * as SheetPrimitive from "@radix-ui/react-dialog"
 import { cva, type VariantProps } from "class-variance-authority"
 import { X } from "lucide-react"
@@ -60,6 +61,29 @@ const SheetContent = React.forwardRef<
     <SheetPrimitive.Content
       ref={ref}
       className={cn(sheetVariants({ side }), className)}
+      onPointerDownOutside={(e) => {
+        // Prevent closing the sheet when clicking on calendar or popover elements
+        if (e.target instanceof HTMLElement) {
+          if (e.target.closest('.rdp') || 
+              e.target.closest('.react-calendar') || 
+              e.target.closest('.calendar') || 
+              e.target.closest('[data-radix-popper-content-wrapper]') ||
+              e.target.closest('[data-radix-popup-content]') ||
+              document.querySelector('[data-radix-popper-content-wrapper]')?.contains(e.target) ||
+              document.querySelector('.z-\\[9999\\]')?.contains(e.target)) {
+            e.preventDefault();
+          }
+        }
+        
+        // Also check if the clicked element is actually the popover content or its children
+        const popoverElements = document.querySelectorAll('[role="dialog"][data-state="open"]');
+        for (const element of popoverElements) {
+          if (element.contains(e.target as Node)) {
+            e.preventDefault();
+            return;
+          }
+        }
+      }}
       {...props}
     >
       {children}
@@ -128,4 +152,3 @@ export {
   Sheet, SheetClose,
   SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetOverlay, SheetPortal, SheetTitle, SheetTrigger
 }
-

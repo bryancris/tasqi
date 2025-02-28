@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { PopoverTrigger, PopoverContent, Popover } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -35,6 +36,7 @@ export function DateSelector({ date, onDateChange, className }: DateSelectorProp
       console.log("Formatted date to pass to parent:", formattedDate);
       onDateChange(formattedDate);
       
+      // Delay closing the popover to allow the state to update
       setTimeout(() => {
         setOpen(false);
       }, 300);
@@ -59,10 +61,21 @@ export function DateSelector({ date, onDateChange, className }: DateSelectorProp
         </Button>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-auto p-0 bg-white border border-gray-100 shadow-lg rounded-lg z-[200]" 
+        className="w-auto p-0 bg-white border border-gray-100 shadow-lg rounded-lg z-[9999]" 
         align="start"
         sideOffset={4}
         side="bottom"
+        onInteractOutside={(e) => {
+          // Prevent outside clicks from closing the popover when clicking on calendar UI elements
+          if (e.target instanceof HTMLElement) {
+            if (e.target.closest('.react-calendar') || 
+                e.target.closest('.rdp') || 
+                e.target.closest('.calendar') || 
+                e.target.closest('[data-radix-popper-content-wrapper]')) {
+              e.preventDefault();
+            }
+          }
+        }}
       >
         <Calendar
           mode="single"
