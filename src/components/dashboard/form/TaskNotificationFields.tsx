@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useEffect, useState } from "react";
-import { useNotifications } from "@/hooks/use-notifications";
+import { useNotifications } from "@/hooks/notifications/use-notifications";
 import { detectPlatform } from "@/utils/notifications/platformDetection";
 
 interface TaskNotificationFieldsProps {
@@ -50,7 +50,10 @@ export function TaskNotificationFields({
     
     try {
       if (isIOSPWA) {
+        console.log('🍎 Enabling iOS PWA simplified notifications');
+        
         localStorage.setItem('ios_pwa_notifications_enabled', 'true');
+        
         onReminderEnabledChange(true);
         
         if ('Notification' in window) {

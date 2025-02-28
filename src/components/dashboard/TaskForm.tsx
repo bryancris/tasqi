@@ -1,3 +1,4 @@
+
 import { ShareTaskDialog } from "./ShareTaskDialog";
 import { FormSubmitButton } from "./form/sections/FormSubmitButton";
 import { TaskFormContent } from "./form/TaskFormContent";
@@ -6,7 +7,7 @@ import { Task, TaskPriority } from "./TaskBoard";
 import { useChat } from "@/hooks/use-chat";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useNotifications } from "@/hooks/use-notifications";
+import { useNotifications } from "@/hooks/notifications/use-notifications";
 import { Subtask } from "./subtasks/SubtaskList";
 import { useTaskAIResponse } from "@/hooks/use-task-ai-response";
 import { detectPlatform } from "@/utils/notifications/platformDetection";

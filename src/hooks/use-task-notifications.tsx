@@ -4,7 +4,7 @@ import { useTasks } from '@/hooks/use-tasks';
 import { Task } from '@/components/dashboard/TaskBoard';
 import { isToday, parseISO, isFuture } from 'date-fns';
 import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
-import { useNotifications } from '@/components/notifications/NotificationsManager';
+import { useNotifications } from '@/hooks/notifications/use-notifications';
 import { showBrowserNotification, playNotificationSound } from '@/utils/notifications/notificationUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
