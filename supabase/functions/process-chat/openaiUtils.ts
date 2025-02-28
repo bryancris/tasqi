@@ -1,5 +1,5 @@
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 // Initialize the Supabase client with environment variables
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
@@ -92,5 +92,14 @@ export const processChatWithOpenAI = async (message: string, userId: string, pre
   } catch (error) {
     console.error('Error processing chat with OpenAI:', error);
     throw error;
+  }
+};
+
+export const openaiCompletion = async (message: string, context: string): Promise<string> => {
+  try {
+    return await processChatWithOpenAI(message, '', []);
+  } catch (error) {
+    console.error('Error with OpenAI completion:', error);
+    return "I'm having trouble understanding that right now. Can you try again?";
   }
 };

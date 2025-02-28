@@ -1,6 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { processMessage, createTaskFromMessage } from './taskUtils.ts';
 import { openaiCompletion } from './openaiUtils.ts';
 
@@ -118,8 +118,8 @@ function isTaskCreationRequest(message: string): boolean {
     new RegExp(`\\b${indicator}\\b`).test(lowerMessage)
   );
   
-  // Check for time patterns like "3:00 PM" or "15:00"
-  const hasTimePattern = /\b((1[0-2]|0?[1-9])(?::([0-5][0-9]))?\s*(am|pm)|([01]?[0-9]|2[0-3]):([0-5][0-9]))\b/i.test(lowerMessage);
+  // Check for time patterns like "4pm", "3:00 PM" or "15:00"
+  const hasTimePattern = /\b((1[0-2]|0?[1-9])(?::([0-5][0-9]))?\s*(am|pm|a|p)|([01]?[0-9]|2[0-3]):([0-5][0-9]))\b/i.test(lowerMessage);
   
   // Check for date patterns like "05/20" or "May 20"
   const hasDatePattern = /\b(0?[1-9]|1[0-2])[\/\-](0?[1-9]|[12][0-9]|3[01])\b/.test(lowerMessage) ||
