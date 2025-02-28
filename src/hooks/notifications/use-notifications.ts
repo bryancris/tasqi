@@ -60,15 +60,12 @@ export function useNotifications() {
     }
   };
   
-  // Provide the showNotification method from the notifications context
-  const showNotification = notificationContext.showNotification;
-  
   return {
     isSubscribed: implementation.isSubscribed,
     isLoading: implementation.isLoading,
     enableNotifications,
     disableNotifications,
     checkSubscriptionStatus: implementation.checkSubscriptionStatus,
-    showNotification
+    showNotification: notificationContext.showNotification
   };
 }
