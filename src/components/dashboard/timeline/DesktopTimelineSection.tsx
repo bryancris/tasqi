@@ -6,9 +6,10 @@ import { Task } from "../TaskBoard";
 import { supabase } from "@/integrations/supabase/client";
 import { format, isSameDay, parseISO } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import { DateSelector } from "../schedule/DateSelector";
 import { useTimelineTasks } from "@/hooks/use-timeline-tasks";
+import { cn } from "@/lib/utils";
 
 interface DesktopTimelineSectionProps {
   selectedDate: Date;
@@ -72,24 +73,46 @@ export function DesktopTimelineSection({ selectedDate, onDateChange }: DesktopTi
   };
 
   return (
-    <Card className="h-full bg-gradient-to-t from-[#E6E9F0] to-[#EEF1F5] border-none shadow-sm">
-      <CardHeader className="bg-white/70 border-b">
-        <CardTitle>Timeline</CardTitle>
-        <div className="flex items-center justify-between mt-2">
-          <Button variant="ghost" size="icon" onClick={handlePrevDay}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <DateSelector 
-            date={format(selectedDate, 'yyyy-MM-dd')}
-            onDateChange={(newDate) => onDateChange(new Date(newDate))}
-          />
-          <Button variant="ghost" size="icon" onClick={handleNextDay}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+    <Card className="h-full bg-gradient-to-t from-[#E6E9F0] to-[#EEF1F5] border-none shadow-sm overflow-hidden">
+      <CardHeader className="bg-gradient-to-r from-[#2EBDAE] to-[#3E8DE3] p-0 border-none">
+        <div className="p-4 flex flex-col space-y-3">
+          <CardTitle className="text-white text-xl font-semibold tracking-wide">Timeline</CardTitle>
+          <div className="flex items-center justify-between">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handlePrevDay}
+              className="h-9 w-9 rounded-full text-white hover:bg-white/20 transition-colors"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+            
+            <div className="relative flex items-center justify-center bg-white/10 backdrop-blur-sm px-4 py-2.5 rounded-full border border-white/20 shadow-sm min-w-[200px]">
+              <Calendar className="h-4 w-4 text-white/90 mr-2.5" />
+              <DateSelector 
+                date={format(selectedDate, 'yyyy-MM-dd')}
+                onDateChange={(newDate) => onDateChange(new Date(newDate))}
+                className="text-white font-medium text-sm"
+              />
+            </div>
+            
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handleNextDay}
+              className="h-9 w-9 rounded-full text-white hover:bg-white/20 transition-colors"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
       </CardHeader>
-      <CardContent className="bg-white/50">
-        <div className="space-y-4">
+      <CardContent className={cn(
+        "bg-white/70 p-0",
+        "max-h-[calc(100vh-16rem)]",
+        "overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
+      )}>
+        <div className="space-y-2 p-4">
           {timeSlots.map((timeSlot) => (
             <TimelineSlot 
               key={timeSlot} 
