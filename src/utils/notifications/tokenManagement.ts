@@ -6,12 +6,21 @@ import { TokenResponse, detectPlatform } from "./platformDetection";
 
 export async function getFCMToken(): Promise<string | null> {
   try {
-    // Generate a unique token for web notifications
-    const token = 'web_' + Math.random().toString(36).substring(2);
-    console.log('✅ Web notification token generated:', token);
-    return token;
+    const platform = detectPlatform();
+    
+    if (platform === 'ios-pwa') {
+      // Generate an iOS-specific token format
+      const token = 'ios_pwa_' + Math.random().toString(36).substring(2) + '_' + Date.now();
+      console.log('✅ iOS PWA notification token generated:', token);
+      return token;
+    } else {
+      // Generate a unique token for web notifications
+      const token = 'web_' + Math.random().toString(36).substring(2);
+      console.log('✅ Web notification token generated:', token);
+      return token;
+    }
   } catch (error) {
-    console.error('❌ Error generating web token:', error);
+    console.error('❌ Error generating notification token:', error);
     return null;
   }
 }
@@ -52,7 +61,9 @@ export async function saveTokenToSupabase(tokenResponse: TokenResponse): Promise
         platform_details: tokenResponse.platformDetails as Json,
         metadata: {
           userAgent: navigator.userAgent,
-          language: navigator.language
+          language: navigator.language,
+          isStandalone: tokenResponse.platformDetails.isStandalone,
+          isIOS: tokenResponse.platformDetails.isIOS
         } as Json,
         notification_settings: {
           enabled: true,
@@ -64,7 +75,7 @@ export async function saveTokenToSupabase(tokenResponse: TokenResponse): Promise
       });
 
     if (error) throw error;
-    console.log(`✅ Web token saved successfully`);
+    console.log(`✅ ${tokenResponse.platform} token saved successfully`);
   } catch (error) {
     console.error('❌ Error saving token to Supabase:', error);
     toast.error('Failed to save notification token');
@@ -77,16 +88,23 @@ export async function getAndSaveToken(): Promise<TokenResponse | null> {
   console.log('🔍 Detected platform:', platform);
   
   try {
-    console.log('🌐 Using web notification system...');
+    console.log(`🌐 Using ${platform} notification system...`);
     const token = await getFCMToken();
     if (token) {
+      // Check if we're on iOS PWA
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+                          (window.navigator as any).standalone === true;
+      
       const tokenResponse: TokenResponse = {
         token: token,
-        platform: 'web',
+        platform: platform,
         source: 'web',
         platformDetails: {
           userAgent: navigator.userAgent,
-          language: navigator.language
+          language: navigator.language,
+          isStandalone: isStandalone,
+          isIOS: isIOS
         }
       };
       await saveTokenToSupabase(tokenResponse);

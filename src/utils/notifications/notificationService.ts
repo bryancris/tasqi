@@ -4,6 +4,7 @@ import { NotificationData, NotificationSubscription, NotificationAction } from "
 import { ServiceWorkerManager } from "./serviceWorkerManager";
 import { SubscriptionManager } from "./subscriptionManager";
 import { QueueManager } from "./queueManager";
+import { detectPlatform } from "./platformDetection";
 
 class NotificationService {
   private swManager: ServiceWorkerManager;
@@ -12,10 +13,12 @@ class NotificationService {
   private periodicSyncInterval = 15; // minutes
   private initialized = false;
   private audioContext: AudioContext | null = null;
+  private platform: 'web' | 'ios-pwa';
 
   constructor() {
     this.swManager = new ServiceWorkerManager();
     this.queueManager = new QueueManager();
+    this.platform = detectPlatform();
   }
 
   async initialize(): Promise<void> {
@@ -25,18 +28,30 @@ class NotificationService {
     }
 
     try {
-      console.log('🚀 Initializing notification service...');
+      console.log('🚀 Initializing notification service for platform:', this.platform);
       const registration = await this.swManager.register();
       
       if (registration) {
         this.subManager = new SubscriptionManager(registration);
         await this.queueManager.loadQueuedNotifications();
-        await this.swManager.setupBackgroundSync();
-        await this.swManager.setupPeriodicSync(this.periodicSyncInterval);
+        
+        // Background sync has limited support on iOS
+        if (this.platform !== 'ios-pwa') {
+          await this.swManager.setupBackgroundSync();
+          await this.swManager.setupPeriodicSync(this.periodicSyncInterval);
+        } else {
+          console.log('🍎 Skipping background/periodic sync setup for iOS PWA');
+        }
+        
         await this.queueManager.processNotificationQueue(this.showNotification.bind(this));
         
         // Initialize audio context for notification sounds
-        this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        try {
+          this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        } catch (audioError) {
+          console.warn('⚠️ Could not initialize audio context:', audioError);
+          // This is not critical, continue without audio context
+        }
         
         console.log('✅ Notification service initialized');
         this.initialized = true;
@@ -56,6 +71,25 @@ class NotificationService {
 
   private async playNotificationSound(): Promise<void> {
     try {
+      // For iOS, we need user interaction to play sounds
+      // This might not work in all contexts on iOS
+      const isIOS = this.platform === 'ios-pwa';
+      
+      if (isIOS) {
+        console.log('🍎 Attempting to play notification sound on iOS');
+        // On iOS, use simple Audio element instead of AudioContext
+        const audio = new Audio('/notification-sound.mp3');
+        audio.volume = 0.5;
+        
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(error => {
+            console.warn('🍎 iOS audio play failed (expected without user interaction):', error);
+          });
+        }
+        return;
+      }
+      
       if (!this.audioContext) {
         this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       }
@@ -74,7 +108,7 @@ class NotificationService {
   }
 
   async showNotification(notification: NotificationData): Promise<void> {
-    console.log('🔔 Showing PWA notification:', notification);
+    console.log('🔔 Showing PWA notification on platform:', this.platform);
     
     const registration = this.swManager.getRegistration();
     if (!registration) {
@@ -86,6 +120,50 @@ class NotificationService {
       // Play notification sound
       await this.playNotificationSound();
 
+      // Handle iOS PWA notifications differently
+      if (this.platform === 'ios-pwa') {
+        console.log('🍎 Using iOS PWA notification approach');
+        
+        // On iOS PWAs, in-app toast notifications are more reliable
+        // than system notifications, which have limitations
+        toast(notification.title, {
+          description: notification.message,
+          duration: 10000,
+          action: {
+            label: 'View',
+            onClick: () => {
+              // Navigate to appropriate screen based on notification type
+              if (notification.data?.taskId) {
+                window.location.href = '/dashboard';
+              }
+            }
+          }
+        });
+        
+        // Still try to show a system notification on iOS
+        // But with simpler options for better compatibility
+        try {
+          // Use the simpler options for iOS
+          await registration.showNotification(notification.title, {
+            body: notification.message,
+            icon: '/pwa-192x192.png',
+            // Avoid using advanced features that might not work on iOS
+            tag: notification.groupId || 'task',
+            data: { 
+              url: '/dashboard',
+              ...notification.data
+            }
+          });
+          console.log('✅ iOS system notification attempted');
+        } catch (iosNotifError) {
+          console.warn('🍎 iOS system notification failed (expected limitation):', iosNotifError);
+          // This is expected to fail sometimes on iOS - we already showed toast
+        }
+        
+        return;
+      }
+
+      // Standard web platform notification
       const notificationOptions: NotificationOptions = {
         body: notification.message,
         icon: '/pwa-192x192.png',

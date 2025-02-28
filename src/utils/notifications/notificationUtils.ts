@@ -1,6 +1,6 @@
 
 import { Task } from "@/components/dashboard/TaskBoard";
-import { isNotificationSupported } from "./platformDetection";
+import { isNotificationSupported, detectPlatform, isSafari } from "./platformDetection";
 
 // Separate browser notification handling
 async function requestNotificationPermission(): Promise<boolean> {
@@ -10,6 +10,26 @@ async function requestNotificationPermission(): Promise<boolean> {
       return false;
     }
 
+    const platform = detectPlatform();
+    if (platform === 'ios-pwa') {
+      console.log('🍎 iOS PWA notification permission check');
+      // iOS handles permissions differently, check if we have any permission
+      if (Notification.permission === 'granted') {
+        return true;
+      }
+      
+      // We'll try to request permission, but this might not show a prompt on iOS
+      try {
+        const permission = await Notification.requestPermission();
+        return permission === 'granted';
+      } catch (iosError) {
+        console.warn('🍎 iOS notification permission request issue:', iosError);
+        // Return true to allow app-internal notifications even if system ones fail
+        return true;
+      }
+    }
+
+    // Standard flow for other platforms
     if (Notification.permission === 'granted') {
       console.log('✅ Notification permission already granted');
       return true;
@@ -35,19 +55,80 @@ export const playNotificationSound = async () => {
     console.log('🔊 Playing notification sound...');
     const audio = new Audio('/notification-sound.mp3');
     audio.volume = 0.5;
-    await audio.play();
-    console.log('✅ Notification sound played successfully');
+    
+    // iOS requires user interaction to play audio
+    // We'll try to play, but it might fail silently on iOS
+    const playPromise = audio.play();
+    
+    if (playPromise !== undefined) {
+      playPromise
+        .then(() => {
+          console.log('✅ Notification sound played successfully');
+        })
+        .catch(error => {
+          console.warn('⚠️ Could not autoplay notification sound (common on iOS):', error);
+          // On iOS this will likely fail without user interaction
+        });
+    }
   } catch (error) {
     console.warn('❌ Could not play notification sound:', error);
   }
 };
 
-// Show browser notification
+// Show browser notification with iOS PWA support
 export async function showBrowserNotification(task: Task, type: 'reminder' | 'shared' | 'assignment' = 'reminder'): Promise<boolean> {
   try {
     console.log('🔔 Attempting to show notification for task:', task.id);
     
+    const platform = detectPlatform();
     const permissionGranted = await requestNotificationPermission();
+    
+    // For iOS PWA, we'll show in-app notifications using toast
+    // as system notifications may not be reliable
+    if (platform === 'ios-pwa') {
+      console.log('🍎 Using iOS PWA notification approach');
+      
+      // Try to use the Notification API, but it might not work fully on iOS
+      if (permissionGranted && 'Notification' in window) {
+        try {
+          const notificationTitle = type === 'reminder' ? 'Task Reminder' :
+                                  type === 'shared' ? 'Task Shared' :
+                                  'New Task Assignment';
+                                  
+          // Use simpler options for iOS compatibility
+          const notification = new Notification(notificationTitle, {
+            body: task.title,
+            icon: '/favicon.ico'
+          });
+          
+          console.log('✅ iOS notification shown successfully');
+          return true;
+        } catch (iosNotificationError) {
+          console.warn('🍎 iOS notification creation failed, falling back:', iosNotificationError);
+          // Fall through to use service worker messaging
+        }
+      }
+      
+      // Use service worker to handle iOS notifications if available
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: 'SHOW_IOS_NOTIFICATION',
+          payload: {
+            id: task.id,
+            title: type === 'reminder' ? 'Task Reminder' : 
+                   type === 'shared' ? 'Task Shared' : 
+                   'New Task Assignment',
+            body: task.title
+          }
+        });
+        console.log('✅ iOS notification request sent to service worker');
+        return true;
+      }
+      
+      return false;
+    }
+    
+    // Standard web notification flow
     if (!permissionGranted) {
       console.warn('❌ No permission to show notifications');
       return false;
