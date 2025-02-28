@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNotifications } from "@/hooks/use-notifications";
 import { detectPlatform } from "@/utils/notifications/platformDetection";
 
@@ -32,34 +32,36 @@ const REMINDER_TIME_OPTIONS = [
 export function TaskNotificationFields({
   reminderEnabled,
   reminderTime,
+  fcmStatus,
   onReminderEnabledChange,
   onReminderTimeChange,
 }: TaskNotificationFieldsProps) {
-  const { isSubscribed, isLoading, enableNotifications, disableNotifications } = useNotifications();
+  const { isSubscribed, isLoading, enableNotifications } = useNotifications();
+  const [localIsLoading, setLocalIsLoading] = useState(false);
   const platform = detectPlatform();
   const isIOSPWA = platform === 'ios-pwa';
 
-  // Reset the toggle if notifications are disabled
-  useEffect(() => {
-    if (!isSubscribed && reminderEnabled) {
-      onReminderEnabledChange(false);
-    }
-  }, [isSubscribed, reminderEnabled, onReminderEnabledChange]);
-
+  // This function handles the toggle change, but with improved state management
   const handleToggle = async (enabled: boolean) => {
     if (!enabled) {
+      // Simply turn off notifications
       onReminderEnabledChange(false);
       return;
     }
 
+    // Set local loading state to prevent multiple clicks
+    setLocalIsLoading(true);
+    
     try {
-      if (!isSubscribed) {
-        await enableNotifications();
-      }
-      onReminderEnabledChange(true);
+      // Call the parent's handler which will attempt to enable notifications
+      await onReminderEnabledChange(true);
+      
+      // The toggle state will be managed by the parent component (TaskForm)
+      // This ensures we don't have conflicting state management
     } catch (error) {
-      console.error('Error toggling notifications:', error);
-      onReminderEnabledChange(false);
+      console.error('Error enabling notifications:', error);
+    } finally {
+      setLocalIsLoading(false);
     }
   };
 
@@ -71,18 +73,18 @@ export function TaskNotificationFields({
             id="reminder"
             checked={reminderEnabled}
             onCheckedChange={handleToggle}
-            disabled={isLoading}
+            disabled={isLoading || localIsLoading || fcmStatus === 'loading'}
           />
           <Label htmlFor="reminder" className="flex items-center gap-2">
             Enable notifications
-            {isLoading && (
+            {(isLoading || localIsLoading || fcmStatus === 'loading') && (
               <Spinner className="w-4 h-4" />
             )}
           </Label>
         </div>
       </div>
 
-      {reminderEnabled && isSubscribed && (
+      {reminderEnabled && (
         <div className="flex items-center space-x-2">
           <Label htmlFor="reminderTime">Notify me</Label>
           <Select

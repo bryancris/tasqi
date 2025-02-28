@@ -2,7 +2,7 @@
 import { ShareTaskDialog } from "./ShareTaskDialog";
 import { FormSubmitButton } from "./form/sections/FormSubmitButton";
 import { TaskFormContent } from "./form/TaskFormContent";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Task, TaskPriority } from "./TaskBoard";
 import { useChat } from "@/hooks/use-chat";
 import { toast } from "@/components/ui/use-toast";
@@ -69,7 +69,7 @@ export function TaskForm({
   const { message, setMessage } = useChat();
   const isMobile = useIsMobile();
   const [fcmStatus, setFcmStatus] = useState<'loading' | 'ready' | 'error'>('ready');
-  const { isSubscribed, isLoading: notificationsLoading, enableNotifications } = useNotifications();
+  const { isSubscribed, isLoading: notificationsLoading, enableNotifications, checkSubscriptionStatus } = useNotifications();
   const platform = detectPlatform();
   const isIOSPWA = platform === 'ios-pwa';
 
@@ -81,17 +81,32 @@ export function TaskForm({
     onSubtasksChange,
   });
 
+  // Synchronize the reminderEnabled state with isSubscribed when appropriate
+  useEffect(() => {
+    // Only synchronize in specific cases to avoid toggle reset issues
+    if (isSubscribed && !reminderEnabled && !notificationsLoading && fcmStatus !== 'loading') {
+      console.log('Syncing reminder state: notifications are subscribed but reminder is disabled');
+      onReminderEnabledChange(true);
+    }
+  }, [isSubscribed, reminderEnabled, notificationsLoading, fcmStatus, onReminderEnabledChange]);
+
   const handleReminderToggle = async (enabled: boolean) => {
     try {
       if (enabled) {
         setFcmStatus('loading');
         
         // Use the enableNotifications function from useNotifications hook
-        // instead of the previous setupPushSubscription utility
         await enableNotifications();
         
-        setFcmStatus('ready');
+        // Set the UI state to enabled immediately
+        // This prevents the toggle from flickering back to disabled
         onReminderEnabledChange(true);
+        setFcmStatus('ready');
+        
+        // Check subscription status again after a delay
+        setTimeout(() => {
+          checkSubscriptionStatus();
+        }, 500);
         
         if (isIOSPWA) {
           toast({
@@ -110,6 +125,8 @@ export function TaskForm({
     } catch (error) {
       console.error('Error setting up notifications:', error);
       setFcmStatus('error');
+      
+      // Important: Make sure the UI reflects the failed state
       onReminderEnabledChange(false);
       
       if (isIOSPWA) {

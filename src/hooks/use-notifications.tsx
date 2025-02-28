@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { notificationService } from '@/utils/notifications/notificationService';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -8,16 +8,18 @@ import { detectPlatform } from '@/utils/notifications/platformDetection';
 export function useNotifications() {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [lastEnableAttempt, setLastEnableAttempt] = useState(0);
   const platform = detectPlatform();
+  const isIOSPWA = platform === 'ios-pwa';
 
-  useEffect(() => {
-    checkSubscriptionStatus();
-  }, []);
-
-  async function checkSubscriptionStatus() {
+  // Check subscription status with debounce for iOS PWA
+  const checkSubscriptionStatus = useCallback(async () => {
     try {
+      setIsLoading(true);
+      
       // For iOS PWA, we need a different approach to check subscription
-      if (platform === 'ios-pwa') {
+      if (isIOSPWA) {
+        console.log('🍎 Checking iOS PWA subscription status');
         // Check if we have a stored token for this device
         const { data } = await supabase.auth.getSession();
         if (data.session?.user) {
@@ -29,11 +31,11 @@ export function useNotifications() {
             .limit(1);
             
           if (!error && tokens && tokens.length > 0) {
+            console.log('✅ iOS PWA notification token found, setting subscribed to true');
             setIsSubscribed(true);
-            console.log('✅ iOS PWA notification token found');
           } else {
+            console.log('ℹ️ No iOS PWA notification token found, setting subscribed to false');
             setIsSubscribed(false);
-            console.log('ℹ️ No iOS PWA notification token found');
           }
         }
       } else {
@@ -41,7 +43,14 @@ export function useNotifications() {
         try {
           const registration = await navigator.serviceWorker.ready;
           const subscription = await registration.pushManager.getSubscription();
-          setIsSubscribed(!!subscription);
+          
+          if (subscription) {
+            console.log('✅ Web push subscription found');
+            setIsSubscribed(true);
+          } else {
+            console.log('ℹ️ No web push subscription found');
+            setIsSubscribed(false);
+          }
         } catch (err) {
           console.error('Error checking push subscription:', err);
           setIsSubscribed(false);
@@ -53,14 +62,33 @@ export function useNotifications() {
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [isIOSPWA]);
+
+  // Initial check when component mounts
+  useEffect(() => {
+    checkSubscriptionStatus();
+  }, [checkSubscriptionStatus]);
+
+  // Re-check subscription status after each enable attempt with a delay
+  // This is crucial for iOS PWA where the token might take a moment to register
+  useEffect(() => {
+    if (lastEnableAttempt > 0) {
+      // Add a slight delay to allow the backend operation to complete
+      const timeoutId = setTimeout(() => {
+        checkSubscriptionStatus();
+      }, 1000);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [lastEnableAttempt, checkSubscriptionStatus]);
 
   async function enableNotifications() {
     try {
       setIsLoading(true);
+      console.log(`🔔 Enabling notifications for platform: ${platform}`);
       
       // Special handling for iOS PWA
-      if (platform === 'ios-pwa') {
+      if (isIOSPWA) {
         console.log('🍎 Setting up iOS PWA notifications');
         
         // For iOS PWA, we need to first request permission
@@ -92,8 +120,7 @@ export function useNotifications() {
                 onClick: () => window.open('https://support.apple.com/guide/iphone/notifications-iph7c3d96bab/ios', '_blank')
               }
             });
-            setIsLoading(false);
-            return;
+            throw new Error('Notification permission denied');
           }
         }
         
@@ -101,8 +128,7 @@ export function useNotifications() {
         const { data: { session } } = await supabase.auth.getSession();
         if (!session?.user) {
           toast.error('You must be logged in to enable notifications');
-          setIsLoading(false);
-          return;
+          throw new Error('User not logged in');
         }
         
         // Generate a unique device token for iOS
@@ -131,11 +157,10 @@ export function useNotifications() {
         if (error) {
           console.error('Error saving iOS token:', error);
           toast.error('Failed to save notification settings');
-          setIsLoading(false);
-          return;
+          throw error;
         }
         
-        // Register the service worker if possible
+        // Register the service worker if possible (for future support)
         if ('serviceWorker' in navigator) {
           try {
             const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
@@ -144,7 +169,8 @@ export function useNotifications() {
             // Tell the service worker we want notifications
             if (registration.active) {
               registration.active.postMessage({
-                type: 'INIT_IOS_NOTIFICATIONS'
+                type: 'INIT_IOS_NOTIFICATIONS',
+                token: deviceToken
               });
             }
           } catch (swError) {
@@ -153,26 +179,37 @@ export function useNotifications() {
           }
         }
         
+        console.log('✅ iOS PWA notifications enabled successfully!');
+        // CRITICAL: Set isSubscribed to true immediately for UI responsiveness
         setIsSubscribed(true);
+        
         toast.success('Notifications enabled for this device', {
           description: 'Keep the app active to receive notifications'
         });
         
       } else {
         // Standard web notifications setup
+        console.log('🌐 Setting up standard web notifications');
         await notificationService.initialize();
         const subscription = await notificationService.subscribe();
         
         if (subscription) {
+          console.log('✅ Web notifications enabled successfully!');
+          // CRITICAL: Set isSubscribed to true immediately for UI responsiveness
           setIsSubscribed(true);
           toast.success('Notifications enabled successfully');
         } else {
-          toast.error('Failed to enable notifications');
+          throw new Error('Failed to create notification subscription');
         }
       }
+      
+      // Record this attempt to trigger the re-check effect
+      setLastEnableAttempt(Date.now());
+      return true;
     } catch (error) {
       console.error('Error enabling notifications:', error);
-      toast.error('Failed to enable notifications. Please try again.');
+      toast.error(error instanceof Error ? error.message : 'Failed to enable notifications. Please try again.');
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -183,7 +220,7 @@ export function useNotifications() {
       setIsLoading(true);
       
       // Special handling for iOS PWA
-      if (platform === 'ios-pwa') {
+      if (isIOSPWA) {
         console.log('🍎 Disabling iOS PWA notifications');
         
         // Remove iOS PWA tokens from Supabase
@@ -197,6 +234,7 @@ export function useNotifications() {
             
           if (error) {
             console.error('Error removing iOS tokens:', error);
+            throw error;
           }
         }
         
@@ -204,27 +242,33 @@ export function useNotifications() {
         toast.success('Notifications disabled');
       } else {
         // Standard web approach
-        const registration = await navigator.serviceWorker.ready;
-        const subscription = await registration.pushManager.getSubscription();
-        
-        if (subscription) {
-          await subscription.unsubscribe();
+        try {
+          const registration = await navigator.serviceWorker.ready;
+          const subscription = await registration.pushManager.getSubscription();
           
-          // Remove subscription from Supabase
-          const { error } = await supabase
-            .from('push_subscriptions')
-            .delete()
-            .eq('endpoint', subscription.endpoint);
+          if (subscription) {
+            await subscription.unsubscribe();
             
-          if (error) throw error;
-          
-          setIsSubscribed(false);
-          toast.success('Notifications disabled');
+            // Remove subscription from Supabase
+            const { error } = await supabase
+              .from('push_subscriptions')
+              .delete()
+              .eq('endpoint', subscription.endpoint);
+              
+            if (error) throw error;
+            
+            setIsSubscribed(false);
+            toast.success('Notifications disabled');
+          }
+        } catch (error) {
+          console.error('Error unsubscribing from push:', error);
+          throw error;
         }
       }
     } catch (error) {
       console.error('Error disabling notifications:', error);
       toast.error('Failed to disable notifications');
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -234,6 +278,7 @@ export function useNotifications() {
     isSubscribed,
     isLoading,
     enableNotifications,
-    disableNotifications
+    disableNotifications,
+    checkSubscriptionStatus
   };
 }
