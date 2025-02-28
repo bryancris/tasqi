@@ -7,9 +7,10 @@ import { Task, TaskPriority } from "./TaskBoard";
 import { useChat } from "@/hooks/use-chat";
 import { toast } from "@/components/ui/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { setupPushSubscription } from "@/utils/notifications/subscriptionUtils";
+import { useNotifications } from "@/hooks/use-notifications";
 import { Subtask } from "./subtasks/SubtaskList";
 import { useTaskAIResponse } from "@/hooks/use-task-ai-response";
+import { detectPlatform } from "@/utils/notifications/platformDetection";
 
 interface TaskFormProps {
   title: string;
@@ -68,6 +69,9 @@ export function TaskForm({
   const { message, setMessage } = useChat();
   const isMobile = useIsMobile();
   const [fcmStatus, setFcmStatus] = useState<'loading' | 'ready' | 'error'>('ready');
+  const { isSubscribed, isLoading: notificationsLoading, enableNotifications } = useNotifications();
+  const platform = detectPlatform();
+  const isIOSPWA = platform === 'ios-pwa';
 
   const { processingAIResponse } = useTaskAIResponse({
     onTitleChange,
@@ -81,18 +85,25 @@ export function TaskForm({
     try {
       if (enabled) {
         setFcmStatus('loading');
-        const subscription = await setupPushSubscription();
         
-        if (!subscription) {
-          throw new Error('Failed to setup push notifications');
-        }
+        // Use the enableNotifications function from useNotifications hook
+        // instead of the previous setupPushSubscription utility
+        await enableNotifications();
         
         setFcmStatus('ready');
         onReminderEnabledChange(true);
-        toast({
-          title: "Success",
-          description: "Notifications enabled successfully",
-        });
+        
+        if (isIOSPWA) {
+          toast({
+            title: "Notifications Enabled",
+            description: "iOS notifications will work best when the app is open",
+          });
+        } else {
+          toast({
+            title: "Success",
+            description: "Notifications enabled successfully",
+          });
+        }
       } else {
         onReminderEnabledChange(false);
       }
@@ -101,11 +112,19 @@ export function TaskForm({
       setFcmStatus('error');
       onReminderEnabledChange(false);
       
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : 'Failed to setup notifications. Please check browser permissions.',
-        variant: "destructive",
-      });
+      if (isIOSPWA) {
+        toast({
+          title: "Error",
+          description: "iOS PWA notification setup failed. Please try again or check Settings.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : 'Failed to setup notifications. Please check browser permissions.',
+          variant: "destructive",
+        });
+      }
     }
   };
 
