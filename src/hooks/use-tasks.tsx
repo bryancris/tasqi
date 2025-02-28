@@ -58,16 +58,31 @@ export function useTasks() {
       .map(sharedTask => {
         const task = sharedTask.task;
         
-        // Ensure task has all required properties or set defaults
+        // Ensure all required properties have default values
         const processedTask = {
           ...task,
-          // Set default values for any required properties that might be missing
+          // Required properties with defaults
           assignees: task.assignees || [],
+          completed_at: task.completed_at || null,
+          created_at: task.created_at || new Date().toISOString(),
+          date: task.date || null,
+          description: task.description || null,
+          end_time: task.end_time || null,
+          owner_id: task.owner_id || task.user_id,
+          position: task.position || 0,
+          priority: task.priority || 'low',
+          is_tracking: task.is_tracking || false,
+          reschedule_count: task.reschedule_count || 0,
+          reminder_enabled: task.reminder_enabled || false,
+          reminder_time: task.reminder_time || 15,
+          start_time: task.start_time || null,
+          time_spent: task.time_spent || 0,
+          updated_at: task.updated_at || new Date().toISOString(),
+          // Custom property for shared tasks
           shared: true,
           // Use the status from shared_tasks for shared tasks since that's the authoritative status for this user
           status: sharedTask.status === 'completed' ? 'completed' : 
                   (task.date ? 'scheduled' : 'unscheduled'),
-          completed_at: sharedTask.status === 'completed' ? new Date().toISOString() : null,
           // Include the shared_tasks record for reference
           shared_tasks: [sharedTask]
         };
