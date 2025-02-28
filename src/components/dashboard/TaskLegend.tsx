@@ -20,10 +20,6 @@ export function TaskLegend() {
         <Bell className="w-3 h-3 text-[#F97316]" />
         <span>Alert Set</span>
       </div>
-      <div className="flex items-center gap-1">
-        <Users className="w-3 h-3 text-[#22C55E]" />
-        <span>Group Task</span>
-      </div>
     </div>
   );
 }
