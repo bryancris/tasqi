@@ -76,27 +76,27 @@ export function TimelineSection({ tasks, selectedDate, onDateChange }: TimelineS
 
   return (
     <Card className="bg-white border-none shadow-sm">
-      <CardHeader className="bg-[#2EBDAE] border-none">
-        <CardTitle className="text-white">Timeline</CardTitle>
+      <CardHeader className="bg-white border-b border-gray-100">
+        <CardTitle className="text-gray-700">Timeline</CardTitle>
         <div className="flex items-center justify-between mt-2">
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={handlePrevDay}
-            className="text-white hover:bg-white/10"
+            className="text-gray-500 hover:bg-gray-50"
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <DateSelector 
             date={format(selectedDate, 'yyyy-MM-dd')}
             onDateChange={(newDate) => onDateChange(new Date(newDate))}
-            className="text-white"
+            className="text-gray-700"
           />
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={handleNextDay}
-            className="text-white hover:bg-white/10"
+            className="text-gray-500 hover:bg-gray-50"
           >
             <ChevronRight className="h-4 w-4" />
           </Button>

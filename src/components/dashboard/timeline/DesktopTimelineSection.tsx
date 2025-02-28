@@ -74,25 +74,25 @@ export function DesktopTimelineSection({ selectedDate, onDateChange }: DesktopTi
 
   return (
     <Card className="h-full border-none shadow-sm overflow-hidden bg-white">
-      <CardHeader className="bg-[#2EBDAE] p-0 border-none">
+      <CardHeader className="bg-white p-0 border-b border-gray-100">
         <div className="p-4 flex flex-col space-y-3">
-          <CardTitle className="text-white text-xl font-semibold tracking-wide">Timeline</CardTitle>
+          <CardTitle className="text-gray-700 text-xl font-semibold tracking-wide">Timeline</CardTitle>
           <div className="flex items-center justify-between">
             <Button 
               variant="ghost" 
               size="icon" 
               onClick={handlePrevDay}
-              className="h-9 w-9 rounded-full text-white hover:bg-white/20 transition-colors"
+              className="h-9 w-9 rounded-full text-gray-500 hover:bg-gray-50 transition-colors"
             >
               <ChevronLeft className="h-5 w-5" />
             </Button>
             
-            <div className="relative flex items-center justify-center bg-white/10 px-4 py-2.5 rounded-full border border-white/20 shadow-sm min-w-[200px]">
-              <Calendar className="h-4 w-4 text-white/90 mr-2.5" />
+            <div className="relative flex items-center justify-center bg-gray-50 px-4 py-2.5 rounded-full border border-gray-100 shadow-sm min-w-[200px]">
+              <Calendar className="h-4 w-4 text-gray-500 mr-2.5" />
               <DateSelector 
                 date={format(selectedDate, 'yyyy-MM-dd')}
                 onDateChange={(newDate) => onDateChange(new Date(newDate))}
-                className="text-white font-medium text-sm"
+                className="text-gray-700 font-medium text-sm"
               />
             </div>
             
@@ -100,7 +100,7 @@ export function DesktopTimelineSection({ selectedDate, onDateChange }: DesktopTi
               variant="ghost" 
               size="icon" 
               onClick={handleNextDay}
-              className="h-9 w-9 rounded-full text-white hover:bg-white/20 transition-colors"
+              className="h-9 w-9 rounded-full text-gray-500 hover:bg-gray-50 transition-colors"
             >
               <ChevronRight className="h-5 w-5" />
             </Button>
