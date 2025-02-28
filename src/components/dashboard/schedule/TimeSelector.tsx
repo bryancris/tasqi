@@ -18,11 +18,37 @@ export function TimeSelector({
   
   // Handle input changes and format with seconds
   const handleStartTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Add seconds to the time value
     onStartTimeChange(`${e.target.value}:00`);
+    
+    // If end time is empty or is the same as the old start time, set end time to start time + 1 hour
+    if (!endTime || endTime === startTime) {
+      // Split the time into hours and minutes
+      const [hours, minutes] = e.target.value.split(':').map(Number);
+      
+      // Add one hour to the start time
+      const endHours = (hours + 1) % 24;
+      
+      // Format the new end time with seconds
+      const newEndTime = `${endHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
+      
+      // Update the end time
+      onEndTimeChange(newEndTime);
+    }
   };
   
   const handleEndTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onEndTimeChange(`${e.target.value}:00`);
+  };
+  
+  // Remove seconds from time string for display in the input field
+  const formatTimeForInput = (time: string): string => {
+    if (!time) return '';
+    // If the time already has a colon, extract hours and minutes
+    if (time.includes(':')) {
+      return time.split(':').slice(0, 2).join(':');
+    }
+    return time; // Return as is if it doesn't match expected format
   };
   
   return (
@@ -33,7 +59,7 @@ export function TimeSelector({
           <Input
             type="time"
             id="startTime"
-            value={startTime.split(':').slice(0, 2).join(':')}
+            value={formatTimeForInput(startTime)}
             onChange={handleStartTimeChange}
             className="w-full"
           />
@@ -46,7 +72,7 @@ export function TimeSelector({
           <Input
             type="time"
             id="endTime"
-            value={endTime.split(':').slice(0, 2).join(':')}
+            value={formatTimeForInput(endTime)}
             onChange={handleEndTimeChange}
             className="w-full"
           />

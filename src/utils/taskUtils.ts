@@ -31,17 +31,14 @@ export const createTask = async ({
 
   // Calculate endTime if startTime is provided but endTime is not
   let calculatedEndTime = endTime;
-  if (startTime && !endTime) {
+  if (startTime && (!endTime || endTime.trim() === '')) {
     // Parse the hours and minutes from startTime
     const [hours, minutes] = startTime.split(':').map(Number);
     // Add one hour
-    let newHours = hours + 1;
-    // Handle overflow (if hours becomes 24 or greater)
-    if (newHours >= 24) {
-      newHours = newHours - 24;
-    }
+    const newHours = (hours + 1) % 24;
     // Format back to HH:MM:SS
     calculatedEndTime = `${newHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
+    console.log(`Calculated end time: ${calculatedEndTime} from start time: ${startTime}`);
   }
 
   const { data: existingTasks } = await supabase
@@ -75,17 +72,14 @@ export const createTask = async ({
 export const updateTask = async (taskId: number, updates: Partial<CreateTaskParams>) => {
   // Apply the same end time calculation logic for updates
   let updatedEndTime = updates.endTime;
-  if (updates.startTime && !updates.endTime) {
+  if (updates.startTime && (!updates.endTime || updates.endTime.trim() === '')) {
     // Parse the hours and minutes from startTime
     const [hours, minutes] = updates.startTime.split(':').map(Number);
     // Add one hour
-    let newHours = hours + 1;
-    // Handle overflow (if hours becomes 24 or greater)
-    if (newHours >= 24) {
-      newHours = newHours - 24;
-    }
+    const newHours = (hours + 1) % 24;
     // Format back to HH:MM:SS
     updatedEndTime = `${newHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
+    console.log(`Calculated updated end time: ${updatedEndTime} from start time: ${updates.startTime}`);
   }
 
   const { data, error } = await supabase

@@ -37,17 +37,20 @@ export function TaskScheduleFields({
     
     // If end time is not set or is the same as the old start time, calculate a new end time
     if (!endTime || endTime === startTime) {
-      // Parse the hours and minutes from the new start time
-      const [hours, minutes] = value.split(':').map(Number);
-      // Add one hour
-      let newHours = hours + 1;
-      // Handle overflow (if hours becomes 24 or greater)
-      if (newHours >= 24) {
-        newHours = newHours - 24;
+      // Check if the time has the expected format
+      if (value && value.includes(':')) {
+        // Parse the hours and minutes from the new start time
+        const [hours, minutes] = value.split(':').map(Number);
+        
+        // Add one hour
+        const endHours = (hours + 1) % 24;
+        
+        // Format back to HH:MM:SS
+        const newEndTime = `${endHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
+        
+        onEndTimeChange(newEndTime);
+        console.log(`Set end time to ${newEndTime} based on start time ${value}`);
       }
-      // Format back to HH:MM:SS
-      const newEndTime = `${newHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
-      onEndTimeChange(newEndTime);
     }
   };
 

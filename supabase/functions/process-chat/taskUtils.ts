@@ -1,4 +1,5 @@
 
+
 import { createClient } from '@supabase/supabase-js';
 import { extractDateFromText, formatDateForSupabase } from './dateUtils';
 import { format } from 'date-fns';
@@ -15,47 +16,15 @@ export const extractTaskDetails = (message: string, taskText: string) => {
   const dateStr = extractDateFromText(taskText);
   console.log('Extracted date:', dateStr);
   
-  // Extract time if present (simple regex for common time formats)
+  // Time extraction with improved natural language processing
   let startTime = null;
   let endTime = null;
   
-  // Look for time patterns like "3:00 PM", "15:00", "3 PM", etc.
-  const timeRegex = /\b((1[0-2]|0?[1-9])(?::([0-5][0-9]))?\s*(am|pm)|([01]?[0-9]|2[0-3]):([0-5][0-9]))\b/gi;
-  const timeMatches = taskText.match(timeRegex);
-  
-  if (timeMatches && timeMatches.length > 0) {
-    // Convert to 24-hour format for database
-    const firstTime = timeMatches[0];
-    let hours = 0;
-    let minutes = 0;
-    
-    // Parse the time string
-    if (firstTime.toLowerCase().includes('am') || firstTime.toLowerCase().includes('pm')) {
-      // Handle "3:00 PM" or "3 PM" format
-      const isPM = firstTime.toLowerCase().includes('pm');
-      const timeComponents = firstTime.replace(/\s*(am|pm)/i, '').split(':');
-      
-      hours = parseInt(timeComponents[0], 10);
-      minutes = timeComponents.length > 1 ? parseInt(timeComponents[1], 10) : 0;
-      
-      // Adjust hours for PM
-      if (isPM && hours < 12) hours += 12;
-      // Adjust for 12 AM
-      if (!isPM && hours === 12) hours = 0;
-    } else {
-      // Handle "15:00" format
-      const timeComponents = firstTime.split(':');
-      hours = parseInt(timeComponents[0], 10);
-      minutes = parseInt(timeComponents[1], 10);
-    }
-    
-    // Format as HH:MM:SS for database
-    startTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
-    
-    // Set end time to 1 hour after start time by default
-    const endHours = (hours + 1) % 24;
-    endTime = `${endHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
-    
+  // Extract time using enhanced natural language processing
+  const timeInfo = extractTimeFromText(taskText);
+  if (timeInfo) {
+    startTime = timeInfo.startTime;
+    endTime = timeInfo.endTime;
     console.log('Extracted start time:', startTime);
     console.log('Generated end time:', endTime);
   }
@@ -88,6 +57,197 @@ export const extractTaskDetails = (message: string, taskText: string) => {
     status: isScheduled ? 'scheduled' : 'unscheduled'
   };
 };
+
+/**
+ * Enhanced time extraction function that handles natural language time expressions
+ */
+function extractTimeFromText(text: string): { startTime: string | null, endTime: string | null } | null {
+  console.log('Analyzing text for time expressions:', text);
+  
+  // Initialize return values
+  let startTime: string | null = null;
+  let endTime: string | null = null;
+  
+  // Standardize text for easier matching
+  const lowerText = text.toLowerCase();
+  
+  // Special time words
+  if (/\bnoon\b/.test(lowerText)) {
+    startTime = '12:00:00';
+    endTime = '13:00:00';
+    return { startTime, endTime };
+  }
+  
+  if (/\bmidnight\b/.test(lowerText)) {
+    startTime = '00:00:00';
+    endTime = '01:00:00';
+    return { startTime, endTime };
+  }
+  
+  // Handle time periods as defaults
+  if (/\b(in the |at )morning\b/.test(lowerText) && !startTime) {
+    startTime = '09:00:00';
+    endTime = '10:00:00';
+    return { startTime, endTime };
+  }
+  
+  if (/\b(in the |at )afternoon\b/.test(lowerText) && !startTime) {
+    startTime = '14:00:00';
+    endTime = '15:00:00';
+    return { startTime, endTime };
+  }
+  
+  if (/\b(in the |at )evening\b/.test(lowerText) && !startTime) {
+    startTime = '19:00:00';
+    endTime = '20:00:00';
+    return { startTime, endTime };
+  }
+  
+  // Match standard time formats with AM/PM
+  const standardTimeRegex = /\b(1[0-2]|0?[1-9])(?::([0-5][0-9]))?\s*(am|pm|a\.m\.|p\.m\.|a|p)\b/i;
+  const standardTimeMatch = lowerText.match(standardTimeRegex);
+  
+  if (standardTimeMatch) {
+    let hours = parseInt(standardTimeMatch[1], 10);
+    const minutes = standardTimeMatch[2] ? parseInt(standardTimeMatch[2], 10) : 0;
+    const period = standardTimeMatch[3].charAt(0).toLowerCase();
+    
+    // Convert to 24-hour format
+    if (period === 'p' && hours < 12) {
+      hours += 12;
+    } else if (period === 'a' && hours === 12) {
+      hours = 0;
+    }
+    
+    startTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
+    
+    // Set end time to 1 hour after start time
+    let endHours = (hours + 1) % 24;
+    endTime = `${endHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
+    
+    console.log(`Parsed standard time: ${standardTimeMatch[0]} → ${startTime}`);
+    return { startTime, endTime };
+  }
+  
+  // Match times with "o'clock" or "oclock"
+  const oclockRegex = /\b(1[0-2]|0?[1-9])\s*(?:o'clock|oclock|o clock)\b(?:\s*(am|pm|a\.m\.|p\.m\.|in the (morning|afternoon|evening)))*/i;
+  const oclockMatch = lowerText.match(oclockRegex);
+  
+  if (oclockMatch) {
+    let hours = parseInt(oclockMatch[1], 10);
+    
+    // Determine AM/PM from context
+    let isPM = false;
+    
+    if (oclockMatch[2]) {
+      // Explicit AM/PM specified
+      isPM = oclockMatch[2].charAt(0).toLowerCase() === 'p';
+    } else if (oclockMatch[3]) {
+      // Period of day specified
+      isPM = oclockMatch[3] === 'afternoon' || oclockMatch[3] === 'evening';
+    } else {
+      // Use default assumption based on hour
+      isPM = (hours >= 1 && hours <= 6) || hours === 12;
+    }
+    
+    // Convert to 24-hour format
+    if (isPM && hours < 12) {
+      hours += 12;
+    } else if (!isPM && hours === 12) {
+      hours = 0;
+    }
+    
+    startTime = `${hours.toString().padStart(2, '0')}:00:00`;
+    
+    // Set end time to 1 hour after start time
+    let endHours = (hours + 1) % 24;
+    endTime = `${endHours.toString().padStart(2, '0')}:00:00`;
+    
+    console.log(`Parsed o'clock time: ${oclockMatch[0]} → ${startTime}`);
+    return { startTime, endTime };
+  }
+  
+  // Match bare numbers that might be times (with contextual AM/PM assumption)
+  const bareNumberRegex = /\b(at |around |approximately |about |@)\s*(1[0-2]|0?[1-9])\b(?:\s*(am|pm|a\.m\.|p\.m\.|in the (morning|afternoon|evening)))*/i;
+  const numberMatch = lowerText.match(bareNumberRegex);
+  
+  if (numberMatch) {
+    let hours = parseInt(numberMatch[2], 10);
+    
+    // Determine AM/PM from context
+    let isPM = false;
+    
+    if (numberMatch[3]) {
+      // Explicit AM/PM or period specified
+      isPM = numberMatch[3].charAt(0).toLowerCase() === 'p' || 
+             numberMatch[3].includes('afternoon') || 
+             numberMatch[3].includes('evening');
+    } else {
+      // Use default assumption based on hour
+      isPM = (hours >= 1 && hours <= 6) || hours === 12;
+    }
+    
+    // Convert to 24-hour format
+    if (isPM && hours < 12) {
+      hours += 12;
+    } else if (!isPM && hours === 12) {
+      hours = 0;
+    }
+    
+    startTime = `${hours.toString().padStart(2, '0')}:00:00`;
+    
+    // Set end time to 1 hour after start time
+    let endHours = (hours + 1) % 24;
+    endTime = `${endHours.toString().padStart(2, '0')}:00:00`;
+    
+    console.log(`Parsed numbered time: ${numberMatch[0]} → ${startTime}`);
+    return { startTime, endTime };
+  }
+  
+  // Match 24-hour format (less common but should be supported)
+  const militaryTimeRegex = /\b([01]?[0-9]|2[0-3]):([0-5][0-9])\b/;
+  const militaryMatch = lowerText.match(militaryTimeRegex);
+  
+  if (militaryMatch) {
+    const hours = parseInt(militaryMatch[1], 10);
+    const minutes = parseInt(militaryMatch[2], 10);
+    
+    startTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
+    
+    // Set end time to 1 hour after start time
+    let endHours = (hours + 1) % 24;
+    endTime = `${endHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
+    
+    console.log(`Parsed 24-hour time: ${militaryMatch[0]} → ${startTime}`);
+    return { startTime, endTime };
+  }
+  
+  // Handle informal expressions with time periods
+  if (/\b(this |in the |during the |after |before )(morning|afternoon|evening)\b/.test(lowerText) && !startTime) {
+    const periodMatch = lowerText.match(/\b(morning|afternoon|evening)\b/);
+    if (periodMatch) {
+      const period = periodMatch[1];
+      
+      if (period === 'morning') {
+        startTime = '09:00:00';
+        endTime = '10:00:00';
+      } else if (period === 'afternoon') {
+        startTime = '14:00:00';
+        endTime = '15:00:00';
+      } else if (period === 'evening') {
+        startTime = '19:00:00';
+        endTime = '20:00:00';
+      }
+      
+      console.log(`Extracted time period: ${period} → ${startTime}`);
+      return { startTime, endTime };
+    }
+  }
+  
+  // If no time was found
+  console.log('No time expression found in text');
+  return null;
+}
 
 export const createTaskFromChat = async (userId: string, taskDetails: any) => {
   console.log('Creating task with details:', taskDetails);
