@@ -38,13 +38,11 @@ export function DateSelector({ date, onDateChange, className }: DateSelectorProp
       // Call onDateChange immediately to ensure parent state updates
       onDateChange(formattedDate);
       
-      // Using requestAnimationFrame to ensure the state has been updated
+      // Using setTimeout with a shorter delay to ensure state updates
       // before closing the popover
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setOpen(false);
-        });
-      });
+      setTimeout(() => {
+        setOpen(false);
+      }, 50);
     }
   };
 
