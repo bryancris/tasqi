@@ -1,5 +1,5 @@
 
-import { Share2, ArrowRight } from "lucide-react";
+import { Share2, ArrowRight, Users } from "lucide-react";
 import { TaskAssignmentInfo } from "./types";
 import { Task } from "../TaskBoard";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
@@ -28,6 +28,32 @@ export function TaskAssignmentIcons({ task, assignmentInfo }: TaskAssignmentIcon
     sharedWithName, 
     sharedByName
   });
+
+  // Check if it's a group task
+  const isGroupTask = task.shared_tasks?.some(st => st.sharing_type === 'group');
+  
+  if (isGroupTask) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center gap-1 text-white/80 cursor-help">
+              <Users className="w-4 h-4 text-[#22C55E]" />
+              <span className="text-xs truncate">Group</span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent 
+            side="left" 
+            align="center"
+            className="bg-gray-800 text-white border-gray-700 text-xs z-50"
+            sideOffset={5}
+          >
+            Shared with group
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
 
   // Check for assignments first
   if (task.assignments?.length) {

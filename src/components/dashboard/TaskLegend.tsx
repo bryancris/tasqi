@@ -9,15 +9,15 @@ export function TaskLegend() {
         <span>Shared Task</span>
       </div>
       <div className="flex items-center gap-1">
-        <Mic className="w-3 h-3" />
+        <Mic className="w-3 h-3 text-[#0EA5E9]" />
         <span>Voice Note</span>
       </div>
       <div className="flex items-center gap-1">
-        <Bell className="w-3 h-3" />
+        <Bell className="w-3 h-3 text-[#F97316]" />
         <span>Alert Set</span>
       </div>
       <div className="flex items-center gap-1">
-        <Users className="w-3 h-3" />
+        <Users className="w-3 h-3 text-[#22C55E]" />
         <span>Group Task</span>
       </div>
     </div>

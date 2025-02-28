@@ -4,7 +4,7 @@ import { Task } from "../TaskBoard";
 import { TaskStatusIndicator } from "../TaskStatusIndicator";
 import { cn } from "@/lib/utils";
 import { getPriorityColor } from "@/utils/taskColors";
-import { Bell } from "lucide-react";
+import { Bell, Mic, Users } from "lucide-react";
 
 interface MonthlyTaskCardProps {
   task: Task;
@@ -25,6 +25,8 @@ function MonthlyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, 
   };
   
   const timeDisplay = getTimeDisplay();
+  const hasVoiceNote = !!task.audio_attachment;
+  const isGroupTask = task.shared_tasks?.some(st => st.sharing_type === 'group');
   
   return (
     <div 
@@ -41,7 +43,13 @@ function MonthlyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, 
         <span className="truncate flex-1">{task.title}</span>
         <div className="flex items-center gap-1 shrink-0">
           {task.reminder_enabled && (
-            <Bell className="h-3 w-3 text-white/80" />
+            <Bell className="h-3 w-3 text-[#F97316]" />
+          )}
+          {hasVoiceNote && (
+            <Mic className="h-3 w-3 text-[#0EA5E9]" />
+          )}
+          {isGroupTask && (
+            <Users className="h-3 w-3 text-[#22C55E]" />
           )}
           {extraButton}
         </div>
@@ -50,7 +58,7 @@ function MonthlyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, 
         <p className="text-[10px] text-white/90 truncate">{timeDisplay}</p>
       )}
       {task.shared && (
-        <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-[#9b87f5]" />
+        <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-[#8B5CF6]" />
       )}
     </div>
   );

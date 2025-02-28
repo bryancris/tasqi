@@ -1,7 +1,7 @@
 
 import { cn } from "@/lib/utils";
 import { Task } from "../TaskBoard";
-import { Bell } from "lucide-react";
+import { Bell, Mic, Users } from "lucide-react";
 
 interface WeeklyTaskCardProps {
   task: Task;
@@ -34,6 +34,9 @@ export function WeeklyTaskCard({ task, onClick, onComplete, dragHandleProps, ext
     return '';
   };
 
+  const hasVoiceNote = !!task.audio_attachment;
+  const isGroupTask = task.shared_tasks?.some(st => st.sharing_type === 'group');
+
   return (
     <div
       {...dragHandleProps}
@@ -52,7 +55,9 @@ export function WeeklyTaskCard({ task, onClick, onComplete, dragHandleProps, ext
         <div className="flex items-center gap-1">
           <div className="font-medium truncate flex-1">{task.title}</div>
           <div className="flex items-center gap-1 shrink-0">
-            {task.reminder_enabled && <Bell className="w-3 h-3" />}
+            {task.reminder_enabled && <Bell className="w-3 h-3 text-[#F97316]" />}
+            {hasVoiceNote && <Mic className="w-3 h-3 text-[#0EA5E9]" />}
+            {isGroupTask && <Users className="w-3 h-3 text-[#22C55E]" />}
             {extraButton}
           </div>
         </div>
