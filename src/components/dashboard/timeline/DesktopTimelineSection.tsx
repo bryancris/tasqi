@@ -73,7 +73,7 @@ export function DesktopTimelineSection({ selectedDate, onDateChange }: DesktopTi
   };
 
   return (
-    <Card className="h-full border-none shadow-sm overflow-hidden bg-gradient-to-bl from-[#3E8DE3]/2 to-[#2EBDAE]/2">
+    <Card className="h-full border-none shadow-sm overflow-hidden bg-white">
       <CardHeader className="bg-gradient-to-r from-[#2EBDAE] to-[#3E8DE3] p-0 border-none">
         <div className="p-4 flex flex-col space-y-3">
           <CardTitle className="text-white text-xl font-semibold tracking-wide">Timeline</CardTitle>
@@ -108,7 +108,7 @@ export function DesktopTimelineSection({ selectedDate, onDateChange }: DesktopTi
         </div>
       </CardHeader>
       <CardContent className={cn(
-        "p-0 bg-white/95 backdrop-blur-sm",
+        "p-0 bg-white",
         "max-h-[calc(100vh-16rem)]",
         "overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
       )}>

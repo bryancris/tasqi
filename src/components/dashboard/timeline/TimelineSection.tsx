@@ -75,7 +75,7 @@ export function TimelineSection({ tasks, selectedDate, onDateChange }: TimelineS
   };
 
   return (
-    <Card className="bg-gradient-to-bl from-[#3E8DE3]/2 to-[#2EBDAE]/2 border-none shadow-sm">
+    <Card className="bg-white border-none shadow-sm">
       <CardHeader className="bg-gradient-to-r from-[#2EBDAE] to-[#3E8DE3] border-none">
         <CardTitle className="text-white">Timeline</CardTitle>
         <div className="flex items-center justify-between mt-2">
@@ -102,7 +102,7 @@ export function TimelineSection({ tasks, selectedDate, onDateChange }: TimelineS
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="bg-white/95 p-4">
+      <CardContent className="bg-white p-4">
         <div className="space-y-0.5">
           {timeSlots.map((timeSlot) => (
             <TimelineSlot 

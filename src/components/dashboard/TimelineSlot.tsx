@@ -34,8 +34,8 @@ export function TimelineSlot({ time, tasks, selectedDate }: TimelineSlotProps) {
   return (
     <div 
       className={cn(
-        "flex items-start gap-4 p-3 border-b border-[#2EBDAE]/5 last:border-0 transition-colors",
-        currentHour ? "bg-gradient-to-r from-[#2EBDAE]/2 to-[#3E8DE3]/2" : "hover:bg-gray-50",
+        "flex items-start gap-4 p-3 border-b border-gray-100 last:border-0 transition-colors",
+        currentHour ? "bg-gray-50" : "hover:bg-gray-50",
         "rounded-md"
       )}
     >
@@ -65,7 +65,7 @@ export function TimelineSlot({ time, tasks, selectedDate }: TimelineSlotProps) {
           </div>
         ))}
         {slotTasks.length === 0 && (
-          <div className="h-1 w-full rounded-full bg-gradient-to-r from-[#2EBDAE]/5 to-[#3E8DE3]/5"></div>
+          <div className="h-1 w-full rounded-full bg-gray-100"></div>
         )}
         {editTask && (
           <EditTaskDrawer
