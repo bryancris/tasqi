@@ -166,7 +166,7 @@ export function SearchDialog({ isOpen, onOpenChange }: SearchDialogProps) {
           className={cn(
             "p-0", 
             isMobile 
-              ? "w-[100%] fixed top-[72px] left-0 right-0 translate-y-0 rounded-none border-t shadow-lg max-h-[calc(100vh-72px)] z-50" 
+              ? "w-[100%] fixed top-[72px] left-[50%] translate-x-[-50%] translate-y-0 rounded-none border-t shadow-lg max-h-[calc(100vh-72px)] z-50" 
               : "sm:max-w-md p-0 fixed top-[50%] translate-y-[-50%]"
           )}
         >
