@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { getPriorityColor } from "@/utils/taskColors";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EditTaskDrawer } from "@/components/dashboard/EditTaskDrawer";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface SearchDialogProps {
   isOpen: boolean;
@@ -26,6 +27,7 @@ export function SearchDialog({ isOpen, onOpenChange }: SearchDialogProps) {
   const [activeTab, setActiveTab] = useState<"all" | "active" | "completed">("all");
   const [isTaskDrawerOpen, setIsTaskDrawerOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const isMobile = useIsMobile();
 
   // Focus input when dialog opens
   useEffect(() => {
@@ -159,75 +161,88 @@ export function SearchDialog({ isOpen, onOpenChange }: SearchDialogProps) {
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-md p-0" hideCloseButton>
-          <div className="flex items-center p-4 border-b">
-            <Search className="h-5 w-5 text-muted-foreground mr-2" />
-            <Input
-              ref={inputRef}
-              className="flex-1 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground"
-              placeholder="Search tasks..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={handleKeyDown}
-            />
-            <button 
-              className="ml-2 text-muted-foreground hover:text-foreground"
-              onClick={() => onOpenChange(false)}
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-          
-          <Tabs 
-            defaultValue="all" 
-            value={activeTab} 
-            onValueChange={(value) => setActiveTab(value as "all" | "active" | "completed")}
-            className="w-full"
-          >
-            <div className="px-4 pt-2">
-              <TabsList className="w-full">
-                <TabsTrigger value="all" className="flex-1">All Tasks</TabsTrigger>
-                <TabsTrigger value="active" className="flex-1">Active</TabsTrigger>
-                <TabsTrigger value="completed" className="flex-1">Completed</TabsTrigger>
-              </TabsList>
+        <DialogContent 
+          hideCloseButton
+          className={cn(
+            "p-0", 
+            isMobile 
+              ? "sm:max-w-md fixed top-[72px] bottom-auto !mt-0 max-h-[80vh] rounded-t-none rounded-b-xl" 
+              : "sm:max-w-md p-0 fixed top-[50%] translate-y-[-50%]"
+          )}
+        >
+          <div className="flex flex-col h-full">
+            <div className="flex items-center p-4 border-b">
+              <Search className="h-5 w-5 text-muted-foreground mr-2" />
+              <Input
+                ref={inputRef}
+                className="flex-1 border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground"
+                placeholder="Search tasks..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
+              />
+              <button 
+                className="ml-2 text-muted-foreground hover:text-foreground"
+                onClick={() => onOpenChange(false)}
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
             
-            <TabsContent value="all" className="mt-0">
-              <SearchResults 
-                tasks={filteredTasks} 
-                selectedIndex={selectedIndex}
-                onTaskSelect={handleTaskSelect}
-                getStatusIcon={getStatusIcon}
-                getFormattedDate={getFormattedDate}
-                getPriorityLabel={getPriorityLabel}
-                searchQuery={debouncedQuery}
-              />
-            </TabsContent>
-            
-            <TabsContent value="active" className="mt-0">
-              <SearchResults 
-                tasks={filteredTasks} 
-                selectedIndex={selectedIndex}
-                onTaskSelect={handleTaskSelect}
-                getStatusIcon={getStatusIcon}
-                getFormattedDate={getFormattedDate}
-                getPriorityLabel={getPriorityLabel}
-                searchQuery={debouncedQuery}
-              />
-            </TabsContent>
-            
-            <TabsContent value="completed" className="mt-0">
-              <SearchResults 
-                tasks={filteredTasks} 
-                selectedIndex={selectedIndex}
-                onTaskSelect={handleTaskSelect}
-                getStatusIcon={getStatusIcon}
-                getFormattedDate={getFormattedDate}
-                getPriorityLabel={getPriorityLabel}
-                searchQuery={debouncedQuery}
-              />
-            </TabsContent>
-          </Tabs>
+            <Tabs 
+              defaultValue="all" 
+              value={activeTab} 
+              onValueChange={(value) => setActiveTab(value as "all" | "active" | "completed")}
+              className="w-full"
+            >
+              <div className="px-4 pt-2">
+                <TabsList className="w-full">
+                  <TabsTrigger value="all" className="flex-1">All Tasks</TabsTrigger>
+                  <TabsTrigger value="active" className="flex-1">Active</TabsTrigger>
+                  <TabsTrigger value="completed" className="flex-1">Completed</TabsTrigger>
+                </TabsList>
+              </div>
+              
+              <TabsContent value="all" className="mt-0">
+                <SearchResults 
+                  tasks={filteredTasks} 
+                  selectedIndex={selectedIndex}
+                  onTaskSelect={handleTaskSelect}
+                  getStatusIcon={getStatusIcon}
+                  getFormattedDate={getFormattedDate}
+                  getPriorityLabel={getPriorityLabel}
+                  searchQuery={debouncedQuery}
+                  isMobile={isMobile}
+                />
+              </TabsContent>
+              
+              <TabsContent value="active" className="mt-0">
+                <SearchResults 
+                  tasks={filteredTasks} 
+                  selectedIndex={selectedIndex}
+                  onTaskSelect={handleTaskSelect}
+                  getStatusIcon={getStatusIcon}
+                  getFormattedDate={getFormattedDate}
+                  getPriorityLabel={getPriorityLabel}
+                  searchQuery={debouncedQuery}
+                  isMobile={isMobile}
+                />
+              </TabsContent>
+              
+              <TabsContent value="completed" className="mt-0">
+                <SearchResults 
+                  tasks={filteredTasks} 
+                  selectedIndex={selectedIndex}
+                  onTaskSelect={handleTaskSelect}
+                  getStatusIcon={getStatusIcon}
+                  getFormattedDate={getFormattedDate}
+                  getPriorityLabel={getPriorityLabel}
+                  searchQuery={debouncedQuery}
+                  isMobile={isMobile}
+                />
+              </TabsContent>
+            </Tabs>
+          </div>
         </DialogContent>
       </Dialog>
       
@@ -250,6 +265,7 @@ interface SearchResultsProps {
   getFormattedDate: (task: Task) => string;
   getPriorityLabel: (priority: string) => string;
   searchQuery: string;
+  isMobile: boolean;
 }
 
 function SearchResults({
@@ -259,7 +275,8 @@ function SearchResults({
   getStatusIcon,
   getFormattedDate,
   getPriorityLabel,
-  searchQuery
+  searchQuery,
+  isMobile
 }: SearchResultsProps) {
   if (searchQuery.trim() === "") {
     return (
@@ -278,7 +295,8 @@ function SearchResults({
   }
   
   return (
-    <ScrollArea className="max-h-[50vh] overflow-y-auto">
+    <ScrollArea className={isMobile ? "max-h-[calc(50vh-72px)]" : "max-h-[50vh]"} 
+      type="auto" scrollHideDelay={100}>
       <div className="p-2">
         {tasks.map((task, index) => (
           <div
