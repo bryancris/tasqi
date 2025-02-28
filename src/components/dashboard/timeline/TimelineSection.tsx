@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DateSelector } from "../schedule/DateSelector";
 import { useTimelineTasks } from "@/hooks/use-timeline-tasks";
+import { cn } from "@/lib/utils";
 
 interface TimelineSectionProps {
   tasks: Task[];
@@ -16,10 +17,10 @@ interface TimelineSectionProps {
   onDateChange: (date: Date) => void;
 }
 
-export function TimelineSection({ selectedDate, onDateChange }: TimelineSectionProps) {
+export function TimelineSection({ tasks, selectedDate, onDateChange }: TimelineSectionProps) {
   const [startHour, setStartHour] = useState(8);
   const [endHour, setEndHour] = useState(17);
-  const { tasks } = useTimelineTasks();
+  const { tasks: timelineTasks } = useTimelineTasks();
 
   useEffect(() => {
     const loadUserSettings = async () => {
@@ -74,24 +75,35 @@ export function TimelineSection({ selectedDate, onDateChange }: TimelineSectionP
   };
 
   return (
-    <Card className="bg-gradient-to-t from-[#E6E9F0] to-[#EEF1F5] border-none shadow-sm">
-      <CardHeader className="bg-white/70 border-b">
-        <CardTitle>Timeline</CardTitle>
+    <Card className="bg-gradient-to-bl from-[#3E8DE3]/2 to-[#2EBDAE]/2 border-none shadow-sm">
+      <CardHeader className="bg-gradient-to-r from-[#2EBDAE] to-[#3E8DE3] border-none">
+        <CardTitle className="text-white">Timeline</CardTitle>
         <div className="flex items-center justify-between mt-2">
-          <Button variant="ghost" size="icon" onClick={handlePrevDay}>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={handlePrevDay}
+            className="text-white hover:bg-white/10"
+          >
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <DateSelector 
             date={format(selectedDate, 'yyyy-MM-dd')}
             onDateChange={(newDate) => onDateChange(new Date(newDate))}
+            className="text-white"
           />
-          <Button variant="ghost" size="icon" onClick={handleNextDay}>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={handleNextDay}
+            className="text-white hover:bg-white/10"
+          >
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="bg-white/50">
-        <div className="space-y-4">
+      <CardContent className="bg-white/95 p-4">
+        <div className="space-y-0.5">
           {timeSlots.map((timeSlot) => (
             <TimelineSlot 
               key={timeSlot} 
