@@ -73,7 +73,7 @@ export function DesktopTimelineSection({ selectedDate, onDateChange }: DesktopTi
   };
 
   return (
-    <Card className="h-full bg-gradient-to-t from-[#E6E9F0] to-[#EEF1F5] border-none shadow-sm overflow-hidden">
+    <Card className="h-full border-none shadow-sm overflow-hidden bg-gradient-to-bl from-[#3E8DE3]/5 to-[#2EBDAE]/5">
       <CardHeader className="bg-gradient-to-r from-[#2EBDAE] to-[#3E8DE3] p-0 border-none">
         <div className="p-4 flex flex-col space-y-3">
           <CardTitle className="text-white text-xl font-semibold tracking-wide">Timeline</CardTitle>
@@ -108,11 +108,11 @@ export function DesktopTimelineSection({ selectedDate, onDateChange }: DesktopTi
         </div>
       </CardHeader>
       <CardContent className={cn(
-        "bg-white/70 p-0",
+        "p-0 bg-gradient-to-t from-white/80 to-white/20 backdrop-blur-sm",
         "max-h-[calc(100vh-16rem)]",
         "overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
       )}>
-        <div className="space-y-2 p-4">
+        <div className="space-y-0.5 p-4">
           {timeSlots.map((timeSlot) => (
             <TimelineSlot 
               key={timeSlot} 

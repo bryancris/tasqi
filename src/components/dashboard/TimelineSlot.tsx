@@ -4,6 +4,7 @@ import { format, isSameDay, parseISO } from "date-fns";
 import { EditTaskDrawer } from "./EditTaskDrawer";
 import { useState } from "react";
 import { getPriorityColor } from "@/utils/taskColors";
+import { cn } from "@/lib/utils";
 
 interface TimelineSlotProps {
   time: string;
@@ -26,9 +27,24 @@ export function TimelineSlot({ time, tasks, selectedDate }: TimelineSlotProps) {
     return taskHour === slotHour && isSameDay(taskDate, selectedDate);
   });
 
+  const hour = parseInt(time.split(':')[0], 10);
+  // Determine if this is a current hour (for highlighting)
+  const currentHour = new Date().getHours() === hour && isSameDay(selectedDate, new Date());
+  
   return (
-    <div className="flex items-start gap-4 p-3 border-b border-gray-100 last:border-0 hover:bg-white/30 rounded-md transition-colors">
-      <div className="w-16 text-sm text-gray-500 font-medium">{time}</div>
+    <div 
+      className={cn(
+        "flex items-start gap-4 p-3 border-b border-[#2EBDAE]/10 last:border-0 transition-colors",
+        currentHour ? "bg-gradient-to-r from-[#2EBDAE]/5 to-[#3E8DE3]/5" : "hover:bg-white/30",
+        "rounded-md"
+      )}
+    >
+      <div className={cn(
+        "w-16 text-sm font-medium",
+        currentHour ? "text-[#2EBDAE]" : "text-gray-500"
+      )}>
+        {time}
+      </div>
       <div className="flex-1 space-y-2">
         {slotTasks.map((task) => (
           <div
@@ -48,6 +64,9 @@ export function TimelineSlot({ time, tasks, selectedDate }: TimelineSlotProps) {
             )}
           </div>
         ))}
+        {slotTasks.length === 0 && (
+          <div className="h-1 w-full rounded-full bg-gradient-to-r from-[#2EBDAE]/10 to-[#3E8DE3]/10"></div>
+        )}
         {editTask && (
           <EditTaskDrawer
             task={editTask}
