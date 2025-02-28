@@ -1,7 +1,6 @@
 
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { useState, useEffect } from "react";
 
 interface TimeSelectorProps {
   startTime: string;
