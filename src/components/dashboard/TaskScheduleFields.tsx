@@ -31,6 +31,26 @@ export function TaskScheduleFields({
   onEndTimeChange,
   onPriorityChange,
 }: TaskScheduleFieldsProps) {
+  // Handle start time change and automatically update end time if it's not set
+  const handleStartTimeChange = (value: string) => {
+    onStartTimeChange(value);
+    
+    // If end time is not set or is the same as the old start time, calculate a new end time
+    if (!endTime || endTime === startTime) {
+      // Parse the hours and minutes from the new start time
+      const [hours, minutes] = value.split(':').map(Number);
+      // Add one hour
+      let newHours = hours + 1;
+      // Handle overflow (if hours becomes 24 or greater)
+      if (newHours >= 24) {
+        newHours = newHours - 24;
+      }
+      // Format back to HH:MM:SS
+      const newEndTime = `${newHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
+      onEndTimeChange(newEndTime);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center space-x-2">
@@ -54,7 +74,7 @@ export function TaskScheduleFields({
           <TimeSelector
             startTime={startTime}
             endTime={endTime}
-            onStartTimeChange={onStartTimeChange}
+            onStartTimeChange={handleStartTimeChange}
             onEndTimeChange={onEndTimeChange}
           />
           <PrioritySelector 

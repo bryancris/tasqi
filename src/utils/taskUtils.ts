@@ -1,4 +1,5 @@
 
+
 import { supabase } from "@/integrations/supabase/client";
 import { TaskPriority } from "@/components/dashboard/TaskBoard";
 
@@ -28,6 +29,21 @@ export const createTask = async ({
   const { data: user } = await supabase.auth.getUser();
   if (!user.user) throw new Error("User not authenticated");
 
+  // Calculate endTime if startTime is provided but endTime is not
+  let calculatedEndTime = endTime;
+  if (startTime && !endTime) {
+    // Parse the hours and minutes from startTime
+    const [hours, minutes] = startTime.split(':').map(Number);
+    // Add one hour
+    let newHours = hours + 1;
+    // Handle overflow (if hours becomes 24 or greater)
+    if (newHours >= 24) {
+      newHours = newHours - 24;
+    }
+    // Format back to HH:MM:SS
+    calculatedEndTime = `${newHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
+  }
+
   const { data: existingTasks } = await supabase
     .from("tasks")
     .select("position")
@@ -42,7 +58,7 @@ export const createTask = async ({
     date,
     status: isScheduled ? "scheduled" : "unscheduled",
     start_time: startTime || null,
-    end_time: endTime || null,
+    end_time: calculatedEndTime || null,
     priority,
     position: nextPosition,
     reminder_enabled: reminderEnabled,
@@ -57,15 +73,32 @@ export const createTask = async ({
 };
 
 export const updateTask = async (taskId: number, updates: Partial<CreateTaskParams>) => {
+  // Apply the same end time calculation logic for updates
+  let updatedEndTime = updates.endTime;
+  if (updates.startTime && !updates.endTime) {
+    // Parse the hours and minutes from startTime
+    const [hours, minutes] = updates.startTime.split(':').map(Number);
+    // Add one hour
+    let newHours = hours + 1;
+    // Handle overflow (if hours becomes 24 or greater)
+    if (newHours >= 24) {
+      newHours = newHours - 24;
+    }
+    // Format back to HH:MM:SS
+    updatedEndTime = `${newHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
+  }
+
   const { data, error } = await supabase
     .from("tasks")
     .update({
       ...updates,
       date: updates.date || null,
-      status: updates.isScheduled ? "scheduled" : "unscheduled"
+      status: updates.isScheduled ? "scheduled" : "unscheduled",
+      end_time: updatedEndTime || null
     })
     .eq('id', taskId);
 
   if (error) throw error;
   return data;
 };
+

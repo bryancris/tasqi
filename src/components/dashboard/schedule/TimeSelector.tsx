@@ -16,6 +16,15 @@ export function TimeSelector({
   onEndTimeChange 
 }: TimeSelectorProps) {
   
+  // Handle input changes and format with seconds
+  const handleStartTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onStartTimeChange(`${e.target.value}:00`);
+  };
+  
+  const handleEndTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onEndTimeChange(`${e.target.value}:00`);
+  };
+  
   return (
     <div className="grid grid-cols-2 gap-2">
       <div>
@@ -25,7 +34,7 @@ export function TimeSelector({
             type="time"
             id="startTime"
             value={startTime.split(':').slice(0, 2).join(':')}
-            onChange={(e) => onStartTimeChange(`${e.target.value}:00`)}
+            onChange={handleStartTimeChange}
             className="w-full"
           />
         </div>
@@ -38,7 +47,7 @@ export function TimeSelector({
             type="time"
             id="endTime"
             value={endTime.split(':').slice(0, 2).join(':')}
-            onChange={(e) => onEndTimeChange(`${e.target.value}:00`)}
+            onChange={handleEndTimeChange}
             className="w-full"
           />
         </div>
