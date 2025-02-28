@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -78,6 +79,12 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
     };
   }, [isMobile, isOpen]); // Keep isOpen in dependencies
 
+  // Add logging for date changes
+  const handleDateChange = (newDate: string) => {
+    console.log("Date changed in AddTaskDrawer:", newDate);
+    setDate(newDate);
+  };
+
   const handleSubmit = async () => {
     try {
       setIsLoading(true);
@@ -95,6 +102,7 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
         subtasks
       };
 
+      console.log("Submitting task with data:", taskData);
       await createTask(taskData);
 
       toast({
@@ -158,7 +166,7 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
           onTitleChange={setTitle}
           onDescriptionChange={setDescription}
           onIsScheduledChange={setIsScheduled}
-          onDateChange={setDate}
+          onDateChange={handleDateChange}
           onStartTimeChange={setStartTime}
           onEndTimeChange={setEndTime}
           onPriorityChange={setPriority}

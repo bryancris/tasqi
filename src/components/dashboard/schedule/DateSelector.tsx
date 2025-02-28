@@ -1,11 +1,10 @@
-
 import { Button } from "@/components/ui/button";
 import { PopoverTrigger, PopoverContent, Popover } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon, Calendar as CalendarLucide } from "lucide-react";
+import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface DateSelectorProps {
   date: string;
@@ -15,11 +14,30 @@ interface DateSelectorProps {
 
 export function DateSelector({ date, onDateChange, className }: DateSelectorProps) {
   const [open, setOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
+    date ? new Date(date) : undefined
+  );
   
-  const handleSelect = (selectedDate: Date | undefined) => {
-    if (selectedDate) {
-      onDateChange(format(selectedDate, 'yyyy-MM-dd'));
-      setOpen(false);
+  useEffect(() => {
+    if (date) {
+      setSelectedDate(new Date(date));
+    } else {
+      setSelectedDate(undefined);
+    }
+  }, [date]);
+  
+  const handleSelect = (newDate: Date | undefined) => {
+    console.log("Date selected:", newDate);
+    setSelectedDate(newDate);
+    
+    if (newDate) {
+      const formattedDate = format(newDate, 'yyyy-MM-dd');
+      console.log("Formatted date to pass to parent:", formattedDate);
+      onDateChange(formattedDate);
+      
+      setTimeout(() => {
+        setOpen(false);
+      }, 300);
     }
   };
 
@@ -35,20 +53,20 @@ export function DateSelector({ date, onDateChange, className }: DateSelectorProp
           )}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
-          {date 
-            ? format(new Date(date), 'MMMM do, yyyy')
+          {selectedDate 
+            ? format(selectedDate, 'MMMM do, yyyy')
             : "Select date"}
         </Button>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-auto p-0 bg-white border border-gray-100 shadow-lg rounded-lg" 
+        className="w-auto p-0 bg-white border border-gray-100 shadow-lg rounded-lg z-[200]" 
         align="start"
         sideOffset={4}
         side="bottom"
       >
         <Calendar
           mode="single"
-          selected={date ? new Date(date) : undefined}
+          selected={selectedDate}
           onSelect={handleSelect}
           initialFocus
           className="bg-white p-3"
