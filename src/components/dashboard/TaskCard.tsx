@@ -73,40 +73,76 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
       
       console.log('Updating task to:', { newStatus, completedAt });
 
-      const user = (await supabase.auth.getUser()).data.user;
-      if (!user) {
+      // Get current user
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData.user) {
         toast.error('User not authenticated');
+        setIsUpdating(false);
         return;
       }
+      
+      const userId = userData.user.id;
 
-      // Optimistically update local state
+      // Apply optimistic update to local state
       setLocalTask(prevTask => ({
         ...prevTask,
         status: newStatus,
         completed_at: completedAt
       }));
 
-      let updateSuccessful = false;
-
+      let updateSuccess = false;
+      
       if (task.shared) {
-        console.log('Updating shared task');
-        const { error: sharedUpdateError } = await supabase
-          .from('shared_tasks')
-          .update({ 
-            status: newStatus === 'completed' ? 'completed' : 'pending'
-          })
-          .eq('task_id', task.id)
-          .eq('shared_with_user_id', user.id);
+        console.log('Checking shared task info for task:', task.title, task);
+        console.log('Using shared_tasks from task object:', task.shared_tasks);
+        
+        // First, find the correct shared task record for this user
+        const userSharedTask = task.shared_tasks?.find(
+          st => st.shared_with_user_id === userId
+        );
+        
+        if (userSharedTask) {
+          console.log('Found shared task record:', userSharedTask);
+          
+          // Update the shared task status
+          const { error: sharedUpdateError } = await supabase
+            .from('shared_tasks')
+            .update({ 
+              status: newStatus === 'completed' ? 'completed' : 'pending'
+            })
+            .eq('id', userSharedTask.id)
+            .eq('shared_with_user_id', userId);
 
-        if (sharedUpdateError) {
-          console.error('Error updating shared task:', sharedUpdateError);
-          toast.error('Failed to update shared task status');
-          updateSuccessful = false;
+          if (sharedUpdateError) {
+            console.error('Error updating shared task:', sharedUpdateError);
+            toast.error('Failed to update shared task status');
+          } else {
+            updateSuccess = true;
+            console.log('Shared task updated successfully');
+          }
         } else {
-          updateSuccessful = true;
+          // In case we don't find a specific shared task (as fallback)
+          console.log('No specific shared task found, using task_id fallback');
+          
+          const { error: fallbackError } = await supabase
+            .from('shared_tasks')
+            .update({ 
+              status: newStatus === 'completed' ? 'completed' : 'pending'
+            })
+            .eq('task_id', task.id)
+            .eq('shared_with_user_id', userId);
+            
+          if (fallbackError) {
+            console.error('Error with fallback shared task update:', fallbackError);
+            toast.error('Failed to update task status');
+          } else {
+            updateSuccess = true;
+            console.log('Task updated with fallback method');
+          }
         }
       } else {
         console.log('Updating owned task');
+        // Update the main task record directly for tasks the user owns
         const { error: updateError } = await supabase
           .from('tasks')
           .update({ 
@@ -118,19 +154,22 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
         if (updateError) {
           console.error('Error updating task:', updateError);
           toast.error('Failed to update task status');
-          updateSuccessful = false;
         } else {
-          updateSuccessful = true;
+          updateSuccess = true;
+          console.log('Task updated successfully');
         }
       }
 
-      if (updateSuccessful) {
-        console.log('Task update successful');
+      if (updateSuccess) {
         toast.success(newStatus === 'completed' ? 'Task completed' : 'Task uncompleted');
-
-        // Invalidate and refetch tasks to ensure UI consistency
+        
+        // Add a small delay to allow triggers to complete
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Force invalidate and refetch tasks to ensure UI consistency
         await queryClient.invalidateQueries({ queryKey: ['tasks'] });
         
+        // Call the onComplete callback if provided
         if (onComplete) {
           await onComplete();
         }
