@@ -1,163 +1,126 @@
 
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { processWithOpenAI } from './openaiUtils.ts';
-import { createTask } from './taskUtils.ts';
-import { saveChatMessages } from './chatUtils.ts';
-import { ChatRequest, SubtaskDetails } from './types.ts';
-import { validateTimeFormat } from './dateUtils.ts';
+import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
+import { createClient } from '@supabase/supabase-js';
+import { processChatWithOpenAI } from './openaiUtils.ts';
+import { checkForTaskIntent, extractTaskDetails, createTaskFromChat } from './taskUtils.ts';
+import { extractDateFromText } from './dateUtils.ts';
 
+// CORS headers for cross-origin requests
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Initialize the Supabase client
+const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+const supabase = createClient(supabaseUrl, supabaseKey);
+
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
-
+  
   try {
-    const { message, userId } = await req.json() as ChatRequest;
-    console.log('Received request:', { message, userId });
-
-    if (!message || !userId) {
-      throw new Error('Message and userId are required');
-    }
-
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    // Fetch tasks for the user
-    const today = new Date().toISOString().split('T')[0];
-    const { data: tasks, error: tasksError } = await supabase
-      .from('tasks')
-      .select('*')
-      .eq('user_id', userId)
-      .neq('status', 'completed');
-
-    if (tasksError) {
-      console.error('Error fetching tasks:', tasksError);
-      throw tasksError;
-    }
-
-    // Count scheduled and unscheduled tasks
-    const scheduledTasks = tasks.filter(task => task.status === 'scheduled');
-    const unscheduledTasks = tasks.filter(task => task.status === 'unscheduled');
+    const { message, userId } = await req.json();
+    console.log('Received message:', message);
+    console.log('From user:', userId);
     
-    // Count today's tasks
-    const todayTasks = tasks.filter(task => task.date === today);
-
-    // Add task information to the message context
-    const contextMessage = `
-Current tasks status:
-- Total active tasks: ${tasks.length}
-- Scheduled tasks: ${scheduledTasks.length}
-- Unscheduled tasks: ${unscheduledTasks.length}
-- Tasks for today: ${todayTasks.length}
-
-Today's tasks:
-${todayTasks.map(task => `- ${task.title}`).join('\n')}
-
-User message: ${message}
-`;
-
-    const result = await processWithOpenAI(contextMessage);
-    console.log('OpenAI Processing Result:', result);
-
-    // Save chat messages
-    await saveChatMessages(supabase, userId, message, result.response);
-
-    // Create task if the AI suggests one
-    if (result.task?.should_create) {
-      console.log('Creating task with details:', result.task);
-      
-      // Parse time strings if they exist
-      const startTime = result.task.start_time || null;
-      const endTime = result.task.end_time || null;
-
-      // Get the next position for the task
-      const { data: existingTasks } = await supabase
-        .from('tasks')
-        .select('position')
-        .eq('user_id', userId)
-        .order('position', { ascending: false })
-        .limit(1);
-
-      const nextPosition = existingTasks && existingTasks[0] ? existingTasks[0].position + 1 : 0;
-
-      // Prepare task data
-      const taskData = {
-        title: result.task.title,
-        description: result.task.description || '',
-        status: result.task.is_scheduled ? 'scheduled' : 'unscheduled',
-        date: result.task.date || null,
-        start_time: startTime,
-        end_time: endTime,
-        position: nextPosition,
-        priority: result.task.priority || 'low',
+    if (!message || !userId) {
+      return new Response(
+        JSON.stringify({ error: 'Message and userId are required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Store the user message in the database
+    const { error: userMessageError } = await supabase
+      .from('chat_messages')
+      .insert({
+        content: message,
         user_id: userId,
-        owner_id: userId
-      };
-
-      console.log('Creating task with data:', taskData);
-
-      // Insert the main task
-      const { data: task, error: taskError } = await supabase
-        .from('tasks')
-        .insert(taskData)
-        .select()
-        .single();
-
-      if (taskError) {
-        console.error('Error creating task:', taskError);
-        throw taskError;
-      }
-
-      console.log('Created task:', task);
-
-      // If the task has subtasks and was created successfully, create them
-      if (result.task.subtasks && task) {
-        const formattedSubtasks = result.task.subtasks.map((subtask: any, index: number) => {
-          const subtaskTitle = typeof subtask === 'string' ? subtask : subtask.title;
-          return {
-            task_id: task.id,
-            title: subtaskTitle,
-            status: 'pending',
-            position: index
-          };
-        });
-
-        console.log('Creating subtasks:', formattedSubtasks);
-
-        const { error: subtaskError } = await supabase
-          .from('subtasks')
-          .insert(formattedSubtasks);
-
-        if (subtaskError) {
-          console.error('Error creating subtasks:', subtaskError);
-        }
+        is_ai: false
+      });
+      
+    if (userMessageError) {
+      console.error('Error storing user message:', userMessageError);
+    }
+    
+    // Get recent conversation history for context
+    const { data: previousMessages, error: historyError } = await supabase
+      .from('chat_messages')
+      .select('content, is_ai')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(10);
+      
+    if (historyError) {
+      console.error('Error fetching message history:', historyError);
+    }
+    
+    // Format previous messages for OpenAI API
+    const formattedPreviousMessages = (previousMessages || [])
+      .reverse()
+      .map(msg => ({
+        role: msg.is_ai ? 'assistant' : 'user',
+        content: msg.content
+      }));
+    
+    // Process the message with OpenAI
+    const aiResponse = await processChatWithOpenAI(message, userId, formattedPreviousMessages);
+    
+    // Store the AI response in the database
+    const { error: aiMessageError } = await supabase
+      .from('chat_messages')
+      .insert({
+        content: aiResponse,
+        user_id: userId,
+        is_ai: true
+      });
+      
+    if (aiMessageError) {
+      console.error('Error storing AI message:', aiMessageError);
+    }
+    
+    // Check if the message seems to be about creating a task
+    const hasTaskIntent = checkForTaskIntent(message);
+    console.log('Task intent detected:', hasTaskIntent);
+    
+    let taskCreated = false;
+    let task = null;
+    
+    if (hasTaskIntent) {
+      // Extract task details from the message
+      const taskDetails = extractTaskDetails(message, message);
+      console.log('Extracted task details:', taskDetails);
+      
+      // Check if we have enough details to create a task
+      if (taskDetails.title) {
+        // Create the task
+        task = await createTaskFromChat(userId, taskDetails);
+        taskCreated = true;
+        console.log('Task created:', task);
       }
     }
-
+    
+    // Create a task event that will be triggered from the client code
+    // This allows us to update the client's task list without refreshing
+    const aiEvent = {
+      response: aiResponse,
+      task: taskCreated ? task[0] : null
+    };
+    
     return new Response(
-      JSON.stringify(result),
+      JSON.stringify(aiEvent),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-
   } catch (error) {
-    console.error('Error processing message:', error);
+    console.error('Error processing request:', error);
+    
     return new Response(
-      JSON.stringify({ 
-        error: error.message || 'An error occurred while processing your request' 
-      }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
+      JSON.stringify({ error: error.message }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });

@@ -1,124 +1,96 @@
 
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { OpenAIResponse } from "./types.ts";
+import { createClient } from '@supabase/supabase-js';
 
-const SYSTEM_PROMPT = `You are a proactive personal task management assistant. Your role is to help users stay organized and productive while maintaining a friendly, supportive tone.
+// Initialize the Supabase client with environment variables
+const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
-Key behaviors:
-1. Be proactive - suggest improvements and offer help without being asked
-2. Be personal - remember and reference user's tasks and patterns
-3. Be supportive - offer encouragement and positive reinforcement
-4. Be efficient - provide clear, actionable advice
+const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
 
-When users ask about task counts or status:
-1. Look at the provided task data in the message context
-2. Give specific, accurate numbers based on the data
-3. Break down the information clearly (e.g., "You have 3 tasks due today: 2 high priority and 1 medium priority")
-4. Offer to help manage or reschedule tasks if there are many due
-
-When users mention tasks or activities that need to be done, ALWAYS create a task by setting should_create to true and providing all necessary details. Follow this format exactly:
-
-{
-  "task": {
-    "should_create": true,
-    "title": "Main task title",
-    "description": "Brief description of what needs to be done",
-    "is_scheduled": true/false,
-    "date": "YYYY-MM-DD",
-    "start_time": "HH:mm",
-    "end_time": "HH:mm",
-    "priority": "low/medium/high",
-    "subtasks": [
-      {
-        "title": "First specific task",
-        "status": "pending",
-        "position": 0
-      }
-    ]
-  },
-  "response": "Your response to user"
-}
-
-When users ask about task counts or status, respond with:
-{
-  "response": "Your detailed response about task counts and status"
-}
-
-IMPORTANT RULES:
-1. ALWAYS set should_create: true when the user mentions any task or activity that needs to be done
-2. Make sure the task object is properly formatted with all required fields
-3. Ensure date is in YYYY-MM-DD format if provided
-4. Times should be in 24-hour HH:mm format
-5. Break down complex tasks into subtasks when appropriate
-6. If no specific date/time mentioned, leave those fields as null
-7. Default to low priority if not specified
-8. When users ask about task counts, ALWAYS look at the task data provided in the context`;
-
-export async function processWithOpenAI(message: string): Promise<OpenAIResponse> {
-  console.log('Processing message with OpenAI:', message);
-  
+export const processChatWithOpenAI = async (message: string, userId: string, previousMessages: any[] = []) => {
   try {
-    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+    console.log('Processing chat with OpenAI:', message);
+    
+    // Fetch relevant context from previous chat messages
+    const { data: contextMessages, error: contextError } = await supabase
+      .rpc('match_chat_messages', {
+        query_embedding: message, // We're cheating here using raw text - ideally this would be vectorized
+        match_threshold: 0.5,
+        match_count: 5,
+        user_id: userId
+      });
+      
+    if (contextError) {
+      console.error('Error fetching context:', contextError);
+    }
+    
+    const contextText = contextMessages && contextMessages.length > 0
+      ? `Previous relevant messages:\n${contextMessages.map((m: any) => 
+        `${m.is_ai ? 'Assistant' : 'User'}: ${m.content}`).join('\n')}`
+      : '';
+    
+    // Build messages array for the completion API
+    const systemMessage = {
+      role: 'system',
+      content: `You are Tasqi, a friendly AI assistant for a task management application. 
+      Help the user organize their day, schedule tasks, and manage their to-do list.
+      
+      When the user asks to create a task or mentions anything that sounds like a task, extract the relevant details and respond helpfully.
+      
+      For scheduling tasks:
+      1. Pay special attention to dates and times. Parse dates like YYYY-MM-DD.
+      2. When the user mentions "tomorrow", "next week", or other relative dates, calculate the actual date correctly.
+      3. For "tomorrow", use the date that is exactly one day after the current date.
+      4. For "next week", use a date 7 days in the future.
+      5. Handle both 12-hour format (3:00 PM) and 24-hour format (15:00).
+      
+      Important date handling:
+      - Current date: ${new Date().toISOString().split('T')[0]}
+      - "Today" refers to: ${new Date().toISOString().split('T')[0]}
+      - "Tomorrow" refers to: ${new Date(Date.now() + 86400000).toISOString().split('T')[0]}
+      - "Next week" starts on: ${new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]}
+      
+      Be conversational and helpful. Acknowledge the user's requests and confirm details.
+      ${contextText}`
+    };
+    
+    const userMessage = { role: 'user', content: message };
+    
+    const messages = [
+      systemMessage,
+      ...previousMessages.slice(-5),
+      userMessage
+    ];
+    
+    // Call the OpenAI API
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: 'gpt-4',
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: message }
-        ],
+        model: 'gpt-3.5-turbo',
+        messages,
         temperature: 0.7,
-      }),
+        max_tokens: 500
+      })
     });
-
-    if (!openAIResponse.ok) {
-      const errorData = await openAIResponse.json();
-      console.error('OpenAI API Error:', errorData);
-      throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      console.error('OpenAI API error:', data);
+      throw new Error(`OpenAI API error: ${data.error?.message || 'Unknown error'}`);
     }
-
-    const data = await openAIResponse.json();
-    console.log('Raw OpenAI Response:', data);
-
-    let parsedResponse: OpenAIResponse;
-    try {
-      const content = data.choices[0].message.content;
-      console.log('OpenAI content to parse:', content);
-      parsedResponse = JSON.parse(content);
-      console.log('Parsed OpenAI response:', parsedResponse);
-
-      // Ensure task has proper format if it exists
-      if (parsedResponse.task) {
-        parsedResponse.task.should_create = true; // Always create task if present
-        
-        // Ensure required fields exist
-        parsedResponse.task = {
-          should_create: true,
-          title: parsedResponse.task.title,
-          description: parsedResponse.task.description || '',
-          is_scheduled: !!parsedResponse.task.is_scheduled,
-          date: parsedResponse.task.date || null,
-          start_time: parsedResponse.task.start_time || null,
-          end_time: parsedResponse.task.end_time || null,
-          priority: parsedResponse.task.priority || 'low',
-          subtasks: parsedResponse.task.subtasks || []
-        };
-      }
-    } catch (parseError) {
-      console.error('Error parsing JSON from OpenAI response:', parseError);
-      console.log('Response content:', data.choices[0].message.content);
-      
-      return {
-        response: "I understood your request, but I'm having trouble processing the task data. Could you please try rephrasing it?"
-      };
-    }
-
-    return parsedResponse;
+    
+    const aiResponse = data.choices[0].message.content;
+    console.log('OpenAI response:', aiResponse);
+    
+    return aiResponse;
   } catch (error) {
-    console.error('Error in processWithOpenAI:', error);
+    console.error('Error processing chat with OpenAI:', error);
     throw error;
   }
-}
+};
