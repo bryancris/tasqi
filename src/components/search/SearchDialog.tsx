@@ -166,7 +166,7 @@ export function SearchDialog({ isOpen, onOpenChange }: SearchDialogProps) {
           className={cn(
             "p-0", 
             isMobile 
-              ? "max-w-full w-full fixed top-[72px] left-0 right-0 !mt-0 max-h-[calc(100vh-72px)] rounded-t-none z-40" 
+              ? "max-w-full w-full fixed top-0 left-0 right-0 mt-[72px] max-h-[calc(100vh-72px)] rounded-t-none rounded-b-lg z-50" 
               : "sm:max-w-md p-0 fixed top-[50%] translate-y-[-50%]"
           )}
         >
@@ -295,7 +295,7 @@ function SearchResults({
   }
   
   return (
-    <ScrollArea className={isMobile ? "max-h-[calc(50vh-72px)]" : "max-h-[50vh]"} 
+    <ScrollArea className={isMobile ? "max-h-[calc(70vh-100px)]" : "max-h-[50vh]"} 
       type="auto" scrollHideDelay={100}>
       <div className="p-2">
         {tasks.map((task, index) => (
