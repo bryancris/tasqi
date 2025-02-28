@@ -44,13 +44,13 @@ function MonthlyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, 
         <span className="truncate flex-1">{task.title}</span>
         <div className="flex items-center gap-1 shrink-0">
           {task.reminder_enabled && (
-            <Bell className="h-3 w-3 text-[#F97316]" />
+            <Bell className="h-3 w-3 text-white" />
           )}
           {hasAudioAttachment && (
-            <Mic className="h-3 w-3 text-[#0EA5E9]" />
+            <Mic className="h-3 w-3 text-white" />
           )}
           {isGroupTask && (
-            <Users className="h-3 w-3 text-[#22C55E]" />
+            <Users className="h-3 w-3 text-white" />
           )}
           {extraButton}
         </div>

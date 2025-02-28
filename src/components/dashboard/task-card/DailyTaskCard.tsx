@@ -123,10 +123,10 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
           )}>{task.title}</h3>
           <div className="flex items-center gap-2">
             {task.reminder_enabled && (
-              <Bell className="w-4 h-4 text-[#F97316] shrink-0" />
+              <Bell className="w-4 h-4 text-white shrink-0" />
             )}
             {hasAudioAttachment && (
-              <Mic className="w-4 h-4 text-[#0EA5E9]" />
+              <Mic className="w-4 h-4 text-white" />
             )}
             <TaskAssignmentIcons 
               task={task} 

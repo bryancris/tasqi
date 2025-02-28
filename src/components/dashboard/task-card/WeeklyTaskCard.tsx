@@ -56,9 +56,9 @@ export function WeeklyTaskCard({ task, onClick, onComplete, dragHandleProps, ext
         <div className="flex items-center gap-1">
           <div className="font-medium truncate flex-1">{task.title}</div>
           <div className="flex items-center gap-1 shrink-0">
-            {task.reminder_enabled && <Bell className="w-3 h-3 text-[#F97316]" />}
-            {hasAudioAttachment && <Mic className="w-3 h-3 text-[#0EA5E9]" />}
-            {isGroupTask && <Users className="w-3 h-3 text-[#22C55E]" />}
+            {task.reminder_enabled && <Bell className="w-3 h-3 text-white" />}
+            {hasAudioAttachment && <Mic className="w-3 h-3 text-white" />}
+            {isGroupTask && <Users className="w-3 h-3 text-white" />}
             {extraButton}
           </div>
         </div>
