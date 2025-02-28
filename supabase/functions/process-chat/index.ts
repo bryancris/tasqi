@@ -1,126 +1,239 @@
 
-import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from '@supabase/supabase-js';
-import { processChatWithOpenAI } from './openaiUtils.ts';
-import { checkForTaskIntent, extractTaskDetails, createTaskFromChat } from './taskUtils.ts';
-import { extractDateFromText } from './dateUtils.ts';
+import { processMessage, createTaskFromMessage } from './taskUtils.ts';
+import { openaiCompletion } from './openaiUtils.ts';
 
-// CORS headers for cross-origin requests
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
-
-// Initialize the Supabase client
-const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
-const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
-  
+
   try {
+    // Get request data
     const { message, userId } = await req.json();
-    console.log('Received message:', message);
-    console.log('From user:', userId);
-    
+
     if (!message || !userId) {
       return new Response(
         JSON.stringify({ error: 'Message and userId are required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
+
+    // Set up Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') as string;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') as string;
+    const supabase = createClient(supabaseUrl, supabaseKey);
     
-    // Store the user message in the database
-    const { error: userMessageError } = await supabase
-      .from('chat_messages')
-      .insert({
-        content: message,
-        user_id: userId,
-        is_ai: false
-      });
-      
-    if (userMessageError) {
-      console.error('Error storing user message:', userMessageError);
-    }
+    // Log the message for debugging
+    console.log(`Processing message from user ${userId}: ${message}`);
+
+    // First, check if the message is likely a task request
+    const isTaskRequest = isTaskCreationRequest(message);
     
-    // Get recent conversation history for context
-    const { data: previousMessages, error: historyError } = await supabase
-      .from('chat_messages')
-      .select('content, is_ai')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(10);
-      
-    if (historyError) {
-      console.error('Error fetching message history:', historyError);
-    }
-    
-    // Format previous messages for OpenAI API
-    const formattedPreviousMessages = (previousMessages || [])
-      .reverse()
-      .map(msg => ({
-        role: msg.is_ai ? 'assistant' : 'user',
-        content: msg.content
-      }));
-    
-    // Process the message with OpenAI
-    const aiResponse = await processChatWithOpenAI(message, userId, formattedPreviousMessages);
-    
-    // Store the AI response in the database
-    const { error: aiMessageError } = await supabase
-      .from('chat_messages')
-      .insert({
-        content: aiResponse,
-        user_id: userId,
-        is_ai: true
-      });
-      
-    if (aiMessageError) {
-      console.error('Error storing AI message:', aiMessageError);
-    }
-    
-    // Check if the message seems to be about creating a task
-    const hasTaskIntent = checkForTaskIntent(message);
-    console.log('Task intent detected:', hasTaskIntent);
-    
-    let taskCreated = false;
-    let task = null;
-    
-    if (hasTaskIntent) {
-      // Extract task details from the message
-      const taskDetails = extractTaskDetails(message, message);
-      console.log('Extracted task details:', taskDetails);
-      
-      // Check if we have enough details to create a task
-      if (taskDetails.title) {
-        // Create the task
-        task = await createTaskFromChat(userId, taskDetails);
-        taskCreated = true;
-        console.log('Task created:', task);
+    if (isTaskRequest) {
+      try {
+        // Process the message to extract task information
+        const taskData = await processMessage(message, userId);
+        
+        // Create the task in the database
+        const createdTask = await createTaskFromMessage(taskData);
+        
+        // Store the message and AI response in the chat history
+        const taskResponse = generateTaskResponse(taskData);
+        await storeConversation(supabase, message, taskResponse, userId);
+        
+        // Return the response
+        return new Response(
+          JSON.stringify({ 
+            response: taskResponse, 
+            taskCreated: true,
+            taskData: createdTask?.[0] || null
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } catch (error) {
+        console.error('Error creating task:', error);
+        
+        // If task creation fails, fall back to AI response
+        const aiResponse = await getAIResponse(message, userId);
+        return new Response(
+          JSON.stringify({ response: aiResponse, taskCreated: false }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
+    } else {
+      // For non-task-related messages, use OpenAI to generate a response
+      const aiResponse = await getAIResponse(message, userId);
+      
+      // Store the conversation in the database
+      await storeConversation(supabase, message, aiResponse, userId);
+      
+      // Return the AI response
+      return new Response(
+        JSON.stringify({ response: aiResponse, taskCreated: false }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
-    
-    // Create a task event that will be triggered from the client code
-    // This allows us to update the client's task list without refreshing
-    const aiEvent = {
-      response: aiResponse,
-      task: taskCreated ? task[0] : null
-    };
-    
-    return new Response(
-      JSON.stringify(aiEvent),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
   } catch (error) {
     console.error('Error processing request:', error);
     
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: 'Failed to process the request' }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
 });
+
+/**
+ * Determines if a message is likely requesting task creation
+ */
+function isTaskCreationRequest(message: string): boolean {
+  const taskKeywords = [
+    'schedule', 'remind', 'task', 'appointment', 'meeting', 'event',
+    'create', 'add', 'set up', 'make', 'put', 'set'
+  ];
+  
+  const timeIndicators = [
+    'today', 'tomorrow', 'morning', 'afternoon', 'evening', 
+    'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
+    'next week', 'am', 'pm', 'o\'clock'
+  ];
+  
+  const lowerMessage = message.toLowerCase();
+  
+  // Check if the message contains task-related keywords
+  const hasTaskKeyword = taskKeywords.some(keyword => 
+    new RegExp(`\\b${keyword}\\b`).test(lowerMessage)
+  );
+  
+  // Check if the message contains time-related indicators
+  const hasTimeIndicator = timeIndicators.some(indicator => 
+    new RegExp(`\\b${indicator}\\b`).test(lowerMessage)
+  );
+  
+  // Check for time patterns like "3:00 PM" or "15:00"
+  const hasTimePattern = /\b((1[0-2]|0?[1-9])(?::([0-5][0-9]))?\s*(am|pm)|([01]?[0-9]|2[0-3]):([0-5][0-9]))\b/i.test(lowerMessage);
+  
+  // Check for date patterns like "05/20" or "May 20"
+  const hasDatePattern = /\b(0?[1-9]|1[0-2])[\/\-](0?[1-9]|[12][0-9]|3[01])\b/.test(lowerMessage) ||
+                         /\b(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|sept|oct|nov|dec)\.?\s+\d{1,2}\b/i.test(lowerMessage);
+  
+  // Consider it a task request if it has a task keyword AND either time or date indicators
+  return hasTaskKeyword && (hasTimeIndicator || hasTimePattern || hasDatePattern);
+}
+
+/**
+ * Generates a response confirming task creation
+ */
+function generateTaskResponse(taskData: any): string {
+  let response = `✅ I've added "${taskData.title}" to your tasks`;
+  
+  if (taskData.isScheduled) {
+    response += ' for';
+    
+    if (taskData.date) {
+      // Format date in a readable way
+      const date = new Date(taskData.date);
+      response += ` ${date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}`;
+    }
+    
+    if (taskData.startTime) {
+      // Format time in a readable way
+      const [hours, minutes] = taskData.startTime.split(':');
+      const hour = parseInt(hours, 10);
+      const period = hour >= 12 ? 'PM' : 'AM';
+      const hour12 = hour % 12 || 12;
+      
+      response += ` at ${hour12}:${minutes} ${period}`;
+    }
+  }
+  
+  response += `. Priority: ${taskData.priority.charAt(0).toUpperCase() + taskData.priority.slice(1)}`;
+  
+  return response;
+}
+
+/**
+ * Stores a conversation in the database
+ */
+async function storeConversation(supabase: any, userMessage: string, aiResponse: string, userId: string) {
+  try {
+    // First store the user message
+    await supabase.from('chat_messages').insert({
+      content: userMessage,
+      user_id: userId,
+      is_ai: false
+    });
+    
+    // Then store the AI response
+    await supabase.from('chat_messages').insert({
+      content: aiResponse,
+      user_id: userId,
+      is_ai: true
+    });
+  } catch (error) {
+    console.error('Error storing conversation:', error);
+    // We don't want to fail the entire request if storage fails
+  }
+}
+
+/**
+ * Gets an AI response from OpenAI
+ */
+async function getAIResponse(message: string, userId: string): Promise<string> {
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') as string;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') as string;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    // Get user's tasks for context
+    const { data: tasks } = await supabase
+      .from('tasks')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(5);
+    
+    // Get recent conversation history for context
+    const { data: recentMessages } = await supabase
+      .from('chat_messages')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(10);
+    
+    // Format the context information
+    let context = '';
+    
+    if (tasks && tasks.length > 0) {
+      context += "User's recent tasks:\n";
+      tasks.forEach((task: any, index: number) => {
+        context += `${index + 1}. "${task.title}" - ${task.status} - Priority: ${task.priority}\n`;
+      });
+      context += '\n';
+    }
+    
+    if (recentMessages && recentMessages.length > 0) {
+      context += "Recent conversation:\n";
+      // Reverse to get chronological order
+      const chronologicalMessages = [...recentMessages].reverse().slice(0, 6);
+      chronologicalMessages.forEach((msg: any) => {
+        context += `${msg.is_ai ? 'AI' : 'User'}: ${msg.content}\n`;
+      });
+    }
+    
+    // Get response from OpenAI
+    const openaiResponse = await openaiCompletion(message, context);
+    return openaiResponse || "I'm not sure how to respond to that. Can you try again?";
+  } catch (error) {
+    console.error('Error getting AI response:', error);
+    return "I'm having trouble processing your request right now. Please try again later.";
+  }
+}
