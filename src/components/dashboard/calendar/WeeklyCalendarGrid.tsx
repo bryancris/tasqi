@@ -39,6 +39,32 @@ export function WeeklyCalendarGrid({
 
   const { tasks } = useTasks();
   const scheduledTasks = tasks.filter(task => task.date && task.start_time);
+  
+  // Function to calculate task height in pixels based on duration
+  const calculateTaskHeight = (startTime: string, endTime: string): number => {
+    if (!startTime || !endTime) return 60; // Default height for 1 hour
+    
+    const startHour = parseInt(startTime.split(':')[0]);
+    const startMinute = parseInt(startTime.split(':')[1]);
+    
+    const endHour = parseInt(endTime.split(':')[0]);
+    const endMinute = parseInt(endTime.split(':')[1]);
+    
+    // Calculate total minutes
+    const durationMinutes = (endHour - startHour) * 60 + (endMinute - startMinute);
+    
+    // Convert to pixels (60px per hour)
+    return Math.max(30, (durationMinutes / 60) * 60); // Minimum height of 30px (30 minutes)
+  };
+
+  // Function to calculate top position offset based on minutes
+  const calculateTopOffset = (startTime: string): number => {
+    if (!startTime) return 0;
+    
+    const minutes = parseInt(startTime.split(':')[1]);
+    // Convert minutes to pixels (60px per hour)
+    return (minutes / 60) * 60;
+  };
 
   return (
     <div className="flex h-full gap-4">
@@ -93,42 +119,54 @@ export function WeeklyCalendarGrid({
                               task.start_time &&
                               parseInt(task.start_time.split(':')[0]) === slot.hour
                           )
-                          .map((task, index) => (
-                            <Draggable
-                              key={task.id}
-                              draggableId={String(task.id)}
-                              index={index}
-                            >
-                              {(provided, snapshot) => (
-                                <div
-                                  ref={provided.innerRef}
-                                  {...provided.draggableProps}
-                                  {...provided.dragHandleProps}
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    setEditTask(task);
-                                  }}
-                                  className="absolute left-0 right-0 top-0 px-2 py-1.5"
-                                  style={{
-                                    ...provided.draggableProps.style,
-                                    opacity: snapshot.isDragging ? 0.8 : 1
-                                  }}
-                                >
-                                  <div 
-                                    className={cn(
-                                      "text-sm px-3 py-1.5 rounded-md text-white font-medium",
-                                      getPriorityColor(task.priority),
-                                      "cursor-pointer truncate hover:brightness-95 transition-all",
-                                      snapshot.isDragging && "shadow-lg brightness-95"
-                                    )}
+                          .map((task, index) => {
+                            // Calculate task height based on duration
+                            const taskHeight = task.end_time ? 
+                              calculateTaskHeight(task.start_time || '', task.end_time) : 60;
+                            
+                            // Calculate top offset based on start time minutes
+                            const topOffset = calculateTopOffset(task.start_time || '');
+
+                            return (
+                              <Draggable
+                                key={task.id}
+                                draggableId={String(task.id)}
+                                index={index}
+                              >
+                                {(provided, snapshot) => (
+                                  <div
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    {...provided.dragHandleProps}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      setEditTask(task);
+                                    }}
+                                    className="absolute left-0 right-0 px-2"
+                                    style={{
+                                      ...provided.draggableProps.style,
+                                      height: `${taskHeight}px`,
+                                      top: `${topOffset}px`,
+                                      opacity: snapshot.isDragging ? 0.8 : 1,
+                                      zIndex: 10
+                                    }}
                                   >
-                                    {task.title}
+                                    <div 
+                                      className={cn(
+                                        "h-full text-sm px-3 py-1.5 rounded-md text-white font-medium",
+                                        getPriorityColor(task.priority),
+                                        "cursor-pointer truncate hover:brightness-95 transition-all",
+                                        snapshot.isDragging && "shadow-lg brightness-95"
+                                      )}
+                                    >
+                                      {task.title}
+                                    </div>
                                   </div>
-                                </div>
-                              )}
-                            </Draggable>
-                          ))}
+                                )}
+                              </Draggable>
+                            );
+                          })}
                         {provided.placeholder}
                       </div>
                     )}
