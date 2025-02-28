@@ -1,4 +1,3 @@
-
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
@@ -41,29 +40,54 @@ export function TaskNotificationFields({
   const platform = detectPlatform();
   const isIOSPWA = platform === 'ios-pwa';
 
-  // This function handles the toggle change, but with improved state management
   const handleToggle = async (enabled: boolean) => {
     if (!enabled) {
-      // Simply turn off notifications
       onReminderEnabledChange(false);
       return;
     }
 
-    // Set local loading state to prevent multiple clicks
     setLocalIsLoading(true);
     
     try {
-      // Call the parent's handler which will attempt to enable notifications
-      await onReminderEnabledChange(true);
-      
-      // The toggle state will be managed by the parent component (TaskForm)
-      // This ensures we don't have conflicting state management
+      if (isIOSPWA) {
+        localStorage.setItem('ios_pwa_notifications_enabled', 'true');
+        onReminderEnabledChange(true);
+        
+        if ('Notification' in window) {
+          try {
+            const permission = await Notification.requestPermission();
+            console.log('🍎 iOS notification permission result:', permission);
+          } catch (err) {
+            console.warn('🍎 iOS permission request failed, but continuing:', err);
+          }
+        }
+        
+        await onReminderEnabledChange(true);
+      } else {
+        await onReminderEnabledChange(true);
+      }
     } catch (error) {
       console.error('Error enabling notifications:', error);
+      
+      if (isIOSPWA && localStorage.getItem('ios_pwa_notifications_enabled') === 'true') {
+        console.log('🍎 Keeping iOS PWA notifications enabled based on local preference');
+      } else {
+        onReminderEnabledChange(false);
+      }
     } finally {
       setLocalIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (isIOSPWA) {
+      const localEnabled = localStorage.getItem('ios_pwa_notifications_enabled') === 'true';
+      if (localEnabled && !reminderEnabled) {
+        console.log('🍎 Syncing iOS PWA notification state from localStorage');
+        onReminderEnabledChange(true);
+      }
+    }
+  }, [isIOSPWA, reminderEnabled, onReminderEnabledChange]);
 
   return (
     <div className="space-y-4">
@@ -107,7 +131,7 @@ export function TaskNotificationFields({
 
       {isIOSPWA && reminderEnabled && (
         <div className="text-xs text-amber-600 mt-1">
-          Note: iOS notifications work best when the app is open
+          Note: iOS notifications work best when the app is open or in recent background apps
         </div>
       )}
     </div>

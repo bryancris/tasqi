@@ -1,4 +1,3 @@
-
 import { ShareTaskDialog } from "./ShareTaskDialog";
 import { FormSubmitButton } from "./form/sections/FormSubmitButton";
 import { TaskFormContent } from "./form/TaskFormContent";
@@ -81,37 +80,53 @@ export function TaskForm({
     onSubtasksChange,
   });
 
-  // Synchronize the reminderEnabled state with isSubscribed when appropriate
   useEffect(() => {
-    // Only synchronize in specific cases to avoid toggle reset issues
-    if (isSubscribed && !reminderEnabled && !notificationsLoading && fcmStatus !== 'loading') {
+    if (isIOSPWA) {
+      const localEnabled = localStorage.getItem('ios_pwa_notifications_enabled') === 'true';
+      if (localEnabled && !reminderEnabled) {
+        console.log('🍎 Setting reminder enabled from localStorage');
+        onReminderEnabledChange(true);
+      }
+    }
+  }, [isIOSPWA, reminderEnabled, onReminderEnabledChange]);
+
+  useEffect(() => {
+    if (!isIOSPWA && isSubscribed && !reminderEnabled && !notificationsLoading && fcmStatus !== 'loading') {
       console.log('Syncing reminder state: notifications are subscribed but reminder is disabled');
       onReminderEnabledChange(true);
     }
-  }, [isSubscribed, reminderEnabled, notificationsLoading, fcmStatus, onReminderEnabledChange]);
+  }, [isIOSPWA, isSubscribed, reminderEnabled, notificationsLoading, fcmStatus, onReminderEnabledChange]);
 
   const handleReminderToggle = async (enabled: boolean) => {
     try {
-      if (enabled) {
-        setFcmStatus('loading');
-        
-        // Use the enableNotifications function from useNotifications hook
+      if (!enabled) {
+        if (isIOSPWA) {
+          localStorage.removeItem('ios_pwa_notifications_enabled');
+        }
+        onReminderEnabledChange(false);
+        try {
+          await enableNotifications();
+        } catch (error) {
+          console.warn('Error disabling notifications, but UI already updated:', error);
+        }
+        return;
+      }
+      
+      setFcmStatus('loading');
+      
+      if (isIOSPWA) {
+        localStorage.setItem('ios_pwa_notifications_enabled', 'true');
+        onReminderEnabledChange(true);
+      }
+      
+      try {
         await enableNotifications();
-        
-        // Set the UI state to enabled immediately
-        // This prevents the toggle from flickering back to disabled
         onReminderEnabledChange(true);
         setFcmStatus('ready');
-        
-        // Check subscription status again after a delay
-        setTimeout(() => {
-          checkSubscriptionStatus();
-        }, 500);
-        
         if (isIOSPWA) {
           toast({
             title: "Notifications Enabled",
-            description: "iOS notifications will work best when the app is open",
+            description: "You'll receive notifications when the app is open or in recent apps",
           });
         } else {
           toast({
@@ -119,28 +134,31 @@ export function TaskForm({
             description: "Notifications enabled successfully",
           });
         }
-      } else {
-        onReminderEnabledChange(false);
+      } catch (error) {
+        console.error('Error setting up notifications:', error);
+        if (isIOSPWA) {
+          toast({
+            title: "Partial Success",
+            description: "Notifications available when app is open. Some browser features may be limited.",
+          });
+          setFcmStatus('ready');
+        } else {
+          setFcmStatus('error');
+          onReminderEnabledChange(false);
+          toast({
+            title: "Error",
+            description: error instanceof Error ? error.message : 'Failed to setup notifications. Please check browser permissions.',
+            variant: "destructive",
+          });
+        }
       }
     } catch (error) {
-      console.error('Error setting up notifications:', error);
-      setFcmStatus('error');
-      
-      // Important: Make sure the UI reflects the failed state
-      onReminderEnabledChange(false);
-      
-      if (isIOSPWA) {
-        toast({
-          title: "Error",
-          description: "iOS PWA notification setup failed. Please try again or check Settings.",
-          variant: "destructive",
-        });
+      console.error('Unexpected error handling reminder toggle:', error);
+      if (isIOSPWA && localStorage.getItem('ios_pwa_notifications_enabled') === 'true') {
+        setFcmStatus('ready');
       } else {
-        toast({
-          title: "Error",
-          description: error instanceof Error ? error.message : 'Failed to setup notifications. Please check browser permissions.',
-          variant: "destructive",
-        });
+        setFcmStatus('error');
+        onReminderEnabledChange(false);
       }
     }
   };
