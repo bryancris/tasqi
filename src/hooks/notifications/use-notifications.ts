@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { detectPlatform } from '@/utils/notifications/platformDetection';
 import { useIOSPWANotifications } from './use-ios-pwa-notifications';
 import { useWebNotifications } from './use-web-notifications';
+import { useNotifications as useNotificationsContext } from '@/components/notifications/context/NotificationsContext';
 
 /**
  * Platform-adaptive notifications hook
@@ -22,6 +23,9 @@ export function useNotifications() {
   
   // Select the appropriate implementation based on platform
   const implementation = isIOSPWA ? iosPwaNotifications : webNotifications;
+  
+  // Get the notification context for showNotification
+  const notificationContext = useNotificationsContext();
   
   // Re-check subscription status after each enable attempt with a delay
   useEffect(() => {
@@ -56,11 +60,15 @@ export function useNotifications() {
     }
   };
   
+  // Provide the showNotification method from the notifications context
+  const showNotification = notificationContext.showNotification;
+  
   return {
     isSubscribed: implementation.isSubscribed,
     isLoading: implementation.isLoading,
     enableNotifications,
     disableNotifications,
-    checkSubscriptionStatus: implementation.checkSubscriptionStatus
+    checkSubscriptionStatus: implementation.checkSubscriptionStatus,
+    showNotification
   };
 }
