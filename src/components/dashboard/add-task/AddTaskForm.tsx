@@ -209,10 +209,10 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
       console.log("Step 7: Task creation complete, showing success message");
       toast.success('Task created successfully');
       
-      // Don't reset the form here, let the parent component handle it
-      // to avoid race conditions with the drawer closing
+      // Explicitly call onSuccess to close the drawer
       console.log("Step 8: Calling onSuccess callback");
       if (typeof onSuccess === 'function') {
+        // This line is crucial - we call onSuccess explicitly to close the drawer
         onSuccess();
         console.log("onSuccess callback completed");
       } else {
