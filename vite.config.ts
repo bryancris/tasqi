@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => ({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
-      includeAssets: ['favicon.ico', 'pwa-192x192.png', 'pwa-512x512.png'],
+      includeAssets: ['favicon.ico', 'pwa-192x192.png', 'pwa-512x512.png', 'notification-sound.mp3'],
       manifest: {
         name: 'TASQI-AI Assistant',
         short_name: 'TASQI-AI',
@@ -43,33 +43,76 @@ export default defineConfig(({ mode }) => ({
         ]
       },
       devOptions: {
-        enabled: true
+        enabled: true,
+        /* Reduce development logging */
+        suppressWarnings: true,
+        type: 'module',
+        navigateFallback: 'index.html'
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
+        // Reduce what files are processed in dev mode
+        globPatterns: mode === 'production' 
+          ? ['**/*.{js,css,html,ico,png,svg,webp}'] 
+          : ['**/pwa-*.png', '**/*-legacy*.js', '**/*.css', 'favicon.ico', 'index.html'],
+        
+        // Exclude development files and source maps
+        globIgnores: [
+          '**/node_modules/**',
+          '**/.vite/**', 
+          '**/*.map',
+          '**/src/**/*.ts',
+          '**/src/**/*.tsx'
+        ],
+        
+        // Optimize caching strategies
         runtimeCaching: [
           {
             urlPattern: ({ url }) => {
+              // Only app routes - be more selective
               const appRoutes = ['/', '/dashboard', '/notes', '/settings'];
-              return appRoutes.some(route => url.pathname.startsWith(route));
+              return appRoutes.some(route => url.pathname === route || url.pathname === route + '/');
             },
             handler: 'NetworkFirst',
             options: {
               cacheName: 'app-routes',
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 // 1 hour
+              },
               cacheableResponse: {
                 statuses: [0, 200]
               }
             }
           },
           {
+            // Static assets - use CacheFirst for better performance
+            urlPattern: /\.(css|js|ico|png|svg|webp|woff2?)$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'static-assets',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 24 * 60 * 60 // 24 hours
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
+            // API calls - use NetworkFirst with timeout
             urlPattern: /^https:\/\/mcwlzrikidzgxexnccju\.supabase\.co/,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'api-cache',
+              networkTimeoutSeconds: 5,
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 5 * 60 // 5 minutes
+              },
               cacheableResponse: {
                 statuses: [0, 200]
-              },
-              networkTimeoutSeconds: 10
+              }
             }
           }
         ],

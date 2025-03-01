@@ -14,6 +14,7 @@ class NotificationService {
   private initialized = false;
   private audioContext: AudioContext | null = null;
   private platform: 'web' | 'ios-pwa';
+  private readonly isDev = process.env.NODE_ENV === 'development';
 
   constructor() {
     this.swManager = new ServiceWorkerManager();
@@ -28,6 +29,27 @@ class NotificationService {
     }
 
     try {
+      // In development mode, delay initialization to prioritize app loading
+      if (this.isDev) {
+        console.log('🚧 Development mode: deferring full notification service initialization');
+        this.initialized = true;  // Mark as initialized to prevent multiple attempts
+        
+        // Delay full initialization to not block the initial app load
+        setTimeout(() => this.deferredInitialization(), 3000);
+        return;
+      }
+      
+      // Production initialization proceeds normally
+      await this.deferredInitialization();
+    } catch (error) {
+      console.error('❌ Failed to initialize notification service:', error);
+      // Don't re-throw, allow app to function without notifications
+      this.initialized = true; // Mark as initialized to prevent retry loops
+    }
+  }
+  
+  private async deferredInitialization(): Promise<void> {
+    try {
       console.log('🚀 Initializing notification service for platform:', this.platform);
       const registration = await this.swManager.register();
       
@@ -36,11 +58,11 @@ class NotificationService {
         await this.queueManager.loadQueuedNotifications();
         
         // Background sync has limited support on iOS
-        if (this.platform !== 'ios-pwa') {
+        if (this.platform !== 'ios-pwa' && !this.isDev) {
           await this.swManager.setupBackgroundSync();
           await this.swManager.setupPeriodicSync(this.periodicSyncInterval);
         } else {
-          console.log('🍎 Skipping background/periodic sync setup for iOS PWA');
+          console.log('🍎 Skipping background/periodic sync setup for iOS PWA or dev mode');
         }
         
         await this.queueManager.processNotificationQueue(this.showNotification.bind(this));
@@ -57,13 +79,18 @@ class NotificationService {
         this.initialized = true;
       }
     } catch (error) {
-      console.error('❌ Failed to initialize notification service:', error);
-      throw error;
+      console.error('❌ Failed in deferred initialization:', error);
+      // Mark as initialized anyway to prevent retry loops
+      this.initialized = true;
     }
   }
 
   async subscribe(): Promise<NotificationSubscription | null> {
     if (!this.subManager) {
+      if (this.isDev) {
+        console.log('⚠️ Development mode: Subscription manager not available');
+        return null;
+      }
       throw new Error('Service Worker not registered');
     }
     return this.subManager.subscribe();
@@ -113,6 +140,8 @@ class NotificationService {
     const registration = this.swManager.getRegistration();
     if (!registration) {
       console.error('❌ Service Worker not registered');
+      // Fallback to toast notification
+      this.showToastNotification(notification);
       return;
     }
 
@@ -125,23 +154,9 @@ class NotificationService {
         console.log('🍎 Using iOS PWA notification approach');
         
         // On iOS PWAs, in-app toast notifications are more reliable
-        // than system notifications, which have limitations
-        toast(notification.title, {
-          description: notification.message,
-          duration: 10000,
-          action: {
-            label: 'View',
-            onClick: () => {
-              // Navigate to appropriate screen based on notification type
-              if (notification.data?.taskId) {
-                window.location.href = '/dashboard';
-              }
-            }
-          }
-        });
+        this.showToastNotification(notification);
         
         // Still try to show a system notification on iOS
-        // But with simpler options for better compatibility
         try {
           // Use the simpler options for iOS
           await registration.showNotification(notification.title, {
@@ -187,8 +202,24 @@ class NotificationService {
     } catch (error) {
       console.error('❌ Error showing PWA notification:', error);
       // Fallback to toast notification if PWA notification fails
-      toast.error('Failed to show notification');
+      this.showToastNotification(notification);
     }
+  }
+  
+  private showToastNotification(notification: NotificationData): void {
+    toast(notification.title, {
+      description: notification.message,
+      duration: 10000,
+      action: {
+        label: 'View',
+        onClick: () => {
+          // Navigate to appropriate screen based on notification type
+          if (notification.data?.taskId) {
+            window.location.href = '/dashboard';
+          }
+        }
+      }
+    });
   }
 }
 

@@ -10,32 +10,40 @@ import { AuthProvider } from '@/contexts/AuthContext';
 
 const queryClient = new QueryClient();
 
+// Track if we're in development mode to tune performance
+const isDev = process.env.NODE_ENV === 'development';
+
 // Handle service worker registration in a non-blocking way
 if ('serviceWorker' in navigator) {
+  // Delay service worker registration in development to prioritize app loading
+  const registerDelay = isDev ? 2000 : 0;
+  
   window.addEventListener('load', () => {
-    // Register service worker but don't block app rendering
-    navigator.serviceWorker.register('/registerSW.js')
-      .then(registration => {
-        console.log('✅ SW registered:', registration);
-        
-        // Handle updates
-        registration.addEventListener('updatefound', () => {
-          const newWorker = registration.installing;
-          if (newWorker) {
-            newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                // New content is available
-                const event = new CustomEvent('updateAvailable');
-                window.dispatchEvent(event);
-              }
-            });
-          }
+    setTimeout(() => {
+      // Register service worker but don't block app rendering
+      navigator.serviceWorker.register('/registerSW.js')
+        .then(registration => {
+          console.log('✅ SW registered:', registration);
+          
+          // Handle updates
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            if (newWorker) {
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // New content is available
+                  const event = new CustomEvent('updateAvailable');
+                  window.dispatchEvent(event);
+                }
+              });
+            }
+          });
+        })
+        .catch(error => {
+          // Log error but don't block app functionality
+          console.warn('⚠️ SW registration failed, app will work without offline capabilities:', error);
         });
-      })
-      .catch(error => {
-        // Log error but don't block app functionality
-        console.warn('⚠️ SW registration failed, app will work without offline capabilities:', error);
-      });
+    }, registerDelay);
   });
 
   // Handle service worker updates

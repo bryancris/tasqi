@@ -1,6 +1,7 @@
 
 export class ServiceWorkerManager {
   private swRegistration: ServiceWorkerRegistration | null = null;
+  private readonly isDev = process.env.NODE_ENV === 'development';
 
   async register(): Promise<ServiceWorkerRegistration | null> {
     try {
@@ -36,30 +37,35 @@ export class ServiceWorkerManager {
         console.log('🍎 Registering iOS PWA service worker');
       }
 
-      // Try the vite-generated SW first, then fall back to default path
-      try {
-        this.swRegistration = await navigator.serviceWorker.register('/registerSW.js', options);
-      } catch (err) {
-        console.warn('⚠️ Could not register vite SW, trying default SW path:', err);
+      // In development mode, check if there's already a service worker registration
+      // to avoid excessive background activity
+      if (this.isDev) {
         try {
-          this.swRegistration = await navigator.serviceWorker.register('/sw.js', options);
-        } catch (fallbackErr) {
-          console.warn('⚠️ Fallback service worker registration also failed:', fallbackErr);
-          // Gracefully continue without service worker
-          return null;
+          const existingReg = await navigator.serviceWorker.getRegistration();
+          if (existingReg && existingReg.active) {
+            console.log('✅ Using existing ServiceWorker registration in dev mode');
+            this.swRegistration = existingReg;
+            return existingReg;
+          }
+        } catch (err) {
+          console.warn('⚠️ Error checking existing SW registration:', err);
         }
       }
 
-      console.log('✅ ServiceWorker registered successfully');
-
-      // Request notification permission if not granted
-      if ('Notification' in window && Notification.permission === 'default') {
+      // First, try with the standard Vite PWA path
+      try {
+        this.swRegistration = await navigator.serviceWorker.register('/registerSW.js', options);
+        console.log('✅ ServiceWorker registered successfully');
+      } catch (err) {
+        console.warn('⚠️ Could not register Vite SW, trying fallback:', err);
+        
+        // Fallback to default SW path
         try {
-          const permission = await Notification.requestPermission();
-          console.log('📱 Notification permission:', permission);
-        } catch (permError) {
-          console.warn('⚠️ Error requesting notification permission:', permError);
-          // Continue anyway, especially for iOS
+          this.swRegistration = await navigator.serviceWorker.register('/sw.js', options);
+          console.log('✅ Fallback ServiceWorker registered successfully');
+        } catch (fallbackErr) {
+          console.warn('⚠️ Fallback service worker registration also failed:', fallbackErr);
+          return null;
         }
       }
 
@@ -88,6 +94,12 @@ export class ServiceWorkerManager {
 
   async setupBackgroundSync(): Promise<void> {
     try {
+      // Skip heavy background processes in development
+      if (this.isDev) {
+        console.log('⚠️ Background sync disabled in development mode');
+        return;
+      }
+      
       // Check if this is an iOS device
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
       
@@ -110,6 +122,12 @@ export class ServiceWorkerManager {
 
   async setupPeriodicSync(interval: number): Promise<void> {
     try {
+      // Skip in development mode
+      if (this.isDev) {
+        console.log('⚠️ Periodic sync disabled in development mode');
+        return;
+      }
+      
       if (!this.swRegistration) return;
 
       // Check for iOS
