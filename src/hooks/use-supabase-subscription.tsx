@@ -15,6 +15,8 @@ export function useSupabaseSubscription() {
   
   // Add debounce mechanism for task updates
   const taskUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Track mounted state
+  const isMountedRef = useRef<boolean>(true);
 
   const debouncedInvalidateTasks = useCallback(() => {
     // Clear any existing timeout
@@ -24,9 +26,11 @@ export function useSupabaseSubscription() {
     
     // Set a new timeout for task invalidation
     taskUpdateTimeoutRef.current = setTimeout(() => {
-      console.log('Debounced task query invalidation triggered');
-      void queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      taskUpdateTimeoutRef.current = null;
+      if (isMountedRef.current) {
+        console.log('Debounced task query invalidation triggered');
+        void queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        taskUpdateTimeoutRef.current = null;
+      }
     }, 1000); // 1 second debounce time
   }, [queryClient]);
 
@@ -34,6 +38,7 @@ export function useSupabaseSubscription() {
     // Only run once
     if (initialized.current) return;
     initialized.current = true;
+    isMountedRef.current = true;
     
     console.log('Initializing Supabase subscriptions');
     
@@ -48,8 +53,10 @@ export function useSupabaseSubscription() {
         console.log('🚀 Initializing notification service...');
         await notificationService.initialize();
       } catch (error) {
-        console.error('❌ Error initializing notification service:', error);
-        toast.error('Failed to initialize notifications');
+        if (isMountedRef.current) {
+          console.error('❌ Error initializing notification service:', error);
+          toast.error('Failed to initialize notifications');
+        }
       }
     };
 
@@ -62,11 +69,15 @@ export function useSupabaseSubscription() {
         { event: 'UPDATE', schema: 'public', table: 'tasks' },
         () => {
           // Use debounced invalidation instead of immediate
-          debouncedInvalidateTasks();
+          if (isMountedRef.current) {
+            debouncedInvalidateTasks();
+          }
         }
       )
       .subscribe((status) => {
-        console.log('Tasks subscription status:', status);
+        if (isMountedRef.current) {
+          console.log('Tasks subscription status:', status);
+        }
       });
 
     // Notes channel
@@ -75,7 +86,9 @@ export function useSupabaseSubscription() {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'notes' },
         () => {
-          void queryClient.invalidateQueries({ queryKey: ['notes'] });
+          if (isMountedRef.current) {
+            void queryClient.invalidateQueries({ queryKey: ['notes'] });
+          }
         }
       )
       .subscribe();
@@ -91,6 +104,8 @@ export function useSupabaseSubscription() {
           filter: 'type=eq.task_assignment'
         },
         async (payload) => {
+          if (!isMountedRef.current) return;
+          
           try {
             console.log('📝 New notification received:', payload);
 
@@ -127,8 +142,10 @@ export function useSupabaseSubscription() {
             });
 
           } catch (error) {
-            console.error('❌ Error handling task assignment notification:', error);
-            toast.error('Failed to show notification');
+            if (isMountedRef.current) {
+              console.error('❌ Error handling task assignment notification:', error);
+              toast.error('Failed to show notification');
+            }
           }
         }
       )
@@ -137,6 +154,7 @@ export function useSupabaseSubscription() {
     // Cleanup function
     return () => {
       console.log('Cleaning up Supabase subscriptions');
+      isMountedRef.current = false;
       
       // Clear any pending timeout
       if (taskUpdateTimeoutRef.current) {

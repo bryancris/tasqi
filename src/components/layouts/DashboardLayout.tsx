@@ -7,6 +7,7 @@ import { DesktopHeader } from "./DesktopHeader";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useCalendarView } from "@/contexts/CalendarViewContext";
 import { useSupabaseSubscription } from "@/hooks/use-supabase-subscription";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -21,7 +22,7 @@ export function DashboardLayout({
     setSelectedDate
   } = useCalendarView();
   
-  // Initialize Supabase subscriptions once
+  // Initialize Supabase subscriptions once - will handle its own initialization check
   useSupabaseSubscription();
   
   // Use ref to track if we've already logged the mount message
@@ -38,7 +39,9 @@ export function DashboardLayout({
       {isMobile ? <>
           <MobileHeader />
           <main className="flex-1 pb-16 pt-[72px] scrollbar-hide">
-            {children}
+            <ErrorBoundary fallback={<div className="p-4 text-center">Something went wrong loading the dashboard. Please refresh the page.</div>}>
+              {children}
+            </ErrorBoundary>
           </main>
           <MobileFooter />
         </> : <div className="flex h-screen overflow-hidden">
@@ -50,7 +53,9 @@ export function DashboardLayout({
             </div>
             {/* Main content area with proper padding */}
             <main className="flex-1 overflow-y-auto bg-[#f8f9fa] p-6 px-[20px] py-0">
-              {children}
+              <ErrorBoundary fallback={<div className="p-4 text-center">Something went wrong loading the dashboard. Please refresh the page.</div>}>
+                {children}
+              </ErrorBoundary>
             </main>
           </div>
         </div>}

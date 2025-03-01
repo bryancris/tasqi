@@ -8,14 +8,8 @@ import { YearlyCalendar } from "@/components/dashboard/YearlyCalendar";
 import { useCalendarView } from "@/contexts/CalendarViewContext";
 
 export default function Dashboard() {
-  // Use a ref to ensure task notifications are only initialized once
-  const notificationsInitialized = useRef(false);
-  
-  // Only initialize notifications once using the ref flag
-  if (!notificationsInitialized.current) {
-    notificationsInitialized.current = true;
-    useTaskNotifications();
-  }
+  // Proper hook usage - call at top level unconditionally 
+  useTaskNotifications();
   
   const {
     view,

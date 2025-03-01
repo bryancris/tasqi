@@ -10,8 +10,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 
-// Increase check interval to reduce frequency - from 30s to 60s
-const NOTIFICATION_CHECK_INTERVAL = 60000; // Check every 60 seconds instead of 30
+// Increase check interval to reduce frequency
+const NOTIFICATION_CHECK_INTERVAL = 60000; // Check every 60 seconds
 
 export function useTaskNotifications() {
   const { tasks } = useTasks();
@@ -70,6 +70,8 @@ export function useTaskNotifications() {
   };
 
   const showTaskNotification = useCallback(async (task: Task, type: 'reminder' | 'shared' | 'assignment' = 'reminder') => {
+    if (!isMountedRef.current) return false;
+    
     try {
       console.log('🔔 Showing notification:', {
         taskId: task.id,
@@ -101,12 +103,16 @@ export function useTaskNotifications() {
 
       return true;
     } catch (error) {
-      console.error('❌ Error showing notification:', error);
+      if (isMountedRef.current) {
+        console.error('❌ Error showing notification:', error);
+      }
       return false;
     }
   }, [showNotification, queryClient]);
 
   const checkForUpcomingTasks = useCallback(async (tasks: Task[]) => {
+    if (!isMountedRef.current) return;
+    
     // Skip checking if last check was too recent (within last 5 seconds)
     const now = Date.now();
     if (now - lastCheckTimeRef.current < 5000) {
@@ -130,6 +136,8 @@ export function useTaskNotifications() {
     );
     
     for (const task of tasksToCheck) {
+      if (!isMountedRef.current) break;
+      
       try {
         const taskDate = parseISO(task.date!);
         
@@ -149,18 +157,21 @@ export function useTaskNotifications() {
             minutesUntilTask > reminderWindowEnd) {
           const notificationSent = await showTaskNotification(task, 'reminder');
           
-          if (notificationSent) {
+          if (notificationSent && isMountedRef.current) {
             console.log('✅ Reminder notification sent successfully');
             notifiedTasksRef.current.add(task.id);
           }
         }
       } catch (error) {
-        console.error('Error processing task notification:', error);
+        if (isMountedRef.current) {
+          console.error('Error processing task notification:', error);
+        }
       }
     }
   }, [showTaskNotification]);
 
   useEffect(() => {
+    console.log('🔔 Task notifications hook initialized');
     isMountedRef.current = true;
     
     // Initial check on mount if we have tasks
@@ -174,9 +185,11 @@ export function useTaskNotifications() {
       }
     }, NOTIFICATION_CHECK_INTERVAL);
 
+    // Cleanup function
     return () => {
       isMountedRef.current = false;
       clearInterval(intervalId);
+      console.log('🔔 Task notifications hook cleanup');
     };
   }, [tasks, checkForUpcomingTasks]);
 }
