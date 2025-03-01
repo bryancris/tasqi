@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -45,7 +44,7 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
     resetForm
   } = formActions;
 
-  const { session } = useAuth();
+  const { session, user } = useAuth();
   const queryClient = useQueryClient();
 
   const handleSubmit = async () => {
@@ -56,9 +55,13 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
       return;
     }
 
-    // Check for authentication
-    if (!session) {
+    // Check for authentication - use either session or user for redundancy
+    const isAuthenticated = !!(session || user);
+    const userId = session?.user?.id || user?.id;
+    
+    if (!isAuthenticated || !userId) {
       console.error("No active session found - user is not authenticated");
+      console.log("Auth state:", { hasSession: !!session, hasUser: !!user });
       toast.error("You must be signed in to create tasks");
       return;
     }
@@ -82,8 +85,7 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
         status = 'unscheduled';
       }
 
-      console.log("Step 1: Using authenticated user from session");
-      const userId = session.user.id;
+      console.log("Step 1: Using authenticated user");
       console.log("User authenticated with ID:", userId);
 
       // Prepare the task data

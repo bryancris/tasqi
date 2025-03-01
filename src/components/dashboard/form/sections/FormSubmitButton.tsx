@@ -15,8 +15,8 @@ export function FormSubmitButton({
   isEditing, 
   isMobile 
 }: FormSubmitButtonProps) {
-  const { session } = useAuth();
-  const isAuthenticated = !!session;
+  const { session, user } = useAuth();
+  const isAuthenticated = !!(session || user); // Consider authenticated if either exists
   const isDisabled = isLoading || processingAIResponse || !isAuthenticated;
   
   let buttonText = isLoading ? 
@@ -45,7 +45,9 @@ export function FormSubmitButton({
             processingAIResponse, 
             isEditing, 
             isDisabled,
-            isAuthenticated 
+            isAuthenticated,
+            hasSession: !!session,
+            hasUser: !!user
           });
         }}
       >
