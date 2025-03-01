@@ -181,14 +181,16 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
       console.log("Step 7: Task creation complete, showing success message");
       toast.success('Task created successfully');
       
-      // Reset the form
-      console.log("Step 8: Resetting form");
-      resetForm();
+      // Don't reset the form here, let the parent component handle it
+      // to avoid race conditions with the drawer closing
+      console.log("Step 8: Calling onSuccess callback");
+      if (typeof onSuccess === 'function') {
+        onSuccess();
+        console.log("onSuccess callback completed");
+      } else {
+        console.error("onSuccess is not a function:", onSuccess);
+      }
       
-      // Call onSuccess callback
-      console.log("Step 9: Calling onSuccess callback");
-      onSuccess();
-      console.log("onSuccess callback completed");
     } catch (error: any) {
       console.error('Error creating task - detailed error:', {
         name: error.name,

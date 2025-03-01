@@ -31,10 +31,15 @@ export function AddTaskDrawer({
   const handleSuccess = () => {
     console.log("handleSuccess called in AddTaskDrawer");
     try {
+      // First reset the form
+      formActions.resetForm();
+      console.log("Form reset successfully");
+      
+      // Then close the drawer
       onOpenChange(false);
       console.log("Drawer closed successfully");
     } catch (error) {
-      console.error("Error closing drawer:", error);
+      console.error("Error in handleSuccess:", error);
     }
   };
 
