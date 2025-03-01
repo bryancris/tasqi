@@ -1,6 +1,8 @@
 
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface FormSubmitButtonProps {
   isLoading: boolean;
@@ -15,8 +17,31 @@ export function FormSubmitButton({
   isEditing, 
   isMobile 
 }: FormSubmitButtonProps) {
-  const { session, user } = useAuth();
-  const isAuthenticated = !!(session || user); // Consider authenticated if either exists
+  const { session, user, loading } = useAuth();
+  const [directAuthCheck, setDirectAuthCheck] = useState<boolean | null>(null);
+  
+  // Add a direct auth check as a backup
+  useEffect(() => {
+    const checkAuthDirectly = async () => {
+      try {
+        const { data } = await supabase.auth.getUser();
+        const isDirectlyAuthenticated = !!data.user;
+        console.log("Direct auth check:", { 
+          isAuthenticated: isDirectlyAuthenticated,
+          userId: data.user?.id
+        });
+        setDirectAuthCheck(isDirectlyAuthenticated);
+      } catch (error) {
+        console.error("Error in direct auth check:", error);
+        setDirectAuthCheck(false);
+      }
+    };
+    
+    checkAuthDirectly();
+  }, []);
+  
+  // Use either context auth or direct auth check, whichever confirms the user is authenticated
+  const isAuthenticated = !!(session || user || directAuthCheck);
   const isDisabled = isLoading || processingAIResponse || !isAuthenticated;
   
   let buttonText = isLoading ? 
@@ -29,6 +54,11 @@ export function FormSubmitButton({
         
   if (!isAuthenticated) {
     buttonText = "Sign in to create tasks";
+  }
+
+  // If we're still loading auth state, show a loading state
+  if (loading && directAuthCheck === null) {
+    buttonText = "Checking authentication...";
   }
 
   return (
@@ -46,8 +76,9 @@ export function FormSubmitButton({
             isEditing, 
             isDisabled,
             isAuthenticated,
-            hasSession: !!session,
-            hasUser: !!user
+            contextAuth: { hasSession: !!session, hasUser: !!user },
+            directAuth: directAuthCheck,
+            authLoading: loading
           });
         }}
       >

@@ -51,6 +51,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Function to fetch and update authentication state
   const refreshAuthState = useCallback(async () => {
     try {
+      console.log("Refreshing auth state...");
       // Get both session and user data for redundancy
       const [sessionResult, userResult] = await Promise.all([
         supabase.auth.getSession(),
@@ -59,6 +60,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const newSession = sessionResult.data.session;
       const newUser = userResult.data.user;
+      
+      console.log("Auth refresh complete:", { 
+        hasSession: !!newSession, 
+        hasUser: !!newUser,
+        userId: newUser?.id
+      });
 
       if (mounted.current) {
         setAuthState(newSession, newUser);
@@ -73,15 +80,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     // Initial auth state fetch
+    console.log("Initializing auth state...");
     refreshAuthState();
 
     // Set up auth state listener
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state change detected:", { event, hasSession: !!session });
+      
       if (mounted.current) {
         // Get user directly when auth state changes
         const { data } = await supabase.auth.getUser();
+        console.log("User data after auth state change:", { hasUser: !!data.user, userId: data.user?.id });
         setAuthState(session, data.user);
       }
     });
