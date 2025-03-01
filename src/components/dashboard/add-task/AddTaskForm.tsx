@@ -104,7 +104,11 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
         user_id: userId,
         owner_id: userId,
         is_all_day: isEvent ? isAllDay : false,
-        position: 0 // This will be adjusted by the backend
+        position: 0, // This will be adjusted by the backend
+        assignees: [], // Initialize empty array for assignees
+        shared: false, // Default to not shared
+        is_tracking: false, // Default to not tracking
+        reschedule_count: 0 // Initialize reschedule count
       };
       
       console.log("Step 2: Preparing task data:", taskData);
