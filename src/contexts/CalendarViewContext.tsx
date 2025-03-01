@@ -24,13 +24,14 @@ export function CalendarViewProvider({ children }: { children: ReactNode }) {
   const [selectedDate, setSelectedDate] = useState(new Date());
   
   // List of non-calendar routes
-  const nonCalendarRoutes = ['notes', 'settings', 'analytics', 'self-care'];
+  const nonCalendarRoutes = ['notes', 'settings', 'analytics', 'self-care', 'chat'];
   
   // Check if current path is a non-calendar route
   const isNonCalendarRoute = () => {
     return nonCalendarRoutes.some(route => location.pathname.includes(`/dashboard/${route}`));
   };
 
+  // Initialize view based on the current path
   const [view, setCurrentView] = useState<CalendarView>(() => {
     // Initialize with the correct view based on the current path
     const path = location.pathname;
@@ -43,18 +44,21 @@ export function CalendarViewProvider({ children }: { children: ReactNode }) {
     return 'tasks';
   });
 
-  // Update view based on current route
+  // Update view based on current route, but only for calendar routes
   useEffect(() => {
     const path = location.pathname;
     if (!path.startsWith('/dashboard')) return;
     if (isNonCalendarRoute()) return;
     
     let newView: CalendarView = 'tasks';
-    if (path.includes('/week')) newView = 'weekly';
-    else if (path.includes('/monthly')) newView = 'monthly';
-    else if (path.includes('/yearly')) newView = 'yearly';
-    else if (path === '/dashboard' || path.includes('/tasks')) newView = 'tasks';
-
+    
+    // Use exact path matching instead of includes
+    if (path === '/dashboard/week') newView = 'weekly';
+    else if (path === '/dashboard/monthly') newView = 'monthly';
+    else if (path === '/dashboard/yearly') newView = 'yearly';
+    else if (path === '/dashboard' || path === '/dashboard/tasks') newView = 'tasks';
+    
+    console.log("CalendarViewContext: path changed to", path, "setting view to", newView);
     setCurrentView(newView);
   }, [location.pathname]);
 
@@ -69,9 +73,14 @@ export function CalendarViewProvider({ children }: { children: ReactNode }) {
     };
     
     const targetPath = viewToPathMap[newView];
+    console.log("CalendarViewContext: navigating to", targetPath, "for view", newView);
+    
     if (location.pathname !== targetPath) {
       navigate(targetPath);
     }
+    
+    // Also manually update the view state to ensure immediate UI update
+    setCurrentView(newView);
   };
 
   return (

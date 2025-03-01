@@ -108,6 +108,12 @@ function App() {
                       <Route path="self-care" element={<SelfCare />} />
                       <Route path="chat" element={<Chat />} />
                       
+                      {/* Add explicit routes for calendar views */}
+                      <Route path="tasks" element={<Dashboard />} />
+                      <Route path="week" element={<Dashboard />} />
+                      <Route path="monthly" element={<Dashboard />} />
+                      <Route path="yearly" element={<Dashboard />} />
+                      
                       <Route index element={<Dashboard />} />
                       <Route path="*" element={<Navigate to="/dashboard" replace />} />
                     </Routes>
