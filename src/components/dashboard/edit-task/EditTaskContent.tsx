@@ -1,18 +1,17 @@
 
 import { TaskForm } from "../TaskForm";
-import { DeleteTaskAlert } from "../DeleteTaskAlert";
 import { Task, TaskPriority } from "../TaskBoard";
 import { Subtask } from "../subtasks/SubtaskList";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { DeleteTaskAlert } from "../DeleteTaskAlert";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
 
 interface EditTaskContentProps {
   task: Task;
   title: string;
   description: string;
   isScheduled: boolean;
+  isEvent: boolean;
+  isAllDay: boolean;
   date: string;
   startTime: string;
   endTime: string;
@@ -24,6 +23,8 @@ interface EditTaskContentProps {
   onTitleChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
   onIsScheduledChange: (value: boolean) => void;
+  onIsEventChange: (value: boolean) => void;
+  onIsAllDayChange: (value: boolean) => void;
   onDateChange: (value: string) => void;
   onStartTimeChange: (value: string) => void;
   onEndTimeChange: (value: string) => void;
@@ -32,7 +33,7 @@ interface EditTaskContentProps {
   onReminderTimeChange: (value: number) => void;
   onSubtasksChange: (subtasks: Subtask[]) => void;
   onSubmit: () => void;
-  onDelete: () => Promise<void>;
+  onDelete: () => void;
 }
 
 export function EditTaskContent({
@@ -40,6 +41,8 @@ export function EditTaskContent({
   title,
   description,
   isScheduled,
+  isEvent,
+  isAllDay,
   date,
   startTime,
   endTime,
@@ -51,6 +54,8 @@ export function EditTaskContent({
   onTitleChange,
   onDescriptionChange,
   onIsScheduledChange,
+  onIsEventChange,
+  onIsAllDayChange,
   onDateChange,
   onStartTimeChange,
   onEndTimeChange,
@@ -59,59 +64,58 @@ export function EditTaskContent({
   onReminderTimeChange,
   onSubtasksChange,
   onSubmit,
-  onDelete,
+  onDelete
 }: EditTaskContentProps) {
-  const isMobile = useIsMobile();
-  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
+  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-y-auto -mx-6">
-        <TaskForm
-          title={title}
-          description={description}
-          isScheduled={isScheduled}
-          date={date}
-          startTime={startTime}
-          endTime={endTime}
-          priority={priority}
-          reminderEnabled={reminderEnabled}
-          reminderTime={reminderTime}
-          subtasks={subtasks}
-          isLoading={isLoading}
-          isEditing={true}
-          task={task}
-          onTitleChange={onTitleChange}
-          onDescriptionChange={onDescriptionChange}
-          onIsScheduledChange={onIsScheduledChange}
-          onDateChange={onDateChange}
-          onStartTimeChange={onStartTimeChange}
-          onEndTimeChange={onEndTimeChange}
-          onPriorityChange={onPriorityChange}
-          onReminderEnabledChange={onReminderEnabledChange}
-          onReminderTimeChange={onReminderTimeChange}
-          onSubtasksChange={onSubtasksChange}
-          onSubmit={onSubmit}
-        />
-      </div>
-      
-      <div className="px-6 pb-6 space-y-4">
-        <Button 
-          variant="destructive" 
-          className="w-full"
-          onClick={() => setIsDeleteAlertOpen(true)}
+    <div className="pt-6">
+      <TaskForm
+        title={title}
+        description={description}
+        isScheduled={isScheduled}
+        isEvent={isEvent}
+        isAllDay={isAllDay}
+        date={date}
+        startTime={startTime}
+        endTime={endTime}
+        priority={priority}
+        reminderEnabled={reminderEnabled}
+        reminderTime={reminderTime}
+        subtasks={subtasks}
+        isLoading={isLoading}
+        isEditing={true}
+        task={task}
+        onTitleChange={onTitleChange}
+        onDescriptionChange={onDescriptionChange}
+        onIsScheduledChange={onIsScheduledChange}
+        onIsEventChange={onIsEventChange}
+        onIsAllDayChange={onIsAllDayChange}
+        onDateChange={onDateChange}
+        onStartTimeChange={onStartTimeChange}
+        onEndTimeChange={onEndTimeChange}
+        onPriorityChange={onPriorityChange}
+        onReminderEnabledChange={onReminderEnabledChange}
+        onReminderTimeChange={onReminderTimeChange}
+        onSubtasksChange={onSubtasksChange}
+        onSubmit={onSubmit}
+      />
+
+      <div className="mt-6 flex justify-center">
+        <button
+          type="button"
+          onClick={() => setShowDeleteAlert(true)}
+          className="text-red-500 hover:text-red-700 text-sm font-medium"
         >
-          <Trash2 className="w-4 h-4 mr-2" />
           Delete Task
-        </Button>
-        
-        <DeleteTaskAlert 
-          taskId={task.id}
-          open={isDeleteAlertOpen}
-          onOpenChange={setIsDeleteAlertOpen}
-          onDelete={onDelete}
-        />
+        </button>
       </div>
+
+      <DeleteTaskAlert
+        open={showDeleteAlert}
+        onOpenChange={setShowDeleteAlert}
+        onConfirm={onDelete}
+      />
     </div>
   );
 }

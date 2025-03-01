@@ -1,160 +1,171 @@
 
-import { useState, useEffect, useRef } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-  SheetClose,
-} from "@/components/ui/sheet";
-import { useToast } from "@/components/ui/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
-import { createTask } from "@/utils/taskUtils";
-import { TaskPriority } from "./TaskBoard";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { ShareTaskDialog } from "./ShareTaskDialog";
-import { Subtask } from "./subtasks/SubtaskList";
-import { AddTaskContent } from "./add-task/AddTaskContent";
+import { useState } from "react";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import { AddTaskHeader } from "./add-task/AddTaskHeader";
+import { AddTaskContent } from "./add-task/AddTaskContent";
+import { useQueryClient } from "@tanstack/react-query";
+import { TaskPriority } from "./TaskBoard";
+import { Subtask } from "./subtasks/SubtaskList";
+import { format } from "date-fns";
 
 interface AddTaskDrawerProps {
-  children?: React.ReactNode;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  initialDate?: Date;
 }
 
-export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
+export function AddTaskDrawer({
+  open,
+  onOpenChange,
+  initialDate
+}: AddTaskDrawerProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [isScheduled, setIsScheduled] = useState(false);
-  const [date, setDate] = useState("");
+  const [isScheduled, setIsScheduled] = useState(!!initialDate);
+  const [isEvent, setIsEvent] = useState(false);
+  const [isAllDay, setIsAllDay] = useState(false);
+  const [date, setDate] = useState(initialDate ? format(initialDate, 'yyyy-MM-dd') : "");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
-  const [priority, setPriority] = useState<TaskPriority>("low");
+  const [priority, setPriority] = useState<TaskPriority>("medium");
   const [reminderEnabled, setReminderEnabled] = useState(false);
   const [reminderTime, setReminderTime] = useState(15);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
-  const [showShareDialog, setShowShareDialog] = useState(false);
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
-  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
-  const isMobile = useIsMobile();
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const keyBuffer = useRef<string>("");
-  const keyTimeout = useRef<NodeJS.Timeout>();
-
-  useEffect(() => {
-    if (isMobile) return; // Only add keyboard shortcuts on desktop
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.repeat) return; // Prevent multiple triggers from key being held down
-      
-      // Clear the key buffer after 500ms of no keypress
-      if (keyTimeout.current) {
-        clearTimeout(keyTimeout.current);
-      }
-      keyTimeout.current = setTimeout(() => {
-        keyBuffer.current = "";
-      }, 500);
-
-      // Add the current key to the buffer
-      keyBuffer.current += e.key;
-
-      // Check if the buffer ends with `t and drawer is not already open
-      if (keyBuffer.current.endsWith("`t") && !isOpen) {
-        e.preventDefault(); // Prevent the key from being typed
-        keyBuffer.current = ""; // Reset the buffer
-        setIsOpen(true);
-      }
-    };
-
-    // Add event listener
-    window.addEventListener("keydown", handleKeyDown);
-
-    // Cleanup function
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      if (keyTimeout.current) {
-        clearTimeout(keyTimeout.current);
-      }
-    };
-  }, [isMobile, isOpen]); // Keep isOpen in dependencies
-
-  // Add logging for date changes
-  const handleDateChange = (newDate: string) => {
-    console.log("Date changed in AddTaskDrawer:", newDate);
-    setDate(newDate);
-  };
 
   const handleSubmit = async () => {
+    if (!title.trim()) {
+      toast.error("Please enter a task title");
+      return;
+    }
+
+    setIsLoading(true);
     try {
-      setIsLoading(true);
+      let status: 'scheduled' | 'unscheduled' | 'event';
       
+      if (isEvent) {
+        status = 'event';
+        // Events must have a date
+        if (!date) {
+          toast.error("Events must have a date");
+          setIsLoading(false);
+          return;
+        }
+      } else if (isScheduled) {
+        status = 'scheduled';
+      } else {
+        status = 'unscheduled';
+      }
+
+      // Get the current user
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      
+      const userId = userData.user?.id;
+      if (!userId) throw new Error("User not authenticated");
+
+      // Prepare the task data
       const taskData = {
         title,
         description,
-        isScheduled,
-        date: isScheduled && date ? date : null,
-        startTime: isScheduled && startTime ? startTime : null,
-        endTime: isScheduled && endTime ? endTime : null,
+        status,
+        date: (isScheduled || isEvent) && date ? date : null,
+        start_time: (isScheduled || (isEvent && !isAllDay)) && startTime ? startTime : null,
+        end_time: (isScheduled || (isEvent && !isAllDay)) && endTime ? endTime : null,
         priority,
-        reminderEnabled,
-        reminderTime,
-        subtasks
+        reminder_enabled: reminderEnabled,
+        reminder_time: reminderTime,
+        user_id: userId,
+        owner_id: userId,
+        is_all_day: isEvent ? isAllDay : false,
+        position: 0 // This will be adjusted by the backend
       };
 
-      console.log("Submitting task with data:", taskData);
-      await createTask(taskData);
+      // Get existing tasks count to properly set position
+      const { data: existingTasks, error: countError } = await supabase
+        .from("tasks")
+        .select("position")
+        .order("position", { ascending: false })
+        .limit(1);
 
-      toast({
-        title: "Success",
-        description: "Task created successfully",
-      });
+      if (!countError && existingTasks && existingTasks.length > 0) {
+        taskData.position = existingTasks[0].position + 1;
+      }
 
-      // Reset form
+      // Create the task
+      const { data: taskResult, error: taskError } = await supabase
+        .from("tasks")
+        .insert([taskData])
+        .select();
+
+      if (taskError) throw taskError;
+
+      // If there are subtasks, insert them
+      if (subtasks.length > 0 && taskResult && taskResult.length > 0) {
+        const taskId = taskResult[0].id;
+        
+        const subtasksToInsert = subtasks.map((subtask, index) => ({
+          task_id: taskId,
+          title: subtask.title,
+          status: subtask.status,
+          position: index,
+          notes: subtask.notes || null
+        }));
+
+        const { error: subtasksError } = await supabase
+          .from("subtasks")
+          .insert(subtasksToInsert);
+
+        if (subtasksError) throw subtasksError;
+      }
+
+      // Invalidate and refetch tasks
+      await queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      
+      toast.success('Task created successfully');
+      
+      // Clear the form
       setTitle("");
       setDescription("");
-      setIsScheduled(false);
-      setDate("");
+      setIsScheduled(!!initialDate);
+      setIsEvent(false);
+      setIsAllDay(false);
+      setDate(initialDate ? format(initialDate, 'yyyy-MM-dd') : "");
       setStartTime("");
       setEndTime("");
-      setPriority("low");
+      setPriority("medium");
       setReminderEnabled(false);
       setReminderTime(15);
       setSubtasks([]);
-      setIsOpen(false);
-
-      // Immediately invalidate and refetch tasks
-      await queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      
+      // Close the drawer
+      onOpenChange(false);
     } catch (error) {
-      console.error("Error creating task:", error);
-      toast({
-        title: "Error",
-        description: "Failed to create task. Please try again.",
-        variant: "destructive",
-      });
+      console.error('Error creating task:', error);
+      toast.error('Failed to create task');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetTrigger asChild ref={triggerRef}>
-        {children || (
-          <Button className="w-full bg-[#22C55E] hover:bg-[#16A34A] text-white text-base font-semibold py-6">
-            + Add a task
-          </Button>
-        )}
-      </SheetTrigger>
+    <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent 
         side="left" 
         className="w-[400px] sm:max-w-[540px]"
+        onOpenAutoFocus={e => e.preventDefault()}
       >
-        <AddTaskHeader onShareClick={() => setShowShareDialog(true)} />
+        <AddTaskHeader />
+        
         <AddTaskContent
           title={title}
           description={description}
           isScheduled={isScheduled}
+          isEvent={isEvent}
+          isAllDay={isAllDay}
           date={date}
           startTime={startTime}
           endTime={endTime}
@@ -166,7 +177,9 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
           onTitleChange={setTitle}
           onDescriptionChange={setDescription}
           onIsScheduledChange={setIsScheduled}
-          onDateChange={handleDateChange}
+          onIsEventChange={setIsEvent}
+          onIsAllDayChange={setIsAllDay}
+          onDateChange={setDate}
           onStartTimeChange={setStartTime}
           onEndTimeChange={setEndTime}
           onPriorityChange={setPriority}
@@ -176,11 +189,6 @@ export function AddTaskDrawer({ children }: AddTaskDrawerProps) {
           onSubmit={handleSubmit}
         />
       </SheetContent>
-      <ShareTaskDialog
-        task={null}
-        open={showShareDialog}
-        onOpenChange={setShowShareDialog}
-      />
     </Sheet>
   );
 }

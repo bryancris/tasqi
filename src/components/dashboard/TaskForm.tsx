@@ -14,6 +14,8 @@ interface TaskFormProps {
   title: string;
   description: string;
   isScheduled: boolean;
+  isEvent: boolean;
+  isAllDay: boolean;
   date: string;
   startTime: string;
   endTime: string;
@@ -27,6 +29,8 @@ interface TaskFormProps {
   onTitleChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
   onIsScheduledChange: (value: boolean) => void;
+  onIsEventChange: (value: boolean) => void;
+  onIsAllDayChange: (value: boolean) => void;
   onDateChange: (value: string) => void;
   onStartTimeChange: (value: string) => void;
   onEndTimeChange: (value: string) => void;
@@ -41,6 +45,8 @@ export function TaskForm({
   title,
   description,
   isScheduled,
+  isEvent,
+  isAllDay,
   date,
   startTime,
   endTime,
@@ -54,6 +60,8 @@ export function TaskForm({
   onTitleChange,
   onDescriptionChange,
   onIsScheduledChange,
+  onIsEventChange,
+  onIsAllDayChange,
   onDateChange,
   onStartTimeChange,
   onEndTimeChange,
@@ -96,6 +104,8 @@ export function TaskForm({
         title={title}
         description={description}
         isScheduled={isScheduled}
+        isEvent={isEvent}
+        isAllDay={isAllDay}
         date={date}
         startTime={startTime}
         endTime={endTime}
@@ -109,6 +119,8 @@ export function TaskForm({
         onTitleChange={onTitleChange}
         onDescriptionChange={onDescriptionChange}
         onIsScheduledChange={onIsScheduledChange}
+        onIsEventChange={onIsEventChange}
+        onIsAllDayChange={onIsAllDayChange}
         onDateChange={onDateChange}
         onStartTimeChange={onStartTimeChange}
         onEndTimeChange={onEndTimeChange}

@@ -12,6 +12,8 @@ interface TaskFormContentProps {
   title: string;
   description: string;
   isScheduled: boolean;
+  isEvent: boolean;
+  isAllDay: boolean;
   date: string;
   startTime: string;
   endTime: string;
@@ -25,6 +27,8 @@ interface TaskFormContentProps {
   onTitleChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
   onIsScheduledChange: (value: boolean) => void;
+  onIsEventChange: (value: boolean) => void;
+  onIsAllDayChange: (value: boolean) => void;
   onDateChange: (value: string) => void;
   onStartTimeChange: (value: string) => void;
   onEndTimeChange: (value: string) => void;
@@ -39,6 +43,8 @@ export function TaskFormContent({
   title,
   description,
   isScheduled,
+  isEvent,
+  isAllDay,
   date,
   startTime,
   endTime,
@@ -52,6 +58,8 @@ export function TaskFormContent({
   onTitleChange,
   onDescriptionChange,
   onIsScheduledChange,
+  onIsEventChange,
+  onIsAllDayChange,
   onDateChange,
   onStartTimeChange,
   onEndTimeChange,
@@ -89,12 +97,16 @@ export function TaskFormContent({
 
       <FormSection>
         <TaskScheduleFields 
-          isScheduled={isScheduled} 
+          isScheduled={isScheduled}
+          isEvent={isEvent}
+          isAllDay={isAllDay}
           date={date} 
           startTime={startTime} 
           endTime={endTime} 
           priority={priority} 
-          onIsScheduledChange={onIsScheduledChange} 
+          onIsScheduledChange={onIsScheduledChange}
+          onIsEventChange={onIsEventChange}
+          onIsAllDayChange={onIsAllDayChange}
           onDateChange={onDateChange} 
           onStartTimeChange={onStartTimeChange} 
           onEndTimeChange={onEndTimeChange} 

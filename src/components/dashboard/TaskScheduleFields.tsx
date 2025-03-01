@@ -5,14 +5,19 @@ import { TaskPriority } from "./TaskBoard";
 import { DateSelector } from "./schedule/DateSelector";
 import { TimeSelector } from "./schedule/TimeSelector";
 import { PrioritySelector } from "./schedule/PrioritySelector";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export interface TaskScheduleFieldsProps {
   isScheduled: boolean;
+  isEvent: boolean;
+  isAllDay: boolean;
   date: string;
   startTime: string;
   endTime: string;
   priority: TaskPriority;
   onIsScheduledChange: (value: boolean) => void;
+  onIsEventChange: (value: boolean) => void;
+  onIsAllDayChange: (value: boolean) => void;
   onDateChange: (value: string) => void;
   onStartTimeChange: (value: string) => void;
   onEndTimeChange: (value: string) => void;
@@ -21,11 +26,15 @@ export interface TaskScheduleFieldsProps {
 
 export function TaskScheduleFields({
   isScheduled,
+  isEvent,
+  isAllDay,
   date,
   startTime,
   endTime,
   priority,
   onIsScheduledChange,
+  onIsEventChange,
+  onIsAllDayChange,
   onDateChange,
   onStartTimeChange,
   onEndTimeChange,
@@ -54,18 +63,52 @@ export function TaskScheduleFields({
     }
   };
 
+  // Handle toggle changes
+  const handleIsScheduledChange = (value: boolean) => {
+    onIsScheduledChange(value);
+    // If turning on scheduled, turn off event (they're mutually exclusive)
+    if (value && isEvent) {
+      onIsEventChange(false);
+    }
+  };
+
+  const handleIsEventChange = (value: boolean) => {
+    onIsEventChange(value);
+    // If turning on event, turn off scheduled (they're mutually exclusive)
+    if (value && isScheduled) {
+      onIsScheduledChange(false);
+    }
+    // Events must have a date, so automatically enable the date field
+    if (value) {
+      onIsAllDayChange(false); // Default to non-all day events
+    }
+  };
+
+  // Determine if we need to show date/time fields (for both scheduled tasks and events)
+  const showDateTimeFields = isScheduled || isEvent;
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center space-x-2">
-        <Switch
-          id="scheduled"
-          checked={isScheduled}
-          onCheckedChange={onIsScheduledChange}
-        />
-        <Label htmlFor="scheduled">Schedule Task</Label>
+      <div className="flex items-center justify-between space-x-4">
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="scheduled"
+            checked={isScheduled}
+            onCheckedChange={handleIsScheduledChange}
+          />
+          <Label htmlFor="scheduled">Schedule Task</Label>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="event"
+            checked={isEvent}
+            onCheckedChange={handleIsEventChange}
+          />
+          <Label htmlFor="event">Event</Label>
+        </div>
       </div>
 
-      {isScheduled && (
+      {showDateTimeFields && (
         <div className="space-y-6 mt-4">
           <div className="w-full">
             <DateSelector 
@@ -74,12 +117,27 @@ export function TaskScheduleFields({
               className="w-full"
             />
           </div>
-          <TimeSelector
-            startTime={startTime}
-            endTime={endTime}
-            onStartTimeChange={handleStartTimeChange}
-            onEndTimeChange={onEndTimeChange}
-          />
+          
+          {isEvent && (
+            <div className="flex items-center space-x-2 mt-2">
+              <Checkbox 
+                id="all-day"
+                checked={isAllDay}
+                onCheckedChange={(checked) => onIsAllDayChange(checked as boolean)}
+              />
+              <Label htmlFor="all-day">All Day Event</Label>
+            </div>
+          )}
+
+          {!isAllDay && (
+            <TimeSelector
+              startTime={startTime}
+              endTime={endTime}
+              onStartTimeChange={handleStartTimeChange}
+              onEndTimeChange={onEndTimeChange}
+            />
+          )}
+          
           <PrioritySelector 
             priority={priority} 
             onPriorityChange={onPriorityChange} 

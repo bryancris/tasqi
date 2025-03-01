@@ -973,6 +973,7 @@ export type Database = {
           description: string | null
           end_time: string | null
           id: number
+          is_all_day: boolean | null
           is_tracking: boolean | null
           owner_id: string
           position: number
@@ -996,6 +997,7 @@ export type Database = {
           description?: string | null
           end_time?: string | null
           id?: never
+          is_all_day?: boolean | null
           is_tracking?: boolean | null
           owner_id: string
           position: number
@@ -1019,6 +1021,7 @@ export type Database = {
           description?: string | null
           end_time?: string | null
           id?: never
+          is_all_day?: boolean | null
           is_tracking?: boolean | null
           owner_id?: string
           position?: number
@@ -1329,6 +1332,7 @@ export type Database = {
         | "completed"
         | "in_progress"
         | "stuck"
+        | "event"
       time_format: "12h" | "24h"
     }
     CompositeTypes: {

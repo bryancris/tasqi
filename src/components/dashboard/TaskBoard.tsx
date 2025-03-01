@@ -1,4 +1,3 @@
-
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DesktopTaskView } from "./DesktopTaskView";
 import { MobileTaskView } from "./MobileTaskView";
@@ -37,7 +36,7 @@ export interface Task {
   id: number;
   title: string;
   description: string | null;
-  status: 'completed' | 'scheduled' | 'unscheduled' | 'in_progress' | 'stuck';
+  status: 'completed' | 'scheduled' | 'unscheduled' | 'in_progress' | 'stuck' | 'event';
   date: string | null;
   start_time: string | null;
   end_time: string | null;
@@ -59,6 +58,7 @@ export interface Task {
   subtasks?: Subtask[];
   task_attachments?: TaskAttachment[];
   shared_tasks?: SharedTask[];
+  is_all_day?: boolean;
 }
 
 interface TaskBoardProps {

@@ -18,6 +18,9 @@ export function getCardColor(task: Task): string {
   if (task.status === 'unscheduled') {
     return 'bg-[#2196F3]';
   }
+  if (task.status === 'event') {
+    return 'bg-[rgb(5,242,222)]'; // Event color
+  }
   return getPriorityColor(task.priority);
 }
 

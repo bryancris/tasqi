@@ -1,5 +1,4 @@
 
-
 import { supabase } from "@/integrations/supabase/client";
 import { TaskPriority } from "@/components/dashboard/TaskBoard";
 
@@ -7,6 +6,8 @@ interface CreateTaskParams {
   title: string;
   description: string;
   isScheduled: boolean;
+  isEvent: boolean;
+  isAllDay: boolean;
   date: string | null;
   startTime: string | null;
   endTime: string | null;
@@ -19,6 +20,8 @@ export const createTask = async ({
   title,
   description,
   isScheduled,
+  isEvent,
+  isAllDay,
   date,
   startTime,
   endTime,
@@ -49,19 +52,34 @@ export const createTask = async ({
 
   const nextPosition = existingTasks && existingTasks[0] ? existingTasks[0].position + 1 : 0;
 
+  // Determine the task status
+  let status;
+  if (isEvent) {
+    status = "event";
+  } else if (isScheduled) {
+    status = "scheduled";
+  } else {
+    status = "unscheduled";
+  }
+
+  // Determine time fields based on task type and all-day setting
+  const taskStartTime = isAllDay ? null : startTime;
+  const taskEndTime = isAllDay ? null : calculatedEndTime;
+
   const { data, error } = await supabase.from("tasks").insert({
     title,
     description,
     date,
-    status: isScheduled ? "scheduled" : "unscheduled",
-    start_time: startTime || null,
-    end_time: calculatedEndTime || null,
+    status,
+    start_time: taskStartTime,
+    end_time: taskEndTime,
     priority,
     position: nextPosition,
     reminder_enabled: reminderEnabled,
     reminder_time: reminderTime,
     user_id: user.user.id,
     owner_id: user.user.id,
+    is_all_day: isAllDay,
     shared: false
   });
 
@@ -82,17 +100,32 @@ export const updateTask = async (taskId: number, updates: Partial<CreateTaskPara
     console.log(`Calculated updated end time: ${updatedEndTime} from start time: ${updates.startTime}`);
   }
 
+  // Determine the task status
+  let status;
+  if (updates.isEvent) {
+    status = "event";
+  } else if (updates.isScheduled) {
+    status = "scheduled";
+  } else {
+    status = "unscheduled";
+  }
+
+  // Determine time fields based on task type and all-day setting
+  const taskStartTime = updates.isAllDay ? null : updates.startTime;
+  const taskEndTime = updates.isAllDay ? null : updatedEndTime;
+
   const { data, error } = await supabase
     .from("tasks")
     .update({
       ...updates,
       date: updates.date || null,
-      status: updates.isScheduled ? "scheduled" : "unscheduled",
-      end_time: updatedEndTime || null
+      status,
+      start_time: taskStartTime,
+      end_time: taskEndTime,
+      is_all_day: updates.isAllDay || false
     })
     .eq('id', taskId);
 
   if (error) throw error;
   return data;
 };
-

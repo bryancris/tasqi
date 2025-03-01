@@ -47,8 +47,9 @@ export function TaskBoardSection({ tasks, selectedDate, onDragEnd, onComplete }:
         return shouldShowCompletedTask(task);
       }
       
-      // For scheduled, in_progress, and stuck tasks, check the date
-      if (task.status === 'scheduled' || task.status === 'in_progress' || task.status === 'stuck') {
+      // For scheduled, in_progress, stuck, and event tasks, check the date
+      if (task.status === 'scheduled' || task.status === 'in_progress' || 
+          task.status === 'stuck' || task.status === 'event') {
         // If task has no date, don't show it (should be handled as unscheduled)
         if (!task.date) return false;
         
@@ -68,6 +69,9 @@ export function TaskBoardSection({ tasks, selectedDate, onDragEnd, onComplete }:
     .sort((a, b) => {
       if (a.status === 'completed' && b.status !== 'completed') return 1;
       if (a.status !== 'completed' && b.status === 'completed') return -1;
+      // Events should appear at the top
+      if (a.status === 'event' && b.status !== 'event') return -1;
+      if (a.status !== 'event' && b.status === 'event') return 1;
       return (a.position || 0) - (b.position || 0);
     });
 

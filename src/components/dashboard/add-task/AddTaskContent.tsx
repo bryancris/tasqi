@@ -1,13 +1,14 @@
 
 import { TaskForm } from "../TaskForm";
-import { Task, TaskPriority } from "../TaskBoard";
+import { TaskPriority } from "../TaskBoard";
 import { Subtask } from "../subtasks/SubtaskList";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AddTaskContentProps {
   title: string;
   description: string;
   isScheduled: boolean;
+  isEvent: boolean;
+  isAllDay: boolean;
   date: string;
   startTime: string;
   endTime: string;
@@ -19,6 +20,8 @@ interface AddTaskContentProps {
   onTitleChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
   onIsScheduledChange: (value: boolean) => void;
+  onIsEventChange: (value: boolean) => void;
+  onIsAllDayChange: (value: boolean) => void;
   onDateChange: (value: string) => void;
   onStartTimeChange: (value: string) => void;
   onEndTimeChange: (value: string) => void;
@@ -33,6 +36,8 @@ export function AddTaskContent({
   title,
   description,
   isScheduled,
+  isEvent,
+  isAllDay,
   date,
   startTime,
   endTime,
@@ -44,6 +49,8 @@ export function AddTaskContent({
   onTitleChange,
   onDescriptionChange,
   onIsScheduledChange,
+  onIsEventChange,
+  onIsAllDayChange,
   onDateChange,
   onStartTimeChange,
   onEndTimeChange,
@@ -51,38 +58,38 @@ export function AddTaskContent({
   onReminderEnabledChange,
   onReminderTimeChange,
   onSubtasksChange,
-  onSubmit,
+  onSubmit
 }: AddTaskContentProps) {
-  const isMobile = useIsMobile();
-
   return (
-    <div className="flex flex-col h-[calc(100vh-80px)]">
-      <div className="flex-1 overflow-y-auto scrollbar-hide pb-20">
-        <TaskForm
-          title={title}
-          description={description}
-          isScheduled={isScheduled}
-          date={date}
-          startTime={startTime}
-          endTime={endTime}
-          priority={priority}
-          reminderEnabled={reminderEnabled}
-          reminderTime={reminderTime}
-          subtasks={subtasks}
-          isLoading={isLoading}
-          onTitleChange={onTitleChange}
-          onDescriptionChange={onDescriptionChange}
-          onIsScheduledChange={onIsScheduledChange}
-          onDateChange={onDateChange}
-          onStartTimeChange={onStartTimeChange}
-          onEndTimeChange={onEndTimeChange}
-          onPriorityChange={onPriorityChange}
-          onReminderEnabledChange={onReminderEnabledChange}
-          onReminderTimeChange={onReminderTimeChange}
-          onSubtasksChange={onSubtasksChange}
-          onSubmit={onSubmit}
-        />
-      </div>
+    <div className="pt-6">
+      <TaskForm
+        title={title}
+        description={description}
+        isScheduled={isScheduled}
+        isEvent={isEvent}
+        isAllDay={isAllDay}
+        date={date}
+        startTime={startTime}
+        endTime={endTime}
+        priority={priority}
+        reminderEnabled={reminderEnabled}
+        reminderTime={reminderTime}
+        subtasks={subtasks}
+        isLoading={isLoading}
+        onTitleChange={onTitleChange}
+        onDescriptionChange={onDescriptionChange}
+        onIsScheduledChange={onIsScheduledChange}
+        onIsEventChange={onIsEventChange}
+        onIsAllDayChange={onIsAllDayChange}
+        onDateChange={onDateChange}
+        onStartTimeChange={onStartTimeChange}
+        onEndTimeChange={onEndTimeChange}
+        onPriorityChange={onPriorityChange}
+        onReminderEnabledChange={onReminderEnabledChange}
+        onReminderTimeChange={onReminderTimeChange}
+        onSubtasksChange={onSubtasksChange}
+        onSubmit={onSubmit}
+      />
     </div>
   );
 }

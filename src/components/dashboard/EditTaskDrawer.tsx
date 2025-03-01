@@ -24,6 +24,8 @@ export function EditTaskDrawer({
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || "");
   const [isScheduled, setIsScheduled] = useState(task.status === "scheduled");
+  const [isEvent, setIsEvent] = useState(task.status === "event");
+  const [isAllDay, setIsAllDay] = useState(task.is_all_day || false);
   const [date, setDate] = useState(task.date || "");
   const [startTime, setStartTime] = useState(task.start_time || "");
   const [endTime, setEndTime] = useState(task.end_time || "");
@@ -81,22 +83,41 @@ export function EditTaskDrawer({
   const handleSubmit = async () => {
     setIsLoading(true);
     try {
-      const status = isScheduled ? 'scheduled' as const : 'unscheduled' as const;
+      let status: 'scheduled' | 'unscheduled' | 'event';
+      
+      if (isEvent) {
+        status = 'event';
+      } else if (isScheduled) {
+        status = 'scheduled';
+      } else {
+        status = 'unscheduled';
+      }
+      
       const updateData = {
         title,
         description,
         status,
-        date: isScheduled && date ? date : null,
+        date: (isScheduled || isEvent) && date ? date : null,
         priority,
         reminder_enabled: reminderEnabled,
-        reminder_time: reminderTime
+        reminder_time: reminderTime,
+        is_all_day: isEvent ? isAllDay : false
       } as const;
-      if (isScheduled && startTime && startTime.trim() !== '') {
+      
+      // Only include time fields if not all-day event
+      if ((isScheduled || (isEvent && !isAllDay)) && startTime && startTime.trim() !== '') {
         Object.assign(updateData, {
           start_time: startTime
         });
+      } else if (isEvent && isAllDay) {
+        // Clear time fields for all-day events
+        Object.assign(updateData, {
+          start_time: null,
+          end_time: null
+        });
       }
-      if (isScheduled && endTime && endTime.trim() !== '') {
+      
+      if ((isScheduled || (isEvent && !isAllDay)) && endTime && endTime.trim() !== '') {
         Object.assign(updateData, {
           end_time: endTime
         });
@@ -165,6 +186,8 @@ export function EditTaskDrawer({
             title={title}
             description={description}
             isScheduled={isScheduled}
+            isEvent={isEvent}
+            isAllDay={isAllDay}
             date={date}
             startTime={startTime}
             endTime={endTime}
@@ -176,6 +199,8 @@ export function EditTaskDrawer({
             onTitleChange={setTitle}
             onDescriptionChange={setDescription}
             onIsScheduledChange={setIsScheduled}
+            onIsEventChange={setIsEvent}
+            onIsAllDayChange={setIsAllDay}
             onDateChange={handleDateChange}
             onStartTimeChange={setStartTime}
             onEndTimeChange={setEndTime}
