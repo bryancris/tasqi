@@ -3,7 +3,7 @@ import { memo } from "react";
 import { Task } from "../TaskBoard";
 import { TaskStatusIndicator } from "../TaskStatusIndicator";
 import { cn } from "@/lib/utils";
-import { Bell, Mic, Paperclip } from "lucide-react";
+import { Bell, Mic, Paperclip, Sun } from "lucide-react";
 import { TaskCardProps } from "./types";
 import { useTaskAssignmentInfo } from "./useTaskAssignmentInfo";
 import { TaskAssignmentIcons } from "./TaskAssignmentIcons";
@@ -15,6 +15,7 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
   const timeDisplay = getTimeDisplay(task);
   const hasAudioAttachment = hasVoiceNote(task);
   const hasFiles = hasFileAttachments(task);
+  const isAllDay = task.is_all_day || false;
 
   // Function to determine the tooltip text based on assignment info
   const getShareTooltipText = () => {
@@ -123,6 +124,22 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
             task.status === 'completed' && "line-through opacity-80"
           )}>{task.title}</h3>
           <div className="flex items-center gap-2">
+            {isAllDay && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Sun className="w-4 h-4 text-white" />
+                  </TooltipTrigger>
+                  <TooltipContent 
+                    className="bg-gray-800 text-white border-gray-700 text-xs z-50"
+                    side="top"
+                    sideOffset={5}
+                  >
+                    All-day event
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
             {task.reminder_enabled && (
               <Bell className="w-4 h-4 text-white shrink-0" />
             )}

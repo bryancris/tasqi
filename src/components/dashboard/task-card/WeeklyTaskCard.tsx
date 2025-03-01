@@ -1,7 +1,7 @@
 
 import { cn } from "@/lib/utils";
 import { Task } from "../TaskBoard";
-import { Bell, Mic, Users, Paperclip } from "lucide-react";
+import { Bell, Mic, Users, Paperclip, Sun } from "lucide-react";
 import { hasVoiceNote, hasFileAttachments } from "./taskCardUtils";
 
 interface WeeklyTaskCardProps {
@@ -38,6 +38,7 @@ export function WeeklyTaskCard({ task, onClick, onComplete, dragHandleProps, ext
   const hasAudioAttachment = hasVoiceNote(task);
   const hasFiles = hasFileAttachments(task);
   const isGroupTask = task.shared_tasks?.some(st => st.sharing_type === 'group');
+  const isAllDay = task.is_all_day || false;
 
   return (
     <div
@@ -57,6 +58,7 @@ export function WeeklyTaskCard({ task, onClick, onComplete, dragHandleProps, ext
         <div className="flex items-center gap-1">
           <div className="font-medium truncate flex-1">{task.title}</div>
           <div className="flex items-center gap-1 shrink-0">
+            {isAllDay && <Sun className="w-3 h-3 text-white" />}
             {task.reminder_enabled && <Bell className="w-3 h-3 text-white" />}
             {hasAudioAttachment && <Mic className="w-3 h-3 text-white" />}
             {hasFiles && <Paperclip className="w-3 h-3 text-white" />}

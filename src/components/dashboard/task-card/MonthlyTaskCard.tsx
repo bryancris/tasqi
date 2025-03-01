@@ -4,7 +4,7 @@ import { Task } from "../TaskBoard";
 import { TaskStatusIndicator } from "../TaskStatusIndicator";
 import { cn } from "@/lib/utils";
 import { getPriorityColor } from "@/utils/taskColors";
-import { Bell, Mic, Users, Paperclip } from "lucide-react";
+import { Bell, Mic, Users, Paperclip, Sun } from "lucide-react";
 import { hasVoiceNote, hasFileAttachments } from "./taskCardUtils";
 
 interface MonthlyTaskCardProps {
@@ -29,6 +29,7 @@ function MonthlyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, 
   const hasAudioAttachment = hasVoiceNote(task);
   const hasFiles = hasFileAttachments(task);
   const isGroupTask = task.shared_tasks?.some(st => st.sharing_type === 'group');
+  const isAllDay = task.is_all_day || false;
   
   return (
     <div 
@@ -44,6 +45,9 @@ function MonthlyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, 
       <div className="flex items-center justify-between gap-1">
         <span className="truncate flex-1">{task.title}</span>
         <div className="flex items-center gap-1 shrink-0">
+          {isAllDay && (
+            <Sun className="h-3 w-3 text-white" />
+          )}
           {task.reminder_enabled && (
             <Bell className="h-3 w-3 text-white" />
           )}
