@@ -18,158 +18,72 @@ const AuthContext = createContext<AuthContextType>({
   handleSignOut: async () => {},
 });
 
-// Cache duration in milliseconds - increased to reduce frequent checks
-const AUTH_CACHE_DURATION = 30000; // 30 seconds cache
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const hasShownToast = useRef(false);
+  const hasToastRef = useRef(false);
   const mounted = useRef(true);
-  const lastAuthCheck = useRef<number>(0);
-  const cachedUserData = useRef<{user: User | null, session: Session | null, timestamp: number} | null>(null);
 
-  // Optimized function to fetch and update authentication state
-  const refreshAuthState = useCallback(async (force = false) => {
-    // Skip if already authenticated and not forced
-    if (!force && session && user) {
-      return;
-    }
+  // Simple function to fetch auth state - no caching, no early returns
+  const refreshAuth = useCallback(async () => {
+    if (!mounted.current) return;
     
-    const now = Date.now();
-    
-    // Use cached data if still valid (unless forced)
-    if (!force && 
-        cachedUserData.current && 
-        now - cachedUserData.current.timestamp < AUTH_CACHE_DURATION) {
-      setSession(cachedUserData.current.session);
-      setUser(cachedUserData.current.user);
-      setLoading(false);
-      return;
-    }
-
-    // Rate limit auth checks
-    if (!force && now - lastAuthCheck.current < 1000) {
-      return;
-    }
-
     try {
-      lastAuthCheck.current = now;
+      // Get current session
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
-      // Get session data
-      const { data: { session: newSession } } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
       
-      // If no session found, clear user as well
-      if (!newSession) {
-        cachedUserData.current = { session: null, user: null, timestamp: now };
+      // Update session state
+      const currentSession = sessionData?.session;
+      
+      if (currentSession) {
+        // If we have a session, get user data
+        const { data: userData, error: userError } = await supabase.auth.getUser();
         
+        if (userError) throw userError;
+        
+        if (mounted.current) {
+          setSession(currentSession);
+          setUser(userData?.user || null);
+          
+          // Show toast only once after successful authentication
+          if (userData?.user && !hasToastRef.current) {
+            toast.success("Successfully signed in", {
+              id: "auth-success",
+              duration: 3000,
+            });
+            hasToastRef.current = true;
+          }
+        }
+      } else {
+        // No session found
         if (mounted.current) {
           setSession(null);
           setUser(null);
-          setLoading(false);
-        }
-        return;
-      }
-      
-      // Only fetch user data if we have a session
-      const { data: { user: newUser } } = await supabase.auth.getUser();
-      
-      // Cache the data
-      cachedUserData.current = { session: newSession, user: newUser, timestamp: now };
-
-      if (mounted.current) {
-        setSession(newSession);
-        setUser(newUser);
-        setLoading(false);
-        
-        // Show toast only once after successful authentication
-        if (newUser && !hasShownToast.current) {
-          toast.success("Successfully signed in", {
-            id: "auth-success",
-            duration: 3000,
-          });
-          hasShownToast.current = true;
         }
       }
     } catch (error) {
       console.error("Error refreshing auth state:", error);
       if (mounted.current) {
+        setSession(null);
+        setUser(null);
+      }
+    } finally {
+      // Always update loading state when done
+      if (mounted.current) {
         setLoading(false);
       }
     }
-  }, [session, user]);
+  }, []);
 
-  useEffect(() => {
-    // Initial auth state fetch - try to restore from localStorage first for faster initial rendering
-    try {
-      const storedSession = localStorage.getItem('sb-session');
-      if (storedSession) {
-        const parsedSession = JSON.parse(storedSession);
-        if (parsedSession) {
-          console.log("Using stored auth data for initial render");
-          setSession(parsedSession);
-          // We still need to verify with a proper fetch
-        }
-      }
-    } catch (e) {
-      console.warn("Error parsing stored auth data:", e);
-    }
-    
-    // Fetch fresh auth state
-    refreshAuthState(true);
-    
-    // Safety timeout to ensure loading state doesn't get stuck
-    const timeoutId = window.setTimeout(() => {
-      if (loading && mounted.current) {
-        console.warn("Auth check timed out, forcing loading to false");
-        setLoading(false);
-      }
-    }, 5000); // Increased timeout for better reliability
-
-    // Set up auth state listener
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state change detected:", { event, hasSession: !!session });
-      
-      // Store session data for faster initial loads
-      if (session && event === 'SIGNED_IN') {
-        try {
-          const { data } = await supabase.auth.getUser();
-          if (data.user) {
-            localStorage.setItem('sb-session', JSON.stringify(session));
-            localStorage.setItem('sb-user', JSON.stringify(data.user));
-          }
-        } catch (e) {
-          console.warn("Error storing auth data:", e);
-        }
-      } else if (event === 'SIGNED_OUT') {
-        localStorage.removeItem('sb-session');
-        localStorage.removeItem('sb-user');
-      }
-      
-      // Force refresh on important events
-      const forceRefresh = ['SIGNED_IN', 'SIGNED_OUT', 'TOKEN_REFRESHED', 'USER_UPDATED'].includes(event);
-      refreshAuthState(forceRefresh);
-    });
-
-    return () => {
-      mounted.current = false;
-      subscription?.unsubscribe();
-      clearTimeout(timeoutId);
-    };
-  }, [refreshAuthState, loading]);
-
+  // Clean sign out function
   const handleSignOut = useCallback(async () => {
     try {
-      console.log("Signing out...");
       setLoading(true);
       
-      // Clear cached data
-      cachedUserData.current = null;
-      
-      // Clear storage items first
+      // Clear local storage related to auth
       try {
         localStorage.removeItem('sb-session');
         localStorage.removeItem('sb-user');
@@ -182,16 +96,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (mounted.current) {
         setSession(null);
         setUser(null);
-        hasShownToast.current = false;
-        setLoading(false);
+        hasToastRef.current = false;
       }
     } catch (error) {
       console.error("Error signing out:", error);
+    } finally {
       if (mounted.current) {
         setLoading(false);
       }
     }
   }, []);
+
+  // Initialize auth state on mount
+  useEffect(() => {
+    // Initial auth check
+    refreshAuth();
+    
+    // Simple timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      if (mounted.current && loading) {
+        console.warn("Auth check timed out, forcing loading to false");
+        setLoading(false);
+      }
+    }, 3000);
+
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+      console.log("Auth state change detected:", { event, hasSession: !!newSession });
+      
+      if (event === 'SIGNED_OUT') {
+        if (mounted.current) {
+          setSession(null);
+          setUser(null);
+          hasToastRef.current = false;
+        }
+      } else if (['SIGNED_IN', 'TOKEN_REFRESHED', 'USER_UPDATED'].includes(event)) {
+        refreshAuth();
+      }
+    });
+
+    return () => {
+      mounted.current = false;
+      clearTimeout(timeoutId);
+      subscription?.unsubscribe();
+    };
+  }, [refreshAuth]);
 
   const contextValue = React.useMemo(
     () => ({

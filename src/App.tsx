@@ -14,26 +14,15 @@ import SelfCare from './pages/SelfCare';
 import Chat from './pages/Chat';
 import { useAuth } from './contexts/AuthContext';
 import { Spinner } from './components/ui/spinner';
-import { useEffect, useState, memo } from 'react';
+import { memo } from 'react';
 
+// Simplified Protected Route component with clearer logic
 const ProtectedRoute = memo(({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
   const location = useLocation();
-  const [showFallback, setShowFallback] = useState(false);
   
-  // Show fallback UI after a reasonable delay if still loading
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (loading) {
-        setShowFallback(true);
-      }
-    }, 3000);
-    
-    return () => clearTimeout(timeoutId);
-  }, [loading]);
-  
-  // During initial load, don't redirect yet
-  if (loading && !showFallback) {
+  // Clean loading state
+  if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-[#1a1b3b]">
         <Spinner className="h-8 w-8 text-primary" />
@@ -42,22 +31,7 @@ const ProtectedRoute = memo(({ children }: { children: React.ReactNode }) => {
     );
   }
   
-  // If still loading after timeout, check local storage as fallback
-  if (loading && showFallback) {
-    try {
-      const hasLocalSession = localStorage.getItem('sb-session') !== null;
-      if (hasLocalSession) {
-        console.log("Using local session as auth fallback");
-        return <>{children}</>;
-      }
-    } catch (e) {
-      console.error("Error checking local storage:", e);
-    }
-    
-    return <Navigate to="/auth" replace state={{ from: location }} />;
-  }
-  
-  // If not authenticated, redirect to auth page
+  // No session means not authenticated
   if (!session) {
     return <Navigate to="/auth" replace state={{ from: location }} />;
   }
@@ -66,10 +40,11 @@ const ProtectedRoute = memo(({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 });
 
+// Simplified Auth Route component
 const AuthRoute = memo(({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
   
-  // For auth routes, simpler loading state
+  // Simple loading state
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-[#1a1b3b]">
