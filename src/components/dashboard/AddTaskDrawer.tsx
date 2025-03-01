@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, ReactNode } from "react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -11,16 +11,19 @@ import { Subtask } from "./subtasks/SubtaskList";
 import { format } from "date-fns";
 
 interface AddTaskDrawerProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  children?: ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   initialDate?: Date;
 }
 
 export function AddTaskDrawer({
-  open,
-  onOpenChange,
+  children,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
   initialDate
 }: AddTaskDrawerProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [isScheduled, setIsScheduled] = useState(!!initialDate);
@@ -35,6 +38,11 @@ export function AddTaskDrawer({
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
+
+  // Determine if we should use controlled or uncontrolled state
+  const isControlled = controlledOpen !== undefined && controlledOnOpenChange !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const onOpenChange = isControlled ? controlledOnOpenChange : setInternalOpen;
 
   const handleSubmit = async () => {
     if (!title.trim()) {
@@ -152,43 +160,50 @@ export function AddTaskDrawer({
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent 
-        side="left" 
-        className="w-[400px] sm:max-w-[540px]"
-        onOpenAutoFocus={e => e.preventDefault()}
-      >
-        <AddTaskHeader />
-        
-        <AddTaskContent
-          title={title}
-          description={description}
-          isScheduled={isScheduled}
-          isEvent={isEvent}
-          isAllDay={isAllDay}
-          date={date}
-          startTime={startTime}
-          endTime={endTime}
-          priority={priority}
-          reminderEnabled={reminderEnabled}
-          reminderTime={reminderTime}
-          subtasks={subtasks}
-          isLoading={isLoading}
-          onTitleChange={setTitle}
-          onDescriptionChange={setDescription}
-          onIsScheduledChange={setIsScheduled}
-          onIsEventChange={setIsEvent}
-          onIsAllDayChange={setIsAllDay}
-          onDateChange={setDate}
-          onStartTimeChange={setStartTime}
-          onEndTimeChange={setEndTime}
-          onPriorityChange={setPriority}
-          onReminderEnabledChange={setReminderEnabled}
-          onReminderTimeChange={setReminderTime}
-          onSubtasksChange={setSubtasks}
-          onSubmit={handleSubmit}
-        />
-      </SheetContent>
-    </Sheet>
+    <>
+      {children && (
+        <div onClick={() => onOpenChange(true)}>
+          {children}
+        </div>
+      )}
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent 
+          side="left" 
+          className="w-[400px] sm:max-w-[540px]"
+          onOpenAutoFocus={e => e.preventDefault()}
+        >
+          <AddTaskHeader />
+          
+          <AddTaskContent
+            title={title}
+            description={description}
+            isScheduled={isScheduled}
+            isEvent={isEvent}
+            isAllDay={isAllDay}
+            date={date}
+            startTime={startTime}
+            endTime={endTime}
+            priority={priority}
+            reminderEnabled={reminderEnabled}
+            reminderTime={reminderTime}
+            subtasks={subtasks}
+            isLoading={isLoading}
+            onTitleChange={setTitle}
+            onDescriptionChange={setDescription}
+            onIsScheduledChange={setIsScheduled}
+            onIsEventChange={setIsEvent}
+            onIsAllDayChange={setIsAllDay}
+            onDateChange={setDate}
+            onStartTimeChange={setStartTime}
+            onEndTimeChange={setEndTime}
+            onPriorityChange={setPriority}
+            onReminderEnabledChange={setReminderEnabled}
+            onReminderTimeChange={setReminderTime}
+            onSubtasksChange={setSubtasks}
+            onSubmit={handleSubmit}
+          />
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }

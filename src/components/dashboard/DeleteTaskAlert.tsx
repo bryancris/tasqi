@@ -15,29 +15,35 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface DeleteTaskAlertProps {
-  taskId: number;
+  taskId?: number;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onDelete?: () => void;
+  onConfirm?: () => void;
 }
 
-export function DeleteTaskAlert({ taskId, open, onOpenChange, onDelete }: DeleteTaskAlertProps) {
+export function DeleteTaskAlert({ taskId, open, onOpenChange, onConfirm }: DeleteTaskAlertProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const queryClient = useQueryClient();
 
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
-      const { error } = await supabase.from('tasks').delete().eq('id', taskId);
       
-      if (error) throw error;
+      if (taskId) {
+        const { error } = await supabase.from('tasks').delete().eq('id', taskId);
+        if (error) throw error;
 
-      // Immediately invalidate and refetch tasks
-      await queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        // Immediately invalidate and refetch tasks
+        await queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      }
       
       toast.success('Task deleted successfully');
       onOpenChange(false);
-      onDelete?.();
+      
+      // Call the onConfirm callback if provided
+      if (onConfirm) {
+        onConfirm();
+      }
     } catch (error) {
       console.error('Error deleting task:', error);
       toast.error('Failed to delete task');
