@@ -57,41 +57,45 @@ export function EditTaskDrawer({
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent 
           side="left" 
-          className="w-[400px] sm:max-w-[540px]"
+          className="w-[400px] sm:max-w-[540px] p-0 pt-4 flex flex-col h-[100dvh]"
           onOpenAutoFocus={e => e.preventDefault()}
           onPointerDownOutside={e => e.preventDefault()}
         >
-          <EditTaskHeader onShareClick={() => setShowShareDialog(true)} />
-          <EditTaskContent
-            task={task}
-            title={title}
-            description={description}
-            isScheduled={isScheduled}
-            isEvent={isEvent}
-            isAllDay={isAllDay}
-            date={date}
-            startTime={startTime}
-            endTime={endTime}
-            priority={priority}
-            reminderEnabled={reminderEnabled}
-            reminderTime={reminderTime}
-            subtasks={subtasks}
-            isLoading={isLoading}
-            onTitleChange={setTitle}
-            onDescriptionChange={setDescription}
-            onIsScheduledChange={setIsScheduled}
-            onIsEventChange={setIsEvent}
-            onIsAllDayChange={setIsAllDay}
-            onDateChange={handleDateChange}
-            onStartTimeChange={setStartTime}
-            onEndTimeChange={setEndTime}
-            onPriorityChange={setPriority}
-            onReminderEnabledChange={setReminderEnabled}
-            onReminderTimeChange={setReminderTime}
-            onSubtasksChange={setSubtasks}
-            onSubmit={handleSubmit}
-            onDelete={handleDelete}
-          />
+          <div className="px-6 mb-2">
+            <EditTaskHeader onShareClick={() => setShowShareDialog(true)} />
+          </div>
+          <div className="flex-1 overflow-hidden">
+            <EditTaskContent
+              task={task}
+              title={title}
+              description={description}
+              isScheduled={isScheduled}
+              isEvent={isEvent}
+              isAllDay={isAllDay}
+              date={date}
+              startTime={startTime}
+              endTime={endTime}
+              priority={priority}
+              reminderEnabled={reminderEnabled}
+              reminderTime={reminderTime}
+              subtasks={subtasks}
+              isLoading={isLoading}
+              onTitleChange={setTitle}
+              onDescriptionChange={setDescription}
+              onIsScheduledChange={setIsScheduled}
+              onIsEventChange={setIsEvent}
+              onIsAllDayChange={setIsAllDay}
+              onDateChange={handleDateChange}
+              onStartTimeChange={setStartTime}
+              onEndTimeChange={setEndTime}
+              onPriorityChange={setPriority}
+              onReminderEnabledChange={setReminderEnabled}
+              onReminderTimeChange={setReminderTime}
+              onSubtasksChange={setSubtasks}
+              onSubmit={handleSubmit}
+              onDelete={handleDelete}
+            />
+          </div>
         </SheetContent>
       </Sheet>
       <ShareTaskDialog

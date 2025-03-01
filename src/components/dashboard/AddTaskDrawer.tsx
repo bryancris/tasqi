@@ -55,15 +55,19 @@ export function AddTaskDrawer({
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent 
           side="left" 
-          className="w-[400px] sm:max-w-[540px]"
+          className="w-[400px] sm:max-w-[540px] p-0 pt-4 flex flex-col h-[100dvh]"
           onOpenAutoFocus={e => e.preventDefault()}
         >
-          <AddTaskHeader />
-          <AddTaskForm 
-            formState={formState}
-            formActions={formActions}
-            onSuccess={handleSuccess}
-          />
+          <div className="px-6 mb-2">
+            <AddTaskHeader />
+          </div>
+          <div className="flex-1 overflow-hidden">
+            <AddTaskForm 
+              formState={formState}
+              formActions={formActions}
+              onSuccess={handleSuccess}
+            />
+          </div>
         </SheetContent>
       </Sheet>
     </>

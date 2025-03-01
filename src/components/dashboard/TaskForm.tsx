@@ -179,13 +179,13 @@ function TaskFormWrapper({
           console.error("onSubmit is not a function:", onSubmit);
         }
       }}
-      className="flex flex-col h-full"
+      className="flex flex-col h-full max-h-full"
     >
-      <div className="flex-1 overflow-y-auto scrollbar-hide">
+      <div className="flex-1 overflow-y-auto scrollbar-hide pb-6">
         {children}
       </div>
 
-      <div className="mt-6">
+      <div className="mt-2 pt-2 border-t sticky bottom-0 bg-background">
         <FormSubmitButton 
           isLoading={isLoading}
           processingAIResponse={processingAIResponse}

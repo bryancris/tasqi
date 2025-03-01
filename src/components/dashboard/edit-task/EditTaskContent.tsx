@@ -69,39 +69,41 @@ export function EditTaskContent({
   console.log("EditTaskContent rendered with onSubmit:", !!onSubmit);
   
   return (
-    <div className="pt-6 flex flex-col h-full">
-      <TaskForm
-        task={task}
-        title={title}
-        description={description}
-        isScheduled={isScheduled}
-        isEvent={isEvent}
-        isAllDay={isAllDay}
-        date={date}
-        startTime={startTime}
-        endTime={endTime}
-        priority={priority}
-        reminderEnabled={reminderEnabled}
-        reminderTime={reminderTime}
-        subtasks={subtasks}
-        isLoading={isLoading}
-        isEditing={true}
-        onTitleChange={onTitleChange}
-        onDescriptionChange={onDescriptionChange}
-        onIsScheduledChange={onIsScheduledChange}
-        onIsEventChange={onIsEventChange}
-        onIsAllDayChange={onIsAllDayChange}
-        onDateChange={onDateChange}
-        onStartTimeChange={onStartTimeChange}
-        onEndTimeChange={onEndTimeChange}
-        onPriorityChange={onPriorityChange}
-        onReminderEnabledChange={onReminderEnabledChange}
-        onReminderTimeChange={onReminderTimeChange}
-        onSubtasksChange={onSubtasksChange}
-        onSubmit={onSubmit}
-      />
+    <div className="h-full flex flex-col">
+      <div className="flex-1 overflow-hidden">
+        <TaskForm
+          task={task}
+          title={title}
+          description={description}
+          isScheduled={isScheduled}
+          isEvent={isEvent}
+          isAllDay={isAllDay}
+          date={date}
+          startTime={startTime}
+          endTime={endTime}
+          priority={priority}
+          reminderEnabled={reminderEnabled}
+          reminderTime={reminderTime}
+          subtasks={subtasks}
+          isLoading={isLoading}
+          isEditing={true}
+          onTitleChange={onTitleChange}
+          onDescriptionChange={onDescriptionChange}
+          onIsScheduledChange={onIsScheduledChange}
+          onIsEventChange={onIsEventChange}
+          onIsAllDayChange={onIsAllDayChange}
+          onDateChange={onDateChange}
+          onStartTimeChange={onStartTimeChange}
+          onEndTimeChange={onEndTimeChange}
+          onPriorityChange={onPriorityChange}
+          onReminderEnabledChange={onReminderEnabledChange}
+          onReminderTimeChange={onReminderTimeChange}
+          onSubtasksChange={onSubtasksChange}
+          onSubmit={onSubmit}
+        />
+      </div>
       
-      <div className="mt-6 px-4">
+      <div className="mt-2 px-6 pb-4 border-t pt-4 bg-background">
         <Button
           type="button"
           variant="destructive"

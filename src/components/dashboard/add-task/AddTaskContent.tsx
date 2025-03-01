@@ -63,7 +63,7 @@ export function AddTaskContent({
   console.log("AddTaskContent rendered with onSubmit:", !!onSubmit);
   
   return (
-    <div className="pt-6">
+    <div className="h-full px-6">
       <TaskForm
         title={title}
         description={description}
