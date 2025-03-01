@@ -12,6 +12,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const hasToastRef = useRef(false);
   const mounted = useRef(true);
+  // Add a flag to prevent multiple refreshes
+  const isRefreshing = useRef(false);
 
   // Clean sign out function
   const handleSignOut = useCallback(async () => {
@@ -41,7 +43,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log("Auth provider initialized");
     
     // Initial auth check
-    refreshAuth(mounted, setSession, setUser, setLoading, hasToastRef);
+    if (!isRefreshing.current) {
+      isRefreshing.current = true;
+      refreshAuth(mounted, setSession, setUser, setLoading, hasToastRef)
+        .finally(() => {
+          isRefreshing.current = false;
+        });
+    }
     
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
@@ -86,7 +94,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       clearTimeout(timeoutId);
       subscription?.unsubscribe();
     };
-  }, []); // Remove the loading dependency to prevent infinite loops
+  }, []); // Empty dependency array to run only once
 
   const contextValue = useMemo(
     () => ({

@@ -1,18 +1,25 @@
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { playNotificationSound } from '@/utils/notifications/soundUtils';
 import { useNotifications } from '@/components/notifications/NotificationsManager';
 import { notificationService } from '@/utils/notifications/notificationService';
-import { showBrowserNotification } from '@/utils/notifications/notificationUtils';
 import { toast } from 'sonner';
 
 export function useSupabaseSubscription() {
   const queryClient = useQueryClient();
   const { showNotification } = useNotifications();
+  // Add a ref to track if we've already initialized
+  const initialized = useRef(false);
 
   useEffect(() => {
+    // Only run once
+    if (initialized.current) return;
+    initialized.current = true;
+    
+    console.log('Initializing Supabase subscriptions');
+    
     const initializeNotifications = async () => {
       try {
         if ('Notification' in window) {
@@ -109,9 +116,10 @@ export function useSupabaseSubscription() {
 
     // Cleanup function
     return () => {
+      console.log('Cleaning up Supabase subscriptions');
       void supabase.removeChannel(tasksChannel);
       void supabase.removeChannel(notesChannel);
       void supabase.removeChannel(notificationsChannel);
     };
-  }, [queryClient, showNotification]);
+  }, [queryClient, showNotification]); // This effect should only run once
 }

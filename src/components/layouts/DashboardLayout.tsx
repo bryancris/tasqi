@@ -1,4 +1,5 @@
-import React, { useEffect } from "react";
+
+import React, { useEffect, useRef } from "react";
 import { MobileHeader } from "./MobileHeader";
 import { MobileFooter } from "./MobileFooter";
 import { Sidebar } from "../dashboard/Sidebar";
@@ -6,9 +7,11 @@ import { DesktopHeader } from "./DesktopHeader";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useCalendarView } from "@/contexts/CalendarViewContext";
 import { useSupabaseSubscription } from "@/hooks/use-supabase-subscription";
+
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
+
 export function DashboardLayout({
   children
 }: DashboardLayoutProps) {
@@ -17,12 +20,20 @@ export function DashboardLayout({
     selectedDate,
     setSelectedDate
   } = useCalendarView();
-
-  // Initialize Supabase subscriptions
+  
+  // Initialize Supabase subscriptions once
   useSupabaseSubscription();
+  
+  // Use ref to track if we've already logged the mount message
+  const hasLoggedMount = useRef(false);
+  
   useEffect(() => {
-    console.log("DashboardLayout mounted");
+    if (!hasLoggedMount.current) {
+      console.log("DashboardLayout mounted");
+      hasLoggedMount.current = true;
+    }
   }, []);
+
   return <div className="min-h-screen bg-white">
       {isMobile ? <>
           <MobileHeader />
