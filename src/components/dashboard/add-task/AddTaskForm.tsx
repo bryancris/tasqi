@@ -56,6 +56,7 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
 
     setIsLoading(true);
     try {
+      // Determine the task status based on scheduling options
       let status: 'scheduled' | 'unscheduled' | 'event';
       
       if (isEvent) {
@@ -72,12 +73,22 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
         status = 'unscheduled';
       }
 
+      console.log("Step 1: Getting authenticated user");
       // Get the current user
       const { data: userData, error: userError } = await supabase.auth.getUser();
-      if (userError) throw userError;
+      
+      if (userError) {
+        console.error("Auth error getting user:", userError);
+        throw userError;
+      }
+      
+      if (!userData || !userData.user) {
+        console.error("No authenticated user found!", userData);
+        throw new Error("User not authenticated");
+      }
       
       const userId = userData.user?.id;
-      if (!userId) throw new Error("User not authenticated");
+      console.log("User authenticated with ID:", userId);
 
       // Prepare the task data
       const taskData = {
@@ -96,28 +107,45 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
         position: 0 // This will be adjusted by the backend
       };
       
-      console.log("Preparing to create task with data:", taskData);
+      console.log("Step 2: Preparing task data:", taskData);
 
       // Get existing tasks count to properly set position
+      console.log("Step 3: Fetching existing tasks for position");
       const { data: existingTasks, error: countError } = await supabase
         .from("tasks")
         .select("position")
         .order("position", { ascending: false })
         .limit(1);
 
-      if (!countError && existingTasks && existingTasks.length > 0) {
-        taskData.position = existingTasks[0].position + 1;
+      if (countError) {
+        console.error("Error fetching task positions:", countError);
+      } else {
+        console.log("Existing tasks result:", existingTasks);
+        if (existingTasks && existingTasks.length > 0) {
+          taskData.position = existingTasks[0].position + 1;
+          console.log("Set position to:", taskData.position);
+        } else {
+          console.log("No existing tasks found, keeping position at 0");
+        }
       }
 
       // Create the task
-      console.log("Creating task with final data:", taskData);
+      console.log("Step 4: Creating task with final data:", taskData);
       const { data: taskResult, error: taskError } = await supabase
         .from("tasks")
         .insert([taskData])
         .select();
 
-      if (taskError) throw taskError;
-      console.log("Task created:", taskResult);
+      if (taskError) {
+        console.error("Error creating task:", taskError);
+        // Check if it's an RLS policy error
+        if (taskError.message.includes("violates row-level security policy")) {
+          console.error("RLS policy violation - check permissions");
+        }
+        throw taskError;
+      }
+      
+      console.log("Task created successfully:", taskResult);
 
       // If there are subtasks, insert them
       if (subtasks.length > 0 && taskResult && taskResult.length > 0) {
@@ -131,29 +159,48 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
           notes: subtask.notes || null
         }));
 
-        console.log("Inserting subtasks:", subtasksToInsert);
-        const { error: subtasksError } = await supabase
+        console.log("Step 5: Inserting subtasks:", subtasksToInsert);
+        const { data: subtaskResult, error: subtasksError } = await supabase
           .from("subtasks")
           .insert(subtasksToInsert);
 
-        if (subtasksError) throw subtasksError;
+        if (subtasksError) {
+          console.error("Error inserting subtasks:", subtasksError);
+          throw subtasksError;
+        }
+        
+        console.log("Subtasks inserted:", subtaskResult);
+      } else {
+        console.log("No subtasks to insert");
       }
 
       // Invalidate and refetch tasks
+      console.log("Step 6: Invalidating tasks query cache");
       await queryClient.invalidateQueries({ queryKey: ["tasks"] });
       
+      console.log("Step 7: Task creation complete, showing success message");
       toast.success('Task created successfully');
       
       // Reset the form
+      console.log("Step 8: Resetting form");
       resetForm();
       
       // Call onSuccess callback
-      console.log("Calling onSuccess callback");
+      console.log("Step 9: Calling onSuccess callback");
       onSuccess();
-    } catch (error) {
-      console.error('Error creating task:', error);
-      toast.error('Failed to create task');
+      console.log("onSuccess callback completed");
+    } catch (error: any) {
+      console.error('Error creating task - detailed error:', {
+        name: error.name,
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+        stack: error.stack
+      });
+      toast.error('Failed to create task: ' + (error.message || 'Unknown error'));
     } finally {
+      console.log("Step 10: Setting loading state to false");
       setIsLoading(false);
     }
   };

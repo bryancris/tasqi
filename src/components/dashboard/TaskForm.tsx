@@ -168,7 +168,16 @@ function TaskFormWrapper({
       onSubmit={(e) => {
         e.preventDefault();
         console.log("Form submitted in TaskFormWrapper");
-        onSubmit();
+        console.log("Form elements:", Array.from(e.currentTarget.elements).map(el => ({
+          type: (el as HTMLElement).tagName,
+          id: (el as HTMLElement).id,
+          className: (el as HTMLElement).className
+        })));
+        if (typeof onSubmit === 'function') {
+          onSubmit();
+        } else {
+          console.error("onSubmit is not a function:", onSubmit);
+        }
       }}
       className="flex flex-col h-full"
     >

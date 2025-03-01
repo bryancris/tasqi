@@ -30,7 +30,12 @@ export function AddTaskDrawer({
 
   const handleSuccess = () => {
     console.log("handleSuccess called in AddTaskDrawer");
-    onOpenChange(false);
+    try {
+      onOpenChange(false);
+      console.log("Drawer closed successfully");
+    } catch (error) {
+      console.error("Error closing drawer:", error);
+    }
   };
 
   console.log("AddTaskDrawer rendered, open state:", open);
