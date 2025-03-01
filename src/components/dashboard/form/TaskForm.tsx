@@ -1,12 +1,12 @@
 
-import { ShareTaskDialog } from "./ShareTaskDialog";
-import { FormSubmitButton } from "./form/sections/FormSubmitButton";
-import { TaskFormContent } from "./form/TaskFormContent";
+import { ShareTaskDialog } from "../ShareTaskDialog";
+import { FormSubmitButton } from "./sections/FormSubmitButton";
+import { TaskFormContent } from "./TaskFormContent";
 import { useState } from "react";
-import { Task, TaskPriority } from "./TaskBoard";
+import { Task, TaskPriority } from "../TaskBoard";
 import { useChat } from "@/hooks/use-chat";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Subtask } from "./subtasks/SubtaskList";
+import { Subtask } from "../subtasks/SubtaskList";
 import { useTaskAIResponse } from "@/hooks/use-task-ai-response";
 import { useTaskFormState } from "@/hooks/use-task-form-state";
 
