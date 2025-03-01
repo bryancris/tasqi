@@ -1,8 +1,10 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { AddTaskContent } from "./AddTaskContent";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffect, useState } from "react";
 
 interface AddTaskFormProps {
   formState: ReturnType<typeof import("@/hooks/use-add-task-form").useAddTaskForm>["formState"];
@@ -46,6 +48,24 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
 
   const { session, user } = useAuth();
   const queryClient = useQueryClient();
+  const [directUserId, setDirectUserId] = useState<string | null>(null);
+  
+  // Add direct auth check on component mount
+  useEffect(() => {
+    const checkAuthDirectly = async () => {
+      try {
+        const { data } = await supabase.auth.getUser();
+        if (data.user) {
+          console.log("Direct auth check in AddTaskForm successful:", data.user.id);
+          setDirectUserId(data.user.id);
+        }
+      } catch (error) {
+        console.error("Error in direct auth check in AddTaskForm:", error);
+      }
+    };
+    
+    checkAuthDirectly();
+  }, []);
 
   const handleSubmit = async () => {
     console.log("handleSubmit called in AddTaskForm with title:", title);
@@ -55,13 +75,19 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
       return;
     }
 
-    // Check for authentication - use either session or user for redundancy
-    const isAuthenticated = !!(session || user);
-    const userId = session?.user?.id || user?.id;
+    // Check for authentication using BOTH context and direct check
+    const contextAuth = !!(session || user);
+    const userId = session?.user?.id || user?.id || directUserId;
     
-    if (!isAuthenticated || !userId) {
-      console.error("No active session found - user is not authenticated");
-      console.log("Auth state:", { hasSession: !!session, hasUser: !!user });
+    console.log("Auth state in handleSubmit:", { 
+      contextAuth,
+      contextUserId: session?.user?.id || user?.id,
+      directUserId,
+      finalUserId: userId
+    });
+    
+    if (!userId) {
+      console.error("No active user ID found - user is not authenticated");
       toast.error("You must be signed in to create tasks");
       return;
     }
