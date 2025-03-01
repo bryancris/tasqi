@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Separator } from "@/components/ui/separator";
+import { Spinner } from "@/components/ui/spinner";
 
 export function SignInForm({ onResetPassword }: { onResetPassword: () => void }) {
   const [email, setEmail] = useState("");
@@ -20,13 +21,28 @@ export function SignInForm({ onResetPassword }: { onResetPassword: () => void })
     
     if (isLoading) return; // Prevent multiple submission attempts
     
+    // Basic validation
+    if (!email.trim()) {
+      toast({
+        title: "Error",
+        description: "Email is required",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!password.trim()) {
+      toast({
+        title: "Error",
+        description: "Password is required",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsLoading(true);
 
     try {
-      // Pre-validate input to avoid unnecessary network requests
-      if (!email.trim()) throw new Error("Email is required");
-      if (!password.trim()) throw new Error("Password is required");
-      
       console.log("Initiating sign in with email...");
       
       const { error, data } = await supabase.auth.signInWithPassword({
@@ -86,7 +102,6 @@ export function SignInForm({ onResetPassword }: { onResetPassword: () => void })
         description: error.message || "Google sign in failed. Please try again.",
         variant: "destructive",
       });
-    } finally {
       setIsGoogleLoading(false);
     }
   };
@@ -103,6 +118,7 @@ export function SignInForm({ onResetPassword }: { onResetPassword: () => void })
             required
             disabled={isLoading}
             aria-label="Email"
+            className="bg-white/5 text-white border-gray-700"
           />
           <Input
             type="password"
@@ -112,10 +128,18 @@ export function SignInForm({ onResetPassword }: { onResetPassword: () => void })
             required
             disabled={isLoading}
             aria-label="Password"
+            className="bg-white/5 text-white border-gray-700"
           />
         </div>
-        <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? "Signing in..." : "Sign In with Email"}
+        <Button type="submit" className="w-full relative" disabled={isLoading}>
+          {isLoading ? (
+            <div className="flex items-center justify-center gap-2">
+              <Spinner className="h-4 w-4" />
+              <span>Signing in...</span>
+            </div>
+          ) : (
+            "Sign In with Email"
+          )}
         </Button>
       </form>
 
@@ -132,11 +156,14 @@ export function SignInForm({ onResetPassword }: { onResetPassword: () => void })
         variant="outline"
         type="button"
         disabled={isGoogleLoading || isLoading}
-        className="w-full"
+        className="w-full relative"
         onClick={handleGoogleSignIn}
       >
         {isGoogleLoading ? (
-          "Connecting..."
+          <div className="flex items-center justify-center gap-2">
+            <Spinner className="h-4 w-4" />
+            <span>Connecting...</span>
+          </div>
         ) : (
           <div className="flex items-center justify-center gap-2">
             <svg role="img" viewBox="0 0 24 24" className="h-4 w-4">

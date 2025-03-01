@@ -1,3 +1,4 @@
+
 import { BrowserRouter } from 'react-router-dom';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { CalendarViewProvider } from './contexts/CalendarViewContext';
@@ -18,20 +19,21 @@ import { useEffect, useState, memo } from 'react';
 const ProtectedRoute = memo(({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
   const location = useLocation();
-  const [timedOut, setTimedOut] = useState(false);
+  const [showFallback, setShowFallback] = useState(false);
   
+  // Show fallback UI after a reasonable delay if still loading
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (loading) {
-        console.warn("Protected route loading timed out after 5 seconds");
-        setTimedOut(true);
+        setShowFallback(true);
       }
-    }, 5000);
+    }, 3000); // Reduced from 5s to 3s
     
     return () => clearTimeout(timeoutId);
   }, [loading]);
   
-  if (loading && !timedOut) {
+  // Show loading spinner during initial load
+  if (loading && !showFallback) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-[#1a1b3b]">
         <Spinner className="h-8 w-8 text-primary" />
@@ -40,11 +42,12 @@ const ProtectedRoute = memo(({ children }: { children: React.ReactNode }) => {
     );
   }
   
-  if (timedOut && loading) {
+  // If still loading after timeout, check local storage as fallback
+  if (loading && showFallback) {
     try {
-      const hasLocalToken = localStorage.getItem('sb-session') !== null;
-      if (hasLocalToken) {
-        console.log("Using local storage token as auth fallback");
+      const hasLocalSession = localStorage.getItem('sb-session') !== null;
+      if (hasLocalSession) {
+        console.log("Using local session as auth fallback");
         return <>{children}</>;
       }
     } catch (e) {
@@ -54,45 +57,51 @@ const ProtectedRoute = memo(({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/auth" replace state={{ from: location }} />;
   }
   
+  // If not authenticated, redirect to auth page
   if (!session) {
     return <Navigate to="/auth" replace state={{ from: location }} />;
   }
 
+  // If authenticated, render children
   return <>{children}</>;
 });
 
 const AuthRoute = memo(({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
-  const [timedOut, setTimedOut] = useState(false);
+  const [showFallback, setShowFallback] = useState(false);
   
+  // Show fallback UI after a reasonable delay if still loading
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (loading) {
-        console.warn("Auth route loading timed out after 5 seconds");
-        setTimedOut(true);
+        setShowFallback(true);
       }
-    }, 5000);
+    }, 2000); // Reduced from 5s to 2s for auth routes
     
     return () => clearTimeout(timeoutId);
   }, [loading]);
   
-  if (loading && !timedOut) {
+  // During initial load
+  if (loading && !showFallback) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-[#1a1b3b]">
         <Spinner className="h-8 w-8 text-primary" />
-        <p className="mt-4 text-sm text-gray-300">Loading...</p>
+        <p className="mt-4 text-sm text-gray-300">Checking authentication...</p>
       </div>
     );
   }
   
-  if (timedOut && loading) {
+  // If loading takes too long, just show the auth page
+  if (loading && showFallback) {
     return <>{children}</>;
   }
   
+  // If already authenticated, redirect to dashboard
   if (session) {
     return <Navigate to="/dashboard" replace />;
   }
 
+  // If not authenticated, render auth page
   return <>{children}</>;
 });
 

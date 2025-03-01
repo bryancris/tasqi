@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SignInForm } from "@/components/auth/SignInForm";
@@ -8,6 +8,7 @@ import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
+import { Spinner } from "@/components/ui/spinner";
 
 const Auth = () => {
   const [activeTab, setActiveTab] = useState("signin");
@@ -19,18 +20,17 @@ const Auth = () => {
     return <Navigate to="/dashboard" replace />;
   }
   
-  // Clear any lingering local/session storage on mount
-  useEffect(() => {
-    // Clean up any potential stale tokens or PWA data
-    // that might interfere with auth state
-    try {
-      // Clear any auth-related items from storage
-      localStorage.removeItem('supabase.auth.token');
-      sessionStorage.removeItem('supabase.auth.token');
-    } catch (error) {
-      console.error('Error clearing storage:', error);
-    }
-  }, []);
+  // Show loading spinner during initial auth check
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#1a1b3b] flex items-center justify-center p-4">
+        <div className="flex flex-col items-center gap-3">
+          <Spinner className="h-8 w-8 text-white" />
+          <p className="text-white/70">Loading authentication...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#1a1b3b] flex items-center justify-center p-4">
