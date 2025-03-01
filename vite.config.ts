@@ -85,6 +85,38 @@ export default defineConfig(({ mode }) => ({
             }
           },
           {
+            // API calls - EXCLUDE auth endpoints
+            urlPattern: ({ url }) => {
+              const isSupabaseAPI = url.origin === 'https://mcwlzrikidzgxexnccju.supabase.co';
+              const isAuthEndpoint = url.pathname.includes('/auth/');
+              return isSupabaseAPI && !isAuthEndpoint;
+            },
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-cache',
+              networkTimeoutSeconds: 5,
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 5 * 60 // 5 minutes
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
+            // Auth endpoints - use NetworkOnly
+            urlPattern: ({ url }) => {
+              const isSupabaseAPI = url.origin === 'https://mcwlzrikidzgxexnccju.supabase.co';
+              const isAuthEndpoint = url.pathname.includes('/auth/');
+              return isSupabaseAPI && isAuthEndpoint;
+            },
+            handler: 'NetworkOnly',
+            options: {
+              // No caching options needed for NetworkOnly
+            }
+          },
+          {
             // Static assets - use CacheFirst for better performance
             urlPattern: /\.(css|js|ico|png|svg|webp|woff2?)$/,
             handler: 'CacheFirst',
@@ -93,22 +125,6 @@ export default defineConfig(({ mode }) => ({
               expiration: {
                 maxEntries: 50,
                 maxAgeSeconds: 24 * 60 * 60 // 24 hours
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          },
-          {
-            // API calls - use NetworkFirst with timeout
-            urlPattern: /^https:\/\/mcwlzrikidzgxexnccju\.supabase\.co/,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'api-cache',
-              networkTimeoutSeconds: 5,
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 5 * 60 // 5 minutes
               },
               cacheableResponse: {
                 statuses: [0, 200]
