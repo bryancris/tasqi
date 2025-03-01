@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Settings, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -21,7 +20,7 @@ import { useInstallPrompt } from "@/hooks/use-install-prompt";
 import { useAppUpdate } from "@/hooks/use-app-update";
 
 export function HeaderUserMenu() {
-  const { session } = useAuth();
+  const { session, handleSignOut } = useAuth();
   const navigate = useNavigate();
   const { deferredPrompt, isStandalone, installable, setDeferredPrompt } = useInstallPrompt();
   const { isChecking, setIsChecking } = useAppUpdate();
@@ -33,21 +32,12 @@ export function HeaderUserMenu() {
 
   const handleLogout = async () => {
     try {
-      localStorage.clear();
-      sessionStorage.clear();
-      
-      const { error } = await supabase.auth.signOut();
-      if (error && !error.message?.includes('session_not_found')) {
-        console.error('Error logging out:', error);
-        throw error;
-      }
-      
+      await handleSignOut();
       navigate('/', { replace: true });
       toast.success("Successfully logged out");
     } catch (error) {
       console.error('Logout error:', error);
       toast.error("Error during logout");
-      navigate('/');
     }
   };
 
