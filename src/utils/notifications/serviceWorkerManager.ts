@@ -36,7 +36,19 @@ export class ServiceWorkerManager {
         console.log('🍎 Registering iOS PWA service worker');
       }
 
-      this.swRegistration = await navigator.serviceWorker.register('/sw.js', options);
+      // Try the vite-generated SW first, then fall back to default path
+      try {
+        this.swRegistration = await navigator.serviceWorker.register('/registerSW.js', options);
+      } catch (err) {
+        console.warn('⚠️ Could not register vite SW, trying default SW path:', err);
+        try {
+          this.swRegistration = await navigator.serviceWorker.register('/sw.js', options);
+        } catch (fallbackErr) {
+          console.warn('⚠️ Fallback service worker registration also failed:', fallbackErr);
+          // Gracefully continue without service worker
+          return null;
+        }
+      }
 
       console.log('✅ ServiceWorker registered successfully');
 
@@ -69,7 +81,8 @@ export class ServiceWorkerManager {
       return this.swRegistration;
     } catch (error) {
       console.error('❌ Failed to register service worker:', error);
-      throw error;
+      // Do not throw, allow app to continue without service worker
+      return null;
     }
   }
 

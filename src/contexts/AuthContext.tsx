@@ -25,6 +25,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const hasShownToast = useRef(false);
   const mounted = useRef(true);
   const initialAuthCheckCompleted = useRef(false);
+  const authTimeoutRef = useRef<number | null>(null);
 
   // Memoize setAuthState to prevent unnecessary re-renders
   const setAuthState = useCallback((newSession: Session | null, newUser: User | null) => {
@@ -90,6 +91,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Initial auth state fetch
     console.log("Initializing auth state...");
     refreshAuthState();
+    
+    // Set safety timeout to ensure loading state doesn't get stuck
+    authTimeoutRef.current = window.setTimeout(() => {
+      if (loading && mounted.current) {
+        console.warn("Auth check timed out, forcing loading to false");
+        initialAuthCheckCompleted.current = true;
+        setLoading(false);
+      }
+    }, 5000); // 5 second safety timeout
 
     // Set up auth state listener
     const {
@@ -115,8 +125,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       mounted.current = false;
       subscription?.unsubscribe();
+      
+      // Clear safety timeout
+      if (authTimeoutRef.current) {
+        clearTimeout(authTimeoutRef.current);
+      }
     };
-  }, [refreshAuthState, setAuthState]);
+  }, [refreshAuthState, setAuthState, loading]);
 
   const handleSignOut = useCallback(async () => {
     try {

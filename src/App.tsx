@@ -1,4 +1,3 @@
-
 import { BrowserRouter } from 'react-router-dom';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { CalendarViewProvider } from './contexts/CalendarViewContext';
@@ -14,12 +13,26 @@ import SelfCare from './pages/SelfCare';
 import Chat from './pages/Chat';
 import { useAuth } from './contexts/AuthContext';
 import { Spinner } from './components/ui/spinner';
+import { useEffect, useState } from 'react';
 
-// Protected route component
+// Protected route component with timeout
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
+  const [timedOut, setTimedOut] = useState(false);
   
-  if (loading) {
+  // Set a safety timeout to prevent infinite loading
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (loading) {
+        console.warn("Protected route loading timed out after 10 seconds");
+        setTimedOut(true);
+      }
+    }, 10000); // 10 second timeout
+    
+    return () => clearTimeout(timeoutId);
+  }, [loading]);
+  
+  if (loading && !timedOut) {
     // Show better loading state with spinner
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-white">
@@ -27,6 +40,23 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
         <p className="mt-4 text-sm text-gray-500">Loading...</p>
       </div>
     );
+  }
+  
+  // If we timed out but we're still technically loading, we'll check local storage as a fallback
+  if (timedOut && loading) {
+    // Try to determine auth state from local storage as fallback
+    try {
+      const hasLocalToken = localStorage.getItem('sb-mcwlzrikidzgxexnccju-auth-token') !== null;
+      if (hasLocalToken) {
+        console.log("Using local storage token as auth fallback");
+        return <>{children}</>;
+      }
+    } catch (e) {
+      console.error("Error checking local storage:", e);
+    }
+    
+    // Otherwise, redirect to auth page
+    return <Navigate to="/auth" replace />;
   }
   
   if (!session) {
@@ -40,8 +70,21 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 // Auth route component (redirects to dashboard if already logged in)
 const AuthRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
+  const [timedOut, setTimedOut] = useState(false);
   
-  if (loading) {
+  // Set a safety timeout to prevent infinite loading
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (loading) {
+        console.warn("Auth route loading timed out after 10 seconds");
+        setTimedOut(true);
+      }
+    }, 10000); // 10 second timeout
+    
+    return () => clearTimeout(timeoutId);
+  }, [loading]);
+  
+  if (loading && !timedOut) {
     // Show better loading state with spinner
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-white">
@@ -49,6 +92,11 @@ const AuthRoute = ({ children }: { children: React.ReactNode }) => {
         <p className="mt-4 text-sm text-gray-500">Loading...</p>
       </div>
     );
+  }
+  
+  // If we timed out but we're still loading, let the user proceed to auth
+  if (timedOut && loading) {
+    return <>{children}</>;
   }
   
   if (session) {

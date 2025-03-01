@@ -10,10 +10,11 @@ import { AuthProvider } from '@/contexts/AuthContext';
 
 const queryClient = new QueryClient();
 
-// Register service worker with error handling
+// Handle service worker registration in a non-blocking way
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
+    // Register service worker but don't block app rendering
+    navigator.serviceWorker.register('/registerSW.js')
       .then(registration => {
         console.log('✅ SW registered:', registration);
         
@@ -32,7 +33,8 @@ if ('serviceWorker' in navigator) {
         });
       })
       .catch(error => {
-        console.error('❌ SW registration failed:', error);
+        // Log error but don't block app functionality
+        console.warn('⚠️ SW registration failed, app will work without offline capabilities:', error);
       });
   });
 
