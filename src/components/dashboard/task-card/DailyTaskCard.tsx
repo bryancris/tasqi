@@ -128,7 +128,7 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Sun className="w-4 h-4 text-white" />
+                    <Sun className="w-4 h-4 text-[#FEF7CD]" />
                   </TooltipTrigger>
                   <TooltipContent 
                     className="bg-gray-800 text-white border-gray-700 text-xs z-50"

@@ -46,7 +46,7 @@ function MonthlyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, 
         <span className="truncate flex-1">{task.title}</span>
         <div className="flex items-center gap-1 shrink-0">
           {isAllDay && (
-            <Sun className="h-3 w-3 text-white" />
+            <Sun className="h-3 w-3 text-[#FEF7CD]" />
           )}
           {task.reminder_enabled && (
             <Bell className="h-3 w-3 text-white" />

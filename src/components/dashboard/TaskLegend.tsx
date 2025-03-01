@@ -9,7 +9,7 @@ export function TaskLegend() {
         <span>Shared Task</span>
       </div>
       <div className="flex items-center gap-1">
-        <Sun className="w-3 h-3 text-[#0EA5E9]" />
+        <Sun className="w-3 h-3 text-[#FEF7CD]" />
         <span>All-day Event</span>
       </div>
       <div className="flex items-center gap-1">
