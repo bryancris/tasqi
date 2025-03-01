@@ -1,4 +1,3 @@
-
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -15,7 +14,7 @@ export default defineConfig(({ mode }) => ({
     mode === 'development' && componentTagger(),
     VitePWA({
       registerType: 'autoUpdate',
-      injectRegister: 'auto',
+      injectRegister: mode === 'production' ? 'auto' : 'script',
       includeAssets: ['favicon.ico', 'pwa-192x192.png', 'pwa-512x512.png', 'notification-sound.mp3'],
       manifest: {
         name: 'TASQI-AI Assistant',
@@ -43,129 +42,90 @@ export default defineConfig(({ mode }) => ({
         ]
       },
       devOptions: {
-        enabled: true,
-        /* Reduce development logging */
+        enabled: mode !== 'development',
         suppressWarnings: true,
         type: 'module',
         navigateFallback: 'index.html'
       },
       workbox: {
-        // Reduce what files are processed in dev mode
-        globPatterns: mode === 'production' 
-          ? ['**/*.{js,css,html,ico,png,svg,webp}'] 
-          : ['**/pwa-*.png', '**/*-legacy*.js', '**/*.css', 'favicon.ico', 'index.html'],
-        
-        // Exclude development files and source maps
+        globPatterns: ['**/favicon.ico', '**/pwa-*.png', '**/index.html'],
         globIgnores: [
           '**/node_modules/**',
           '**/.vite/**', 
           '**/*.map',
           '**/src/**/*.ts',
-          '**/src/**/*.tsx'
+          '**/src/**/*.tsx',
+          '**/src/**'
         ],
-        
-        // Optimize caching strategies
         runtimeCaching: [
           {
             urlPattern: ({ url }) => {
-              // Only app routes - be more selective
-              const appRoutes = ['/', '/dashboard', '/notes', '/settings'];
-              return appRoutes.some(route => url.pathname === route || url.pathname === route + '/');
+              const exactRoutes = ['/', '/dashboard', '/notes', '/settings'];
+              return exactRoutes.includes(url.pathname) || 
+                     exactRoutes.some(route => url.pathname === route + '/');
             },
             handler: 'NetworkFirst',
             options: {
               cacheName: 'app-routes',
               expiration: {
                 maxEntries: 10,
-                maxAgeSeconds: 60 * 60 // 1 hour
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
+                maxAgeSeconds: 60 * 60
               }
             }
           },
           {
-            // API calls - EXCLUDE auth endpoints and improve caching
             urlPattern: ({ url }) => {
               const isSupabaseAPI = url.origin === 'https://mcwlzrikidzgxexnccju.supabase.co';
               const isAuthEndpoint = url.pathname.includes('/auth/');
-              const isRestAPI = url.pathname.includes('/rest/v1/');
               
-              // Special handling for frequently accessed endpoints
-              const isTasksEndpoint = isRestAPI && (
-                url.pathname.includes('/tasks') || 
-                url.pathname.includes('/subtasks')
-              );
-              
-              // Don't cache auth endpoints at all
               if (isSupabaseAPI && isAuthEndpoint) {
                 return false;
               }
               
-              // Better caching for task-related endpoints
-              return isSupabaseAPI && isRestAPI;
-            },
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'api-cache',
-              networkTimeoutSeconds: 10, // Longer timeout
-              expiration: {
-                maxEntries: 100, // Store more entries
-                maxAgeSeconds: 5 * 60 // Still keep for 5 minutes
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          },
-          {
-            // Task-specific endpoints - use stale-while-revalidate for better performance
-            urlPattern: ({ url }) => {
-              const isSupabaseAPI = url.origin === 'https://mcwlzrikidzgxexnccju.supabase.co';
-              const isTasksEndpoint = url.pathname.includes('/rest/v1/tasks') || 
-                                     url.pathname.includes('/rest/v1/subtasks');
-              return isSupabaseAPI && isTasksEndpoint;
+              return isSupabaseAPI && url.pathname.includes('/rest/v1/');
             },
             handler: 'StaleWhileRevalidate',
             options: {
-              cacheName: 'tasks-cache',
+              cacheName: 'api-cache',
               expiration: {
-                maxEntries: 200,
-                maxAgeSeconds: 10 * 60 // 10 minutes
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
+                maxEntries: 50,
+                maxAgeSeconds: 5 * 60
               }
             }
           },
           {
-            // Auth endpoints - ALWAYS use NetworkOnly for auth
             urlPattern: ({ url }) => {
-              const isSupabaseAPI = url.origin === 'https://mcwlzrikidzgxexnccju.supabase.co';
-              const isAuthEndpoint = url.pathname.includes('/auth/');
-              return isSupabaseAPI && isAuthEndpoint;
+              return url.origin === 'https://mcwlzrikidzgxexnccju.supabase.co' && 
+                     url.pathname.includes('/auth/');
             },
             handler: 'NetworkOnly'
           },
           {
-            // Static assets - use CacheFirst for better performance
-            urlPattern: /\.(css|js|ico|png|svg|webp|woff2?)$/,
+            urlPattern: /\.(js|css)$/,
             handler: 'CacheFirst',
             options: {
-              cacheName: 'static-assets',
+              cacheName: 'static-resources',
               expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 24 * 60 * 60 // 24 hours
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
+                maxEntries: 30,
+                maxAgeSeconds: 24 * 60 * 60
+              }
+            }
+          },
+          {
+            urlPattern: /\.(png|jpg|jpeg|svg|gif|webp|woff2?)$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'assets',
+              expiration: {
+                maxEntries: 30,
+                maxAgeSeconds: 7 * 24 * 60 * 60
               }
             }
           }
         ],
         cleanupOutdatedCaches: true,
-        clientsClaim: true,
-        skipWaiting: true
+        clientsClaim: mode === 'production',
+        skipWaiting: mode === 'production'
       }
     })
   ].filter(Boolean),
