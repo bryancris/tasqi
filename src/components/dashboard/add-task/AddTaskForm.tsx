@@ -114,12 +114,24 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
       console.log("Step 1: Using authenticated user");
       console.log("User authenticated with ID:", userId);
 
-      // Prepare the task data
+      // Validate time fields when needed
+      if ((isScheduled || (isEvent && !isAllDay)) && startTime && !endTime) {
+        console.log("Missing end time when start time is set, using default end time");
+        // If start time exists but end time doesn't, set a default end time (1 hour later)
+        const [hours, minutes] = startTime.split(':').map(Number);
+        const endHours = (hours + 1) % 24;
+        const newEndTime = `${endHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
+        setEndTime(newEndTime);
+      }
+
+      // Prepare the task data with improved validation
       const taskData = {
         title,
         description,
         status,
+        // Only set date if it's required (for scheduled tasks and events)
         date: (isScheduled || isEvent) && date ? date : null,
+        // Only set times if they're required and valid
         start_time: (isScheduled || (isEvent && !isAllDay)) && startTime ? startTime : null,
         end_time: (isScheduled || (isEvent && !isAllDay)) && endTime ? endTime : null,
         priority: isEvent ? "medium" : priority,
@@ -166,9 +178,26 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
 
       if (taskError) {
         console.error("Error creating task:", taskError);
+        // More detailed error debugging
+        console.error("Error details:", {
+          message: taskError.message,
+          code: taskError.code,
+          details: taskError.details,
+          hint: taskError.hint
+        });
+        
         // Check if it's an RLS policy error
         if (taskError.message.includes("violates row-level security policy")) {
           console.error("RLS policy violation - check permissions");
+          toast.error("Permission error: You don't have access to create tasks");
+        } else {
+          // Check for data validation errors
+          if (taskError.message.includes("invalid input value")) {
+            console.error("Data validation error - check task data format");
+            toast.error("Task creation failed: Invalid data format");
+          } else {
+            toast.error(`Error creating task: ${taskError.message}`);
+          }
         }
         throw taskError;
       }

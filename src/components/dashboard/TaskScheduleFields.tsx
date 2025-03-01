@@ -63,9 +63,20 @@ export function TaskScheduleFields({
     }
   };
 
-  // Handle toggle changes
+  // Handle toggle changes with improved transitions
   const handleIsScheduledChange = (value: boolean) => {
+    // If turning off scheduled, clear related fields
+    if (!value && isScheduled) {
+      // Only clear date and times if not in event mode
+      if (!isEvent) {
+        onDateChange("");
+        onStartTimeChange("");
+        onEndTimeChange("");
+      }
+    }
+    
     onIsScheduledChange(value);
+    
     // If turning on scheduled, turn off event (they're mutually exclusive)
     if (value && isEvent) {
       onIsEventChange(false);
@@ -73,14 +84,24 @@ export function TaskScheduleFields({
   };
 
   const handleIsEventChange = (value: boolean) => {
+    // If turning off event mode, clear event-specific settings
+    if (!value && isEvent) {
+      // Clear all-day setting
+      onIsAllDayChange(false);
+      
+      // If not switching to scheduled mode, clear date and times
+      if (!isScheduled) {
+        onDateChange("");
+        onStartTimeChange("");
+        onEndTimeChange("");
+      }
+    }
+    
     onIsEventChange(value);
+    
     // If turning on event, turn off scheduled (they're mutually exclusive)
     if (value && isScheduled) {
       onIsScheduledChange(false);
-    }
-    // Events must have a date, so automatically enable the date field
-    if (value) {
-      onIsAllDayChange(false); // Default to non-all day events
     }
   };
 
