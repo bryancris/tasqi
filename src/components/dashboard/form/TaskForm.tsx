@@ -1,10 +1,14 @@
 
-import { Task, TaskPriority } from "../TaskBoard";
-import { ShareTaskDialog } from "../ShareTaskDialog";
-import { Subtask } from "../subtasks/SubtaskList";
-import { TaskFormContent } from "./task-form/TaskFormContent";
-import { TaskFormFooter } from "./TaskFormFooter";
-import { useTaskForm } from "@/hooks/use-task-form";
+import { ShareTaskDialog } from "./ShareTaskDialog";
+import { FormSubmitButton } from "./form/sections/FormSubmitButton";
+import { TaskFormContent } from "./form/TaskFormContent";
+import { useState } from "react";
+import { Task, TaskPriority } from "./TaskBoard";
+import { useChat } from "@/hooks/use-chat";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Subtask } from "./subtasks/SubtaskList";
+import { useTaskAIResponse } from "@/hooks/use-task-ai-response";
+import { useTaskFormState } from "@/hooks/use-task-form-state";
 
 interface TaskFormProps {
   title: string;
@@ -67,76 +71,65 @@ export function TaskForm({
   onSubtasksChange,
   onSubmit,
 }: TaskFormProps) {
+  const { message } = useChat();
+  const isMobile = useIsMobile();
+  
   const {
     showShareDialog,
     setShowShareDialog,
-    isMobile,
     fcmStatus,
-    handleReminderToggle,
-    processingAIResponse,
-  } = useTaskForm({
+    handleReminderToggle
+  } = useTaskFormState({
+    reminderEnabled,
+    onReminderEnabledChange
+  });
+
+  const { processingAIResponse } = useTaskAIResponse({
     onTitleChange,
     onDescriptionChange,
     onIsScheduledChange,
     onDateChange,
-    onStartTimeChange,
-    onEndTimeChange,
-    onPriorityChange,
-    onReminderEnabledChange,
-    onReminderTimeChange,
     onSubtasksChange,
   });
 
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        onSubmit();
-      }}
-      className="flex flex-col h-full relative bg-gradient-to-br from-[#F1F0FB] to-[#E5DEFF]"
+    <TaskFormWrapper
+      onSubmit={onSubmit}
+      isLoading={isLoading}
+      processingAIResponse={processingAIResponse}
+      isEditing={isEditing}
+      isMobile={isMobile}
     >
-      <div className="flex-1 overflow-y-auto">
-        <TaskFormContent
-          title={title}
-          description={description}
-          isScheduled={isScheduled}
-          isEvent={isEvent}
-          isAllDay={isAllDay}
-          date={date}
-          startTime={startTime}
-          endTime={endTime}
-          priority={priority}
-          reminderEnabled={reminderEnabled}
-          reminderTime={reminderTime}
-          subtasks={subtasks}
-          task={task}
-          isEditing={isEditing}
-          isMobile={isMobile}
-          fcmStatus={fcmStatus}
-          onTitleChange={onTitleChange}
-          onDescriptionChange={onDescriptionChange}
-          onIsScheduledChange={onIsScheduledChange}
-          onIsEventChange={onIsEventChange}
-          onIsAllDayChange={onIsAllDayChange}
-          onDateChange={onDateChange}
-          onStartTimeChange={onStartTimeChange}
-          onEndTimeChange={onEndTimeChange}
-          onPriorityChange={onPriorityChange}
-          onReminderEnabledChange={onReminderEnabledChange}
-          onReminderTimeChange={onReminderTimeChange}
-          onSubtasksChange={onSubtasksChange}
-          handleReminderToggle={handleReminderToggle}
-        />
-      </div>
-
-      <div className="sticky bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-gray-200">
-        <TaskFormFooter
-          isLoading={isLoading}
-          processingAIResponse={processingAIResponse}
-          isEditing={isEditing}
-          isMobile={isMobile}
-        />
-      </div>
+      <TaskFormContent
+        title={title}
+        description={description}
+        isScheduled={isScheduled}
+        isEvent={isEvent}
+        isAllDay={isAllDay}
+        date={date}
+        startTime={startTime}
+        endTime={endTime}
+        priority={priority}
+        reminderEnabled={reminderEnabled}
+        reminderTime={reminderTime}
+        subtasks={subtasks}
+        fcmStatus={fcmStatus}
+        isEditing={isEditing}
+        task={task}
+        onTitleChange={onTitleChange}
+        onDescriptionChange={onDescriptionChange}
+        onIsScheduledChange={onIsScheduledChange}
+        onIsEventChange={onIsEventChange}
+        onIsAllDayChange={onIsAllDayChange}
+        onDateChange={onDateChange}
+        onStartTimeChange={onStartTimeChange}
+        onEndTimeChange={onEndTimeChange}
+        onPriorityChange={onPriorityChange}
+        onReminderEnabledChange={onReminderEnabledChange}
+        onReminderTimeChange={onReminderTimeChange}
+        onSubtasksChange={onSubtasksChange}
+        handleReminderToggle={handleReminderToggle}
+      />
 
       {task && (
         <ShareTaskDialog
@@ -145,6 +138,47 @@ export function TaskForm({
           onOpenChange={setShowShareDialog}
         />
       )}
+    </TaskFormWrapper>
+  );
+}
+
+interface TaskFormWrapperProps {
+  children: React.ReactNode;
+  onSubmit: () => void;
+  isLoading: boolean;
+  processingAIResponse: boolean;
+  isEditing: boolean;
+  isMobile: boolean;
+}
+
+function TaskFormWrapper({ 
+  children, 
+  onSubmit, 
+  isLoading, 
+  processingAIResponse, 
+  isEditing, 
+  isMobile 
+}: TaskFormWrapperProps) {
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSubmit();
+      }}
+      className="flex flex-col h-full"
+    >
+      <div className="flex-1 overflow-y-auto scrollbar-hide">
+        {children}
+      </div>
+
+      <div className="mt-6">
+        <FormSubmitButton 
+          isLoading={isLoading}
+          processingAIResponse={processingAIResponse}
+          isEditing={isEditing}
+          isMobile={isMobile}
+        />
+      </div>
     </form>
   );
 }
