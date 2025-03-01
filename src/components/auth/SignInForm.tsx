@@ -17,21 +17,45 @@ export function SignInForm({ onResetPassword }: { onResetPassword: () => void })
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (isLoading) return; // Prevent multiple submission attempts
+    
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      // Pre-validate input to avoid unnecessary network requests
+      if (!email.trim()) throw new Error("Email is required");
+      if (!password.trim()) throw new Error("Password is required");
+      
+      console.log("Initiating sign in with email...");
+      
+      const { error, data } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) throw error;
       
-      navigate("/dashboard");
+      console.log("Sign in successful, redirecting...");
+      
+      // Store minimal auth data for faster subsequent loads
+      try {
+        if (data?.session && data?.user) {
+          localStorage.setItem('sb-session', JSON.stringify(data.session));
+          localStorage.setItem('sb-user', JSON.stringify(data.user));
+        }
+      } catch (e) {
+        console.warn("Error storing auth data:", e);
+      }
+      
+      // Navigate after successful sign in
+      navigate("/dashboard", { replace: true });
     } catch (error: any) {
+      console.error("Sign in error:", error);
+      
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Sign in failed. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -40,8 +64,12 @@ export function SignInForm({ onResetPassword }: { onResetPassword: () => void })
   };
 
   const handleGoogleSignIn = async () => {
+    if (isGoogleLoading) return; // Prevent multiple clicks
+    
     try {
       setIsGoogleLoading(true);
+      console.log("Initiating Google sign in...");
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -51,9 +79,11 @@ export function SignInForm({ onResetPassword }: { onResetPassword: () => void })
 
       if (error) throw error;
     } catch (error: any) {
+      console.error("Google sign in error:", error);
+      
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Google sign in failed. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -71,6 +101,8 @@ export function SignInForm({ onResetPassword }: { onResetPassword: () => void })
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            disabled={isLoading}
+            aria-label="Email"
           />
           <Input
             type="password"
@@ -78,6 +110,8 @@ export function SignInForm({ onResetPassword }: { onResetPassword: () => void })
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            disabled={isLoading}
+            aria-label="Password"
           />
         </div>
         <Button type="submit" className="w-full" disabled={isLoading}>
@@ -97,7 +131,7 @@ export function SignInForm({ onResetPassword }: { onResetPassword: () => void })
       <Button
         variant="outline"
         type="button"
-        disabled={isGoogleLoading}
+        disabled={isGoogleLoading || isLoading}
         className="w-full"
         onClick={handleGoogleSignIn}
       >
@@ -120,6 +154,7 @@ export function SignInForm({ onResetPassword }: { onResetPassword: () => void })
         variant="ghost"
         className="w-full text-white/70 hover:text-white"
         onClick={onResetPassword}
+        disabled={isLoading || isGoogleLoading}
       >
         Forgot password?
       </Button>

@@ -6,10 +6,18 @@ import { SignInForm } from "@/components/auth/SignInForm";
 import { SignUpForm } from "@/components/auth/SignUpForm";
 import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
+import { Navigate } from "react-router-dom";
 
 const Auth = () => {
   const [activeTab, setActiveTab] = useState("signin");
   const [showReset, setShowReset] = useState(false);
+  const { session, loading } = useAuth();
+  
+  // If session exists, redirect to dashboard
+  if (session && !loading) {
+    return <Navigate to="/dashboard" replace />;
+  }
   
   // Clear any lingering local/session storage on mount
   useEffect(() => {

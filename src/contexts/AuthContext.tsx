@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { debounce } from "lodash";
 
 type AuthContextType = {
   session: Session | null;
@@ -18,6 +19,9 @@ const AuthContext = createContext<AuthContextType>({
   handleSignOut: async () => {},
 });
 
+// Cache duration in milliseconds
+const AUTH_CACHE_DURATION = 60000; // 1 minute
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -26,47 +30,95 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const mounted = useRef(true);
   const initialAuthCheckCompleted = useRef(false);
   const authTimeoutRef = useRef<number | null>(null);
+  const lastAuthCheck = useRef<number>(0);
+  const authInProgress = useRef<boolean>(false);
+  const cachedUserData = useRef<{user: User | null, session: Session | null, timestamp: number} | null>(null);
 
-  // Memoize setAuthState to prevent unnecessary re-renders
-  const setAuthState = useCallback((newSession: Session | null, newUser: User | null) => {
-    if (!mounted.current) return;
+  // Debounced version of the auth state setter to prevent multiple updates in quick succession
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const debouncedSetAuthState = useCallback(
+    debounce((newSession: Session | null, newUser: User | null) => {
+      if (!mounted.current) return;
 
-    console.log("Auth state updated:", { 
-      hasSession: !!newSession,
-      hasUser: !!newUser, 
-      userId: newUser?.id
-    });
-
-    setSession(newSession);
-    setUser(newUser);
-    
-    // Only set loading to false after initial auth check is completed
-    if (!initialAuthCheckCompleted.current) {
-      initialAuthCheckCompleted.current = true;
-      setLoading(false);
-    }
-
-    if ((newSession || newUser) && !hasShownToast.current) {
-      toast.success("Successfully signed in", {
-        id: "auth-success",
-        duration: 3000,
+      console.log("Auth state updated (debounced):", { 
+        hasSession: !!newSession,
+        hasUser: !!newUser, 
+        userId: newUser?.id
       });
-      hasShownToast.current = true;
+
+      setSession(newSession);
+      setUser(newUser);
+      
+      // Only set loading to false after initial auth check is completed
+      if (!initialAuthCheckCompleted.current) {
+        initialAuthCheckCompleted.current = true;
+        setLoading(false);
+      }
+
+      if ((newSession || newUser) && !hasShownToast.current) {
+        toast.success("Successfully signed in", {
+          id: "auth-success",
+          duration: 3000,
+        });
+        hasShownToast.current = true;
+      }
+    }, 100),
+    []
+  );
+
+  // Function to fetch and update authentication state with caching and debouncing
+  const refreshAuthState = useCallback(async (force = false) => {
+    // Skip if auth check is already in progress or if cache is still valid
+    const now = Date.now();
+    if (
+      authInProgress.current || 
+      (!force && 
+       cachedUserData.current && 
+       now - cachedUserData.current.timestamp < AUTH_CACHE_DURATION)
+    ) {
+      // Use cached data if it's still valid
+      if (cachedUserData.current) {
+        console.log("Using cached auth data:", {
+          hasSession: !!cachedUserData.current.session,
+          hasUser: !!cachedUserData.current.user,
+          cacheAge: now - cachedUserData.current.timestamp
+        });
+        
+        debouncedSetAuthState(cachedUserData.current.session, cachedUserData.current.user);
+      }
+      return;
     }
-  }, []);
 
-  // Function to fetch and update authentication state
-  const refreshAuthState = useCallback(async () => {
+    // Rate limit auth checks
+    if (!force && now - lastAuthCheck.current < 1000) {
+      console.log("Auth check throttled, too frequent");
+      return;
+    }
+
     try {
+      // Set flag to prevent concurrent auth checks
+      authInProgress.current = true;
+      lastAuthCheck.current = now;
+      
       console.log("Refreshing auth state...");
-      // Get both session and user data for redundancy
-      const [sessionResult, userResult] = await Promise.all([
-        supabase.auth.getSession(),
-        supabase.auth.getUser()
-      ]);
-
-      const newSession = sessionResult.data.session;
-      const newUser = userResult.data.user;
+      
+      // Get session first, which is more lightweight
+      const { data: { session: newSession } } = await supabase.auth.getSession();
+      
+      // If no session found, clear the user as well
+      if (!newSession) {
+        cachedUserData.current = { session: null, user: null, timestamp: now };
+        
+        if (mounted.current) {
+          debouncedSetAuthState(null, null);
+        }
+        
+        console.log("No active session found");
+        return;
+      }
+      
+      // Only fetch user data if we have a session
+      const { data: { user: newUser } } = await supabase.auth.getUser();
       
       console.log("Auth refresh complete:", { 
         hasSession: !!newSession, 
@@ -74,8 +126,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         userId: newUser?.id
       });
 
+      // Cache the data
+      cachedUserData.current = { session: newSession, user: newUser, timestamp: now };
+
       if (mounted.current) {
-        setAuthState(newSession, newUser);
+        debouncedSetAuthState(newSession, newUser);
       }
     } catch (error) {
       console.error("Error refreshing auth state:", error);
@@ -84,13 +139,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         initialAuthCheckCompleted.current = true;
         setLoading(false);
       }
+    } finally {
+      authInProgress.current = false;
     }
-  }, [setAuthState]);
+  }, [debouncedSetAuthState]);
 
   useEffect(() => {
     // Initial auth state fetch
     console.log("Initializing auth state...");
-    refreshAuthState();
+    
+    // Try to restore from localStorage first for faster initial render
+    try {
+      const storedSession = localStorage.getItem('sb-session');
+      const storedUser = localStorage.getItem('sb-user');
+      
+      if (storedSession && storedUser) {
+        const parsedSession = JSON.parse(storedSession);
+        const parsedUser = JSON.parse(storedUser);
+        
+        if (parsedSession && parsedUser) {
+          console.log("Using stored auth data while fetching fresh data");
+          setSession(parsedSession);
+          setUser(parsedUser);
+          // Don't set loading to false yet, we still want to verify the session
+        }
+      }
+    } catch (e) {
+      console.warn("Error parsing stored auth data:", e);
+    }
+    
+    // Fetch fresh auth state
+    refreshAuthState(true);
     
     // Set safety timeout to ensure loading state doesn't get stuck
     authTimeoutRef.current = window.setTimeout(() => {
@@ -101,45 +180,58 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }, 5000); // 5 second safety timeout
 
-    // Set up auth state listener
+    // Set up auth state listener with throttling to prevent excessive calls
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state change detected:", { event, hasSession: !!session });
       
-      if (mounted.current) {
-        // Get user directly when auth state changes
-        const { data } = await supabase.auth.getUser();
-        console.log("User data after auth state change:", { hasUser: !!data.user, userId: data.user?.id });
-        setAuthState(session, data.user);
-        
-        // Handle SIGNED_OUT event specifically
-        if (event === 'SIGNED_OUT') {
-          // Make sure loading is false
-          initialAuthCheckCompleted.current = true;
-          setLoading(false);
+      // Store session and user data for faster initial loads on subsequent visits
+      if (session && event === 'SIGNED_IN') {
+        try {
+          const { data } = await supabase.auth.getUser();
+          if (data.user) {
+            localStorage.setItem('sb-session', JSON.stringify(session));
+            localStorage.setItem('sb-user', JSON.stringify(data.user));
+          }
+        } catch (e) {
+          console.warn("Error storing auth data:", e);
         }
+      } else if (event === 'SIGNED_OUT') {
+        // Clear stored auth data
+        localStorage.removeItem('sb-session');
+        localStorage.removeItem('sb-user');
       }
+      
+      // Refresh auth state, forcing a refresh on important events
+      const forceRefresh = ['SIGNED_IN', 'SIGNED_OUT', 'TOKEN_REFRESHED', 'USER_UPDATED'].includes(event);
+      refreshAuthState(forceRefresh);
     });
 
     return () => {
       mounted.current = false;
       subscription?.unsubscribe();
+      debouncedSetAuthState.cancel();
       
       // Clear safety timeout
       if (authTimeoutRef.current) {
         clearTimeout(authTimeoutRef.current);
       }
     };
-  }, [refreshAuthState, setAuthState, loading]);
+  }, [refreshAuthState, debouncedSetAuthState, loading]);
 
   const handleSignOut = useCallback(async () => {
     try {
       console.log("Signing out...");
       setLoading(true); // Set loading to true during sign out
       
+      // Clear cached data
+      cachedUserData.current = null;
+      
       // Clear storage items first to avoid PWA state issues
       try {
+        localStorage.removeItem('sb-session');
+        localStorage.removeItem('sb-user');
         localStorage.removeItem('supabase.auth.token');
         sessionStorage.removeItem('supabase.auth.token');
       } catch (error) {
