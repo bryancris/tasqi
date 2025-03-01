@@ -69,6 +69,15 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
 
   const handleSubmit = async () => {
     console.log("handleSubmit called in AddTaskForm with title:", title);
+    console.log("Current form state:", { 
+      isScheduled, 
+      isEvent, 
+      isAllDay, 
+      date, 
+      startTime, 
+      endTime,
+      priority
+    });
     
     if (!title.trim()) {
       toast.error("Please enter a task title");
@@ -94,6 +103,8 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
 
     setIsLoading(true);
     try {
+      console.log("Starting task creation process...");
+      
       // Determine the task status based on scheduling options
       let status: 'scheduled' | 'unscheduled' | 'event';
       
@@ -113,6 +124,7 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
 
       console.log("Step 1: Using authenticated user");
       console.log("User authenticated with ID:", userId);
+      console.log("Task status determined as:", status);
 
       // Validate time fields when needed
       if ((isScheduled || (isEvent && !isAllDay)) && startTime && !endTime) {

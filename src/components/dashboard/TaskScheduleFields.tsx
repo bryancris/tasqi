@@ -65,8 +65,11 @@ export function TaskScheduleFields({
 
   // Handle toggle changes with improved transitions
   const handleIsScheduledChange = (value: boolean) => {
+    console.log("Scheduled toggle changed to:", value);
+    
     // If turning off scheduled, clear related fields
     if (!value && isScheduled) {
+      console.log("Turning off scheduled mode, clearing related fields");
       // Only clear date and times if not in event mode
       if (!isEvent) {
         onDateChange("");
@@ -79,13 +82,17 @@ export function TaskScheduleFields({
     
     // If turning on scheduled, turn off event (they're mutually exclusive)
     if (value && isEvent) {
+      console.log("Turning on scheduled while event is active, disabling event mode");
       onIsEventChange(false);
     }
   };
 
   const handleIsEventChange = (value: boolean) => {
+    console.log("Event toggle changed to:", value);
+    
     // If turning off event mode, clear event-specific settings
     if (!value && isEvent) {
+      console.log("Turning off event mode, clearing event-specific settings");
       // Clear all-day setting
       onIsAllDayChange(false);
       
@@ -101,6 +108,7 @@ export function TaskScheduleFields({
     
     // If turning on event, turn off scheduled (they're mutually exclusive)
     if (value && isScheduled) {
+      console.log("Turning on event while scheduled is active, disabling scheduled mode");
       onIsScheduledChange(false);
     }
   };
@@ -144,7 +152,16 @@ export function TaskScheduleFields({
               <Checkbox 
                 id="all-day"
                 checked={isAllDay}
-                onCheckedChange={(checked) => onIsAllDayChange(checked as boolean)}
+                onCheckedChange={(checked) => {
+                  const newValue = !!checked;
+                  console.log("All day changed to:", newValue);
+                  onIsAllDayChange(newValue);
+                  // Clear time fields when switching to all day
+                  if (newValue) {
+                    onStartTimeChange("");
+                    onEndTimeChange("");
+                  }
+                }}
               />
               <Label htmlFor="all-day">All Day Event</Label>
             </div>
