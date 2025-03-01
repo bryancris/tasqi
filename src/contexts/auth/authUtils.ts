@@ -4,7 +4,7 @@ import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-// Improved function to refresh auth state with a single request
+// Simplified function to refresh auth state with a single request
 export const refreshAuth = async (
   mounted: MutableRefObject<boolean>,
   setSession: (session: Session | null) => void,
@@ -15,8 +15,6 @@ export const refreshAuth = async (
   if (!mounted.current) return;
   
   try {
-    console.log("Refreshing auth state...");
-    
     // Get current session with a single request (includes user data)
     const { data, error } = await supabase.auth.getSession();
     
@@ -31,7 +29,6 @@ export const refreshAuth = async (
     // Update state with what we found
     if (mounted.current) {
       if (currentSession) {
-        console.log("Valid session found");
         setSession(currentSession);
         setUser(currentSession.user);
         
@@ -44,7 +41,6 @@ export const refreshAuth = async (
           hasToastRef.current = true;
         }
       } else {
-        console.log("No session found");
         // No session found
         setSession(null);
         setUser(null);

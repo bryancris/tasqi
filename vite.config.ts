@@ -1,4 +1,3 @@
-
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -105,16 +104,13 @@ export default defineConfig(({ mode }) => ({
             }
           },
           {
-            // Auth endpoints - use NetworkOnly
+            // Auth endpoints - ALWAYS use NetworkOnly for auth
             urlPattern: ({ url }) => {
               const isSupabaseAPI = url.origin === 'https://mcwlzrikidzgxexnccju.supabase.co';
               const isAuthEndpoint = url.pathname.includes('/auth/');
               return isSupabaseAPI && isAuthEndpoint;
             },
-            handler: 'NetworkOnly',
-            options: {
-              // No caching options needed for NetworkOnly
-            }
+            handler: 'NetworkOnly'
           },
           {
             // Static assets - use CacheFirst for better performance
