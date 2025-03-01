@@ -138,10 +138,13 @@ export function TaskScheduleFields({
             />
           )}
           
-          <PrioritySelector 
-            priority={priority} 
-            onPriorityChange={onPriorityChange} 
-          />
+          {/* Only show priority selector for tasks, not for events */}
+          {!isEvent && (
+            <PrioritySelector 
+              priority={priority} 
+              onPriorityChange={onPriorityChange} 
+            />
+          )}
         </div>
       )}
     </div>

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -85,7 +84,7 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
         date: (isScheduled || isEvent) && date ? date : null,
         start_time: (isScheduled || (isEvent && !isAllDay)) && startTime ? startTime : null,
         end_time: (isScheduled || (isEvent && !isAllDay)) && endTime ? endTime : null,
-        priority,
+        priority: isEvent ? "medium" : priority,
         reminder_enabled: reminderEnabled,
         reminder_time: reminderTime,
         user_id: userId,

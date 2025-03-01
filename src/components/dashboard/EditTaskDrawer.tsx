@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Task } from "./TaskBoard";
@@ -98,19 +97,17 @@ export function EditTaskDrawer({
         description,
         status,
         date: (isScheduled || isEvent) && date ? date : null,
-        priority,
+        priority: isEvent ? "medium" : priority,
         reminder_enabled: reminderEnabled,
         reminder_time: reminderTime,
         is_all_day: isEvent ? isAllDay : false
       } as const;
       
-      // Only include time fields if not all-day event
       if ((isScheduled || (isEvent && !isAllDay)) && startTime && startTime.trim() !== '') {
         Object.assign(updateData, {
           start_time: startTime
         });
       } else if (isEvent && isAllDay) {
-        // Clear time fields for all-day events
         Object.assign(updateData, {
           start_time: null,
           end_time: null
@@ -158,7 +155,6 @@ export function EditTaskDrawer({
         }
       }
 
-      // Immediately invalidate and refetch tasks
       await queryClient.invalidateQueries({ queryKey: ["tasks"] });
       
       toast.success('Task updated successfully');
