@@ -24,6 +24,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const hasShownToast = useRef(false);
   const mounted = useRef(true);
+  const initialAuthCheckCompleted = useRef(false);
 
   // Memoize setAuthState to prevent unnecessary re-renders
   const setAuthState = useCallback((newSession: Session | null, newUser: User | null) => {
@@ -37,7 +38,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     setSession(newSession);
     setUser(newUser);
-    setLoading(false);
+    
+    // Only set loading to false after initial auth check is completed
+    if (!initialAuthCheckCompleted.current) {
+      initialAuthCheckCompleted.current = true;
+      setLoading(false);
+    }
 
     if ((newSession || newUser) && !hasShownToast.current) {
       toast.success("Successfully signed in", {
@@ -73,6 +79,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error("Error refreshing auth state:", error);
       if (mounted.current) {
+        // Ensure loading is set to false even on error
+        initialAuthCheckCompleted.current = true;
         setLoading(false);
       }
     }
@@ -94,6 +102,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { data } = await supabase.auth.getUser();
         console.log("User data after auth state change:", { hasUser: !!data.user, userId: data.user?.id });
         setAuthState(session, data.user);
+        
+        // Handle SIGNED_OUT event specifically
+        if (event === 'SIGNED_OUT') {
+          // Make sure loading is false
+          initialAuthCheckCompleted.current = true;
+          setLoading(false);
+        }
       }
     });
 
@@ -105,14 +120,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const handleSignOut = useCallback(async () => {
     try {
+      console.log("Signing out...");
+      setLoading(true); // Set loading to true during sign out
+      
+      // Clear storage items first to avoid PWA state issues
+      try {
+        localStorage.removeItem('supabase.auth.token');
+        sessionStorage.removeItem('supabase.auth.token');
+      } catch (error) {
+        console.error("Error clearing storage:", error);
+      }
+      
       await supabase.auth.signOut();
+      
       if (mounted.current) {
         setSession(null);
         setUser(null);
         hasShownToast.current = false; // Reset toast flag on sign out
+        setLoading(false); // Make sure loading is set to false after sign out
       }
     } catch (error) {
       console.error("Error signing out:", error);
+      if (mounted.current) {
+        setLoading(false); // Ensure loading is set to false even on error
+      }
     }
   }, []);
 

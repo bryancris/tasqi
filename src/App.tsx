@@ -13,14 +13,20 @@ import Analytics from './pages/Analytics';
 import SelfCare from './pages/SelfCare';
 import Chat from './pages/Chat';
 import { useAuth } from './contexts/AuthContext';
+import { Spinner } from './components/ui/spinner';
 
 // Protected route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
   
   if (loading) {
-    // Show loading state if auth is being checked
-    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+    // Show better loading state with spinner
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-white">
+        <Spinner className="h-8 w-8 text-primary" />
+        <p className="mt-4 text-sm text-gray-500">Loading...</p>
+      </div>
+    );
   }
   
   if (!session) {
@@ -36,8 +42,13 @@ const AuthRoute = ({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
   
   if (loading) {
-    // Show loading state if auth is being checked
-    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+    // Show better loading state with spinner
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-white">
+        <Spinner className="h-8 w-8 text-primary" />
+        <p className="mt-4 text-sm text-gray-500">Loading...</p>
+      </div>
+    );
   }
   
   if (session) {
@@ -95,8 +106,9 @@ function App() {
                       <Route path="self-care" element={<SelfCare />} />
                       <Route path="chat" element={<Chat />} />
                       
-                      {/* Calendar routes - must be last to handle all other dashboard paths */}
-                      <Route path="*" element={<Dashboard />} />
+                      {/* Dashboard should match exact path */}
+                      <Route index element={<Dashboard />} />
+                      <Route path="*" element={<Navigate to="/dashboard" replace />} />
                     </Routes>
                   </DashboardLayout>
                 </ProtectedRoute>

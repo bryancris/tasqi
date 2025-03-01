@@ -11,6 +11,8 @@ import { Settings, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useState } from "react";
+import { Spinner } from "@/components/ui/spinner";
 
 import { UserAvatar } from "./user-menu/UserAvatar";
 import { UserInfo } from "./user-menu/UserInfo";
@@ -24,6 +26,7 @@ export function HeaderUserMenu() {
   const navigate = useNavigate();
   const { deferredPrompt, isStandalone, installable, setDeferredPrompt } = useInstallPrompt();
   const { isChecking, setIsChecking } = useAppUpdate();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   
   const userDisplayName = session?.user.user_metadata?.full_name || 
                          session?.user.user_metadata?.name ||
@@ -32,12 +35,19 @@ export function HeaderUserMenu() {
 
   const handleLogout = async () => {
     try {
+      setIsLoggingOut(true);
       await handleSignOut();
+      
+      // Navigate after successful logout
       navigate('/auth', { replace: true });
+      
+      // Only show toast if logged out successfully
       toast.success("Successfully logged out");
     } catch (error) {
       console.error('Logout error:', error);
       toast.error("Error during logout");
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
@@ -75,9 +85,18 @@ export function HeaderUserMenu() {
           isChecking={isChecking}
           setIsChecking={setIsChecking}
         />
-        <DropdownMenuItem onClick={handleLogout}>
-          <LogOut className="mr-2 h-4 w-4" />
-          Log out
+        <DropdownMenuItem onClick={handleLogout} disabled={isLoggingOut}>
+          {isLoggingOut ? (
+            <>
+              <Spinner className="mr-2 h-4 w-4" />
+              Logging out...
+            </>
+          ) : (
+            <>
+              <LogOut className="mr-2 h-4 w-4" />
+              Log out
+            </>
+          )}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
