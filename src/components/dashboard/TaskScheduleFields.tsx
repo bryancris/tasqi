@@ -62,7 +62,7 @@ export function TaskScheduleFields({
           checked={isScheduled}
           onCheckedChange={onIsScheduledChange}
         />
-        <Label htmlFor="scheduled">Schedule this task</Label>
+        <Label htmlFor="scheduled">Schedule Task</Label>
       </div>
 
       {isScheduled && (
