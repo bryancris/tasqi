@@ -2,6 +2,8 @@
 import { TaskForm } from "../TaskForm";
 import { Task, TaskPriority } from "../TaskBoard";
 import { Subtask } from "../subtasks/SubtaskList";
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
 
 interface EditTaskContentProps {
   task: Task;
@@ -67,7 +69,7 @@ export function EditTaskContent({
   console.log("EditTaskContent rendered with onSubmit:", !!onSubmit);
   
   return (
-    <div className="pt-6">
+    <div className="pt-6 flex flex-col h-full">
       <TaskForm
         task={task}
         title={title}
@@ -98,6 +100,19 @@ export function EditTaskContent({
         onSubtasksChange={onSubtasksChange}
         onSubmit={onSubmit}
       />
+      
+      <div className="mt-6 px-4">
+        <Button
+          type="button"
+          variant="destructive"
+          className="w-full"
+          onClick={onDelete}
+          disabled={isLoading}
+        >
+          <Trash2 className="mr-2 h-4 w-4" />
+          Delete Task
+        </Button>
+      </div>
     </div>
   );
 }
