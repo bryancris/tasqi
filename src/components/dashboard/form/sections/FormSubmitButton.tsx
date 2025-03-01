@@ -20,6 +20,9 @@ export function FormSubmitButton({
         type="submit"
         className="w-full bg-gradient-to-r from-[#9b87f5] to-[#8B5CF6] hover:from-[#8B5CF6] hover:to-[#7C3AED] text-white shadow-sm transition-all duration-200"
         disabled={isLoading || processingAIResponse}
+        onClick={() => {
+          console.log("Submit button clicked");
+        }}
       >
         {isLoading || processingAIResponse ? "Loading..." : isEditing ? "Update Task" : "Create Task"}
       </Button>

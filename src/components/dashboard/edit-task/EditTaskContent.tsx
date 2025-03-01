@@ -2,8 +2,6 @@
 import { TaskForm } from "../TaskForm";
 import { Task, TaskPriority } from "../TaskBoard";
 import { Subtask } from "../subtasks/SubtaskList";
-import { DeleteTaskAlert } from "../DeleteTaskAlert";
-import { useState } from "react";
 
 interface EditTaskContentProps {
   task: Task;
@@ -66,11 +64,12 @@ export function EditTaskContent({
   onSubmit,
   onDelete
 }: EditTaskContentProps) {
-  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
-
+  console.log("EditTaskContent rendered with onSubmit:", !!onSubmit);
+  
   return (
     <div className="pt-6">
       <TaskForm
+        task={task}
         title={title}
         description={description}
         isScheduled={isScheduled}
@@ -85,7 +84,6 @@ export function EditTaskContent({
         subtasks={subtasks}
         isLoading={isLoading}
         isEditing={true}
-        task={task}
         onTitleChange={onTitleChange}
         onDescriptionChange={onDescriptionChange}
         onIsScheduledChange={onIsScheduledChange}
@@ -99,22 +97,6 @@ export function EditTaskContent({
         onReminderTimeChange={onReminderTimeChange}
         onSubtasksChange={onSubtasksChange}
         onSubmit={onSubmit}
-      />
-
-      <div className="mt-6 flex justify-center">
-        <button
-          type="button"
-          onClick={() => setShowDeleteAlert(true)}
-          className="text-red-500 hover:text-red-700 text-sm font-medium"
-        >
-          Delete Task
-        </button>
-      </div>
-
-      <DeleteTaskAlert
-        open={showDeleteAlert}
-        onOpenChange={setShowDeleteAlert}
-        onConfirm={onDelete}
       />
     </div>
   );

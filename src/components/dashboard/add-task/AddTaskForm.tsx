@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -46,6 +47,8 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
   const queryClient = useQueryClient();
 
   const handleSubmit = async () => {
+    console.log("handleSubmit called in AddTaskForm with title:", title);
+    
     if (!title.trim()) {
       toast.error("Please enter a task title");
       return;
@@ -92,6 +95,8 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
         is_all_day: isEvent ? isAllDay : false,
         position: 0 // This will be adjusted by the backend
       };
+      
+      console.log("Preparing to create task with data:", taskData);
 
       // Get existing tasks count to properly set position
       const { data: existingTasks, error: countError } = await supabase
@@ -105,12 +110,14 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
       }
 
       // Create the task
+      console.log("Creating task with final data:", taskData);
       const { data: taskResult, error: taskError } = await supabase
         .from("tasks")
         .insert([taskData])
         .select();
 
       if (taskError) throw taskError;
+      console.log("Task created:", taskResult);
 
       // If there are subtasks, insert them
       if (subtasks.length > 0 && taskResult && taskResult.length > 0) {
@@ -124,6 +131,7 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
           notes: subtask.notes || null
         }));
 
+        console.log("Inserting subtasks:", subtasksToInsert);
         const { error: subtasksError } = await supabase
           .from("subtasks")
           .insert(subtasksToInsert);
@@ -140,6 +148,7 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
       resetForm();
       
       // Call onSuccess callback
+      console.log("Calling onSuccess callback");
       onSuccess();
     } catch (error) {
       console.error('Error creating task:', error);
@@ -148,6 +157,8 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
       setIsLoading(false);
     }
   };
+
+  console.log("AddTaskForm rendered, passing handleSubmit to AddTaskContent");
 
   return (
     <AddTaskContent

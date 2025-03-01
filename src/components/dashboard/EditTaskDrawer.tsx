@@ -50,6 +50,8 @@ export function EditTaskDrawer({
     handleDelete
   } = useEditTaskState(task, () => onOpenChange(false));
 
+  console.log("EditTaskDrawer rendered, open state:", open);
+
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>

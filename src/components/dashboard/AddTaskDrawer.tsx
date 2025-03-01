@@ -29,8 +29,11 @@ export function AddTaskDrawer({
   const { formState, formActions } = useAddTaskForm({ initialDate });
 
   const handleSuccess = () => {
+    console.log("handleSuccess called in AddTaskDrawer");
     onOpenChange(false);
   };
+
+  console.log("AddTaskDrawer rendered, open state:", open);
 
   return (
     <>

@@ -60,6 +60,8 @@ export function AddTaskContent({
   onSubtasksChange,
   onSubmit
 }: AddTaskContentProps) {
+  console.log("AddTaskContent rendered with onSubmit:", !!onSubmit);
+  
   return (
     <div className="pt-6">
       <TaskForm

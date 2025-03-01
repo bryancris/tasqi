@@ -92,6 +92,8 @@ export function TaskForm({
     onSubtasksChange,
   });
 
+  console.log("TaskForm rendered with onSubmit:", !!onSubmit);
+
   return (
     <TaskFormWrapper
       onSubmit={onSubmit}
@@ -159,10 +161,13 @@ function TaskFormWrapper({
   isEditing, 
   isMobile 
 }: TaskFormWrapperProps) {
+  console.log("TaskFormWrapper rendered with onSubmit:", !!onSubmit);
+
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
+        console.log("Form submitted in TaskFormWrapper");
         onSubmit();
       }}
       className="flex flex-col h-full"
