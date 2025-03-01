@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { AddTaskContent } from "./AddTaskContent";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface AddTaskFormProps {
   formState: ReturnType<typeof import("@/hooks/use-add-task-form").useAddTaskForm>["formState"];
@@ -44,6 +45,7 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
     resetForm
   } = formActions;
 
+  const { session } = useAuth();
   const queryClient = useQueryClient();
 
   const handleSubmit = async () => {
@@ -51,6 +53,13 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
     
     if (!title.trim()) {
       toast.error("Please enter a task title");
+      return;
+    }
+
+    // Check for authentication
+    if (!session) {
+      console.error("No active session found - user is not authenticated");
+      toast.error("You must be signed in to create tasks");
       return;
     }
 
@@ -73,21 +82,8 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
         status = 'unscheduled';
       }
 
-      console.log("Step 1: Getting authenticated user");
-      // Get the current user
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      
-      if (userError) {
-        console.error("Auth error getting user:", userError);
-        throw userError;
-      }
-      
-      if (!userData || !userData.user) {
-        console.error("No authenticated user found!", userData);
-        throw new Error("User not authenticated");
-      }
-      
-      const userId = userData.user?.id;
+      console.log("Step 1: Using authenticated user from session");
+      const userId = session.user.id;
       console.log("User authenticated with ID:", userId);
 
       // Prepare the task data
@@ -204,7 +200,9 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
         hint: error.hint,
         stack: error.stack
       });
-      toast.error('Failed to create task: ' + (error.message || 'Unknown error'));
+      const errorMessage = error.message || 'Unknown error';
+      console.log("Error creating task:", errorMessage);
+      toast.error('Failed to create task: ' + errorMessage);
     } finally {
       console.log("Step 10: Setting loading state to false");
       setIsLoading(false);
