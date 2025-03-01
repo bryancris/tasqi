@@ -27,12 +27,12 @@ const ProtectedRoute = memo(({ children }: { children: React.ReactNode }) => {
       if (loading) {
         setShowFallback(true);
       }
-    }, 3000); // Reduced from 5s to 3s
+    }, 3000);
     
     return () => clearTimeout(timeoutId);
   }, [loading]);
   
-  // Show loading spinner during initial load
+  // During initial load, don't redirect yet
   if (loading && !showFallback) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-[#1a1b3b]">
@@ -68,32 +68,15 @@ const ProtectedRoute = memo(({ children }: { children: React.ReactNode }) => {
 
 const AuthRoute = memo(({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
-  const [showFallback, setShowFallback] = useState(false);
   
-  // Show fallback UI after a reasonable delay if still loading
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (loading) {
-        setShowFallback(true);
-      }
-    }, 2000); // Reduced from 5s to 2s for auth routes
-    
-    return () => clearTimeout(timeoutId);
-  }, [loading]);
-  
-  // During initial load
-  if (loading && !showFallback) {
+  // For auth routes, simpler loading state
+  if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-[#1a1b3b]">
         <Spinner className="h-8 w-8 text-primary" />
         <p className="mt-4 text-sm text-gray-300">Checking authentication...</p>
       </div>
     );
-  }
-  
-  // If loading takes too long, just show the auth page
-  if (loading && showFallback) {
-    return <>{children}</>;
   }
   
   // If already authenticated, redirect to dashboard

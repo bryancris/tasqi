@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SignInForm } from "@/components/auth/SignInForm";
@@ -14,19 +14,29 @@ const Auth = () => {
   const [activeTab, setActiveTab] = useState("signin");
   const [showReset, setShowReset] = useState(false);
   const { session, loading } = useAuth();
+  const [initialRender, setInitialRender] = useState(true);
+  
+  // Effect to handle initial render state
+  useEffect(() => {
+    // After component mounts, set initialRender to false with a small delay
+    // This prevents a flash of loading state on fast authentications
+    const timer = setTimeout(() => setInitialRender(false), 100);
+    return () => clearTimeout(timer);
+  }, []);
   
   // If session exists, redirect to dashboard
   if (session && !loading) {
+    console.log("Auth page: Session exists, redirecting to dashboard");
     return <Navigate to="/dashboard" replace />;
   }
   
-  // Show loading spinner during initial auth check
-  if (loading) {
+  // Don't show loading spinner on initial render to prevent flickering
+  if ((loading && !initialRender) || (loading && initialRender && !session)) {
     return (
       <div className="min-h-screen bg-[#1a1b3b] flex items-center justify-center p-4">
         <div className="flex flex-col items-center gap-3">
           <Spinner className="h-8 w-8 text-white" />
-          <p className="text-white/70">Loading authentication...</p>
+          <p className="text-white/70">Checking authentication...</p>
         </div>
       </div>
     );

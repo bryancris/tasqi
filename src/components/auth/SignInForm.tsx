@@ -54,16 +54,6 @@ export function SignInForm({ onResetPassword }: { onResetPassword: () => void })
       
       console.log("Sign in successful, redirecting...");
       
-      // Store minimal auth data for faster subsequent loads
-      try {
-        if (data?.session && data?.user) {
-          localStorage.setItem('sb-session', JSON.stringify(data.session));
-          localStorage.setItem('sb-user', JSON.stringify(data.user));
-        }
-      } catch (e) {
-        console.warn("Error storing auth data:", e);
-      }
-      
       // Navigate after successful sign in
       navigate("/dashboard", { replace: true });
     } catch (error: any) {
@@ -74,7 +64,6 @@ export function SignInForm({ onResetPassword }: { onResetPassword: () => void })
         description: error.message || "Sign in failed. Please try again.",
         variant: "destructive",
       });
-    } finally {
       setIsLoading(false);
     }
   };

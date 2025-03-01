@@ -1,8 +1,8 @@
+
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { debounce } from "lodash";
 
 type AuthContextType = {
   session: Session | null;
@@ -18,8 +18,8 @@ const AuthContext = createContext<AuthContextType>({
   handleSignOut: async () => {},
 });
 
-// Cache duration in milliseconds - reduced to improve performance
-const AUTH_CACHE_DURATION = 10000; // 10 seconds cache
+// Cache duration in milliseconds - increased to reduce frequent checks
+const AUTH_CACHE_DURATION = 30000; // 30 seconds cache
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
@@ -27,61 +27,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const hasShownToast = useRef(false);
   const mounted = useRef(true);
-  const authInProgress = useRef<boolean>(false);
   const lastAuthCheck = useRef<number>(0);
   const cachedUserData = useRef<{user: User | null, session: Session | null, timestamp: number} | null>(null);
 
-  // Faster debounced version of the auth state setter
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const debouncedSetAuthState = useCallback(
-    debounce((newSession: Session | null, newUser: User | null) => {
-      if (!mounted.current) return;
-
-      console.log("Auth state updated:", { 
-        hasSession: !!newSession,
-        hasUser: !!newUser 
-      });
-
-      setSession(newSession);
-      setUser(newUser);
-      setLoading(false);
-      
-      if ((newSession || newUser) && !hasShownToast.current) {
-        toast.success("Successfully signed in", {
-          id: "auth-success",
-          duration: 3000,
-        });
-        hasShownToast.current = true;
-      }
-    }, 50), // Reduced debounce time for faster updates
-    []
-  );
-
   // Optimized function to fetch and update authentication state
   const refreshAuthState = useCallback(async (force = false) => {
-    // Skip if auth check is already in progress
+    // Skip if already authenticated and not forced
+    if (!force && session && user) {
+      return;
+    }
+    
     const now = Date.now();
-    if (authInProgress.current) return;
     
     // Use cached data if still valid (unless forced)
     if (!force && 
         cachedUserData.current && 
         now - cachedUserData.current.timestamp < AUTH_CACHE_DURATION) {
-      debouncedSetAuthState(cachedUserData.current.session, cachedUserData.current.user);
+      setSession(cachedUserData.current.session);
+      setUser(cachedUserData.current.user);
+      setLoading(false);
       return;
     }
 
     // Rate limit auth checks
-    if (!force && now - lastAuthCheck.current < 500) {
+    if (!force && now - lastAuthCheck.current < 1000) {
       return;
     }
 
     try {
-      // Set flag to prevent concurrent auth checks
-      authInProgress.current = true;
       lastAuthCheck.current = now;
       
-      // Get session and user data
+      // Get session data
       const { data: { session: newSession } } = await supabase.auth.getSession();
       
       // If no session found, clear user as well
@@ -89,7 +65,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         cachedUserData.current = { session: null, user: null, timestamp: now };
         
         if (mounted.current) {
-          debouncedSetAuthState(null, null);
+          setSession(null);
+          setUser(null);
+          setLoading(false);
         }
         return;
       }
@@ -101,33 +79,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       cachedUserData.current = { session: newSession, user: newUser, timestamp: now };
 
       if (mounted.current) {
-        debouncedSetAuthState(newSession, newUser);
+        setSession(newSession);
+        setUser(newUser);
+        setLoading(false);
+        
+        // Show toast only once after successful authentication
+        if (newUser && !hasShownToast.current) {
+          toast.success("Successfully signed in", {
+            id: "auth-success",
+            duration: 3000,
+          });
+          hasShownToast.current = true;
+        }
       }
     } catch (error) {
       console.error("Error refreshing auth state:", error);
       if (mounted.current) {
         setLoading(false);
       }
-    } finally {
-      authInProgress.current = false;
     }
-  }, [debouncedSetAuthState]);
+  }, [session, user]);
 
   useEffect(() => {
-    // Initial auth state fetch - try to restore from localStorage first
+    // Initial auth state fetch - try to restore from localStorage first for faster initial rendering
     try {
       const storedSession = localStorage.getItem('sb-session');
-      const storedUser = localStorage.getItem('sb-user');
-      
-      if (storedSession && storedUser) {
+      if (storedSession) {
         const parsedSession = JSON.parse(storedSession);
-        const parsedUser = JSON.parse(storedUser);
-        
-        if (parsedSession && parsedUser) {
-          console.log("Using stored auth data");
+        if (parsedSession) {
+          console.log("Using stored auth data for initial render");
           setSession(parsedSession);
-          setUser(parsedUser);
-          // We still need to verify the session, so keep loading true
+          // We still need to verify with a proper fetch
         }
       }
     } catch (e) {
@@ -143,9 +125,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.warn("Auth check timed out, forcing loading to false");
         setLoading(false);
       }
-    }, 3000); // Reduced from 5s to 3s
+    }, 5000); // Increased timeout for better reliability
 
-    // Set up auth state listener with simple throttling
+    // Set up auth state listener
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -175,10 +157,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       mounted.current = false;
       subscription?.unsubscribe();
-      debouncedSetAuthState.cancel();
       clearTimeout(timeoutId);
     };
-  }, [refreshAuthState, debouncedSetAuthState, loading]);
+  }, [refreshAuthState, loading]);
 
   const handleSignOut = useCallback(async () => {
     try {
