@@ -39,8 +39,8 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
     return task.completed_at && isAfter(new Date(task.completed_at), todayStart);
   };
 
-  const sortedTasks = [...tasks]
-    .filter(task => {
+  const filterTasks = (task: Task) => {
+    try {
       // Always show unscheduled tasks
       if (task.status === 'unscheduled') {
         return true;
@@ -52,16 +52,27 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
       }
       
       // For scheduled tasks, check if they match the selected date
-      if (task.status === 'scheduled' || task.status === 'in_progress' || task.status === 'stuck') {
+      if (task.status === 'scheduled' || task.status === 'in_progress' || 
+          task.status === 'stuck' || task.status === 'event') {
         if (!task.date) return false;
         return isSameDay(parseISO(task.date), selectedDate);
       }
       
       return false;
-    })
+    } catch (error) {
+      console.error("Error filtering task:", error, task);
+      return false;
+    }
+  };
+
+  const sortedTasks = [...tasks]
+    .filter(filterTasks)
     .sort((a, b) => {
       if (a.status === 'completed' && b.status !== 'completed') return 1;
       if (a.status !== 'completed' && b.status === 'completed') return -1;
+      // Events should appear at the top
+      if (a.status === 'event' && b.status !== 'event') return -1;
+      if (a.status !== 'event' && b.status === 'event') return 1;
       return (a.position || 0) - (b.position || 0);
     });
 
@@ -100,6 +111,11 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
                       onComplete={onComplete}
                     />
                   ))}
+                  {sortedTasks.length === 0 && (
+                    <div className="text-center text-gray-500 py-8">
+                      No tasks available
+                    </div>
+                  )}
                 </div>
               </SortableContext>
             </DndContext>
