@@ -24,7 +24,7 @@ function TaskCardIconsComponent({ task, assignmentInfo, extraButton }: TaskCardI
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Sun className="w-4 h-4 text-[#FEF7CD]" />
+              <Sun className="w-4 h-4 text-[#F97316]" />
             </TooltipTrigger>
             <TooltipContent 
               className="bg-gray-800 text-white border-gray-700 text-xs z-50"
