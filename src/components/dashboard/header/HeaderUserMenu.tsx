@@ -33,7 +33,7 @@ export function HeaderUserMenu() {
   const handleLogout = async () => {
     try {
       await handleSignOut();
-      navigate('/', { replace: true });
+      navigate('/auth', { replace: true });
       toast.success("Successfully logged out");
     } catch (error) {
       console.error('Logout error:', error);

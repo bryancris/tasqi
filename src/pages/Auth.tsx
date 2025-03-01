@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SignInForm } from "@/components/auth/SignInForm";
@@ -10,6 +10,19 @@ import { Button } from "@/components/ui/button";
 const Auth = () => {
   const [activeTab, setActiveTab] = useState("signin");
   const [showReset, setShowReset] = useState(false);
+  
+  // Clear any lingering local/session storage on mount
+  useEffect(() => {
+    // Clean up any potential stale tokens or PWA data
+    // that might interfere with auth state
+    try {
+      // Clear any auth-related items from storage
+      localStorage.removeItem('supabase.auth.token');
+      sessionStorage.removeItem('supabase.auth.token');
+    } catch (error) {
+      console.error('Error clearing storage:', error);
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#1a1b3b] flex items-center justify-center p-4">
