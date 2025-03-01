@@ -90,6 +90,14 @@ export function TaskScheduleFields({
   const handleIsEventChange = (value: boolean) => {
     console.log("Event toggle changed to:", value);
     
+    // If turning ON event mode, make sure we have a date
+    if (value && !isEvent && !date) {
+      // Set a default date to today when enabling event mode if no date is set
+      const today = new Date().toISOString().split('T')[0];
+      console.log("Setting default date for event:", today);
+      onDateChange(today);
+    }
+    
     // If turning off event mode, clear event-specific settings
     if (!value && isEvent) {
       console.log("Turning off event mode, clearing event-specific settings");

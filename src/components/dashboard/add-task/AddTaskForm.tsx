@@ -84,6 +84,15 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
       return;
     }
 
+    // Validate event-specific requirements
+    if (isEvent) {
+      if (!date) {
+        console.error("Events must have a date");
+        toast.error("Events must have a date");
+        return;
+      }
+    }
+
     // Check for authentication using BOTH context and direct check
     const contextAuth = !!(session || user);
     const userId = session?.user?.id || user?.id || directUserId;
