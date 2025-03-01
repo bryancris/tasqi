@@ -1,3 +1,4 @@
+
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -84,19 +85,53 @@ export default defineConfig(({ mode }) => ({
             }
           },
           {
-            // API calls - EXCLUDE auth endpoints
+            // API calls - EXCLUDE auth endpoints and improve caching
             urlPattern: ({ url }) => {
               const isSupabaseAPI = url.origin === 'https://mcwlzrikidzgxexnccju.supabase.co';
               const isAuthEndpoint = url.pathname.includes('/auth/');
-              return isSupabaseAPI && !isAuthEndpoint;
+              const isRestAPI = url.pathname.includes('/rest/v1/');
+              
+              // Special handling for frequently accessed endpoints
+              const isTasksEndpoint = isRestAPI && (
+                url.pathname.includes('/tasks') || 
+                url.pathname.includes('/subtasks')
+              );
+              
+              // Don't cache auth endpoints at all
+              if (isSupabaseAPI && isAuthEndpoint) {
+                return false;
+              }
+              
+              // Better caching for task-related endpoints
+              return isSupabaseAPI && isRestAPI;
             },
             handler: 'NetworkFirst',
             options: {
               cacheName: 'api-cache',
-              networkTimeoutSeconds: 5,
+              networkTimeoutSeconds: 10, // Longer timeout
               expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 5 * 60 // 5 minutes
+                maxEntries: 100, // Store more entries
+                maxAgeSeconds: 5 * 60 // Still keep for 5 minutes
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
+            // Task-specific endpoints - use stale-while-revalidate for better performance
+            urlPattern: ({ url }) => {
+              const isSupabaseAPI = url.origin === 'https://mcwlzrikidzgxexnccju.supabase.co';
+              const isTasksEndpoint = url.pathname.includes('/rest/v1/tasks') || 
+                                     url.pathname.includes('/rest/v1/subtasks');
+              return isSupabaseAPI && isTasksEndpoint;
+            },
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'tasks-cache',
+              expiration: {
+                maxEntries: 200,
+                maxAgeSeconds: 10 * 60 // 10 minutes
               },
               cacheableResponse: {
                 statuses: [0, 200]

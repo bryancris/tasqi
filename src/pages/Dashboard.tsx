@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useTaskNotifications } from "@/hooks/use-task-notifications";
 import { TaskBoard } from "@/components/dashboard/TaskBoard";
 import { WeeklyCalendar } from "@/components/dashboard/WeeklyCalendar";
@@ -8,7 +8,15 @@ import { YearlyCalendar } from "@/components/dashboard/YearlyCalendar";
 import { useCalendarView } from "@/contexts/CalendarViewContext";
 
 export default function Dashboard() {
-  useTaskNotifications();
+  // Use a ref to ensure task notifications are only initialized once
+  const notificationsInitialized = useRef(false);
+  
+  // Only initialize notifications once using the ref flag
+  if (!notificationsInitialized.current) {
+    notificationsInitialized.current = true;
+    useTaskNotifications();
+  }
+  
   const {
     view,
     selectedDate,

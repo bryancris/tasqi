@@ -133,10 +133,11 @@ export function useTasks() {
   const { data: tasks = [], refetch, isLoading } = useQuery({
     queryKey: ['tasks'],
     queryFn: fetchTasks,
-    staleTime: 0, // Always consider data stale to ensure fresh data
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-    refetchOnReconnect: true,
+    staleTime: 60 * 1000, // Consider data stale after 1 minute instead of immediately
+    gcTime: 5 * 60 * 1000, // Keep unused data for 5 minutes
+    refetchOnWindowFocus: false, // Don't refetch when window regains focus
+    refetchOnMount: 'always', // Only 'always' for the initial mount
+    refetchOnReconnect: false, // Don't refetch on reconnect
     retry: 1,
   });
 

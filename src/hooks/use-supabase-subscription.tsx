@@ -1,5 +1,5 @@
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { playNotificationSound } from '@/utils/notifications/soundUtils';
@@ -12,6 +12,23 @@ export function useSupabaseSubscription() {
   const { showNotification } = useNotifications();
   // Add a ref to track if we've already initialized
   const initialized = useRef(false);
+  
+  // Add debounce mechanism for task updates
+  const taskUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const debouncedInvalidateTasks = useCallback(() => {
+    // Clear any existing timeout
+    if (taskUpdateTimeoutRef.current) {
+      clearTimeout(taskUpdateTimeoutRef.current);
+    }
+    
+    // Set a new timeout for task invalidation
+    taskUpdateTimeoutRef.current = setTimeout(() => {
+      console.log('Debounced task query invalidation triggered');
+      void queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      taskUpdateTimeoutRef.current = null;
+    }, 1000); // 1 second debounce time
+  }, [queryClient]);
 
   useEffect(() => {
     // Only run once
@@ -38,16 +55,19 @@ export function useSupabaseSubscription() {
 
     void initializeNotifications();
 
-    // Tasks channel
+    // Tasks channel - Now with debounced updates
     const tasksChannel = supabase.channel('tasks-changes')
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'tasks' },
         () => {
-          void queryClient.invalidateQueries({ queryKey: ['tasks'] });
+          // Use debounced invalidation instead of immediate
+          debouncedInvalidateTasks();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Tasks subscription status:', status);
+      });
 
     // Notes channel
     const notesChannel = supabase.channel('notes-changes')
@@ -117,9 +137,15 @@ export function useSupabaseSubscription() {
     // Cleanup function
     return () => {
       console.log('Cleaning up Supabase subscriptions');
+      
+      // Clear any pending timeout
+      if (taskUpdateTimeoutRef.current) {
+        clearTimeout(taskUpdateTimeoutRef.current);
+      }
+      
       void supabase.removeChannel(tasksChannel);
       void supabase.removeChannel(notesChannel);
       void supabase.removeChannel(notificationsChannel);
     };
-  }, [queryClient, showNotification]); // This effect should only run once
+  }, [queryClient, showNotification, debouncedInvalidateTasks]); // Added debouncedInvalidateTasks to dependency array
 }
