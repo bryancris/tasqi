@@ -4,6 +4,7 @@ import { Task, TaskPriority } from "../TaskBoard";
 import { Subtask } from "../subtasks/SubtaskList";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 
 interface EditTaskContentProps {
   task: Task;
@@ -34,6 +35,7 @@ interface EditTaskContentProps {
   onSubtasksChange: (subtasks: Subtask[]) => void;
   onSubmit: () => void;
   onDelete: () => void;
+  isDeletingTask?: boolean;
 }
 
 export function EditTaskContent({
@@ -64,7 +66,8 @@ export function EditTaskContent({
   onReminderTimeChange,
   onSubtasksChange,
   onSubmit,
-  onDelete
+  onDelete,
+  isDeletingTask = false
 }: EditTaskContentProps) {
   console.log("EditTaskContent rendered with onSubmit:", !!onSubmit);
   
@@ -109,10 +112,19 @@ export function EditTaskContent({
           variant="destructive"
           className="w-full"
           onClick={onDelete}
-          disabled={isLoading}
+          disabled={isLoading || isDeletingTask}
         >
-          <Trash2 className="mr-2 h-4 w-4" />
-          Delete Task
+          {isDeletingTask ? (
+            <>
+              <Spinner className="mr-2 h-4 w-4" />
+              Deleting...
+            </>
+          ) : (
+            <>
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete Task
+            </>
+          )}
         </Button>
       </div>
     </div>

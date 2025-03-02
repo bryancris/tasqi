@@ -20,6 +20,7 @@ export function useEditTaskState(task: Task, onClose: () => void) {
   const [reminderTime, setReminderTime] = useState(task.reminder_time || 15);
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDeletingTask, setIsDeletingTask] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const queryClient = useQueryClient();
 
@@ -49,15 +50,28 @@ export function useEditTaskState(task: Task, onClose: () => void) {
 
   const handleDelete = async () => {
     try {
+      setIsDeletingTask(true);
+      console.log("Deleting task with ID:", task.id);
+      
       const {
         error
       } = await supabase.from('tasks').delete().eq('id', task.id);
-      if (error) throw error;
+      
+      if (error) {
+        console.error("Error from Supabase:", error);
+        throw error;
+      }
+      
+      // Wait for query invalidation to ensure the UI is updated properly
+      await queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      
       toast.success('Task deleted successfully');
       onClose();
     } catch (error) {
       console.error('Error deleting task:', error);
-      toast.error('Failed to delete task');
+      toast.error('Failed to delete task: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    } finally {
+      setIsDeletingTask(false);
     }
   };
 
@@ -168,6 +182,7 @@ export function useEditTaskState(task: Task, onClose: () => void) {
     reminderTime,
     subtasks,
     isLoading,
+    isDeletingTask,
     showShareDialog,
     setTitle,
     setDescription,

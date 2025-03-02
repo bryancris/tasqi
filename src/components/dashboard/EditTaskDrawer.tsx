@@ -31,6 +31,7 @@ export function EditTaskDrawer({
     reminderTime,
     subtasks,
     isLoading,
+    isDeletingTask,
     showShareDialog,
     setTitle,
     setDescription,
@@ -80,6 +81,7 @@ export function EditTaskDrawer({
               reminderTime={reminderTime}
               subtasks={subtasks}
               isLoading={isLoading}
+              isDeletingTask={isDeletingTask}
               onTitleChange={setTitle}
               onDescriptionChange={setDescription}
               onIsScheduledChange={setIsScheduled}
