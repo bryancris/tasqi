@@ -65,7 +65,7 @@ export function useChatMessaging() {
         const duration = parseInt(match[1]);
         const unit = match[2].toLowerCase();
         
-        // Construct a direct response
+        // Construct timer response message
         let timerResponse;
         if (unit.startsWith('sec')) {
           timerResponse = `I've set a ${duration} second timer for you.`;
@@ -75,7 +75,7 @@ export function useChatMessaging() {
           timerResponse = `I've set a ${duration} hour timer for you.`;
         }
         
-        // Try the server-side function first
+        // Try the server-side function first with proper error handling
         try {
           const startTime = Date.now();
           const { data, error } = await supabase.functions.invoke('process-chat', {
@@ -95,8 +95,10 @@ export function useChatMessaging() {
           // Check for timer data
           if (data?.timer) {
             console.log('⏰ Timer data received:', data.timer);
-            // Force immediate refresh of timer data
-            await queryClient.invalidateQueries({ queryKey: ['timers'] });
+            // Force immediate refresh of timer data, but with delay to prevent UI blocking
+            setTimeout(() => {
+              queryClient.invalidateQueries({ queryKey: ['timers'] });
+            }, 300);
           }
           
           return data;
@@ -131,7 +133,7 @@ export function useChatMessaging() {
               label: timerLabel,
               duration: duration,
               unit: unit,
-              milliseconds: milliseconds  // Add milliseconds for accurate timing
+              milliseconds: milliseconds
             }
           };
         }
@@ -154,11 +156,13 @@ export function useChatMessaging() {
 
         console.log('✅ Function returned data:', data);
         
-        // Check for timer data
+        // Check for timer data - but don't refresh immediately
         if (data?.timer) {
           console.log('⏰ Timer data detected:', data.timer);
-          // Force immediate refresh of timer data
-          await queryClient.invalidateQueries({ queryKey: ['timers'] });
+          // Force refresh of timer data with delay
+          setTimeout(() => {
+            queryClient.invalidateQueries({ queryKey: ['timers'] });
+          }, 300);
         }
         
         return data;

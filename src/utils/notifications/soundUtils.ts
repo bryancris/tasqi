@@ -4,9 +4,9 @@ export async function playNotificationSound() {
   
   return new Promise<boolean>(async (resolve) => {
     try {
-      // Create a single audio element with better error handling
+      // Create audio element with better error handling
       const audio = new Audio('/notification-sound.mp3');
-      audio.volume = 1.0;
+      audio.volume = 0.7; // Slightly lower volume to avoid startling users
       audio.preload = 'auto';
       
       // Set up event handlers before attempting to play
@@ -19,7 +19,7 @@ export async function playNotificationSound() {
             resolve(true);
           })
           .catch(error => {
-            console.warn('⚠️ HTML5 Audio playback failed, falling back to Web Audio API:', error);
+            console.warn('⚠️ HTML5 Audio playback failed:', error);
             
             // Web Audio API fallback
             try {
@@ -53,27 +53,8 @@ export async function playNotificationSound() {
             }
           });
       } else {
-        console.warn('⚠️ Audio play() returned undefined, trying fallback');
-        
-        // Try another approach
-        try {
-          setTimeout(() => {
-            const alternativeAudio = new Audio('/notification-sound.mp3');
-            alternativeAudio.volume = 1.0;
-            alternativeAudio.play()
-              .then(() => {
-                console.log('✅ Alternative audio playback successful');
-                resolve(true);
-              })
-              .catch(altError => {
-                console.error('❌ Alternative audio playback failed:', altError);
-                resolve(false);
-              });
-          }, 100);
-        } catch (alternativeError) {
-          console.error('❌ Alternative audio approach failed:', alternativeError);
-          resolve(false);
-        }
+        console.warn('⚠️ Audio play() returned undefined');
+        resolve(false);
       }
       
       // Safety timeout in case all methods fail or hang

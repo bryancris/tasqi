@@ -59,35 +59,26 @@ export function useChatSubmission(
             addAIMessage("I'm sorry, I couldn't process that request.");
           }
           
-          // Handle timer-related response in a controlled, non-blocking way
+          // Handle timer-related response in a non-blocking way
           if (data?.timer) {
             console.log('⏰ Timer data received:', data.timer);
             
-            // Use setTimeout to handle timer response asynchronously
-            // This prevents UI freezing by not blocking the main thread
-            setTimeout(async () => {
-              await handleTimerResponse(data.timer);
+            // Use a small delay before handling timer to prevent UI blocking
+            setTimeout(() => {
+              void handleTimerResponse(data.timer);
             }, 100);
-            
-            // Force immediate update of notifications for timers
-            // with timeout to prevent UI blocking
-            setTimeout(async () => {
-              await refreshLists();
-            }, 500);
           } 
           // Still check general timer-related responses for backward compatibility
           else if (data?.response) {
-            console.log('🔍 Checking response for timer references:', data.response.substring(0, 50) + '...');
-            
-            // Handle in non-blocking way
-            setTimeout(async () => {
-              await handleTimerRelatedResponse(data.response);
-            }, 100);
+            // Use longer delay for non-critical timer-related responses
+            setTimeout(() => {
+              void handleTimerRelatedResponse(data.response);
+            }, 500);
           }
           
-          // Refresh tasks and notifications with delay to prevent UI blocking
-          setTimeout(async () => {
-            await refreshLists();
+          // Refresh lists after a longer delay
+          setTimeout(() => {
+            void refreshLists();
           }, 1000);
         } catch (fetchError) {
           console.error('Error with server, using client-side timer fallback:', fetchError);
@@ -112,16 +103,16 @@ export function useChatSubmission(
           // Add a success message
           addAIMessage(`I've set a timer for ${timerLabel}.`);
           
-          // Handle the timer asynchronously to prevent UI blocking
-          setTimeout(async () => {
-            await handleTimerResponse({
+          // Handle the timer in a controlled way
+          setTimeout(() => {
+            void handleTimerResponse({
               action: 'created',
               label: timerLabel,
               duration: duration,
               unit: unit,
               milliseconds: milliseconds
             });
-          }, 100);
+          }, 200);
         }
       } else {
         // If the message doesn't match timer regex or we're offline, use regular flow
@@ -149,30 +140,22 @@ export function useChatSubmission(
           if (data?.timer) {
             console.log('⏰ Timer data received:', data.timer);
             
-            // Use setTimeout to prevent UI blocking
-            setTimeout(async () => {
-              await handleTimerResponse(data.timer);
-            }, 100);
-            
-            // Force immediate update of notifications for timers with delay
-            setTimeout(async () => {
-              await refreshLists();
-            }, 500);
+            // Use setTimeout with increasing delays to prevent UI blocking
+            setTimeout(() => {
+              void handleTimerResponse(data.timer);
+            }, 200);
           } 
           // Still check general timer-related responses for backward compatibility
           else if (data?.response) {
-            console.log('🔍 Checking response for timer references:', data.response.substring(0, 50) + '...');
-            
-            // Handle in non-blocking way
-            setTimeout(async () => {
-              await handleTimerRelatedResponse(data.response);
-            }, 100);
+            setTimeout(() => {
+              void handleTimerRelatedResponse(data.response);
+            }, 500);
           }
           
-          // Refresh tasks and notifications with delay
-          setTimeout(async () => {
-            await refreshLists();
-          }, 1000);
+          // Refresh tasks and notifications with longer delay
+          setTimeout(() => {
+            void refreshLists();
+          }, 1500);
         } catch (err) {
           // Error occurred, but wasn't a timer request
           console.error('Error processing message:', err);
