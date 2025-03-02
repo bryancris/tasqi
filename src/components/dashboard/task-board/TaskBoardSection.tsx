@@ -32,6 +32,9 @@ export function TaskBoardSection({ tasks, selectedDate, onDragEnd, onComplete }:
 
   // Get today's date at start of day in local timezone
   const today = startOfDay(new Date());
+  
+  // Get the selected date at start of day for consistent comparisons
+  const selectedDayStart = startOfDay(selectedDate);
 
   const shouldShowCompletedTask = (task: Task) => {
     return task.completed_at && isAfter(new Date(task.completed_at), today);
@@ -53,8 +56,22 @@ export function TaskBoardSection({ tasks, selectedDate, onDragEnd, onComplete }:
         // If task has no date, don't show it (should be handled as unscheduled)
         if (!task.date) return false;
         
-        // Show tasks that match the selected date
-        return isSameDay(parseISO(task.date), selectedDate);
+        // Parse task date - creating the date object without time component
+        const taskDate = parseISO(task.date);
+        
+        // Reset to start of day to ensure comparison is done at day level only, ignoring time
+        const taskDayStart = startOfDay(taskDate);
+        
+        // Add debug logging to help diagnose date comparison issues
+        console.log(`Comparing dates for task ${task.id} - ${task.title}:`);
+        console.log(`- Task date: ${task.date}, parsed to: ${taskDate.toISOString()}`);
+        console.log(`- Task day start: ${taskDayStart.toISOString()}`);
+        console.log(`- Selected date: ${selectedDate.toISOString()}`);
+        console.log(`- Selected day start: ${selectedDayStart.toISOString()}`);
+        console.log(`- Are same day: ${isSameDay(taskDayStart, selectedDayStart)}`);
+        
+        // Compare the dates at day level only
+        return isSameDay(taskDayStart, selectedDayStart);
       }
       
       return false;
