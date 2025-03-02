@@ -1,238 +1,180 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import { formatDateForDB } from './dateUtils.ts'
+import { extractDateFromMessage, formatDateForDB } from './dateUtils.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') as string
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') as string
 const supabase = createClient(supabaseUrl, supabaseKey)
 
+// Check if message is a task creation request
+export function isTaskCreationRequest(message: string): boolean {
+  const taskCreationPatterns = [
+    /add (a )?task/i,
+    /create (a )?task/i,
+    /new task/i,
+    /schedule (a )?task/i,
+    /remind me to/i,
+    /i need to/i,
+    /set (a )?reminder/i,
+    /add to( my)? to-?do( list)?/i
+  ]
+  
+  return taskCreationPatterns.some(pattern => pattern.test(message))
+}
+
+// Check if message is asking about tasks
 export function isTaskQueryRequest(message: string): boolean {
-  const queryPhrases = [
-    "what tasks",
-    "my tasks",
-    "tasks for",
-    "do i have",
-    "what do i have",
-    "what are my",
-    "show me my tasks",
-    "show my tasks",
-    "list my tasks",
-    "view my tasks",
-    "see my tasks",
-  ];
+  const taskQueryPatterns = [
+    /what (tasks|to-?dos) do i have/i,
+    /show me my (tasks|to-?dos)/i,
+    /list my (tasks|to-?dos)/i,
+    /what('s| is) on my (schedule|to-?do list)/i,
+    /do i have any (tasks|to-?dos)/i,
+    /what am i (doing|supposed to do)/i
+  ]
   
-  const lowerMessage = message.toLowerCase();
-  return queryPhrases.some(phrase => lowerMessage.includes(phrase));
+  return taskQueryPatterns.some(pattern => pattern.test(message))
 }
 
-export async function getTaskCountForDate(userId: string, date: Date): Promise<number> {
-  const formattedDate = formatDateForDB(date);
-  
-  const { data, error } = await supabase
-    .from('tasks')
-    .select('id', { count: 'exact' })
-    .eq('user_id', userId)
-    .eq('date', formattedDate)
-    .eq('status', 'scheduled');
-  
-  if (error) {
-    console.error('Error getting task count:', error);
-    throw error;
-  }
-  
-  return data?.length || 0;
-}
-
-export async function getTasksForDate(userId: string, date: Date): Promise<any[]> {
-  const formattedDate = formatDateForDB(date);
+// Get all tasks for a specific date
+export async function getTasksForDate(userId: string, date: Date) {
+  const formattedDate = formatDateForDB(date)
   
   const { data, error } = await supabase
     .from('tasks')
     .select('*')
     .eq('user_id', userId)
-    .eq('date', formattedDate);
+    .eq('date', formattedDate)
+    .order('start_time', { ascending: true })
   
   if (error) {
-    console.error('Error getting tasks:', error);
-    throw error;
+    console.error('Error fetching tasks:', error)
+    throw error
   }
   
-  return data || [];
+  return data || []
 }
 
+// Get unscheduled tasks
+export async function getUnscheduledTasks(userId: string) {
+  const { data, error } = await supabase
+    .from('tasks')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('status', 'unscheduled')
+    .order('position', { ascending: true })
+  
+  if (error) {
+    console.error('Error fetching unscheduled tasks:', error)
+    throw error
+  }
+  
+  return data || []
+}
+
+// Get task count for a specific date
+export async function getTaskCountForDate(userId: string, date: Date) {
+  const formattedDate = formatDateForDB(date)
+  
+  const { data, error, count } = await supabase
+    .from('tasks')
+    .select('*', { count: 'exact' })
+    .eq('user_id', userId)
+    .eq('date', formattedDate)
+  
+  if (error) {
+    console.error('Error counting tasks:', error)
+    throw error
+  }
+  
+  return count || 0
+}
+
+// Get count of unscheduled tasks
+export async function getUnscheduledTaskCount(userId: string) {
+  const { data, error, count } = await supabase
+    .from('tasks')
+    .select('*', { count: 'exact' })
+    .eq('user_id', userId)
+    .eq('status', 'unscheduled')
+  
+  if (error) {
+    console.error('Error counting unscheduled tasks:', error)
+    throw error
+  }
+  
+  return count || 0
+}
+
+// Generate a summary of tasks for a given date
 export function generateTaskSummary(tasks: any[], date: Date): string {
   if (tasks.length === 0) {
-    return `You don't have any tasks scheduled for ${date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}.`;
+    return `You don't have any tasks scheduled for ${date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}.`
   }
   
-  const taskCount = tasks.length;
-  const dateString = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-  
-  let summary = `You have ${taskCount} task${taskCount === 1 ? '' : 's'} for ${dateString}:\n\n`;
+  const dateStr = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+  let summary = `Here are your tasks for ${dateStr}:\n\n`
   
   tasks.forEach((task, index) => {
-    const timeInfo = task.start_time 
-      ? `at ${formatTime(task.start_time)}` 
-      : '';
-    
-    summary += `${index + 1}. ${task.title} ${timeInfo}\n`;
-  });
-  
-  return summary;
-}
-
-export async function createTaskFromMessage(message: string, userId: string): Promise<void> {
-  try {
-    // Extract a title from the message (simple implementation)
-    const title = extractTaskTitle(message);
-    
-    // Extract date if provided in the message, otherwise default to today
-    const date = extractDateFromMessage(message) || new Date();
-    const formattedDate = formatDateForDB(date);
-    
-    // Extract time if provided (simple implementation)
-    const timeMatch = message.match(/at\s+(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)/i);
-    let startTime = null;
-    
-    if (timeMatch) {
-      startTime = parseTime(timeMatch[1]);
+    let taskTime = ''
+    if (task.start_time) {
+      taskTime = task.start_time.slice(0, 5)
+      if (task.end_time) {
+        taskTime += ` - ${task.end_time.slice(0, 5)}`
+      }
+      taskTime = ` at ${taskTime}`
     }
     
-    // Determine if this is a scheduled or unscheduled task
-    const status = formattedDate ? 'scheduled' : 'unscheduled';
+    summary += `${index + 1}. ${task.title}${taskTime}\n`
+  })
+  
+  return summary
+}
+
+// Create a new task from the user's message
+export async function createTaskFromMessage(message: string, userId: string) {
+  try {
+    // Extract potential date from message or default to today
+    const extractedDate = extractDateFromMessage(message)
+    const formattedDate = extractedDate ? formatDateForDB(extractedDate) : null
     
-    // Create the task
+    // Determine if there's a date mentioned (scheduled) or not (unscheduled)
+    const status = formattedDate ? 'scheduled' : 'unscheduled'
+    
+    // Get the highest position number for proper ordering
+    const { data: positionData } = await supabase
+      .from('tasks')
+      .select('position')
+      .eq('user_id', userId)
+      .order('position', { ascending: false })
+      .limit(1)
+    
+    const nextPosition = positionData && positionData.length > 0 
+      ? (positionData[0].position + 1) 
+      : 0
+    
+    // Create the new task
     const { data, error } = await supabase
       .from('tasks')
-      .insert([
-        {
-          title,
-          date: formattedDate,
-          start_time: startTime,
-          status,
-          user_id: userId,
-          priority: 'medium',
-        }
-      ]);
+      .insert({
+        title: message,
+        user_id: userId,
+        date: formattedDate,
+        status,
+        position: nextPosition,
+        priority: 'medium',
+        owner_id: userId
+      })
+      .select()
     
-    if (error) throw error;
-    
-    console.log('Task created successfully:', data);
-  } catch (error) {
-    console.error('Error creating task:', error);
-    throw error;
-  }
-}
-
-// Helper functions
-function extractTaskTitle(message: string): string {
-  // Remove common task creation phrases
-  let title = message;
-  const phrasesToRemove = [
-    "add task ",
-    "create task ",
-    "new task ",
-    "remind me to ",
-    "need to ",
-    "have to ",
-    "got to ",
-    "gotta ",
-  ];
-  
-  phrasesToRemove.forEach(phrase => {
-    if (title.toLowerCase().includes(phrase)) {
-      title = title.replace(new RegExp(phrase, 'i'), '');
-    }
-  });
-  
-  // Remove time information if present
-  title = title.replace(/\bat\s+\d{1,2}(?::\d{2})?\s*(?:am|pm)?/i, '');
-  
-  // Remove date information
-  const datePatterns = [
-    /\bon\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i,
-    /\btoday\b/i,
-    /\btomorrow\b/i,
-    /\bnext\s+week\b/i,
-  ];
-  
-  datePatterns.forEach(pattern => {
-    title = title.replace(pattern, '');
-  });
-  
-  // Trim extra spaces and capitalize first letter
-  title = title.trim();
-  title = title.charAt(0).toUpperCase() + title.slice(1);
-  
-  return title;
-}
-
-function formatTime(timeString: string): string {
-  if (!timeString) return '';
-  
-  // Simple formatting - convert "15:00:00" to "3:00 PM"
-  const date = new Date(`2000-01-01T${timeString}`);
-  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-}
-
-function parseTime(timeString: string): string | null {
-  try {
-    if (!timeString) return null;
-    
-    // Handle 24-hour format
-    const hourMinuteRegex = /(\d{1,2})(?::(\d{2}))?/;
-    const match = timeString.match(hourMinuteRegex);
-    
-    if (!match) return null;
-    
-    let hours = parseInt(match[1], 10);
-    const minutes = match[2] ? parseInt(match[2], 10) : 0;
-    
-    // Check for AM/PM
-    if (timeString.toLowerCase().includes('pm') && hours < 12) {
-      hours += 12;
-    } else if (timeString.toLowerCase().includes('am') && hours === 12) {
-      hours = 0;
+    if (error) {
+      console.error('Error creating task:', error)
+      throw error
     }
     
-    // Format as HH:MM:00
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
+    return data
   } catch (error) {
-    console.error('Error parsing time:', error);
-    return null;
+    console.error('Error in createTaskFromMessage:', error)
+    throw error
   }
-}
-
-export function extractDateFromMessage(message: string): Date | null {
-  // Re-using from dateUtils to avoid circular imports
-  const today = new Date();
-  
-  // Check for "today" mention
-  if (message.toLowerCase().includes('today')) {
-    return today;
-  }
-  
-  // Check for "tomorrow" mention
-  if (message.toLowerCase().includes('tomorrow')) {
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    return tomorrow;
-  }
-  
-  // Check for days of the week
-  const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-  const dayMentions = days.filter(day => message.toLowerCase().includes(day));
-  
-  if (dayMentions.length > 0) {
-    const targetDay = days.indexOf(dayMentions[0]);
-    const result = new Date(today);
-    const currentDay = today.getDay();
-    const daysUntilTarget = (targetDay + 7 - currentDay) % 7 || 7;
-    
-    result.setDate(today.getDate() + daysUntilTarget);
-    return result;
-  }
-  
-  // If no date is explicitly mentioned, return null
-  return null;
 }

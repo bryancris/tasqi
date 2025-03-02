@@ -6,9 +6,11 @@ import { generateResponse, isTaskCreationRequest } from './openaiUtils.ts'
 import { 
   createTaskFromMessage, 
   isTaskQueryRequest, 
-  getTasksForDate, 
+  getTasksForDate,
+  getUnscheduledTasks,
   generateTaskSummary,
-  getTaskCountForDate
+  getTaskCountForDate,
+  getUnscheduledTaskCount
 } from './taskUtils.ts'
 
 // Define CORS headers to allow cross-origin requests
@@ -43,10 +45,19 @@ serve(async (req) => {
     })
 
     let response = ''
-    let shouldCreateTask = false
 
+    // Check if this is a query about unscheduled tasks
+    if (message.toLowerCase().includes('unscheduled') && 
+        message.toLowerCase().includes('task') && 
+        (message.toLowerCase().includes('how many') || message.toLowerCase().includes('count'))) {
+      console.log('Detected unscheduled task count query')
+      
+      const unscheduledCount = await getUnscheduledTaskCount(userId)
+      
+      response = `You have ${unscheduledCount} unscheduled task${unscheduledCount === 1 ? '' : 's'}.`
+    }
     // Check if this is a task query request about task count
-    if (message.toLowerCase().includes('how many') && message.toLowerCase().includes('task') && 
+    else if (message.toLowerCase().includes('how many') && message.toLowerCase().includes('task') && 
         (message.toLowerCase().includes('today') || message.toLowerCase().includes('do i have'))) {
       console.log('Detected task count query request')
       
@@ -56,8 +67,11 @@ serve(async (req) => {
       // Get task count for the extracted date
       const taskCount = await getTaskCountForDate(userId, extractedDate)
       
+      // Get unscheduled task count for a complete picture
+      const unscheduledCount = await getUnscheduledTaskCount(userId)
+      
       // Generate a response with the task count
-      response = `You have ${taskCount} task${taskCount === 1 ? '' : 's'} scheduled for ${extractedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}.`
+      response = `You have ${taskCount} task${taskCount === 1 ? '' : 's'} scheduled for ${extractedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}.${unscheduledCount > 0 ? ` Additionally, you have ${unscheduledCount} unscheduled task${unscheduledCount === 1 ? '' : 's'}.` : ''}`
     }
     // Check if this is a task query request (asking about tasks)
     else if (isTaskQueryRequest(message)) {
