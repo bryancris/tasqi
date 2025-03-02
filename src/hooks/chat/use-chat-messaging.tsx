@@ -46,21 +46,37 @@ export function useChatMessaging() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
+        console.error('Authentication required for processing message');
         throw new Error("Authentication required");
       }
 
+      console.log('🚀 Invoking process-chat function with message:', userMessage.content.substring(0, 50) + '...');
+      
+      const startTime = Date.now();
       const { data, error } = await supabase.functions.invoke('process-chat', {
         body: { message: userMessage.content, userId: user.id }
       });
+      const endTime = Date.now();
+      
+      console.log(`⏱️ Function invocation took ${endTime - startTime}ms`);
 
       if (error) {
-        console.error('Function error:', error);
+        console.error('❌ Function error:', error);
         throw error;
       }
 
+      console.log('✅ Function returned data:', data);
+      
+      // Check for timer data
+      if (data?.timer) {
+        console.log('⏰ Timer data detected:', data.timer);
+        // Force immediate refresh of timer data
+        await queryClient.invalidateQueries({ queryKey: ['timers'] });
+      }
+      
       return data;
     } catch (error) {
-      console.error('Error processing message:', error);
+      console.error('❌ Error processing message:', error);
       throw error;
     }
   };
