@@ -1,7 +1,8 @@
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '../../../test/test-utils';
 import { useTimerManagement } from '../use-timer-management';
-import { NotificationsContextType } from '@/components/notifications/context/NotificationsContext';
+import { NotificationsContextType } from '@/components/notifications/types';
 
 // Mock the notifications context
 vi.mock('@/components/notifications/NotificationsManager', () => ({
@@ -12,7 +13,9 @@ vi.mock('@/components/notifications/NotificationsManager', () => ({
     dismissGroup: vi.fn(),
     isSubscribed: true,
     hasPermission: true,
-    subscribe: vi.fn()
+    subscribe: vi.fn(),
+    isLoading: false,
+    enableNotifications: vi.fn()
   })
 }));
 
@@ -32,7 +35,9 @@ describe('useTimerManagement', () => {
       dismissGroup: vi.fn(),
       isSubscribed: true,
       hasPermission: true,
-      subscribe: vi.fn()
+      subscribe: vi.fn(),
+      isLoading: false,
+      enableNotifications: vi.fn()
     });
   });
 

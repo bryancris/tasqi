@@ -1,7 +1,7 @@
 
 import React, { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { renderHook, act } from '@testing-library/react-hooks';
+import { renderHook as originalRenderHook, act } from '@testing-library/react-hooks';
 import type { RenderHookOptions, RenderHookResult } from '@testing-library/react-hooks';
 
 // Create a wrapper with the necessary providers
@@ -10,7 +10,7 @@ export function createTestQueryClient() {
     defaultOptions: {
       queries: {
         retry: false,
-        // cacheTime has been renamed to gcTime in v5
+        // v5 uses gcTime instead of cacheTime
         gcTime: 0,
       },
     },

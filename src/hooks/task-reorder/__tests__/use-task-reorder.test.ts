@@ -27,8 +27,8 @@ vi.mock('../use-supabase-reorder', () => ({
 describe('useTaskReorder', () => {
   // Create mock tasks for testing with all required properties
   const mockTasks: Task[] = [
-    { id: 1, title: 'Task 1', description: 'Description 1', position: 1000, status: 'scheduled', date: null, start_time: null, end_time: null, user_id: 'test-user', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    { id: 2, title: 'Task 2', description: 'Description 2', position: 2000, status: 'scheduled', date: null, start_time: null, end_time: null, user_id: 'test-user', created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
+    { id: 1, title: 'Task 1', description: 'Description 1', position: 1000, status: 'scheduled', date: null, start_time: null, end_time: null, user_id: 'test-user', created_at: new Date().toISOString(), updated_at: new Date().toISOString(), priority: 'low', owner_id: 'test-user' },
+    { id: 2, title: 'Task 2', description: 'Description 2', position: 2000, status: 'scheduled', date: null, start_time: null, end_time: null, user_id: 'test-user', created_at: new Date().toISOString(), updated_at: new Date().toISOString(), priority: 'low', owner_id: 'test-user' }
   ];
 
   // Mock functions
@@ -42,8 +42,8 @@ describe('useTaskReorder', () => {
     
     // Setup the mocks
     mockProcessDragEnd = vi.fn().mockReturnValue([
-      { id: 2, title: 'Task 2', description: 'Description 2', position: 2000 },
-      { id: 1, title: 'Task 1', description: 'Description 1', position: 1000 }
+      { id: 2, title: 'Task 2', description: 'Description 2', position: 2000, status: 'scheduled', date: null, start_time: null, end_time: null, user_id: 'test-user', priority: 'low', owner_id: 'test-user' },
+      { id: 1, title: 'Task 1', description: 'Description 1', position: 1000, status: 'scheduled', date: null, start_time: null, end_time: null, user_id: 'test-user', priority: 'low', owner_id: 'test-user' }
     ]);
     
     mockCalculateNewPositions = vi.fn().mockReturnValue([
@@ -84,16 +84,16 @@ describe('useTaskReorder', () => {
     // Check that all functions were called in the correct order
     expect(mockProcessDragEnd).toHaveBeenCalledWith(mockDragEvent);
     expect(mockCalculateNewPositions).toHaveBeenCalledWith([
-      { id: 2, title: 'Task 2', description: 'Description 2', position: 2000 },
-      { id: 1, title: 'Task 1', description: 'Description 1', position: 1000 }
+      { id: 2, title: 'Task 2', description: 'Description 2', position: 2000, status: 'scheduled', date: null, start_time: null, end_time: null, user_id: 'test-user', priority: 'low', owner_id: 'test-user' },
+      { id: 1, title: 'Task 1', description: 'Description 1', position: 1000, status: 'scheduled', date: null, start_time: null, end_time: null, user_id: 'test-user', priority: 'low', owner_id: 'test-user' }
     ]);
     expect(mockReorderTasksInDatabase).toHaveBeenCalledWith([
       { task_id: 2, new_position: 1000 },
       { task_id: 1, new_position: 2000 }
     ]);
     expect(mockOnTasksReordered).toHaveBeenCalledWith([
-      { id: 2, title: 'Task 2', description: 'Description 2', position: 2000 },
-      { id: 1, title: 'Task 1', description: 'Description 1', position: 1000 }
+      { id: 2, title: 'Task 2', description: 'Description 2', position: 2000, status: 'scheduled', date: null, start_time: null, end_time: null, user_id: 'test-user', priority: 'low', owner_id: 'test-user' },
+      { id: 1, title: 'Task 1', description: 'Description 1', position: 1000, status: 'scheduled', date: null, start_time: null, end_time: null, user_id: 'test-user', priority: 'low', owner_id: 'test-user' }
     ]);
   });
 

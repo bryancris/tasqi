@@ -7,9 +7,9 @@ import { Task } from '@/components/dashboard/TaskBoard';
 describe('useDragEventHandler', () => {
   // Create some mock tasks for testing with all required properties
   const mockTasks: Task[] = [
-    { id: 1, title: 'Task 1', description: 'Description 1', position: 1000, status: 'scheduled', date: null, start_time: null, end_time: null, user_id: 'test-user', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    { id: 2, title: 'Task 2', description: 'Description 2', position: 2000, status: 'scheduled', date: null, start_time: null, end_time: null, user_id: 'test-user', created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    { id: 3, title: 'Task 3', description: 'Description 3', position: 3000, status: 'scheduled', date: null, start_time: null, end_time: null, user_id: 'test-user', created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
+    { id: 1, title: 'Task 1', description: 'Description 1', position: 1000, status: 'scheduled', date: null, start_time: null, end_time: null, user_id: 'test-user', created_at: new Date().toISOString(), updated_at: new Date().toISOString(), priority: 'low', owner_id: 'test-user' },
+    { id: 2, title: 'Task 2', description: 'Description 2', position: 2000, status: 'scheduled', date: null, start_time: null, end_time: null, user_id: 'test-user', created_at: new Date().toISOString(), updated_at: new Date().toISOString(), priority: 'low', owner_id: 'test-user' },
+    { id: 3, title: 'Task 3', description: 'Description 3', position: 3000, status: 'scheduled', date: null, start_time: null, end_time: null, user_id: 'test-user', created_at: new Date().toISOString(), updated_at: new Date().toISOString(), priority: 'low', owner_id: 'test-user' }
   ];
 
   it('should return null if active and over are the same', () => {

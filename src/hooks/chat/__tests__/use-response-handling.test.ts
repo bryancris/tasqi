@@ -1,7 +1,8 @@
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '../../../test/test-utils';
 import { useResponseHandling } from '../use-response-handling';
-import { NotificationsContextType } from '@/components/notifications/context/NotificationsContext';
+import { NotificationsContextType } from '@/components/notifications/types';
 
 // Mock the notifications context
 vi.mock('@/components/notifications/NotificationsManager', () => ({
@@ -12,7 +13,9 @@ vi.mock('@/components/notifications/NotificationsManager', () => ({
     dismissGroup: vi.fn(),
     isSubscribed: true,
     hasPermission: true,
-    subscribe: vi.fn()
+    subscribe: vi.fn(),
+    isLoading: false,
+    enableNotifications: vi.fn()
   })
 }));
 
@@ -34,7 +37,9 @@ describe('useResponseHandling', () => {
       dismissGroup: vi.fn(),
       isSubscribed: true,
       hasPermission: true,
-      subscribe: vi.fn()
+      subscribe: vi.fn(),
+      isLoading: false,
+      enableNotifications: vi.fn()
     });
     
     const { result } = renderHook(() => useResponseHandling(isMountedRef, timerPhrasesDetectedRef));
@@ -57,7 +62,9 @@ describe('useResponseHandling', () => {
       dismissGroup: vi.fn(),
       isSubscribed: true,
       hasPermission: true,
-      subscribe: vi.fn()
+      subscribe: vi.fn(),
+      isLoading: false,
+      enableNotifications: vi.fn()
     });
     
     const isMountedRef = { current: false }; // Simulate unmounted component
@@ -78,7 +85,9 @@ describe('useResponseHandling', () => {
       dismissGroup: vi.fn(),
       isSubscribed: true,
       hasPermission: true,
-      subscribe: vi.fn()
+      subscribe: vi.fn(),
+      isLoading: false,
+      enableNotifications: vi.fn()
     });
     
     timerPhrasesDetectedRef.current.add("Okay, I'll remind you in 5 minutes.");
