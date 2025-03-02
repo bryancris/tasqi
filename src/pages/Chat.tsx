@@ -9,6 +9,7 @@ import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNotifications } from "@/components/notifications/NotificationsManager";
 import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Chat() {
   const [error, setError] = useState<Error | null>(null);

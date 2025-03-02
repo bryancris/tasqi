@@ -1,3 +1,4 @@
+
 import { corsHeaders } from '../_shared/cors.ts';
 import { ChatMessage, ChatBody, ChatResponse } from "./types.ts";
 import { createClient } from '@supabase/supabase-js';

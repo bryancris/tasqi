@@ -113,7 +113,8 @@ export function useChat() {
         if (data?.response && (
             data.response.includes("set a timer") || 
             data.response.includes("notify you at") ||
-            data.response.includes("timer for")
+            data.response.includes("timer for") ||
+            data.response.includes("timer is complete")
         )) {
           showNotification({
             title: "Timer Set",
@@ -124,6 +125,9 @@ export function useChat() {
         
         // Refresh the tasks list after AI processes the message
         await queryClient.invalidateQueries({ queryKey: ['tasks'] });
+
+        // Also refresh timer notifications
+        await queryClient.invalidateQueries({ queryKey: ['notifications'] });
       } catch (invokeError) {
         console.error('Error invoking function:', invokeError);
         

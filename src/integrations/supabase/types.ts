@@ -1039,6 +1039,39 @@ export type Database = {
         }
         Relationships: []
       }
+      timer_sessions: {
+        Row: {
+          created_at: string
+          duration_seconds: number
+          expires_at: string
+          id: number
+          is_active: boolean
+          is_completed: boolean
+          label: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_seconds: number
+          expires_at: string
+          id?: number
+          is_active?: boolean
+          is_completed?: boolean
+          label?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_seconds?: number
+          expires_at?: string
+          id?: number
+          is_active?: boolean
+          is_completed?: boolean
+          label?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       trusted_task_users: {
         Row: {
           alias: string | null
@@ -1231,6 +1264,10 @@ export type Database = {
           is_ai: boolean
           similarity: number
         }[]
+      }
+      process_completed_timers: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       reorder_tasks: {
         Args: {
