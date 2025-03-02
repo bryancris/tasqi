@@ -3,6 +3,9 @@ import { useCallback } from "react";
 import { useChatMessaging } from "./use-chat-messaging";
 import { useChatHistory } from "./use-chat-history";
 import { useChatNotifications } from "./use-chat-notifications";
+import { supabase } from "@/integrations/supabase/client";
+import { playNotificationSound } from "@/utils/notifications/soundUtils";
+import { useNotifications } from "@/components/notifications/context/NotificationsContext";
 
 export function useChat() {
   const {
@@ -35,6 +38,9 @@ export function useChat() {
     handleTimerRelatedResponse,
     refreshLists
   } = useChatNotifications();
+  
+  // Properly use the notifications hook inside the component
+  const { showNotification } = useNotifications();
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,23 +123,27 @@ export function useChat() {
             // Play notification sound to confirm timer creation
             await playNotificationSound();
             
-            // Show notification for timer creation
-            await showNotification({
-              title: `Timer Set: ${timerLabel}`,
-              message: `I'll notify you when your ${timerLabel} timer is complete.`,
-              type: "info",
-              persistent: true
-            });
+            // Use the hook from the component context
+            if (showNotification) {
+              await showNotification({
+                title: `Timer Set: ${timerLabel}`,
+                message: `I'll notify you when your ${timerLabel} timer is complete.`,
+                type: "info",
+                persistent: true
+              });
+            }
             
             // Set up timer to notify when complete
             setTimeout(async () => {
               await playNotificationSound();
-              await showNotification({
-                title: "Timer Complete",
-                message: `Your ${timerLabel} timer is complete!`,
-                type: "info",
-                persistent: true
-              });
+              if (showNotification) {
+                await showNotification({
+                  title: "Timer Complete",
+                  message: `Your ${timerLabel} timer is complete!`,
+                  type: "info",
+                  persistent: true
+                });
+              }
             }, milliseconds);
           }
         } else {
@@ -191,7 +201,7 @@ export function useChat() {
     } finally {
       setIsLoading(false);
     }
-  }, [message, addUserMessage, setMessage, setIsLoading, addLoadingMessage, processMessage, removeLastMessage, addAIMessage, handleTimerResponse, handleTimerRelatedResponse, refreshLists, toast]);
+  }, [message, addUserMessage, setMessage, setIsLoading, addLoadingMessage, processMessage, removeLastMessage, addAIMessage, handleTimerResponse, handleTimerRelatedResponse, refreshLists, toast, showNotification]);
 
   return {
     message,
@@ -202,11 +212,3 @@ export function useChat() {
     fetchChatHistory
   };
 }
-
-// Add missing imports that we're using in the hook
-import { supabase } from "@/integrations/supabase/client";
-import { playNotificationSound } from "@/utils/notifications/soundUtils";
-import { useNotifications } from "@/components/notifications/NotificationsManager";
-
-// Use the shared notification context for local timers
-const { showNotification } = useNotifications();
