@@ -1,3 +1,4 @@
+
 import { useChat } from "@/hooks/use-chat";
 import { useEffect, useState } from "react";
 import { ChatMessages } from "@/components/chat/ChatMessages";
@@ -36,7 +37,8 @@ export default function Chat() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        const { data, error } = await supabase
+        // Check for timer-related notifications
+        const { data: timerNotifications, error: timerError } = await supabase
           .from('notifications')
           .select('*')
           .eq('user_id', user.id)
@@ -44,19 +46,29 @@ export default function Chat() {
           .eq('read', false)
           .order('created_at', { ascending: false });
 
-        if (error) {
-          console.error('Error checking timer notifications:', error);
+        if (timerError) {
+          console.error('Error checking timer notifications:', timerError);
           return;
         }
 
-        if (data && data.length > 0) {
+        if (timerNotifications && timerNotifications.length > 0) {
           // Show notifications and mark them as read
-          for (const notification of data) {
+          for (const notification of timerNotifications) {
             showNotification({
               title: notification.title,
               message: notification.message,
               type: 'info',
-              persistent: true
+              persistent: true,
+              action: {
+                label: 'Dismiss',
+                onClick: async () => {
+                  // Mark as read
+                  await supabase
+                    .from('notifications')
+                    .update({ read: true })
+                    .eq('id', notification.id);
+                }
+              }
             });
 
             // Mark notification as read
@@ -67,20 +79,43 @@ export default function Chat() {
           }
 
           // Play notification sound
-          const audio = new Audio('/notification-sound.mp3');
-          audio.play().catch(e => console.warn('Could not play sound:', e));
+          try {
+            const audio = new Audio('/notification-sound.mp3');
+            await audio.play();
+          } catch (soundError) {
+            console.warn('Could not play sound:', soundError);
+          }
 
           // Refresh notifications list if using that feature
           queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        }
+
+        // Also check task-related notifications
+        const { data, error } = await supabase
+          .from('notifications')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('type', 'task_reminder')
+          .eq('read', false)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error checking task notifications:', error);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          // Process task notifications...
+          // Similar handling as timer notifications
         }
       } catch (err) {
         console.error('Error in notification check:', err);
       }
     };
 
-    // Check immediately and then every 10 seconds
+    // Check immediately and then every 15 seconds (less frequent to reduce database load)
     checkForNotifications();
-    const intervalId = setInterval(checkForNotifications, 10000);
+    const intervalId = setInterval(checkForNotifications, 15000);
 
     return () => clearInterval(intervalId);
   }, [fetchChatHistory, showNotification, queryClient]);

@@ -1,4 +1,5 @@
 
+// process-notifications/index.ts
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
 
 const corsHeaders = {
@@ -6,164 +7,202 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-interface NotificationEvent {
-  id: number
-  event_type: string
-  user_id: string
-  task_id: number
-  metadata: {
-    title: string
-    message?: string
-    date?: string
-    start_time?: string
-    end_time?: string
-    reminder_time?: string
-  }
-  status: string
-  delivery_platform?: string
-  delivery_status?: string
-  last_error?: string
-}
-
-interface DeviceToken {
-  id: number
-  token: string
-  platform: string
-  notification_settings: {
-    enabled: boolean
-    task_reminders: boolean
-    task_updates: boolean
-  }
-}
+// Create a single supabase client for interacting with your database
+const supabase = createClient(
+  Deno.env.get('SUPABASE_URL') ?? '',
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+)
 
 Deno.serve(async (req) => {
+  // Handle CORS
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
+
   try {
-    // Handle CORS preflight requests
-    if (req.method === 'OPTIONS') {
-      return new Response(null, { headers: corsHeaders })
-    }
-
-    // Get environment variables
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      throw new Error('Missing environment variables')
-    }
-
-    // Initialize Supabase client with service role key
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
-
     console.log('🔄 Fetching pending notifications...')
-
-    // Get pending notifications
-    const { data: notifications, error: notificationsError } = await supabase
+    
+    // Process notification events (including timer notifications)
+    const { data: events, error: eventsError } = await supabase
       .from('notification_events')
       .select('*')
       .eq('status', 'pending')
-      .is('delivery_status', null)
-      .order('created_at', { ascending: true })
-
-    if (notificationsError) {
-      throw notificationsError
+      .limit(100)
+    
+    if (eventsError) {
+      throw eventsError
     }
 
-    console.log(`Found ${notifications?.length || 0} pending notifications`)
-
-    // Process each notification
-    for (const notification of notifications || []) {
+    console.log(`📬 Found ${events.length} pending notification events to process`)
+    
+    for (const event of events) {
       try {
-        // Get user's device tokens
-        const { data: deviceTokens, error: deviceTokensError } = await supabase
-          .from('push_device_tokens')
-          .select('*')
-          .eq('user_id', notification.user_id)
-          .eq('platform', 'web')
-
-        if (deviceTokensError) {
-          throw deviceTokensError
+        console.log(`🔔 Processing event ID: ${event.id}, type: ${event.event_type}`)
+        
+        // Handle timer completion events
+        if (event.event_type === 'timer_complete') {
+          await processTimerNotification(event)
+        } 
+        // Handle task reminder events
+        else if (event.event_type === 'task_reminder') {
+          await processTaskReminder(event)
         }
-
-        // Skip if no device tokens found
-        if (!deviceTokens?.length) {
-          await updateNotificationStatus(supabase, notification.id, 'skipped', 'No device tokens found')
-          continue
-        }
-
-        // Send notification to each device
-        for (const device of deviceTokens) {
-          try {
-            // Check if notifications are enabled for this device
-            if (!device.notification_settings?.enabled) {
-              console.log('Notifications disabled for device:', device.id)
-              continue
-            }
-
-            // Send web notification
-            await sendWebNotification(notification, device)
-
-            // Update notification status
-            await updateNotificationStatus(supabase, notification.id, 'delivered')
-          } catch (error) {
-            console.error('Error sending notification to device:', error)
-            await updateNotificationStatus(
-              supabase,
-              notification.id,
-              'failed',
-              error instanceof Error ? error.message : 'Unknown error'
-            )
-          }
-        }
-      } catch (error) {
-        console.error('Error processing notification:', error)
-        await updateNotificationStatus(
-          supabase,
-          notification.id,
-          'failed',
-          error instanceof Error ? error.message : 'Unknown error'
-        )
+        
+        // Mark event as processed
+        await supabase
+          .from('notification_events')
+          .update({ status: 'processed', processed_at: new Date().toISOString() })
+          .eq('id', event.id)
+          
+      } catch (eventError) {
+        console.error(`❌ Error processing event ${event.id}:`, eventError)
+        
+        // Mark as failed but don't throw so we can continue with other events
+        await supabase
+          .from('notification_events')
+          .update({ 
+            status: 'failed', 
+            processed_at: new Date().toISOString(),
+            error_message: String(eventError)
+          })
+          .eq('id', event.id)
       }
     }
-
-    return new Response(JSON.stringify({ success: true }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
-    })
+    
+    // Also check for newly completed timers directly
+    await checkForCompletedTimers()
+    
+    return new Response(
+      JSON.stringify({ success: true, processed: events.length }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200 
+      }
+    )
   } catch (error) {
-    console.error('Error in process-notifications:', error)
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500,
-    })
+    console.error('❌ Error in process-notifications function:', error)
+    return new Response(
+      JSON.stringify({ error: String(error) }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500 
+      }
+    )
   }
 })
 
-async function updateNotificationStatus(
-  supabase: any,
-  notificationId: number,
-  status: string,
-  error?: string
-) {
-  const { error: updateError } = await supabase
-    .from('notification_events')
-    .update({
-      delivery_status: status,
-      last_error: error,
-      processed_at: new Date().toISOString(),
-    })
-    .eq('id', notificationId)
-
-  if (updateError) {
-    console.error('Error updating notification status:', updateError)
+async function processTimerNotification(event: any) {
+  console.log('⏰ Processing timer notification:', event.metadata)
+  
+  // 1. Get token for user
+  const { data: tokens, error: tokenError } = await supabase
+    .from('push_subscriptions')
+    .select('subscription')
+    .eq('user_id', event.user_id)
+  
+  if (tokenError) {
+    console.error('❌ Error fetching tokens:', tokenError)
+    return
+  }
+  
+  // 2. Send web push for each token
+  for (const token of tokens || []) {
+    try {
+      await sendWebPushNotification(token.subscription, {
+        title: event.metadata.title || 'Timer Complete',
+        body: event.metadata.message || 'Your timer has completed',
+        tag: `timer-${event.metadata.timer_id || 'unknown'}`,
+        data: {
+          url: '/dashboard',
+          timerId: event.metadata.timer_id
+        }
+      })
+    } catch (pushError) {
+      console.error('❌ Error sending push notification:', pushError)
+    }
+  }
+  
+  // Also create in-app notification if it doesn't exist
+  try {
+    const { count, error: countError } = await supabase
+      .from('notifications')
+      .select('*', { count: 'exact', head: true })
+      .eq('reference_id', String(event.metadata.timer_id))
+      .eq('type', 'timer_complete')
+    
+    if (countError) throw countError
+    
+    // Only create if not exists
+    if (count === 0) {
+      await supabase.from('notifications').insert({
+        user_id: event.user_id,
+        title: event.metadata.title || 'Timer Complete',
+        message: event.metadata.message || 'Your timer has completed',
+        type: 'timer_complete',
+        reference_id: String(event.metadata.timer_id),
+        reference_type: 'timer'
+      })
+    }
+  } catch (notifError) {
+    console.error('❌ Error creating in-app notification:', notifError)
   }
 }
 
-async function sendWebNotification(notification: NotificationEvent, device: DeviceToken) {
-  // Here we'd typically use a web push service
-  // For now, we'll just log the notification
-  console.log('Would send notification:', {
-    title: notification.metadata.title,
-    message: notification.metadata.message,
-    deviceToken: device.token,
-  })
+async function processTaskReminder(event: any) {
+  console.log('🔔 Processing task reminder:', event.metadata)
+  
+  // Implementation for task reminders (similar to timer logic)
+  const { data: tokens, error: tokenError } = await supabase
+    .from('push_subscriptions')
+    .select('subscription')
+    .eq('user_id', event.user_id)
+  
+  if (tokenError) {
+    console.error('❌ Error fetching tokens:', tokenError)
+    return
+  }
+  
+  for (const token of tokens || []) {
+    try {
+      await sendWebPushNotification(token.subscription, {
+        title: 'Task Reminder',
+        body: event.metadata.title || 'You have a task due soon',
+        tag: `task-${event.task_id || 'unknown'}`,
+        data: {
+          url: '/dashboard',
+          taskId: event.task_id
+        }
+      })
+    } catch (pushError) {
+      console.error('❌ Error sending push notification:', pushError)
+    }
+  }
+}
+
+// Additional check for newly completed timers (directly from DB)
+async function checkForCompletedTimers() {
+  try {
+    // Call the database function to process timers
+    await supabase.rpc('process_completed_timers')
+    console.log('✅ Checked for completed timers')
+  } catch (error) {
+    console.error('❌ Error checking for completed timers:', error)
+  }
+}
+
+// Function to send web push notifications
+async function sendWebPushNotification(subscription: any, notification: any) {
+  try {
+    // This is a placeholder - in a real implementation, you would use the Web Push API
+    // For now, we're just logging what would be sent
+    console.log('🔔 Would send web push notification:', { subscription, notification })
+    
+    // TODO: Implement actual web push using the subscription
+    // You would use the web-push library or equivalent in a real implementation
+    
+    return true
+  } catch (error) {
+    console.error('❌ Error in sendWebPushNotification:', error)
+    return false
+  }
 }

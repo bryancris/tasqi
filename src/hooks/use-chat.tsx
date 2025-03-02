@@ -109,17 +109,45 @@ export function useChat() {
         };
         setMessages(prev => [...prev, aiMessage]);
         
-        // Show notification for timer-related responses
-        if (data?.response && (
+        // Handle timer-related response
+        if (data?.timer) {
+          const timerData = data.timer;
+          
+          // Enhanced timer notification
+          showNotification({
+            title: timerData.action === 'created' 
+              ? `Timer Set: ${timerData.label || 'Unnamed Timer'}` 
+              : timerData.action === 'cancelled' 
+                ? 'Timer Cancelled' 
+                : 'Timer Update',
+            message: timerData.message || data.response,
+            type: "info",
+            persistent: true,
+            action: timerData.action === 'created' ? {
+              label: "View Timer",
+              onClick: () => {
+                // Navigate to the timer view or open timer dialog
+                // This could be expanded based on your app's navigation
+                window.location.href = '/dashboard';
+              }
+            } : undefined
+          });
+          
+          // Invalidate any relevant queries
+          await queryClient.invalidateQueries({ queryKey: ['timers'] });
+        }
+        // Still check general timer-related responses for backward compatibility
+        else if (data?.response && (
             data.response.includes("set a timer") || 
             data.response.includes("notify you at") ||
             data.response.includes("timer for") ||
             data.response.includes("timer is complete")
         )) {
           showNotification({
-            title: "Timer Set",
+            title: "Timer Update",
             message: data.response,
-            type: "info"
+            type: "info",
+            persistent: true
           });
         }
         
