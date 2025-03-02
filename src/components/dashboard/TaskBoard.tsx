@@ -4,7 +4,7 @@ import { DesktopTaskView } from "./DesktopTaskView";
 import { MobileTaskView } from "./MobileTaskView";
 import { useTasks } from "@/hooks/use-tasks";
 import { useTaskReorder } from "@/hooks/use-task-reorder";
-import { useCallback, useMemo, useEffect } from 'react';
+import { useCallback, useMemo, useEffect, useRef } from 'react';
 import { Subtask } from "./subtasks/SubtaskList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TaskAttachment } from "./form/types";
@@ -73,6 +73,7 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
   const { tasks, refetch, isLoading } = useTasks();
   const { handleDragEnd } = useTaskReorder(tasks, refetch);
   const queryClient = useQueryClient();
+  const isRefetchingRef = useRef(false);
 
   useEffect(() => {
     console.log("TaskBoard mounted");
@@ -87,9 +88,21 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
     const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
       if (event.type === 'updated' || event.type === 'added' || event.type === 'removed') {
         if (Array.isArray(event.query?.queryKey) && 
-            event.query?.queryKey[0] === 'tasks') {
-          console.log('Task query updated in TaskBoard, refreshing data');
-          refetch();
+            event.query?.queryKey[0] === 'tasks' &&
+            !isRefetchingRef.current) {
+          console.log('Task query updated in TaskBoard, marking as stale');
+          
+          // Set the flag to prevent recursive refetches
+          isRefetchingRef.current = true;
+          
+          // Mark the query as stale instead of immediately refetching
+          queryClient.invalidateQueries({ queryKey: ['tasks'] })
+            .then(() => {
+              // Reset the flag after a short delay
+              setTimeout(() => {
+                isRefetchingRef.current = false;
+              }, 100);
+            });
         }
       }
     });

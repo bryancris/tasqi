@@ -133,11 +133,11 @@ export function useTasks() {
   const { data: tasks = [], refetch, isLoading } = useQuery({
     queryKey: ['tasks'],
     queryFn: fetchTasks,
-    // Updated settings for more immediate updates
-    staleTime: 0, // Consider data stale immediately
+    // Updated settings for better performance
+    staleTime: 1000, // Consider data stale after 1 second
     gcTime: 5 * 60 * 1000, // Keep unused data for 5 minutes
     refetchOnWindowFocus: true, // Refetch when window regains focus
-    refetchOnMount: 'always', // Always refetch when component mounts
+    refetchOnMount: true, // Refetch when component mounts
     refetchOnReconnect: true, // Refetch on reconnect
     retry: 1,
   });
