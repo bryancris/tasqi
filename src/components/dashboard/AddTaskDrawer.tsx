@@ -1,5 +1,5 @@
 
-import { useState, ReactNode } from "react";
+import { useState, ReactNode, useEffect } from "react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useAddTaskForm } from "@/hooks/use-add-task-form";
 import { AddTaskHeader } from "./add-task/AddTaskHeader";
@@ -28,22 +28,22 @@ export function AddTaskDrawer({
   // Use our custom hook to manage form state
   const { formState, formActions } = useAddTaskForm({ initialDate });
 
+  // Log only when the open state changes, not on every render
+  useEffect(() => {
+    console.log("AddTaskDrawer open state changed:", open);
+  }, [open]);
+
   const handleSuccess = () => {
-    console.log("handleSuccess called in AddTaskDrawer");
     try {
       // First reset the form
       formActions.resetForm();
-      console.log("Form reset successfully");
       
       // Then close the drawer
       onOpenChange(false);
-      console.log("Drawer closed successfully");
     } catch (error) {
       console.error("Error in handleSuccess:", error);
     }
   };
-
-  console.log("AddTaskDrawer rendered, open state:", open);
 
   return (
     <>
