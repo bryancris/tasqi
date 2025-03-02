@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Message } from "@/components/chat/types";
@@ -12,7 +12,7 @@ export function useChat() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const fetchChatHistory = async () => {
+  const fetchChatHistory = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -49,7 +49,7 @@ export function useChat() {
         variant: "destructive",
       });
     }
-  };
+  }, [toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,24 +71,62 @@ export function useChat() {
         return;
       }
 
-      const { data, error } = await supabase.functions.invoke('process-chat', {
-        body: { message, userId: user.id }
-      });
+      // Add a loading indicator message while waiting for response
+      const tempAiMessage = { content: "...", isUser: false };
+      setMessages(prev => [...prev, tempAiMessage]);
 
-      if (error) {
-        console.error('Function error:', error);
-        throw error;
+      try {
+        const { data, error } = await supabase.functions.invoke('process-chat', {
+          body: { message, userId: user.id }
+        });
+
+        if (error) {
+          console.error('Function error:', error);
+          
+          // Remove the loading indicator message
+          setMessages(prev => prev.slice(0, -1));
+          
+          // Add an error message
+          setMessages(prev => [...prev, { 
+            content: "Sorry, I'm having trouble processing your request right now. Please try again later.", 
+            isUser: false 
+          }]);
+          
+          throw error;
+        }
+
+        // Remove the loading indicator message
+        setMessages(prev => prev.slice(0, -1));
+        
+        const aiMessage = { 
+          content: data.response || "I'm sorry, I couldn't process that request.", 
+          isUser: false 
+        };
+        setMessages(prev => [...prev, aiMessage]);
+        
+        // Refresh the tasks list after AI processes the message
+        await queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      } catch (invokeError) {
+        console.error('Error invoking function:', invokeError);
+        
+        // If we haven't already handled this error
+        if (messages[messages.length - 1].content === "...") {
+          // Remove the loading indicator message
+          setMessages(prev => prev.slice(0, -1));
+          
+          // Add an error message
+          setMessages(prev => [...prev, { 
+            content: "Sorry, I'm having trouble connecting to the server. Please check your internet connection and try again.", 
+            isUser: false 
+          }]);
+        }
+        
+        toast({
+          title: "Communication Error",
+          description: "Failed to communicate with the AI. Please try again later.",
+          variant: "destructive",
+        });
       }
-
-      const aiMessage = { 
-        content: data.response || "I'm sorry, I couldn't process that request.", 
-        isUser: false 
-      };
-      setMessages(prev => [...prev, aiMessage]);
-      
-      // Refresh the tasks list after AI processes the message
-      await queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      
     } catch (error) {
       console.error('Error processing message:', error);
       toast({

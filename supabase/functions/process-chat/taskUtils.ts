@@ -1,241 +1,238 @@
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import { extractDateFromMessage, formatDateForDB } from './dateUtils.ts'
+import { formatDateForDB } from './dateUtils.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') as string
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') as string
 const supabase = createClient(supabaseUrl, supabaseKey)
 
-/**
- * Creates a task from a message
- */
-export async function createTaskFromMessage(message: string, userId: string) {
-  try {
-    // Extract date from message
-    const extractedDate = extractDateFromMessage(message)
-    const formattedDate = extractedDate ? formatDateForDB(extractedDate) : null
-
-    // Get the highest position for proper ordering
-    const { data: positionData, error: positionError } = await supabase
-      .from('tasks')
-      .select('position')
-      .eq('user_id', userId)
-      .order('position', { ascending: false })
-      .limit(1)
-
-    if (positionError) {
-      console.error('Error getting position:', positionError)
-      throw positionError
-    }
-
-    const nextPosition = positionData && positionData.length > 0 
-      ? (positionData[0].position + 1) 
-      : 0
-
-    // Create the task
-    const { data, error } = await supabase
-      .from('tasks')
-      .insert({
-        title: message,
-        user_id: userId,
-        owner_id: userId,
-        status: formattedDate ? 'scheduled' : 'unscheduled',
-        date: formattedDate,
-        position: nextPosition
-      })
-      .select()
-
-    if (error) {
-      console.error('Error creating task:', error)
-      throw error
-    }
-
-    return data
-  } catch (error) {
-    console.error('Error in createTaskFromMessage:', error)
-    throw error
-  }
-}
-
-/**
- * Checks if a message is asking about tasks (query) rather than creating a task
- */
 export function isTaskQueryRequest(message: string): boolean {
   const queryPhrases = [
-    'how many tasks', 'what tasks', 'list tasks', 'show tasks', 
-    'what are my tasks', 'tasks for today', 'today\'s tasks',
-    'pending tasks', 'scheduled tasks', 'what do i have',
-    'what\'s on my schedule', 'what is on my schedule',
-    'what\'s my schedule', 'what is my schedule'
+    "what tasks",
+    "my tasks",
+    "tasks for",
+    "do i have",
+    "what do i have",
+    "what are my",
+    "show me my tasks",
+    "show my tasks",
+    "list my tasks",
+    "view my tasks",
+    "see my tasks",
   ];
   
   const lowerMessage = message.toLowerCase();
-  
   return queryPhrases.some(phrase => lowerMessage.includes(phrase));
 }
 
-/**
- * Fetches tasks for the specified date and returns them categorized
- */
-export async function getTasksForDate(userId: string, date: Date): Promise<{
-  pendingTasks: any[];
-  completedTasks: any[];
-  events: any[];
-  totalCount: number;
-}> {
-  // Get start and end of day in UTC
-  const startOfDay = new Date(date);
-  startOfDay.setUTCHours(0, 0, 0, 0);
+export async function getTaskCountForDate(userId: string, date: Date): Promise<number> {
+  const formattedDate = formatDateForDB(date);
   
-  const endOfDay = new Date(date);
-  endOfDay.setUTCHours(23, 59, 59, 999);
-  
-  const formattedDate = startOfDay.toISOString().split('T')[0];
-  
-  // Fetch tasks for the specified date
-  const { data: tasks, error } = await supabase
+  const { data, error } = await supabase
     .from('tasks')
-    .select(`
-      *,
-      task_attachments(*),
-      shared_tasks(*)
-    `)
+    .select('id', { count: 'exact' })
+    .eq('user_id', userId)
+    .eq('date', formattedDate)
+    .eq('status', 'scheduled');
+  
+  if (error) {
+    console.error('Error getting task count:', error);
+    throw error;
+  }
+  
+  return data?.length || 0;
+}
+
+export async function getTasksForDate(userId: string, date: Date): Promise<any[]> {
+  const formattedDate = formatDateForDB(date);
+  
+  const { data, error } = await supabase
+    .from('tasks')
+    .select('*')
     .eq('user_id', userId)
     .eq('date', formattedDate);
   
   if (error) {
-    console.error('Error fetching tasks for date:', error);
+    console.error('Error getting tasks:', error);
     throw error;
   }
   
-  // Also fetch shared tasks
-  const { data: sharedWithUserTasks, error: sharedTasksError } = await supabase
-    .from('shared_tasks')
-    .select(`
-      *,
-      task:tasks(
-        *,
-        task_attachments(*)
-      )
-    `)
-    .eq('shared_with_user_id', userId);
-
-  if (sharedTasksError) {
-    console.error('Error fetching shared tasks:', sharedTasksError);
-    throw sharedTasksError;
-  }
-  
-  // Process shared tasks and filter by date
-  const sharedTasks = sharedWithUserTasks
-    .filter(st => st.task) // Filter out null tasks
-    .map(st => st.task)
-    .filter(task => task.date === formattedDate);
-  
-  // Combine tasks and shared tasks
-  const allTasks = [...(tasks || []), ...(sharedTasks || [])];
-  
-  // Categorize tasks
-  const pendingTasks = allTasks.filter(task => 
-    task.status !== 'completed' && task.status !== 'event'
-  );
-  
-  const completedTasks = allTasks.filter(task => 
-    task.status === 'completed'
-  );
-  
-  const events = allTasks.filter(task => 
-    task.status === 'event'
-  );
-  
-  return {
-    pendingTasks,
-    completedTasks,
-    events,
-    totalCount: allTasks.length
-  };
+  return data || [];
 }
 
-/**
- * Formats a task for display in the chat
- */
-export function formatTaskForDisplay(task: any): string {
-  let result = `- ${task.title}`;
-  
-  // Add priority if available
-  if (task.priority) {
-    const priorityDisplay = task.priority.charAt(0).toUpperCase() + task.priority.slice(1);
-    result += ` (${priorityDisplay})`;
+export function generateTaskSummary(tasks: any[], date: Date): string {
+  if (tasks.length === 0) {
+    return `You don't have any tasks scheduled for ${date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}.`;
   }
   
-  // Add time if available
-  if (task.start_time) {
-    const timeParts = task.start_time.split(':');
-    const hours = parseInt(timeParts[0]);
-    const minutes = timeParts[1];
-    
-    // Format in 12-hour time
-    const period = hours >= 12 ? 'PM' : 'AM';
-    const displayHours = hours % 12 || 12;
-    
-    result += ` at ${displayHours}:${minutes} ${period}`;
-  } else if (task.is_all_day) {
-    result += ' (All day)';
-  }
+  const taskCount = tasks.length;
+  const dateString = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
   
-  return result;
-}
-
-/**
- * Generates a summary of tasks for a given date
- */
-export function generateTaskSummary(tasks: {
-  pendingTasks: any[];
-  completedTasks: any[];
-  events: any[];
-  totalCount: number;
-}, date: Date): string {
-  const dateString = date.toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
+  let summary = `You have ${taskCount} task${taskCount === 1 ? '' : 's'} for ${dateString}:\n\n`;
+  
+  tasks.forEach((task, index) => {
+    const timeInfo = task.start_time 
+      ? `at ${formatTime(task.start_time)}` 
+      : '';
+    
+    summary += `${index + 1}. ${task.title} ${timeInfo}\n`;
   });
   
-  const isToday = new Date().toDateString() === date.toDateString();
-  const dateLabel = isToday ? 'today' : `on ${dateString}`;
+  return summary;
+}
+
+export async function createTaskFromMessage(message: string, userId: string): Promise<void> {
+  try {
+    // Extract a title from the message (simple implementation)
+    const title = extractTaskTitle(message);
+    
+    // Extract date if provided in the message, otherwise default to today
+    const date = extractDateFromMessage(message) || new Date();
+    const formattedDate = formatDateForDB(date);
+    
+    // Extract time if provided (simple implementation)
+    const timeMatch = message.match(/at\s+(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)/i);
+    let startTime = null;
+    
+    if (timeMatch) {
+      startTime = parseTime(timeMatch[1]);
+    }
+    
+    // Determine if this is a scheduled or unscheduled task
+    const status = formattedDate ? 'scheduled' : 'unscheduled';
+    
+    // Create the task
+    const { data, error } = await supabase
+      .from('tasks')
+      .insert([
+        {
+          title,
+          date: formattedDate,
+          start_time: startTime,
+          status,
+          user_id: userId,
+          priority: 'medium',
+        }
+      ]);
+    
+    if (error) throw error;
+    
+    console.log('Task created successfully:', data);
+  } catch (error) {
+    console.error('Error creating task:', error);
+    throw error;
+  }
+}
+
+// Helper functions
+function extractTaskTitle(message: string): string {
+  // Remove common task creation phrases
+  let title = message;
+  const phrasesToRemove = [
+    "add task ",
+    "create task ",
+    "new task ",
+    "remind me to ",
+    "need to ",
+    "have to ",
+    "got to ",
+    "gotta ",
+  ];
   
-  let summary = '';
+  phrasesToRemove.forEach(phrase => {
+    if (title.toLowerCase().includes(phrase)) {
+      title = title.replace(new RegExp(phrase, 'i'), '');
+    }
+  });
   
-  if (tasks.totalCount === 0) {
-    return `You don't have any tasks scheduled ${dateLabel}.`;
+  // Remove time information if present
+  title = title.replace(/\bat\s+\d{1,2}(?::\d{2})?\s*(?:am|pm)?/i, '');
+  
+  // Remove date information
+  const datePatterns = [
+    /\bon\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i,
+    /\btoday\b/i,
+    /\btomorrow\b/i,
+    /\bnext\s+week\b/i,
+  ];
+  
+  datePatterns.forEach(pattern => {
+    title = title.replace(pattern, '');
+  });
+  
+  // Trim extra spaces and capitalize first letter
+  title = title.trim();
+  title = title.charAt(0).toUpperCase() + title.slice(1);
+  
+  return title;
+}
+
+function formatTime(timeString: string): string {
+  if (!timeString) return '';
+  
+  // Simple formatting - convert "15:00:00" to "3:00 PM"
+  const date = new Date(`2000-01-01T${timeString}`);
+  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+}
+
+function parseTime(timeString: string): string | null {
+  try {
+    if (!timeString) return null;
+    
+    // Handle 24-hour format
+    const hourMinuteRegex = /(\d{1,2})(?::(\d{2}))?/;
+    const match = timeString.match(hourMinuteRegex);
+    
+    if (!match) return null;
+    
+    let hours = parseInt(match[1], 10);
+    const minutes = match[2] ? parseInt(match[2], 10) : 0;
+    
+    // Check for AM/PM
+    if (timeString.toLowerCase().includes('pm') && hours < 12) {
+      hours += 12;
+    } else if (timeString.toLowerCase().includes('am') && hours === 12) {
+      hours = 0;
+    }
+    
+    // Format as HH:MM:00
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
+  } catch (error) {
+    console.error('Error parsing time:', error);
+    return null;
+  }
+}
+
+export function extractDateFromMessage(message: string): Date | null {
+  // Re-using from dateUtils to avoid circular imports
+  const today = new Date();
+  
+  // Check for "today" mention
+  if (message.toLowerCase().includes('today')) {
+    return today;
   }
   
-  summary += `You have ${tasks.totalCount} task${tasks.totalCount !== 1 ? 's' : ''} ${dateLabel}:\n\n`;
-  
-  // Add pending tasks
-  if (tasks.pendingTasks.length > 0) {
-    summary += `Pending (${tasks.pendingTasks.length}):\n`;
-    tasks.pendingTasks.forEach(task => {
-      summary += `${formatTaskForDisplay(task)}\n`;
-    });
-    summary += '\n';
+  // Check for "tomorrow" mention
+  if (message.toLowerCase().includes('tomorrow')) {
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow;
   }
   
-  // Add completed tasks
-  if (tasks.completedTasks.length > 0) {
-    summary += `Completed (${tasks.completedTasks.length}):\n`;
-    tasks.completedTasks.forEach(task => {
-      summary += `${formatTaskForDisplay(task)}\n`;
-    });
-    summary += '\n';
+  // Check for days of the week
+  const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const dayMentions = days.filter(day => message.toLowerCase().includes(day));
+  
+  if (dayMentions.length > 0) {
+    const targetDay = days.indexOf(dayMentions[0]);
+    const result = new Date(today);
+    const currentDay = today.getDay();
+    const daysUntilTarget = (targetDay + 7 - currentDay) % 7 || 7;
+    
+    result.setDate(today.getDate() + daysUntilTarget);
+    return result;
   }
   
-  // Add events
-  if (tasks.events.length > 0) {
-    summary += `Events (${tasks.events.length}):\n`;
-    tasks.events.forEach(event => {
-      summary += `${formatTaskForDisplay(event)}\n`;
-    });
-  }
-  
-  return summary.trim();
+  // If no date is explicitly mentioned, return null
+  return null;
 }

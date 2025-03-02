@@ -1,15 +1,22 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import { corsHeaders } from '../_shared/cors.ts'
 import { extractDateFromMessage, formatDateForDB } from './dateUtils.ts'
 import { generateResponse, isTaskCreationRequest } from './openaiUtils.ts'
 import { 
   createTaskFromMessage, 
   isTaskQueryRequest, 
   getTasksForDate, 
-  generateTaskSummary 
+  generateTaskSummary,
+  getTaskCountForDate
 } from './taskUtils.ts'
+
+// Define CORS headers to allow cross-origin requests
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+}
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') as string
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') as string
@@ -18,11 +25,15 @@ const supabase = createClient(supabaseUrl, supabaseKey)
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { 
+      status: 204,
+      headers: corsHeaders 
+    })
   }
 
   try {
     const { message, userId } = await req.json()
+    console.log('Received request:', { message, userId })
 
     // Store user message in database
     await supabase.from('chat_messages').insert({
@@ -34,8 +45,22 @@ serve(async (req) => {
     let response = ''
     let shouldCreateTask = false
 
+    // Check if this is a task query request about task count
+    if (message.toLowerCase().includes('how many') && message.toLowerCase().includes('task') && 
+        (message.toLowerCase().includes('today') || message.toLowerCase().includes('do i have'))) {
+      console.log('Detected task count query request')
+      
+      // Extract date from message or default to today
+      const extractedDate = extractDateFromMessage(message) || new Date()
+      
+      // Get task count for the extracted date
+      const taskCount = await getTaskCountForDate(userId, extractedDate)
+      
+      // Generate a response with the task count
+      response = `You have ${taskCount} task${taskCount === 1 ? '' : 's'} scheduled for ${extractedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}.`
+    }
     // Check if this is a task query request (asking about tasks)
-    if (isTaskQueryRequest(message)) {
+    else if (isTaskQueryRequest(message)) {
       console.log('Detected task query request')
       
       // Extract date from message or default to today
