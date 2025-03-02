@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useNotifications } from "@/components/notifications/NotificationsManager";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { playNotificationSound } from "@/utils/notifications/soundUtils";
 
 export default function Chat() {
   const [error, setError] = useState<Error | null>(null);
@@ -52,11 +53,13 @@ export default function Chat() {
         }
 
         if (timerNotifications && timerNotifications.length > 0) {
+          console.log('📱 Found timer notifications:', timerNotifications.length);
+          
           // Show notifications and mark them as read
           for (const notification of timerNotifications) {
             showNotification({
-              title: notification.title,
-              message: notification.message,
+              title: notification.title || "Timer Complete",
+              message: notification.message || "Your timer has finished",
               type: 'info',
               persistent: true,
               action: {
@@ -80,10 +83,18 @@ export default function Chat() {
 
           // Play notification sound
           try {
-            const audio = new Audio('/notification-sound.mp3');
-            await audio.play();
+            await playNotificationSound();
+            console.log('🔊 Timer notification sound played via utils');
           } catch (soundError) {
             console.warn('Could not play sound:', soundError);
+            // Fallback method
+            try {
+              const audio = new Audio('/notification-sound.mp3');
+              audio.volume = 1.0;
+              await audio.play();
+            } catch (fallbackError) {
+              console.error('Fallback sound also failed:', fallbackError);
+            }
           }
 
           // Refresh notifications list if using that feature
@@ -105,7 +116,7 @@ export default function Chat() {
         }
 
         if (data && data.length > 0) {
-          // Process task notifications...
+          console.log('Found task notifications:', data.length);
           // Similar handling as timer notifications
         }
       } catch (err) {
@@ -113,9 +124,9 @@ export default function Chat() {
       }
     };
 
-    // Check immediately and then every 15 seconds (less frequent to reduce database load)
+    // Check immediately and then every 10 seconds (more frequent to ensure timers are caught)
     checkForNotifications();
-    const intervalId = setInterval(checkForNotifications, 15000);
+    const intervalId = setInterval(checkForNotifications, 10000);
 
     return () => clearInterval(intervalId);
   }, [fetchChatHistory, showNotification, queryClient]);

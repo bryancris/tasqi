@@ -73,10 +73,12 @@ export function useChat() {
         
         // Handle timer-related response
         if (data?.timer) {
+          console.log('⏰ Timer data received:', data.timer);
           await handleTimerResponse(data.timer);
         } 
         // Still check general timer-related responses for backward compatibility
         else if (data?.response) {
+          console.log('🔍 Checking response for timer references:', data.response.substring(0, 50) + '...');
           await handleTimerRelatedResponse(data.response);
         }
         

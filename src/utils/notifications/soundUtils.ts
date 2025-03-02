@@ -3,10 +3,32 @@ export async function playNotificationSound() {
   console.log('🎵 Initializing notification sound...');
   try {
     const audio = new Audio('/notification-sound.mp3');
-    audio.volume = 0.5;
+    audio.volume = 1.0; // Maximum volume
+    
+    // Attempt to load the audio before playing
+    await new Promise((resolve, reject) => {
+      audio.oncanplaythrough = resolve;
+      audio.onerror = reject;
+      
+      // Set a timeout in case loading hangs
+      const timeout = setTimeout(() => {
+        reject(new Error('Audio loading timed out'));
+      }, 3000);
+      
+      // Cleanup timeout if loaded successfully
+      audio.oncanplaythrough = () => {
+        clearTimeout(timeout);
+        resolve(true);
+      };
+      
+      // Force load
+      audio.load();
+    });
     
     console.log('🔊 Attempting to play notification sound...');
-    await audio.play();
+    const playPromise = audio.play();
+    
+    await playPromise;
     
     console.log('✅ Notification sound played successfully');
     
@@ -23,6 +45,7 @@ export async function playNotificationSound() {
       console.error('❌ Audio playback error:', e);
     });
     
+    return true;
   } catch (error) {
     console.error('❌ Could not play notification sound:', error);
     // Log more details about the error
@@ -31,6 +54,19 @@ export async function playNotificationSound() {
       console.error('Error message:', error.message);
       console.error('Error stack:', error.stack);
     }
-    throw error; // Re-throw to handle in the calling code
+    
+    // Try a fallback approach without async/await
+    try {
+      console.log('🔄 Trying fallback sound approach...');
+      const fallbackAudio = new Audio('/notification-sound.mp3');
+      fallbackAudio.volume = 1.0;
+      
+      // Play without awaiting
+      fallbackAudio.play();
+      return true;
+    } catch (fallbackError) {
+      console.error('❌ Fallback sound also failed:', fallbackError);
+      throw error; // Re-throw the original error
+    }
   }
 }
