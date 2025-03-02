@@ -27,11 +27,13 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
   useEffect(() => {
     // Listen for query invalidations
     const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
-      if (event.type === 'queryUpdated' && 
-          event.query.queryKey[0] === 'tasks') {
-        console.log('Task query updated, refreshing mobile view');
-        // Force refetch when tasks are updated
-        queryClient.refetchQueries({ queryKey: ['tasks'] });
+      // Check if tasks query was modified
+      if (event.type === 'updated' || event.type === 'added' || event.type === 'removed') {
+        if (Array.isArray(event.query?.queryKey) && event.query?.queryKey[0] === 'tasks') {
+          console.log('Task query updated, refreshing mobile view');
+          // Force refetch when tasks are updated
+          queryClient.refetchQueries({ queryKey: ['tasks'] });
+        }
       }
     });
 

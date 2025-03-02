@@ -85,11 +85,12 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
     
     // Set up a listener for task-related changes
     const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
-      if (event.type === 'queryUpdated' && 
-          Array.isArray(event.query.queryKey) && 
-          event.query.queryKey[0] === 'tasks') {
-        console.log('Task query updated in TaskBoard, refreshing data');
-        refetch();
+      if (event.type === 'updated' || event.type === 'added' || event.type === 'removed') {
+        if (Array.isArray(event.query?.queryKey) && 
+            event.query?.queryKey[0] === 'tasks') {
+          console.log('Task query updated in TaskBoard, refreshing data');
+          refetch();
+        }
       }
     });
     
