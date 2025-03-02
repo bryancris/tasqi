@@ -16,12 +16,12 @@ export function useChat() {
     removeLastMessage,
     processMessage,
     setIsLoading,
-    toast
+    toast,
+    setMessages
   } = useChatMessaging();
 
   const { fetchChatHistory } = useChatHistory(messages => {
-    // We need to use a function here instead of directly using setMessages
-    // because useChatHistory doesn't have access to the setMessages from useChatMessaging
+    // Pass the messages to the setMessages function from useChatMessaging
     if (typeof messages === 'function') {
       const messagesArray = messages([]);
       setMessages(messagesArray);
