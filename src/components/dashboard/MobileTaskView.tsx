@@ -6,8 +6,9 @@ import { DndContext, MouseSensor, TouchSensor, useSensor, useSensors, DragEndEve
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { startOfDay, isAfter, parseISO, isSameDay } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TimelineSection } from "./timeline/TimelineSection";
+import { useQueryClient } from "@tanstack/react-query";
 
 export interface MobileTaskViewProps {
   tasks: Task[];
@@ -20,6 +21,24 @@ export interface MobileTaskViewProps {
 export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, onComplete }: MobileTaskViewProps) {
   const [view, setView] = useState<'board' | 'timeline'>('board');
   const todayStart = startOfDay(new Date());
+  const queryClient = useQueryClient();
+
+  // Create a subscription to task updates
+  useEffect(() => {
+    // Listen for query invalidations
+    const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
+      if (event.type === 'queryUpdated' && 
+          event.query.queryKey[0] === 'tasks') {
+        console.log('Task query updated, refreshing mobile view');
+        // Force refetch when tasks are updated
+        queryClient.refetchQueries({ queryKey: ['tasks'] });
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [queryClient]);
 
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -80,6 +99,16 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
     .filter(task => task.status !== 'completed')
     .map(task => task.id);
 
+  // Enhanced onComplete function with refetch
+  const handleComplete = () => {
+    console.log("Task completed, refreshing tasks");
+    if (onComplete) {
+      onComplete();
+    }
+    // Force an immediate refetch
+    queryClient.refetchQueries({ queryKey: ['tasks'] });
+  };
+
   return (
     <div className="h-[calc(100vh-144px)] overflow-hidden px-4">
       <Card className="h-full border-none shadow-none bg-transparent">
@@ -108,7 +137,7 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
                       task={task}
                       index={index}
                       isDraggable={task.status !== 'completed'}
-                      onComplete={onComplete}
+                      onComplete={handleComplete}
                     />
                   ))}
                   {sortedTasks.length === 0 && (

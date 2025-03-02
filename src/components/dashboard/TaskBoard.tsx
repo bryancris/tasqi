@@ -1,3 +1,4 @@
+
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DesktopTaskView } from "./DesktopTaskView";
 import { MobileTaskView } from "./MobileTaskView";
@@ -7,6 +8,7 @@ import { useCallback, useMemo, useEffect } from 'react';
 import { Subtask } from "./subtasks/SubtaskList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TaskAttachment } from "./form/types";
+import { useQueryClient } from "@tanstack/react-query";
 
 export type TaskPriority = "low" | "medium" | "high";
 
@@ -70,15 +72,34 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
   const isMobile = useIsMobile();
   const { tasks, refetch, isLoading } = useTasks();
   const { handleDragEnd } = useTaskReorder(tasks, refetch);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     console.log("TaskBoard mounted");
     console.log("Is mobile:", isMobile);
     console.log("Is loading:", isLoading);
     console.log("Tasks count:", tasks.length);
-  }, [isMobile, isLoading, tasks.length]);
+
+    // Force refetch on mount to ensure we have the latest data
+    refetch();
+    
+    // Set up a listener for task-related changes
+    const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
+      if (event.type === 'queryUpdated' && 
+          Array.isArray(event.query.queryKey) && 
+          event.query.queryKey[0] === 'tasks') {
+        console.log('Task query updated in TaskBoard, refreshing data');
+        refetch();
+      }
+    });
+    
+    return () => {
+      unsubscribe();
+    };
+  }, [isMobile, isLoading, refetch, queryClient]);
 
   const memoizedRefetch = useCallback(() => {
+    console.log("Executing memoizedRefetch");
     return refetch();
   }, [refetch]);
 

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -50,7 +49,6 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
   const queryClient = useQueryClient();
   const [directUserId, setDirectUserId] = useState<string | null>(null);
   
-  // Add direct auth check on component mount
   useEffect(() => {
     const checkAuthDirectly = async () => {
       try {
@@ -84,7 +82,6 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
       return;
     }
 
-    // Validate event-specific requirements
     if (isEvent) {
       if (!date) {
         console.error("Events must have a date");
@@ -93,7 +90,6 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
       }
     }
 
-    // Check for authentication using BOTH context and direct check
     const contextAuth = !!(session || user);
     const userId = session?.user?.id || user?.id || directUserId;
     
@@ -114,12 +110,10 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
     try {
       console.log("Starting task creation process...");
       
-      // Determine the task status based on scheduling options
       let status: 'scheduled' | 'unscheduled' | 'event';
       
       if (isEvent) {
         status = 'event';
-        // Events must have a date
         if (!date) {
           toast.error("Events must have a date");
           setIsLoading(false);
@@ -135,24 +129,19 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
       console.log("User authenticated with ID:", userId);
       console.log("Task status determined as:", status);
 
-      // Validate time fields when needed
       if ((isScheduled || (isEvent && !isAllDay)) && startTime && !endTime) {
         console.log("Missing end time when start time is set, using default end time");
-        // If start time exists but end time doesn't, set a default end time (1 hour later)
         const [hours, minutes] = startTime.split(':').map(Number);
         const endHours = (hours + 1) % 24;
         const newEndTime = `${endHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
         setEndTime(newEndTime);
       }
 
-      // Prepare the task data with improved validation
       const taskData = {
         title,
         description,
         status,
-        // Only set date if it's required (for scheduled tasks and events)
         date: (isScheduled || isEvent) && date ? date : null,
-        // Only set times if they're required and valid
         start_time: (isScheduled || (isEvent && !isAllDay)) && startTime ? startTime : null,
         end_time: (isScheduled || (isEvent && !isAllDay)) && endTime ? endTime : null,
         priority: isEvent ? "medium" : priority,
@@ -161,16 +150,15 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
         user_id: userId,
         owner_id: userId,
         is_all_day: isEvent ? isAllDay : false,
-        position: 0, // This will be adjusted by the backend
-        assignees: [], // Initialize empty array for assignees
-        shared: false, // Default to not shared
-        is_tracking: false, // Default to not tracking
-        reschedule_count: 0 // Initialize reschedule count
+        position: 0,
+        assignees: [],
+        shared: false,
+        is_tracking: false,
+        reschedule_count: 0
       };
       
       console.log("Step 2: Preparing task data:", taskData);
 
-      // Get existing tasks count to properly set position
       console.log("Step 3: Fetching existing tasks for position");
       const { data: existingTasks, error: countError } = await supabase
         .from("tasks")
@@ -190,7 +178,6 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
         }
       }
 
-      // Create the task
       console.log("Step 4: Creating task with final data:", taskData);
       const { data: taskResult, error: taskError } = await supabase
         .from("tasks")
@@ -199,7 +186,6 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
 
       if (taskError) {
         console.error("Error creating task:", taskError);
-        // More detailed error debugging
         console.error("Error details:", {
           message: taskError.message,
           code: taskError.code,
@@ -207,12 +193,10 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
           hint: taskError.hint
         });
         
-        // Check if it's an RLS policy error
         if (taskError.message.includes("violates row-level security policy")) {
           console.error("RLS policy violation - check permissions");
           toast.error("Permission error: You don't have access to create tasks");
         } else {
-          // Check for data validation errors
           if (taskError.message.includes("invalid input value")) {
             console.error("Data validation error - check task data format");
             toast.error("Task creation failed: Invalid data format");
@@ -225,7 +209,6 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
       
       console.log("Task created successfully:", taskResult);
 
-      // If there are subtasks, insert them
       if (subtasks.length > 0 && taskResult && taskResult.length > 0) {
         const taskId = taskResult[0].id;
         
@@ -252,17 +235,14 @@ export function AddTaskForm({ formState, formActions, onSuccess }: AddTaskFormPr
         console.log("No subtasks to insert");
       }
 
-      // Invalidate and refetch tasks
       console.log("Step 6: Invalidating tasks query cache");
       await queryClient.invalidateQueries({ queryKey: ["tasks"] });
       
       console.log("Step 7: Task creation complete, showing success message");
       toast.success('Task created successfully');
       
-      // Explicitly call onSuccess to close the drawer
       console.log("Step 8: Calling onSuccess callback");
       if (typeof onSuccess === 'function') {
-        // This line is crucial - we call onSuccess explicitly to close the drawer
         onSuccess();
         console.log("onSuccess callback completed");
       } else {
