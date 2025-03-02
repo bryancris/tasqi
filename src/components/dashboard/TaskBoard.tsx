@@ -74,6 +74,7 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
   const { handleDragEnd } = useTaskReorder(tasks, refetch);
   const queryClient = useQueryClient();
   const isRefetchingRef = useRef(false);
+  const refetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     console.log("TaskBoard mounted");
@@ -84,31 +85,50 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
     // Force refetch on mount to ensure we have the latest data
     refetch();
     
-    // Set up a listener for task-related changes
+    // Set up a listener for task-related changes with improved debounce
     const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
       if (event.type === 'updated' || event.type === 'added' || event.type === 'removed') {
         if (Array.isArray(event.query?.queryKey) && 
             event.query?.queryKey[0] === 'tasks' &&
             !isRefetchingRef.current) {
-          console.log('Task query updated in TaskBoard, marking as stale');
+          console.log('Task query updated in TaskBoard, debouncing refetch');
           
           // Set the flag to prevent recursive refetches
           isRefetchingRef.current = true;
           
-          // Mark the query as stale instead of immediately refetching
-          queryClient.invalidateQueries({ queryKey: ['tasks'] })
-            .then(() => {
-              // Reset the flag after a short delay
-              setTimeout(() => {
+          // Clear any existing timeout
+          if (refetchTimeoutRef.current) {
+            clearTimeout(refetchTimeoutRef.current);
+          }
+          
+          // Set a longer debounce timeout (500ms instead of 100ms)
+          refetchTimeoutRef.current = setTimeout(() => {
+            console.log('Executing debounced task refetch');
+            queryClient.invalidateQueries({ queryKey: ['tasks'] })
+              .then(() => {
+                // Reset the flag after the query is invalidated
+                setTimeout(() => {
+                  isRefetchingRef.current = false;
+                  refetchTimeoutRef.current = null;
+                }, 200);
+              })
+              .catch(error => {
+                console.error('Error invalidating tasks query:', error);
                 isRefetchingRef.current = false;
-              }, 100);
-            });
+                refetchTimeoutRef.current = null;
+              });
+          }, 500);
         }
       }
     });
     
     return () => {
       unsubscribe();
+      // Clean up any pending timeout
+      if (refetchTimeoutRef.current) {
+        clearTimeout(refetchTimeoutRef.current);
+        refetchTimeoutRef.current = null;
+      }
     };
   }, [isMobile, isLoading, refetch, queryClient]);
 

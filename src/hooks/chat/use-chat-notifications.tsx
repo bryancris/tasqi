@@ -15,9 +15,18 @@ export function useChatNotifications() {
     
     console.log('🔄 Refreshing task and notification lists');
     
+    // Use staggered refreshes to avoid hammering the database
     debouncedRefresh(['tasks'], 500);
-    debouncedRefresh(['notifications'], 800);
-    debouncedRefresh(['timers'], 1000);
+    setTimeout(() => {
+      if (isMountedRef.current) {
+        debouncedRefresh(['notifications'], 800);
+      }
+    }, 200);
+    setTimeout(() => {
+      if (isMountedRef.current) {
+        debouncedRefresh(['timers'], 1000);
+      }
+    }, 400);
   }, [debouncedRefresh, isMountedRef]);
 
   return {

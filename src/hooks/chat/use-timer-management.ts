@@ -1,128 +1,107 @@
 
-import { useRef, useCallback, useEffect } from "react";
-import { playNotificationSound } from "@/utils/notifications/soundUtils";
+import { useCallback, useRef } from "react";
 import { useNotifications } from "@/components/notifications/NotificationsManager";
+import { playNotificationSound } from "@/utils/notifications/soundUtils";
 
-type ActiveTimer = {
-  id: string;
-  timeoutId: NodeJS.Timeout;
-  label: string;
-  expiresAt: number;
-};
-
-export function useTimerManagement(debouncedRefresh: (queryKey: string[], delay: number) => void, isMountedRef: React.RefObject<boolean>) {
+export function useTimerManagement(
+  debouncedRefresh: (queryKey: string[], delay: number) => void,
+  isMountedRef: React.RefObject<boolean>
+) {
   const { showNotification } = useNotifications();
-  const activeTimersRef = useRef<Map<string, ActiveTimer>>(new Map());
   const timerPhrasesDetectedRef = useRef<Set<string>>(new Set());
-  
-  useEffect(() => {
-    return () => {
-      activeTimersRef.current.forEach(timer => {
-        clearTimeout(timer.timeoutId);
-      });
-      activeTimersRef.current.clear();
-    };
-  }, []);
+  const timerProcessingRef = useRef<boolean>(false);
 
   const handleTimerResponse = useCallback(async (timerData: any) => {
     if (!timerData || !isMountedRef.current) {
-      console.log('⚠️ Timer data is empty or undefined, or component unmounted');
+      console.log('⚠️ Invalid timer data or component unmounted');
       return;
     }
     
-    console.log('📅 Processing timer response:', timerData);
+    // Prevent concurrent timer processing
+    if (timerProcessingRef.current) {
+      console.log('⚠️ Already processing a timer response, skipping');
+      return;
+    }
     
-    if (timerData.action === 'created') {
-      try {
-        // Store this timer phrase to prevent duplicate notifications
-        if (timerData.label) {
-          timerPhrasesDetectedRef.current.add(timerData.label.toLowerCase());
+    timerProcessingRef.current = true;
+    
+    try {
+      console.log('⏰ Processing timer data:', timerData);
+      
+      if (timerData.action === 'created') {
+        // Calculate a display-friendly duration
+        const label = timerData.label || `${timerData.duration} ${timerData.unit}${timerData.duration > 1 && !timerData.unit.endsWith('s') ? 's' : ''}`;
+        
+        try {
+          // Play notification sound with good error handling
+          await playNotificationSound().catch(soundError => {
+            console.warn('Failed to play notification sound:', soundError);
+          });
+          
+          // Show notification with proper error handling
+          await showNotification({
+            title: "Timer Started",
+            message: `Timer for ${label} has been started`,
+            type: "info",
+            persistent: false
+          });
+          
+          console.log('✅ Timer notification shown successfully');
+        } catch (notificationError) {
+          console.error('❌ Failed to show timer notification:', notificationError);
         }
         
-        await showNotification({
-          title: `Timer Set: ${timerData.label || 'Unnamed Timer'}`,
-          message: `I'll notify you when your ${timerData.label || 'timer'} is complete.`,
-          type: "info",
-          persistent: false
-        });
-        console.log('✅ Timer setup notification shown');
-      } catch (notificationError) {
-        console.error('❌ Failed to show timer setup notification:', notificationError);
-      }
-      
-      if (timerData.milliseconds && timerData.milliseconds > 0) {
-        const timerId = `timer-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-        const expirationTime = Date.now() + timerData.milliseconds;
-        
-        console.log(`⏰ Setting client-side timer for ${timerData.milliseconds}ms (${timerData.label}) to expire at ${new Date(expirationTime).toLocaleTimeString()}`);
-        
-        const timeoutId = setTimeout(async () => {
-          if (!isMountedRef.current) {
-            console.log('Timer completed but component unmounted, skipping notification');
-            return;
-          }
-          
-          console.log(`⏰ Timer complete: ${timerData.label}`);
-          
-          try {
-            const soundPlayed = await playNotificationSound();
-            console.log('🔊 Timer complete notification sound played:', soundPlayed);
-          } catch (soundError) {
-            console.error('❌ Could not play timer completion sound:', soundError);
-          }
-          
-          try {
-            await showNotification({
-              title: "Timer Complete",
-              message: `Your ${timerData.label} timer is complete!`,
-              type: "info",
-              persistent: true
-            });
-            console.log('✅ Timer completion notification shown');
-          } catch (notificationError) {
-            console.error('❌ Failed to show timer completion notification:', notificationError);
-          }
-          
+        // Refresh timer list with sufficient delay
+        setTimeout(() => {
           if (isMountedRef.current) {
-            activeTimersRef.current.delete(timerId);
-            
-            debouncedRefresh(['notifications'], 500);
-            debouncedRefresh(['timers'], 700);
+            debouncedRefresh(['timers'], 800);
           }
-        }, timerData.milliseconds);
+        }, 300);
+      } else if (timerData.action === 'completed' || timerData.action === 'cancelled') {
+        try {
+          // Wait a moment before processing completion to avoid UI jank
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          await playNotificationSound().catch(soundError => {
+            console.warn('Failed to play timer completion sound:', soundError);
+          });
+          
+          const title = timerData.action === 'completed' ? "Timer Complete" : "Timer Cancelled";
+          const message = timerData.action === 'completed' 
+            ? `Your timer for ${timerData.label || 'task'} is complete`
+            : `Your timer for ${timerData.label || 'task'} has been cancelled`;
+          
+          await showNotification({
+            title,
+            message,
+            type: timerData.action === 'completed' ? "success" : "info",
+            persistent: timerData.action === 'completed'
+          });
+          
+          console.log(`✅ Timer ${timerData.action} notification shown`);
+        } catch (notificationError) {
+          console.error(`❌ Failed to show timer ${timerData.action} notification:`, notificationError);
+        }
         
-        activeTimersRef.current.set(timerId, { 
-          id: timerId,
-          timeoutId, 
-          label: timerData.label,
-          expiresAt: expirationTime 
-        });
+        // Refresh with sufficient delay and separation
+        setTimeout(() => {
+          if (isMountedRef.current) {
+            debouncedRefresh(['timers'], 1000);
+            setTimeout(() => {
+              if (isMountedRef.current) {
+                debouncedRefresh(['notifications'], 1200);
+              }
+            }, 300);
+          }
+        }, 300);
       }
-    } 
-    else if (timerData.action === 'cancelled') {
-      try {
-        await playNotificationSound();
-        console.log('🔊 Timer cancellation sound played');
-      } catch (soundError) {
-        console.error('❌ Could not play timer cancellation sound:', soundError);
-      }
-      
-      try {
-        await showNotification({
-          title: 'Timer Cancelled',
-          message: timerData.message || `Your timer has been cancelled.`,
-          type: "info",
-          persistent: false
-        });
-      } catch (notificationError) {
-        console.error('❌ Failed to show timer cancellation notification:', notificationError);
-      }
+    } finally {
+      // Always reset the processing flag
+      setTimeout(() => {
+        timerProcessingRef.current = false;
+      }, 500);
     }
-    
-    if (isMountedRef.current) {
-      debouncedRefresh(['timers'], 1000);
-    }
-  }, [showNotification, debouncedRefresh, isMountedRef]);
+  }, [debouncedRefresh, isMountedRef, showNotification]);
 
   return {
     handleTimerResponse,
