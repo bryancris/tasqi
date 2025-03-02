@@ -113,6 +113,14 @@ export function useChat() {
         if (data?.timer) {
           const timerData = data.timer;
           
+          // Play notification sound immediately for timer confirmation
+          try {
+            const audio = new Audio('/notification-sound.mp3');
+            await audio.play();
+          } catch (soundError) {
+            console.warn('Could not play sound:', soundError);
+          }
+          
           // Enhanced timer notification
           showNotification({
             title: timerData.action === 'created' 
@@ -127,7 +135,6 @@ export function useChat() {
               label: "View Timer",
               onClick: () => {
                 // Navigate to the timer view or open timer dialog
-                // This could be expanded based on your app's navigation
                 window.location.href = '/dashboard';
               }
             } : undefined
@@ -143,6 +150,14 @@ export function useChat() {
             data.response.includes("timer for") ||
             data.response.includes("timer is complete")
         )) {
+          // Play notification sound for timer-related responses
+          try {
+            const audio = new Audio('/notification-sound.mp3');
+            await audio.play();
+          } catch (soundError) {
+            console.warn('Could not play sound:', soundError);
+          }
+          
           showNotification({
             title: "Timer Update",
             message: data.response,
