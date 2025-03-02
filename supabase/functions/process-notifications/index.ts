@@ -1,5 +1,6 @@
 
-import { createClient } from '@supabase/supabase-js';
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 import { Database } from '../_shared/database.types';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? '';
@@ -204,7 +205,7 @@ async function processNotifications() {
   console.log('Notification processing complete.');
 }
 
-Deno.serve(async (req) => {
+serve(async (req) => {
   // Handle CORS preflight request
   if (req.method === 'OPTIONS') {
     return new Response(null, {
