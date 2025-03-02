@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 // Initialize the Supabase client with environment variables
@@ -103,3 +102,38 @@ export const openaiCompletion = async (message: string, context: string): Promis
     return "I'm having trouble understanding that right now. Can you try again?";
   }
 };
+
+/**
+ * Determines if a message is likely a task creation request
+ */
+export function isTaskCreationRequest(message: string): boolean {
+  // Convert to lowercase for easier matching
+  const lowerMessage = message.toLowerCase();
+  
+  // Task-related keywords
+  const taskKeywords = ['task', 'todo', 'to-do', 'to do', 'reminder', 'schedule', 'appointment'];
+  const hasTaskKeyword = taskKeywords.some(keyword => lowerMessage.includes(keyword));
+  
+  // Action verbs that suggest creating something
+  const actionVerbs = ['add', 'create', 'make', 'set', 'schedule', 'remind'];
+  const hasActionVerb = actionVerbs.some(verb => lowerMessage.includes(verb));
+  
+  // Time indicators suggest it's a task with a specific time
+  const timeIndicators = ['today', 'tomorrow', 'next week', 'on monday', 'on tuesday', 'on wednesday', 
+                         'on thursday', 'on friday', 'on saturday', 'on sunday'];
+  const hasTimeIndicator = timeIndicators.some(indicator => lowerMessage.includes(indicator));
+  
+  // Check for query keywords which would indicate a question rather than a task creation
+  const queryPhrases = ['how many', 'what are', 'list', 'show me', 'tell me about', 'what is', 'what\'s'];
+  const isQuery = queryPhrases.some(phrase => lowerMessage.includes(phrase));
+  
+  // If it's a query, it's not a task creation
+  if (isQuery) return false;
+  
+  // Different criteria combinations that suggest a task creation
+  const criteria1 = hasActionVerb && hasTaskKeyword;
+  const criteria2 = hasTaskKeyword && hasTimeIndicator;
+  const criteria3 = hasActionVerb && hasTimeIndicator && message.length > 10;
+  
+  return criteria1 || criteria2 || criteria3;
+}
