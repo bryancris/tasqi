@@ -39,7 +39,7 @@ export function useChat() {
     refreshLists
   } = useChatNotifications();
   
-  // Properly use the notifications hook inside the component
+  // Get the notifications hook properly
   const { showNotification } = useNotifications();
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
@@ -91,6 +91,22 @@ export function useChat() {
               
               // Force immediate update of notifications for timers
               await refreshLists();
+              
+              // If we're using client-side timer
+              if (data.timer.milliseconds) {
+                // Set up timer to notify when complete
+                setTimeout(async () => {
+                  await playNotificationSound();
+                  if (showNotification) {
+                    await showNotification({
+                      title: "Timer Complete",
+                      message: `Your ${data.timer.label} timer is complete!`,
+                      type: "info",
+                      persistent: true
+                    });
+                  }
+                }, data.timer.milliseconds);
+              }
             } 
             // Still check general timer-related responses for backward compatibility
             else if (data?.response) {
@@ -133,8 +149,10 @@ export function useChat() {
               });
             }
             
-            // Set up timer to notify when complete
+            // Set up timer to notify when complete - use the calculated milliseconds
+            console.log(`Setting timer for ${milliseconds}ms (${timerLabel})`);
             setTimeout(async () => {
+              console.log(`Timer complete for ${timerLabel}!`);
               await playNotificationSound();
               if (showNotification) {
                 await showNotification({

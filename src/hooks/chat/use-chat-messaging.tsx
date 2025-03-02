@@ -94,7 +94,7 @@ export function useChatMessaging() {
           
           // Check for timer data
           if (data?.timer) {
-            console.log('⏰ Timer data detected:', data.timer);
+            console.log('⏰ Timer data received:', data.timer);
             // Force immediate refresh of timer data
             await queryClient.invalidateQueries({ queryKey: ['timers'] });
           }
@@ -113,13 +113,22 @@ export function useChatMessaging() {
           }
           
           // Fall back to client-side response for timers
+          // Calculate milliseconds properly based on the unit
+          let milliseconds = 0;
+          if (unit.startsWith('sec')) milliseconds = duration * 1000;
+          else if (unit.startsWith('min')) milliseconds = duration * 60 * 1000;
+          else if (unit.startsWith('hour')) milliseconds = duration * 60 * 60 * 1000;
+          
+          const timerLabel = `${duration} ${unit}${duration > 1 && !unit.endsWith('s') ? 's' : ''}`;
+          
           return {
             response: timerResponse,
             timer: {
               action: 'created',
-              label: `${duration} ${unit}${duration > 1 && !unit.endsWith('s') ? 's' : ''}`,
+              label: timerLabel,
               duration: duration,
-              unit: unit
+              unit: unit,
+              milliseconds: milliseconds  // Add milliseconds for accurate timing
             }
           };
         }
