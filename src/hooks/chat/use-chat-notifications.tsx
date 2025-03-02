@@ -2,10 +2,23 @@
 import { useNotifications } from "@/components/notifications/NotificationsManager";
 import { useQueryClient } from "@tanstack/react-query";
 import { playNotificationSound } from "@/utils/notifications/soundUtils";
+import { useRef, useEffect } from "react";
 
 export function useChatNotifications() {
   const { showNotification } = useNotifications();
   const queryClient = useQueryClient();
+  const activeTimersRef = useRef<Map<string, { timeoutId: NodeJS.Timeout, label: string }>>(new Map());
+  
+  // Clean up timers when component unmounts
+  useEffect(() => {
+    return () => {
+      // Clear all active timers
+      activeTimersRef.current.forEach(timer => {
+        clearTimeout(timer.timeoutId);
+      });
+      activeTimersRef.current.clear();
+    };
+  }, []);
 
   const handleTimerResponse = async (timerData: any) => {
     if (!timerData) {
@@ -15,59 +28,99 @@ export function useChatNotifications() {
     
     console.log('📅 Processing timer response:', timerData);
     
-    // Play notification sound immediately for timer confirmation
-    try {
-      const soundPlayed = await playNotificationSound();
-      console.log('🔊 Timer notification sound played successfully:', soundPlayed);
-    } catch (soundError) {
-      console.error('❌ Could not play timer sound:', soundError);
-      // Continue with notification even if sound fails
-      
-      // Try an alternative method to play sound
+    // Handle different timer actions
+    if (timerData.action === 'created') {
+      // For new timers, show a confirmation notification (no sound)
       try {
-        const audio = new Audio('/notification-sound.mp3');
-        audio.volume = 1.0;
-        await audio.play();
-        console.log('🔊 Alternative sound method succeeded');
-      } catch (altSoundError) {
-        console.error('❌ Alternative sound method also failed:', altSoundError);
+        await showNotification({
+          title: `Timer Set: ${timerData.label || 'Unnamed Timer'}`,
+          message: `I'll notify you when your ${timerData.label || 'timer'} is complete.`,
+          type: "info",
+          persistent: false // Use non-persistent for setup notifications
+        });
+        console.log('✅ Timer setup notification shown');
+      } catch (notificationError) {
+        console.error('❌ Failed to show timer setup notification:', notificationError);
+      }
+      
+      // Set up the actual timer if milliseconds are provided
+      if (timerData.milliseconds && timerData.milliseconds > 0) {
+        const timerId = Math.random().toString(36).substr(2, 9);
+        
+        console.log(`⏰ Setting client-side timer for ${timerData.milliseconds}ms (${timerData.label})`);
+        
+        // Create the timeout to fire when the timer completes
+        const timeoutId = setTimeout(async () => {
+          console.log(`⏰ Timer complete: ${timerData.label}`);
+          
+          // Play notification sound for timer completion
+          try {
+            const soundPlayed = await playNotificationSound();
+            console.log('🔊 Timer complete notification sound played:', soundPlayed);
+          } catch (soundError) {
+            console.error('❌ Could not play timer completion sound:', soundError);
+          }
+          
+          // Show completion notification
+          try {
+            await showNotification({
+              title: "Timer Complete",
+              message: `Your ${timerData.label} timer is complete!`,
+              type: "info",
+              persistent: true
+            });
+            console.log('✅ Timer completion notification shown');
+          } catch (notificationError) {
+            console.error('❌ Failed to show timer completion notification:', notificationError);
+          }
+          
+          // Remove this timer from active timers
+          activeTimersRef.current.delete(timerId);
+          
+          // Refresh notifications
+          await queryClient.invalidateQueries({ queryKey: ['notifications'] });
+          await queryClient.invalidateQueries({ queryKey: ['timers'] });
+          
+        }, timerData.milliseconds);
+        
+        // Store the timer reference for cleanup
+        activeTimersRef.current.set(timerId, { 
+          timeoutId, 
+          label: timerData.label 
+        });
+      }
+    } 
+    else if (timerData.action === 'cancelled') {
+      // Play notification sound for cancellations
+      try {
+        const soundPlayed = await playNotificationSound();
+        console.log('🔊 Timer cancellation sound played:', soundPlayed);
+      } catch (soundError) {
+        console.error('❌ Could not play timer cancellation sound:', soundError);
+      }
+      
+      // Show cancellation notification
+      try {
+        await showNotification({
+          title: 'Timer Cancelled',
+          message: timerData.message || `Your timer has been cancelled.`,
+          type: "info",
+          persistent: false
+        });
+      } catch (notificationError) {
+        console.error('❌ Failed to show timer cancellation notification:', notificationError);
       }
     }
     
-    // Enhanced timer notification
-    try {
-      await showNotification({
-        title: timerData.action === 'created' 
-          ? `Timer Set: ${timerData.label || 'Unnamed Timer'}` 
-          : timerData.action === 'cancelled' 
-            ? 'Timer Cancelled' 
-            : 'Timer Update',
-        message: timerData.message || "Timer notification",
-        type: "info",
-        persistent: true,
-        action: timerData.action === 'created' ? {
-          label: "View Timer",
-          onClick: () => {
-            // Navigate to the timer view or open timer dialog
-            window.location.href = '/dashboard';
-          }
-        } : undefined
-      });
-      console.log('✅ Timer notification shown successfully');
-    } catch (notificationError) {
-      console.error('❌ Failed to show timer notification:', notificationError);
-      
-      // Try another method to show notification
-      alert(`${timerData.action === 'created' ? `Timer Set: ${timerData.label || 'Unnamed Timer'}` : 'Timer Update'}`);
-    }
-    
-    // Invalidate any relevant queries
-    try {
-      await queryClient.invalidateQueries({ queryKey: ['timers'] });
-      console.log('🔄 Timer queries invalidated');
-    } catch (queryError) {
-      console.error('❌ Failed to invalidate timer queries:', queryError);
-    }
+    // Invalidate queries in a controlled manner with slight delay to prevent UI freezing
+    setTimeout(async () => {
+      try {
+        await queryClient.invalidateQueries({ queryKey: ['timers'] });
+        console.log('🔄 Timer queries invalidated');
+      } catch (queryError) {
+        console.error('❌ Failed to invalidate timer queries:', queryError);
+      }
+    }, 500);
   };
 
   const handleTimerRelatedResponse = async (response: string) => {
@@ -114,24 +167,7 @@ export function useChatNotifications() {
     if (hasTimerPhrase) {
       console.log('⏰ Timer-related phrase detected in response:', response);
       
-      // Play notification sound for timer-related responses
-      try {
-        const soundPlayed = await playNotificationSound();
-        console.log('🔊 Timer notification sound played for phrase detection:', soundPlayed);
-      } catch (soundError) {
-        console.error('❌ Could not play timer phrase sound:', soundError);
-        
-        // Try an alternative sound method
-        try {
-          const audio = new Audio('/notification-sound.mp3');
-          audio.volume = 1.0;
-          await audio.play();
-          console.log('🔊 Alternative sound method succeeded');
-        } catch (altSoundError) {
-          console.error('❌ Alternative sound method also failed:', altSoundError);
-        }
-      }
-      
+      // For phrases, we'll show a notification but WITHOUT sound to avoid confusion
       try {
         await showNotification({
           title: "Timer Update",
@@ -150,15 +186,29 @@ export function useChatNotifications() {
 
   const refreshLists = async () => {
     console.log('🔄 Refreshing task and notification lists');
-    try {
-      // Refresh the tasks list and notifications
-      await queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      await queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      await queryClient.invalidateQueries({ queryKey: ['timers'] });
-      console.log('✅ Lists refreshed successfully');
-    } catch (refreshError) {
-      console.error('❌ Failed to refresh lists:', refreshError);
-    }
+    
+    // Use a debounced approach to prevent UI freezing
+    setTimeout(async () => {
+      try {
+        // Refresh the tasks list and notifications in sequence, not parallel
+        await queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        console.log('✅ Tasks list refreshed');
+        
+        // Small delay before next invalidation
+        setTimeout(async () => {
+          await queryClient.invalidateQueries({ queryKey: ['notifications'] });
+          console.log('✅ Notifications list refreshed');
+          
+          // Small delay before final invalidation
+          setTimeout(async () => {
+            await queryClient.invalidateQueries({ queryKey: ['timers'] });
+            console.log('✅ Timers list refreshed');
+          }, 200);
+        }, 200);
+      } catch (refreshError) {
+        console.error('❌ Failed to refresh lists:', refreshError);
+      }
+    }, 300);
   };
 
   return {

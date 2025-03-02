@@ -2,7 +2,6 @@
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Message } from "@/components/chat/types";
-import { playNotificationSound } from "@/utils/notifications/soundUtils";
 import { useNotifications } from "@/components/notifications/NotificationsManager";
 
 export function useChatSubmission(
@@ -42,168 +41,149 @@ export function useChatSubmission(
       // Add a loading indicator message while waiting for response
       addLoadingMessage();
 
-      try {
-        // Check for timer commands in the user message before sending to the server
-        // This is a client-side fallback for when the server is unavailable
-        const timerRegex = /set a (\d+)\s*(min|minute|hour|second|sec)s?\s*timer/i;
-        const match = message.match(timerRegex);
-        
-        if (match && navigator.onLine) {
-          try {
-            const data = await processMessage(userMessage);
-            
-            // Remove the loading indicator message
-            removeLastMessage();
-            
-            // Add the AI's response
-            if (data?.response) {
-              addAIMessage(data.response);
-            } else {
-              addAIMessage("I'm sorry, I couldn't process that request.");
-            }
-            
-            // Handle timer-related response
-            if (data?.timer) {
-              console.log('⏰ Timer data received:', data.timer);
-              await handleTimerResponse(data.timer);
-              
-              // Force immediate update of notifications for timers
-              await refreshLists();
-              
-              // If we're using client-side timer
-              if (data.timer.milliseconds) {
-                // Set up timer to notify when complete
-                setTimeout(async () => {
-                  await playNotificationSound();
-                  if (showNotification) {
-                    await showNotification({
-                      title: "Timer Complete",
-                      message: `Your ${data.timer.label} timer is complete!`,
-                      type: "info",
-                      persistent: true
-                    });
-                  }
-                }, data.timer.milliseconds);
-              }
-            } 
-            // Still check general timer-related responses for backward compatibility
-            else if (data?.response) {
-              console.log('🔍 Checking response for timer references:', data.response.substring(0, 50) + '...');
-              await handleTimerRelatedResponse(data.response);
-            }
-            
-            // Refresh tasks and notifications
-            await refreshLists();
-          } catch (fetchError) {
-            console.error('Error with server, using client-side timer fallback:', fetchError);
-            
-            // Remove the loading indicator message
-            removeLastMessage();
-            
-            // Create a timer locally when server can't be reached
-            const duration = parseInt(match[1]);
-            const unit = match[2].toLowerCase();
-            
-            let milliseconds = 0;
-            if (unit.startsWith('sec')) milliseconds = duration * 1000;
-            else if (unit.startsWith('min')) milliseconds = duration * 60 * 1000;
-            else if (unit.startsWith('hour')) milliseconds = duration * 60 * 60 * 1000;
-            
-            const timerLabel = `${duration} ${unit}${duration > 1 && !unit.endsWith('s') ? 's' : ''}`;
-            
-            // Add a success message
-            addAIMessage(`I've set a timer for ${timerLabel}.`);
-            
-            // Play notification sound to confirm timer creation
-            await playNotificationSound();
-            
-            // Use the hook from the component context
-            if (showNotification) {
-              await showNotification({
-                title: `Timer Set: ${timerLabel}`,
-                message: `I'll notify you when your ${timerLabel} timer is complete.`,
-                type: "info",
-                persistent: true
-              });
-            }
-            
-            // Set up timer to notify when complete - use the calculated milliseconds
-            console.log(`Setting timer for ${milliseconds}ms (${timerLabel})`);
-            setTimeout(async () => {
-              console.log(`Timer complete for ${timerLabel}!`);
-              await playNotificationSound();
-              if (showNotification) {
-                await showNotification({
-                  title: "Timer Complete",
-                  message: `Your ${timerLabel} timer is complete!`,
-                  type: "info",
-                  persistent: true
-                });
-              }
-            }, milliseconds);
+      // Check for timer commands in the user message before sending to the server
+      const timerRegex = /set a (\d+)\s*(min|minute|hour|second|sec)s?\s*timer/i;
+      const match = message.match(timerRegex);
+      
+      if (match && navigator.onLine) {
+        try {
+          const data = await processMessage(userMessage);
+          
+          // Remove the loading indicator message
+          removeLastMessage();
+          
+          // Add the AI's response
+          if (data?.response) {
+            addAIMessage(data.response);
+          } else {
+            addAIMessage("I'm sorry, I couldn't process that request.");
           }
-        } else {
-          // If the message doesn't match timer regex or we're offline, use regular flow
-          try {
-            // Handle the case when we're offline but not a timer request
-            if (!navigator.onLine) {
-              removeLastMessage();
-              addAIMessage("Sorry, I'm having trouble connecting to the server. Please check your internet connection and try again.");
-              return;
-            }
+          
+          // Handle timer-related response in a controlled, non-blocking way
+          if (data?.timer) {
+            console.log('⏰ Timer data received:', data.timer);
             
-            const data = await processMessage(userMessage);
-            
-            // Remove the loading indicator message
-            removeLastMessage();
-            
-            // Add the AI's response
-            if (data?.response) {
-              addAIMessage(data.response);
-            } else {
-              addAIMessage("I'm sorry, I couldn't process that request.");
-            }
-            
-            // Handle timer-related response
-            if (data?.timer) {
-              console.log('⏰ Timer data received:', data.timer);
+            // Use setTimeout to handle timer response asynchronously
+            // This prevents UI freezing by not blocking the main thread
+            setTimeout(async () => {
               await handleTimerResponse(data.timer);
-              
-              // Force immediate update of notifications for timers
-              await refreshLists();
-            } 
-            // Still check general timer-related responses for backward compatibility
-            else if (data?.response) {
-              console.log('🔍 Checking response for timer references:', data.response.substring(0, 50) + '...');
-              await handleTimerRelatedResponse(data.response);
-            }
+            }, 100);
             
-            // Refresh tasks and notifications
+            // Force immediate update of notifications for timers
+            // with timeout to prevent UI blocking
+            setTimeout(async () => {
+              await refreshLists();
+            }, 500);
+          } 
+          // Still check general timer-related responses for backward compatibility
+          else if (data?.response) {
+            console.log('🔍 Checking response for timer references:', data.response.substring(0, 50) + '...');
+            
+            // Handle in non-blocking way
+            setTimeout(async () => {
+              await handleTimerRelatedResponse(data.response);
+            }, 100);
+          }
+          
+          // Refresh tasks and notifications with delay to prevent UI blocking
+          setTimeout(async () => {
             await refreshLists();
-          } catch (err) {
-            // Error occurred, but wasn't a timer request
-            console.error('Error processing message:', err);
+          }, 1000);
+        } catch (fetchError) {
+          console.error('Error with server, using client-side timer fallback:', fetchError);
+          
+          // Remove the loading indicator message
+          removeLastMessage();
+          
+          // Create a timer locally when server can't be reached
+          const duration = parseInt(match[1]);
+          const unit = match[2].toLowerCase();
+          
+          let milliseconds = 0;
+          if (unit.startsWith('sec')) milliseconds = duration * 1000;
+          else if (unit.startsWith('min')) milliseconds = duration * 60 * 1000;
+          else if (unit.startsWith('hour')) milliseconds = duration * 60 * 60 * 1000;
+          
+          // Verify the calculation is correct
+          console.log(`⏱️ Creating client-side timer: ${duration} ${unit} = ${milliseconds}ms`);
+          
+          const timerLabel = `${duration} ${unit}${duration > 1 && !unit.endsWith('s') ? 's' : ''}`;
+          
+          // Add a success message
+          addAIMessage(`I've set a timer for ${timerLabel}.`);
+          
+          // Handle the timer asynchronously to prevent UI blocking
+          setTimeout(async () => {
+            await handleTimerResponse({
+              action: 'created',
+              label: timerLabel,
+              duration: duration,
+              unit: unit,
+              milliseconds: milliseconds
+            });
+          }, 100);
+        }
+      } else {
+        // If the message doesn't match timer regex or we're offline, use regular flow
+        try {
+          // Handle the case when we're offline but not a timer request
+          if (!navigator.onLine) {
             removeLastMessage();
             addAIMessage("Sorry, I'm having trouble connecting to the server. Please check your internet connection and try again.");
+            return;
           }
+          
+          const data = await processMessage(userMessage);
+          
+          // Remove the loading indicator message
+          removeLastMessage();
+          
+          // Add the AI's response
+          if (data?.response) {
+            addAIMessage(data.response);
+          } else {
+            addAIMessage("I'm sorry, I couldn't process that request.");
+          }
+          
+          // Handle timer-related response
+          if (data?.timer) {
+            console.log('⏰ Timer data received:', data.timer);
+            
+            // Use setTimeout to prevent UI blocking
+            setTimeout(async () => {
+              await handleTimerResponse(data.timer);
+            }, 100);
+            
+            // Force immediate update of notifications for timers with delay
+            setTimeout(async () => {
+              await refreshLists();
+            }, 500);
+          } 
+          // Still check general timer-related responses for backward compatibility
+          else if (data?.response) {
+            console.log('🔍 Checking response for timer references:', data.response.substring(0, 50) + '...');
+            
+            // Handle in non-blocking way
+            setTimeout(async () => {
+              await handleTimerRelatedResponse(data.response);
+            }, 100);
+          }
+          
+          // Refresh tasks and notifications with delay
+          setTimeout(async () => {
+            await refreshLists();
+          }, 1000);
+        } catch (err) {
+          // Error occurred, but wasn't a timer request
+          console.error('Error processing message:', err);
+          removeLastMessage();
+          addAIMessage("Sorry, I'm having trouble connecting to the server. Please check your internet connection and try again.");
         }
-      } catch (invokeError) {
-        console.error('Error invoking function:', invokeError);
-        
-        // Remove the loading indicator message if it exists
-        removeLastMessage();
-        
-        // Add an error message
-        addAIMessage("Sorry, I'm having trouble connecting to the server. Please check your internet connection and try again.");
-        
-        toast({
-          title: "Communication Error",
-          description: "Failed to communicate with the AI. Please try again later.",
-          variant: "destructive",
-        });
       }
     } catch (error) {
       console.error('Error processing message:', error);
+      removeLastMessage(); // Make sure to remove loading indicator if it exists
+      addAIMessage("Sorry, I encountered an error processing your message. Please try again later.");
       toast({
         title: "Error",
         description: "Failed to process message. Please try again.",

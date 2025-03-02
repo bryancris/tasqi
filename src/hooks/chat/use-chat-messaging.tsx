@@ -121,6 +121,9 @@ export function useChatMessaging() {
           
           const timerLabel = `${duration} ${unit}${duration > 1 && !unit.endsWith('s') ? 's' : ''}`;
           
+          // Double-check the milliseconds calculation
+          console.log(`⏱️ Client timer calculation: ${timerLabel} = ${milliseconds}ms`);
+          
           return {
             response: timerResponse,
             timer: {
