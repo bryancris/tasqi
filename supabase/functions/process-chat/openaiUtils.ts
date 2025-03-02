@@ -1,50 +1,30 @@
 
+// Simple implementation for demo purposes
+// In a real app, this would connect to OpenAI API
 export async function generateResponse(message: string): Promise<string> {
-  // For now, use predefined responses until we integrate with OpenAI API
-  const phrases = [
-    "I'll help you manage that task.",
-    "Let me know if you need anything else with your tasks.",
-    "I'm here to assist with your task management.",
-    "Your productivity is my priority.",
-    "I've processed your request. Anything else you need?",
-    "I understand. Is there anything specific you'd like to know about your tasks?",
-    "I'll take care of that for you.",
-    "Consider it done!"
+  // For demo purposes, return a simple response
+  const responses = [
+    "I understand you'd like assistance with that. How can I help you manage this task?",
+    "That's an interesting topic. Would you like me to create a task for this?",
+    "I'm here to help you stay organized. What would you like me to do with this information?",
+    "Thanks for sharing that. Would you like me to schedule this for you?",
+    "I appreciate you letting me know. Is there anything specific you'd like me to do with this information?"
   ];
   
-  return phrases[Math.floor(Math.random() * phrases.length)];
+  // Random selection for demo
+  const randomIndex = Math.floor(Math.random() * responses.length);
+  return responses[randomIndex];
 }
 
+// Check if a message appears to be a task creation request
 export function isTaskCreationRequest(message: string): boolean {
-  // Simple heuristic to identify task creation requests
+  // Common phrases that might indicate a task creation request
   const taskCreationPhrases = [
-    "add task",
-    "create task",
-    "new task",
-    "remind me to",
-    "need to",
-    "have to",
-    "got to",
-    "gotta",
-    "should",
-    "i will",
-    "i'll",
+    'add task', 'create task', 'make task', 'new task',
+    'add a task', 'create a task', 'schedule task', 'schedule a task',
+    'remind me to', 'i need to', 'schedule an appointment', 'add appointment',
+    'set up meeting', 'schedule meeting'
   ];
   
-  const lowerMessage = message.toLowerCase();
-  
-  // Exclude patterns that commonly appear in questions
-  if (lowerMessage.includes("?") || 
-      lowerMessage.startsWith("how") || 
-      lowerMessage.startsWith("what") || 
-      lowerMessage.startsWith("when") || 
-      lowerMessage.startsWith("why") || 
-      lowerMessage.startsWith("where") || 
-      lowerMessage.startsWith("who") || 
-      lowerMessage.startsWith("can you")) {
-    return false;
-  }
-  
-  // Check for common task creation phrases
-  return taskCreationPhrases.some(phrase => lowerMessage.includes(phrase));
+  return taskCreationPhrases.some(phrase => message.toLowerCase().includes(phrase));
 }

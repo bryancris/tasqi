@@ -77,14 +77,14 @@ export function useChat() {
 
       try {
         const { data, error } = await supabase.functions.invoke('process-chat', {
-          body: { message, userId: user.id }
+          body: { message: userMessage.content, userId: user.id }
         });
+
+        // Remove the loading indicator message
+        setMessages(prev => prev.slice(0, -1));
 
         if (error) {
           console.error('Function error:', error);
-          
-          // Remove the loading indicator message
-          setMessages(prev => prev.slice(0, -1));
           
           // Add an error message
           setMessages(prev => [...prev, { 
@@ -92,14 +92,17 @@ export function useChat() {
             isUser: false 
           }]);
           
-          throw error;
+          toast({
+            title: "Communication Error",
+            description: "Failed to communicate with the AI. Please try again later.",
+            variant: "destructive",
+          });
+          
+          return;
         }
 
-        // Remove the loading indicator message
-        setMessages(prev => prev.slice(0, -1));
-        
         const aiMessage = { 
-          content: data.response || "I'm sorry, I couldn't process that request.", 
+          content: data?.response || "I'm sorry, I couldn't process that request.", 
           isUser: false 
         };
         setMessages(prev => [...prev, aiMessage]);
@@ -109,17 +112,16 @@ export function useChat() {
       } catch (invokeError) {
         console.error('Error invoking function:', invokeError);
         
-        // If we haven't already handled this error
-        if (messages[messages.length - 1].content === "...") {
-          // Remove the loading indicator message
+        // Remove the loading indicator message if it exists
+        if (messages.length > 0 && messages[messages.length - 1].content === "...") {
           setMessages(prev => prev.slice(0, -1));
-          
-          // Add an error message
-          setMessages(prev => [...prev, { 
-            content: "Sorry, I'm having trouble connecting to the server. Please check your internet connection and try again.", 
-            isUser: false 
-          }]);
         }
+        
+        // Add an error message
+        setMessages(prev => [...prev, { 
+          content: "Sorry, I'm having trouble connecting to the server. Please check your internet connection and try again.", 
+          isUser: false 
+        }]);
         
         toast({
           title: "Communication Error",

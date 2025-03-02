@@ -45,6 +45,7 @@ serve(async (req) => {
     })
 
     let response = ''
+    let shouldCreateTask = false
 
     // Check if this is a query about unscheduled tasks
     if (message.toLowerCase().includes('unscheduled') && 
@@ -72,6 +73,36 @@ serve(async (req) => {
       
       // Generate a response with the task count
       response = `You have ${taskCount} task${taskCount === 1 ? '' : 's'} scheduled for ${extractedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}.${unscheduledCount > 0 ? ` Additionally, you have ${unscheduledCount} unscheduled task${unscheduledCount === 1 ? '' : 's'}.` : ''}`
+    }
+    // Check if the user is asking what tasks they have today or similar
+    else if (message.toLowerCase().includes('what') && 
+            (message.toLowerCase().includes('today') || message.toLowerCase().includes('going on')) && 
+            (message.toLowerCase().includes('have') || message.toLowerCase().includes('tasks'))) {
+      console.log('Detected query about today\'s tasks')
+      
+      // Get today's date
+      const today = new Date()
+      
+      // Get task count for today
+      const taskCount = await getTaskCountForDate(userId, today)
+      
+      // Get unscheduled task count
+      const unscheduledCount = await getUnscheduledTaskCount(userId)
+      
+      // Get tasks for today to provide details
+      const tasks = await getTasksForDate(userId, today)
+      
+      if (taskCount === 0 && unscheduledCount === 0) {
+        response = `You don't have any tasks scheduled for today or in your unscheduled list. Enjoy your free day!`
+      } else {
+        // Generate a detailed summary of tasks
+        response = generateTaskSummary(tasks, today)
+        
+        // Add unscheduled tasks count if any
+        if (unscheduledCount > 0) {
+          response += ` You also have ${unscheduledCount} unscheduled task${unscheduledCount === 1 ? '' : 's'}.`
+        }
+      }
     }
     // Check if this is a task query request (asking about tasks)
     else if (isTaskQueryRequest(message)) {

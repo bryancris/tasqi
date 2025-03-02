@@ -1,180 +1,214 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import { extractDateFromMessage, formatDateForDB } from './dateUtils.ts'
+import { formatDateForDB } from './dateUtils.ts'
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') as string
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') as string
 const supabase = createClient(supabaseUrl, supabaseKey)
 
-// Check if message is a task creation request
-export function isTaskCreationRequest(message: string): boolean {
-  const taskCreationPatterns = [
-    /add (a )?task/i,
-    /create (a )?task/i,
-    /new task/i,
-    /schedule (a )?task/i,
-    /remind me to/i,
-    /i need to/i,
-    /set (a )?reminder/i,
-    /add to( my)? to-?do( list)?/i
-  ]
-  
-  return taskCreationPatterns.some(pattern => pattern.test(message))
-}
-
-// Check if message is asking about tasks
+// Check if a message appears to be a task query
 export function isTaskQueryRequest(message: string): boolean {
-  const taskQueryPatterns = [
-    /what (tasks|to-?dos) do i have/i,
-    /show me my (tasks|to-?dos)/i,
-    /list my (tasks|to-?dos)/i,
-    /what('s| is) on my (schedule|to-?do list)/i,
-    /do i have any (tasks|to-?dos)/i,
-    /what am i (doing|supposed to do)/i
-  ]
+  const taskQueryKeywords = [
+    'what tasks', 'my tasks', 'show tasks', 'list tasks', 'view tasks',
+    'show my tasks', 'list my tasks', 'view my tasks',
+    'what do i have', 'what appointments', 'what meetings',
+    'what is scheduled', 'what\'s scheduled'
+  ];
   
-  return taskQueryPatterns.some(pattern => pattern.test(message))
+  return taskQueryKeywords.some(keyword => message.toLowerCase().includes(keyword));
 }
 
-// Get all tasks for a specific date
-export async function getTasksForDate(userId: string, date: Date) {
-  const formattedDate = formatDateForDB(date)
+// Get tasks for a specific date
+export async function getTasksForDate(userId: string, date: Date): Promise<any[]> {
+  const formattedDate = formatDateForDB(date);
   
+  // Query for tasks that belong to this user and are scheduled for this date
   const { data, error } = await supabase
     .from('tasks')
     .select('*')
     .eq('user_id', userId)
     .eq('date', formattedDate)
-    .order('start_time', { ascending: true })
+    .order('start_time', { ascending: true });
   
   if (error) {
-    console.error('Error fetching tasks:', error)
-    throw error
+    console.error('Error fetching tasks:', error);
+    return [];
   }
   
-  return data || []
+  return data || [];
 }
 
 // Get unscheduled tasks
-export async function getUnscheduledTasks(userId: string) {
+export async function getUnscheduledTasks(userId: string): Promise<any[]> {
   const { data, error } = await supabase
     .from('tasks')
     .select('*')
     .eq('user_id', userId)
     .eq('status', 'unscheduled')
-    .order('position', { ascending: true })
+    .order('position', { ascending: true });
   
   if (error) {
-    console.error('Error fetching unscheduled tasks:', error)
-    throw error
+    console.error('Error fetching unscheduled tasks:', error);
+    return [];
   }
   
-  return data || []
+  return data || [];
 }
 
-// Get task count for a specific date
-export async function getTaskCountForDate(userId: string, date: Date) {
-  const formattedDate = formatDateForDB(date)
+// Generate a summary of tasks
+export function generateTaskSummary(tasks: any[], date: Date): string {
+  const dateStr = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
   
-  const { data, error, count } = await supabase
-    .from('tasks')
-    .select('*', { count: 'exact' })
-    .eq('user_id', userId)
-    .eq('date', formattedDate)
-  
-  if (error) {
-    console.error('Error counting tasks:', error)
-    throw error
+  if (tasks.length === 0) {
+    return `You don't have any tasks scheduled for ${dateStr}.`;
   }
   
-  return count || 0
+  let summary = `For ${dateStr}, you have ${tasks.length} task${tasks.length === 1 ? '' : 's'}:\n\n`;
+  
+  tasks.forEach((task, index) => {
+    let taskInfo = `${index + 1}. ${task.title}`;
+    
+    if (task.start_time) {
+      // Convert time from 24-hour format to 12-hour format with AM/PM
+      const startTimeParts = task.start_time.split(':');
+      const hour = parseInt(startTimeParts[0], 10);
+      const minute = parseInt(startTimeParts[1], 10);
+      
+      const period = hour >= 12 ? 'PM' : 'AM';
+      const hour12 = hour % 12 || 12; // Convert 0 to 12 for 12 AM
+      
+      const formattedTime = `${hour12}:${minute.toString().padStart(2, '0')} ${period}`;
+      taskInfo += ` at ${formattedTime}`;
+    }
+    
+    if (task.priority === 'high') {
+      taskInfo += " (High Priority)";
+    }
+    
+    summary += taskInfo + '\n';
+  });
+  
+  return summary;
+}
+
+// Get count of tasks for a specific date
+export async function getTaskCountForDate(userId: string, date: Date): Promise<number> {
+  const formattedDate = formatDateForDB(date);
+  
+  // Query for tasks that belong to this user, are scheduled for this date, and aren't completed
+  const { count, error } = await supabase
+    .from('tasks')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('date', formattedDate)
+    .not('status', 'eq', 'completed');
+  
+  if (error) {
+    console.error('Error counting tasks:', error);
+    return 0;
+  }
+  
+  return count || 0;
 }
 
 // Get count of unscheduled tasks
-export async function getUnscheduledTaskCount(userId: string) {
-  const { data, error, count } = await supabase
+export async function getUnscheduledTaskCount(userId: string): Promise<number> {
+  // Query for tasks that belong to this user and are unscheduled
+  const { count, error } = await supabase
     .from('tasks')
-    .select('*', { count: 'exact' })
+    .select('*', { count: 'exact', head: true })
     .eq('user_id', userId)
-    .eq('status', 'unscheduled')
+    .eq('status', 'unscheduled');
   
   if (error) {
-    console.error('Error counting unscheduled tasks:', error)
-    throw error
+    console.error('Error counting unscheduled tasks:', error);
+    return 0;
   }
   
-  return count || 0
+  return count || 0;
 }
 
-// Generate a summary of tasks for a given date
-export function generateTaskSummary(tasks: any[], date: Date): string {
-  if (tasks.length === 0) {
-    return `You don't have any tasks scheduled for ${date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}.`
-  }
+// Check if a message appears to be a task creation request
+export function isTaskCreationRequest(message: string): boolean {
+  // Common phrases that might indicate a task creation request
+  const taskCreationPhrases = [
+    'add task', 'create task', 'make task', 'new task',
+    'add a task', 'create a task', 'schedule task', 'schedule a task',
+    'remind me to', 'i need to', 'schedule an appointment', 'add appointment',
+    'set up meeting', 'schedule meeting'
+  ];
   
-  const dateStr = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
-  let summary = `Here are your tasks for ${dateStr}:\n\n`
-  
-  tasks.forEach((task, index) => {
-    let taskTime = ''
-    if (task.start_time) {
-      taskTime = task.start_time.slice(0, 5)
-      if (task.end_time) {
-        taskTime += ` - ${task.end_time.slice(0, 5)}`
+  return taskCreationPhrases.some(phrase => message.toLowerCase().includes(phrase));
+}
+
+// Create a task from a message
+export async function createTaskFromMessage(message: string, userId: string): Promise<boolean> {
+  try {
+    // Extract task title from message
+    // This is a simple implementation - in a real app, you might use NLP for better extraction
+    let title = message;
+    
+    // Remove common prefixes
+    const prefixes = ['add task ', 'create task ', 'add a task ', 'create a task ', 'remind me to ', 'i need to '];
+    for (const prefix of prefixes) {
+      if (title.toLowerCase().startsWith(prefix)) {
+        title = title.substring(prefix.length);
+        break;
       }
-      taskTime = ` at ${taskTime}`
     }
     
-    summary += `${index + 1}. ${task.title}${taskTime}\n`
-  })
-  
-  return summary
-}
-
-// Create a new task from the user's message
-export async function createTaskFromMessage(message: string, userId: string) {
-  try {
-    // Extract potential date from message or default to today
-    const extractedDate = extractDateFromMessage(message)
-    const formattedDate = extractedDate ? formatDateForDB(extractedDate) : null
+    // Capitalize first letter
+    title = title.charAt(0).toUpperCase() + title.slice(1);
     
-    // Determine if there's a date mentioned (scheduled) or not (unscheduled)
-    const status = formattedDate ? 'scheduled' : 'unscheduled'
+    // Extract date if present, default to null (unscheduled)
+    let taskDate = null;
+    let taskStatus = 'unscheduled';
     
-    // Get the highest position number for proper ordering
+    // For now, use a basic approach to check for dates
+    if (message.toLowerCase().includes('today')) {
+      taskDate = formatDateForDB(new Date());
+      taskStatus = 'scheduled';
+    } else if (message.toLowerCase().includes('tomorrow')) {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      taskDate = formatDateForDB(tomorrow);
+      taskStatus = 'scheduled';
+    }
+    
+    // Get the highest position value for proper ordering
     const { data: positionData } = await supabase
       .from('tasks')
       .select('position')
-      .eq('user_id', userId)
       .order('position', { ascending: false })
-      .limit(1)
+      .limit(1);
     
-    const nextPosition = positionData && positionData.length > 0 
-      ? (positionData[0].position + 1) 
-      : 0
+    const position = (positionData && positionData.length > 0) ? positionData[0].position + 1000 : 1000;
     
-    // Create the new task
+    // Create the task
     const { data, error } = await supabase
       .from('tasks')
       .insert({
-        title: message,
-        user_id: userId,
-        date: formattedDate,
-        status,
-        position: nextPosition,
+        title,
+        date: taskDate,
+        status: taskStatus,
         priority: 'medium',
-        owner_id: userId
+        user_id: userId,
+        owner_id: userId,
+        position,
+        reminder_enabled: false,
+        reminder_time: 15
       })
-      .select()
+      .select();
     
     if (error) {
-      console.error('Error creating task:', error)
-      throw error
+      console.error('Error creating task:', error);
+      return false;
     }
     
-    return data
+    console.log('Task created successfully:', data);
+    return true;
   } catch (error) {
-    console.error('Error in createTaskFromMessage:', error)
-    throw error
+    console.error('Error in createTaskFromMessage:', error);
+    return false;
   }
 }
