@@ -75,6 +75,9 @@ export function useChat() {
         if (data?.timer) {
           console.log('⏰ Timer data received:', data.timer);
           await handleTimerResponse(data.timer);
+          
+          // Force immediate update of notifications for timers
+          await refreshLists();
         } 
         // Still check general timer-related responses for backward compatibility
         else if (data?.response) {

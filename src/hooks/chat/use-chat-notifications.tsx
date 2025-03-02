@@ -84,7 +84,10 @@ export function useChatNotifications() {
       'timer has been set',
       'will remind you',
       'remind you at',
-      'reminder has been set'
+      'reminder has been set',
+      'I\'ve set a timer',
+      'set a timer',
+      'I\'ll notify you'
     ];
     
     // Check if any of the timer phrases are in the response

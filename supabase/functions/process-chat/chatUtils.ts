@@ -32,35 +32,52 @@ export function parseTimerIntent(message: string): TimerIntent | null {
     };
   }
 
-  // Regex patterns for timer creation
-  const timerPatterns = [
-    /set (?:a |an |)timer for (\d+) (minute|minutes|min|mins|hour|hours|hr|hrs)/i,
-    /remind me in (\d+) (minute|minutes|min|mins|hour|hours|hr|hrs)/i,
-    /start (?:a |an |)timer for (\d+) (minute|minutes|min|mins|hour|hours|hr|hrs)/i,
-    /timer for (\d+) (minute|minutes|min|mins|hour|hours|hr|hrs)/i,
-    /start countdown for (\d+) (minute|minutes|min|mins|hour|hours|hr|hrs)/i,
-    /set (?:a |an |)reminder for (\d+) (minute|minutes|min|mins|hour|hours|hr|hrs)/i,
-  ];
-
-  for (const pattern of timerPatterns) {
-    const match = lowerMessage.match(pattern);
-    if (match) {
-      const duration = parseInt(match[1], 10);
-      const unit = match[2].toLowerCase();
+  // Improved regex patterns for timer creation with more variations
+  // Match more conversational patterns like "set a 1 min timer please"
+  const minutesPattern = /(\d+)\s*(minute|minutes|min|mins)/i;
+  const hoursPattern = /(\d+)\s*(hour|hours|hr|hrs)/i;
+  
+  let minutes = 0;
+  let label = null;
+  
+  // Check if message contains "timer" or "remind" keywords
+  const isTimerRequest = lowerMessage.includes('timer') || 
+                         lowerMessage.includes('remind') || 
+                         lowerMessage.includes('alert') ||
+                         lowerMessage.includes('notification');
+  
+  if (isTimerRequest) {
+    // Try to extract minutes
+    const minutesMatch = lowerMessage.match(minutesPattern);
+    if (minutesMatch) {
+      minutes = parseInt(minutesMatch[1], 10);
+    }
+    
+    // Try to extract hours
+    const hoursMatch = lowerMessage.match(hoursPattern);
+    if (hoursMatch) {
+      minutes += parseInt(hoursMatch[1], 10) * 60;
+    }
+    
+    // If we found a time duration
+    if (minutes > 0) {
+      // Try to extract an optional label
+      // Look for phrases after "for", "about", "to", etc.
+      const labelPatterns = [
+        /for\s+([^.!?]+?)(?:$|\.|\!|\?|in\s+\d+)/i,
+        /about\s+([^.!?]+?)(?:$|\.|\!|\?|in\s+\d+)/i,
+        /to\s+([^.!?]+?)(?:$|\.|\!|\?|in\s+\d+)/i
+      ];
       
-      // Convert to minutes if specified in hours
-      let minutes = duration;
-      if (unit.startsWith('hour') || unit === 'hr' || unit === 'hrs') {
-        minutes = duration * 60;
+      for (const pattern of labelPatterns) {
+        const labelMatch = lowerMessage.match(pattern);
+        if (labelMatch && !labelMatch[1].includes('minute') && !labelMatch[1].includes('hour') && 
+            !labelMatch[1].includes('min') && !labelMatch[1].includes('hr')) {
+          label = labelMatch[1].trim();
+          break;
+        }
       }
-
-      // Try to extract an optional label (ex: "set a timer for 5 minutes for my pasta")
-      let label = null;
-      const labelMatch = lowerMessage.match(/for (.+?)(?:$|\.)/i);
-      if (labelMatch && !labelMatch[1].includes('minute') && !labelMatch[1].includes('hour') && !labelMatch[1].includes('min') && !labelMatch[1].includes('hr')) {
-        label = labelMatch[1].trim();
-      }
-
+      
       return {
         action: 'create',
         minutes,

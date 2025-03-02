@@ -1,152 +1,269 @@
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
-import { openAIHandler } from "./openaiUtils.ts";
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { corsHeaders } from "../_shared/cors.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import { ChatMessage, TimerData, TimerIntent } from "./types.ts";
 import { parseTimerIntent, cancelTimer, checkTimerStatus } from "./chatUtils.ts";
-import { isToday, addMinutes, parseISO, format } from "./dateUtils.ts";
-import { processTaskCommand, fetchRecentTasks } from "./taskUtils.ts";
-import type { ChatMessage, TimerData } from "./types.ts";
+import { add } from "./dateUtils.ts";
+import { generateAIResponse } from "./openaiUtils.ts";
+import { checkForTaskCommands, extractTaskDetails } from "./taskUtils.ts";
 
-// CORS headers for browser clients
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const openaiApiKey = Deno.env.get("OPENAI_API_KEY")!;
 
 serve(async (req) => {
   // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Create a Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // Get the request data
+    const { message, userId } = await req.json();
 
-    // Parse request body
-    const body = await req.json();
-    const { message, userId } = body;
-
-    if (!message || !userId) {
+    // Validate the message
+    if (!message || typeof message !== "string") {
       return new Response(
-        JSON.stringify({ error: 'Message and userId are required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: "Missing or invalid message parameter" }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400,
+        }
       );
     }
 
-    // Check for timer intents
+    // Validate the userId
+    if (!userId || typeof userId !== "string") {
+      return new Response(
+        JSON.stringify({ error: "Missing or invalid userId parameter" }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400,
+        }
+      );
+    }
+
+    // Initialize the Supabase client
+    const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+
+    // Store the user message
+    await storeUserMessage(supabase, message, userId);
+
+    // Check for timer intent in the message
     const timerIntent = parseTimerIntent(message);
-    
     if (timerIntent) {
-      console.log("Timer intent detected:", timerIntent);
+      console.log("Detected timer intent:", timerIntent);
+      const timerData = await handleTimerIntent(supabase, timerIntent, userId);
       
-      if (timerIntent.action === 'create') {
-        // Create a new timer
-        const expiresAt = addMinutes(new Date(), timerIntent.minutes);
+      // Generate a user-friendly response
+      let timerResponse = "I'll set a timer for you.";
+      if (timerData) {
+        switch (timerData.action) {
+          case 'created':
+            const labelText = timerData.label ? ` for "${timerData.label}"` : '';
+            timerResponse = `I've set a timer${labelText} for ${timerData.duration_minutes} ${timerData.duration_minutes === 1 ? 'minute' : 'minutes'}. I'll notify you when it's done!`;
+            break;
+          case 'cancelled':
+            timerResponse = timerData.message || "I've cancelled your timer.";
+            break;
+          case 'checked':
+            timerResponse = timerData.message || "You don't have any active timers.";
+            break;
+          default:
+            timerResponse = "I've processed your timer request.";
+        }
+      }
+      
+      // Store the AI response
+      await storeAIMessage(supabase, timerResponse, userId);
+      
+      // Return the response with timer data
+      return new Response(
+        JSON.stringify({ 
+          response: timerResponse,
+          timer: timerData // Include timer data in the response
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
+    }
+
+    // Check for task commands
+    const taskCommandResult = await checkForTaskCommands(message, userId, supabase);
+    if (taskCommandResult.isTaskCommand) {
+      // Store the AI response
+      await storeAIMessage(supabase, taskCommandResult.response, userId);
+      
+      return new Response(
+        JSON.stringify({ response: taskCommandResult.response }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
+    }
+
+    // Get the chat history
+    const chatHistory = await getChatHistory(supabase, userId);
+
+    // Generate the AI response
+    const aiResponse = await generateAIResponse(message, chatHistory, openaiApiKey);
+
+    // Store the AI response
+    await storeAIMessage(supabase, aiResponse, userId);
+
+    // Extract task details if present
+    const taskDetails = extractTaskDetails(aiResponse);
+
+    // Return the response
+    return new Response(
+      JSON.stringify({ response: aiResponse, task: taskDetails }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      }
+    );
+  } catch (error) {
+    console.error("Error processing chat:", error);
+    return new Response(
+      JSON.stringify({ error: "Error processing request", details: error.message }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
+      }
+    );
+  }
+});
+
+// Store a user message
+async function storeUserMessage(supabase: any, content: string, userId: string) {
+  try {
+    const { error } = await supabase.from("chat_messages").insert({
+      content,
+      user_id: userId,
+      is_ai: false,
+    });
+
+    if (error) {
+      console.error("Error storing user message:", error);
+    }
+  } catch (error) {
+    console.error("Error storing user message:", error);
+  }
+}
+
+// Store an AI message
+async function storeAIMessage(supabase: any, content: string, userId: string) {
+  try {
+    const { error } = await supabase.from("chat_messages").insert({
+      content,
+      user_id: userId,
+      is_ai: true,
+    });
+
+    if (error) {
+      console.error("Error storing AI message:", error);
+    }
+  } catch (error) {
+    console.error("Error storing AI message:", error);
+  }
+}
+
+// Get the chat history
+async function getChatHistory(supabase: any, userId: string): Promise<ChatMessage[]> {
+  try {
+    const { data, error } = await supabase
+      .from("chat_messages")
+      .select("content, is_ai, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: true })
+      .limit(20);
+
+    if (error) {
+      console.error("Error getting chat history:", error);
+      return [];
+    }
+
+    return data.map((message: any) => ({
+      content: message.content,
+      role: message.is_ai ? "assistant" : "user",
+    }));
+  } catch (error) {
+    console.error("Error getting chat history:", error);
+    return [];
+  }
+}
+
+// Handle a timer intent
+async function handleTimerIntent(
+  supabase: any,
+  timerIntent: TimerIntent,
+  userId: string
+): Promise<any> {
+  try {
+    // Process based on the action type
+    switch (timerIntent.action) {
+      case "create":
+        console.log(`Creating timer for ${timerIntent.minutes} minutes`);
         
-        const { data: timer, error: timerError } = await supabase
-          .from('timer_sessions')
+        // Calculate expiration time
+        const expiresAt = add(new Date(), { minutes: timerIntent.minutes });
+        
+        // Insert the timer
+        const { data, error } = await supabase
+          .from("timer_sessions")
           .insert({
             user_id: userId,
-            label: timerIntent.label || null,
+            label: timerIntent.label,
             duration_minutes: timerIntent.minutes,
             expires_at: expiresAt.toISOString(),
             is_active: true,
-            is_completed: false
+            is_completed: false,
           })
           .select()
           .single();
         
-        if (timerError) {
-          console.error("Error creating timer:", timerError);
-          return new Response(
-            JSON.stringify({ 
-              response: "I had trouble setting your timer. Please try again." 
-            }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
+        if (error) {
+          console.error("Error creating timer:", error);
+          return null;
         }
         
-        // Format response with the timer information
-        const formattedTime = format(expiresAt, 'h:mm a');
-        const timerResponse = timerIntent.label
-          ? `I've set a timer for ${timerIntent.minutes} minutes for "${timerIntent.label}". I'll notify you at ${formattedTime}.`
-          : `I've set a timer for ${timerIntent.minutes} minutes. I'll notify you at ${formattedTime}.`;
+        console.log("Timer created:", data);
+        return {
+          action: 'created',
+          id: data.id,
+          label: timerIntent.label,
+          duration_minutes: timerIntent.minutes,
+          expires_at: expiresAt.toISOString(),
+          message: `Timer set for ${timerIntent.minutes} ${timerIntent.minutes === 1 ? 'minute' : 'minutes'}${timerIntent.label ? ` (${timerIntent.label})` : ''}`
+        };
         
-        return new Response(
-          JSON.stringify({ response: timerResponse }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      } else if (timerIntent.action === 'cancel') {
-        // Cancel active timers
+      case "cancel":
         const cancelResult = await cancelTimer(supabase, userId);
-        return new Response(
-          JSON.stringify({ response: cancelResult.message }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      } else if (timerIntent.action === 'check') {
-        // Check status of active timers
-        const statusResult = await checkTimerStatus(supabase, userId);
-        return new Response(
-          JSON.stringify({ response: statusResult.message }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
+        return {
+          action: 'cancelled',
+          success: cancelResult.success,
+          message: cancelResult.message
+        };
+        
+      case "check":
+        const checkResult = await checkTimerStatus(supabase, userId);
+        return {
+          action: 'checked',
+          success: checkResult.success,
+          message: checkResult.message,
+          data: checkResult.data
+        };
+        
+      default:
+        console.error("Unknown timer action:", timerIntent.action);
+        return null;
     }
-    
-    // Continue with task processing and OpenAI for other messages
-    const taskCommandResponse = await processTaskCommand(message, userId, supabase);
-    if (taskCommandResponse.isTaskCommand) {
-      return new Response(
-        JSON.stringify({ response: taskCommandResponse.response }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Fetch recent tasks for context
-    const recentTasks = await fetchRecentTasks(supabase, userId);
-    
-    // Fetch recent chat history for context
-    const { data: chatHistory, error: chatError } = await supabase
-      .from('chat_messages')
-      .select('content, is_ai, created_at')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(10);
-    
-    if (chatError) {
-      console.error("Error fetching chat history:", chatError);
-    }
-    
-    // Process the message with OpenAI
-    const formattedHistory = (chatHistory || [])
-      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-      .map(msg => ({
-        content: msg.content,
-        role: msg.is_ai ? 'assistant' : 'user'
-      }));
-    
-    const aiResponse = await openAIHandler(message, formattedHistory, recentTasks);
-    
-    // Store the messages in the database
-    await supabase.from('chat_messages').insert([
-      { user_id: userId, content: message, is_ai: false },
-      { user_id: userId, content: aiResponse, is_ai: true }
-    ]);
-    
-    // Return the response
-    return new Response(
-      JSON.stringify({ response: aiResponse }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
-    
   } catch (error) {
-    console.error("Error:", error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    console.error("Error handling timer intent:", error);
+    return null;
   }
-});
+}
