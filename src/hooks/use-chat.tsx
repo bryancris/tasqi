@@ -4,6 +4,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Message } from "@/components/chat/types";
 import { useQueryClient } from "@tanstack/react-query";
+import { useNotifications } from "@/components/notifications/NotificationsManager";
 
 export function useChat() {
   const [message, setMessage] = useState("");
@@ -11,6 +12,7 @@ export function useChat() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { showNotification } = useNotifications();
 
   const fetchChatHistory = useCallback(async () => {
     try {
@@ -106,6 +108,19 @@ export function useChat() {
           isUser: false 
         };
         setMessages(prev => [...prev, aiMessage]);
+        
+        // Show notification for timer-related responses
+        if (data?.response && (
+            data.response.includes("set a timer") || 
+            data.response.includes("notify you at") ||
+            data.response.includes("timer for")
+        )) {
+          showNotification({
+            title: "Timer Set",
+            message: data.response,
+            type: "info"
+          });
+        }
         
         // Refresh the tasks list after AI processes the message
         await queryClient.invalidateQueries({ queryKey: ['tasks'] });

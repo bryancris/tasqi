@@ -7,6 +7,8 @@ import { MobileHeader } from "@/components/layouts/MobileHeader";
 import { MobileFooter } from "@/components/layouts/MobileFooter";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNotifications } from "@/components/notifications/NotificationsManager";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function Chat() {
   const [error, setError] = useState<Error | null>(null);
@@ -18,6 +20,8 @@ export default function Chat() {
     handleSubmit,
     fetchChatHistory 
   } = useChat();
+  const { showNotification } = useNotifications();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     try {
@@ -25,7 +29,61 @@ export default function Chat() {
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch chat history'));
     }
-  }, [fetchChatHistory]);
+
+    // Set up notification listener for timers
+    const checkForNotifications = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { data, error } = await supabase
+          .from('notifications')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('type', 'timer_complete')
+          .eq('read', false)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error checking timer notifications:', error);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          // Show notifications and mark them as read
+          for (const notification of data) {
+            showNotification({
+              title: notification.title,
+              message: notification.message,
+              type: 'info',
+              persistent: true
+            });
+
+            // Mark notification as read
+            await supabase
+              .from('notifications')
+              .update({ read: true })
+              .eq('id', notification.id);
+          }
+
+          // Play notification sound
+          const audio = new Audio('/notification-sound.mp3');
+          audio.play().catch(e => console.warn('Could not play sound:', e));
+
+          // Refresh notifications list if using that feature
+          queryClient.invalidateQueries({ queryKey: ['notifications'] });
+        }
+      } catch (err) {
+        console.error('Error in notification check:', err);
+      }
+    };
+
+    // Check immediately and then every 10 seconds
+    checkForNotifications();
+    const intervalId = setInterval(checkForNotifications, 10000);
+
+    return () => clearInterval(intervalId);
+  }, [fetchChatHistory, showNotification, queryClient]);
 
   const handleRetry = () => {
     setError(null);
