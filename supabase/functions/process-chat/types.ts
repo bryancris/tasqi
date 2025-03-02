@@ -1,37 +1,42 @@
 
-export interface ChatRequest {
+export interface ChatMessage {
+  content: string;
+  role: 'user' | 'assistant';
+}
+
+export interface TimerData {
+  id: number;
+  user_id: string;
+  label: string | null;
+  duration_minutes: number;
+  expires_at: string;
+  is_active: boolean;
+  is_completed: boolean;
+  created_at: string;
+}
+
+export interface TimerIntent {
+  action: 'create' | 'cancel' | 'check';
+  minutes?: number;
+  label?: string | null;
+}
+
+export interface TimerActionResult {
+  success: boolean;
   message: string;
-  userId: string;
+  data?: TimerData[];
 }
 
-export interface SubtaskDetails {
-  title: string;
-  status: 'pending' | 'completed';
-  position: number;
+export interface TaskCommandResponse {
+  isTaskCommand: boolean;
+  response: string;
 }
 
-export interface TaskDetails {
+export interface Task {
+  id: number;
   title: string;
   description?: string;
   date?: string;
-  startTime?: string;
-  endTime?: string;
-  isScheduled: boolean;
-  priority?: "low" | "medium" | "high";
-  subtasks?: SubtaskDetails[];
-}
-
-export interface OpenAIResponse {
-  task?: {
-    should_create: boolean;
-    title: string;
-    description?: string;
-    is_scheduled: boolean;
-    date?: string;
-    start_time?: string;
-    end_time?: string;
-    priority?: "low" | "medium" | "high";
-    subtasks?: (SubtaskDetails | string)[];
-  };
-  response: string;
+  status: 'scheduled' | 'unscheduled' | 'completed' | 'event';
+  priority?: 'low' | 'medium' | 'high';
 }

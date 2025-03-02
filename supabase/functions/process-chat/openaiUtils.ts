@@ -1,30 +1,71 @@
 
-// Simple implementation for demo purposes
-// In a real app, this would connect to OpenAI API
-export async function generateResponse(message: string): Promise<string> {
-  // For demo purposes, return a simple response
-  const responses = [
-    "I understand you'd like assistance with that. How can I help you manage this task?",
-    "That's an interesting topic. Would you like me to create a task for this?",
-    "I'm here to help you stay organized. What would you like me to do with this information?",
-    "Thanks for sharing that. Would you like me to schedule this for you?",
-    "I appreciate you letting me know. Is there anything specific you'd like me to do with this information?"
-  ];
-  
-  // Random selection for demo
-  const randomIndex = Math.floor(Math.random() * responses.length);
-  return responses[randomIndex];
-}
+import { ChatMessage, Task } from "./types.ts";
 
-// Check if a message appears to be a task creation request
-export function isTaskCreationRequest(message: string): boolean {
-  // Common phrases that might indicate a task creation request
-  const taskCreationPhrases = [
-    'add task', 'create task', 'make task', 'new task',
-    'add a task', 'create a task', 'schedule task', 'schedule a task',
-    'remind me to', 'i need to', 'schedule an appointment', 'add appointment',
-    'set up meeting', 'schedule meeting'
-  ];
-  
-  return taskCreationPhrases.some(phrase => message.toLowerCase().includes(phrase));
+/**
+ * Process a message with OpenAI to generate a response
+ */
+export async function openAIHandler(
+  message: string,
+  chatHistory: ChatMessage[],
+  recentTasks: Task[]
+): Promise<string> {
+  try {
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    
+    if (!OPENAI_API_KEY) {
+      console.error("Missing OpenAI API key");
+      return "I'm having trouble connecting to my knowledge base right now. Please try again later.";
+    }
+
+    // Create system message with context
+    const tasksContext = recentTasks.length > 0
+      ? `The user has the following tasks:\n${recentTasks
+          .map(t => `- ${t.title} (${t.status}${t.date ? `, date: ${t.date}` : ''})`)
+          .join('\n')}`
+      : "The user has no tasks.";
+
+    // Build messages array for OpenAI
+    const messages = [
+      {
+        role: "system",
+        content: `You are a helpful AI assistant in a task management app. Help the user manage their tasks, timers, and provide assistance.
+                  Today's date is ${new Date().toISOString().split('T')[0]}.
+                  ${tasksContext}
+                  Be concise in your responses. If the user asks to set a timer, asks about a timer, or wants to cancel a timer, inform them that you'll handle that request.`
+      },
+      ...chatHistory,
+      { role: "user", content: message }
+    ];
+
+    // Make request to OpenAI API
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "gpt-3.5-turbo",
+        messages: messages,
+        temperature: 0.7,
+        max_tokens: 500
+      })
+    });
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      console.error("OpenAI API error:", data);
+      return "I'm having trouble generating a response right now. Please try again later.";
+    }
+
+    // Extract and return the assistant's message
+    const assistantResponse = data.choices[0]?.message?.content || 
+      "I'm having trouble understanding right now. Could you rephrase that?";
+    
+    return assistantResponse;
+  } catch (error) {
+    console.error("Error in OpenAI processing:", error);
+    return "I'm having trouble connecting right now. Please try again later.";
+  }
 }

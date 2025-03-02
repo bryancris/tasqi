@@ -1,51 +1,38 @@
 
-// Extract date from a message string
-export function extractDateFromMessage(message: string): Date | null {
-  // Look for common date patterns in the message
-  
-  // Check for "today"
-  if (message.toLowerCase().includes('today')) {
-    return new Date();
-  }
-  
-  // Check for "tomorrow"
-  if (message.toLowerCase().includes('tomorrow')) {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    return tomorrow;
-  }
-  
-  // Check for days of the week (e.g., "on Monday")
-  const daysOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-  for (let i = 0; i < daysOfWeek.length; i++) {
-    if (message.toLowerCase().includes(daysOfWeek[i])) {
-      const today = new Date();
-      const currentDay = today.getDay();
-      const daysUntilTarget = (i - currentDay + 7) % 7;
-      
-      // If the day is today but referred by name, don't add days
-      if (daysUntilTarget === 0 && message.toLowerCase().includes('this ' + daysOfWeek[i])) {
-        return today;
-      }
-      
-      const targetDate = new Date();
-      targetDate.setDate(today.getDate() + (daysUntilTarget === 0 ? 7 : daysUntilTarget));
-      return targetDate;
-    }
-  }
-  
-  // Check for "next week"
-  if (message.toLowerCase().includes('next week')) {
-    const nextWeek = new Date();
-    nextWeek.setDate(nextWeek.getDate() + 7);
-    return nextWeek;
-  }
-  
-  // No recognized date pattern found
-  return null;
-}
+import {
+  addDays, addHours, addMinutes as _addMinutes, addMonths, addWeeks, addYears,
+  differenceInMinutes as _differenceInMinutes,
+  format as _format,
+  formatDistanceToNow as _formatDistanceToNow,
+  parseISO as _parseISO,
+  isToday as _isToday,
+  isTomorrow,
+  isYesterday,
+  isThisWeek,
+  isThisMonth
+} from "https://esm.sh/date-fns@2.29.3";
 
-// Format a date for storing in the database
-export function formatDateForDB(date: Date): string {
-  return date.toISOString().split('T')[0]; // Returns YYYY-MM-DD format
+// Re-export date-fns functions
+export const addMinutes = _addMinutes;
+export const differenceInMinutes = _differenceInMinutes;
+export const format = _format;
+export const formatDistanceToNow = _formatDistanceToNow;
+export const parseISO = _parseISO;
+export const isToday = _isToday;
+
+// Export other date-fns functions we might use
+export {
+  addDays, addHours, addMonths, addWeeks, addYears,
+  isTomorrow, isYesterday, isThisWeek, isThisMonth
+};
+
+/**
+ * Parse a human-readable date string into a standardized date format
+ */
+export function parseDateString(dateStr: string): string | null {
+  if (!dateStr) return null;
+  
+  // TODO: Implement more advanced date parsing if needed
+  // For now, just passing through as is
+  return dateStr;
 }
