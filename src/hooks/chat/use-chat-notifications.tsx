@@ -22,6 +22,16 @@ export function useChatNotifications() {
     } catch (soundError) {
       console.error('❌ Could not play timer sound:', soundError);
       // Continue with notification even if sound fails
+      
+      // Try an alternative method to play sound
+      try {
+        const audio = new Audio('/notification-sound.mp3');
+        audio.volume = 1.0;
+        await audio.play();
+        console.log('🔊 Alternative sound method succeeded');
+      } catch (altSoundError) {
+        console.error('❌ Alternative sound method also failed:', altSoundError);
+      }
     }
     
     // Enhanced timer notification
@@ -46,6 +56,9 @@ export function useChatNotifications() {
       console.log('✅ Timer notification shown successfully');
     } catch (notificationError) {
       console.error('❌ Failed to show timer notification:', notificationError);
+      
+      // Try another method to show notification
+      alert(`${timerData.action === 'created' ? `Timer Set: ${timerData.label || 'Unnamed Timer'}` : 'Timer Update'}`);
     }
     
     // Invalidate any relevant queries
@@ -87,7 +100,10 @@ export function useChatNotifications() {
       'reminder has been set',
       'I\'ve set a timer',
       'set a timer',
-      'I\'ll notify you'
+      'I\'ll notify you',
+      'I\'ve set a', // More generic pattern
+      'set a', // More generic pattern
+      'timer' // Fallback pattern
     ];
     
     // Check if any of the timer phrases are in the response
@@ -104,6 +120,16 @@ export function useChatNotifications() {
         console.log('🔊 Timer notification sound played for phrase detection:', soundPlayed);
       } catch (soundError) {
         console.error('❌ Could not play timer phrase sound:', soundError);
+        
+        // Try an alternative sound method
+        try {
+          const audio = new Audio('/notification-sound.mp3');
+          audio.volume = 1.0;
+          await audio.play();
+          console.log('🔊 Alternative sound method succeeded');
+        } catch (altSoundError) {
+          console.error('❌ Alternative sound method also failed:', altSoundError);
+        }
       }
       
       try {

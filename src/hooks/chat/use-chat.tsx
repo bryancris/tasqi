@@ -59,34 +59,113 @@ export function useChat() {
       addLoadingMessage();
 
       try {
-        const data = await processMessage(userMessage);
+        // Check for timer commands in the user message before sending to the server
+        // This is a client-side fallback for when the server is unavailable
+        const timerRegex = /set a (\d+)\s*(min|minute|hour|second|sec)s?\s*timer/i;
+        const match = message.match(timerRegex);
         
-        // Remove the loading indicator message
-        removeLastMessage();
-
-        // Add the AI's response
-        if (data?.response) {
-          addAIMessage(data.response);
+        if (match && navigator.onLine) {
+          try {
+            const data = await processMessage(userMessage);
+            
+            // Remove the loading indicator message
+            removeLastMessage();
+            
+            // Add the AI's response
+            if (data?.response) {
+              addAIMessage(data.response);
+            } else {
+              addAIMessage("I'm sorry, I couldn't process that request.");
+            }
+            
+            // Handle timer-related response
+            if (data?.timer) {
+              console.log('⏰ Timer data received:', data.timer);
+              await handleTimerResponse(data.timer);
+              
+              // Force immediate update of notifications for timers
+              await refreshLists();
+            } 
+            // Still check general timer-related responses for backward compatibility
+            else if (data?.response) {
+              console.log('🔍 Checking response for timer references:', data.response.substring(0, 50) + '...');
+              await handleTimerRelatedResponse(data.response);
+            }
+            
+            // Refresh tasks and notifications
+            await refreshLists();
+          } catch (fetchError) {
+            console.error('Error with server, using client-side timer fallback:', fetchError);
+            
+            // Remove the loading indicator message
+            removeLastMessage();
+            
+            // Create a timer locally when server can't be reached
+            const duration = parseInt(match[1]);
+            const unit = match[2].toLowerCase();
+            
+            let milliseconds = 0;
+            if (unit.startsWith('sec')) milliseconds = duration * 1000;
+            else if (unit.startsWith('min')) milliseconds = duration * 60 * 1000;
+            else if (unit.startsWith('hour')) milliseconds = duration * 60 * 60 * 1000;
+            
+            const timerLabel = `${duration} ${unit}${duration > 1 && !unit.endsWith('s') ? 's' : ''}`;
+            
+            // Add a success message
+            addAIMessage(`I've set a timer for ${timerLabel}.`);
+            
+            // Play notification sound to confirm timer creation
+            await playNotificationSound();
+            
+            // Show notification for timer creation
+            await showNotification({
+              title: `Timer Set: ${timerLabel}`,
+              message: `I'll notify you when your ${timerLabel} timer is complete.`,
+              type: "info",
+              persistent: true
+            });
+            
+            // Set up timer to notify when complete
+            setTimeout(async () => {
+              await playNotificationSound();
+              await showNotification({
+                title: "Timer Complete",
+                message: `Your ${timerLabel} timer is complete!`,
+                type: "info",
+                persistent: true
+              });
+            }, milliseconds);
+          }
         } else {
-          addAIMessage("I'm sorry, I couldn't process that request.");
-        }
-        
-        // Handle timer-related response
-        if (data?.timer) {
-          console.log('⏰ Timer data received:', data.timer);
-          await handleTimerResponse(data.timer);
+          const data = await processMessage(userMessage);
           
-          // Force immediate update of notifications for timers
+          // Remove the loading indicator message
+          removeLastMessage();
+          
+          // Add the AI's response
+          if (data?.response) {
+            addAIMessage(data.response);
+          } else {
+            addAIMessage("I'm sorry, I couldn't process that request.");
+          }
+          
+          // Handle timer-related response
+          if (data?.timer) {
+            console.log('⏰ Timer data received:', data.timer);
+            await handleTimerResponse(data.timer);
+            
+            // Force immediate update of notifications for timers
+            await refreshLists();
+          } 
+          // Still check general timer-related responses for backward compatibility
+          else if (data?.response) {
+            console.log('🔍 Checking response for timer references:', data.response.substring(0, 50) + '...');
+            await handleTimerRelatedResponse(data.response);
+          }
+          
+          // Refresh tasks and notifications
           await refreshLists();
-        } 
-        // Still check general timer-related responses for backward compatibility
-        else if (data?.response) {
-          console.log('🔍 Checking response for timer references:', data.response.substring(0, 50) + '...');
-          await handleTimerRelatedResponse(data.response);
         }
-        
-        // Refresh tasks and notifications
-        await refreshLists();
       } catch (invokeError) {
         console.error('Error invoking function:', invokeError);
         
@@ -124,5 +203,10 @@ export function useChat() {
   };
 }
 
-// Add missing import that we're using in the hook
+// Add missing imports that we're using in the hook
 import { supabase } from "@/integrations/supabase/client";
+import { playNotificationSound } from "@/utils/notifications/soundUtils";
+import { useNotifications } from "@/components/notifications/NotificationsManager";
+
+// Use the shared notification context for local timers
+const { showNotification } = useNotifications();
