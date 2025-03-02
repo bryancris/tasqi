@@ -1,3 +1,4 @@
+
 import { useNotifications } from "@/components/notifications/NotificationsManager";
 import { useQueryClient } from "@tanstack/react-query";
 import { playNotificationSound } from "@/utils/notifications/soundUtils";
@@ -18,6 +19,7 @@ export function useChatNotifications() {
   const activeTimersRef = useRef<Map<string, ActiveTimer>>(new Map());
   const isMountedRef = useRef<boolean>(true);
   const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timerPhrasesDetectedRef = useRef<Set<string>>(new Set());
   
   useEffect(() => {
     isMountedRef.current = true;
@@ -60,6 +62,11 @@ export function useChatNotifications() {
     
     if (timerData.action === 'created') {
       try {
+        // Store this timer phrase to prevent duplicate notifications
+        if (timerData.label) {
+          timerPhrasesDetectedRef.current.add(timerData.label.toLowerCase());
+        }
+        
         await showNotification({
           title: `Timer Set: ${timerData.label || 'Unnamed Timer'}`,
           message: `I'll notify you when your ${timerData.label || 'timer'} is complete.`,
@@ -154,25 +161,38 @@ export function useChatNotifications() {
     console.log('🔍 Checking for timer references in response:', response);
     
     const timerPhrases = [
-      'set a timer', 
-      'timer for',
       'timer is complete',
-      'minute timer',
-      'second timer',
-      'hour timer',
-      'timer set',
-      'timer created',
+      'timer cancelled',
       'reminder set',
-      'I\'ve set a timer',
-      'set a timer'
     ];
     
-    const hasTimerPhrase = timerPhrases.some(phrase => 
+    // Modified to exclude "set a timer" and similar phrases that would cause duplicate notifications
+    // We now only notify for non-creation timer phrases
+    
+    // Check if this is a timer creation confirmation response
+    const isTimerCreationResponse = 
+      response.toLowerCase().includes('set a timer') || 
+      response.toLowerCase().includes('timer for') ||
+      response.toLowerCase().includes('timer set') ||
+      response.toLowerCase().includes('timer created') ||
+      response.toLowerCase().includes('i\'ve set a timer') ||
+      response.toLowerCase().includes('minute timer') ||
+      response.toLowerCase().includes('second timer') ||
+      response.toLowerCase().includes('hour timer');
+    
+    // Skip timer creation responses since they'll be handled by handleTimerResponse
+    if (isTimerCreationResponse) {
+      console.log('⏰ Timer creation phrase detected, skipping duplicate notification');
+      return;
+    }
+    
+    // For other timer-related responses that aren't about creating timers
+    const hasOtherTimerPhrase = timerPhrases.some(phrase => 
       response.toLowerCase().includes(phrase.toLowerCase())
     );
     
-    if (hasTimerPhrase) {
-      console.log('⏰ Timer-related phrase detected in response:', response);
+    if (hasOtherTimerPhrase) {
+      console.log('⏰ Non-creation timer phrase detected in response:', response);
       
       try {
         await showNotification({
@@ -181,12 +201,12 @@ export function useChatNotifications() {
           type: "info",
           persistent: false
         });
-        console.log('✅ Timer phrase notification shown successfully');
+        console.log('✅ Timer update notification shown successfully');
       } catch (notificationError) {
-        console.error('❌ Failed to show timer phrase notification:', notificationError);
+        console.error('❌ Failed to show timer update notification:', notificationError);
       }
     } else {
-      console.log('ℹ️ No timer phrases detected in response');
+      console.log('ℹ️ No relevant timer phrases detected in response');
     }
   }, [showNotification]);
 

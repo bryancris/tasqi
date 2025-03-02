@@ -26,6 +26,11 @@ export function useChatSubmission(
     const userMessage = addUserMessage(message);
     setMessage("");
     setIsLoading(true);
+    
+    // Store information about timer detection to prevent duplicate processing
+    let timerDetectedInMessage = false;
+    let timerDuration = 0;
+    let timerUnit = '';
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -46,6 +51,11 @@ export function useChatSubmission(
       const match = message.match(timerRegex);
       
       if (match && navigator.onLine) {
+        // Store that we've detected a timer in the message to prevent duplicate notifications
+        timerDetectedInMessage = true;
+        timerDuration = parseInt(match[1]);
+        timerUnit = match[2].toLowerCase();
+        
         try {
           const data = await processMessage(userMessage);
           
@@ -68,13 +78,8 @@ export function useChatSubmission(
               void handleTimerResponse(data.timer);
             }, 100);
           } 
-          // Still check general timer-related responses for backward compatibility
-          else if (data?.response) {
-            // Use longer delay for non-critical timer-related responses
-            setTimeout(() => {
-              void handleTimerRelatedResponse(data.response);
-            }, 500);
-          }
+          // We'll skip checking general timer-related responses for timer creation phrases
+          // since we already know this message was about creating a timer
           
           // Refresh lists after a longer delay
           setTimeout(() => {
@@ -87,18 +92,15 @@ export function useChatSubmission(
           removeLastMessage();
           
           // Create a timer locally when server can't be reached
-          const duration = parseInt(match[1]);
-          const unit = match[2].toLowerCase();
-          
           let milliseconds = 0;
-          if (unit.startsWith('sec')) milliseconds = duration * 1000;
-          else if (unit.startsWith('min')) milliseconds = duration * 60 * 1000;
-          else if (unit.startsWith('hour')) milliseconds = duration * 60 * 60 * 1000;
+          if (timerUnit.startsWith('sec')) milliseconds = timerDuration * 1000;
+          else if (timerUnit.startsWith('min')) milliseconds = timerDuration * 60 * 1000;
+          else if (timerUnit.startsWith('hour')) milliseconds = timerDuration * 60 * 60 * 1000;
           
           // Verify the calculation is correct
-          console.log(`⏱️ Creating client-side timer: ${duration} ${unit} = ${milliseconds}ms`);
+          console.log(`⏱️ Creating client-side timer: ${timerDuration} ${timerUnit} = ${milliseconds}ms`);
           
-          const timerLabel = `${duration} ${unit}${duration > 1 && !unit.endsWith('s') ? 's' : ''}`;
+          const timerLabel = `${timerDuration} ${timerUnit}${timerDuration > 1 && !timerUnit.endsWith('s') ? 's' : ''}`;
           
           // Add a success message
           addAIMessage(`I've set a timer for ${timerLabel}.`);
@@ -108,8 +110,8 @@ export function useChatSubmission(
             void handleTimerResponse({
               action: 'created',
               label: timerLabel,
-              duration: duration,
-              unit: unit,
+              duration: timerDuration,
+              unit: timerUnit,
               milliseconds: milliseconds
             });
           }, 200);
@@ -145,10 +147,10 @@ export function useChatSubmission(
               void handleTimerResponse(data.timer);
             }, 200);
           } 
-          // Still check general timer-related responses for backward compatibility
-          else if (data?.response) {
+          // Only check for timer phrases if we didn't explicitly detect a timer command in the original message
+          else if (data?.response && !timerDetectedInMessage) {
             setTimeout(() => {
-              void handleTimerRelatedResponse(data.response);
+              void handleTimerRelatedResponse(data.response!);
             }, 500);
           }
           

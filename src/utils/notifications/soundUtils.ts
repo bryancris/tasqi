@@ -9,19 +9,43 @@ export async function playNotificationSound() {
       audio.volume = 0.7; // Slightly lower volume to avoid startling users
       audio.preload = 'auto';
       
+      // Add event listeners to better track playback status
+      let playbackStarted = false;
+      let playbackCompleted = false;
+      
+      audio.onplay = () => {
+        playbackStarted = true;
+        console.log('▶️ Audio playback started');
+      };
+      
+      audio.onended = () => {
+        playbackCompleted = true;
+        console.log('✅ Audio playback completed normally');
+        resolve(true);
+      };
+      
       // Set up event handlers before attempting to play
       const playPromise = audio.play();
       
       if (playPromise !== undefined) {
         playPromise
           .then(() => {
-            console.log('✅ Audio playback successful');
-            resolve(true);
+            if (!playbackCompleted) {
+              console.log('✅ Audio playback started successfully');
+              
+              // Safety resolution in case onended doesn't fire
+              setTimeout(() => {
+                if (!playbackCompleted) {
+                  console.log('⚠️ Resolving sound promise after timeout');
+                  resolve(true);
+                }
+              }, 2000);
+            }
           })
           .catch(error => {
             console.warn('⚠️ HTML5 Audio playback failed:', error);
             
-            // Web Audio API fallback
+            // Web Audio API fallback with improved error handling
             try {
               const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
               if (AudioContext) {
@@ -59,8 +83,10 @@ export async function playNotificationSound() {
       
       // Safety timeout in case all methods fail or hang
       setTimeout(() => {
-        console.warn('⚠️ Audio playback timed out');
-        resolve(false);
+        if (!playbackStarted && !playbackCompleted) {
+          console.warn('⚠️ Audio playback timed out without starting');
+          resolve(false);
+        }
       }, 2000);
       
     } catch (error) {
