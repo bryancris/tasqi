@@ -100,8 +100,17 @@ export function useChatMessaging() {
           }
           
           return data;
-        } catch (serverError) {
+        } catch (serverError: any) {
           console.error('Server-side timer function failed, using client fallback:', serverError);
+          
+          // Special handling for CORS errors
+          if (
+            (serverError instanceof TypeError && serverError.message === 'Failed to fetch') ||
+            serverError.message?.includes('CORS') ||
+            (serverError.cause instanceof TypeError && serverError.cause.message === 'Failed to fetch')
+          ) {
+            console.error('❌ CORS or network error detected, using client-side fallback');
+          }
           
           // Fall back to client-side response for timers
           return {
@@ -117,29 +126,44 @@ export function useChatMessaging() {
       }
       
       // For non-timer messages, always use the server
-      const startTime = Date.now();
-      const { data, error } = await supabase.functions.invoke('process-chat', {
-        body: { message: userMessage.content, userId: user.id }
-      });
-      const endTime = Date.now();
-      
-      console.log(`⏱️ Function invocation took ${endTime - startTime}ms`);
+      try {
+        const startTime = Date.now();
+        const { data, error } = await supabase.functions.invoke('process-chat', {
+          body: { message: userMessage.content, userId: user.id }
+        });
+        const endTime = Date.now();
+        
+        console.log(`⏱️ Function invocation took ${endTime - startTime}ms`);
 
-      if (error) {
-        console.error('❌ Function error:', error);
-        throw error;
-      }
+        if (error) {
+          console.error('❌ Function error:', error);
+          throw error;
+        }
 
-      console.log('✅ Function returned data:', data);
-      
-      // Check for timer data
-      if (data?.timer) {
-        console.log('⏰ Timer data detected:', data.timer);
-        // Force immediate refresh of timer data
-        await queryClient.invalidateQueries({ queryKey: ['timers'] });
+        console.log('✅ Function returned data:', data);
+        
+        // Check for timer data
+        if (data?.timer) {
+          console.log('⏰ Timer data detected:', data.timer);
+          // Force immediate refresh of timer data
+          await queryClient.invalidateQueries({ queryKey: ['timers'] });
+        }
+        
+        return data;
+      } catch (serverError: any) {
+        // Special handling for CORS errors
+        if (
+          (serverError instanceof TypeError && serverError.message === 'Failed to fetch') ||
+          serverError.message?.includes('CORS') ||
+          (serverError.cause instanceof TypeError && serverError.cause.message === 'Failed to fetch')
+        ) {
+          console.error('❌ CORS or network error detected:', serverError);
+          throw new Error("The server is currently unavailable. Please try again later.");
+        } else {
+          console.error('❌ Error invoking function:', serverError);
+          throw serverError;
+        }
       }
-      
-      return data;
     } catch (error) {
       if ((error as any)?.message?.includes('CORS')) {
         console.error('❌ CORS error processing message:', error);

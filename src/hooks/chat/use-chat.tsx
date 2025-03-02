@@ -5,7 +5,7 @@ import { useChatHistory } from "./use-chat-history";
 import { useChatNotifications } from "./use-chat-notifications";
 import { supabase } from "@/integrations/supabase/client";
 import { playNotificationSound } from "@/utils/notifications/soundUtils";
-import { useNotifications } from "@/components/notifications/context/NotificationsContext";
+import { useNotifications } from "@/components/notifications/NotificationsManager";
 
 export function useChat() {
   const {
@@ -147,34 +147,49 @@ export function useChat() {
             }, milliseconds);
           }
         } else {
-          const data = await processMessage(userMessage);
-          
-          // Remove the loading indicator message
-          removeLastMessage();
-          
-          // Add the AI's response
-          if (data?.response) {
-            addAIMessage(data.response);
-          } else {
-            addAIMessage("I'm sorry, I couldn't process that request.");
-          }
-          
-          // Handle timer-related response
-          if (data?.timer) {
-            console.log('⏰ Timer data received:', data.timer);
-            await handleTimerResponse(data.timer);
+          // If the message doesn't match timer regex or we're offline, use regular flow
+          try {
+            // Handle the case when we're offline but not a timer request
+            if (!navigator.onLine) {
+              removeLastMessage();
+              addAIMessage("Sorry, I'm having trouble connecting to the server. Please check your internet connection and try again.");
+              return;
+            }
             
-            // Force immediate update of notifications for timers
+            const data = await processMessage(userMessage);
+            
+            // Remove the loading indicator message
+            removeLastMessage();
+            
+            // Add the AI's response
+            if (data?.response) {
+              addAIMessage(data.response);
+            } else {
+              addAIMessage("I'm sorry, I couldn't process that request.");
+            }
+            
+            // Handle timer-related response
+            if (data?.timer) {
+              console.log('⏰ Timer data received:', data.timer);
+              await handleTimerResponse(data.timer);
+              
+              // Force immediate update of notifications for timers
+              await refreshLists();
+            } 
+            // Still check general timer-related responses for backward compatibility
+            else if (data?.response) {
+              console.log('🔍 Checking response for timer references:', data.response.substring(0, 50) + '...');
+              await handleTimerRelatedResponse(data.response);
+            }
+            
+            // Refresh tasks and notifications
             await refreshLists();
-          } 
-          // Still check general timer-related responses for backward compatibility
-          else if (data?.response) {
-            console.log('🔍 Checking response for timer references:', data.response.substring(0, 50) + '...');
-            await handleTimerRelatedResponse(data.response);
+          } catch (err) {
+            // Error occurred, but wasn't a timer request
+            console.error('Error processing message:', err);
+            removeLastMessage();
+            addAIMessage("Sorry, I'm having trouble connecting to the server. Please check your internet connection and try again.");
           }
-          
-          // Refresh tasks and notifications
-          await refreshLists();
         }
       } catch (invokeError) {
         console.error('Error invoking function:', invokeError);
