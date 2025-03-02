@@ -1,6 +1,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, act } from '../../../test/test-utils';
+import { renderHook } from '../../../test/test-utils';
+import { act } from '../../../test/test-utils';
 import { useDebouncedRefresh } from '../use-debounced-refresh';
 
 describe('useDebouncedRefresh', () => {

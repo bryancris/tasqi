@@ -1,6 +1,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, act } from '../../../test/test-utils';
+import { renderHook } from '../../../test/test-utils';
+import { act } from '../../../test/test-utils';
 import { useChat } from '../use-chat';
 
 // Mock all imported hooks
@@ -82,8 +83,8 @@ describe('useChat', () => {
       setMessages: mockSetMessages,
     });
     
-    // Verify the callback is set up correctly
-    const mockChatHistorySetMessagesFn = vi.fn();
+    // Use a regular function instead of a constant for the mock
+    let mockChatHistorySetMessagesFn = vi.fn();
     vi.mocked(require('../use-chat-history').useChatHistory).mockImplementation(callback => {
       // Store the callback so we can test it
       mockChatHistorySetMessagesFn = callback;

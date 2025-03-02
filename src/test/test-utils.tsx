@@ -1,7 +1,8 @@
 
 import React, { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { renderHook as originalRenderHook, RenderHookOptions } from '@testing-library/react-hooks';
+import { renderHook, act } from '@testing-library/react-hooks';
+import type { RenderHookOptions, RenderHookResult } from '@testing-library/react-hooks';
 
 // Create a wrapper with the necessary providers
 export function createTestQueryClient() {
@@ -9,7 +10,8 @@ export function createTestQueryClient() {
     defaultOptions: {
       queries: {
         retry: false,
-        cacheTime: 0,
+        // cacheTime has been renamed to gcTime in v5
+        gcTime: 0,
       },
     },
   });
@@ -18,22 +20,30 @@ export function createTestQueryClient() {
 export function createWrapper() {
   const queryClient = createTestQueryClient();
   
-  return ({ children }: { children: ReactNode }) => (
-    <QueryClientProvider client={queryClient}>
-      {children}
-    </QueryClientProvider>
-  );
+  return function Wrapper({ children }: { children: ReactNode }) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        {children}
+      </QueryClientProvider>
+    );
+  };
 }
 
+// Export renderHook with a properly typed wrapper
 export function renderHook<TProps, TResult>(
   callback: (props: TProps) => TResult,
-  options?: RenderHookOptions<TProps>
-) {
+  options?: Omit<RenderHookOptions<TProps>, 'wrapper'> & { wrapper?: React.ComponentType<any> }
+): RenderHookResult<TProps, TResult> {
   if (!options) {
-    options = { wrapper: createWrapper() };
-  } else if (!options.wrapper) {
+    options = {};
+  }
+  
+  if (!options.wrapper) {
     options.wrapper = createWrapper();
   }
   
-  return originalRenderHook(callback, options);
+  return originalRenderHook(callback, options as RenderHookOptions<TProps>);
 }
+
+// Export act from the testing library
+export { act };

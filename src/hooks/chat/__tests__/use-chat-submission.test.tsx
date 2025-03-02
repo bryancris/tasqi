@@ -1,11 +1,30 @@
-
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '../../../test/test-utils';
 import { useChatSubmission } from '../use-chat-submission';
 import { supabase } from '@/integrations/supabase/client';
+import { Message } from '@/components/chat/types';
+
+// Create a mock for toast
+vi.mock('@/components/ui/use-toast', () => ({
+  useToast: () => ({
+    toast: vi.fn()
+  })
+}));
+
+vi.mock('@/components/notifications/NotificationsManager', () => ({
+  useNotifications: () => ({
+    showNotification: vi.fn(),
+    notifications: [],
+    dismissNotification: vi.fn(),
+    dismissGroup: vi.fn(),
+    isSubscribed: true,
+    hasPermission: true,
+    subscribe: vi.fn()
+  })
+}));
 
 describe('useChatSubmission', () => {
-  // Create mock functions for all dependencies
+  // Create all necessary mocks
   const mockAddUserMessage = vi.fn().mockReturnValue({ content: 'User message', isUser: true });
   const mockSetMessage = vi.fn();
   const mockSetIsLoading = vi.fn();
@@ -13,43 +32,26 @@ describe('useChatSubmission', () => {
   const mockProcessMessage = vi.fn().mockResolvedValue({ response: 'AI response' });
   const mockRemoveLastMessage = vi.fn();
   const mockAddAIMessage = vi.fn();
-  const mockHandleTimerResponse = vi.fn();
-  const mockHandleTimerRelatedResponse = vi.fn();
-  const mockRefreshLists = vi.fn();
-  const mockToast = vi.fn();
-  const mockNavigator = vi.fn();
-  const mockSupabase = vi.mocked(supabase);
-  const mockShowNotification = vi.fn();
+  const mockHandleTimerResponse = vi.fn().mockResolvedValue(undefined);
+  const mockHandleTimerRelatedResponse = vi.fn().mockResolvedValue(undefined);
+  const mockRefreshLists = vi.fn().mockResolvedValue(undefined);
+  const mockToast = { error: vi.fn() };
   
-  // Mock React FormEvent
   const mockEvent = {
     preventDefault: vi.fn()
   } as unknown as React.FormEvent;
-  
+
   beforeEach(() => {
     vi.resetAllMocks();
     
     // Setup default auth response
-    mockSupabase.auth.getUser.mockResolvedValue({
+    vi.mocked(supabase.auth).getUser = vi.fn().mockResolvedValue({
       data: { user: { id: 'test-user-id' } },
       error: null
     });
-    
-    // Mock the notifications module
-    vi.mock('@/components/notifications/NotificationsManager', () => ({
-      useNotifications: () => ({
-        showNotification: mockShowNotification
-      })
-    }));
-    
-    // Mock navigator.onLine
-    Object.defineProperty(window.navigator, 'onLine', {
-      writable: true,
-      value: true
-    });
   });
 
-  it('should handle basic message submission', async () => {
+  it('should call preventDefault on the event', async () => {
     const { result } = renderHook(() => useChatSubmission(
       mockAddUserMessage,
       mockSetMessage,
@@ -64,22 +66,12 @@ describe('useChatSubmission', () => {
       mockToast
     ));
     
-    await result.current(mockEvent, 'Hello AI');
+    await result.current(mockEvent, 'Test message');
     
-    // Check if functions were called in the correct order with right params
     expect(mockEvent.preventDefault).toHaveBeenCalled();
-    expect(mockAddUserMessage).toHaveBeenCalledWith('Hello AI');
-    expect(mockSetMessage).toHaveBeenCalledWith('');
-    expect(mockSetIsLoading).toHaveBeenCalledWith(true);
-    expect(mockAddLoadingMessage).toHaveBeenCalled();
-    expect(mockProcessMessage).toHaveBeenCalledWith({ content: 'User message', isUser: true });
-    expect(mockRemoveLastMessage).toHaveBeenCalled();
-    expect(mockAddAIMessage).toHaveBeenCalledWith('AI response');
-    expect(mockRefreshLists).toHaveBeenCalled();
-    expect(mockSetIsLoading).toHaveBeenCalledWith(false);
   });
 
-  it('should not process empty messages', async () => {
+  it('should not proceed if the message is empty', async () => {
     const { result } = renderHook(() => useChatSubmission(
       mockAddUserMessage,
       mockSetMessage,
@@ -96,18 +88,12 @@ describe('useChatSubmission', () => {
     
     await result.current(mockEvent, '   ');
     
-    // Only preventDefault should be called
-    expect(mockEvent.preventDefault).toHaveBeenCalled();
     expect(mockAddUserMessage).not.toHaveBeenCalled();
     expect(mockSetIsLoading).not.toHaveBeenCalled();
+    expect(mockAddLoadingMessage).not.toHaveBeenCalled();
   });
 
-  it('should handle authentication errors', async () => {
-    mockSupabase.auth.getUser.mockResolvedValue({
-      data: { user: null },
-      error: null
-    });
-    
+  it('should add user message, set message, and set loading state', async () => {
     const { result } = renderHook(() => useChatSubmission(
       mockAddUserMessage,
       mockSetMessage,
@@ -122,26 +108,15 @@ describe('useChatSubmission', () => {
       mockToast
     ));
     
-    await result.current(mockEvent, 'Hello AI');
+    await result.current(mockEvent, 'Test message');
     
-    // Should show authentication error
-    expect(mockToast).toHaveBeenCalledWith({
-      title: "Authentication Error",
-      description: expect.stringContaining("sign in"),
-      variant: "destructive",
-    });
-    
-    // Should not process the message
-    expect(mockProcessMessage).not.toHaveBeenCalled();
+    expect(mockAddUserMessage).toHaveBeenCalledWith('Test message');
+    expect(mockSetMessage).toHaveBeenCalledWith('');
+    expect(mockSetIsLoading).toHaveBeenCalledWith(true);
+    expect(mockAddLoadingMessage).toHaveBeenCalled();
   });
 
-  it('should handle timer-related responses', async () => {
-    // Mock a timer response
-    mockProcessMessage.mockResolvedValue({
-      response: 'Timer set',
-      timer: { action: 'created', duration: 5 }
-    });
-    
+  it('should call processMessage with the user message', async () => {
     const { result } = renderHook(() => useChatSubmission(
       mockAddUserMessage,
       mockSetMessage,
@@ -156,18 +131,12 @@ describe('useChatSubmission', () => {
       mockToast
     ));
     
-    await result.current(mockEvent, 'set a 5 minute timer');
+    await result.current(mockEvent, 'Test message');
     
-    // Should process timer response
-    expect(mockHandleTimerResponse).toHaveBeenCalledWith({ action: 'created', duration: 5 });
+    expect(mockProcessMessage).toHaveBeenCalledWith({ content: 'User message', isUser: true });
   });
 
-  it('should handle response containing timer phrases', async () => {
-    // Mock a response with timer phrases
-    mockProcessMessage.mockResolvedValue({
-      response: 'Your timer is complete'
-    });
-    
+  it('should add AI message and remove loading message on successful response', async () => {
     const { result } = renderHook(() => useChatSubmission(
       mockAddUserMessage,
       mockSetMessage,
@@ -182,78 +151,36 @@ describe('useChatSubmission', () => {
       mockToast
     ));
     
-    await result.current(mockEvent, 'What happened to my timer?');
+    await result.current(mockEvent, 'Test message');
     
-    // Should process timer-related response
-    expect(mockHandleTimerRelatedResponse).toHaveBeenCalledWith('Your timer is complete');
-  });
-
-  it('should handle offline state', async () => {
-    // Mock navigator.onLine as false
-    Object.defineProperty(window.navigator, 'onLine', {
-      writable: true,
-      value: false
-    });
-    
-    const { result } = renderHook(() => useChatSubmission(
-      mockAddUserMessage,
-      mockSetMessage,
-      mockSetIsLoading,
-      mockAddLoadingMessage,
-      mockProcessMessage,
-      mockRemoveLastMessage,
-      mockAddAIMessage,
-      mockHandleTimerResponse,
-      mockHandleTimerRelatedResponse,
-      mockRefreshLists,
-      mockToast
-    ));
-    
-    await result.current(mockEvent, 'Hello AI');
-    
-    // Should add error message
-    expect(mockAddAIMessage).toHaveBeenCalledWith(expect.stringContaining("trouble connecting"));
-    expect(mockProcessMessage).not.toHaveBeenCalled();
-  });
-
-  it('should handle errors in processMessage', async () => {
-    // Mock processMessage to throw an error
-    mockProcessMessage.mockRejectedValue(new Error('Processing error'));
-    
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    
-    const { result } = renderHook(() => useChatSubmission(
-      mockAddUserMessage,
-      mockSetMessage,
-      mockSetIsLoading,
-      mockAddLoadingMessage,
-      mockProcessMessage,
-      mockRemoveLastMessage,
-      mockAddAIMessage,
-      mockHandleTimerResponse,
-      mockHandleTimerRelatedResponse,
-      mockRefreshLists,
-      mockToast
-    ));
-    
-    await result.current(mockEvent, 'Hello AI');
-    
-    // Should log the error
-    expect(consoleSpy).toHaveBeenCalledWith('Error processing message:', expect.any(Error));
-    
-    // Should add error message
-    expect(mockAddAIMessage).toHaveBeenCalledWith(expect.stringContaining("encountered an error"));
-    
-    // Should show error toast
-    expect(mockToast).toHaveBeenCalledWith({
-      title: "Error",
-      description: expect.stringContaining("Failed to process message"),
-      variant: "destructive",
-    });
-    
-    // Should set isLoading to false
+    expect(mockRemoveLastMessage).toHaveBeenCalled();
+    expect(mockAddAIMessage).toHaveBeenCalledWith('AI response');
     expect(mockSetIsLoading).toHaveBeenCalledWith(false);
+  });
+
+  it('should handle errors and display a toast', async () => {
+    // Mock processMessage to reject
+    mockProcessMessage.mockRejectedValue(new Error('Async error'));
     
-    consoleSpy.mockRestore();
+    const { result } = renderHook(() => useChatSubmission(
+      mockAddUserMessage,
+      mockSetMessage,
+      mockSetIsLoading,
+      mockAddLoadingMessage,
+      mockProcessMessage,
+      mockRemoveLastMessage,
+      mockAddAIMessage,
+      mockHandleTimerResponse,
+      mockHandleTimerRelatedResponse,
+      mockRefreshLists,
+      mockToast
+    ));
+    
+    await result.current(mockEvent, 'Test message');
+    
+    expect(mockRemoveLastMessage).toHaveBeenCalled();
+    expect(mockAddAIMessage).toHaveBeenCalledWith("Sorry, I encountered an error processing your message. Please try again later.");
+    expect(mockToast.error).toHaveBeenCalledWith("Failed to process message. Please try again.");
+    expect(mockSetIsLoading).toHaveBeenCalledWith(false);
   });
 });

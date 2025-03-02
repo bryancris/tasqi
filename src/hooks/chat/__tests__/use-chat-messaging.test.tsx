@@ -1,6 +1,6 @@
-
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, act } from '../../../test/test-utils';
+import { renderHook } from '../../../test/test-utils';
+import { act } from '../../../test/test-utils';
 import { useChatMessaging } from '../use-chat-messaging';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -54,13 +54,11 @@ vi.mock('@/components/ui/use-toast', () => ({
 }));
 
 describe('useChatMessaging', () => {
-  const mockSupabase = vi.mocked(supabase);
-  
   beforeEach(() => {
     vi.resetAllMocks();
     
     // Setup default auth response
-    mockSupabase.auth.getUser.mockResolvedValue({
+    vi.mocked(supabase.auth).getUser = vi.fn().mockResolvedValue({
       data: { user: { id: 'test-user-id' } },
       error: null
     });
@@ -91,7 +89,7 @@ describe('useChatMessaging', () => {
   });
 
   it('should throw an error when no user is authenticated', async () => {
-    mockSupabase.auth.getUser.mockResolvedValue({
+    vi.mocked(supabase.auth).getUser = vi.fn().mockResolvedValue({
       data: { user: null },
       error: null
     });
