@@ -27,6 +27,34 @@ export {
 };
 
 /**
+ * Add specified time units to a date
+ * @param date Base date to modify
+ * @param duration Object with time units to add
+ * @returns New date with added time
+ */
+export function add(date: Date, duration: { 
+  years?: number; 
+  months?: number; 
+  weeks?: number; 
+  days?: number; 
+  hours?: number; 
+  minutes?: number; 
+  seconds?: number;
+}): Date {
+  let result = new Date(date);
+  
+  if (duration.years) result = addYears(result, duration.years);
+  if (duration.months) result = addMonths(result, duration.months);
+  if (duration.weeks) result = addWeeks(result, duration.weeks);
+  if (duration.days) result = addDays(result, duration.days);
+  if (duration.hours) result = addHours(result, duration.hours);
+  if (duration.minutes) result = addMinutes(result, duration.minutes);
+  if (duration.seconds) result = addMinutes(result, duration.seconds / 60);
+  
+  return result;
+}
+
+/**
  * Parse a human-readable date string into a standardized date format
  */
 export function parseDateString(dateStr: string): string | null {

@@ -15,7 +15,11 @@ const openaiApiKey = Deno.env.get("OPENAI_API_KEY")!;
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    console.log("Handling CORS preflight request");
+    return new Response(null, { 
+      headers: corsHeaders,
+      status: 204 // No Content is the proper response for OPTIONS
+    });
   }
 
   try {
