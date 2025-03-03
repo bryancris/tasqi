@@ -62,7 +62,7 @@ export function MobileFooter({ activePage }: { activePage?: string }) {
           <DropdownMenuContent align="center" className="min-w-[120px] bg-white border shadow-lg">
             <button
               onClick={handleWeeklyClick}
-              className="flex items-center justify-center gap-2 py-3 relative hover:bg-gray-50 focus:bg-gray-50 w-full"
+              className="flex items-center justify-center gap-2 py-1.5 relative hover:bg-gray-50 focus:bg-gray-50 w-full"
             >
               <div className="relative">
                 <CalendarDays className="h-7 w-7 text-[#AAAAAA]" />
@@ -73,7 +73,7 @@ export function MobileFooter({ activePage }: { activePage?: string }) {
             </button>
             <button
               onClick={handleMonthlyClick}
-              className="flex items-center justify-center gap-2 py-3 relative hover:bg-gray-50 focus:bg-gray-50 w-full"
+              className="flex items-center justify-center gap-2 py-1.5 relative hover:bg-gray-50 focus:bg-gray-50 w-full"
             >
               <div className="relative">
                 <Calendar className="h-7 w-7 text-[#AAAAAA]" />
