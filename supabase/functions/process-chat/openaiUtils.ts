@@ -2,27 +2,18 @@
 import { ChatMessage, Task } from "./types.ts";
 
 /**
- * Process a message with OpenAI to generate a response
+ * Generate an AI response based on the user's message and chat history
  */
-export async function openAIHandler(
+export async function generateAIResponse(
   message: string,
   chatHistory: ChatMessage[],
-  recentTasks: Task[]
+  apiKey: string
 ): Promise<string> {
   try {
-    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
-    
-    if (!OPENAI_API_KEY) {
+    if (!apiKey) {
       console.error("Missing OpenAI API key");
       return "I'm having trouble connecting to my knowledge base right now. Please try again later.";
     }
-
-    // Create system message with context
-    const tasksContext = recentTasks.length > 0
-      ? `The user has the following tasks:\n${recentTasks
-          .map(t => `- ${t.title} (${t.status}${t.date ? `, date: ${t.date}` : ''})`)
-          .join('\n')}`
-      : "The user has no tasks.";
 
     // Build messages array for OpenAI
     const messages = [
@@ -30,7 +21,6 @@ export async function openAIHandler(
         role: "system",
         content: `You are a helpful AI assistant in a task management app. Help the user manage their tasks, timers, and provide assistance.
                   Today's date is ${new Date().toISOString().split('T')[0]}.
-                  ${tasksContext}
                   Be concise in your responses. If the user asks to set a timer, asks about a timer, or wants to cancel a timer, inform them that you'll handle that request.`
       },
       ...chatHistory,
@@ -42,7 +32,7 @@ export async function openAIHandler(
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${OPENAI_API_KEY}`
+        "Authorization": `Bearer ${apiKey}`
       },
       body: JSON.stringify({
         model: "gpt-3.5-turbo",

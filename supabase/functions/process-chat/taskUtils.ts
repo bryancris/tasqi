@@ -2,9 +2,9 @@
 import type { TaskCommandResponse, Task } from "./types.ts";
 
 /**
- * Process a potential task-related command from a user message
+ * Check if a message contains task-related commands
  */
-export async function processTaskCommand(
+export async function checkForTaskCommands(
   message: string, 
   userId: string, 
   supabase: any
@@ -61,6 +61,15 @@ export async function processTaskCommand(
     isTaskCommand: false,
     response: ""
   };
+}
+
+/**
+ * Extract task details from AI response
+ */
+export function extractTaskDetails(aiResponse: string): Task | null {
+  // For now, return null since AI responses don't automatically create tasks
+  // This could be enhanced with NLP to extract potential task details
+  return null;
 }
 
 /**
