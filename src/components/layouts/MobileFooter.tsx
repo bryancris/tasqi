@@ -59,7 +59,7 @@ export function MobileFooter({ activePage }: { activePage?: string }) {
               <span className="text-xs mt-1">Calendars</span>
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="center" className="min-w-[100px] bg-white border-0 shadow-lg p-0">
+          <DropdownMenuContent align="center" className="min-w-[70px] bg-white border-0 shadow-lg p-0 -mx-1 overflow-hidden">
             <button
               onClick={handleWeeklyClick}
               className="flex items-center justify-center py-0.5 px-0 relative hover:bg-gray-50 focus:bg-gray-50 w-full"
