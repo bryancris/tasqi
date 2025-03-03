@@ -59,10 +59,10 @@ export function MobileFooter({ activePage }: { activePage?: string }) {
               <span className="text-xs mt-1">Calendars</span>
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="center" className="min-w-[120px] bg-white border border-gray-100 shadow-lg p-0.5">
+          <DropdownMenuContent align="center" className="min-w-[100px] bg-white border-0 shadow-lg p-0">
             <button
               onClick={handleWeeklyClick}
-              className="flex items-center justify-center gap-2 py-1 relative hover:bg-gray-50 focus:bg-gray-50 w-full"
+              className="flex items-center justify-center py-0.5 px-0 relative hover:bg-gray-50 focus:bg-gray-50 w-full"
             >
               <div className="relative">
                 <CalendarDays className="h-7 w-7 text-[#AAAAAA]" />
@@ -73,7 +73,7 @@ export function MobileFooter({ activePage }: { activePage?: string }) {
             </button>
             <button
               onClick={handleMonthlyClick}
-              className="flex items-center justify-center gap-2 py-1 relative hover:bg-gray-50 focus:bg-gray-50 w-full"
+              className="flex items-center justify-center py-0.5 px-0 relative hover:bg-gray-50 focus:bg-gray-50 w-full"
             >
               <div className="relative">
                 <Calendar className="h-7 w-7 text-[#AAAAAA]" />
