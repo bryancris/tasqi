@@ -55,9 +55,11 @@ export function useServerCommunication() {
         
         // CRITICAL: Dispatch AI response event with task data for form updates
         try {
-          window.dispatchEvent(new CustomEvent('ai-response', { 
+          const customEvent = new CustomEvent('ai-response', { 
             detail: { task: data.task }
-          }));
+          });
+          console.log('📣 Dispatching AI response event with task data:', customEvent);
+          window.dispatchEvent(customEvent);
           console.log('✅ AI response event dispatched with task data');
         } catch (e) {
           console.error('❌ Error dispatching custom event:', e);

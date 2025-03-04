@@ -22,22 +22,46 @@ export function useAiTaskResponse({
 
   useEffect(() => {
     const handleAIResponse = (e: CustomEvent<any>) => {
-      console.log('AI Response received in TaskForm:', e.detail);
+      console.log('🤖 AI Response received in TaskForm:', e.detail);
       
       if (e.detail?.task) {
         setProcessingAIResponse(true);
         
         try {
           const taskData = e.detail.task;
-          console.log('Processing task data:', taskData);
+          console.log('📊 Processing task data in AI response handler:', taskData);
 
-          onTitleChange(taskData.title || '');
-          onDescriptionChange(taskData.description || '');
-          onIsScheduledChange(!!taskData.is_scheduled);
-          if (taskData.date) onDateChange(taskData.date);
+          // Set title with validation
+          if (taskData.title && typeof taskData.title === 'string') {
+            console.log('✏️ Setting task title:', taskData.title);
+            onTitleChange(taskData.title);
+          } else {
+            console.warn('⚠️ No valid title in task data');
+          }
+          
+          // Set description with validation
+          if (taskData.description && typeof taskData.description === 'string') {
+            console.log('📝 Setting task description:', taskData.description);
+            onDescriptionChange(taskData.description);
+          } else {
+            console.log('ℹ️ No description in task data, setting empty string');
+            onDescriptionChange('');
+          }
+          
+          // Handle scheduling based on date
+          const hasDate = !!taskData.date && typeof taskData.date === 'string';
+          console.log('📅 Task has date:', hasDate, taskData.date);
+          onIsScheduledChange(hasDate);
+          
+          // Set date if available
+          if (hasDate) {
+            console.log('📅 Setting task date:', taskData.date);
+            onDateChange(taskData.date);
+          }
 
+          // Handle subtasks if available
           if (taskData.subtasks && Array.isArray(taskData.subtasks)) {
-            console.log('Setting subtasks:', taskData.subtasks);
+            console.log('📋 Setting subtasks:', taskData.subtasks);
             const newSubtasks = taskData.subtasks.map((subtask: any, index: number) => ({
               title: subtask.title,
               status: 'pending',
@@ -50,8 +74,14 @@ export function useAiTaskResponse({
               description: `Added ${newSubtasks.length} subtasks to your task.`,
             });
           }
+          
+          // Notify the user that a task was created
+          toast({
+            title: "Task Created",
+            description: "Task created by AI assistant",
+          });
         } catch (error) {
-          console.error('Error processing AI response:', error);
+          console.error('❌ Error processing AI response:', error);
           toast({
             title: "Error",
             description: "Failed to process AI response",
@@ -60,6 +90,8 @@ export function useAiTaskResponse({
         } finally {
           setProcessingAIResponse(false);
         }
+      } else {
+        console.warn('⚠️ AI Response event received but no task data found:', e.detail);
       }
     };
 

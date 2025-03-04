@@ -11,6 +11,7 @@ import { useNotifications } from "@/components/notifications/NotificationsManage
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { playNotificationSound } from "@/utils/notifications/soundUtils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function Chat() {
   const [error, setError] = useState<Error | null>(null);
@@ -25,6 +26,24 @@ export default function Chat() {
   const { showNotification } = useNotifications();
   const queryClient = useQueryClient();
   const [lastNotificationCheck, setLastNotificationCheck] = useState(0);
+  const isMobile = useIsMobile();
+  
+  // Listen for AI task events in both mobile and desktop views
+  useEffect(() => {
+    const handleAiTaskEvents = (e: CustomEvent<any>) => {
+      if (e.detail?.task) {
+        console.log('📱 Chat page detected task creation event:', e.detail.task);
+        // Refresh tasks after AI created a task
+        setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: ['tasks'] });
+          queryClient.invalidateQueries({ queryKey: ['weekly-tasks'] });
+        }, 500);
+      }
+    };
+    
+    window.addEventListener('ai-response', handleAiTaskEvents as EventListener);
+    return () => window.removeEventListener('ai-response', handleAiTaskEvents as EventListener);
+  }, [queryClient]);
 
   useEffect(() => {
     try {

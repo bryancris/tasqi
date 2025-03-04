@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Subtask } from "@/components/dashboard/subtasks/SubtaskList";
 
+// Main hook for handling AI task responses
 export function useAiTaskResponse({
   onTitleChange,
   onDescriptionChange,
