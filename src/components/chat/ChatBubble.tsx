@@ -1,118 +1,36 @@
 
-import { useState, useEffect } from "react";
-import { useChat } from "@/hooks/use-chat";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { ChatDialog } from "./components/ChatDialog";
-import { useNavigate } from "react-router-dom";
+import { useState } from 'react';
+import { MessageSquare } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
-interface ChatBubbleProps {
-  isOpen?: boolean;
-  onOpenChange?: (open: boolean) => void;
-  variant?: 'floating' | 'sidebar';
-}
-
-export function ChatBubble({ isOpen, onOpenChange, variant = 'floating' }: ChatBubbleProps) {
-  const [open, setOpen] = useState(false);
-  const isMobile = useIsMobile();
-  const navigate = useNavigate();
-  const { 
-    message, 
-    messages, 
-    isLoading, 
-    setMessage, 
-    handleSubmit,
-    fetchChatHistory 
-  } = useChat();
-
-  useEffect(() => {
-    if (isMobile) return; // Only add keyboard shortcuts on desktop
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === '`') {
-        const handleNextKey = (nextE: KeyboardEvent) => {
-          if (nextE.key === 'a') {
-            // Open the chat window
-            const newOpen = true;
-            if (!isOpen) {
-              onOpenChange?.(newOpen);
-              setOpen(newOpen);
-            }
-          } else if (nextE.key === 'w') {
-            // Navigate to weekly view
-            navigate("/dashboard/weekly");
-          }
-          // Remove the event listener after handling the second key
-          window.removeEventListener('keydown', handleNextKey);
-        };
-
-        // Add event listener for the next key
-        window.addEventListener('keydown', handleNextKey, { once: true });
-      }
-    };
-
-    // Add event listener for the backtick key
-    window.addEventListener("keydown", handleKeyDown);
-
-    // Cleanup function
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isMobile, isOpen, onOpenChange, navigate]);
-
-  useEffect(() => {
-    if (open) {
-      fetchChatHistory();
-    }
-  }, [open, fetchChatHistory]);
-
-  // Handle both controlled and uncontrolled states
-  const isControlled = isOpen !== undefined;
-  const isDialogOpen = isControlled ? isOpen : open;
-  
-  const handleOpenChange = (newOpen: boolean) => {
-    if (!isControlled) {
-      setOpen(newOpen);
-    }
-    onOpenChange?.(newOpen);
-  };
-
-  // On mobile, navigate to the chat page instead of showing the overlay
-  if (isMobile) {
-    useEffect(() => {
-      if (isDialogOpen) {
-        navigate('/chat');
-        handleOpenChange(false);
-      }
-    }, [isDialogOpen]);
-    
-    return null;
-  }
-
-  if (variant === 'sidebar') {
-    return (
-      <ChatDialog
-        isOpen={isDialogOpen}
-        onOpenChange={handleOpenChange}
-        message={message}
-        messages={messages}
-        isLoading={isLoading}
-        onMessageChange={setMessage}
-        onSubmit={handleSubmit}
-      />
-    );
-  }
+export const ChatBubble = () => {
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="fixed bottom-4 right-4 z-50">
-      <ChatDialog
-        isOpen={isDialogOpen}
-        onOpenChange={handleOpenChange}
-        message={message}
-        messages={messages}
-        isLoading={isLoading}
-        onMessageChange={setMessage}
-        onSubmit={handleSubmit}
-      />
+    <div className="fixed bottom-6 right-6 z-50">
+      {isOpen && (
+        <div className="bg-white rounded-lg shadow-lg p-4 mb-4 w-[300px] border border-gray-200 animate-in fade-in slide-in-from-bottom-5">
+          <h3 className="font-bold text-lg mb-2">Need assistance?</h3>
+          <p className="text-gray-700 mb-4">
+            Chat with TASQI-AI to get help with your tasks or ask any questions about the app.
+          </p>
+          <div className="flex justify-end">
+            <Link to="/chat">
+              <Button>
+                Start Chatting
+              </Button>
+            </Link>
+          </div>
+        </div>
+      )}
+      <Button
+        size="icon"
+        className="h-14 w-14 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <MessageSquare className="h-6 w-6" />
+      </Button>
     </div>
   );
-}
+};
