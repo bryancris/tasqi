@@ -65,7 +65,11 @@ export function ToolsSection() {
         Tasqi AI Assistant
       </Button>
       
-      <ChatBubble variant="sidebar" isOpen={isChatOpen} onOpenChange={setIsChatOpen} />
+      <ChatBubble 
+        variant="sidebar" 
+        isOpen={isChatOpen} 
+        onOpenChange={setIsChatOpen} 
+      />
     </div>
   );
 }
