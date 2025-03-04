@@ -1,6 +1,7 @@
 
 import { Task } from "@/components/dashboard/TaskBoard";
 import { isNotificationSupported, detectPlatform, isSafari } from "./platformDetection";
+import { playNotificationSound } from "./soundUtils";
 
 // Separate browser notification handling
 async function requestNotificationPermission(): Promise<boolean> {
@@ -48,32 +49,6 @@ async function requestNotificationPermission(): Promise<boolean> {
     return false;
   }
 }
-
-// Play notification sound using both native and custom sound
-export const playNotificationSound = async () => {
-  try {
-    console.log('🔊 Playing notification sound...');
-    const audio = new Audio('/notification-sound.mp3');
-    audio.volume = 0.5;
-    
-    // iOS requires user interaction to play audio
-    // We'll try to play, but it might fail silently on iOS
-    const playPromise = audio.play();
-    
-    if (playPromise !== undefined) {
-      playPromise
-        .then(() => {
-          console.log('✅ Notification sound played successfully');
-        })
-        .catch(error => {
-          console.warn('⚠️ Could not autoplay notification sound (common on iOS):', error);
-          // On iOS this will likely fail without user interaction
-        });
-    }
-  } catch (error) {
-    console.warn('❌ Could not play notification sound:', error);
-  }
-};
 
 // Show browser notification with iOS PWA support
 export async function showBrowserNotification(task: Task, type: 'reminder' | 'shared' | 'assignment' = 'reminder'): Promise<boolean> {
@@ -164,3 +139,5 @@ export async function showBrowserNotification(task: Task, type: 'reminder' | 'sh
     return false;
   }
 }
+
+export { playNotificationSound };

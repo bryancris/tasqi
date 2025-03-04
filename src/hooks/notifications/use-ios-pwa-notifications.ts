@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { trackUserInteraction } from '@/utils/notifications/soundUtils';
 
 /**
  * iOS PWA specific notification handling
@@ -15,6 +16,9 @@ export function useIOSPWANotifications() {
   const checkSubscriptionStatus = useCallback(async () => {
     try {
       setIsLoading(true);
+      
+      // Track user interaction for iOS audio playback
+      trackUserInteraction();
       
       // First check local storage preference (most reliable for iOS PWA)
       const localEnabled = localStorage.getItem('ios_pwa_notifications_enabled') === 'true';
@@ -63,6 +67,9 @@ export function useIOSPWANotifications() {
     try {
       setIsLoading(true);
       console.log('🍎 Setting up iOS PWA notifications');
+      
+      // Track user interaction for iOS audio playback
+      trackUserInteraction();
       
       // Set the local storage flag first for UI consistency
       localStorage.setItem('ios_pwa_notifications_enabled', 'true');

@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { playNotificationSound } from "@/utils/notifications/soundUtils";
+import { playNotificationSound, trackUserInteraction } from "@/utils/notifications/soundUtils";
 
 interface TimerDialogProps {
   isOpen: boolean;
@@ -22,6 +21,12 @@ export function TimerDialog({ isOpen, onOpenChange }: TimerDialogProps) {
   const [isRunning, setIsRunning] = useState(false);
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [label, setLabel] = useState("");
+  
+  useEffect(() => {
+    if (isOpen) {
+      trackUserInteraction();
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -44,12 +49,32 @@ export function TimerDialog({ isOpen, onOpenChange }: TimerDialogProps) {
   const handleTimerComplete = async () => {
     setIsRunning(false);
     try {
-      await playNotificationSound();
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      
+      if (isIOS) {
+        console.log('🍎 Timer complete on iOS device, trying multiple sound approaches');
+        
+        try {
+          await playNotificationSound();
+        } catch (soundError) {
+          console.warn('🍎 Primary sound method failed on iOS:', soundError);
+          
+          try {
+            const audio = new Audio('/notification-sound.mp3');
+            audio.volume = 0.3;
+            audio.play().catch(e => console.warn('🍎 Fallback iOS sound also failed:', e));
+          } catch (fallbackError) {
+            console.warn('🍎 All iOS sound methods failed:', fallbackError);
+          }
+        }
+      } else {
+        await playNotificationSound();
+      }
+      
       toast.success("Timer Complete!", {
         description: label ? `${label} timer finished` : "Your timer has finished",
       });
       
-      // Show browser notification if permission is granted
       if (Notification.permission === "granted") {
         new Notification("Timer Complete!", {
           body: label ? `${label} timer finished` : "Your timer has finished",
@@ -57,7 +82,6 @@ export function TimerDialog({ isOpen, onOpenChange }: TimerDialogProps) {
         });
       }
       
-      // Vibrate on mobile devices if supported
       if (navigator.vibrate) {
         navigator.vibrate([200, 100, 200]);
       }
@@ -67,6 +91,8 @@ export function TimerDialog({ isOpen, onOpenChange }: TimerDialogProps) {
   };
 
   const startTimer = () => {
+    trackUserInteraction();
+    
     const totalSeconds = 
       parseInt(hours) * 3600 + 
       parseInt(minutes) * 60 + 
@@ -89,12 +115,16 @@ export function TimerDialog({ isOpen, onOpenChange }: TimerDialogProps) {
   };
 
   const handlePresetClick = (mins: number) => {
+    trackUserInteraction();
+    
     setHours("00");
     setMinutes(mins.toString().padStart(2, "0"));
     setSeconds("00");
   };
 
   const resetTimer = () => {
+    trackUserInteraction();
+    
     setIsRunning(false);
     setTimeLeft(0);
     setHours("00");
@@ -111,7 +141,10 @@ export function TimerDialog({ isOpen, onOpenChange }: TimerDialogProps) {
           <Input
             id="hours"
             value={hours}
-            onChange={(e) => setHours(e.target.value.padStart(2, "0"))}
+            onChange={(e) => {
+              trackUserInteraction();
+              setHours(e.target.value.padStart(2, "0"));
+            }}
             maxLength={2}
             disabled={isRunning}
           />
@@ -121,7 +154,10 @@ export function TimerDialog({ isOpen, onOpenChange }: TimerDialogProps) {
           <Input
             id="minutes"
             value={minutes}
-            onChange={(e) => setMinutes(e.target.value.padStart(2, "0"))}
+            onChange={(e) => {
+              trackUserInteraction();
+              setMinutes(e.target.value.padStart(2, "0"));
+            }}
             maxLength={2}
             disabled={isRunning}
           />
@@ -131,7 +167,10 @@ export function TimerDialog({ isOpen, onOpenChange }: TimerDialogProps) {
           <Input
             id="seconds"
             value={seconds}
-            onChange={(e) => setSeconds(e.target.value.padStart(2, "0"))}
+            onChange={(e) => {
+              trackUserInteraction();
+              setSeconds(e.target.value.padStart(2, "0"));
+            }}
             maxLength={2}
             disabled={isRunning}
           />
@@ -171,7 +210,10 @@ export function TimerDialog({ isOpen, onOpenChange }: TimerDialogProps) {
           id="label"
           placeholder="Focus Session"
           value={label}
-          onChange={(e) => setLabel(e.target.value)}
+          onChange={(e) => {
+            trackUserInteraction();
+            setLabel(e.target.value);
+          }}
           disabled={isRunning}
         />
       </div>
@@ -182,7 +224,10 @@ export function TimerDialog({ isOpen, onOpenChange }: TimerDialogProps) {
             {formatTime(timeLeft)}
           </div>
           <div className="flex gap-2 justify-center">
-            <Button onClick={() => setIsRunning(false)} variant="outline">
+            <Button onClick={() => {
+              trackUserInteraction();
+              setIsRunning(false);
+            }} variant="outline">
               Pause
             </Button>
             <Button onClick={resetTimer} variant="destructive">
@@ -203,7 +248,10 @@ export function TimerDialog({ isOpen, onOpenChange }: TimerDialogProps) {
 
   if (isMobile) {
     return (
-      <Sheet open={isOpen} onOpenChange={onOpenChange}>
+      <Sheet open={isOpen} onOpenChange={(open) => {
+        if (open) trackUserInteraction();
+        onOpenChange(open);
+      }}>
         <SheetContent side="bottom" className="h-[80vh]">
           <SheetHeader>
             <SheetTitle>Set Timer</SheetTitle>
@@ -215,7 +263,10 @@ export function TimerDialog({ isOpen, onOpenChange }: TimerDialogProps) {
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (open) trackUserInteraction();
+      onOpenChange(open);
+    }}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Set Timer</DialogTitle>
