@@ -1,3 +1,4 @@
+
 import { Task } from "./TaskBoard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TaskCard } from "./TaskCard";
@@ -125,9 +126,9 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
               {view === 'board' ? 'Task Board' : 'Timeline'}
             </CardTitle>
             <Button
-              variant="ghost"
+              variant="outline"
               onClick={() => setView(view === 'board' ? 'timeline' : 'board')}
-              className="text-base font-medium text-gray-600"
+              className="text-base font-medium"
             >
               Switch to {view === 'board' ? 'Timeline' : 'Board'}
             </Button>
