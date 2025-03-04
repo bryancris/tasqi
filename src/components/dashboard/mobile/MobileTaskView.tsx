@@ -60,9 +60,9 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
               {view === 'board' ? 'Task Board' : 'Timeline'}
             </CardTitle>
             <Button
-              variant="ghost"
+              variant="rainbow"
               onClick={() => setView(view === 'board' ? 'timeline' : 'board')}
-              className="text-base font-medium text-gray-600"
+              className="text-base font-medium"
             >
               Switch to {view === 'board' ? 'Timeline' : 'Board'}
             </Button>
