@@ -17,8 +17,9 @@ export function useChat() {
     removeLastMessage,
     processMessage,
     setIsLoading,
-    toast,
-    setMessages
+    shadowToast,
+    setMessages,
+    queryClient
   } = useChatMessaging();
 
   const { fetchChatHistory } = useChatHistory(messages => {
@@ -49,7 +50,7 @@ export function useChat() {
     handleTimerResponse, 
     handleTimerRelatedResponse, 
     refreshLists, 
-    toast
+    shadowToast
   );
   
   // Create a wrapper function that calls the submission hook with the current message

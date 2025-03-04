@@ -80,3 +80,6 @@ export function useAiTaskResponse({
 
   return { processingAIResponse };
 }
+
+// Also export it as useTaskAIResponse for backward compatibility
+export const useTaskAIResponse = useAiTaskResponse;

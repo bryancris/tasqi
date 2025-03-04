@@ -1,4 +1,3 @@
-
 import { ShareTaskDialog } from "./ShareTaskDialog";
 import { FormSubmitButton } from "./form/sections/FormSubmitButton";
 import { TaskFormContent } from "./form/TaskFormContent";
@@ -7,7 +6,7 @@ import { Task, TaskPriority } from "./TaskBoard";
 import { useChat } from "@/hooks/use-chat";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Subtask } from "./subtasks/SubtaskList";
-import { useTaskAIResponse } from "@/hooks/use-task-ai-response";
+import { useAiTaskResponse } from "@/hooks/use-task-ai-response";
 import { useTaskFormState } from "@/hooks/use-task-form-state";
 
 interface TaskFormProps {
@@ -84,7 +83,7 @@ export function TaskForm({
     onReminderEnabledChange
   });
 
-  const { processingAIResponse } = useTaskAIResponse({
+  const { processingAIResponse } = useAiTaskResponse({
     onTitleChange,
     onDescriptionChange,
     onIsScheduledChange,
