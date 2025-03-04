@@ -67,20 +67,20 @@
     background-size: 200% 200%;
   }
   
-  .rainbow-animated {
+  .rainbow-border {
     position: relative;
-    z-index: 1;
+    border: 2px solid transparent;
+    background-clip: padding-box;
   }
   
-  .rainbow-animated::before {
+  .rainbow-border::before {
     content: '';
     position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
+    top: -2px;
+    right: -2px;
+    bottom: -2px;
+    left: -2px;
     z-index: -1;
-    margin: -2px;
     border-radius: inherit;
     background: linear-gradient(
       90deg,
@@ -96,8 +96,16 @@
     animation: rainbow-border 3s linear infinite;
   }
   
-  .rainbow-animated:hover::before {
-    animation: rainbow-border 1.5s linear infinite;
+  .rainbow-border::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: -1;
+    border-radius: calc(0.5rem - 2px);
+    background: white;
   }
 }
 
