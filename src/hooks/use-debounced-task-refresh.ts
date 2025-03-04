@@ -41,7 +41,7 @@ export function useDebouncedTaskRefresh() {
         setTimeout(() => {
           isRefreshingRef.current = false;
           timeoutRef.current = null;
-        }, 100);
+        }, 50); // Reduced from 100ms to 50ms for faster refresh cycle
       })
       .catch(error => {
         console.error('Error refreshing tasks:', error);

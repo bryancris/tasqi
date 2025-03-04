@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -45,15 +46,25 @@ export function useSupabaseSubscription() {
 
     void initializeNotifications();
 
-    // Tasks channel - with improved update handling
+    // ENHANCED Tasks channel - listen to ALL events on both tasks and shared_tasks
     const tasksChannel = supabase.channel('tasks-changes')
       .on(
         'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'tasks' },
-        () => {
+        { event: '*', schema: 'public', table: 'tasks' },
+        (payload) => {
           if (isMountedRef.current) {
-            console.log('Task update from Supabase realtime - refreshing data');
-            invalidateTasks(300); // Use a 300ms debounce for realtime updates
+            console.log('Task change from Supabase realtime:', payload.eventType, payload);
+            invalidateTasks(100); // Use a faster 100ms debounce for realtime updates
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'shared_tasks' },
+        (payload) => {
+          if (isMountedRef.current) {
+            console.log('Shared task change from Supabase realtime:', payload.eventType, payload);
+            invalidateTasks(100); // Use a faster 100ms debounce for realtime updates
           }
         }
       )

@@ -1,3 +1,4 @@
+
 import { useIsMobile } from "@/hooks/use-mobile";
 import { DesktopTaskView } from "./DesktopTaskView";
 import { MobileTaskView } from "./MobileTaskView";
@@ -9,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TaskAttachment } from "./form/types";
 import { useQueryClient } from "@tanstack/react-query";
 import { useDebouncedTaskRefresh } from "@/hooks/use-debounced-task-refresh";
+import { useSupabaseSubscription } from "@/hooks/use-supabase-subscription";
 
 export type TaskPriority = "low" | "medium" | "high";
 
@@ -74,6 +76,9 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
   const { handleDragEnd } = useTaskReorder(tasks, refetch);
   const queryClient = useQueryClient();
   const { invalidateTasks, cleanup } = useDebouncedTaskRefresh();
+  
+  // Initialize Supabase subscriptions
+  useSupabaseSubscription();
 
   useEffect(() => {
     console.log("TaskBoard mounted");
@@ -88,9 +93,10 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
     const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
       if (event.type === 'updated' || event.type === 'added' || event.type === 'removed') {
         if (Array.isArray(event.query?.queryKey) && 
-            event.query?.queryKey[0] === 'tasks') {
+            (event.query?.queryKey[0] === 'tasks' || 
+             (event.query?.queryKey[0] === 'weekly-tasks' && tasks.length > 0))) {
           console.log('Task query updated in TaskBoard, triggering debounced refresh');
-          invalidateTasks(300); // Use a 300ms debounce delay
+          invalidateTasks(100); // Use a 100ms debounce for faster updates
         }
       }
     });
@@ -99,7 +105,7 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
       unsubscribe();
       cleanup(); // Clean up any pending timeouts
     };
-  }, [isMobile, isLoading, refetch, queryClient, invalidateTasks, cleanup]);
+  }, [isMobile, isLoading, refetch, queryClient, invalidateTasks, cleanup, tasks.length]);
 
   const memoizedRefetch = useCallback(() => {
     console.log("Executing memoizedRefetch");
