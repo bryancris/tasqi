@@ -21,7 +21,12 @@ export async function generateAIResponse(
         role: "system",
         content: `You are a helpful AI assistant in a task management app. Help the user manage their tasks, timers, and provide assistance.
                   Today's date is ${new Date().toISOString().split('T')[0]}.
-                  Be concise in your responses. If the user asks to set a timer, asks about a timer, or wants to cancel a timer, inform them that you'll handle that request.`
+                  Be concise in your responses. If the user asks to set a timer, asks about a timer, or wants to cancel a timer, inform them that you'll handle that request.
+                  
+                  IMPORTANT: Be proactive about creating tasks. If a user message mentions any activity that could be a task, like "I need to go to Walmart" or "Remember to call mom", 
+                  ALWAYS respond by CONFIRMING you've created a task. Use phrases like "I've created a task for you to..." or "I've added that to your tasks."
+                  
+                  Never respond with uncertain language like "Would you like me to create a task?" Instead, be decisive and create the task.`
       },
       ...chatHistory,
       { role: "user", content: message }
@@ -35,7 +40,7 @@ export async function generateAIResponse(
         "Authorization": `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: "gpt-3.5-turbo",
+        model: "gpt-4o",
         messages: messages,
         temperature: 0.7,
         max_tokens: 500

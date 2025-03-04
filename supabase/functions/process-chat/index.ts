@@ -102,35 +102,50 @@ serve(async (req) => {
       // Continue with normal processing if timer intent fails
     }
 
-    // Check for task commands
+    // Check for task commands - ENHANCED to be more aggressive with task detection
     try {
-      const taskCommandResult = await checkForTaskCommands(message, userId, supabase);
-      if (taskCommandResult.isTaskCommand) {
-        console.log("Detected task command:", taskCommandResult);
+      // Use more aggressive task detection - if it contains any action verbs or places, consider it a task
+      const containsTaskLanguage = /\b(go|get|pick|buy|call|email|visit|remember|need|want|should|must|have to|check|do|make|send|write|read|clean|wash|cook|prepare|attend|meet|schedule|organize|pay|finish|complete|work on|take|bring|drop|deliver|order|cancel|update|review|watch|listen)\b/i.test(message);
+      const containsPlaces = /\b(store|walmart|target|grocery|market|shop|mall|office|home|school|library|bank|restaurant|cafe|gym|park|doctor|dentist|hospital|pharmacy|gas station)\b/i.test(message);
+      
+      const mightBeTask = containsTaskLanguage || containsPlaces || 
+                         message.toLowerCase().includes("to") || 
+                         message.toLowerCase().includes("task") ||
+                         message.length < 60; // Short messages are often tasks
+      
+      if (mightBeTask) {
+        console.log("Detected potential task in message:", message);
         
-        // Store the AI response
-        await storeAIMessage(supabase, taskCommandResult.response, userId);
+        // Directly try to create a task rather than checking if it's a command
+        const { data: taskData, error: taskError } = await supabase.functions.invoke('process-task', {
+          body: { message, userId }
+        });
         
-        // Check if a task was created as part of the command
-        const taskCreated = taskCommandResult.response.toLowerCase().includes("created") || 
-                           taskCommandResult.response.toLowerCase().includes("added") ||
-                           taskCommandResult.response.toLowerCase().includes("scheduled");
-        
-        return new Response(
-          JSON.stringify({ 
-            response: taskCommandResult.response,
-            taskCreated: taskCreated,
-            task: taskCommandResult.task || null
-          }),
-          {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 200,
-          }
-        );
+        if (taskError) {
+          console.error("Error invoking process-task:", taskError);
+        } else if (taskData?.success && taskData?.task) {
+          console.log("Successfully created task from chat message:", taskData.task);
+          
+          // Store the AI response
+          await storeAIMessage(supabase, taskData.response, userId);
+          
+          // Return the response with task data
+          return new Response(
+            JSON.stringify({ 
+              response: taskData.response,
+              taskCreated: true,
+              task: taskData.task
+            }),
+            {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+              status: 200,
+            }
+          );
+        }
       }
     } catch (taskError) {
-      console.error("Error processing task command:", taskError);
-      // Continue with normal processing if task command fails
+      console.error("Error processing potential task:", taskError);
+      // Continue with normal processing if task intent fails
     }
 
     // Get the chat history
@@ -144,21 +159,55 @@ serve(async (req) => {
     // Store the AI response
     await storeAIMessage(supabase, aiResponse, userId);
 
-    // Extract task details if present
+    // Extract task details if present or if the response indicates a task was created
     const taskDetails = extractTaskDetails(aiResponse);
-    const taskCreated = !!taskDetails || 
-                       aiResponse.toLowerCase().includes("created a task") ||
-                       aiResponse.toLowerCase().includes("added a task") ||
-                       aiResponse.toLowerCase().includes("scheduled a task");
+    const responseIndicatesTask = aiResponse.toLowerCase().includes("created a task") ||
+                                 aiResponse.toLowerCase().includes("added a task") ||
+                                 aiResponse.toLowerCase().includes("scheduled a task") ||
+                                 aiResponse.toLowerCase().includes("i've added") || 
+                                 aiResponse.toLowerCase().includes("added to your tasks") ||
+                                 aiResponse.toLowerCase().includes("i've created") ||
+                                 aiResponse.toLowerCase().includes("created the task") ||
+                                 aiResponse.toLowerCase().includes("made a task");
 
-    console.log("Task created:", taskCreated, "Task details:", taskDetails);
+    // If the response indicates a task but we don't have task details, try to create one
+    if (responseIndicatesTask && !taskDetails) {
+      try {
+        console.log("Response indicates task creation but no task details, creating task from message:", message);
+        const { data: fallbackTaskData, error: fallbackTaskError } = await supabase.functions.invoke('process-task', {
+          body: { message, userId }
+        });
+        
+        if (fallbackTaskError) {
+          console.error("Error in fallback task creation:", fallbackTaskError);
+        } else if (fallbackTaskData?.success && fallbackTaskData?.task) {
+          console.log("Successfully created fallback task:", fallbackTaskData.task);
+          
+          return new Response(
+            JSON.stringify({ 
+              response: aiResponse,
+              taskCreated: true,
+              task: fallbackTaskData.task
+            }),
+            {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+              status: 200,
+            }
+          );
+        }
+      } catch (fallbackError) {
+        console.error("Error in fallback task creation:", fallbackError);
+      }
+    }
+
+    console.log("Task created:", !!(taskDetails || responseIndicatesTask), "Task details:", taskDetails);
 
     // Return the response
     return new Response(
       JSON.stringify({ 
         response: aiResponse,
         task: taskDetails,
-        taskCreated: taskCreated // Explicitly indicate if a task was created
+        taskCreated: !!(taskDetails || responseIndicatesTask) // More aggressively mark as task created
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

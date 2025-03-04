@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -85,8 +84,8 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o', // Updated to a valid model name
-        temperature: 0.7,
+        model: 'gpt-4o', // Using current recommended model
+        temperature: 0.5, // Lower temperature for more deterministic results
         messages: [
           {
             role: 'system',
@@ -101,9 +100,10 @@ serve(async (req) => {
               
               Convert relative dates (today, tomorrow, next week, etc) to actual dates.
               If no priority is specified, default to "low".
-              Be generous in your extraction - if the user mentions anything that sounds remotely like a task, extract it.
-              For casual or ambiguous requests like "I need to go to Walmart", create a task with appropriate defaults.
-              DO NOT respond with "I couldn't identify a task" unless the message is completely unrelated to tasks.
+              BE EXTREMELY AGGRESSIVE in your extraction - if the user mentions ANYTHING that sounds REMOTELY like a task, extract it.
+              For casual or ambiguous requests like "I need to go to Walmart", ALWAYS create a task - don't overthink it.
+              For "I need to go to Walmart", the task title should be "Go to Walmart".
+              NEVER respond with "I couldn't identify a task" unless the message is completely unrelated to any action.
               
               Example response format:
               {
@@ -225,19 +225,47 @@ serve(async (req) => {
       }
     }
     
-    // Check if OpenAI didn't find a task
+    // If OpenAI couldn't identify a task, but the message is simple enough, create a default task
     if (!result || (result.task === null && result.response)) {
-      console.log('⚠️ No task identified in the message, returning response only');
-      return new Response(
-        JSON.stringify({
-          success: false,
-          taskCreated: false,
-          response: result?.response || "I couldn't identify a task in your request. Can you provide more details?"
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      console.log('⚠️ No task identified in the message. Applying fallback extraction for simple inputs');
+      
+      // For very simple messages like "I need to go to Walmart", create a default task
+      if (message.length < 60) {
+        // Extract the action from the message
+        const cleanMessage = message.replace(/^(i need to|i have to|i should|i must|need to|have to|should|must|please|can you|reminder to|remind me to)/i, '').trim();
+        // Capitalize first letter
+        const taskTitle = cleanMessage.charAt(0).toUpperCase() + cleanMessage.slice(1);
+        
+        if (taskTitle.length > 0) {
+          console.log('🔧 Creating default task from simple message:', taskTitle);
+          result = {
+            task: {
+              title: taskTitle,
+              description: "",
+              date: null,
+              startTime: null,
+              endTime: null,
+              priority: "low",
+              subtasks: []
+            },
+            response: `I've created a task for "${taskTitle}". Can I help with anything else?`
+          };
         }
-      );
+      }
+      
+      // If we still have no task, return the original response
+      if (!result || !result.task) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            taskCreated: false,
+            response: result?.response || "I couldn't identify a task in your request. Can you provide more details?"
+          }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
     }
     
     // Validate the task data

@@ -21,16 +21,22 @@ export function MobileChatView({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const hasRespondedRef = useRef(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const requestTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Listen for the ai-response event specifically for task creation in mobile view
   useEffect(() => {
     const handleAiResponse = (e: CustomEvent<any>) => {
       console.log('📱 Mobile chat detected AI response event:', e.detail);
       
-      // Clear any loading timeout
+      // Clear any loading timeouts
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
+      }
+      
+      if (requestTimeoutRef.current) {
+        clearTimeout(requestTimeoutRef.current);
+        requestTimeoutRef.current = null;
       }
       
       // Mark that we've received a response
@@ -57,10 +63,15 @@ export function MobileChatView({
     const handleAiError = (e: CustomEvent<any>) => {
       console.error('📱 Mobile chat error:', e.detail?.error || 'Unknown error');
       
-      // Clear any loading timeout
+      // Clear any loading timeouts
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
+      }
+      
+      if (requestTimeoutRef.current) {
+        clearTimeout(requestTimeoutRef.current);
+        requestTimeoutRef.current = null;
       }
       
       // Mark that we've received a response (even if it's an error)
@@ -79,9 +90,13 @@ export function MobileChatView({
     window.addEventListener('ai-error', handleAiError as EventListener);
     
     return () => {
-      // Clear any pending timeout on cleanup
+      // Clear any pending timeouts on cleanup
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
+      }
+      
+      if (requestTimeoutRef.current) {
+        clearTimeout(requestTimeoutRef.current);
       }
       
       window.removeEventListener('ai-response', handleAiResponse as EventListener);
@@ -95,9 +110,13 @@ export function MobileChatView({
     setErrorMessage(null);
     hasRespondedRef.current = false;
     
-    // Clear any existing timeout
+    // Clear any existing timeouts
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
+    }
+    
+    if (requestTimeoutRef.current) {
+      clearTimeout(requestTimeoutRef.current);
     }
     
     try {
@@ -116,7 +135,15 @@ export function MobileChatView({
             detail: { error: "Request timed out" }
           }));
         }
-      }, 20000); // 20-second timeout
+      }, 25000); // 25-second timeout for the whole process
+      
+      // Set a second shorter timeout to check progress and provide feedback
+      requestTimeoutRef.current = setTimeout(() => {
+        if (!hasRespondedRef.current) {
+          console.log('📱 Mobile chat: Request taking longer than usual, showing progress message');
+          toast.info("Your request is taking longer than usual, but I'm still working on it.");
+        }
+      }, 10000); // 10-second timeout for progress update
       
     } catch (error) {
       console.error('📱 Mobile chat submission error:', error);
