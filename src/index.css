@@ -69,17 +69,18 @@
   
   .rainbow-border {
     position: relative;
-    border: 2px solid transparent;
-    background-clip: padding-box;
+    border: 3px solid transparent !important;
+    background-clip: padding-box !important;
+    z-index: 0;
   }
   
   .rainbow-border::before {
     content: '';
     position: absolute;
-    top: -2px;
-    right: -2px;
-    bottom: -2px;
-    left: -2px;
+    top: -3px;
+    right: -3px;
+    bottom: -3px;
+    left: -3px;
     z-index: -1;
     border-radius: inherit;
     background: linear-gradient(
@@ -104,7 +105,7 @@
     bottom: 0;
     left: 0;
     z-index: -1;
-    border-radius: calc(0.5rem - 2px);
+    border-radius: calc(var(--radius) - 3px);
     background: white;
   }
 }
