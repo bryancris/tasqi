@@ -27,7 +27,7 @@ export function WeeklyViewHeader({
         <Button
           variant="outline"
           onClick={onToggleView}
-          className="h-8 text-xs px-3"
+          className="h-8 text-xs px-3 font-medium text-white bg-gradient-to-r from-[#0EA5E9] to-[#2A9BB5] border-2 border-[#0EA5E9]/50 hover:from-[#0990D3] hover:to-[#248A9F] hover:border-[#0EA5E9]/70"
         >
           {showFullWeek ? '7 Day' : '5 Day'}
         </Button>

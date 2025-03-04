@@ -1,3 +1,4 @@
+
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 
@@ -17,7 +18,7 @@ export function WeeklyDayHeader({ weekDays, visitsPerDay, showFullWeek, onToggle
           <Button
             variant="outline"
             onClick={onToggleView}
-            className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white border-none text-sm"
+            className="text-white border-2 border-[#0EA5E9]/50 text-sm bg-gradient-to-r from-[#0EA5E9] to-[#2A9BB5] hover:from-[#0990D3] hover:to-[#248A9F] hover:border-[#0EA5E9]/70"
             size="sm"
           >
             {showFullWeek ? '5 Day' : '7 Day'}

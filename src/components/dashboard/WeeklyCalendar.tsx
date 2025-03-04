@@ -41,7 +41,7 @@ export function WeeklyCalendar() {
             <Button
               variant="outline"
               onClick={() => setShowFullWeek(!showFullWeek)}
-              className="h-8 px-3 text-xs"
+              className="h-8 px-3 text-xs font-medium text-white bg-gradient-to-r from-[#0EA5E9] to-[#2A9BB5] border-2 border-[#0EA5E9]/50 hover:from-[#0990D3] hover:to-[#248A9F] hover:border-[#0EA5E9]/70"
             >
               {showFullWeek ? '7 Day' : '5 Day'}
             </Button>
