@@ -11,9 +11,16 @@ export function useTasks() {
     
     // Get current user
     const { data: userData, error: userError } = await supabase.auth.getUser();
-    if (userError) throw userError;
+    if (userError) {
+      console.error('Error getting user data:', userError);
+      throw userError;
+    }
     
     const userId = userData.user?.id;
+    if (!userId) {
+      console.error('No user ID available');
+      throw new Error('User not authenticated');
+    }
     
     // First get tasks owned by user
     const { data: ownedTasks, error: tasksError } = await supabase

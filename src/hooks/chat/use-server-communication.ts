@@ -22,6 +22,8 @@ export function useServerCommunication() {
     const startTime = Date.now();
     
     try {
+      console.log('Invoking process-chat with message:', content.substring(0, 50) + '...');
+      
       const { data, error } = await supabase.functions.invoke('process-chat', {
         body: { message: content, userId }
       });
@@ -45,16 +47,32 @@ export function useServerCommunication() {
         }, 300);
       }
       
-      // Check for task creation confirmation in response
+      // Check for explicit task creation confirmation
+      if (data?.taskCreated === true) {
+        console.log('✅ Task creation explicitly confirmed in response');
+        // Force refresh of task data with slight delay
+        setTimeout(() => {
+          console.log('🔄 Refreshing task lists after confirmed task creation');
+          queryClient.invalidateQueries({ queryKey: ['tasks'] });
+          queryClient.invalidateQueries({ queryKey: ['weekly-tasks'] });
+          toast.success("Task created successfully!");
+        }, 300);
+        return data;
+      }
+      
+      // Check for task creation confirmation in response text
       if (data?.response && typeof data.response === 'string') {
         const taskCreationPhrases = [
           'created a task',
           'added a task', 
           'scheduled a task',
           'set up a task',
-          'task has been created',
           'added to your tasks',
-          'new task for you'
+          'task has been created',
+          'new task for you',
+          'noted down the task',
+          'put on your schedule',
+          'added to your calendar'
         ];
         
         const mightContainTaskConfirmation = taskCreationPhrases.some(phrase => 
@@ -62,22 +80,37 @@ export function useServerCommunication() {
         );
         
         if (mightContainTaskConfirmation) {
-          // Force refresh of task data with slight delay
-          setTimeout(() => {
-            console.log('🔄 Task creation detected in response, refreshing tasks');
-            queryClient.invalidateQueries({ queryKey: ['tasks'] });
-            queryClient.invalidateQueries({ queryKey: ['weekly-tasks'] });
-            toast.success("Task created successfully!");
-          }, 500);
+          console.log('🔍 Detected task creation language in response:', 
+            data.response.substring(0, 100) + '...');
+          
+          // Check if the data actually contains a created task
+          if (data.task) {
+            console.log('✅ Found task data in response:', data.task);
+            
+            // Force refresh of task data with slight delay
+            setTimeout(() => {
+              console.log('🔄 Task data found in response, refreshing tasks');
+              queryClient.invalidateQueries({ queryKey: ['tasks'] });
+              queryClient.invalidateQueries({ queryKey: ['weekly-tasks'] });
+              toast.success("Task created successfully!");
+            }, 500);
+          } else {
+            console.log('⚠️ Task creation mentioned in response, but no task data found');
+            
+            // Still refresh tasks in case the task was created but not returned properly
+            setTimeout(() => {
+              console.log('🔄 Task creation mentioned, refreshing tasks as precaution');
+              queryClient.invalidateQueries({ queryKey: ['tasks'] });
+              queryClient.invalidateQueries({ queryKey: ['weekly-tasks'] });
+            }, 500);
+          }
         }
       }
       
-      // Always invalidate tasks since a message might create a task
-      // Add a short delay to ensure the backend has completed processing
+      // Always refresh tasks list to catch any possible task creations
       setTimeout(() => {
-        console.log('🔄 Invalidating tasks query to refresh list');
+        console.log('🔄 Refreshing task and notification lists');
         queryClient.invalidateQueries({ queryKey: ['tasks'] });
-        // Also refresh weekly tasks if they're being viewed
         queryClient.invalidateQueries({ queryKey: ['weekly-tasks'] });
       }, 500);
       

@@ -10,23 +10,81 @@ serve(async (req) => {
   }
 
   try {
-    const { message, userId } = await req.json();
-    console.log('Received message:', message, 'userId:', userId);
+    // Extract and validate the request payload
+    let requestPayload;
+    try {
+      requestPayload = await req.json();
+    } catch (error) {
+      console.error('Error parsing request JSON:', error);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Invalid JSON in request' 
+        }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    const { message, userId } = requestPayload;
+    console.log('📝 Received task creation request:', { message: message?.substring(0, 50) + '...', userId });
+
+    // Validate required fields
+    if (!message || typeof message !== 'string') {
+      console.error('Missing or invalid message parameter');
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Missing or invalid message parameter' 
+        }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
 
     if (!userId) {
-      throw new Error('No user ID provided');
+      console.error('No user ID provided');
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'No user ID provided' 
+        }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
     }
 
     // Process with OpenAI
-    console.log('Calling OpenAI to extract task information...');
+    console.log('🧠 Calling OpenAI to extract task information...');
+    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openAIApiKey) {
+      console.error('OpenAI API key not configured');
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'OpenAI API key not configured' 
+        }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+        'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini', // Updated to use current recommended model
+        model: 'gpt-4o-mini', // Using current recommended model
         temperature: 0.7,
         messages: [
           {
@@ -42,7 +100,7 @@ serve(async (req) => {
               
               Convert relative dates (today, tomorrow, next week, etc) to actual dates.
               If no priority is specified, default to "low".
-              If you cannot extract task information, return null.
+              If you cannot clearly extract task information, return null.
               
               Example response format:
               {
@@ -67,31 +125,90 @@ serve(async (req) => {
     });
 
     if (!openAIResponse.ok) {
-      const errorData = await openAIResponse.json();
-      console.error('OpenAI API Error:', errorData);
-      throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
+      let errorMessage = 'OpenAI API error';
+      try {
+        const errorData = await openAIResponse.json();
+        console.error('OpenAI API Error:', errorData);
+        errorMessage = `OpenAI API error: ${errorData.error?.message || 'Unknown error'}`;
+      } catch (e) {
+        console.error('Failed to parse OpenAI error response');
+        errorMessage = `OpenAI API error: Status ${openAIResponse.status}`;
+      }
+      
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: errorMessage,
+          response: "I'm having trouble understanding your task. Could you try describing it differently?"
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
     }
 
-    const data = await openAIResponse.json();
-    console.log('OpenAI Response:', data);
+    // Parse OpenAI response
+    let data;
+    try {
+      data = await openAIResponse.json();
+      console.log('🧠 OpenAI Response structure:', 
+        { choices: data.choices?.length, model: data.model, usage: data.usage });
+    } catch (error) {
+      console.error('Error parsing OpenAI response:', error);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Failed to parse OpenAI response',
+          response: "I encountered an error processing your task. Please try again."
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
 
     if (!data.choices?.[0]?.message?.content) {
       console.error('Invalid OpenAI response structure:', data);
-      throw new Error('Invalid response structure from OpenAI');
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Invalid response structure from OpenAI',
+          response: "I couldn't extract the task details from your request. Could you be more specific?"
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
     }
 
+    // Parse the task data from OpenAI's response
     let result;
     try {
-      result = JSON.parse(data.choices[0].message.content);
-      console.log('Parsed result:', result);
+      const content = data.choices[0].message.content;
+      console.log('📄 Raw OpenAI content:', content);
+      result = JSON.parse(content);
+      console.log('🧩 Parsed task data:', result);
     } catch (error) {
-      console.error('Error parsing OpenAI response:', error);
-      throw new Error('Failed to parse OpenAI response');
+      console.error('Error parsing OpenAI JSON response:', error);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Failed to parse OpenAI task JSON',
+          response: "I couldn't process your task data. Please try describing your task more clearly."
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
     }
     
-    // Validate the result has the expected structure
+    // Check if OpenAI didn't find a task
     if (!result || (result.task === null && result.response)) {
-      console.log('No task identified in the message, returning response only');
+      console.log('⚠️ No task identified in the message, returning response only');
       return new Response(
         JSON.stringify({
           success: false,
@@ -104,6 +221,7 @@ serve(async (req) => {
       );
     }
     
+    // Validate the task data
     if (!result.task || !result.task.title) {
       console.error('Missing required task information:', result);
       return new Response(
@@ -120,7 +238,7 @@ serve(async (req) => {
     
     // If task information was extracted, create the task
     if (result.task && userId) {
-      console.log('Creating task with data:', result.task);
+      console.log('💾 Creating task with data:', result.task);
       const supabase = createClient(
         Deno.env.get('SUPABASE_URL') ?? '',
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -143,11 +261,11 @@ serve(async (req) => {
         ? Math.ceil(existingTasks[0].position / 1000) * 1000 + 1000
         : 1000;
         
-      console.log('Calculated next position:', nextPosition);
+      console.log('📊 Calculated next position:', nextPosition);
 
       // Determine task status based on date
       const taskStatus = result.task.date ? 'scheduled' : 'unscheduled';
-      console.log('Determined task status:', taskStatus);
+      console.log('📋 Determined task status:', taskStatus);
 
       const taskData = {
         title: result.task.title,
@@ -163,14 +281,14 @@ serve(async (req) => {
         shared: false,
         reminder_enabled: false,
         reminder_time: 15,
-        is_all_day: false,
+        is_all_day: !result.task.startTime,
         reschedule_count: 0,
         time_spent: 0,
         is_tracking: false,
         assignees: []
       };
       
-      console.log('Creating task with data:', taskData);
+      console.log('💾 Creating task with final data:', taskData);
 
       const { data: taskResult, error: taskError } = await supabase
         .from('tasks')
@@ -178,7 +296,7 @@ serve(async (req) => {
         .select();
 
       if (taskError) {
-        console.error('Error creating task:', taskError);
+        console.error('❌ Error creating task:', taskError);
         return new Response(
           JSON.stringify({ 
             success: false,
@@ -192,7 +310,7 @@ serve(async (req) => {
         );
       }
       
-      console.log('Task created successfully, ID:', taskResult?.[0]?.id);
+      console.log('✅ Task created successfully, ID:', taskResult?.[0]?.id);
       
       // Process subtasks if they exist
       if (result.task.subtasks && Array.isArray(result.task.subtasks) && taskResult?.[0]?.id) {
@@ -221,6 +339,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           success: true,
+          taskCreated: true,
           task: taskResult?.[0] || null,
           response: result.response || `I've created a task titled "${result.task.title}" for you.`,
           taskData: taskData // Include the original task data for debugging
@@ -243,7 +362,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error('Error processing message:', error);
+    console.error('❌ Error processing message:', error);
     return new Response(
       JSON.stringify({ 
         success: false,

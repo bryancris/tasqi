@@ -43,10 +43,11 @@ export function useChatMessaging() {
         throw new Error("You are currently offline. Please check your internet connection.");
       }
       
-      // Check if message is a timer request
+      // Check for timer intent in the message
       const { timerMatch, duration, unit } = timerDetection.detectTimerRequest(userMessage.content);
       
       if (timerMatch && duration && unit) {
+        console.log("Timer intent detected, processing...");
         // Try the server-side function first with proper error handling
         try {
           const data = await invokeProcessChat(userMessage.content, user.id);
@@ -74,22 +75,24 @@ export function useChatMessaging() {
         }
       }
       
-      // For task-related requests, check for task-related keywords more thoroughly
+      // Check for task-related keywords more thoroughly
       const taskRelatedTerms = [
         'create task', 'new task', 'add task', 'schedule task', 'remind me to', 
         'set a task', 'make a task', 'add to my tasks', 'schedule a', 'create a task',
-        'add a task', 'set a reminder', 'schedule this', 'create an event', 'create reminder'
+        'add a task', 'set a reminder', 'schedule this', 'create an event', 'create reminder',
+        'note down', 'write down', 'add to calendar', 'put on my schedule', 'remember to',
+        'don\'t forget to', 'need to', 'have to', 'should'
       ];
       
       const mightBeTaskRelated = taskRelatedTerms.some(term => 
         userMessage.content.toLowerCase().includes(term)
-      );
+      ) || /^[A-Z].*\s(at|on|tomorrow|today|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b/i.test(userMessage.content);
       
       if (mightBeTaskRelated) {
-        console.log('🔍 Message may be task-related, attempting to process as task');
+        console.log('🔍 Message likely task-related, attempting to process as task:', userMessage.content);
         try {
-          // Try using the process-task endpoint for task creation
-          console.log('Calling process-task function with message:', userMessage.content.substring(0, 50) + '...');
+          // Directly call the process-task function for task creation
+          console.log('Calling process-task function with message:', userMessage.content);
           
           const { data, error } = await supabase.functions.invoke('process-task', {
             body: { message: userMessage.content, userId: user.id }
@@ -104,7 +107,7 @@ export function useChatMessaging() {
           }
           
           // Check if task was successfully created
-          if (data.success === true) {
+          if (data?.success === true && data?.task) {
             console.log('✅ Task created successfully:', data.task);
             
             // Dispatch a custom event for task creation
@@ -118,7 +121,7 @@ export function useChatMessaging() {
             
             // Force refresh tasks after creation with a short delay
             setTimeout(() => {
-              console.log('🔄 Refreshing tasks after task creation');
+              console.log('🔄 Refreshing tasks after successful task creation');
               queryClient.invalidateQueries({ queryKey: ['tasks'] });
               queryClient.invalidateQueries({ queryKey: ['weekly-tasks'] });
               
@@ -132,12 +135,20 @@ export function useChatMessaging() {
               taskCreated: true
             };
           } else {
-            console.log('ℹ️ Task not created, but response provided:', data.response);
-            return {
-              response: data.response,
-              success: false,
-              taskCreated: false
-            };
+            console.log('ℹ️ No task created by process-task function, but response provided:', data?.response);
+            
+            // If the function didn't create a task but gave a response
+            if (data?.response) {
+              return {
+                response: data.response,
+                success: false,
+                taskCreated: false
+              };
+            }
+            
+            // Fall back to the regular chat processing
+            console.log('🔄 Falling back to regular chat processing');
+            return await invokeProcessChat(userMessage.content, user.id);
           }
         } catch (taskError) {
           console.error('❌ Error in task processing, falling back to regular chat:', taskError);
@@ -147,7 +158,8 @@ export function useChatMessaging() {
         }
       }
       
-      // For non-timer messages, always use the server
+      // For non-timer/task messages, use the server
+      console.log('💬 Processing as regular chat message');
       const response = await invokeProcessChat(userMessage.content, user.id);
       
       // Always check for task-related keywords in the response
@@ -158,7 +170,10 @@ export function useChatMessaging() {
           'added a task',
           'set up a task',
           'added this to your tasks',
-          'task has been created'
+          'task has been created',
+          'noted down the task',
+          'added to your calendar',
+          'put on your schedule'
         ];
         
         const containsTaskConfirmation = taskCompletionPhrases.some(phrase => 
@@ -166,11 +181,34 @@ export function useChatMessaging() {
         );
         
         if (containsTaskConfirmation) {
-          console.log('🔍 Response contains task confirmation, refreshing tasks');
-          setTimeout(() => {
-            queryClient.invalidateQueries({ queryKey: ['tasks'] });
-            queryClient.invalidateQueries({ queryKey: ['weekly-tasks'] });
-          }, 500);
+          console.log('🔍 Response contains task confirmation, but task wasn\'t created. Trying to create it now.');
+          try {
+            // Try to extract task info from the AI response and create the task
+            const { data } = await supabase.functions.invoke('process-task', {
+              body: { message: userMessage.content, userId: user.id }
+            });
+            
+            if (data?.success === true && data?.task) {
+              console.log('✅ Task created via secondary process:', data.task);
+              
+              // Dispatch event and refresh tasks
+              window.dispatchEvent(new CustomEvent('ai-response', { 
+                detail: { task: data.task }
+              }));
+              
+              setTimeout(() => {
+                queryClient.invalidateQueries({ queryKey: ['tasks'] });
+                queryClient.invalidateQueries({ queryKey: ['weekly-tasks'] });
+              }, 300);
+              
+              return {
+                ...response,
+                taskCreated: true
+              };
+            }
+          } catch (err) {
+            console.error('Failed secondary task creation attempt:', err);
+          }
         }
       }
       
