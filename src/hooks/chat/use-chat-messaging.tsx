@@ -74,8 +74,13 @@ export function useChatMessaging() {
         }
       }
       
-      // For task-related requests, check for task-related keywords
-      const taskRelatedTerms = ['create task', 'new task', 'add task', 'schedule task', 'remind me to', 'set a task', 'make a task'];
+      // For task-related requests, check for task-related keywords more thoroughly
+      const taskRelatedTerms = [
+        'create task', 'new task', 'add task', 'schedule task', 'remind me to', 
+        'set a task', 'make a task', 'add to my tasks', 'schedule a', 'create a task',
+        'add a task', 'set a reminder', 'schedule this', 'create an event', 'create reminder'
+      ];
+      
       const mightBeTaskRelated = taskRelatedTerms.some(term => 
         userMessage.content.toLowerCase().includes(term)
       );
@@ -84,6 +89,8 @@ export function useChatMessaging() {
         console.log('🔍 Message may be task-related, attempting to process as task');
         try {
           // Try using the process-task endpoint for task creation
+          console.log('Calling process-task function with message:', userMessage.content.substring(0, 50) + '...');
+          
           const { data, error } = await supabase.functions.invoke('process-task', {
             body: { message: userMessage.content, userId: user.id }
           });
@@ -99,6 +106,15 @@ export function useChatMessaging() {
           // Check if task was successfully created
           if (data.success === true) {
             console.log('✅ Task created successfully:', data.task);
+            
+            // Dispatch a custom event for task creation
+            try {
+              window.dispatchEvent(new CustomEvent('ai-response', { 
+                detail: { task: data.task }
+              }));
+            } catch (e) {
+              console.error('Error dispatching task event:', e);
+            }
             
             // Force refresh tasks after creation with a short delay
             setTimeout(() => {

@@ -33,6 +33,8 @@ export function useTasks() {
       throw tasksError;
     }
 
+    console.log('Fetched owned tasks:', ownedTasks?.length || 0);
+
     // Then get tasks shared with the user
     const { data: sharedWithUserTasks, error: sharedTasksError } = await supabase
       .from('shared_tasks')
@@ -51,6 +53,8 @@ export function useTasks() {
       toast.error("Failed to load shared tasks");
       throw sharedTasksError;
     }
+
+    console.log('Fetched shared tasks:', sharedWithUserTasks?.length || 0);
 
     // Process shared tasks to match the Task interface
     const processedSharedTasks = sharedWithUserTasks
@@ -126,7 +130,7 @@ export function useTasks() {
       }
     });
 
-    console.log('Tasks fetched:', allTasks.length);
+    console.log('Total tasks after processing:', allTasks.length);
     return allTasks as Task[];
   };
 

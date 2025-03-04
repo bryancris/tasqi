@@ -18,6 +18,7 @@ serve(async (req) => {
     }
 
     // Process with OpenAI
+    console.log('Calling OpenAI to extract task information...');
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -25,7 +26,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4o-mini', // Updated to use current recommended model
         temperature: 0.7,
         messages: [
           {
@@ -88,8 +89,38 @@ serve(async (req) => {
       throw new Error('Failed to parse OpenAI response');
     }
     
+    // Validate the result has the expected structure
+    if (!result || (result.task === null && result.response)) {
+      console.log('No task identified in the message, returning response only');
+      return new Response(
+        JSON.stringify({
+          success: false,
+          taskCreated: false,
+          response: result.response || "I couldn't identify a task in your request. Can you provide more details?"
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+    
+    if (!result.task || !result.task.title) {
+      console.error('Missing required task information:', result);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          taskCreated: false,
+          response: "I couldn't understand the task details. Please try describing your task more clearly."
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+    
     // If task information was extracted, create the task
     if (result.task && userId) {
+      console.log('Creating task with data:', result.task);
       const supabase = createClient(
         Deno.env.get('SUPABASE_URL') ?? '',
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''

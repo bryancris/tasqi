@@ -52,7 +52,9 @@ export function useServerCommunication() {
           'added a task', 
           'scheduled a task',
           'set up a task',
-          'task has been created'
+          'task has been created',
+          'added to your tasks',
+          'new task for you'
         ];
         
         const mightContainTaskConfirmation = taskCreationPhrases.some(phrase => 
