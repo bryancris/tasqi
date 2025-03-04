@@ -22,8 +22,12 @@ export function useChatSubmission(
 
   return useCallback(async (e: React.FormEvent, message: string) => {
     e.preventDefault();
+    
     if (!message.trim()) return;
 
+    console.log('🔄 Processing message in useChatSubmission:', message.substring(0, 30) + '...');
+    
+    // Create the user message and reset the input
     const userMessage = addUserMessage(message);
     setMessage("");
     setIsLoading(true);
@@ -34,14 +38,22 @@ export function useChatSubmission(
     let timerUnit = '';
 
     try {
+      // Check user authentication
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        toast.error("Please sign in to send messages");
+        const errorMsg = "Please sign in to send messages";
+        toast.error(errorMsg);
+        // Dispatch error event for mobile clients
+        window.dispatchEvent(new CustomEvent('ai-error', { 
+          detail: { error: errorMsg }
+        }));
+        setIsLoading(false);
         return;
       }
 
       // Add a loading indicator message while waiting for response
       addLoadingMessage();
+      console.log('⏳ Added loading message, waiting for AI response...');
 
       // Check for timer commands in the user message before sending to the server
       const timerRegex = /set a (\d+)\s*(min|minute|hour|second|sec)s?\s*timer/i;
@@ -54,7 +66,9 @@ export function useChatSubmission(
         timerUnit = match[2].toLowerCase();
         
         try {
+          console.log('⏰ Timer detected, processing message...');
           const data = await processMessage(userMessage);
+          console.log('⏰ Timer response received:', data);
           
           // Remove the loading indicator message
           removeLastMessage();
@@ -81,7 +95,7 @@ export function useChatSubmission(
             void refreshLists();
           }, 1000);
         } catch (fetchError) {
-          console.error('Error with server, using client-side timer fallback:', fetchError);
+          console.error('❌ Error with server, using client-side timer fallback:', fetchError);
           
           // Remove the loading indicator message
           removeLastMessage();
@@ -117,11 +131,16 @@ export function useChatSubmission(
           // Handle the case when we're offline but not a timer request
           if (!navigator.onLine) {
             removeLastMessage();
-            addAIMessage("Sorry, I'm having trouble connecting to the server. Please check your internet connection and try again.");
+            const offlineMessage = "Sorry, I'm having trouble connecting to the server. Please check your internet connection and try again.";
+            addAIMessage(offlineMessage);
+            // Dispatch error event for mobile clients
+            window.dispatchEvent(new CustomEvent('ai-error', { 
+              detail: { error: "No internet connection" }
+            }));
             return;
           }
           
-          console.log('🚀 Processing message in chat submission:', message);
+          console.log('🚀 Processing regular message in chat submission:', message.substring(0, 30) + '...');
           const data = await processMessage(userMessage);
           console.log('📊 Response data:', data);
           
@@ -136,6 +155,16 @@ export function useChatSubmission(
             if (data.taskCreated && data.task) {
               console.log('✅ Task created in chat submission:', data.task);
               toast.success("Task created successfully!");
+              
+              // Dispatch a custom event for form updates
+              try {
+                window.dispatchEvent(new CustomEvent('ai-response', { 
+                  detail: { task: data.task }
+                }));
+                console.log('✅ AI response event dispatched with task data');
+              } catch (e) {
+                console.error('❌ Error dispatching task event:', e);
+              }
             }
           } else {
             addAIMessage("I'm sorry, I couldn't process that request.");
@@ -162,20 +191,51 @@ export function useChatSubmission(
             void refreshLists();
           }, 1500);
         } catch (err) {
-          // Error occurred, but wasn't a timer request
-          console.error('Error processing message:', err);
+          // Log the error for debugging
+          console.error('❌ Error processing message:', err);
+          
+          // Remove the loading indicator and show an error message
           removeLastMessage();
-          addAIMessage("Sorry, I'm having trouble connecting to the server. Please check your internet connection and try again.");
+          
+          const errorMessage = err instanceof Error 
+            ? err.message 
+            : "Sorry, I'm having trouble connecting to the server. Please try again.";
+          
+          // Add error message as AI response
+          addAIMessage(`Sorry, I encountered an error: ${errorMessage}`);
+          
+          // Show toast notification
           toast.error("Failed to process message. Please try again.");
+          
+          // Dispatch error event for mobile clients
+          window.dispatchEvent(new CustomEvent('ai-error', { 
+            detail: { error: errorMessage }
+          }));
         }
       }
     } catch (error) {
-      console.error('Error processing message:', error);
-      removeLastMessage(); // Make sure to remove loading indicator if it exists
-      addAIMessage("Sorry, I encountered an error processing your message. Please try again later.");
+      console.error('❌ Fatal error in chat submission:', error);
+      
+      // Clean up any loading messages
+      removeLastMessage();
+      
+      // Add a user-friendly error message
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "Sorry, something went wrong. Please try again later.";
+      
+      addAIMessage(`Sorry, I encountered an error: ${errorMessage}`);
+      
+      // Show toast notification
       toast.error("Failed to process message. Please try again.");
+      
+      // Dispatch error event for mobile clients
+      window.dispatchEvent(new CustomEvent('ai-error', { 
+        detail: { error: errorMessage }
+      }));
     } finally {
       setIsLoading(false);
+      console.log('✅ Chat submission process completed');
     }
   }, [addUserMessage, setMessage, setIsLoading, addLoadingMessage, processMessage, removeLastMessage, addAIMessage, handleTimerResponse, handleTimerRelatedResponse, refreshLists, showNotification]);
 }

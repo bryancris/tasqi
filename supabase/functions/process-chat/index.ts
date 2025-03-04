@@ -23,6 +23,8 @@ serve(async (req) => {
   }
 
   try {
+    console.log("Processing chat request");
+    
     // Get the request data
     const { message, userId } = await req.json();
 
@@ -98,11 +100,22 @@ serve(async (req) => {
     // Check for task commands
     const taskCommandResult = await checkForTaskCommands(message, userId, supabase);
     if (taskCommandResult.isTaskCommand) {
+      console.log("Detected task command:", taskCommandResult);
+      
       // Store the AI response
       await storeAIMessage(supabase, taskCommandResult.response, userId);
       
+      // Check if a task was created as part of the command
+      const taskCreated = taskCommandResult.response.toLowerCase().includes("created") || 
+                         taskCommandResult.response.toLowerCase().includes("added") ||
+                         taskCommandResult.response.toLowerCase().includes("scheduled");
+      
       return new Response(
-        JSON.stringify({ response: taskCommandResult.response }),
+        JSON.stringify({ 
+          response: taskCommandResult.response,
+          taskCreated: taskCreated,
+          task: taskCommandResult.task || null
+        }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 200,
@@ -114,20 +127,28 @@ serve(async (req) => {
     const chatHistory = await getChatHistory(supabase, userId);
 
     // Generate the AI response
+    console.log("Generating AI response for:", message.substring(0, 30) + "...");
     const aiResponse = await generateAIResponse(message, chatHistory, openaiApiKey);
+    console.log("AI response generated:", aiResponse.substring(0, 30) + "...");
 
     // Store the AI response
     await storeAIMessage(supabase, aiResponse, userId);
 
     // Extract task details if present
     const taskDetails = extractTaskDetails(aiResponse);
+    const taskCreated = !!taskDetails || 
+                       aiResponse.toLowerCase().includes("created a task") ||
+                       aiResponse.toLowerCase().includes("added a task") ||
+                       aiResponse.toLowerCase().includes("scheduled a task");
+
+    console.log("Task created:", taskCreated, "Task details:", taskDetails);
 
     // Return the response
     return new Response(
       JSON.stringify({ 
         response: aiResponse,
         task: taskDetails,
-        taskCreated: !!taskDetails // Explicitly indicate if a task was created
+        taskCreated: taskCreated // Explicitly indicate if a task was created
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
