@@ -1,11 +1,14 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export interface ProcessChatResponse {
   response?: string;
   timer?: any;
   error?: Error;
+  success?: boolean;
+  taskCreated?: boolean;
 }
 
 export function useServerCommunication() {
@@ -40,6 +43,31 @@ export function useServerCommunication() {
         setTimeout(() => {
           queryClient.invalidateQueries({ queryKey: ['timers'] });
         }, 300);
+      }
+      
+      // Check for task creation confirmation in response
+      if (data?.response && typeof data.response === 'string') {
+        const taskCreationPhrases = [
+          'created a task',
+          'added a task', 
+          'scheduled a task',
+          'set up a task',
+          'task has been created'
+        ];
+        
+        const mightContainTaskConfirmation = taskCreationPhrases.some(phrase => 
+          data.response!.toLowerCase().includes(phrase)
+        );
+        
+        if (mightContainTaskConfirmation) {
+          // Force refresh of task data with slight delay
+          setTimeout(() => {
+            console.log('🔄 Task creation detected in response, refreshing tasks');
+            queryClient.invalidateQueries({ queryKey: ['tasks'] });
+            queryClient.invalidateQueries({ queryKey: ['weekly-tasks'] });
+            toast.success("Task created successfully!");
+          }, 500);
+        }
       }
       
       // Always invalidate tasks since a message might create a task

@@ -8,6 +8,7 @@ import { useLoadingState } from "./use-loading-state";
 import { useNetworkDetection } from "./use-network-detection";
 import { useTimerDetection } from "./use-timer-detection";
 import { useServerCommunication } from "./use-server-communication";
+import { toast } from "sonner";
 
 export function useChatMessaging() {
   // Use the smaller, focused hooks
@@ -17,14 +18,16 @@ export function useChatMessaging() {
   const timerDetection = useTimerDetection();
   const { invokeProcessChat } = useServerCommunication();
   
-  const { toast } = useToast();
+  const { toast: shadowToast } = useToast();
   const queryClient = useQueryClient();
 
   // Process the user's message with the AI
   const processMessage = async (userMessage: Message): Promise<{ 
     response?: string; 
     timer?: any;
-    error?: Error 
+    error?: Error;
+    success?: boolean;
+    taskCreated?: boolean;
   }> => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -33,7 +36,7 @@ export function useChatMessaging() {
         throw new Error("Authentication required");
       }
 
-      console.log('🚀 Invoking process-chat function with message:', userMessage.content.substring(0, 50) + '...');
+      console.log('🚀 Processing message:', userMessage.content.substring(0, 50) + '...');
       
       // First, check if the network is even available
       if (!isNetworkAvailable()) {
@@ -72,7 +75,7 @@ export function useChatMessaging() {
       }
       
       // For task-related requests, check for task-related keywords
-      const taskRelatedTerms = ['create task', 'new task', 'add task', 'schedule task', 'remind me to', 'set a task'];
+      const taskRelatedTerms = ['create task', 'new task', 'add task', 'schedule task', 'remind me to', 'set a task', 'make a task'];
       const mightBeTaskRelated = taskRelatedTerms.some(term => 
         userMessage.content.toLowerCase().includes(term)
       );
@@ -85,24 +88,44 @@ export function useChatMessaging() {
             body: { message: userMessage.content, userId: user.id }
           });
           
+          console.log('📝 Task processing response:', data);
+          
           if (error) {
             console.error('❌ Task function error:', error);
-            // Fall back to normal chat if task processing fails
+            toast.error("Error creating task. Falling back to chat processing.");
             return await invokeProcessChat(userMessage.content, user.id);
           }
           
-          console.log('✅ Task function processed successfully:', data);
-          
-          // Force refresh tasks after creation
-          setTimeout(() => {
-            console.log('🔄 Refreshing tasks after task creation');
-            queryClient.invalidateQueries({ queryKey: ['tasks'] });
-            queryClient.invalidateQueries({ queryKey: ['weekly-tasks'] });
-          }, 500);
-          
-          return data;
+          // Check if task was successfully created
+          if (data.success === true) {
+            console.log('✅ Task created successfully:', data.task);
+            
+            // Force refresh tasks after creation with a short delay
+            setTimeout(() => {
+              console.log('🔄 Refreshing tasks after task creation');
+              queryClient.invalidateQueries({ queryKey: ['tasks'] });
+              queryClient.invalidateQueries({ queryKey: ['weekly-tasks'] });
+              
+              // Show toast notification for task creation
+              toast.success("Task created successfully!");
+            }, 300);
+            
+            return {
+              response: data.response,
+              success: true,
+              taskCreated: true
+            };
+          } else {
+            console.log('ℹ️ Task not created, but response provided:', data.response);
+            return {
+              response: data.response,
+              success: false,
+              taskCreated: false
+            };
+          }
         } catch (taskError) {
           console.error('❌ Error in task processing, falling back to regular chat:', taskError);
+          toast.error("Error creating task. Falling back to chat processing.");
           // Fall back to normal chat processing
           return await invokeProcessChat(userMessage.content, user.id);
         }
@@ -152,7 +175,7 @@ export function useChatMessaging() {
     isLoading,
     processMessage,
     setIsLoading,
-    toast,
+    shadowToast,
     queryClient
   };
 }

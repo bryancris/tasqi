@@ -1,9 +1,9 @@
 
 import { useState, useEffect } from "react";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { Subtask } from "@/components/dashboard/subtasks/SubtaskList";
 
-export function useTaskAIResponse({
+export function useAiTaskResponse({
   onTitleChange,
   onDescriptionChange,
   onIsScheduledChange,
@@ -60,24 +60,14 @@ export function useTaskAIResponse({
             }));
             onSubtasksChange(newSubtasks);
             
-            toast({
-              title: "Subtasks Added",
-              description: `Added ${newSubtasks.length} subtasks to your task.`,
-            });
+            toast.success(`Added ${newSubtasks.length} subtasks to your task.`);
           }
           
           // Notify the user that a task was created
-          toast({
-            title: "Task Created",
-            description: "The AI assistant has created a task based on your conversation",
-          });
+          toast.success("Task created by AI assistant");
         } catch (error) {
           console.error('Error processing AI response:', error);
-          toast({
-            title: "Error",
-            description: "Failed to process AI response",
-            variant: "destructive",
-          });
+          toast.error("Failed to process AI response");
         } finally {
           setProcessingAIResponse(false);
         }

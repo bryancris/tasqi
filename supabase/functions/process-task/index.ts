@@ -2,11 +2,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { corsHeaders } from "../_shared/cors.ts";
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -41,6 +37,7 @@ serve(async (req) => {
               - startTime (HH:mm format if specified, null if not)
               - endTime (HH:mm format if specified, null if not)
               - priority (either "low", "medium", or "high")
+              - subtasks (array of objects with title property, optional)
               
               Convert relative dates (today, tomorrow, next week, etc) to actual dates.
               If no priority is specified, default to "low".
@@ -54,7 +51,11 @@ serve(async (req) => {
                   "date": "2024-01-27",
                   "startTime": "09:00",
                   "endTime": null,
-                  "priority": "low"
+                  "priority": "low",
+                  "subtasks": [
+                    { "title": "Bring water bottle" },
+                    { "title": "Take poop bags" }
+                  ]
                 },
                 "response": "I've scheduled a task to walk the dog today at 9 AM. Would you like me to help you with anything else?"
               }`
@@ -127,7 +128,7 @@ serve(async (req) => {
         priority: result.task.priority || 'low',
         position: nextPosition,
         user_id: userId,
-        owner_id: userId, // Set owner_id equal to user_id
+        owner_id: userId,
         shared: false,
         reminder_enabled: false,
         reminder_time: 15,
@@ -147,30 +148,64 @@ serve(async (req) => {
 
       if (taskError) {
         console.error('Error creating task:', taskError);
-        throw taskError;
+        return new Response(
+          JSON.stringify({ 
+            success: false,
+            error: taskError.message,
+            response: `I couldn't create that task due to an error: ${taskError.message}. Please try again.`
+          }),
+          {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
       }
       
       console.log('Task created successfully, ID:', taskResult?.[0]?.id);
       
-      // Fetch all tasks for this user to verify
-      const { data: allTasks, error: fetchError } = await supabase
-        .from('tasks')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(10);
+      // Process subtasks if they exist
+      if (result.task.subtasks && Array.isArray(result.task.subtasks) && taskResult?.[0]?.id) {
+        const subtasks = result.task.subtasks.map((subtask: any, index: number) => ({
+          task_id: taskResult[0].id,
+          title: subtask.title,
+          status: 'pending',
+          position: index * 100,
+          user_id: userId
+        }));
         
-      if (fetchError) {
-        console.error('Error fetching tasks for verification:', fetchError);
-      } else {
-        console.log('Recent tasks for user:', allTasks?.length || 0);
-        console.log('Most recent task:', allTasks?.[0]);
+        if (subtasks.length > 0) {
+          const { error: subtasksError } = await supabase
+            .from('subtasks')
+            .insert(subtasks);
+            
+          if (subtasksError) {
+            console.error('Error creating subtasks:', subtasksError);
+          } else {
+            console.log(`Created ${subtasks.length} subtasks successfully`);
+          }
+        }
       }
+      
+      // Return the created task along with the success message
+      return new Response(
+        JSON.stringify({
+          success: true,
+          task: taskResult?.[0] || null,
+          response: result.response || `I've created a task titled "${result.task.title}" for you.`,
+          taskData: taskData // Include the original task data for debugging
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
     }
 
+    // If no task information was extracted or created
     return new Response(
       JSON.stringify({
-        response: result.response || "I'm sorry, I couldn't process that request."
+        success: false,
+        taskCreated: false,
+        response: result.response || "I'm sorry, I couldn't identify a task in your request. Can you provide more details?"
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -180,7 +215,9 @@ serve(async (req) => {
     console.error('Error processing message:', error);
     return new Response(
       JSON.stringify({ 
-        error: error.message || 'An error occurred while processing your request' 
+        success: false,
+        error: error.message || 'An error occurred while processing your request',
+        response: "I'm sorry, I encountered an error while trying to process your request. Please try again."
       }),
       {
         status: 500,
