@@ -3,7 +3,6 @@ import { useChat } from "@/hooks/chat/use-chat";
 import { useEffect, useState } from "react";
 import { MobileChatView } from "@/components/chat/MobileChatView";
 import { DesktopChatView } from "@/components/chat/DesktopChatView";
-import { useNotifications } from "@/components/notifications/NotificationsManager";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
