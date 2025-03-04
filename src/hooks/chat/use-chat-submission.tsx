@@ -36,6 +36,8 @@ export function useChatSubmission(
     let timerDetectedInMessage = false;
     let timerDuration = 0;
     let timerUnit = '';
+    // Flag to track if a task has been created to prevent duplicate creation
+    let taskCreatedSuccessfully = false;
 
     try {
       // Check user authentication
@@ -82,37 +84,13 @@ export function useChatSubmission(
           
           if (taskError) {
             console.error('❌ Direct task creation error:', taskError);
-            // Fall back to normal processing
-            const regularResponse = await processMessage(userMessage);
-            
-            // Remove the loading indicator message
-            removeLastMessage();
-            
-            if (regularResponse?.response) {
-              addAIMessage(regularResponse.response);
-              
-              // Check if task was created in the process
-              if (regularResponse.taskCreated && regularResponse.task) {
-                toast.success("Task created successfully!");
-                
-                // Dispatch event for UI updates
-                window.dispatchEvent(new CustomEvent('ai-response', { 
-                  detail: { task: regularResponse.task }
-                }));
-              } else {
-                // Just dispatch a generic success response
-                window.dispatchEvent(new CustomEvent('ai-response', { 
-                  detail: { success: true }
-                }));
-              }
-            } else {
-              addAIMessage("I understood that as a task but couldn't process it correctly. Can you try rephrasing?");
-              window.dispatchEvent(new CustomEvent('ai-response', { 
-                detail: { success: true }
-              }));
-            }
+            // Continue to regular processing - no task created yet
+            console.log('⚠️ Direct task creation failed, falling back to regular processing');
           } else if (taskData?.success && taskData?.task) {
             console.log('✅ Task created directly from message:', taskData.task);
+            
+            // Mark that we've successfully created a task to prevent duplicate creation
+            taskCreatedSuccessfully = true;
             
             // Remove the loading indicator
             removeLastMessage();
@@ -134,63 +112,17 @@ export function useChatSubmission(
             }, 500);
           } else {
             console.log('⚠️ Task creation attempt returned success=false, falling back to regular processing');
-            
-            // Fall back to normal processing
-            const regularResponse = await processMessage(userMessage);
-            
-            // Remove the loading indicator message
-            removeLastMessage();
-            
-            if (regularResponse?.response) {
-              addAIMessage(regularResponse.response);
-              
-              // Check if task was created in the process
-              if (regularResponse.taskCreated && regularResponse.task) {
-                toast.success("Task created successfully!");
-                
-                // Dispatch event for UI updates
-                window.dispatchEvent(new CustomEvent('ai-response', { 
-                  detail: { task: regularResponse.task }
-                }));
-              } else {
-                // Just dispatch a generic success response
-                window.dispatchEvent(new CustomEvent('ai-response', { 
-                  detail: { success: true }
-                }));
-              }
-            } else {
-              addAIMessage("I understood that as a task but couldn't process it correctly. Can you try rephrasing?");
-              window.dispatchEvent(new CustomEvent('ai-response', { 
-                detail: { success: true }
-              }));
-            }
+            // Continue to regular processing - no task created yet
           }
         } catch (taskAttemptError) {
           console.error('❌ Error in task creation attempt:', taskAttemptError);
-          
-          // Fall back to normal message processing
-          const data = await processMessage(userMessage);
-          
-          // Remove the loading indicator message
-          removeLastMessage();
-          
-          if (data?.response) {
-            addAIMessage(data.response);
-            
-            // Dispatch success response event
-            window.dispatchEvent(new CustomEvent('ai-response', { 
-              detail: { success: true, task: data.taskCreated ? data.task : null }
-            }));
-          } else {
-            addAIMessage("I'm sorry, I couldn't process that request.");
-            
-            // Dispatch generic success event
-            window.dispatchEvent(new CustomEvent('ai-response', { 
-              detail: { success: true }
-            }));
-          }
+          // Continue to regular processing - no task created yet
+          console.log('⚠️ Task creation attempt failed with exception, falling back to regular processing');
         }
-      } else {
+      }
+
+      // Only proceed with regular message processing if no task was created yet
+      if (!taskCreatedSuccessfully) {
         // Check for timer commands in the user message before sending to the server
         const timerRegex = /set a (\d+)\s*(min|minute|hour|second|sec)s?\s*timer/i;
         const match = message.match(timerRegex);
@@ -303,6 +235,16 @@ export function useChatSubmission(
             if (data?.response) {
               addAIMessage(data.response);
               
+              // Check if task was created during regular processing
+              // Only handle task creation if it wasn't already handled by direct task creation
+              if (data.taskCreated && data.task && !taskCreatedSuccessfully) {
+                console.log('✅ Task created in regular processing:', data.task);
+                toast.success("Task created successfully!");
+                
+                // Set the flag to prevent duplicate task creation
+                taskCreatedSuccessfully = true;
+              }
+              
               // Dispatch success response event with task data if available
               window.dispatchEvent(new CustomEvent('ai-response', { 
                 detail: { 
@@ -311,12 +253,6 @@ export function useChatSubmission(
                   timer: data.timer || null
                 }
               }));
-              
-              // If there's a task created by the AI, ensure we show the proper notification
-              if (data.taskCreated && data.task) {
-                console.log('✅ Task created in chat submission:', data.task);
-                toast.success("Task created successfully!");
-              }
             } else {
               addAIMessage("I'm sorry, I couldn't process that request.");
               
