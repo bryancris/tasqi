@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Task } from "../TaskBoard";
 import { useQueryClient } from "@tanstack/react-query";
-import { playNotificationSound } from "@/utils/notifications/soundUtils";
 import { useDebouncedTaskRefresh } from "@/hooks/use-debounced-task-refresh";
 
 export function useTaskStatus(task: Task) {
@@ -49,15 +48,6 @@ export function useTaskStatus(task: Task) {
       
       console.log('Updating task to:', { newStatus, completedAt });
       
-      // Play a notification sound for task completion
-      if (newStatus === 'completed') {
-        try {
-          await playNotificationSound();
-        } catch (error) {
-          console.warn('Could not play notification sound:', error);
-        }
-      }
-
       // Apply enhanced optimistic update immediately for better UX
       updateOptimisticTask(task.id, newStatus);
 
