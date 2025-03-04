@@ -128,7 +128,7 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
             <Button
               variant="outline"
               onClick={() => setView(view === 'board' ? 'timeline' : 'board')}
-              className="text-base font-medium"
+              className="text-base font-medium border-2 border-primary hover:bg-primary hover:text-primary-foreground"
             >
               Switch to {view === 'board' ? 'Timeline' : 'Board'}
             </Button>
