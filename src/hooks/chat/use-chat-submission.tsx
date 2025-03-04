@@ -3,19 +3,20 @@ import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Message } from "@/components/chat/types";
 import { useNotifications } from "@/components/notifications/NotificationsManager";
+import { toast } from "sonner";
 
 export function useChatSubmission(
   addUserMessage: (content: string) => Message,
   setMessage: (message: string) => void,
   setIsLoading: (isLoading: boolean) => void,
   addLoadingMessage: () => void,
-  processMessage: (userMessage: Message) => Promise<{ response?: string; timer?: any }>,
+  processMessage: (userMessage: Message) => Promise<{ response?: string; timer?: any; taskCreated?: boolean; task?: any }>,
   removeLastMessage: () => void,
   addAIMessage: (content: string) => Message,
   handleTimerResponse: (timerData: any) => Promise<void>,
   handleTimerRelatedResponse: (response: string) => Promise<void>,
   refreshLists: () => Promise<void>,
-  toast: any
+  toast: any // Keep the original toast for backward compatibility but ignore it
 ) {
   const { showNotification } = useNotifications();
 
@@ -35,11 +36,7 @@ export function useChatSubmission(
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        toast({
-          title: "Authentication Error",
-          description: "Please sign in to send messages",
-          variant: "destructive",
-        });
+        toast.error("Please sign in to send messages");
         return;
       }
 
@@ -78,8 +75,6 @@ export function useChatSubmission(
               void handleTimerResponse(data.timer);
             }, 100);
           } 
-          // We'll skip checking general timer-related responses for timer creation phrases
-          // since we already know this message was about creating a timer
           
           // Refresh lists after a longer delay
           setTimeout(() => {
@@ -126,7 +121,9 @@ export function useChatSubmission(
             return;
           }
           
+          console.log('🚀 Processing message in chat submission:', message);
           const data = await processMessage(userMessage);
+          console.log('📊 Response data:', data);
           
           // Remove the loading indicator message
           removeLastMessage();
@@ -134,6 +131,12 @@ export function useChatSubmission(
           // Add the AI's response
           if (data?.response) {
             addAIMessage(data.response);
+            
+            // If there's a task created by the AI, ensure we show the proper notification
+            if (data.taskCreated && data.task) {
+              console.log('✅ Task created in chat submission:', data.task);
+              toast.success("Task created successfully!");
+            }
           } else {
             addAIMessage("I'm sorry, I couldn't process that request.");
           }
@@ -163,19 +166,16 @@ export function useChatSubmission(
           console.error('Error processing message:', err);
           removeLastMessage();
           addAIMessage("Sorry, I'm having trouble connecting to the server. Please check your internet connection and try again.");
+          toast.error("Failed to process message. Please try again.");
         }
       }
     } catch (error) {
       console.error('Error processing message:', error);
       removeLastMessage(); // Make sure to remove loading indicator if it exists
       addAIMessage("Sorry, I encountered an error processing your message. Please try again later.");
-      toast({
-        title: "Error",
-        description: "Failed to process message. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Failed to process message. Please try again.");
     } finally {
       setIsLoading(false);
     }
-  }, [addUserMessage, setMessage, setIsLoading, addLoadingMessage, processMessage, removeLastMessage, addAIMessage, handleTimerResponse, handleTimerRelatedResponse, refreshLists, toast, showNotification]);
+  }, [addUserMessage, setMessage, setIsLoading, addLoadingMessage, processMessage, removeLastMessage, addAIMessage, handleTimerResponse, handleTimerRelatedResponse, refreshLists, showNotification]);
 }

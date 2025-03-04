@@ -124,7 +124,11 @@ serve(async (req) => {
 
     // Return the response
     return new Response(
-      JSON.stringify({ response: aiResponse, task: taskDetails }),
+      JSON.stringify({ 
+        response: aiResponse,
+        task: taskDetails,
+        taskCreated: !!taskDetails // Explicitly indicate if a task was created
+      }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,

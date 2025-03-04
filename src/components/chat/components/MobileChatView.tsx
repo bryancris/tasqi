@@ -5,6 +5,7 @@ import { ChatInput } from "../ChatInput";
 import { MobileChatViewProps } from "../types";
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export function MobileChatView({
   onClose,
@@ -21,7 +22,10 @@ export function MobileChatView({
   useEffect(() => {
     const handleAiResponse = (e: CustomEvent<any>) => {
       if (e.detail?.task) {
-        console.log('🔄 Mobile chat detected task creation, refreshing data');
+        console.log('📱 Mobile chat detected task creation event:', e.detail.task);
+        // Show success toast
+        toast.success("Task created successfully!");
+        
         // Refresh tasks with a slight delay to ensure backend is updated
         setTimeout(() => {
           queryClient.invalidateQueries({ queryKey: ['tasks'] });

@@ -65,12 +65,12 @@ export function useServerCommunication() {
           console.error('❌ Error dispatching custom event:', e);
         }
         
+        // No need to show a toast here as the event handlers will do it
         // Force refresh of task data with slight delay
         setTimeout(() => {
           console.log('🔄 Refreshing task lists after confirmed task creation');
           queryClient.invalidateQueries({ queryKey: ['tasks'] });
           queryClient.invalidateQueries({ queryKey: ['weekly-tasks'] });
-          toast.success("Task created successfully!");
         }, 300);
         
         return {
@@ -124,7 +124,6 @@ export function useServerCommunication() {
               console.log('🔄 Task data found in response, refreshing tasks');
               queryClient.invalidateQueries({ queryKey: ['tasks'] });
               queryClient.invalidateQueries({ queryKey: ['weekly-tasks'] });
-              toast.success("Task created successfully!");
             }, 500);
             
             return {
@@ -162,7 +161,6 @@ export function useServerCommunication() {
                 setTimeout(() => {
                   queryClient.invalidateQueries({ queryKey: ['tasks'] });
                   queryClient.invalidateQueries({ queryKey: ['weekly-tasks'] });
-                  toast.success("Task created successfully!");
                 }, 500);
                 
                 return {
