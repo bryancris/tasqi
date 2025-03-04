@@ -66,26 +66,51 @@
     );
     background-size: 200% 200%;
   }
+  
+  .rainbow-border {
+    position: relative;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  
+  .rainbow-border::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    bottom: -2px;
+    left: -2px;
+    z-index: -1;
+    border-radius: inherit;
+    background: linear-gradient(
+      90deg,
+      #ff0000,
+      #ff9900,
+      #ffff00,
+      #33cc33,
+      #0099ff,
+      #6633cc,
+      #ff0000
+    );
+    background-size: 400% 100%;
+  }
 }
 
 @keyframes rainbow-border {
   0% {
     background-position: 0% 50%;
   }
-  50% {
-    background-position: 100% 50%;
-  }
   100% {
-    background-position: 0% 50%;
+    background-position: 200% 50%;
   }
 }
 
 @layer utilities {
-  .animate-rainbow-border {
+  .animation-rainbow::before {
     animation: rainbow-border 6s linear infinite;
   }
   
-  .animate-rainbow-border-fast {
+  .animation-rainbow-fast::before {
     animation: rainbow-border 3s linear infinite;
   }
 }
