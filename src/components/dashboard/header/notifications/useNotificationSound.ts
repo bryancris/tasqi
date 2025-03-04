@@ -2,55 +2,17 @@
 /**
  * Hook for playing notification sounds with iOS PWA compatibility
  */
+import { playNotificationSound } from "@/utils/notifications/audio";
+
 export function useNotificationSound() {
-  const playNotificationSound = async () => {
+  const playSound = async () => {
     try {
-      console.log('Playing notification sound...');
-      
-      // Detect iOS
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && 
-                  !(window as any).MSStream;
-      
-      if (isIOS) {
-        console.log('🍎 iOS device detected, using iOS-compatible approach');
-        
-        // iOS requires user interaction to play audio in many contexts
-        // Use a simpler Audio element with higher volume to match other platforms
-        const audio = new Audio('/notification-sound.mp3');
-        audio.volume = 0.9; // Increased from 0.3 to 0.9 for louder iOS notifications
-        
-        // Create a timeout promise to handle cases where play() hangs
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Timeout')), 2000)
-        );
-        
-        // Try to play with timeout protection
-        try {
-          await Promise.race([audio.play(), timeoutPromise]);
-          console.log('✅ iOS notification sound started playing');
-        } catch (iosError) {
-          // This is expected on iOS without user interaction
-          console.warn('⚠️ iOS audio autoplay blocked (normal behavior):', iosError);
-          
-          // Try fallback approach - load first to prepare audio
-          audio.load();
-          try {
-            await audio.play();
-          } catch (secondError) {
-            console.warn('⚠️ iOS fallback sound also failed:', secondError);
-          }
-        }
-      } else {
-        // Standard approach for non-iOS devices
-        const audio = new Audio('/notification-sound.mp3');
-        audio.volume = 0.5;
-        await audio.play();
-        console.log('✅ Notification sound played successfully');
-      }
+      console.log('Playing notification sound via hook...');
+      await playNotificationSound();
     } catch (error) {
       console.warn('❌ Could not play notification sound:', error);
     }
   };
 
-  return { playNotificationSound };
+  return { playNotificationSound: playSound };
 }

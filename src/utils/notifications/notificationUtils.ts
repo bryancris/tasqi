@@ -1,7 +1,7 @@
 
 import { Task } from "@/components/dashboard/TaskBoard";
 import { isNotificationSupported, detectPlatform, isSafari } from "./platformDetection";
-import { playNotificationSound } from "./soundUtils";
+import { playNotificationSound } from "./audio";
 
 // Separate browser notification handling
 async function requestNotificationPermission(): Promise<boolean> {
