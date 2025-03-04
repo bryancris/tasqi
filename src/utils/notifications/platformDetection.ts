@@ -44,6 +44,32 @@ export const detectPlatform = (): PlatformType => {
   }
 };
 
+/**
+ * Check if the current device is running iOS
+ */
+export function isIOS(): boolean {
+  try {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) && 
+           !(window as any).MSStream;
+  } catch (error) {
+    console.error('❌ Error checking iOS:', error);
+    return false;
+  }
+}
+
+/**
+ * Check if the app is running as an installed PWA
+ */
+export function isPWA(): boolean {
+  try {
+    return window.matchMedia('(display-mode: standalone)').matches ||
+           (window.navigator as any).standalone === true;
+  } catch (error) {
+    console.error('❌ Error checking PWA status:', error);
+    return false;
+  }
+}
+
 // Check if the device/browser supports notifications
 export const isNotificationSupported = (): boolean => {
   try {
