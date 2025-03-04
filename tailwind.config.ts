@@ -71,11 +71,17 @@ export default {
             transform: 'rotate(360deg)',
           },
         },
+        "rainbow-border": {
+          "0%, 100%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "spin": "spin 3s linear infinite",
+        "rainbow-border": "rainbow-border 6s linear infinite",
+        "rainbow-border-fast": "rainbow-border 3s linear infinite",
       },
     },
   },

@@ -48,4 +48,44 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+  
+  .bg-rainbow-gradient {
+    background: linear-gradient(
+      90deg,
+      #ff0000 0%,
+      #ff9900 10%,
+      #ffff00 20%,
+      #33cc33 30%,
+      #0099ff 40%,
+      #6633cc 50%,
+      #ff0000 60%,
+      #ff9900 70%,
+      #ffff00 80%,
+      #33cc33 90%,
+      #0099ff 100%
+    );
+    background-size: 200% 100%;
+  }
+}
+
+@keyframes rainbow-border {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@layer utilities {
+  .animate-rainbow-border {
+    animation: rainbow-border 6s linear infinite;
+  }
+  
+  .animate-rainbow-border-fast {
+    animation: rainbow-border 3s linear infinite;
+  }
 }
