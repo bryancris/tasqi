@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { format, addWeeks, subWeeks } from 'date-fns';
 import { Button } from "@/components/ui/button";
@@ -16,7 +15,6 @@ export function WeeklyCalendar() {
   const { tasks } = useTasks();
   const isMobile = useIsMobile();
   
-  // Filter unscheduled tasks based on specific criteria
   const unscheduledTasks = tasks?.filter(task => 
     task.status === 'unscheduled' && 
     !task.date && 
@@ -30,7 +28,6 @@ export function WeeklyCalendar() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* Controls Row - Now properly positioned below the global header */}
       <div className="flex items-center justify-between px-4 h-14 bg-white border-b">
         <div className="w-[200px]" />
         <div className="flex items-center gap-4">
@@ -48,18 +45,18 @@ export function WeeklyCalendar() {
             <Button
               variant="outline"
               size="icon"
-              className="h-8 w-8 text-white bg-gradient-to-r from-[#B2E3EA] to-[#83C5D2] border border-[#83C5D2] hover:from-[#9ED0D8] hover:to-[#6BAEBB]"
+              className="h-8 w-8 bg-gradient-to-r from-[#B2E3EA] to-[#83C5D2] border border-[#83C5D2] hover:bg-[#EA384C] hover:border-[#EA384C] hover:from-transparent hover:to-transparent"
               onClick={() => setCurrentDate(prev => subWeeks(prev, 1))}
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-4 w-4 text-black hover:text-white" />
             </Button>
             <Button
               variant="outline"
               size="icon"
-              className="h-8 w-8 text-white bg-gradient-to-r from-[#B2E3EA] to-[#83C5D2] border border-[#83C5D2] hover:from-[#9ED0D8] hover:to-[#6BAEBB]"
+              className="h-8 w-8 bg-gradient-to-r from-[#B2E3EA] to-[#83C5D2] border border-[#83C5D2] hover:bg-[#EA384C] hover:border-[#EA384C] hover:from-transparent hover:to-transparent"
               onClick={() => setCurrentDate(prev => addWeeks(prev, 1))}
             >
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-4 w-4 text-black hover:text-white" />
             </Button>
           </div>
         </div>
@@ -68,9 +65,7 @@ export function WeeklyCalendar() {
         </div>
       </div>
 
-      {/* Main Content Area */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Calendar Grid */}
         <div className="flex-1">
           <WeeklyCalendarGrid 
             currentDate={currentDate}
@@ -79,7 +74,6 @@ export function WeeklyCalendar() {
           />
         </div>
 
-        {/* Unscheduled Tasks Section */}
         <Droppable droppableId="unscheduled-tasks">
           {(provided) => (
             <div 
