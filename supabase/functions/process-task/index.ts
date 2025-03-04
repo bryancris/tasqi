@@ -284,6 +284,11 @@ serve(async (req) => {
       const taskStatus = result.task.date ? 'scheduled' : 'unscheduled';
       console.log('📋 Determined task status:', taskStatus);
 
+      // Fix: Only set is_all_day to true if the task has a date AND it's meant to be all day
+      // This ensures unscheduled tasks don't get marked as all-day events
+      const isAllDay = result.task.date && !result.task.startTime;
+      console.log('📅 Is task all-day event?', isAllDay);
+
       const taskData = {
         title: result.task.title,
         description: result.task.description || '',
@@ -298,7 +303,7 @@ serve(async (req) => {
         shared: false,
         reminder_enabled: false,
         reminder_time: 15,
-        is_all_day: !result.task.startTime,
+        is_all_day: isAllDay, // Fixed assignment
         reschedule_count: 0,
         time_spent: 0,
         is_tracking: false,

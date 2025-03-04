@@ -16,7 +16,10 @@ interface TaskCardIconsProps {
 function TaskCardIconsComponent({ task, assignmentInfo, extraButton }: TaskCardIconsProps) {
   const hasAudioAttachment = hasVoiceNote(task);
   const hasFiles = hasFileAttachments(task);
-  const isAllDay = task.is_all_day || false;
+  
+  // Fix: Only show sun icon for scheduled tasks that are marked as all-day
+  // This ensures unscheduled tasks don't show the sun icon
+  const isAllDay = task.is_all_day && task.date && task.status !== 'unscheduled';
 
   return (
     <div className="flex items-center gap-2">
