@@ -67,6 +67,22 @@
     background-size: 200% 200%;
   }
   
+  .text-gradient {
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    background-image: linear-gradient(
+      90deg,
+      #9b87f5 0%,
+      #7E69AB 25%,
+      #6E59A5 50%,
+      #9b87f5 75%,
+      #7E69AB 100%
+    );
+    background-size: 200% auto;
+    animation: text-gradient-animation 4s linear infinite;
+  }
+  
   .rainbow-border {
     position: relative;
     border: 2px solid transparent !important;
@@ -116,5 +132,14 @@
   }
   100% {
     background-position: 200% 50%;
+  }
+}
+
+@keyframes text-gradient-animation {
+  0% {
+    background-position: 0% center;
+  }
+  100% {
+    background-position: 200% center;
   }
 }

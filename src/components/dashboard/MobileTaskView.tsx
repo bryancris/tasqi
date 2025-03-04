@@ -123,7 +123,9 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
         <CardHeader className="pb-3 px-0">
           <div className="flex items-center justify-between">
             <CardTitle className="text-2xl font-semibold">
-              {view === 'board' ? 'Task Board' : 'Timeline'}
+              {view === 'board' ? (
+                <span className="text-gradient">Task Board</span>
+              ) : 'Timeline'}
             </CardTitle>
             <Button
               variant="rainbow"
