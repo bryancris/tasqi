@@ -42,6 +42,15 @@ export function useServerCommunication() {
         }, 300);
       }
       
+      // Always invalidate tasks since a message might create a task
+      // Add a short delay to ensure the backend has completed processing
+      setTimeout(() => {
+        console.log('🔄 Invalidating tasks query to refresh list');
+        queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        // Also refresh weekly tasks if they're being viewed
+        queryClient.invalidateQueries({ queryKey: ['weekly-tasks'] });
+      }, 500);
+      
       return data;
     } catch (error) {
       // Handle CORS and network errors

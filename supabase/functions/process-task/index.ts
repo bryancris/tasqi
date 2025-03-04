@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -93,35 +94,77 @@ serve(async (req) => {
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
       );
 
-      // Get highest position for user's tasks
-      const { data: existingTasks } = await supabase
+      // Get highest position for user's tasks - improved position calculation
+      const { data: existingTasks, error: positionError } = await supabase
         .from("tasks")
         .select("position")
         .eq("user_id", userId)
         .order("position", { ascending: false })
         .limit(1);
+        
+      if (positionError) {
+        console.error('Error getting task positions:', positionError);
+      }
 
+      // Multiply by 1000 to allow for better positioning and sorting
       const nextPosition = existingTasks && existingTasks.length > 0 
-        ? existingTasks[0].position + 1 
-        : 1;
+        ? Math.ceil(existingTasks[0].position / 1000) * 1000 + 1000
+        : 1000;
+        
+      console.log('Calculated next position:', nextPosition);
 
-      const { error: taskError } = await supabase
+      // Determine task status based on date
+      const taskStatus = result.task.date ? 'scheduled' : 'unscheduled';
+      console.log('Determined task status:', taskStatus);
+
+      const taskData = {
+        title: result.task.title,
+        description: result.task.description || '',
+        date: result.task.date || null,
+        status: taskStatus,
+        start_time: result.task.startTime || null,
+        end_time: result.task.endTime || null,
+        priority: result.task.priority || 'low',
+        position: nextPosition,
+        user_id: userId,
+        owner_id: userId, // Set owner_id equal to user_id
+        shared: false,
+        reminder_enabled: false,
+        reminder_time: 15,
+        is_all_day: false,
+        reschedule_count: 0,
+        time_spent: 0,
+        is_tracking: false,
+        assignees: []
+      };
+      
+      console.log('Creating task with data:', taskData);
+
+      const { data: taskResult, error: taskError } = await supabase
         .from('tasks')
-        .insert({
-          title: result.task.title,
-          description: result.task.description,
-          date: result.task.date,
-          status: result.task.date ? 'scheduled' : 'unscheduled',
-          start_time: result.task.startTime,
-          end_time: result.task.endTime,
-          priority: result.task.priority,
-          position: nextPosition,
-          user_id: userId
-        });
+        .insert(taskData)
+        .select();
 
       if (taskError) {
         console.error('Error creating task:', taskError);
         throw taskError;
+      }
+      
+      console.log('Task created successfully, ID:', taskResult?.[0]?.id);
+      
+      // Fetch all tasks for this user to verify
+      const { data: allTasks, error: fetchError } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(10);
+        
+      if (fetchError) {
+        console.error('Error fetching tasks for verification:', fetchError);
+      } else {
+        console.log('Recent tasks for user:', allTasks?.length || 0);
+        console.log('Most recent task:', allTasks?.[0]);
       }
     }
 

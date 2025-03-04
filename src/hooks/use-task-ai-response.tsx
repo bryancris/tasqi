@@ -29,11 +29,28 @@ export function useTaskAIResponse({
           const taskData = e.detail.task;
           console.log('Processing task data:', taskData);
 
-          onTitleChange(taskData.title || '');
-          onDescriptionChange(taskData.description || '');
-          onIsScheduledChange(!!taskData.is_scheduled);
-          if (taskData.date) onDateChange(taskData.date);
+          // Set title with validation
+          if (taskData.title && typeof taskData.title === 'string') {
+            onTitleChange(taskData.title);
+          }
+          
+          // Set description with validation
+          if (taskData.description && typeof taskData.description === 'string') {
+            onDescriptionChange(taskData.description);
+          } else {
+            onDescriptionChange('');
+          }
+          
+          // Handle scheduling based on date
+          const hasDate = !!taskData.date && typeof taskData.date === 'string';
+          onIsScheduledChange(hasDate);
+          
+          // Set date if available
+          if (hasDate) {
+            onDateChange(taskData.date);
+          }
 
+          // Handle subtasks if available
           if (taskData.subtasks && Array.isArray(taskData.subtasks)) {
             console.log('Setting subtasks:', taskData.subtasks);
             const newSubtasks = taskData.subtasks.map((subtask: any, index: number) => ({
@@ -48,6 +65,12 @@ export function useTaskAIResponse({
               description: `Added ${newSubtasks.length} subtasks to your task.`,
             });
           }
+          
+          // Notify the user that a task was created
+          toast({
+            title: "Task Created",
+            description: "The AI assistant has created a task based on your conversation",
+          });
         } catch (error) {
           console.error('Error processing AI response:', error);
           toast({

@@ -71,8 +71,71 @@ export function useChatMessaging() {
         }
       }
       
+      // For task-related requests, check for task-related keywords
+      const taskRelatedTerms = ['create task', 'new task', 'add task', 'schedule task', 'remind me to', 'set a task'];
+      const mightBeTaskRelated = taskRelatedTerms.some(term => 
+        userMessage.content.toLowerCase().includes(term)
+      );
+      
+      if (mightBeTaskRelated) {
+        console.log('🔍 Message may be task-related, attempting to process as task');
+        try {
+          // Try using the process-task endpoint for task creation
+          const { data, error } = await supabase.functions.invoke('process-task', {
+            body: { message: userMessage.content, userId: user.id }
+          });
+          
+          if (error) {
+            console.error('❌ Task function error:', error);
+            // Fall back to normal chat if task processing fails
+            return await invokeProcessChat(userMessage.content, user.id);
+          }
+          
+          console.log('✅ Task function processed successfully:', data);
+          
+          // Force refresh tasks after creation
+          setTimeout(() => {
+            console.log('🔄 Refreshing tasks after task creation');
+            queryClient.invalidateQueries({ queryKey: ['tasks'] });
+            queryClient.invalidateQueries({ queryKey: ['weekly-tasks'] });
+          }, 500);
+          
+          return data;
+        } catch (taskError) {
+          console.error('❌ Error in task processing, falling back to regular chat:', taskError);
+          // Fall back to normal chat processing
+          return await invokeProcessChat(userMessage.content, user.id);
+        }
+      }
+      
       // For non-timer messages, always use the server
-      return await invokeProcessChat(userMessage.content, user.id);
+      const response = await invokeProcessChat(userMessage.content, user.id);
+      
+      // Always check for task-related keywords in the response
+      if (response?.response && typeof response.response === 'string') {
+        const taskCompletionPhrases = [
+          'scheduled a task',
+          'created a task',
+          'added a task',
+          'set up a task',
+          'added this to your tasks',
+          'task has been created'
+        ];
+        
+        const containsTaskConfirmation = taskCompletionPhrases.some(phrase => 
+          response.response!.toLowerCase().includes(phrase)
+        );
+        
+        if (containsTaskConfirmation) {
+          console.log('🔍 Response contains task confirmation, refreshing tasks');
+          setTimeout(() => {
+            queryClient.invalidateQueries({ queryKey: ['tasks'] });
+            queryClient.invalidateQueries({ queryKey: ['weekly-tasks'] });
+          }, 500);
+        }
+      }
+      
+      return response;
     } catch (error) {
       if ((error as any)?.message?.includes('CORS')) {
         console.error('❌ CORS error processing message:', error);
