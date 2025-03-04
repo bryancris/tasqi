@@ -1,4 +1,3 @@
-
 import { BrowserRouter } from 'react-router-dom';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { CalendarViewProvider } from './contexts/CalendarViewContext';
@@ -12,16 +11,14 @@ import Notes from './pages/Notes';
 import Analytics from './pages/Analytics';
 import SelfCare from './pages/SelfCare';
 import Chat from './pages/Chat';
-import { useAuth } from './contexts/AuthContext';
+import { useAuth } from './contexts/auth';
 import { Spinner } from './components/ui/spinner';
 import { memo } from 'react';
 
-// Simplified Protected Route component with clearer logic
 const ProtectedRoute = memo(({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
   const location = useLocation();
   
-  // Clean loading state
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-[#1a1b3b]">
@@ -31,20 +28,16 @@ const ProtectedRoute = memo(({ children }: { children: React.ReactNode }) => {
     );
   }
   
-  // No session means not authenticated - use the location state to remember where they came from
   if (!session) {
     return <Navigate to="/auth" replace state={{ from: location }} />;
   }
 
-  // If authenticated, render children
   return <>{children}</>;
 });
 
-// Simplified Auth Route component - prevent authenticated users from accessing the auth page
 const AuthRoute = memo(({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
   
-  // Simple loading state
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-[#1a1b3b]">
@@ -54,12 +47,10 @@ const AuthRoute = memo(({ children }: { children: React.ReactNode }) => {
     );
   }
   
-  // If already authenticated, redirect to dashboard
   if (session) {
     return <Navigate to="/dashboard" replace />;
   }
 
-  // If not authenticated, render auth page
   return <>{children}</>;
 });
 
@@ -108,7 +99,6 @@ function App() {
                       <Route path="self-care" element={<SelfCare />} />
                       <Route path="chat" element={<Chat />} />
                       
-                      {/* Add explicit routes for calendar views */}
                       <Route path="tasks" element={<Dashboard />} />
                       <Route path="week" element={<Dashboard />} />
                       <Route path="monthly" element={<Dashboard />} />

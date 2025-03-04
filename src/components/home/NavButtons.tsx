@@ -1,19 +1,18 @@
 
 import { LogIn, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 
 const NavButtons = () => {
-  const navigate = useNavigate();
   const { session, handleSignOut } = useAuth();
   const { toast } = useToast();
 
   const handleLogout = async () => {
     try {
       await handleSignOut();
-      // Don't use navigate here as it might trigger a reload
+      // Don't navigate here - AuthContext will handle the state change
     } catch (error: any) {
       toast({
         variant: "destructive",
