@@ -38,8 +38,20 @@ export default function Chat() {
       }
     };
     
+    const handleAiErrors = (e: CustomEvent<any>) => {
+      if (e.detail?.error) {
+        console.error('📱 Chat page detected error event:', e.detail.error);
+        setError(new Error(e.detail.error));
+      }
+    };
+    
     window.addEventListener('ai-response', handleAiTaskEvents as EventListener);
-    return () => window.removeEventListener('ai-response', handleAiTaskEvents as EventListener);
+    window.addEventListener('ai-error', handleAiErrors as EventListener);
+    
+    return () => {
+      window.removeEventListener('ai-response', handleAiTaskEvents as EventListener);
+      window.removeEventListener('ai-error', handleAiErrors as EventListener);
+    };
   }, [queryClient]);
 
   useEffect(() => {
@@ -55,6 +67,16 @@ export default function Chat() {
     fetchChatHistory();
   };
 
+  // Custom error handler wrapper for submit
+  const handleSubmitWithErrorHandling = async (e: React.FormEvent) => {
+    try {
+      await handleSubmit(e);
+    } catch (err) {
+      console.error('Error in chat submission:', err);
+      setError(err instanceof Error ? err : new Error(String(err)));
+    }
+  };
+
   // Render based on device type
   if (isMobile) {
     return (
@@ -64,7 +86,7 @@ export default function Chat() {
         messages={messages}
         isLoading={isLoading}
         onMessageChange={setMessage}
-        onSubmit={handleSubmit}
+        onSubmit={handleSubmitWithErrorHandling}
         onRetry={handleRetry}
       />
     );
@@ -77,7 +99,7 @@ export default function Chat() {
       messages={messages}
       isLoading={isLoading}
       onMessageChange={setMessage}
-      onSubmit={handleSubmit}
+      onSubmit={handleSubmitWithErrorHandling}
       onRetry={handleRetry}
     />
   );

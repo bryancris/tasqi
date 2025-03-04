@@ -229,6 +229,16 @@ export function useChatMessaging() {
         throw new Error("CORS policy prevented the request. This is a server configuration issue.");
       } else {
         console.error('❌ Error processing message:', error);
+        // Convert any error to an Error instance to ensure we have a message property
+        if (!(error instanceof Error)) {
+          if (typeof error === 'string') {
+            throw new Error(error);
+          } else if (typeof error === 'object' && error !== null) {
+            throw new Error(String(error));
+          } else {
+            throw new Error("Unknown error occurred");
+          }
+        }
         throw error;
       }
     }
