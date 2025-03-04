@@ -1,16 +1,7 @@
 
-import { useServerCommunicationCore } from "./server/use-server-communication-core";
+import { useServerCommunicationCore, ProcessChatResponse } from "./server/use-server-communication-core";
 import { useTaskExtraction } from "./server/use-task-extraction";
 import { useResponseProcessing } from "./server/use-response-processing";
-
-export interface ProcessChatResponse {
-  response?: string;
-  timer?: any;
-  error?: Error;
-  success?: boolean;
-  taskCreated?: boolean;
-  task?: any;
-}
 
 export function useServerCommunication() {
   const { invokeProcessChat, queryClient } = useServerCommunicationCore();
@@ -48,3 +39,6 @@ export function useServerCommunication() {
     invokeProcessChat: processChat
   };
 }
+
+// Re-export the ProcessChatResponse type from the core module
+export type { ProcessChatResponse } from "./server/use-server-communication-core";
