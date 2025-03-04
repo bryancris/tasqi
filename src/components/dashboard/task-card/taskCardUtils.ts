@@ -12,6 +12,7 @@ export function getTimeDisplay(task: Task): string {
 }
 
 export function getCardColor(task: Task): string {
+  // Always check status first - completed tasks should always be gray
   if (task.status === 'completed') {
     return 'bg-[#8E9196]'; // Dark gray for completed tasks
   }

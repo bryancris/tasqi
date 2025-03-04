@@ -12,6 +12,9 @@ import { ShareIndicator } from "./components/ShareIndicator";
 function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, extraButton }: TaskCardProps) {
   const assignmentInfo = useTaskAssignmentInfo(task);
   const timeDisplay = getTimeDisplay(task);
+  
+  // Get the color based on task status
+  const backgroundColor = getCardColor(task);
 
   return (
     <div 
@@ -22,7 +25,7 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
         "hover:shadow-[0_8px_20px_rgba(0,0,0,0.12)]",
         "hover:-translate-y-1",
         "cursor-pointer",
-        getCardColor(task),
+        backgroundColor,
         "text-white",
         "before:content-[''] before:absolute before:inset-0",
         "before:bg-gradient-to-br before:from-white/10 before:to-transparent",

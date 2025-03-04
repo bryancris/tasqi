@@ -12,7 +12,7 @@ export function useTaskStatus(task: Task) {
   const queryClient = useQueryClient();
   const { invalidateTasks } = useDebouncedTaskRefresh();
   
-  // Immediate optimistic update helper
+  // Enhanced optimistic update helper with proper status handling
   const updateOptimisticTask = (taskId: number, newStatus: 'completed' | 'unscheduled') => {
     // Update the task in the QueryClient cache immediately for UI responsiveness
     queryClient.setQueryData(['tasks'], (oldData: Task[] | undefined) => {
@@ -20,7 +20,8 @@ export function useTaskStatus(task: Task) {
       
       return oldData.map(t => {
         if (t.id === taskId) {
-          // Create optimistic update for task
+          console.log(`Optimistically updating task ${taskId} to status: ${newStatus}`);
+          // Create optimistic update with ALL required properties
           return {
             ...t,
             status: newStatus,
@@ -57,7 +58,7 @@ export function useTaskStatus(task: Task) {
         }
       }
 
-      // Apply optimistic update immediately for better UX
+      // Apply enhanced optimistic update immediately for better UX
       updateOptimisticTask(task.id, newStatus);
 
       // Get current user
@@ -143,8 +144,7 @@ export function useTaskStatus(task: Task) {
       if (updateSuccess) {
         toast.success(newStatus === 'completed' ? 'Task completed' : 'Task uncompleted');
         
-        // Trigger a quick refresh for related queries with minimal delay
-        // This ensures all components have the latest data
+        // Trigger a fast refresh for related queries
         invalidateTasks(100);
       }
 
