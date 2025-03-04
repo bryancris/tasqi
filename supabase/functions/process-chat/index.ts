@@ -57,70 +57,80 @@ serve(async (req) => {
     await storeUserMessage(supabase, message, userId);
 
     // Check for timer intent in the message
-    const timerIntent = parseTimerIntent(message);
-    if (timerIntent) {
-      console.log("Detected timer intent:", timerIntent);
-      const timerData = await handleTimerIntent(supabase, timerIntent, userId);
-      
-      // Generate a user-friendly response
-      let timerResponse = "I'll set a timer for you.";
-      if (timerData) {
-        switch (timerData.action) {
-          case 'created':
-            const labelText = timerData.label ? ` for "${timerData.label}"` : '';
-            timerResponse = `I've set a timer${labelText} for ${timerData.duration_minutes} ${timerData.duration_minutes === 1 ? 'minute' : 'minutes'}. I'll notify you when it's done!`;
-            break;
-          case 'cancelled':
-            timerResponse = timerData.message || "I've cancelled your timer.";
-            break;
-          case 'checked':
-            timerResponse = timerData.message || "You don't have any active timers.";
-            break;
-          default:
-            timerResponse = "I've processed your timer request.";
+    try {
+      const timerIntent = parseTimerIntent(message);
+      if (timerIntent) {
+        console.log("Detected timer intent:", timerIntent);
+        const timerData = await handleTimerIntent(supabase, timerIntent, userId);
+        
+        // Generate a user-friendly response
+        let timerResponse = "I'll set a timer for you.";
+        if (timerData) {
+          switch (timerData.action) {
+            case 'created':
+              const labelText = timerData.label ? ` for "${timerData.label}"` : '';
+              timerResponse = `I've set a timer${labelText} for ${timerData.duration_minutes} ${timerData.duration_minutes === 1 ? 'minute' : 'minutes'}. I'll notify you when it's done!`;
+              break;
+            case 'cancelled':
+              timerResponse = timerData.message || "I've cancelled your timer.";
+              break;
+            case 'checked':
+              timerResponse = timerData.message || "You don't have any active timers.";
+              break;
+            default:
+              timerResponse = "I've processed your timer request.";
+          }
         }
+        
+        // Store the AI response
+        await storeAIMessage(supabase, timerResponse, userId);
+        
+        // Return the response with timer data
+        return new Response(
+          JSON.stringify({ 
+            response: timerResponse,
+            timer: timerData // Include timer data in the response
+          }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 200,
+          }
+        );
       }
-      
-      // Store the AI response
-      await storeAIMessage(supabase, timerResponse, userId);
-      
-      // Return the response with timer data
-      return new Response(
-        JSON.stringify({ 
-          response: timerResponse,
-          timer: timerData // Include timer data in the response
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 200,
-        }
-      );
+    } catch (timerError) {
+      console.error("Error processing timer intent:", timerError);
+      // Continue with normal processing if timer intent fails
     }
 
     // Check for task commands
-    const taskCommandResult = await checkForTaskCommands(message, userId, supabase);
-    if (taskCommandResult.isTaskCommand) {
-      console.log("Detected task command:", taskCommandResult);
-      
-      // Store the AI response
-      await storeAIMessage(supabase, taskCommandResult.response, userId);
-      
-      // Check if a task was created as part of the command
-      const taskCreated = taskCommandResult.response.toLowerCase().includes("created") || 
-                         taskCommandResult.response.toLowerCase().includes("added") ||
-                         taskCommandResult.response.toLowerCase().includes("scheduled");
-      
-      return new Response(
-        JSON.stringify({ 
-          response: taskCommandResult.response,
-          taskCreated: taskCreated,
-          task: taskCommandResult.task || null
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 200,
-        }
-      );
+    try {
+      const taskCommandResult = await checkForTaskCommands(message, userId, supabase);
+      if (taskCommandResult.isTaskCommand) {
+        console.log("Detected task command:", taskCommandResult);
+        
+        // Store the AI response
+        await storeAIMessage(supabase, taskCommandResult.response, userId);
+        
+        // Check if a task was created as part of the command
+        const taskCreated = taskCommandResult.response.toLowerCase().includes("created") || 
+                           taskCommandResult.response.toLowerCase().includes("added") ||
+                           taskCommandResult.response.toLowerCase().includes("scheduled");
+        
+        return new Response(
+          JSON.stringify({ 
+            response: taskCommandResult.response,
+            taskCreated: taskCreated,
+            task: taskCommandResult.task || null
+          }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 200,
+          }
+        );
+      }
+    } catch (taskError) {
+      console.error("Error processing task command:", taskError);
+      // Continue with normal processing if task command fails
     }
 
     // Get the chat history
@@ -257,7 +267,13 @@ async function handleTimerIntent(
         
         if (error) {
           console.error("Error creating timer:", error);
-          return null;
+          // Return a simplified response to avoid client-side processing errors
+          return {
+            action: 'created',
+            success: false,
+            message: "Created a timer but couldn't save it. I'll remind you anyway!",
+            duration_minutes: timerIntent.minutes
+          };
         }
         
         console.log("Timer created:", data);
@@ -289,10 +305,20 @@ async function handleTimerIntent(
         
       default:
         console.error("Unknown timer action:", timerIntent.action);
-        return null;
+        return {
+          action: 'error',
+          success: false,
+          message: "I couldn't understand that timer request. Try something like 'set a 5 minute timer'."
+        };
     }
   } catch (error) {
     console.error("Error handling timer intent:", error);
-    return null;
+    // Return a simplified response that won't cause client-side processing errors
+    return {
+      action: 'error',
+      success: false,
+      message: "I had trouble with that timer. Let's try again.",
+      error: error.message
+    };
   }
 }

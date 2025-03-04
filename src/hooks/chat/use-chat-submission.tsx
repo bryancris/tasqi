@@ -48,6 +48,7 @@ export function useChatSubmission(
           detail: { error: errorMsg }
         }));
         setIsLoading(false);
+        removeLastMessage(); // Remove loading message if added
         return;
       }
 
@@ -76,8 +77,18 @@ export function useChatSubmission(
           // Add the AI's response
           if (data?.response) {
             addAIMessage(data.response);
+            
+            // Dispatch success response event (important for mobile)
+            window.dispatchEvent(new CustomEvent('ai-response', { 
+              detail: { success: true, timer: data.timer }
+            }));
           } else {
             addAIMessage("I'm sorry, I couldn't process that request.");
+            
+            // Dispatch generic success event
+            window.dispatchEvent(new CustomEvent('ai-response', { 
+              detail: { success: true }
+            }));
           }
           
           // Handle timer-related response in a non-blocking way
@@ -124,6 +135,11 @@ export function useChatSubmission(
               milliseconds: milliseconds
             });
           }, 200);
+          
+          // Dispatch success response event (important for mobile)
+          window.dispatchEvent(new CustomEvent('ai-response', { 
+            detail: { success: true, timerFallback: true }
+          }));
         }
       } else {
         // If the message doesn't match timer regex or we're offline, use regular flow
@@ -137,6 +153,7 @@ export function useChatSubmission(
             window.dispatchEvent(new CustomEvent('ai-error', { 
               detail: { error: "No internet connection" }
             }));
+            setIsLoading(false);
             return;
           }
           
@@ -151,23 +168,27 @@ export function useChatSubmission(
           if (data?.response) {
             addAIMessage(data.response);
             
+            // Dispatch success response event with task data if available
+            window.dispatchEvent(new CustomEvent('ai-response', { 
+              detail: { 
+                success: true, 
+                task: data.taskCreated ? data.task : null,
+                timer: data.timer || null
+              }
+            }));
+            
             // If there's a task created by the AI, ensure we show the proper notification
             if (data.taskCreated && data.task) {
               console.log('✅ Task created in chat submission:', data.task);
               toast.success("Task created successfully!");
-              
-              // Dispatch a custom event for form updates
-              try {
-                window.dispatchEvent(new CustomEvent('ai-response', { 
-                  detail: { task: data.task }
-                }));
-                console.log('✅ AI response event dispatched with task data');
-              } catch (e) {
-                console.error('❌ Error dispatching task event:', e);
-              }
             }
           } else {
             addAIMessage("I'm sorry, I couldn't process that request.");
+            
+            // Dispatch generic success event
+            window.dispatchEvent(new CustomEvent('ai-response', { 
+              detail: { success: true }
+            }));
           }
           
           // Handle timer-related response
