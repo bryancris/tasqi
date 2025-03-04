@@ -28,6 +28,7 @@ export function useChatMessaging() {
     error?: Error;
     success?: boolean;
     taskCreated?: boolean;
+    task?: any;
   }> => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -81,18 +82,21 @@ export function useChatMessaging() {
         'set a task', 'make a task', 'add to my tasks', 'schedule a', 'create a task',
         'add a task', 'set a reminder', 'schedule this', 'create an event', 'create reminder',
         'note down', 'write down', 'add to calendar', 'put on my schedule', 'remember to',
-        'don\'t forget to', 'need to', 'have to', 'should'
+        'don\'t forget to', 'need to', 'have to', 'should', 'pick up', 'meeting', 'appointment',
+        'deadline', 'due', 'finish', 'complete', 'attend', 'go to', 'call', 'email'
       ];
       
       const mightBeTaskRelated = taskRelatedTerms.some(term => 
         userMessage.content.toLowerCase().includes(term)
-      ) || /^[A-Z].*\s(at|on|tomorrow|today|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b/i.test(userMessage.content);
+      ) || /\b(at|on|tomorrow|today|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b/i.test(userMessage.content);
+      
+      console.log('Message task related?', mightBeTaskRelated, userMessage.content);
       
       if (mightBeTaskRelated) {
         console.log('🔍 Message likely task-related, attempting to process as task:', userMessage.content);
         try {
-          // Directly call the process-task function for task creation
-          console.log('Calling process-task function with message:', userMessage.content);
+          // IMPORTANT: Always try process-task first for task-related messages
+          console.log('Directly calling process-task function with message:', userMessage.content);
           
           const { data, error } = await supabase.functions.invoke('process-task', {
             body: { message: userMessage.content, userId: user.id }
@@ -115,6 +119,7 @@ export function useChatMessaging() {
               window.dispatchEvent(new CustomEvent('ai-response', { 
                 detail: { task: data.task }
               }));
+              console.log('✅ AI response event dispatched with task data');
             } catch (e) {
               console.error('Error dispatching task event:', e);
             }
@@ -132,7 +137,8 @@ export function useChatMessaging() {
             return {
               response: data.response,
               success: true,
-              taskCreated: true
+              taskCreated: true,
+              task: data.task
             };
           } else {
             console.log('ℹ️ No task created by process-task function, but response provided:', data?.response);
@@ -173,7 +179,9 @@ export function useChatMessaging() {
           'task has been created',
           'noted down the task',
           'added to your calendar',
-          'put on your schedule'
+          'put on your schedule',
+          'i\'ve scheduled', 
+          'i\'ve created a task'
         ];
         
         const containsTaskConfirmation = taskCompletionPhrases.some(phrase => 
@@ -199,11 +207,13 @@ export function useChatMessaging() {
               setTimeout(() => {
                 queryClient.invalidateQueries({ queryKey: ['tasks'] });
                 queryClient.invalidateQueries({ queryKey: ['weekly-tasks'] });
+                toast.success("Task created successfully!");
               }, 300);
               
               return {
                 ...response,
-                taskCreated: true
+                taskCreated: true,
+                task: data.task
               };
             }
           } catch (err) {

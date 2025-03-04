@@ -77,6 +77,7 @@ serve(async (req) => {
       );
     }
 
+    console.log('Making API request to OpenAI with message:', message);
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -154,6 +155,7 @@ serve(async (req) => {
       data = await openAIResponse.json();
       console.log('🧠 OpenAI Response structure:', 
         { choices: data.choices?.length, model: data.model, usage: data.usage });
+      console.log('OpenAI response first choice message:', data.choices?.[0]?.message);
     } catch (error) {
       console.error('Error parsing OpenAI response:', error);
       return new Response(
@@ -193,17 +195,32 @@ serve(async (req) => {
       console.log('🧩 Parsed task data:', result);
     } catch (error) {
       console.error('Error parsing OpenAI JSON response:', error);
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Failed to parse OpenAI task JSON',
-          response: "I couldn't process your task data. Please try describing your task more clearly."
-        }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      // Try a more lenient approach to extract the JSON
+      try {
+        const content = data.choices[0].message.content;
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const jsonStr = jsonMatch[0];
+          console.log('Attempting to parse extracted JSON:', jsonStr);
+          result = JSON.parse(jsonStr);
+          console.log('Successfully parsed JSON with lenient extraction:', result);
+        } else {
+          throw new Error('No JSON object found in response');
         }
-      );
+      } catch (fallbackError) {
+        console.error('Even fallback JSON parsing failed:', fallbackError);
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'Failed to parse OpenAI task JSON',
+            response: "I couldn't process your task data. Please try describing your task more clearly."
+          }),
+          {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
     }
     
     // Check if OpenAI didn't find a task
@@ -213,7 +230,7 @@ serve(async (req) => {
         JSON.stringify({
           success: false,
           taskCreated: false,
-          response: result.response || "I couldn't identify a task in your request. Can you provide more details?"
+          response: result?.response || "I couldn't identify a task in your request. Can you provide more details?"
         }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
