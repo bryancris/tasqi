@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -6,33 +5,17 @@ import { playNotificationSound } from '@/utils/notifications/soundUtils';
 import { useNotifications } from '@/components/notifications/NotificationsManager';
 import { notificationService } from '@/utils/notifications/notificationService';
 import { toast } from 'sonner';
+import { useDebouncedTaskRefresh } from './use-debounced-task-refresh';
 
 export function useSupabaseSubscription() {
   const queryClient = useQueryClient();
   const { showNotification } = useNotifications();
+  const { invalidateTasks, cleanup } = useDebouncedTaskRefresh();
+  
   // Add a ref to track if we've already initialized
   const initialized = useRef(false);
-  
-  // Add debounce mechanism for task updates
-  const taskUpdateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   // Track mounted state
   const isMountedRef = useRef<boolean>(true);
-
-  const debouncedInvalidateTasks = useCallback(() => {
-    // Clear any existing timeout
-    if (taskUpdateTimeoutRef.current) {
-      clearTimeout(taskUpdateTimeoutRef.current);
-    }
-    
-    // Set a new timeout for task invalidation
-    taskUpdateTimeoutRef.current = setTimeout(() => {
-      if (isMountedRef.current) {
-        console.log('Debounced task query invalidation triggered');
-        void queryClient.invalidateQueries({ queryKey: ['tasks'] });
-        taskUpdateTimeoutRef.current = null;
-      }
-    }, 1000); // 1 second debounce time
-  }, [queryClient]);
 
   useEffect(() => {
     // Only run once
@@ -62,15 +45,15 @@ export function useSupabaseSubscription() {
 
     void initializeNotifications();
 
-    // Tasks channel - Now with debounced updates
+    // Tasks channel - with improved update handling
     const tasksChannel = supabase.channel('tasks-changes')
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'tasks' },
         () => {
-          // Use debounced invalidation instead of immediate
           if (isMountedRef.current) {
-            debouncedInvalidateTasks();
+            console.log('Task update from Supabase realtime - refreshing data');
+            invalidateTasks(300); // Use a 300ms debounce for realtime updates
           }
         }
       )
@@ -155,15 +138,11 @@ export function useSupabaseSubscription() {
     return () => {
       console.log('Cleaning up Supabase subscriptions');
       isMountedRef.current = false;
-      
-      // Clear any pending timeout
-      if (taskUpdateTimeoutRef.current) {
-        clearTimeout(taskUpdateTimeoutRef.current);
-      }
+      cleanup();
       
       void supabase.removeChannel(tasksChannel);
       void supabase.removeChannel(notesChannel);
       void supabase.removeChannel(notificationsChannel);
     };
-  }, [queryClient, showNotification, debouncedInvalidateTasks]); // Added debouncedInvalidateTasks to dependency array
+  }, [queryClient, showNotification, invalidateTasks, cleanup]);
 }

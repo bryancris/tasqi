@@ -1,4 +1,3 @@
-
 import { Task } from "./TaskBoard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TaskCard } from "./TaskCard";
@@ -6,9 +5,10 @@ import { DndContext, MouseSensor, TouchSensor, useSensor, useSensors, DragEndEve
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { startOfDay, isAfter, parseISO, isSameDay } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { TimelineSection } from "./timeline/TimelineSection";
 import { useQueryClient } from "@tanstack/react-query";
+import { useDebouncedTaskRefresh } from "@/hooks/use-debounced-task-refresh";
 
 export interface MobileTaskViewProps {
   tasks: Task[];
@@ -22,7 +22,7 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
   const [view, setView] = useState<'board' | 'timeline'>('board');
   const todayStart = startOfDay(new Date());
   const queryClient = useQueryClient();
-  const isRefetchingRef = useRef(false);
+  const { invalidateTasks, cleanup } = useDebouncedTaskRefresh();
 
   // Create a subscription to task updates
   useEffect(() => {
@@ -33,21 +33,9 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
       // Check if tasks query was modified
       if (event.type === 'updated' || event.type === 'added' || event.type === 'removed') {
         if (Array.isArray(event.query?.queryKey) && 
-            event.query?.queryKey[0] === 'tasks' &&
-            !isRefetchingRef.current) {
-          console.log('Task query updated in MobileTaskView, marking as stale');
-          
-          // Set the flag to prevent recursive refetches
-          isRefetchingRef.current = true;
-          
-          // Mark the query as stale instead of immediately refetching
-          queryClient.invalidateQueries({ queryKey: ['tasks'] })
-            .then(() => {
-              // Reset the flag after a short delay
-              setTimeout(() => {
-                isRefetchingRef.current = false;
-              }, 100);
-            });
+            event.query?.queryKey[0] === 'tasks') {
+          console.log('Task query updated in MobileTaskView, refreshing');
+          invalidateTasks(200); // Use a 200ms debounce delay for mobile
         }
       }
     });
@@ -55,8 +43,9 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
     return () => {
       console.log("Cleaning up mobile view task subscription");
       unsubscribe();
+      cleanup();
     };
-  }, [queryClient]);
+  }, [queryClient, invalidateTasks, cleanup]);
 
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -123,6 +112,8 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
     if (onComplete) {
       onComplete();
     }
+    // Also trigger a task refresh with shorter delay
+    invalidateTasks(150);
   };
 
   return (

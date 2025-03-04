@@ -4,17 +4,40 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Task } from "../TaskBoard";
 import { useQueryClient } from "@tanstack/react-query";
+import { playNotificationSound } from "@/utils/notifications/soundUtils";
+import { useDebouncedTaskRefresh } from "@/hooks/use-debounced-task-refresh";
 
 export function useTaskStatus(task: Task) {
   const [isUpdating, setIsUpdating] = useState(false);
   const queryClient = useQueryClient();
+  const { invalidateTasks } = useDebouncedTaskRefresh();
+  
+  // Immediate optimistic update helper
+  const updateOptimisticTask = (taskId: number, newStatus: 'completed' | 'unscheduled') => {
+    // Update the task in the QueryClient cache immediately for UI responsiveness
+    queryClient.setQueryData(['tasks'], (oldData: Task[] | undefined) => {
+      if (!oldData) return undefined;
+      
+      return oldData.map(t => {
+        if (t.id === taskId) {
+          // Create optimistic update for task
+          return {
+            ...t,
+            status: newStatus,
+            completed_at: newStatus === 'completed' ? new Date().toISOString() : null
+          };
+        }
+        return t;
+      });
+    });
+  };
 
   const handleComplete = async () => {
     try {
       console.log('Attempting to complete task:', task.id);
       if (isUpdating) {
         console.log('Task update already in progress, skipping...');
-        return;
+        return false;
       }
       
       setIsUpdating(true);
@@ -24,13 +47,25 @@ export function useTaskStatus(task: Task) {
       const completedAt = task.status === 'completed' ? null : new Date().toISOString();
       
       console.log('Updating task to:', { newStatus, completedAt });
+      
+      // Play a notification sound for task completion
+      if (newStatus === 'completed') {
+        try {
+          await playNotificationSound();
+        } catch (error) {
+          console.warn('Could not play notification sound:', error);
+        }
+      }
+
+      // Apply optimistic update immediately for better UX
+      updateOptimisticTask(task.id, newStatus);
 
       // Get current user
       const { data: userData, error: userError } = await supabase.auth.getUser();
       if (userError || !userData.user) {
         toast.error('User not authenticated');
         setIsUpdating(false);
-        return;
+        return false;
       }
       
       const userId = userData.user.id;
@@ -108,11 +143,9 @@ export function useTaskStatus(task: Task) {
       if (updateSuccess) {
         toast.success(newStatus === 'completed' ? 'Task completed' : 'Task uncompleted');
         
-        // Add a small delay to allow triggers to complete
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        // Force invalidate and refetch tasks to ensure UI consistency
-        await queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        // Trigger a quick refresh for related queries with minimal delay
+        // This ensures all components have the latest data
+        invalidateTasks(100);
       }
 
       return updateSuccess;

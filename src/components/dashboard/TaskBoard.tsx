@@ -8,6 +8,7 @@ import { Subtask } from "./subtasks/SubtaskList";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TaskAttachment } from "./form/types";
 import { useQueryClient } from "@tanstack/react-query";
+import { useDebouncedTaskRefresh } from "@/hooks/use-debounced-task-refresh";
 
 export type TaskPriority = "low" | "medium" | "high";
 
@@ -72,8 +73,7 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
   const { tasks, refetch, isLoading } = useTasks();
   const { handleDragEnd } = useTaskReorder(tasks, refetch);
   const queryClient = useQueryClient();
-  const isRefetchingRef = useRef(false);
-  const refetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { invalidateTasks, cleanup } = useDebouncedTaskRefresh();
 
   useEffect(() => {
     console.log("TaskBoard mounted");
@@ -84,52 +84,22 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
     // Force refetch on mount to ensure we have the latest data
     refetch();
     
-    // Set up a listener for task-related changes with improved debounce
+    // Set up a listener for task-related changes
     const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
       if (event.type === 'updated' || event.type === 'added' || event.type === 'removed') {
         if (Array.isArray(event.query?.queryKey) && 
-            event.query?.queryKey[0] === 'tasks' &&
-            !isRefetchingRef.current) {
-          console.log('Task query updated in TaskBoard, debouncing refetch');
-          
-          // Set the flag to prevent recursive refetches
-          isRefetchingRef.current = true;
-          
-          // Clear any existing timeout
-          if (refetchTimeoutRef.current) {
-            clearTimeout(refetchTimeoutRef.current);
-          }
-          
-          // Set a longer debounce timeout (500ms instead of 100ms)
-          refetchTimeoutRef.current = setTimeout(() => {
-            console.log('Executing debounced task refetch');
-            queryClient.invalidateQueries({ queryKey: ['tasks'] })
-              .then(() => {
-                // Reset the flag after the query is invalidated
-                setTimeout(() => {
-                  isRefetchingRef.current = false;
-                  refetchTimeoutRef.current = null;
-                }, 200);
-              })
-              .catch(error => {
-                console.error('Error invalidating tasks query:', error);
-                isRefetchingRef.current = false;
-                refetchTimeoutRef.current = null;
-              });
-          }, 500);
+            event.query?.queryKey[0] === 'tasks') {
+          console.log('Task query updated in TaskBoard, triggering debounced refresh');
+          invalidateTasks(300); // Use a 300ms debounce delay
         }
       }
     });
     
     return () => {
       unsubscribe();
-      // Clean up any pending timeout
-      if (refetchTimeoutRef.current) {
-        clearTimeout(refetchTimeoutRef.current);
-        refetchTimeoutRef.current = null;
-      }
+      cleanup(); // Clean up any pending timeouts
     };
-  }, [isMobile, isLoading, refetch, queryClient]);
+  }, [isMobile, isLoading, refetch, queryClient, invalidateTasks, cleanup]);
 
   const memoizedRefetch = useCallback(() => {
     console.log("Executing memoizedRefetch");
