@@ -13,7 +13,7 @@ const NavButtons = () => {
   const handleLogout = async () => {
     try {
       await handleSignOut();
-      navigate('/');
+      // Don't use navigate here as it might trigger a reload
     } catch (error: any) {
       toast({
         variant: "destructive",

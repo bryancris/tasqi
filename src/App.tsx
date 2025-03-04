@@ -31,7 +31,7 @@ const ProtectedRoute = memo(({ children }: { children: React.ReactNode }) => {
     );
   }
   
-  // No session means not authenticated
+  // No session means not authenticated - use the location state to remember where they came from
   if (!session) {
     return <Navigate to="/auth" replace state={{ from: location }} />;
   }
@@ -40,7 +40,7 @@ const ProtectedRoute = memo(({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 });
 
-// Simplified Auth Route component
+// Simplified Auth Route component - prevent authenticated users from accessing the auth page
 const AuthRoute = memo(({ children }: { children: React.ReactNode }) => {
   const { session, loading } = useAuth();
   
@@ -121,7 +121,7 @@ function App() {
                 </ProtectedRoute>
               } />
               
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </div>
         </DragDropContext>
