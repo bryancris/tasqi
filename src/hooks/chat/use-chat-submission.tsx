@@ -48,7 +48,6 @@ export function useChatSubmission(
           detail: { error: errorMsg }
         }));
         setIsLoading(false);
-        removeLastMessage(); // Remove loading message if added
         return;
       }
 

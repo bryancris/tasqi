@@ -20,13 +20,23 @@ export function MobileChatView({
   const queryClient = useQueryClient();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const hasRespondedRef = useRef(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Listen for the ai-response event specifically for task creation in mobile view
   useEffect(() => {
     const handleAiResponse = (e: CustomEvent<any>) => {
-      hasRespondedRef.current = true;
       console.log('📱 Mobile chat detected AI response event:', e.detail);
       
+      // Clear any loading timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      
+      // Mark that we've received a response
+      hasRespondedRef.current = true;
+      
+      // Handle task creation response
       if (e.detail?.task) {
         console.log('📱 Mobile chat detected task creation event:', e.detail.task);
         // Show success toast
@@ -38,12 +48,23 @@ export function MobileChatView({
           queryClient.invalidateQueries({ queryKey: ['weekly-tasks'] });
         }, 500);
       }
+      
+      // Clear any error message that might be showing
+      setErrorMessage(null);
     };
 
     // Listen for any errors in the chat process
     const handleAiError = (e: CustomEvent<any>) => {
-      hasRespondedRef.current = true;
       console.error('📱 Mobile chat error:', e.detail?.error || 'Unknown error');
+      
+      // Clear any loading timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      
+      // Mark that we've received a response (even if it's an error)
+      hasRespondedRef.current = true;
       
       if (e.detail?.error) {
         setErrorMessage(e.detail.error);
@@ -58,6 +79,11 @@ export function MobileChatView({
     window.addEventListener('ai-error', handleAiError as EventListener);
     
     return () => {
+      // Clear any pending timeout on cleanup
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      
       window.removeEventListener('ai-response', handleAiResponse as EventListener);
       window.removeEventListener('ai-error', handleAiError as EventListener);
     };
@@ -65,15 +91,21 @@ export function MobileChatView({
 
   // Custom submit handler for mobile chat to better handle loading states
   const handleMobileSubmit = (e: React.FormEvent) => {
+    // Reset state before submission
     setErrorMessage(null);
     hasRespondedRef.current = false;
+    
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
     
     try {
       console.log('📱 Mobile chat: submitting message');
       onSubmit(e);
       
       // Set a safety timeout to clear loading state if no response is received
-      setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         if (!hasRespondedRef.current) {
           console.error('📱 Mobile chat: No response received within timeout period');
           setErrorMessage("No response received. Please try again.");
@@ -84,7 +116,7 @@ export function MobileChatView({
             detail: { error: "Request timed out" }
           }));
         }
-      }, 15000); // 15-second timeout
+      }, 20000); // 20-second timeout
       
     } catch (error) {
       console.error('📱 Mobile chat submission error:', error);

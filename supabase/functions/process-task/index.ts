@@ -85,7 +85,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini', // Using current recommended model
+        model: 'gpt-4o', // Updated to a valid model name
         temperature: 0.7,
         messages: [
           {
@@ -101,7 +101,9 @@ serve(async (req) => {
               
               Convert relative dates (today, tomorrow, next week, etc) to actual dates.
               If no priority is specified, default to "low".
-              If you cannot clearly extract task information, return null.
+              Be generous in your extraction - if the user mentions anything that sounds remotely like a task, extract it.
+              For casual or ambiguous requests like "I need to go to Walmart", create a task with appropriate defaults.
+              DO NOT respond with "I couldn't identify a task" unless the message is completely unrelated to tasks.
               
               Example response format:
               {
