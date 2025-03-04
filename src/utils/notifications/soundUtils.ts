@@ -1,3 +1,4 @@
+
 /**
  * Sound utilities for playing notification sounds with multiple fallback mechanisms
  * Enhanced for iOS PWA support
@@ -6,7 +7,7 @@
 // Constants for configuration
 const SOUND_FILE_PATH = '/notification-sound.mp3';
 const DEFAULT_VOLUME = 0.7;
-const IOS_VOLUME = 0.4; // Lower volume for iOS to prevent harsh sounds
+const IOS_VOLUME = 0.9; // Increased from 0.4 to 0.9 for louder iOS notifications
 const AUDIO_TIMEOUT_MS = 2000;
 const AUDIO_CACHE_DURATION = 60000; // Cache audio for 1 minute
 

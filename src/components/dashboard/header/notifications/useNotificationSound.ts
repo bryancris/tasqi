@@ -15,9 +15,9 @@ export function useNotificationSound() {
         console.log('🍎 iOS device detected, using iOS-compatible approach');
         
         // iOS requires user interaction to play audio in many contexts
-        // Use a simpler Audio element with lower volume to avoid loudness issues on iOS
+        // Use a simpler Audio element with higher volume to match other platforms
         const audio = new Audio('/notification-sound.mp3');
-        audio.volume = 0.3; // Lower volume for iOS
+        audio.volume = 0.9; // Increased from 0.3 to 0.9 for louder iOS notifications
         
         // Create a timeout promise to handle cases where play() hangs
         const timeoutPromise = new Promise((_, reject) => 
