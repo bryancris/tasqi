@@ -48,6 +48,11 @@ export const ChatBubble = ({
     );
   }
 
+  // If we're in default variant and hideFloatingButton is true, don't render anything
+  if (variant === 'default' && hideFloatingButton) {
+    return null;
+  }
+
   return (
     <div className={`${variant === 'sidebar' ? '' : 'fixed bottom-6 right-6 z-50'}`}>
       <Button
