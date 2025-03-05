@@ -79,12 +79,12 @@ export function DesktopTimelineSection({ selectedDate, onDateChange }: DesktopTi
           <CardTitle className="text-gray-700 text-xl font-semibold tracking-wide">Timeline</CardTitle>
           <div className="flex items-center justify-between">
             <Button 
-              variant="ghost" 
+              variant="outline" 
               size="icon" 
               onClick={handlePrevDay}
-              className="h-9 w-9 rounded-full text-gray-500 hover:bg-gray-50 transition-colors"
+              className="h-8 w-8 bg-gradient-to-r from-[#B2E3EA] to-[#83C5D2] border border-[#83C5D2] hover:bg-[#EA384C] hover:border-[#EA384C] hover:from-transparent hover:to-transparent"
             >
-              <ChevronLeft className="h-5 w-5" />
+              <ChevronLeft className="h-4 w-4 text-black hover:text-white" />
             </Button>
             
             <div className="relative flex items-center justify-center bg-gray-50 px-4 py-2.5 rounded-full border border-gray-100 shadow-sm min-w-[200px]">
@@ -97,12 +97,12 @@ export function DesktopTimelineSection({ selectedDate, onDateChange }: DesktopTi
             </div>
             
             <Button 
-              variant="ghost" 
+              variant="outline" 
               size="icon" 
               onClick={handleNextDay}
-              className="h-9 w-9 rounded-full text-gray-500 hover:bg-gray-50 transition-colors"
+              className="h-8 w-8 bg-gradient-to-r from-[#B2E3EA] to-[#83C5D2] border border-[#83C5D2] hover:bg-[#EA384C] hover:border-[#EA384C] hover:from-transparent hover:to-transparent"
             >
-              <ChevronRight className="h-5 w-5" />
+              <ChevronRight className="h-4 w-4 text-black hover:text-white" />
             </Button>
           </div>
         </div>
