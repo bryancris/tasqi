@@ -2,12 +2,13 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Task } from "../TaskBoard";
-import { TaskStatusIcon } from "../TaskStatusIcon";
+import { TaskStatusIndicator } from "../TaskStatusIndicator";
 import { getPriorityColor } from "@/utils/taskColors";
 import { cn } from "@/lib/utils";
 import { GripVertical, Clock } from "lucide-react";
 import { useMemo } from "react";
 import { ShareIndicator } from "../task-card/components/ShareIndicator";
+import { TaskAssignmentInfo } from "../task-card/types";
 
 interface TaskCardBaseProps {
   task: Task;
@@ -48,6 +49,17 @@ export function TaskCardBase({ task, index, isDraggable = false, view = 'daily',
 
   const timeDisplay = getTimeDisplay();
   const isCompleted = task.status === 'completed';
+  
+  // Create a mock assignment info for the ShareIndicator
+  const assignmentInfo: TaskAssignmentInfo = {
+    assignerName: '',
+    assigneeName: '',
+    sharedWithUser: false,
+    sharedByUser: false,
+    sharedWithName: '',
+    sharedByName: '',
+    currentUserId: '',
+  };
 
   return (
     <div
@@ -72,7 +84,7 @@ export function TaskCardBase({ task, index, isDraggable = false, view = 'daily',
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
             <h3 className={cn("font-medium text-base", isCompleted && "line-through opacity-75")}>{task.title}</h3>
-            {task.shared && <ShareIndicator />}
+            {task.shared && <ShareIndicator task={task} assignmentInfo={assignmentInfo} />}
           </div>
           {timeDisplay && (
             <div className="flex items-center gap-1 text-sm text-white/90">
@@ -91,7 +103,7 @@ export function TaskCardBase({ task, index, isDraggable = false, view = 'daily',
           }
         }}
       >
-        <TaskStatusIcon 
+        <TaskStatusIndicator 
           status={task.status} 
           className={cn(
             "w-6 h-6 cursor-pointer",

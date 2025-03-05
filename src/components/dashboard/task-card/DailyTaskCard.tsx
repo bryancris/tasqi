@@ -38,7 +38,6 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
       <TaskStatusIndicator 
         status={task.status} 
         time={timeDisplay}
-        rescheduleCount={task.reschedule_count}
         onClick={(e) => {
           e.stopPropagation();
           onComplete();
