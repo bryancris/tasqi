@@ -59,7 +59,15 @@ export function DatePickerInput({
     <div className="space-y-2">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button type="button" variant="outline" className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")}>
+          <Button 
+            type="button" 
+            variant="outline" 
+            className={cn(
+              "w-full justify-start text-left font-normal", 
+              !date && "text-muted-foreground",
+              "bg-transparent border-0 hover:bg-transparent hover:text-inherit focus-visible:ring-0 focus-visible:ring-offset-0"
+            )}
+          >
             {!hideIcon && <CalendarIcon className="mr-2 h-4 w-4" />}
             {date ? format(selectedDate!, 'PPP') : <span>Pick a date</span>}
           </Button>

@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TimelineSlot } from "../TimelineSlot";
@@ -87,14 +88,16 @@ export function TimelineSection({ selectedDate, onDateChange }: TimelineSectionP
               <ChevronLeft className="h-4 w-4 text-black hover:text-white" />
             </Button>
             
-            <div className="relative flex items-center justify-center bg-white/10 backdrop-blur-sm px-3 py-2 rounded-full border border-white/20 shadow-sm max-w-[180px]">
-              <Calendar className="h-4 w-4 text-white/90 mr-2" />
-              <DateSelector 
-                date={format(selectedDate, 'yyyy-MM-dd')}
-                onDateChange={(newDate) => onDateChange(new Date(newDate))}
-                className="text-white font-medium text-sm"
-                hideIcon={true}
-              />
+            <div className="relative flex items-center justify-center max-w-[180px]">
+              <div className="w-full px-3 py-2 text-white bg-gradient-to-r from-[#0EA5E9] to-[#2A9BB5] border-2 border-[#0EA5E9]/50 rounded-full shadow-sm flex items-center">
+                <Calendar className="h-4 w-4 text-white/90 mr-2" />
+                <DateSelector 
+                  date={format(selectedDate, 'yyyy-MM-dd')}
+                  onDateChange={(newDate) => onDateChange(new Date(newDate))}
+                  className="text-white font-medium text-sm"
+                  hideIcon={true}
+                />
+              </div>
             </div>
             
             <Button 
