@@ -11,7 +11,7 @@ interface DateSelectorProps {
 
 export function DateSelector({ date, onDateChange, className, hideIcon = false }: DateSelectorProps) {
   return (
-    <div className={cn("w-full inline-block", className)}>
+    <div className={cn("inline-flex items-center", className)}>
       <DatePickerInput 
         date={date} 
         onDateChange={onDateChange}

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TimelineSlot } from "../TimelineSlot";
@@ -55,7 +54,6 @@ export function TimelineSection({ tasks, selectedDate, onDateChange }: TimelineS
     }
   );
 
-  // Filter tasks for the selected date
   const scheduledTasks = tasks.filter(task => {
     if (!task.date) return false;
     const taskDate = parseISO(task.date);
@@ -88,8 +86,8 @@ export function TimelineSection({ tasks, selectedDate, onDateChange }: TimelineS
             <ChevronLeft className="h-4 w-4 text-black hover:text-white" />
           </Button>
           
-          <div className="relative flex items-center justify-center">
-            <div className="inline-flex px-3 py-1 text-white bg-gradient-to-r from-[#0EA5E9] to-[#2A9BB5] border-2 border-[#0EA5E9]/50 rounded-full shadow-sm">
+          <div className="flex items-center justify-center">
+            <div className="inline-flex px-2 py-0.5 text-white bg-gradient-to-r from-[#0EA5E9] to-[#2A9BB5] border border-[#0EA5E9]/50 rounded-full shadow-sm">
               <DateSelector 
                 date={format(selectedDate, 'yyyy-MM-dd')}
                 onDateChange={(newDate) => onDateChange(new Date(newDate))}
