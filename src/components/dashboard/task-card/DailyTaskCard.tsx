@@ -9,37 +9,40 @@ import { getTimeDisplay, getCardColor } from "./taskCardUtils";
 import { TaskCardContent } from "./components/TaskCardContent";
 import { ShareIndicator } from "./components/ShareIndicator";
 
-function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, extraButton, view = 'daily' }: TaskCardProps) {
+function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, extraButton }: TaskCardProps) {
   const assignmentInfo = useTaskAssignmentInfo(task);
   const timeDisplay = getTimeDisplay(task);
   
   // Get the color based on task status
   const backgroundColor = getCardColor(task);
 
-  const handleStatusClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (onComplete) {
-      onComplete();
-    }
-  };
-
   return (
     <div 
       className={cn(
         "flex items-start gap-3 p-3 rounded-xl relative",
-        "transition-all duration-200",
-        "shadow-sm",
+        "transition-all duration-300",
+        "shadow-[0_2px_10px_rgba(0,0,0,0.08)]",
+        "hover:shadow-[0_8px_20px_rgba(0,0,0,0.12)]",
+        "hover:-translate-y-1",
+        "cursor-pointer",
         backgroundColor,
-        "text-white"
+        "text-white",
+        "before:content-[''] before:absolute before:inset-0",
+        "before:bg-gradient-to-br before:from-white/10 before:to-transparent",
+        "before:pointer-events-none",
+        "border border-white/20"
       )}
       onClick={onClick}
       {...dragHandleProps}
     >
       <TaskStatusIndicator 
         status={task.status} 
-        time={view === 'daily' ? timeDisplay : undefined}
-        onClick={handleStatusClick} 
-        rescheduleCount={task.reschedule_count} 
+        time={timeDisplay}
+        rescheduleCount={task.reschedule_count}
+        onClick={(e) => {
+          e.stopPropagation();
+          onComplete();
+        }} 
       />
       
       <TaskCardContent

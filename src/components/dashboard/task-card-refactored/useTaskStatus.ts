@@ -64,8 +64,8 @@ export function useTaskStatus(task: Task) {
       let updateSuccess = false;
       
       if (task.shared) {
-        console.log('Handling shared task completion:', task.title, task);
-        console.log('User ID:', userId);
+        console.log('Checking shared task info for task:', task.title, task);
+        console.log('Using shared_tasks from task object:', task.shared_tasks);
         
         // First, find the correct shared task record for this user
         const userSharedTask = task.shared_tasks?.find(
@@ -81,59 +81,34 @@ export function useTaskStatus(task: Task) {
             .update({ 
               status: newStatus === 'completed' ? 'completed' : 'pending'
             })
-            .eq('id', userSharedTask.id);
+            .eq('id', userSharedTask.id)
+            .eq('shared_with_user_id', userId);
 
           if (sharedUpdateError) {
             console.error('Error updating shared task:', sharedUpdateError);
             toast.error('Failed to update shared task status');
           } else {
             updateSuccess = true;
-            console.log('Shared task status updated successfully');
-            
-            // Force a longer delay before refreshing to ensure the database trigger has time to process
-            setTimeout(() => {
-              invalidateTasks(0); // Immediate refresh after delay
-            }, 500);
+            console.log('Shared task updated successfully');
           }
         } else {
           // In case we don't find a specific shared task (as fallback)
           console.log('No specific shared task found, using task_id fallback');
           
-          // Try to find any shared task for this user and task
-          const { data: sharedTasks, error: fetchError } = await supabase
+          const { error: fallbackError } = await supabase
             .from('shared_tasks')
-            .select('*')
+            .update({ 
+              status: newStatus === 'completed' ? 'completed' : 'pending'
+            })
             .eq('task_id', task.id)
             .eq('shared_with_user_id', userId);
             
-          if (fetchError) {
-            console.error('Error fetching shared tasks:', fetchError);
-          } else if (sharedTasks && sharedTasks.length > 0) {
-            console.log('Found shared tasks through query:', sharedTasks);
-            
-            // Update the first found shared task
-            const { error: fallbackError } = await supabase
-              .from('shared_tasks')
-              .update({ 
-                status: newStatus === 'completed' ? 'completed' : 'pending'
-              })
-              .eq('id', sharedTasks[0].id);
-              
-            if (fallbackError) {
-              console.error('Error with fallback shared task update:', fallbackError);
-              toast.error('Failed to update task status');
-            } else {
-              updateSuccess = true;
-              console.log('Task updated with fallback method');
-              
-              // Force a longer delay before refreshing
-              setTimeout(() => {
-                invalidateTasks(0);
-              }, 500);
-            }
+          if (fallbackError) {
+            console.error('Error with fallback shared task update:', fallbackError);
+            toast.error('Failed to update task status');
           } else {
-            console.error('No shared tasks found for this user and task');
-            toast.error('Failed to find shared task record');
+            updateSuccess = true;
+            console.log('Task updated with fallback method');
           }
         }
       } else {
@@ -153,12 +128,14 @@ export function useTaskStatus(task: Task) {
         } else {
           updateSuccess = true;
           console.log('Task updated successfully');
-          invalidateTasks(100);
         }
       }
 
       if (updateSuccess) {
         toast.success(newStatus === 'completed' ? 'Task completed' : 'Task uncompleted');
+        
+        // Trigger a fast refresh for related queries
+        invalidateTasks(100);
       }
 
       return updateSuccess;

@@ -7,7 +7,6 @@ export interface TaskCardProps {
   onClick: () => void;
   dragHandleProps?: any;
   extraButton?: React.ReactNode;
-  view?: 'daily' | 'weekly' | 'monthly'; // Optional view prop for different card styles
 }
 
 export interface TaskAssignmentInfo {

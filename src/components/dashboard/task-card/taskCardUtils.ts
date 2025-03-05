@@ -1,48 +1,38 @@
 
 import { Task } from "../TaskBoard";
+import { getPriorityColor } from "@/utils/taskColors";
 
-export const getTimeDisplay = (task: Task): string => {
+export function getTimeDisplay(task: Task): string {
   if (task.start_time && task.end_time) {
     const startTime = task.start_time.split(':').slice(0, 2).join(':');
     const endTime = task.end_time.split(':').slice(0, 2).join(':');
     return `${startTime} - ${endTime}`;
   }
   return '';
-};
+}
 
-export const getCardColor = (task: Task): string => {
+export function getCardColor(task: Task): string {
+  // Always check status first - completed tasks should always be gray
   if (task.status === 'completed') {
-    return 'bg-gray-500';
+    return 'bg-[#8E9196]'; // Dark gray for completed tasks
   }
-  
+  if (task.status === 'unscheduled') {
+    return 'bg-[#2196F3]';
+  }
   if (task.status === 'event') {
-    return 'bg-cyan-500';
+    return 'bg-[rgb(5,242,222)]'; // Event color
   }
-  
-  if (task.shared) {
-    return 'bg-purple-500';
-  }
-  
-  switch (task.priority) {
-    case 'high':
-      return 'bg-red-500';
-    case 'medium':
-      return 'bg-orange-500';
-    case 'low':
-      return 'bg-blue-500';
-    default:
-      return 'bg-blue-500';
-  }
-};
+  return getPriorityColor(task.priority);
+}
 
-export const hasVoiceNote = (task: Task): boolean => {
+export function hasVoiceNote(task: Task): boolean {
   return !!task.task_attachments?.some(
     attachment => attachment.content_type === 'audio/webm'
   );
-};
+}
 
-export const hasFileAttachments = (task: Task): boolean => {
+export function hasFileAttachments(task: Task): boolean {
   return !!task.task_attachments?.some(
     attachment => attachment.content_type !== 'audio/webm'
   );
-};
+}

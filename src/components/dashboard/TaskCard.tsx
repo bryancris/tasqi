@@ -1,4 +1,4 @@
 
-import { DailyTaskCard } from "./task-card/DailyTaskCard";
+import { TaskCard } from "./task-card-refactored/TaskCard";
 
-export { DailyTaskCard as TaskCard };
+export { TaskCard };
