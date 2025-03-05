@@ -34,3 +34,15 @@ export const getCardColor = (task: Task): string => {
       return 'bg-blue-500';
   }
 };
+
+export const hasVoiceNote = (task: Task): boolean => {
+  return !!task.task_attachments?.some(
+    attachment => attachment.content_type === 'audio/webm'
+  );
+};
+
+export const hasFileAttachments = (task: Task): boolean => {
+  return !!task.task_attachments?.some(
+    attachment => attachment.content_type !== 'audio/webm'
+  );
+};
