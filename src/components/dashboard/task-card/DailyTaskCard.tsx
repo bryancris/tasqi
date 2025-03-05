@@ -27,17 +27,10 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
     <div 
       className={cn(
         "flex items-start gap-3 p-3 rounded-xl relative",
-        "transition-all duration-300",
-        "shadow-[0_2px_10px_rgba(0,0,0,0.08)]",
-        "hover:shadow-[0_8px_20px_rgba(0,0,0,0.12)]",
-        "hover:-translate-y-1",
-        "cursor-pointer",
+        "transition-all duration-200",
+        "shadow-sm",
         backgroundColor,
-        "text-white",
-        "before:content-[''] before:absolute before:inset-0",
-        "before:bg-gradient-to-br before:from-white/10 before:to-transparent",
-        "before:pointer-events-none",
-        "border border-white/20"
+        "text-white"
       )}
       onClick={onClick}
       {...dragHandleProps}
