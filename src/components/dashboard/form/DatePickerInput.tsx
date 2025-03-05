@@ -15,12 +15,14 @@ interface DatePickerInputProps {
   date: string;
   onDateChange: (value: string) => void;
   label?: string;
+  hideIcon?: boolean;
 }
 
 export function DatePickerInput({
   date,
   onDateChange,
-  label = "Date"
+  label = "Date",
+  hideIcon = false
 }: DatePickerInputProps) {
   const [open, setOpen] = useState(false);
   const today = startOfToday();
@@ -58,7 +60,7 @@ export function DatePickerInput({
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button type="button" variant="outline" className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")}>
-            <CalendarIcon className="mr-2 h-4 w-4" />
+            {!hideIcon && <CalendarIcon className="mr-2 h-4 w-4" />}
             {date ? format(selectedDate!, 'PPP') : <span>Pick a date</span>}
           </Button>
         </PopoverTrigger>

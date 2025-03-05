@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TimelineSlot } from "../TimelineSlot";
@@ -6,7 +5,7 @@ import { Task } from "../TaskBoard";
 import { supabase } from "@/integrations/supabase/client";
 import { format, isSameDay, parseISO } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DateSelector } from "../schedule/DateSelector";
 import { useTimelineTasks } from "@/hooks/use-timeline-tasks";
 import { cn } from "@/lib/utils";
@@ -88,7 +87,6 @@ export function DesktopTimelineSection({ selectedDate, onDateChange }: DesktopTi
             </Button>
             
             <div className="relative flex items-center justify-center bg-gray-50 px-4 py-2.5 rounded-full border border-gray-100 shadow-sm min-w-[200px]">
-              <Calendar className="h-4 w-4 text-gray-500 mr-2.5" />
               <DateSelector 
                 date={format(selectedDate, 'yyyy-MM-dd')}
                 onDateChange={(newDate) => onDateChange(new Date(newDate))}

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TimelineSlot } from "../TimelineSlot";
@@ -55,7 +54,6 @@ export function TimelineSection({ selectedDate, onDateChange }: TimelineSectionP
     }
   );
 
-  // Filter tasks for the selected date
   const scheduledTasks = tasks.filter(task => {
     if (!task.date) return false;
     const taskDate = parseISO(task.date);
@@ -95,6 +93,7 @@ export function TimelineSection({ selectedDate, onDateChange }: TimelineSectionP
                 date={format(selectedDate, 'yyyy-MM-dd')}
                 onDateChange={(newDate) => onDateChange(new Date(newDate))}
                 className="text-white font-medium text-sm"
+                hideIcon={true}
               />
             </div>
             

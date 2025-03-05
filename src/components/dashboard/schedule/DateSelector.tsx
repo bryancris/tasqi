@@ -6,14 +6,16 @@ interface DateSelectorProps {
   date: string;
   onDateChange: (date: string) => void;
   className?: string;
+  hideIcon?: boolean;
 }
 
-export function DateSelector({ date, onDateChange, className }: DateSelectorProps) {
+export function DateSelector({ date, onDateChange, className, hideIcon = false }: DateSelectorProps) {
   return (
     <div className={cn("w-full", className)}>
       <DatePickerInput 
         date={date} 
-        onDateChange={onDateChange} 
+        onDateChange={onDateChange}
+        hideIcon={hideIcon}
       />
     </div>
   );
