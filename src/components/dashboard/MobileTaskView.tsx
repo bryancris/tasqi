@@ -1,7 +1,7 @@
 
 import { Task } from "./TaskBoard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TaskCard } from "./TaskCard";
+import { DailyTaskCard } from "./task-card/DailyTaskCard";
 import { DndContext, MouseSensor, TouchSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { startOfDay, isAfter, parseISO, isSameDay } from "date-fns";
@@ -144,12 +144,12 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
               <SortableContext items={draggableTaskIds} strategy={verticalListSortingStrategy}>
                 <div className="flex flex-col gap-2">
                   {sortedTasks.map((task, index) => (
-                    <TaskCard
+                    <DailyTaskCard
                       key={task.id}
-                      task={task}
-                      index={index}
-                      isDraggable={task.status !== 'completed'}
+                      task={task} 
                       onComplete={handleComplete}
+                      onClick={() => console.log("Task clicked", task.id)}
+                      dragHandleProps={null}
                     />
                   ))}
                   {sortedTasks.length === 0 && (

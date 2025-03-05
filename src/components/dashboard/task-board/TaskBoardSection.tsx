@@ -4,7 +4,7 @@ import { Task } from "../TaskBoard";
 import { DndContext, MouseSensor, TouchSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { startOfDay, parseISO, isSameDay, isAfter } from "date-fns";
-import { TaskCard } from "../TaskCard";
+import { DailyTaskCard } from "../task-card/DailyTaskCard";
 import { TaskLegend } from "../TaskLegend";
 import { QueryObserverResult } from "@tanstack/react-query";
 
@@ -109,12 +109,12 @@ export function TaskBoardSection({ tasks, selectedDate, onDragEnd, onComplete }:
           <SortableContext items={draggableTaskIds} strategy={verticalListSortingStrategy}>
             <div className="flex flex-col gap-4">
               {sortedTasks.map((task, index) => (
-                <TaskCard
+                <DailyTaskCard
                   key={task.id}
                   task={task}
-                  index={index}
-                  isDraggable={task.status !== 'completed'}
                   onComplete={onComplete}
+                  onClick={() => console.log("Task clicked", task.id)}
+                  dragHandleProps={null}
                 />
               ))}
               {sortedTasks.length === 0 && (
