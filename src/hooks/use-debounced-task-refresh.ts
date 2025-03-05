@@ -2,62 +2,42 @@
 import { useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
-/**
- * Hook for debounced task query invalidation to prevent excessive refetching
- * while ensuring UI stays updated
- */
 export function useDebouncedTaskRefresh() {
   const queryClient = useQueryClient();
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const isRefreshingRef = useRef(false);
 
-  const invalidateTasks = useCallback((delay: number = 250) => {
+  const invalidateTasks = useCallback((delay: number = 300) => {
+    console.log(`Scheduling task refresh with ${delay}ms delay`);
+    
     // Clear any existing timeout
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
     
-    // Set refreshing flag to prevent duplicate refreshes
-    if (isRefreshingRef.current) {
-      console.log('Task refresh already in progress, skipping...');
-      return;
-    }
-    
-    isRefreshingRef.current = true;
-    console.log(`Scheduling task refresh with ${delay}ms delay`);
-    
-    // Schedule the refresh
+    // Set a new timeout
     timeoutRef.current = setTimeout(() => {
-      console.log('Executing debounced task refresh');
+      console.log('Executing delayed task refresh');
       
+      // Invalidate both tasks and weekly-tasks
       Promise.all([
-        // Invalidate all task-related queries at once
         queryClient.invalidateQueries({ queryKey: ['tasks'] }),
-        queryClient.invalidateQueries({ queryKey: ['weekly-tasks'] })
-      ])
-      .then(() => {
-        console.log('Task queries successfully invalidated');
-        // Reset after a small delay to prevent immediate re-triggering
-        setTimeout(() => {
-          isRefreshingRef.current = false;
-          timeoutRef.current = null;
-        }, 50); // Reduced from 100ms to 50ms for faster refresh cycle
-      })
-      .catch(error => {
-        console.error('Error refreshing tasks:', error);
-        isRefreshingRef.current = false;
-        timeoutRef.current = null;
+        queryClient.invalidateQueries({ queryKey: ['weekly-tasks'] }),
+        queryClient.invalidateQueries({ queryKey: ['timeline-tasks'] })
+      ]).then(() => {
+        console.log('All task queries invalidated successfully');
+      }).catch(error => {
+        console.error('Error invalidating task queries:', error);
       });
+      
+      timeoutRef.current = null;
     }, delay);
   }, [queryClient]);
 
-  // Cleanup function
   const cleanup = useCallback(() => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
-    isRefreshingRef.current = false;
   }, []);
 
   return { invalidateTasks, cleanup };

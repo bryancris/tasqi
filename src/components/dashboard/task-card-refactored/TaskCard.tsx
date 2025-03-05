@@ -23,6 +23,8 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
   }, [task]);
   
   const handleTaskComplete = async () => {
+    console.log('TaskCard: handling task completion for', localTask.title);
+    
     const success = await handleComplete();
     
     if (success) {
@@ -35,10 +37,24 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
       
       // Call the onComplete callback if provided
       if (onComplete) {
-        await onComplete();
+        try {
+          console.log('Calling onComplete callback');
+          await onComplete();
+        } catch (error) {
+          console.error('Error in onComplete callback:', error);
+        }
       }
+    } else {
+      console.log('Task completion was not successful');
     }
   };
+
+  // Debugging log to track task status changes
+  useEffect(() => {
+    if (task.shared) {
+      console.log(`Shared TaskCard ${task.id} (${task.title}) status updated:`, task.status);
+    }
+  }, [task.id, task.status, task.title, task.shared]);
 
   return (
     <TaskCardBase
@@ -47,6 +63,7 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
       isDraggable={isDraggable}
       view={view}
       onComplete={handleTaskComplete}
+      isUpdating={isUpdating}
     />
   );
 }
