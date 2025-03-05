@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TimelineSlot } from "../TimelineSlot";
@@ -9,6 +10,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DateSelector } from "../schedule/DateSelector";
 import { useTimelineTasks } from "@/hooks/use-timeline-tasks";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface TimelineSectionProps {
   tasks: Task[];
@@ -20,6 +22,7 @@ export function TimelineSection({ tasks, selectedDate, onDateChange }: TimelineS
   const [startHour, setStartHour] = useState(8);
   const [endHour, setEndHour] = useState(17);
   const { tasks: timelineTasks } = useTimelineTasks();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const loadUserSettings = async () => {
@@ -75,7 +78,7 @@ export function TimelineSection({ tasks, selectedDate, onDateChange }: TimelineS
   return (
     <Card className="bg-white border-none shadow-sm">
       <CardHeader className="bg-white border-b border-gray-100">
-        <CardTitle className="text-gray-700">Timeline</CardTitle>
+        {!isMobile && <CardTitle className="text-gray-700">Timeline</CardTitle>}
         <div className="flex items-center justify-between mt-2">
           <Button 
             variant="outline" 

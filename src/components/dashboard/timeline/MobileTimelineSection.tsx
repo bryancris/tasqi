@@ -1,7 +1,7 @@
+
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { TimelineSlot } from "../TimelineSlot";
-import { Task } from "../TaskBoard";
 import { supabase } from "@/integrations/supabase/client";
 import { format, isSameDay, parseISO } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,6 @@ import { useTimelineTasks } from "@/hooks/use-timeline-tasks";
 import { cn } from "@/lib/utils";
 
 interface TimelineSectionProps {
-  tasks: Task[];
   selectedDate: Date;
   onDateChange: (date: Date) => void;
 }
@@ -76,7 +75,7 @@ export function TimelineSection({ selectedDate, onDateChange }: TimelineSectionP
     <Card className="bg-gradient-to-t from-[#E6E9F0] to-[#EEF1F5] border-none shadow-sm overflow-hidden">
       <CardHeader className="bg-gradient-to-r from-[#2EBDAE] to-[#3E8DE3] p-0 border-none">
         <div className="p-4 flex flex-col space-y-3">
-          <CardTitle className="text-white text-xl font-semibold tracking-wide">Timeline</CardTitle>
+          {/* Removed CardTitle completely to avoid duplicate "Timeline" text */}
           <div className="flex items-center justify-between">
             <Button 
               variant="outline" 
