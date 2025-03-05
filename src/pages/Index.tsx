@@ -13,7 +13,6 @@ import {
 import HeroSection from "@/components/home/HeroSection";
 import FeatureSection from "@/components/home/FeatureSection";
 import NavButtons from "@/components/home/NavButtons";
-import { ChatBubble } from "@/components/chat/ChatBubble";
 
 const Index = () => {
   const aiProductivityFeatures = [
@@ -88,7 +87,6 @@ const Index = () => {
         <FeatureSection title="Specialized AI Agents" features={specializedAgentsFeatures} />
         <FeatureSection title="Mobile First & Data Driven" features={mobileFirstFeatures} />
       </div>
-      <ChatBubble />
     </>
   );
 };

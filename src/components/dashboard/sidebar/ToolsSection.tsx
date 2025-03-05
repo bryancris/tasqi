@@ -68,7 +68,8 @@ export function ToolsSection() {
       <ChatBubble 
         variant="sidebar" 
         isOpen={isChatOpen} 
-        onOpenChange={setIsChatOpen} 
+        onOpenChange={setIsChatOpen}
+        hideFloatingButton={true}
       />
     </div>
   );

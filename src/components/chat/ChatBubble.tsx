@@ -9,12 +9,14 @@ interface ChatBubbleProps {
   variant?: 'default' | 'sidebar';
   isOpen?: boolean;
   onOpenChange?: Dispatch<SetStateAction<boolean>>;
+  hideFloatingButton?: boolean; // Added new prop
 }
 
 export const ChatBubble = ({ 
   variant = 'default',
   isOpen: externalIsOpen,
-  onOpenChange
+  onOpenChange,
+  hideFloatingButton = false
 }: ChatBubbleProps) => {
   const [internalIsOpen, setInternalIsOpen] = useState(false);
   
@@ -30,6 +32,21 @@ export const ChatBubble = ({
     setMessage, 
     handleSubmit 
   } = useChat();
+  
+  // Don't render the button if hideFloatingButton is true
+  if (hideFloatingButton && variant === 'default') {
+    return (
+      <ChatDialog
+        isOpen={isOpen}
+        onOpenChange={setIsOpen}
+        message={message}
+        messages={messages}
+        isLoading={isLoading}
+        onMessageChange={setMessage}
+        onSubmit={handleSubmit}
+      />
+    );
+  }
 
   return (
     <div className={`${variant === 'sidebar' ? '' : 'fixed bottom-6 right-6 z-50'}`}>
