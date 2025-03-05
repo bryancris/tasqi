@@ -16,7 +16,8 @@ export function useChatSubmission(
   handleTimerResponse: (timerData: any) => Promise<void>,
   handleTimerRelatedResponse: (response: string) => Promise<void>,
   refreshLists: () => Promise<void>,
-  toast: any // Keep the original toast for backward compatibility but ignore it
+  toast: any, // Keep the original toast for backward compatibility but ignore it
+  resetMessages?: () => void // Add optional resetMessages parameter
 ) {
   const { showNotification } = useNotifications();
   
@@ -32,7 +33,8 @@ export function useChatSubmission(
     handleTimerResponse,
     handleTimerRelatedResponse,
     refreshLists,
-    toast
+    toast,
+    resetMessages
   };
   
   // Use our refactored submission core hook

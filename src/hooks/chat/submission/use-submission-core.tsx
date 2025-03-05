@@ -39,6 +39,22 @@ export function useSubmissionCore(helpers: SubmissionHelpers) {
     
     if (!message.trim()) return;
 
+    // Check for command patterns
+    if (message.trim().toLowerCase() === '/clear') {
+      // Handle the clear command
+      if (helpers.resetMessages) {
+        helpers.resetMessages();
+        // Add a system message to confirm the action
+        setTimeout(() => {
+          helpers.addAIMessage("Chat history has been cleared.");
+        }, 100);
+      } else {
+        toast.error("Could not clear chat history. The reset function is unavailable.");
+      }
+      helpers.setMessage("");
+      return;
+    }
+
     console.log('🔄 Processing message in useSubmissionCore:', message.substring(0, 30) + '...');
     
     // Create the user message and reset the input
@@ -243,6 +259,7 @@ export function useSubmissionCore(helpers: SubmissionHelpers) {
     helpers.handleTimerResponse, 
     helpers.handleTimerRelatedResponse, 
     helpers.refreshLists,
+    helpers.resetMessages,
     handleTaskCreation,
     handleTimerDetection,
     handleErrors
