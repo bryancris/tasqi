@@ -8,7 +8,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useCalendarView } from "@/contexts/CalendarViewContext";
 import { useSupabaseSubscription } from "@/hooks/use-supabase-subscription";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
-import { ChatBubble } from "@/components/chat/ChatBubble";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -45,8 +44,6 @@ export function DashboardLayout({
             </ErrorBoundary>
           </main>
           <MobileFooter />
-          {/* Add ChatBubble here with hideFloatingButton set to true */}
-          <ChatBubble hideFloatingButton={true} />
         </> : <div className="flex h-screen overflow-hidden">
           <Sidebar selectedDate={selectedDate} onDateChange={setSelectedDate} />
           <div className="flex-1 flex flex-col overflow-hidden">
@@ -61,8 +58,6 @@ export function DashboardLayout({
               </ErrorBoundary>
             </main>
           </div>
-          {/* Add ChatBubble here with hideFloatingButton set to true */}
-          <ChatBubble hideFloatingButton={true} />
         </div>}
     </div>;
 }

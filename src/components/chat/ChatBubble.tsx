@@ -1,4 +1,3 @@
-
 import { useState, Dispatch, SetStateAction } from 'react';
 import { MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,7 +8,7 @@ interface ChatBubbleProps {
   variant?: 'default' | 'sidebar';
   isOpen?: boolean;
   onOpenChange?: Dispatch<SetStateAction<boolean>>;
-  hideFloatingButton?: boolean; // Added new prop
+  hideFloatingButton?: boolean;
 }
 
 export const ChatBubble = ({ 
@@ -33,8 +32,8 @@ export const ChatBubble = ({
     handleSubmit 
   } = useChat();
   
-  // Don't render the button if hideFloatingButton is true
-  if (hideFloatingButton && variant === 'default') {
+  // If variant is sidebar, render normally
+  if (variant === 'sidebar') {
     return (
       <ChatDialog
         isOpen={isOpen}
@@ -48,16 +47,17 @@ export const ChatBubble = ({
     );
   }
 
-  // If we're in default variant and hideFloatingButton is true, don't render anything
-  if (variant === 'default' && hideFloatingButton) {
+  // If hideFloatingButton is true or we're in default variant, don't render the floating button
+  if (hideFloatingButton) {
     return null;
   }
 
+  // Otherwise, render the floating button
   return (
-    <div className={`${variant === 'sidebar' ? '' : 'fixed bottom-6 right-6 z-50'}`}>
+    <div className="fixed bottom-6 right-6 z-50">
       <Button
         size="icon"
-        className={`${variant === 'default' ? 'h-14 w-14 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700' : ''}`}
+        className="h-14 w-14 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700"
         onClick={() => setIsOpen(!isOpen)}
       >
         <MessageSquare className="h-6 w-6" />
