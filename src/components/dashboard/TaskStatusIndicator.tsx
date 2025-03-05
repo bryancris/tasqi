@@ -8,9 +8,17 @@ interface TaskStatusIndicatorProps {
   onClick?: React.MouseEventHandler<HTMLDivElement>;
   className?: string;
   isUpdating?: boolean;
+  rescheduleCount?: number;
 }
 
-export function TaskStatusIndicator({ status, time, onClick, className, isUpdating = false }: TaskStatusIndicatorProps) {
+export function TaskStatusIndicator({ 
+  status, 
+  time, 
+  onClick, 
+  className, 
+  isUpdating = false, 
+  rescheduleCount 
+}: TaskStatusIndicatorProps) {
   const isCompleted = status === 'completed';
 
   return (
@@ -18,7 +26,8 @@ export function TaskStatusIndicator({ status, time, onClick, className, isUpdati
       className={cn(
         "flex items-center justify-center relative", 
         className,
-        isUpdating && "opacity-50 pointer-events-none"
+        isUpdating && "opacity-50 pointer-events-none",
+        onClick && "cursor-pointer"
       )}
       onClick={onClick}
     >
@@ -31,8 +40,15 @@ export function TaskStatusIndicator({ status, time, onClick, className, isUpdati
         </div>
       )}
       
+      {rescheduleCount && rescheduleCount > 0 && (
+        <div className="absolute -top-1 -right-1 flex items-center justify-center bg-red-500 text-white rounded-full w-4 h-4 text-[10px] font-bold">
+          {rescheduleCount}
+        </div>
+      )}
+      
       <div className={cn(
-        "rounded-full p-1 cursor-pointer",
+        "rounded-full p-1 transition-all duration-200",
+        onClick && "hover:scale-110 hover:opacity-90",
         isUpdating && "animate-pulse"
       )}>
         {isCompleted ? (

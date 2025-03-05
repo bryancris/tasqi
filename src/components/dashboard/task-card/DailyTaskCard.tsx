@@ -9,12 +9,19 @@ import { getTimeDisplay, getCardColor } from "./taskCardUtils";
 import { TaskCardContent } from "./components/TaskCardContent";
 import { ShareIndicator } from "./components/ShareIndicator";
 
-function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, extraButton }: TaskCardProps) {
+function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, extraButton, view = 'daily' }: TaskCardProps) {
   const assignmentInfo = useTaskAssignmentInfo(task);
   const timeDisplay = getTimeDisplay(task);
   
   // Get the color based on task status
   const backgroundColor = getCardColor(task);
+
+  const handleStatusClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onComplete) {
+      onComplete();
+    }
+  };
 
   return (
     <div 
@@ -37,11 +44,9 @@ function DailyTaskCardComponent({ task, onComplete, onClick, dragHandleProps, ex
     >
       <TaskStatusIndicator 
         status={task.status} 
-        time={timeDisplay}
-        onClick={(e) => {
-          e.stopPropagation();
-          onComplete();
-        }} 
+        time={view === 'daily' ? timeDisplay : undefined}
+        onClick={handleStatusClick} 
+        rescheduleCount={task.reschedule_count} 
       />
       
       <TaskCardContent
