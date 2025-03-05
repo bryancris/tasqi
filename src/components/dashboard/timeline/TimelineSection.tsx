@@ -89,7 +89,7 @@ export function TimelineSection({ tasks, selectedDate, onDateChange }: TimelineS
           </Button>
           
           <div className="relative flex items-center justify-center">
-            <div className="w-full px-3 py-2 text-white bg-gradient-to-r from-[#0EA5E9] to-[#2A9BB5] border-2 border-[#0EA5E9]/50 rounded-full shadow-sm">
+            <div className="inline-flex px-3 py-1 text-white bg-gradient-to-r from-[#0EA5E9] to-[#2A9BB5] border-2 border-[#0EA5E9]/50 rounded-full shadow-sm">
               <DateSelector 
                 date={format(selectedDate, 'yyyy-MM-dd')}
                 onDateChange={(newDate) => onDateChange(new Date(newDate))}
