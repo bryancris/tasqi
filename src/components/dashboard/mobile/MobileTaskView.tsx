@@ -73,13 +73,13 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
             <DndContext sensors={sensors} onDragEnd={onDragEnd}>
               <SortableContext items={draggableTaskIds} strategy={verticalListSortingStrategy}>
                 <div className="flex flex-col gap-2">
-                  {sortedTasks.map((task, index) => (
+                  {sortedTasks.map((task) => (
                     <TaskCard
                       key={task.id}
                       task={task}
-                      index={index}
-                      isDraggable={task.status !== 'completed'}
-                      onComplete={onComplete}
+                      onComplete={onComplete || (() => {})}
+                      onClick={() => console.log("Task clicked", task.id)}
+                      dragHandleProps={null}
                     />
                   ))}
                 </div>

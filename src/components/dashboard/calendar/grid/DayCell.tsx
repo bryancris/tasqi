@@ -84,7 +84,7 @@ export function DayCell({ day, timeSlot, tasks, dayIndex, isLastRow }: DayCellPr
       <div className="absolute left-0 right-0 top-1/2 border-t border-gray-200" />
       
       {/* Tasks */}
-      {tasksForCell.map((task, index) => {
+      {tasksForCell.map((task) => {
         const position = getTaskPosition(task);
         if (!position) return null;
 
@@ -93,7 +93,9 @@ export function DayCell({ day, timeSlot, tasks, dayIndex, isLastRow }: DayCellPr
             <TaskCard 
               key={task.id} 
               task={task} 
-              index={index}
+              onComplete={() => console.log("Complete task", task.id)}
+              onClick={() => console.log("Task clicked", task.id)}
+              dragHandleProps={null}
               view="weekly"
             />
           </div>
