@@ -12,12 +12,15 @@ export function useGoogleSignIn() {
     try {
       console.log("Initiating Google sign in...");
       
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { error, data } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/dashboard`
         }
       });
+
+      console.log("Google sign in response:", error ? "Error occurred" : "No error", 
+                  data?.url ? "Redirect URL exists" : "No redirect URL");
 
       if (error) throw error;
       

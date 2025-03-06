@@ -21,14 +21,17 @@ export function useEmailSignIn() {
     try {
       console.log("Initiating sign in with email...");
       
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error, data } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) throw error;
       
-      console.log("Sign in successful");
+      console.log("Sign in successful", data.session ? "Session exists" : "No session");
+      
+      // If we got here, authentication succeeded
+      toast.success("Sign in successful");
       return true;
       
     } catch (error: any) {

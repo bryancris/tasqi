@@ -27,6 +27,7 @@ export const useAuthSubscription = ({
   const authStateSubscription = useRef<{ unsubscribe: () => void } | null>(null);
   const authInitialized = useRef(false);
   const lastRefreshTime = useRef(0);
+  const setupAttempted = useRef(false);
   
   // Helper function to handle auth state updates with debouncing
   const updateAuthState = useCallback((newSession: Session | null) => {
@@ -41,6 +42,7 @@ export const useAuthSubscription = ({
     lastRefreshTime.current = now;
     
     if (newSession) {
+      console.log("Auth state update: session found, updating state");
       setSession(newSession);
       setUser(newSession.user);
       setLoading(false);
@@ -55,6 +57,7 @@ export const useAuthSubscription = ({
       }
     } else {
       // No session found
+      console.log("Auth state update: no session found, clearing state");
       clearAuthState();
       setLoading(false);
     }
@@ -73,59 +76,74 @@ export const useAuthSubscription = ({
   // Setup auth subscription
   const setupAuthSubscription = useCallback(() => {
     // Never setup twice
-    if (authStateSubscription.current) return;
+    if (authStateSubscription.current || setupAttempted.current) {
+      console.log("Auth subscription already set up or attempted, skipping");
+      return null;
+    }
 
+    setupAttempted.current = true;
     console.log("Setting up auth state subscription");
-    const { data } = supabase.auth.onAuthStateChange((event, newSession) => {
-      console.log(`Auth state change event: ${event}, hasSession: ${!!newSession}`);
-      
-      if (!mounted.current) return;
-      
-      if (event === 'SIGNED_OUT') {
-        clearAuthState();
-        console.log("Signed out, auth state cleared");
-        setLoading(false);
-      } 
-      else if (event === 'SIGNED_IN' && newSession) {
-        updateAuthState(newSession);
-      } 
-      else if (event === 'TOKEN_REFRESHED' && newSession) {
-        console.log('Token refreshed successfully');
-        updateAuthState(newSession);
-      } 
-      else if (event === 'USER_UPDATED' && newSession) {
-        console.log('User updated');
-        updateAuthState(newSession);
-      }
-      else if (event === 'INITIAL_SESSION') {
-        // Handle initial session check
-        if (newSession) {
-          console.log("Initial session found");
-          updateAuthState(newSession);
-        } else {
-          console.log("No initial session found");
-          clearAuthState();
-          setLoading(false);
-        }
+    
+    try {
+      const { data } = supabase.auth.onAuthStateChange((event, newSession) => {
+        console.log(`Auth state change event: ${event}, hasSession: ${!!newSession}`);
         
-        // Mark as initialized
-        authInitialized.current = true;
-      }
-    });
-    
-    // Store the subscription for cleanup
-    authStateSubscription.current = data.subscription;
-    
-    // Set a timeout to ensure we don't get stuck in loading
-    setTimeout(() => {
-      if (mounted.current && !authInitialized.current) {
-        console.log("Auth initialization timed out, forcing to not loading");
-        setLoading(false);
-        authInitialized.current = true;
-      }
-    }, AUTH_TIMEOUT_MS);
-    
-    return data.subscription;
+        if (!mounted.current) return;
+        
+        if (event === 'SIGNED_OUT') {
+          clearAuthState();
+          console.log("Signed out, auth state cleared");
+          setLoading(false);
+        } 
+        else if (event === 'SIGNED_IN' && newSession) {
+          console.log("Signed in event received with session");
+          updateAuthState(newSession);
+        } 
+        else if (event === 'TOKEN_REFRESHED' && newSession) {
+          console.log('Token refreshed successfully');
+          updateAuthState(newSession);
+        } 
+        else if (event === 'USER_UPDATED' && newSession) {
+          console.log('User updated');
+          updateAuthState(newSession);
+        }
+        else if (event === 'INITIAL_SESSION') {
+          console.log("Initial session check complete");
+          // Handle initial session check
+          if (newSession) {
+            console.log("Initial session found");
+            updateAuthState(newSession);
+          } else {
+            console.log("No initial session found");
+            clearAuthState();
+            setLoading(false);
+          }
+          
+          // Mark as initialized
+          authInitialized.current = true;
+        }
+      });
+      
+      // Store the subscription for cleanup
+      authStateSubscription.current = data.subscription;
+      console.log("Auth subscription setup successful");
+      
+      // Set a timeout to ensure we don't get stuck in loading
+      setTimeout(() => {
+        if (mounted.current && !authInitialized.current) {
+          console.log("Auth initialization timed out, forcing to not loading");
+          setLoading(false);
+          authInitialized.current = true;
+        }
+      }, AUTH_TIMEOUT_MS);
+      
+      return data.subscription;
+    } catch (error) {
+      console.error("Error setting up auth subscription:", error);
+      setLoading(false);
+      authInitialized.current = true;
+      return null;
+    }
   }, [clearAuthState, mounted, setLoading, updateAuthState]);
 
   // Cleanup function

@@ -1,14 +1,16 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
 import { useEmailSignIn, useGoogleSignIn } from "@/hooks/auth";
+import { toast } from "sonner";
 
 export function SignInForm({ onResetPassword }: { onResetPassword: () => void }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [submitAttempted, setSubmitAttempted] = useState(false);
   
   // Use custom hooks for authentication
   const { isLoading: isEmailLoading, signInWithEmail } = useEmailSignIn();
@@ -17,15 +19,31 @@ export function SignInForm({ onResetPassword }: { onResetPassword: () => void })
   // Determine if any authentication method is currently loading
   const isLoading = isEmailLoading || isGoogleLoading;
 
+  // Reset submit attempted state when loading completes
+  useEffect(() => {
+    if (submitAttempted && !isLoading) {
+      setSubmitAttempted(false);
+    }
+  }, [isLoading, submitAttempted]);
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isLoading) return; // Prevent multiple submission attempts
     
+    // Mark that we've attempted to submit the form
+    setSubmitAttempted(true);
+    
+    console.log("Attempting email sign in for:", email);
     await signInWithEmail(email, password);
   };
 
   const handleGoogleSignIn = async () => {
     if (isLoading) return; // Prevent multiple clicks
+    
+    // Mark that we've attempted to submit the form
+    setSubmitAttempted(true);
+    
+    console.log("Attempting Google sign in");
     await signInWithGoogle();
   };
 

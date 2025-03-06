@@ -19,6 +19,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const mounted = useRef(true);
   const hasToastRef = useRef(false);
   const authStateSubscription = useRef<{ unsubscribe: () => void } | null>(null);
+  const authSetupComplete = useRef(false);
   
   // Network status
   const { isOnline } = useNetworkDetection();
@@ -59,14 +60,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     hasToastRef
   });
 
-  // Perform initial auth check on mount
+  // Perform initial auth check on mount - only once
   useEffect(() => {
-    console.log("Auth provider initialized");
+    console.log("Auth provider initializing");
+    
+    // Prevent duplicate initialization
+    if (authSetupComplete.current) {
+      console.log("Auth provider already initialized, skipping");
+      return;
+    }
+    
+    authSetupComplete.current = true;
     
     // Setup auth subscription
     const subscription = setupAuthSubscription();
     if (subscription) {
+      console.log("Auth subscription set up successfully");
       authStateSubscription.current = subscription;
+    } else {
+      console.warn("Auth subscription setup failed");
     }
     
     // Force loading to false after a timeout
@@ -86,7 +98,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Cleanup auth subscription
       cleanupAuthSubscription();
     };
-  }, [setupAuthSubscription, loading, cleanupAuthSubscription]);
+  }, []); // Empty dependency array to ensure this only runs once
 
   const contextValue = useMemo(
     () => ({

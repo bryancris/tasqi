@@ -14,6 +14,7 @@ import { ErrorBoundary } from "@/components/ui/error-boundary";
 const Auth = () => {
   const [activeTab, setActiveTab] = useState("signin");
   const [showReset, setShowReset] = useState(false);
+  const [forceReady, setForceReady] = useState(false);
   const { session, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -21,9 +22,21 @@ const Auth = () => {
   // Check if we're on the update password route
   const isUpdatePasswordRoute = location.pathname === "/auth/update-password";
   
+  // Force the loading state to end after a timeout (to prevent infinite loading)
+  useEffect(() => {
+    if (loading) {
+      const timer = setTimeout(() => {
+        console.log("Auth loading timeout reached, forcing ready state");
+        setForceReady(true);
+      }, 5000); // 5 seconds timeout
+      
+      return () => clearTimeout(timer);
+    }
+  }, [loading]);
+  
   // Only redirect when we have a confirmed session and loading is complete
   useEffect(() => {
-    if (session && !loading) {
+    if (session && (!loading || forceReady)) {
       console.log("Auth page: Session exists, redirecting to dashboard");
       // Use a slight delay to allow state to settle
       const redirectTimer = setTimeout(() => {
@@ -32,10 +45,11 @@ const Auth = () => {
       
       return () => clearTimeout(redirectTimer);
     }
-  }, [session, loading, navigate]);
-  
-  // Dedicated loading component for cleaner rendering
-  if (loading) {
+  }, [session, loading, forceReady, navigate]);
+
+  // If we're still loading and haven't timed out, show loading state
+  if (loading && !forceReady) {
+    console.log("Auth page: Still loading authentication state");
     return (
       <div className="min-h-screen bg-[#1a1b3b] flex items-center justify-center p-4">
         <div className="flex flex-col items-center gap-3">
@@ -48,6 +62,7 @@ const Auth = () => {
   
   // If we have a confirmed session, show a redirect message
   if (session) {
+    console.log("Auth page: Confirmed session, showing redirect message");
     return (
       <div className="min-h-screen bg-[#1a1b3b] flex items-center justify-center p-4">
         <div className="flex flex-col items-center gap-3">
@@ -58,6 +73,7 @@ const Auth = () => {
     );
   }
 
+  console.log("Auth page: Rendering authentication UI");
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-[#1a1b3b] flex items-center justify-center p-4">
