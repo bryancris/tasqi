@@ -76,6 +76,17 @@ export function NoteForm({ onOpenDictateDialog }: NoteFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="mb-4 space-y-3">
+      {/* Moved the AI Assisted Note button to the top */}
+      <Button 
+        type="button"
+        variant="secondary"
+        className="w-full flex items-center justify-center gap-2 mb-2"
+        onClick={onOpenDictateDialog}
+      >
+        <Bot className="w-4 h-4" />
+        Tasqi AI Assisted Note
+      </Button>
+
       <div className="flex gap-2">
         <Input
           placeholder="Note title"
@@ -128,15 +139,6 @@ export function NoteForm({ onOpenDictateDialog }: NoteFormProps) {
       >
         <PlusCircle className="w-4 h-4" />
         Add Note
-      </Button>
-      <Button 
-        type="button"
-        variant="secondary"
-        className="w-full flex items-center justify-center gap-2"
-        onClick={onOpenDictateDialog}
-      >
-        <Bot className="w-4 h-4" />
-        Tasqi AI Assisted Note
       </Button>
     </form>
   );
