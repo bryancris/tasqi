@@ -17,10 +17,11 @@ import { Spinner } from './components/ui/spinner';
 import { memo } from 'react';
 
 const ProtectedRoute = memo(({ children }: { children: React.ReactNode }) => {
-  const { session, loading } = useAuth();
+  const { session, loading, initialized } = useAuth();
   const location = useLocation();
   
-  if (loading) {
+  // Show loading state if not yet fully initialized
+  if (loading && !initialized) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-[#1a1b3b]">
         <Spinner className="h-8 w-8 text-primary" />
@@ -37,9 +38,10 @@ const ProtectedRoute = memo(({ children }: { children: React.ReactNode }) => {
 });
 
 const AuthRoute = memo(({ children }: { children: React.ReactNode }) => {
-  const { session, loading } = useAuth();
+  const { session, loading, initialized } = useAuth();
   
-  if (loading) {
+  // Show loading state if not yet fully initialized
+  if (loading && !initialized) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-[#1a1b3b]">
         <Spinner className="h-8 w-8 text-primary" />
@@ -48,8 +50,8 @@ const AuthRoute = memo(({ children }: { children: React.ReactNode }) => {
     );
   }
   
-  // Don't redirect if still loading
-  if (session) {
+  // Redirect if session exists and initialization is complete
+  if (session && initialized) {
     return <Navigate to="/dashboard" replace />;
   }
 

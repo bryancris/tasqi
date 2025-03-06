@@ -15,7 +15,7 @@ const Auth = () => {
   const [activeTab, setActiveTab] = useState("signin");
   const [showReset, setShowReset] = useState(false);
   const [forceReady, setForceReady] = useState(false);
-  const { session, loading } = useAuth();
+  const { session, loading, initialized } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -24,19 +24,19 @@ const Auth = () => {
   
   // Force the loading state to end after a timeout (to prevent infinite loading)
   useEffect(() => {
-    if (loading) {
+    if (loading && !initialized) {
       const timer = setTimeout(() => {
         console.log("Auth loading timeout reached, forcing ready state");
         setForceReady(true);
-      }, 5000); // 5 seconds timeout
+      }, 6000); // 6 seconds timeout (longer than normal to account for dev mode)
       
       return () => clearTimeout(timer);
     }
-  }, [loading]);
+  }, [loading, initialized]);
   
   // Only redirect when we have a confirmed session and loading is complete
   useEffect(() => {
-    if (session && (!loading || forceReady)) {
+    if (session && (!loading || initialized || forceReady)) {
       console.log("Auth page: Session exists, redirecting to dashboard");
       // Use a slight delay to allow state to settle
       const redirectTimer = setTimeout(() => {
@@ -45,10 +45,15 @@ const Auth = () => {
       
       return () => clearTimeout(redirectTimer);
     }
-  }, [session, loading, forceReady, navigate]);
+  }, [session, loading, initialized, forceReady, navigate]);
 
-  // If we're still loading and haven't timed out, show loading state
-  if (loading && !forceReady) {
+  // For debugging
+  useEffect(() => {
+    console.log("Auth page state:", { loading, initialized, forceReady, hasSession: !!session });
+  }, [loading, initialized, forceReady, session]);
+
+  // If we're still loading and haven't timed out and aren't initialized, show loading state
+  if ((loading && !forceReady && !initialized) || (initialized && loading && !forceReady)) {
     console.log("Auth page: Still loading authentication state");
     return (
       <div className="min-h-screen bg-[#1a1b3b] flex items-center justify-center p-4">
