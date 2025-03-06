@@ -15,6 +15,8 @@ export const refreshAuth = async (
   if (!mounted.current) return;
   
   try {
+    console.log("Refreshing auth state...");
+    
     // Get current session with a single request (includes user data)
     const { data, error } = await supabase.auth.getSession();
     
@@ -29,6 +31,7 @@ export const refreshAuth = async (
     // Update state with what we found
     if (mounted.current) {
       if (currentSession) {
+        console.log("Session found, updating state");
         setSession(currentSession);
         setUser(currentSession.user);
         
@@ -42,6 +45,7 @@ export const refreshAuth = async (
         }
       } else {
         // No session found
+        console.log("No session found, clearing state");
         setSession(null);
         setUser(null);
         hasToastRef.current = false;
@@ -57,6 +61,7 @@ export const refreshAuth = async (
   } finally {
     // Always update loading state when done
     if (mounted.current) {
+      console.log("Auth refresh complete, setting loading to false");
       setLoading(false);
     }
   }

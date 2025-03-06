@@ -6,7 +6,7 @@ import { SignInForm } from "@/components/auth/SignInForm";
 import { SignUpForm } from "@/components/auth/SignUpForm";
 import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 import { Navigate } from "react-router-dom";
 import { Spinner } from "@/components/ui/spinner";
 
