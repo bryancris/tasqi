@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
@@ -13,7 +12,6 @@ export function SignInForm({ onResetPassword }: { onResetPassword: () => void })
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const navigate = useNavigate();
   const { toast } = useToast();
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -45,17 +43,16 @@ export function SignInForm({ onResetPassword }: { onResetPassword: () => void })
     try {
       console.log("Initiating sign in with email...");
       
-      const { error, data } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) throw error;
       
-      console.log("Sign in successful, redirecting...");
+      console.log("Sign in successful");
+      // No navigation here - let the auth context handle it
       
-      // Navigate after successful sign in
-      navigate("/dashboard", { replace: true });
     } catch (error: any) {
       console.error("Sign in error:", error);
       
@@ -64,6 +61,8 @@ export function SignInForm({ onResetPassword }: { onResetPassword: () => void })
         description: error.message || "Sign in failed. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      // Important: Always reset loading state, even on success
       setIsLoading(false);
     }
   };
@@ -83,6 +82,8 @@ export function SignInForm({ onResetPassword }: { onResetPassword: () => void })
       });
 
       if (error) throw error;
+      
+      // No need to reset Google loading state here as we're redirecting
     } catch (error: any) {
       console.error("Google sign in error:", error);
       
