@@ -23,6 +23,7 @@ export function useChatMessaging() {
     processMessage,
     setIsLoading,
     shadowToast,
-    queryClient
+    queryClient,
+    isNetworkAvailable
   };
 }

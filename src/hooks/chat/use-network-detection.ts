@@ -27,5 +27,11 @@ export const useNetworkDetection = () => {
     };
   }, []);
 
-  return { isOnline };
+  // Add a function to check network availability
+  const isNetworkAvailable = () => isOnline;
+
+  return { 
+    isOnline,
+    isNetworkAvailable 
+  };
 };

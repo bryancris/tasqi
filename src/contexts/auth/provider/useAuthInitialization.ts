@@ -117,7 +117,7 @@ export const useAuthInitialization = ({
       console.log("Development mode: Found forced initialization flag, skipping normal flow");
       
       // If we have a last known state with a session, restore it
-      if (lastKnownAuthState?.current?.hasSession && !session) {
+      if (lastKnownAuthState && lastKnownAuthState.hasSession && !session) {
         console.log("Development mode: Using last known auth state");
         
         // Attempt to check for existing session, but don't wait for it
