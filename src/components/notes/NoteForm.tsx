@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -139,7 +140,7 @@ export function NoteForm({ onOpenDictateDialog }: NoteFormProps) {
       />
       <Button 
         type="submit" 
-        className="w-full flex items-center justify-center gap-2"
+        className="w-full h-8 flex items-center justify-center gap-2 text-white bg-gradient-to-r from-[#0EA5E9] to-[#2A9BB5] border-2 border-[#0EA5E9]/50 hover:from-[#0990D3] hover:to-[#248A9F] hover:border-[#0EA5E9]/70"
         disabled={createNoteMutation.isPending}
       >
         <PlusCircle className="w-4 h-4" />
