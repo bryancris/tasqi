@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,26 +29,20 @@ const COLORS = [
 
 interface NoteFormProps {
   onOpenDictateDialog: () => void;
+  isAuthenticated: boolean;
 }
 
-export function NoteForm({ onOpenDictateDialog }: NoteFormProps) {
+export function NoteForm({ onOpenDictateDialog, isAuthenticated }: NoteFormProps) {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [color, setColor] = useState("#F1F0FB");
-  const { session, initialized } = useAuth();
+  const { session } = useAuth();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
-  const [sessionChecked, setSessionChecked] = useState(false);
-
-  useEffect(() => {
-    if (initialized) {
-      setSessionChecked(true);
-    }
-  }, [initialized]);
 
   const createNoteMutation = useMutation({
     mutationFn: async () => {
-      if (!session && !isDevAuthBypassed()) {
+      if (!isAuthenticated) {
         throw new Error("You must be logged in to create notes");
       }
 
@@ -97,7 +92,7 @@ export function NoteForm({ onOpenDictateDialog }: NoteFormProps) {
       return;
     }
     
-    if (!session && !isDevAuthBypassed()) {
+    if (!isAuthenticated) {
       toast.error("You must be logged in to create notes");
       return;
     }
@@ -113,7 +108,7 @@ export function NoteForm({ onOpenDictateDialog }: NoteFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="mb-4 space-y-3">
-      {isDevMode() && (!session && !isDevAuthBypassed()) && (
+      {!isAuthenticated && isDevMode() && (
         <Alert variant="destructive" className="mb-3">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
@@ -127,6 +122,7 @@ export function NoteForm({ onOpenDictateDialog }: NoteFormProps) {
         variant="rainbow"
         className="w-full flex items-center justify-center gap-2 mb-2"
         onClick={onOpenDictateDialog}
+        disabled={!isAuthenticated}
       >
         <Bot className="w-4 h-4" />
         Tasqi AI Assisted Note
@@ -138,6 +134,7 @@ export function NoteForm({ onOpenDictateDialog }: NoteFormProps) {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           className="w-full"
+          disabled={!isAuthenticated}
         />
         <Popover>
           <PopoverTrigger asChild>
@@ -147,6 +144,7 @@ export function NoteForm({ onOpenDictateDialog }: NoteFormProps) {
               size="icon"
               className="shrink-0"
               style={{ backgroundColor: color }}
+              disabled={!isAuthenticated}
             >
               <Palette className="h-4 w-4" />
             </Button>
@@ -176,11 +174,12 @@ export function NoteForm({ onOpenDictateDialog }: NoteFormProps) {
         value={content}
         onChange={(e) => setContent(e.target.value)}
         className={`w-full ${isMobile ? 'min-h-[100px]' : 'min-h-[150px]'}`}
+        disabled={!isAuthenticated}
       />
       <Button 
         type="submit" 
         className="w-full h-8 flex items-center justify-center gap-2 text-white bg-gradient-to-r from-[#0EA5E9] to-[#2A9BB5] border-2 border-[#0EA5E9]/50 hover:from-[#0990D3] hover:to-[#248A9F] hover:border-[#0EA5E9]/70"
-        disabled={createNoteMutation.isPending}
+        disabled={createNoteMutation.isPending || !isAuthenticated}
       >
         <PlusCircle className="w-4 h-4" />
         Add Note

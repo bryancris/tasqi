@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -8,15 +8,35 @@ import { NoteForm } from "./NoteForm";
 import { NoteList } from "./NoteList";
 import { Note } from "./types";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { useAuth } from "@/contexts/AuthContext";
+import { isDevAuthBypassed } from "@/contexts/auth/provider/constants";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
 
 export function NotesContent() {
   const [isDictateDialogOpen, setIsDictateDialogOpen] = useState(false);
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
+  const { session, initialized } = useAuth();
+  const [authChecked, setAuthChecked] = useState(false);
+
+  // Check authentication state when the component mounts and auth is initialized
+  useEffect(() => {
+    if (initialized) {
+      setAuthChecked(true);
+    }
+  }, [initialized]);
+
+  const isAuthenticated = session !== null || isDevAuthBypassed();
 
   const { data: notes, isLoading, refetch } = useQuery({
     queryKey: ["notes"],
     queryFn: async () => {
+      if (!isAuthenticated) {
+        console.log("User not authenticated, skipping notes fetch");
+        return [];
+      }
+
       console.log("Executing notes query fetch");
       const { data, error } = await supabase
         .from("notes")
@@ -36,6 +56,7 @@ export function NotesContent() {
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     refetchOnReconnect: true,
+    enabled: isAuthenticated && authChecked, // Only run query when authenticated
   });
 
   const handleNoteCreated = useCallback(() => {
@@ -50,6 +71,12 @@ export function NotesContent() {
     setIsDictateDialogOpen(false);
   }, [queryClient, refetch]);
 
+  const isDevMode = () => {
+    return process.env.NODE_ENV === 'development' || 
+           window.location.hostname === 'localhost' || 
+           window.location.hostname === '127.0.0.1';
+  };
+
   return (
     <div 
       className={`container mx-auto ${
@@ -57,8 +84,26 @@ export function NotesContent() {
       } max-w-4xl h-[calc(100vh-144px)] overflow-y-auto`}
     >
       <ErrorBoundary>
-        <NoteForm onOpenDictateDialog={() => setIsDictateDialogOpen(true)} />
-        <NoteList notes={notes || []} isLoading={isLoading} />
+        {!isAuthenticated && authChecked && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              You must be logged in to create and view notes. {isDevMode() && "Use the Dev Auth Tools in the bottom right to bypass auth for testing."}
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        <NoteForm 
+          onOpenDictateDialog={() => setIsDictateDialogOpen(true)}
+          isAuthenticated={isAuthenticated}
+        />
+        
+        <NoteList 
+          notes={notes || []} 
+          isLoading={isLoading} 
+          isAuthenticated={isAuthenticated}
+        />
+        
         <DictateNoteDialog
           open={isDictateDialogOpen}
           onOpenChange={setIsDictateDialogOpen}
