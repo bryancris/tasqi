@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext } from "react";
 import { Session, User } from "@supabase/supabase-js";
-import { AuthProvider } from "./AuthProvider";
+import { AuthProvider } from "./provider";
 
 // Type definition for our context
 export type AuthContextType = {
