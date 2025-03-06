@@ -1,8 +1,8 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AudioRecorder } from "@/components/chat/AudioRecorder";
 import { Button } from "@/components/ui/button";
-import { Mic } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -47,12 +47,14 @@ export function DictateNoteDialog({ open, onOpenChange, onNoteCreated }: Dictate
       if (noteError) throw noteError;
 
       toast.success("Note created successfully");
+      
+      // Important: Call onNoteCreated first, then reset state
       onNoteCreated();
-      onOpenChange(false);
       setContent("");
     } catch (error) {
       console.error('Error creating note:', error);
       toast.error("Failed to create note. Please try again.");
+      // Don't close the dialog on error
     } finally {
       setIsProcessing(false);
     }
