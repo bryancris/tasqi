@@ -34,7 +34,7 @@ export function NotesContent() {
   return (
     <div 
       className={`container mx-auto ${
-        isMobile ? 'pt-20 px-4 pb-24 bg-gradient-to-b from-[#F1F0FB] to-[#E5DEFF]' : 'p-4'
+        isMobile ? 'pt-4 px-4 pb-16 bg-gradient-to-b from-[#F1F0FB] to-[#E5DEFF]' : 'p-4'
       } max-w-4xl h-[calc(100vh-144px)] overflow-y-auto`}
     >
       <NoteForm onOpenDictateDialog={() => setIsDictateDialogOpen(true)} />
