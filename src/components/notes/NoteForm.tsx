@@ -47,17 +47,13 @@ export function NoteForm({ onOpenDictateDialog }: NoteFormProps) {
 
   const createNoteMutation = useMutation({
     mutationFn: async () => {
-      console.log("Creating new note, session:", session);
-      
       if (!session && !isDevAuthBypassed()) {
-        console.error("No authenticated session found");
         throw new Error("You must be logged in to create notes");
       }
-      
+
       const userId = session?.user.id || (isDevAuthBypassed() ? '00000000-0000-0000-0000-000000000000' : null);
       
       if (!userId) {
-        console.error("Failed to get user ID");
         throw new Error("User ID not available");
       }
 
@@ -77,14 +73,8 @@ export function NoteForm({ onOpenDictateDialog }: NoteFormProps) {
       return data;
     },
     onSuccess: () => {
-      console.log("Note created successfully, invalidating queries");
-      // Invalidate the notes query to refetch data
       queryClient.invalidateQueries({ queryKey: ["notes"] });
-      
-      // Force a refetch to ensure immediate UI update
       queryClient.refetchQueries({ queryKey: ["notes"] });
-      
-      // Reset form
       setTitle("");
       setContent("");
       setColor("#F1F0FB");
