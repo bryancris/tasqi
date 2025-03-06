@@ -27,6 +27,17 @@ type AuthInitializationProps = {
   isOnline: boolean;
 };
 
+// Simple helper to check if we should bypass auth in dev mode
+const shouldBypassAuth = () => {
+  try {
+    return process.env.NODE_ENV === 'development' && 
+           sessionStorage.getItem('dev_bypass_auth') === 'true' &&
+           sessionStorage.getItem('force_auth_initialized') === 'true';
+  } catch (e) {
+    return false;
+  }
+};
+
 /**
  * Enhanced hook to handle auth initialization process with better dev mode support
  */
@@ -97,8 +108,29 @@ export const useAuthInitialization = ({
     }
   }, [session, saveAuthState, isDevMode]);
 
+  // Fast path for development mode bypass
+  useEffect(() => {
+    if (isDevMode.current && shouldBypassAuth() && loading) {
+      console.log("Development mode: Auth bypass enabled, skipping normal initialization");
+      if (mounted.current) {
+        setLoading(false);
+        setInitialized(true);
+      }
+    }
+  }, [isDevMode, loading, mounted, setLoading, setInitialized]);
+
   // Perform initial auth check on mount - only once
   useEffect(() => {
+    // Skip everything if we're bypassing auth in dev mode
+    if (isDevMode.current && shouldBypassAuth()) {
+      console.log("Development mode: Auth bypass enabled, skipping normal flow");
+      if (mounted.current) {
+        setLoading(false);
+        setInitialized(true);
+      }
+      return;
+    }
+
     const currentMountTime = Date.now();
     const timeSinceLastMount = currentMountTime - lastMountTimestamp.current;
     lastMountTimestamp.current = currentMountTime;

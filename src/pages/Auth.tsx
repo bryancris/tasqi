@@ -12,6 +12,11 @@ import { Spinner } from "@/components/ui/spinner";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { DevAuthTools } from "@/components/dev/DevAuthTools";
+
+const isDev = () => process.env.NODE_ENV === 'development' || 
+                    window.location.hostname === 'localhost' || 
+                    window.location.hostname === '127.0.0.1';
 
 const Auth = () => {
   const [activeTab, setActiveTab] = useState("signin");
@@ -31,11 +36,8 @@ const Auth = () => {
   // to prevent infinite loading
   useEffect(() => {
     if (loading && !initialized) {
-      const isDev = process.env.NODE_ENV === 'development' || 
-                    window.location.hostname === 'localhost' || 
-                    window.location.hostname === '127.0.0.1';
-      
-      const timeoutDuration = isDev ? 2500 : 4000;
+      // Development environment gets a shorter timeout
+      const timeoutDuration = isDev() ? 1500 : 4000;
       
       console.log(`Auth page: Setting force ready timeout for ${timeoutDuration}ms`);
       
@@ -47,6 +49,26 @@ const Auth = () => {
       return () => clearTimeout(timer);
     }
   }, [loading, initialized]);
+
+  // Handle dev mode bypass
+  useEffect(() => {
+    if (isDev()) {
+      const bypassAuth = sessionStorage.getItem('dev_bypass_auth') === 'true';
+      const forceInit = sessionStorage.getItem('force_auth_initialized') === 'true';
+      
+      if (bypassAuth && forceInit && loading) {
+        console.log("Dev mode: Auth bypass enabled, forcing ready state");
+        setForceReady(true);
+        
+        // Force navigation to dashboard after a short delay
+        const timer = setTimeout(() => {
+          navigate("/dashboard", { replace: true });
+        }, 500);
+        
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [loading, navigate]);
   
   // Only redirect when we have a confirmed session and loading is complete
   useEffect(() => {
@@ -69,11 +91,13 @@ const Auth = () => {
       forceReady, 
       hasSession: !!session,
       hasError: !!error,
-      timeOnPage: Date.now() - mountTime.current
+      timeOnPage: Date.now() - mountTime.current,
+      isDev: isDev(),
+      authBypassEnabled: sessionStorage.getItem('dev_bypass_auth') === 'true'
     });
     
     // Force ready state if we've been on this page too long
-    const MAX_TIME_ON_AUTH_PAGE = 5000; // 5 seconds
+    const MAX_TIME_ON_AUTH_PAGE = 3000; // 3 seconds
     const timeSinceMounted = Date.now() - mountTime.current;
     
     if (loading && !initialized && !forceReady && timeSinceMounted > MAX_TIME_ON_AUTH_PAGE) {
@@ -81,6 +105,20 @@ const Auth = () => {
       setForceReady(true);
     }
   }, [loading, initialized, forceReady, session, error]);
+
+  // Special case for development mode: if bypass is enabled, show simple loading and redirect
+  if (isDev() && sessionStorage.getItem('dev_bypass_auth') === 'true') {
+    return (
+      <div className="min-h-screen bg-[#1a1b3b] flex items-center justify-center p-4">
+        <div className="flex flex-col items-center gap-3">
+          <Spinner className="h-8 w-8 text-white" />
+          <p className="text-white/70">Development mode: Bypassing authentication...</p>
+          <p className="text-xs text-white/50">Redirecting to dashboard...</p>
+        </div>
+        <DevAuthTools />
+      </div>
+    );
+  }
 
   // If we've been stuck in loading state for too long, force show the auth UI
   const shouldShowAuthForm = forceReady || !loading || initialized;
@@ -93,16 +131,33 @@ const Auth = () => {
         <div className="flex flex-col items-center gap-3">
           <Spinner className="h-8 w-8 text-white" />
           <p className="text-white/70">Verifying authentication...</p>
-          {process.env.NODE_ENV === 'development' && (
-            <Button 
-              variant="ghost" 
-              className="text-white/50 text-xs mt-4 hover:text-white"
-              onClick={() => setForceReady(true)}
-            >
-              Continue without waiting (dev only)
-            </Button>
+          {isDev() && (
+            <>
+              <Button 
+                variant="ghost" 
+                className="text-white/50 text-xs mt-4 hover:text-white"
+                onClick={() => {
+                  setForceReady(true);
+                  sessionStorage.setItem('force_auth_initialized', 'true');
+                }}
+              >
+                Continue without waiting (dev only)
+              </Button>
+              <Button
+                variant="ghost"
+                className="text-white/50 text-xs mt-1 hover:text-white"
+                onClick={() => {
+                  sessionStorage.setItem('dev_bypass_auth', 'true');
+                  sessionStorage.setItem('force_auth_initialized', 'true');
+                  window.location.reload();
+                }}
+              >
+                Bypass Authentication (dev only)
+              </Button>
+            </>
           )}
         </div>
+        <DevAuthTools />
       </div>
     );
   }
@@ -116,6 +171,7 @@ const Auth = () => {
           <Spinner className="h-8 w-8 text-white" />
           <p className="text-white/70">Redirecting to dashboard...</p>
         </div>
+        <DevAuthTools />
       </div>
     );
   }
@@ -185,10 +241,31 @@ const Auth = () => {
                     </Tabs>
                   </>
                 )}
+                
+                {isDev() && (
+                  <div className="mt-6 border-t border-gray-700 pt-4">
+                    <p className="text-xs text-center text-white/50 mb-2">Development Options</p>
+                    <Button
+                      variant="outline"
+                      className="w-full mb-2 text-white/70 hover:text-white"
+                      onClick={() => {
+                        sessionStorage.setItem('dev_bypass_auth', 'true');
+                        sessionStorage.setItem('force_auth_initialized', 'true');
+                        navigate("/dashboard", { replace: true });
+                      }}
+                    >
+                      Bypass Authentication (Dev Only)
+                    </Button>
+                    <div className="text-xs text-white/40 text-center">
+                      This option is only available in development mode.
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </CardContent>
         </Card>
+        <DevAuthTools />
       </div>
     </ErrorBoundary>
   );
