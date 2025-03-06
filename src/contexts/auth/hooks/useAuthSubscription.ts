@@ -5,10 +5,12 @@ import { Session } from "@supabase/supabase-js";
 import { toast } from "sonner";
 
 // Constants
-const AUTH_TIMEOUT_MS = 5000;
-const AUTH_DEBOUNCE_MS = 300;
+const AUTH_TIMEOUT_MS = 3000; // Reduced from 5000
+const AUTH_DEBOUNCE_MS = 200; // Reduced from 300
 // Different debounce time for development
-const DEV_AUTH_DEBOUNCE_MS = 500;
+const DEV_AUTH_DEBOUNCE_MS = 300; // Reduced from 500
+// Maximum auth initialization attempts before forcing completion
+const MAX_AUTH_INIT_ATTEMPTS = 3;
 
 type AuthSubscriptionProps = {
   mounted: React.MutableRefObject<boolean>;
@@ -17,6 +19,7 @@ type AuthSubscriptionProps = {
   setLoading: (loading: boolean) => void;
   hasToastRef: React.MutableRefObject<boolean>;
   setInitialized?: (initialized: boolean) => void;
+  setAuthError?: (error: Error | null) => void;
   isDevelopment?: boolean;
 };
 
@@ -27,6 +30,7 @@ export const useAuthSubscription = ({
   setLoading,
   hasToastRef,
   setInitialized,
+  setAuthError,
   isDevelopment = false,
 }: AuthSubscriptionProps) => {
   // Refs for tracking state
@@ -34,11 +38,38 @@ export const useAuthSubscription = ({
   const authInitialized = useRef(false);
   const lastRefreshTime = useRef(0);
   const setupAttempted = useRef(false);
+  const initAttemptCount = useRef(0);
   const pendingUpdates = useRef<NodeJS.Timeout | null>(null);
   const debugCount = useRef(0);
+  const firstSetupTimestamp = useRef(0);
   
-  // Use a longer debounce in dev mode to prevent too many updates
+  // Use a shorter debounce in dev mode to prevent too many updates
   const debounceTime = isDevelopment ? DEV_AUTH_DEBOUNCE_MS : AUTH_DEBOUNCE_MS;
+  
+  // Reset attempt counter on hot reload in development
+  useEffect(() => {
+    if (isDevelopment) {
+      const now = Date.now();
+      // If this is the first time, set timestamp
+      if (firstSetupTimestamp.current === 0) {
+        firstSetupTimestamp.current = now;
+      }
+      // If this hook is re-instantiated within a short time, it's likely a hot reload
+      else if (now - firstSetupTimestamp.current < 500) {
+        console.log("Detected hook re-instantiation due to hot reload, resetting state");
+        setupAttempted.current = false;
+        initAttemptCount.current = 0;
+      }
+    }
+    
+    return () => {
+      // Clear any pending updates on unmount
+      if (pendingUpdates.current) {
+        clearTimeout(pendingUpdates.current);
+        pendingUpdates.current = null;
+      }
+    };
+  }, [isDevelopment]);
   
   // Helper function to handle auth state updates with debouncing
   const updateAuthState = useCallback((newSession: Session | null) => {
@@ -77,6 +108,9 @@ export const useAuthSubscription = ({
       setUser(newSession.user);
       setLoading(false);
       
+      // Clear any auth errors
+      if (setAuthError) setAuthError(null);
+      
       // Mark as initialized
       authInitialized.current = true;
       if (setInitialized) setInitialized(true);
@@ -99,7 +133,7 @@ export const useAuthSubscription = ({
       authInitialized.current = true;
       if (setInitialized) setInitialized(true);
     }
-  }, [setSession, setUser, setLoading, hasToastRef, setInitialized, debounceTime]);
+  }, [setSession, setUser, setLoading, hasToastRef, setInitialized, debounceTime, setAuthError]);
 
   // Helper to clear auth state
   const clearAuthState = useCallback(() => {
@@ -114,13 +148,25 @@ export const useAuthSubscription = ({
   // Setup auth subscription
   const setupAuthSubscription = useCallback(() => {
     // Never setup twice
-    if (authStateSubscription.current || setupAttempted.current) {
-      console.log("Auth subscription already set up or attempted, skipping");
+    if (authStateSubscription.current) {
+      console.log("Auth subscription already exists, reusing it");
+      return authStateSubscription.current;
+    }
+    
+    if (setupAttempted.current && initAttemptCount.current >= MAX_AUTH_INIT_ATTEMPTS) {
+      console.log(`Max setup attempts (${MAX_AUTH_INIT_ATTEMPTS}) reached, forcing completion`);
+      setLoading(false);
+      if (setInitialized) setInitialized(true);
+      authInitialized.current = true;
       return null;
     }
 
     setupAttempted.current = true;
-    console.log("Setting up auth state subscription", isDevelopment ? "(development mode)" : "");
+    initAttemptCount.current++;
+    
+    console.log("Setting up auth state subscription", 
+                isDevelopment ? "(development mode)" : "",
+                `attempt ${initAttemptCount.current}/${MAX_AUTH_INIT_ATTEMPTS}`);
     
     try {
       // First get current session to handle initial state faster
@@ -131,6 +177,7 @@ export const useAuthSubscription = ({
           
           if (error) {
             console.error("Error retrieving session:", error);
+            if (setAuthError) setAuthError(error);
             return;
           }
           
@@ -149,11 +196,12 @@ export const useAuthSubscription = ({
                   authInitialized.current = true;
                   if (setInitialized) setInitialized(true);
                 }
-              }, 1000);
+              }, 800); // Reduced from 1000ms
             }
           }
         } catch (err) {
           console.error("Session check failed:", err);
+          if (setAuthError && err instanceof Error) setAuthError(err);
         }
       };
       
@@ -215,7 +263,7 @@ export const useAuthSubscription = ({
           authInitialized.current = true;
           if (setInitialized) setInitialized(true);
         }
-      }, AUTH_TIMEOUT_MS + (isDevelopment ? 2000 : 0));
+      }, AUTH_TIMEOUT_MS + (isDevelopment ? 1000 : 0)); // Reduced from 2000ms additional time
       
       return data.subscription;
     } catch (error) {
@@ -223,9 +271,10 @@ export const useAuthSubscription = ({
       setLoading(false);
       authInitialized.current = true;
       if (setInitialized) setInitialized(true);
+      if (setAuthError && error instanceof Error) setAuthError(error);
       return null;
     }
-  }, [clearAuthState, mounted, setLoading, updateAuthState, isDevelopment, setInitialized]);
+  }, [clearAuthState, mounted, setLoading, updateAuthState, isDevelopment, setInitialized, setAuthError]);
 
   // Cleanup function
   const cleanupAuthSubscription = useCallback(() => {

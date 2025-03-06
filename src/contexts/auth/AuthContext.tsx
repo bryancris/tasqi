@@ -9,6 +9,7 @@ export type AuthContextType = {
   user: User | null;
   loading: boolean;
   initialized: boolean;
+  error: Error | null;
   handleSignOut: () => Promise<void>;
 };
 
@@ -18,6 +19,7 @@ export const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   initialized: false,
+  error: null,
   handleSignOut: async () => {},
 });
 

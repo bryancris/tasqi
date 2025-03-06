@@ -10,25 +10,27 @@ import { useAuth } from "@/contexts/auth";
 import { Navigate, useNavigate, useLocation } from "react-router-dom";
 import { Spinner } from "@/components/ui/spinner";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 const Auth = () => {
   const [activeTab, setActiveTab] = useState("signin");
   const [showReset, setShowReset] = useState(false);
   const [forceReady, setForceReady] = useState(false);
-  const { session, loading, initialized } = useAuth();
+  const { session, loading, initialized, error } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
   // Check if we're on the update password route
   const isUpdatePasswordRoute = location.pathname === "/auth/update-password";
   
-  // Force the loading state to end after a timeout (to prevent infinite loading)
+  // Force the loading state to end after a shorter timeout (to prevent infinite loading)
   useEffect(() => {
     if (loading && !initialized) {
       const timer = setTimeout(() => {
         console.log("Auth loading timeout reached, forcing ready state");
         setForceReady(true);
-      }, 6000); // 6 seconds timeout (longer than normal to account for dev mode)
+      }, 4000); // Reduced from 6000ms
       
       return () => clearTimeout(timer);
     }
@@ -49,8 +51,14 @@ const Auth = () => {
 
   // For debugging
   useEffect(() => {
-    console.log("Auth page state:", { loading, initialized, forceReady, hasSession: !!session });
-  }, [loading, initialized, forceReady, session]);
+    console.log("Auth page state:", { 
+      loading, 
+      initialized, 
+      forceReady, 
+      hasSession: !!session,
+      hasError: !!error
+    });
+  }, [loading, initialized, forceReady, session, error]);
 
   // If we're still loading and haven't timed out and aren't initialized, show loading state
   if ((loading && !forceReady && !initialized) || (initialized && loading && !forceReady)) {
@@ -93,6 +101,16 @@ const Auth = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
+            {/* Show any auth errors */}
+            {error && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  {error.message || "An authentication error occurred. Please try again."}
+                </AlertDescription>
+              </Alert>
+            )}
+            
             {isUpdatePasswordRoute ? (
               <div className="space-y-4">
                 <ResetPasswordForm />
