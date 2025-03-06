@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SignInForm } from "@/components/auth/SignInForm";
@@ -7,15 +7,24 @@ import { SignUpForm } from "@/components/auth/SignUpForm";
 import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { Spinner } from "@/components/ui/spinner";
 
 const Auth = () => {
   const [activeTab, setActiveTab] = useState("signin");
   const [showReset, setShowReset] = useState(false);
   const { session, loading } = useAuth();
+  const navigate = useNavigate();
   
-  // Clean loading state handling - simplified
+  // Handle redirect to dashboard when a session is detected
+  useEffect(() => {
+    if (session) {
+      console.log("Auth page: Session exists, redirecting to dashboard");
+      navigate("/dashboard", { replace: true });
+    }
+  }, [session, navigate]);
+  
+  // Clean loading state handling
   if (loading) {
     return (
       <div className="min-h-screen bg-[#1a1b3b] flex items-center justify-center p-4">
@@ -27,9 +36,8 @@ const Auth = () => {
     );
   }
   
-  // Simple session check - if we have a session, redirect to dashboard
+  // If we have a session, redirect to dashboard
   if (session) {
-    console.log("Auth page: Session exists, redirecting to dashboard");
     return <Navigate to="/dashboard" replace />;
   }
 

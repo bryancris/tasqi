@@ -1,3 +1,4 @@
+
 import { BrowserRouter } from 'react-router-dom';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { CalendarViewProvider } from './contexts/CalendarViewContext';
@@ -47,6 +48,7 @@ const AuthRoute = memo(({ children }: { children: React.ReactNode }) => {
     );
   }
   
+  // Don't redirect if still loading
   if (session) {
     return <Navigate to="/dashboard" replace />;
   }
@@ -73,6 +75,10 @@ function App() {
                 <AuthRoute>
                   <Auth />
                 </AuthRoute>
+              } />
+              
+              <Route path="/auth/update-password" element={
+                <Auth />
               } />
               
               <Route path="/notes" element={

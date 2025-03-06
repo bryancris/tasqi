@@ -12,15 +12,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const hasToastRef = useRef(false);
   const mounted = useRef(true);
-  // Add flags to prevent multiple refreshes and track auth state
+  // Tracking flags
   const isRefreshing = useRef(false);
+  const lastRefreshTime = useRef(0);
+  const maxRefreshTimeMs = useRef(500); // Debounce period
   const authStateSubscription = useRef<{ unsubscribe: () => void } | null>(null);
+  const refreshAttemptCount = useRef(0);
+  const maxRefreshAttempts = 3;
 
   // Clean sign out function
   const handleSignOut = useCallback(async () => {
     try {
       console.log("Signing out...");
       setLoading(true);
+      
+      // Unsubscribe from auth state first to prevent extra callbacks during signout
+      if (authStateSubscription.current) {
+        authStateSubscription.current.unsubscribe();
+        authStateSubscription.current = null;
+      }
       
       // Sign out from Supabase
       await supabase.auth.signOut();
@@ -35,11 +45,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       if (mounted.current) {
         setLoading(false);
+        // Reset refresh attempt counter
+        refreshAttemptCount.current = 0;
       }
     }
   }, []);
 
-  // Setup auth subscription - separate from initial auth check
+  // Setup auth subscription only once
   const setupAuthSubscription = useCallback(() => {
     if (authStateSubscription.current) {
       console.log("Auth subscription already exists, skipping setup");
@@ -48,33 +60,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     console.log("Setting up auth state subscription");
     const { data } = supabase.auth.onAuthStateChange((event, newSession) => {
-      console.log("Auth state change detected:", { event, hasSession: !!newSession });
+      console.log(`Auth state change detected: ${event}, hasSession: ${!!newSession}`);
       
       if (!mounted.current) return;
       
+      // Clear any stored refresh timer to prevent racing conditions
       if (event === 'SIGNED_OUT') {
         clearAuthState(mounted, setSession, setUser, hasToastRef);
         console.log("Signed out, auth state cleared");
         setLoading(false);
-      } else if (newSession) {
+        refreshAttemptCount.current = 0;
+      } else if (event === 'SIGNED_IN' && newSession) {
         // If we have a session from the event, use it
         setSession(newSession);
         setUser(newSession.user);
         setLoading(false);
+        refreshAttemptCount.current = 0;
         
         // Show success toast on sign in
-        if (event === 'SIGNED_IN' && !hasToastRef.current) {
+        if (!hasToastRef.current) {
           toast.success("Successfully signed in", {
             id: "auth-success",
             duration: 3000,
           });
           hasToastRef.current = true;
         }
-      } else if (event === 'INITIAL_SESSION' && !newSession) {
-        // No initial session and no previous session set
-        if (session === null) {
-          setSession(null);
-          setUser(null);
+      } else if (event === 'TOKEN_REFRESHED' && newSession) {
+        console.log('Token refreshed successfully');
+        setSession(newSession);
+        setUser(newSession.user);
+        setLoading(false);
+        refreshAttemptCount.current = 0;
+      } else if (event === 'INITIAL_SESSION') {
+        if (newSession) {
+          console.log("Initial session found");
+          setSession(newSession);
+          setUser(newSession.user);
+          
+          if (!hasToastRef.current && !session) {
+            toast.success("Successfully signed in", {
+              id: "auth-success",
+              duration: 3000,
+            });
+            hasToastRef.current = true;
+          }
+        } else {
+          console.log("No initial session found");
+          // Force loading to false after INITIAL_SESSION event
+          // to prevent getting stuck on loading screens
           setLoading(false);
         }
       }
@@ -84,25 +117,57 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return data.subscription;
   }, [session]);
 
-  // Initialize auth state on mount - only once
+  // Perform one-time auth check on mount
   useEffect(() => {
     console.log("Auth provider initialized");
     
-    // Initial auth check - debounced to prevent rapid refreshes
-    if (!isRefreshing.current) {
-      isRefreshing.current = true;
+    // Setup auth state listener first
+    setupAuthSubscription();
+    
+    // Then check current auth state - only once
+    const checkAuthOnce = async () => {
+      if (isRefreshing.current) return;
       
-      // Set up auth state listener first
-      const subscription = setupAuthSubscription();
-      
-      // Then perform initial auth check
-      refreshAuth(mounted, setSession, setUser, setLoading, hasToastRef)
-        .finally(() => {
-          setTimeout(() => {
-            isRefreshing.current = false;
-          }, 300); // Add debounce to prevent rapid refreshes
-        });
-    }
+      try {
+        isRefreshing.current = true;
+        refreshAttemptCount.current += 1;
+        
+        // Get current session
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Error getting session:", error);
+          clearAuthState(mounted, setSession, setUser, hasToastRef);
+          setLoading(false);
+          return;
+        }
+        
+        if (data?.session) {
+          console.log("Initial auth check: Session found");
+          setSession(data.session);
+          setUser(data.session.user);
+          setLoading(false);
+        } else {
+          console.log("Initial auth check: No session found");
+          clearAuthState(mounted, setSession, setUser, hasToastRef);
+          setLoading(false);
+        }
+      } catch (e) {
+        console.error("Error during initial auth check:", e);
+        clearAuthState(mounted, setSession, setUser, hasToastRef);
+      } finally {
+        isRefreshing.current = false;
+        // Force loading to false after a timeout (failsafe)
+        setTimeout(() => {
+          if (mounted.current && loading) {
+            console.log("Forcing loading to false (timeout)");
+            setLoading(false);
+          }
+        }, 1000);
+      }
+    };
+    
+    checkAuthOnce();
     
     // Force loading to false after a timeout (failsafe)
     const timeoutId = setTimeout(() => {
@@ -110,7 +175,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.warn("Auth check timed out, forcing loading to false");
         setLoading(false);
       }
-    }, 1500); // Reduced timeout for better UX
+    }, 2000);
 
     return () => {
       console.log("Auth provider unmounting, cleaning up");
@@ -119,11 +184,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Clean up auth subscription
       if (authStateSubscription.current) {
+        console.log("Unsubscribing from auth state on unmount");
         authStateSubscription.current.unsubscribe();
         authStateSubscription.current = null;
       }
     };
-  }, []); // Empty dependency array to run only once
+  }, [setupAuthSubscription, loading]);
 
   const contextValue = useMemo(
     () => ({

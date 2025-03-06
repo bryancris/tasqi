@@ -22,7 +22,10 @@ export const refreshAuth = async (
     
     if (error) {
       console.error("Error getting session:", error);
-      throw error;
+      // Clear auth state on error
+      clearAuthState(mounted, setSession, setUser, hasToastRef);
+      setLoading(false);
+      return;
     }
     
     // Current session from the response
@@ -46,17 +49,13 @@ export const refreshAuth = async (
       } else {
         // No session found
         console.log("No session found, clearing state");
-        setSession(null);
-        setUser(null);
-        hasToastRef.current = false;
+        clearAuthState(mounted, setSession, setUser, hasToastRef);
       }
     }
   } catch (error) {
     console.error("Error refreshing auth state:", error);
     if (mounted.current) {
-      setSession(null);
-      setUser(null);
-      hasToastRef.current = false;
+      clearAuthState(mounted, setSession, setUser, hasToastRef);
     }
   } finally {
     // Always update loading state when done
@@ -75,6 +74,7 @@ export const clearAuthState = (
   hasToastRef: MutableRefObject<boolean>
 ) => {
   if (mounted.current) {
+    console.log("Clearing auth state");
     setSession(null);
     setUser(null);
     hasToastRef.current = false;
