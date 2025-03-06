@@ -48,8 +48,13 @@ export function DictateNoteDialog({ open, onOpenChange, onNoteCreated }: Dictate
 
       toast.success("Note created successfully");
       
-      // Important: Call onNoteCreated first, then reset state
+      // Call onNoteCreated callback first
       onNoteCreated();
+      
+      // Then close the dialog explicitly
+      onOpenChange(false);
+      
+      // Finally reset the content state
       setContent("");
     } catch (error) {
       console.error('Error creating note:', error);
