@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SignInForm } from "@/components/auth/SignInForm";
@@ -21,16 +21,28 @@ const Auth = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
+  // Add ref to track mounting time
+  const mountTime = useRef(Date.now());
+  
   // Check if we're on the update password route
   const isUpdatePasswordRoute = location.pathname === "/auth/update-password";
   
-  // Force the loading state to end after a shorter timeout (to prevent infinite loading)
+  // Force the loading state to end after a shorter timeout in development
+  // to prevent infinite loading
   useEffect(() => {
     if (loading && !initialized) {
+      const isDev = process.env.NODE_ENV === 'development' || 
+                    window.location.hostname === 'localhost' || 
+                    window.location.hostname === '127.0.0.1';
+      
+      const timeoutDuration = isDev ? 2500 : 4000;
+      
+      console.log(`Auth page: Setting force ready timeout for ${timeoutDuration}ms`);
+      
       const timer = setTimeout(() => {
         console.log("Auth loading timeout reached, forcing ready state");
         setForceReady(true);
-      }, 4000); // Reduced from 6000ms
+      }, timeoutDuration);
       
       return () => clearTimeout(timer);
     }
@@ -56,9 +68,22 @@ const Auth = () => {
       initialized, 
       forceReady, 
       hasSession: !!session,
-      hasError: !!error
+      hasError: !!error,
+      timeOnPage: Date.now() - mountTime.current
     });
+    
+    // Force ready state if we've been on this page too long
+    const MAX_TIME_ON_AUTH_PAGE = 5000; // 5 seconds
+    const timeSinceMounted = Date.now() - mountTime.current;
+    
+    if (loading && !initialized && !forceReady && timeSinceMounted > MAX_TIME_ON_AUTH_PAGE) {
+      console.log(`Auth page: Been on page for ${timeSinceMounted}ms, forcing ready state`);
+      setForceReady(true);
+    }
   }, [loading, initialized, forceReady, session, error]);
+
+  // If we've been stuck in loading state for too long, force show the auth UI
+  const shouldShowAuthForm = forceReady || !loading || initialized;
 
   // If we're still loading and haven't timed out and aren't initialized, show loading state
   if ((loading && !forceReady && !initialized) || (initialized && loading && !forceReady)) {
@@ -68,6 +93,15 @@ const Auth = () => {
         <div className="flex flex-col items-center gap-3">
           <Spinner className="h-8 w-8 text-white" />
           <p className="text-white/70">Verifying authentication...</p>
+          {process.env.NODE_ENV === 'development' && (
+            <Button 
+              variant="ghost" 
+              className="text-white/50 text-xs mt-4 hover:text-white"
+              onClick={() => setForceReady(true)}
+            >
+              Continue without waiting (dev only)
+            </Button>
+          )}
         </div>
       </div>
     );
@@ -111,42 +145,46 @@ const Auth = () => {
               </Alert>
             )}
             
-            {isUpdatePasswordRoute ? (
-              <div className="space-y-4">
-                <ResetPasswordForm />
-                <Button
-                  variant="ghost"
-                  className="w-full text-white/70 hover:text-white"
-                  onClick={() => navigate("/auth", { replace: true })}
-                >
-                  Back to login
-                </Button>
-              </div>
-            ) : showReset ? (
-              <div className="space-y-4">
-                <ResetPasswordForm />
-                <Button
-                  variant="ghost"
-                  className="w-full text-white/70 hover:text-white"
-                  onClick={() => setShowReset(false)}
-                >
-                  Back to login
-                </Button>
-              </div>
-            ) : (
+            {shouldShowAuthForm && (
               <>
-                <Tabs value={activeTab} onValueChange={setActiveTab}>
-                  <TabsList className="grid w-full grid-cols-2 mb-8">
-                    <TabsTrigger value="signin">Sign In</TabsTrigger>
-                    <TabsTrigger value="signup">Sign Up</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="signin">
-                    <SignInForm onResetPassword={() => setShowReset(true)} />
-                  </TabsContent>
-                  <TabsContent value="signup">
-                    <SignUpForm />
-                  </TabsContent>
-                </Tabs>
+                {isUpdatePasswordRoute ? (
+                  <div className="space-y-4">
+                    <ResetPasswordForm />
+                    <Button
+                      variant="ghost"
+                      className="w-full text-white/70 hover:text-white"
+                      onClick={() => navigate("/auth", { replace: true })}
+                    >
+                      Back to login
+                    </Button>
+                  </div>
+                ) : showReset ? (
+                  <div className="space-y-4">
+                    <ResetPasswordForm />
+                    <Button
+                      variant="ghost"
+                      className="w-full text-white/70 hover:text-white"
+                      onClick={() => setShowReset(false)}
+                    >
+                      Back to login
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <Tabs value={activeTab} onValueChange={setActiveTab}>
+                      <TabsList className="grid w-full grid-cols-2 mb-8">
+                        <TabsTrigger value="signin">Sign In</TabsTrigger>
+                        <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="signin">
+                        <SignInForm onResetPassword={() => setShowReset(true)} />
+                      </TabsContent>
+                      <TabsContent value="signup">
+                        <SignUpForm />
+                      </TabsContent>
+                    </Tabs>
+                  </>
+                )}
               </>
             )}
           </CardContent>

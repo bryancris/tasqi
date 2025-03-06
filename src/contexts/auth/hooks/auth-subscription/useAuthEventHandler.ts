@@ -1,6 +1,7 @@
 
 import { useCallback } from "react";
 import { Session } from "@supabase/supabase-js";
+import { AuthChangeEvent } from "@supabase/supabase-js";
 
 type AuthEventHandlerProps = {
   updateAuthState: (session: Session | null) => void;
@@ -8,6 +9,7 @@ type AuthEventHandlerProps = {
   setLoading: (loading: boolean) => void;
   setInitialized?: (initialized: boolean) => void;
   mounted: React.MutableRefObject<boolean>;
+  devMode?: boolean;
 };
 
 /**
@@ -18,49 +20,91 @@ export const useAuthEventHandler = ({
   clearAuthState,
   setLoading,
   setInitialized,
-  mounted
+  mounted,
+  devMode = false
 }: AuthEventHandlerProps) => {
   
-  const handleAuthEvent = useCallback((event: string, newSession: Session | null) => {
-    console.log(`Auth state change event: ${event}, hasSession: ${!!newSession}`);
-    
+  // Process auth events
+  const handleAuthEvent = useCallback((
+    event: AuthChangeEvent,
+    newSession: Session | null
+  ) => {
     if (!mounted.current) {
-      console.log("Component unmounted, ignoring auth state change");
+      console.log(`${devMode ? '[DEV] ' : ''}Component unmounted, ignoring auth state change`);
       return;
     }
     
-    if (event === 'SIGNED_OUT') {
-      clearAuthState();
-      console.log("Signed out, auth state cleared");
-      setLoading(false);
-      if (setInitialized) setInitialized(true);
-    } 
-    else if (event === 'SIGNED_IN' && newSession) {
-      console.log("Signed in event received with session");
-      updateAuthState(newSession);
-    } 
-    else if (event === 'TOKEN_REFRESHED' && newSession) {
-      console.log('Token refreshed successfully');
-      updateAuthState(newSession);
-    } 
-    else if (event === 'USER_UPDATED' && newSession) {
-      console.log('User updated');
-      updateAuthState(newSession);
-    }
-    else if (event === 'INITIAL_SESSION') {
-      console.log("Initial session check complete");
-      // Handle initial session check
-      if (newSession) {
-        console.log("Initial session found");
-        updateAuthState(newSession);
-      } else {
-        console.log("No initial session found");
+    console.log(`Auth state change event: ${event}, hasSession: ${!!newSession}`);
+    
+    // Handle different auth events
+    switch (event) {
+      case 'SIGNED_OUT':
+        console.log("Signed out event received");
         clearAuthState();
         setLoading(false);
         if (setInitialized) setInitialized(true);
-      }
+        break;
+        
+      case 'SIGNED_IN':
+        if (newSession) {
+          console.log("Signed in event received with session");
+          updateAuthState(newSession);
+        } else {
+          console.warn("Signed in event received without session");
+          setLoading(false);
+          if (setInitialized) setInitialized(true);
+        }
+        break;
+        
+      case 'TOKEN_REFRESHED':
+        if (newSession) {
+          console.log('Token refreshed successfully');
+          updateAuthState(newSession);
+        } else {
+          console.warn('Token refresh event without session');
+          setLoading(false);
+          if (setInitialized) setInitialized(true);
+        }
+        break;
+        
+      case 'USER_UPDATED':
+        if (newSession) {
+          console.log('User updated');
+          updateAuthState(newSession);
+        } else {
+          console.warn('User updated event without session');
+          setLoading(false);
+          if (setInitialized) setInitialized(true);
+        }
+        break;
+        
+      case 'INITIAL_SESSION':
+        console.log("Initial session check complete");
+        if (newSession) {
+          console.log("Initial session found");
+          updateAuthState(newSession);
+        } else {
+          console.log("No initial session found");
+          clearAuthState();
+          setLoading(false);
+          if (setInitialized) setInitialized(true);
+        }
+        break;
+        
+      case 'PASSWORD_RECOVERY':
+        console.log("Password recovery event received");
+        // Don't update session here, just mark as initialized
+        setLoading(false);
+        if (setInitialized) setInitialized(true);
+        break;
+        
+      default:
+        console.log(`Unhandled auth event: ${event}`);
+        // For unknown events, ensure we're not stuck loading
+        setLoading(false);
+        if (setInitialized) setInitialized(true);
     }
-  }, [updateAuthState, clearAuthState, setLoading, setInitialized, mounted]);
+  }, [clearAuthState, mounted, setLoading, updateAuthState, setInitialized, devMode]);
 
   return { handleAuthEvent };
 };

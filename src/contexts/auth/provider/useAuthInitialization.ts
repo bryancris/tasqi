@@ -1,6 +1,7 @@
 
 import { useEffect } from "react";
 import { useAuthSubscription, useNetworkAuth } from "../hooks";
+import { useDevModeAuth } from "../hooks/useDevModeAuth";
 
 type AuthInitializationProps = {
   // Refs
@@ -27,7 +28,7 @@ type AuthInitializationProps = {
 };
 
 /**
- * Hook to handle auth initialization process
+ * Enhanced hook to handle auth initialization process with better dev mode support
  */
 export const useAuthInitialization = ({
   // Refs
@@ -52,6 +53,14 @@ export const useAuthInitialization = ({
   // Network state
   isOnline
 }: AuthInitializationProps) => {
+  // Get dev mode helpers
+  const { 
+    isHotReload, 
+    lastKnownAuthState,
+    saveAuthState,
+    checkForceInitialized
+  } = useDevModeAuth();
+  
   // Use the auth subscription hook with enhanced timeout for dev mode
   const { 
     setupAuthSubscription, 
@@ -81,6 +90,13 @@ export const useAuthInitialization = ({
     hasToastRef
   });
 
+  // Track session changes to save state in dev mode
+  useEffect(() => {
+    if (isDevMode.current && session) {
+      saveAuthState(true);
+    }
+  }, [session, saveAuthState, isDevMode]);
+
   // Perform initial auth check on mount - only once
   useEffect(() => {
     const currentMountTime = Date.now();
@@ -88,12 +104,59 @@ export const useAuthInitialization = ({
     lastMountTimestamp.current = currentMountTime;
     
     // Detect potential hot reload (very quick remount)
-    const isProbableHotReload = isDevMode.current && timeSinceLastMount < 300;
+    const isProbableHotReload = isDevMode.current && 
+                              (isHotReload || timeSinceLastMount < 300);
     
     console.log("Auth provider initializing", 
                 "Count:", initializationCount.current, 
                 "Dev mode:", isDevMode.current,
                 "Hot reload detected:", isProbableHotReload);
+    
+    // Check if forced initialization is set in dev mode
+    if (isDevMode.current && checkForceInitialized()) {
+      console.log("Development mode: Found forced initialization flag, skipping normal flow");
+      
+      // If we have a last known state with a session, restore it
+      if (lastKnownAuthState?.current?.hasSession && !session) {
+        console.log("Development mode: Using last known auth state");
+        
+        // Attempt to check for existing session, but don't wait for it
+        const quickSessionCheck = async () => {
+          try {
+            const { data } = await fetch(
+              'https://mcwlzrikidzgxexnccju.functions.supabase.co/health-check',
+              { method: 'GET' }
+            ).then(res => res.json());
+            
+            if (data?.healthy) {
+              console.log("Development mode: Backend is healthy, proceeding with normal auth");
+              setupAuthSubscription();
+            } else {
+              console.log("Development mode: Backend health check failed, forcing initialized state");
+              if (mounted.current) {
+                setLoading(false);
+                setInitialized(true);
+              }
+            }
+          } catch (e) {
+            console.warn("Development mode: Health check failed, forcing initialized state");
+            if (mounted.current) {
+              setLoading(false);
+              setInitialized(true);
+            }
+          }
+        };
+        
+        quickSessionCheck();
+      } else {
+        // Just force loading to complete
+        if (mounted.current && loading) {
+          setLoading(false);
+          setInitialized(true);
+        }
+      }
+      return;
+    }
     
     // In development mode with hot reload, reset setup state
     if (isProbableHotReload && isDevMode.current) {
@@ -142,8 +205,10 @@ export const useAuthInitialization = ({
         mounted.current = false;
         
         // Only cleanup subscription if we're truly unmounting, not just in dev mode hot reload
-        if (authStateSubscription.current) {
+        if (authStateSubscription.current && !isDevMode.current) {
           cleanupAuthSubscription();
+        } else if (isDevMode.current) {
+          console.log("Dev mode: Preserving auth subscription during hot reload");
         }
       };
     }

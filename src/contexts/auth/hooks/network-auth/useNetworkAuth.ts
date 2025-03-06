@@ -1,8 +1,8 @@
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
-import { useNetworkReconnection } from "./useNetworkReconnection";
-import { useAuthRefresh } from "./useAuthRefresh";
+import { toast } from "sonner";
 
 type NetworkAuthProps = {
   isOnline: boolean;
@@ -16,7 +16,7 @@ type NetworkAuthProps = {
 };
 
 /**
- * Hook to handle authentication refresh on network reconnection
+ * Hook to handle authentication recovery when network connection is restored
  */
 export const useNetworkAuth = ({
   isOnline,
@@ -28,28 +28,75 @@ export const useNetworkAuth = ({
   setLoading,
   hasToastRef
 }: NetworkAuthProps) => {
-  const { canAttemptReconnection, markReconnectionAttempt } = useNetworkReconnection();
-  const { refreshAuthentication } = useAuthRefresh();
-
-  // Handle network reconnection - refresh auth if needed
+  const wasOffline = useRef(false);
+  const recoveryInProgress = useRef(false);
+  
+  // Handle network reconnection
   useEffect(() => {
-    // Only attempt refresh if:
-    // 1. We're now online
-    // 2. There's no active session
-    // 3. Auth is already initialized
-    // 4. Enough time has passed since last attempt
-    if (isOnline && !session && authInitialized.current && canAttemptReconnection()) {
-      markReconnectionAttempt();
-      refreshAuthentication(mounted, setSession, setUser, setLoading, hasToastRef);
+    // When connection is restored
+    if (isOnline && wasOffline.current && mounted.current && !recoveryInProgress.current) {
+      console.log("Network reconnected, checking authentication state");
+      recoveryInProgress.current = true;
+      
+      const recoverSession = async () => {
+        try {
+          console.log("Network auth: Checking session after reconnection");
+          setLoading(true);
+          
+          // If we already have a session, try refreshing it
+          if (session) {
+            const { data, error } = await supabase.auth.refreshSession();
+            
+            if (error) {
+              console.error("Failed to refresh session after reconnection:", error);
+              // If refresh fails, try getting the session
+              const { data: sessionData } = await supabase.auth.getSession();
+              if (sessionData?.session) {
+                console.log("Successfully retrieved session after network reconnection");
+                setSession(sessionData.session);
+                setUser(sessionData.session.user);
+              } else {
+                // No session found, clear state
+                console.log("No session found after network reconnection");
+                setSession(null);
+                setUser(null);
+                hasToastRef.current = false;
+              }
+            } else if (data?.session) {
+              console.log("Successfully refreshed session after network reconnection");
+              setSession(data.session);
+              setUser(data.session.user);
+            }
+          } else {
+            // No existing session, check if there is one on the server
+            const { data: sessionData } = await supabase.auth.getSession();
+            if (sessionData?.session) {
+              console.log("Found session after network reconnection");
+              setSession(sessionData.session);
+              setUser(sessionData.session.user);
+              
+              // Show toast only once
+              if (!hasToastRef.current) {
+                toast.success("Reconnected and restored session");
+                hasToastRef.current = true;
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Error recovering session after network reconnection:", error);
+        } finally {
+          if (mounted.current) {
+            setLoading(false);
+            recoveryInProgress.current = false;
+            authInitialized.current = true;
+          }
+        }
+      };
+      
+      recoverSession();
     }
-  }, [
-    isOnline, 
-    session, 
-    authInitialized, 
-    mounted, 
-    setSession, 
-    setUser, 
-    setLoading, 
-    hasToastRef
-  ]);
+    
+    // Update offline status for next comparison
+    wasOffline.current = !isOnline;
+  }, [isOnline, session, mounted, setSession, setUser, setLoading, hasToastRef, authInitialized]);
 };
