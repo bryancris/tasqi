@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -14,30 +14,41 @@ export function NotesContent() {
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
 
-  const { data: notes, isLoading } = useQuery({
+  const { data: notes, isLoading, refetch } = useQuery({
     queryKey: ["notes"],
     queryFn: async () => {
+      console.log("Executing notes query fetch");
       const { data, error } = await supabase
         .from("notes")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching notes:", error);
+        throw error;
+      }
+      
+      console.log(`Fetched ${data?.length || 0} notes`);
       return data as Note[];
     },
-    staleTime: 30 * 1000, // 30 seconds instead of Infinity
-    gcTime: 5 * 60 * 1000, // 5 minutes instead of Infinity
+    staleTime: 0, // Consider data always stale to ensure refetch
+    gcTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     refetchOnReconnect: true,
   });
 
-  const handleNoteCreated = () => {
+  const handleNoteCreated = useCallback(() => {
+    console.log("Note created, forcing refetch");
     // Force an immediate refetch of the notes data
     queryClient.invalidateQueries({ queryKey: ["notes"] });
+    
+    // Also directly trigger refetch as a backup mechanism
+    refetch();
+    
     // Close the dialog
     setIsDictateDialogOpen(false);
-  };
+  }, [queryClient, refetch]);
 
   return (
     <div 

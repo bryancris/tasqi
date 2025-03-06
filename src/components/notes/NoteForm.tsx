@@ -38,6 +38,7 @@ export function NoteForm({ onOpenDictateDialog }: NoteFormProps) {
 
   const createNoteMutation = useMutation({
     mutationFn: async () => {
+      console.log("Creating new note");
       const { error, data } = await supabase.from("notes").insert([
         {
           title,
@@ -51,7 +52,14 @@ export function NoteForm({ onOpenDictateDialog }: NoteFormProps) {
       return data;
     },
     onSuccess: () => {
+      console.log("Note created successfully, invalidating queries");
+      // Invalidate the notes query to refetch data
       queryClient.invalidateQueries({ queryKey: ["notes"] });
+      
+      // Force a refetch to ensure immediate UI update
+      queryClient.refetchQueries({ queryKey: ["notes"] });
+      
+      // Reset form
       setTitle("");
       setContent("");
       setColor("#F1F0FB");

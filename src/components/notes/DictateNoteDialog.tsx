@@ -46,16 +46,20 @@ export function DictateNoteDialog({ open, onOpenChange, onNoteCreated }: Dictate
 
       if (noteError) throw noteError;
 
-      toast.success("Note created successfully");
-      
-      // Call onNoteCreated callback first
-      onNoteCreated();
-      
-      // Then close the dialog explicitly
+      // Close the dialog first - prevents React re-render timing issues
       onOpenChange(false);
       
-      // Finally reset the content state
+      // Reset content state
       setContent("");
+      
+      // Show success message
+      toast.success("Note created successfully");
+      
+      // Trigger refetch AFTER dialog is closed
+      setTimeout(() => {
+        console.log("Triggering note list refresh");
+        onNoteCreated();
+      }, 0);
     } catch (error) {
       console.error('Error creating note:', error);
       toast.error("Failed to create note. Please try again.");
