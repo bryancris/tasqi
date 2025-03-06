@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -52,7 +51,6 @@ export function NoteForm({ onOpenDictateDialog }: NoteFormProps) {
       return data;
     },
     onSuccess: () => {
-      // Immediately invalidate the notes query to trigger a refresh
       queryClient.invalidateQueries({ queryKey: ["notes"] });
       setTitle("");
       setContent("");
@@ -76,10 +74,9 @@ export function NoteForm({ onOpenDictateDialog }: NoteFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="mb-4 space-y-3">
-      {/* Moved the AI Assisted Note button to the top */}
       <Button 
         type="button"
-        variant="secondary"
+        variant="rainbow"
         className="w-full flex items-center justify-center gap-2 mb-2"
         onClick={onOpenDictateDialog}
       >
