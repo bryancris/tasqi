@@ -2,98 +2,31 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
+import { useEmailSignIn, useGoogleSignIn } from "@/hooks/auth";
 
 export function SignInForm({ onResetPassword }: { onResetPassword: () => void }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const { toast } = useToast();
+  
+  // Use custom hooks for authentication
+  const { isLoading: isEmailLoading, signInWithEmail } = useEmailSignIn();
+  const { isLoading: isGoogleLoading, signInWithGoogle } = useGoogleSignIn();
+  
+  // Determine if any authentication method is currently loading
+  const isLoading = isEmailLoading || isGoogleLoading;
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (isLoading) return; // Prevent multiple submission attempts
     
-    // Basic validation
-    if (!email.trim()) {
-      toast({
-        title: "Error",
-        description: "Email is required",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (!password.trim()) {
-      toast({
-        title: "Error",
-        description: "Password is required",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setIsLoading(true);
-
-    try {
-      console.log("Initiating sign in with email...");
-      
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-      
-      console.log("Sign in successful");
-      // No navigation here - let the auth context handle it
-      
-    } catch (error: any) {
-      console.error("Sign in error:", error);
-      
-      toast({
-        title: "Error",
-        description: error.message || "Sign in failed. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      // Important: Always reset loading state, even on success
-      setIsLoading(false);
-    }
+    await signInWithEmail(email, password);
   };
 
   const handleGoogleSignIn = async () => {
-    if (isGoogleLoading) return; // Prevent multiple clicks
-    
-    try {
-      setIsGoogleLoading(true);
-      console.log("Initiating Google sign in...");
-      
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/dashboard`
-        }
-      });
-
-      if (error) throw error;
-      
-      // No need to reset Google loading state here as we're redirecting
-    } catch (error: any) {
-      console.error("Google sign in error:", error);
-      
-      toast({
-        title: "Error",
-        description: error.message || "Google sign in failed. Please try again.",
-        variant: "destructive",
-      });
-      setIsGoogleLoading(false);
-    }
+    if (isLoading) return; // Prevent multiple clicks
+    await signInWithGoogle();
   };
 
   return (
@@ -122,7 +55,7 @@ export function SignInForm({ onResetPassword }: { onResetPassword: () => void })
           />
         </div>
         <Button type="submit" className="w-full relative" disabled={isLoading}>
-          {isLoading ? (
+          {isEmailLoading ? (
             <div className="flex items-center justify-center gap-2">
               <Spinner className="h-4 w-4" />
               <span>Signing in...</span>
@@ -145,7 +78,7 @@ export function SignInForm({ onResetPassword }: { onResetPassword: () => void })
       <Button
         variant="outline"
         type="button"
-        disabled={isGoogleLoading || isLoading}
+        disabled={isLoading}
         className="w-full relative"
         onClick={handleGoogleSignIn}
       >
@@ -171,7 +104,7 @@ export function SignInForm({ onResetPassword }: { onResetPassword: () => void })
         variant="ghost"
         className="w-full text-white/70 hover:text-white"
         onClick={onResetPassword}
-        disabled={isLoading || isGoogleLoading}
+        disabled={isLoading}
       >
         Forgot password?
       </Button>
