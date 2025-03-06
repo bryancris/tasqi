@@ -1,15 +1,16 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { PlusCircle, Bot, Palette } from "lucide-react";
+import { PlusCircle, Bot, Palette, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { isDevAuthBypassed } from "@/contexts/auth/provider/constants";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const COLORS = [
   '#8E9196', // Neutral Gray
@@ -33,23 +34,46 @@ export function NoteForm({ onOpenDictateDialog }: NoteFormProps) {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [color, setColor] = useState("#F1F0FB");
-  const { session } = useAuth();
+  const { session, initialized } = useAuth();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
+  const [sessionChecked, setSessionChecked] = useState(false);
+
+  useEffect(() => {
+    if (initialized) {
+      setSessionChecked(true);
+    }
+  }, [initialized]);
 
   const createNoteMutation = useMutation({
     mutationFn: async () => {
-      console.log("Creating new note");
+      console.log("Creating new note, session:", session);
+      
+      if (!session && !isDevAuthBypassed()) {
+        console.error("No authenticated session found");
+        throw new Error("You must be logged in to create notes");
+      }
+      
+      const userId = session?.user.id || (isDevAuthBypassed() ? '00000000-0000-0000-0000-000000000000' : null);
+      
+      if (!userId) {
+        console.error("Failed to get user ID");
+        throw new Error("User ID not available");
+      }
+
       const { error, data } = await supabase.from("notes").insert([
         {
           title,
           content,
           color,
-          user_id: session?.user.id,
+          user_id: userId,
         },
       ]).select();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error from Supabase:", error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -68,7 +92,11 @@ export function NoteForm({ onOpenDictateDialog }: NoteFormProps) {
     },
     onError: (error) => {
       console.error("Error creating note:", error);
-      toast.error("Failed to create note");
+      if (error instanceof Error) {
+        toast.error(`Failed to create note: ${error.message}`);
+      } else {
+        toast.error("Failed to create note");
+      }
     },
   });
 
@@ -78,11 +106,32 @@ export function NoteForm({ onOpenDictateDialog }: NoteFormProps) {
       toast.error("Please fill in both title and content");
       return;
     }
+    
+    if (!session && !isDevAuthBypassed()) {
+      toast.error("You must be logged in to create notes");
+      return;
+    }
+    
     createNoteMutation.mutate();
+  };
+
+  const isDevMode = () => {
+    return process.env.NODE_ENV === 'development' || 
+           window.location.hostname === 'localhost' || 
+           window.location.hostname === '127.0.0.1';
   };
 
   return (
     <form onSubmit={handleSubmit} className="mb-4 space-y-3">
+      {isDevMode() && (!session && !isDevAuthBypassed()) && (
+        <Alert variant="destructive" className="mb-3">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            No active session. Use the Dev Auth Tools in the bottom right to bypass auth for testing.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <Button 
         type="button"
         variant="rainbow"
