@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,36 +8,39 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Note } from "./types";
+import { ColorPicker } from "./ColorPicker";
 
 interface EditNoteDialogProps {
-  note: Note | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  note: Note;
 }
 
-export function EditNoteDialog({ note, open, onOpenChange }: EditNoteDialogProps) {
-  const [title, setTitle] = useState(note?.title || "");
-  const [content, setContent] = useState(note?.content || "");
+export function EditNoteDialog({ open, onOpenChange, note }: EditNoteDialogProps) {
+  const [title, setTitle] = useState(note.title);
+  const [content, setContent] = useState(note.content);
+  const [color, setColor] = useState(note.color);
   const queryClient = useQueryClient();
 
   // Reset form when note changes
-  useState(() => {
+  useEffect(() => {
     if (note) {
       setTitle(note.title);
       setContent(note.content);
+      setColor(note.color);
     }
-  });
+  }, [note]);
 
   const updateNoteMutation = useMutation({
     mutationFn: async () => {
-      if (!note) return;
-      
       const { error } = await supabase
         .from("notes")
-        .update({ title, content })
+        .update({ title, content, color })
         .eq("id", note.id);
-
-      if (error) throw error;
+      
+      if (error) {
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notes"] });
@@ -61,32 +64,40 @@ export function EditNoteDialog({ note, open, onOpenChange }: EditNoteDialogProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent 
+        className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto"
+        style={{ backgroundColor: color }}
+      >
         <DialogHeader>
           <DialogTitle>Edit Note</DialogTitle>
-          <DialogDescription>
-            Make changes to your note here. Click save when you're done.
-          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            placeholder="Note title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
+          <div className="flex gap-2">
+            <Input
+              placeholder="Note title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full"
+            />
+            <ColorPicker
+              selectedColor={color}
+              onColorSelect={setColor}
+            />
+          </div>
           <Textarea
-            placeholder="Write your note here..."
+            placeholder="Note content"
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="min-h-[150px]"
+            className="min-h-[200px]"
           />
-          <Button 
-            type="submit" 
-            className="w-full"
-            disabled={updateNoteMutation.isPending}
-          >
-            Save Changes
-          </Button>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={updateNoteMutation.isPending}>
+              Save Changes
+            </Button>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
