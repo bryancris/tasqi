@@ -1,21 +1,42 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 /**
- * Hook to detect online/offline status
+ * Hook to detect online/offline status with debouncing to prevent frequent toggles
  */
 export const useNetworkDetection = () => {
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
+  const lastOnlineState = useRef<boolean>(navigator.onLine);
+  const lastOnlineChangeTime = useRef<number>(Date.now());
+  const MIN_TIME_BETWEEN_CHANGES_MS = 5000; // 5 second minimum between state changes
 
   useEffect(() => {
     const handleOnline = () => {
-      console.log('Network connection restored');
-      setIsOnline(true);
+      const now = Date.now();
+      // Only update if sufficient time has passed or this is a real state change
+      if (
+        !lastOnlineState.current || 
+        now - lastOnlineChangeTime.current > MIN_TIME_BETWEEN_CHANGES_MS
+      ) {
+        console.log('Network connection restored (debounced)');
+        setIsOnline(true);
+        lastOnlineState.current = true;
+        lastOnlineChangeTime.current = now;
+      }
     };
 
     const handleOffline = () => {
-      console.log('Network connection lost');
-      setIsOnline(false);
+      const now = Date.now();
+      // For offline state, we update immediately for better UX
+      if (
+        lastOnlineState.current || 
+        now - lastOnlineChangeTime.current > MIN_TIME_BETWEEN_CHANGES_MS
+      ) {
+        console.log('Network connection lost (debounced)');
+        setIsOnline(false);
+        lastOnlineState.current = false;
+        lastOnlineChangeTime.current = now;
+      }
     };
 
     window.addEventListener('online', handleOnline);

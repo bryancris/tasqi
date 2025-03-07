@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import { toast } from "sonner";
+import { useNetworkReconnection } from "./useNetworkReconnection";
 
 type NetworkAuthProps = {
   isOnline: boolean;
@@ -30,13 +31,25 @@ export const useNetworkAuth = ({
 }: NetworkAuthProps) => {
   const wasOffline = useRef(false);
   const recoveryInProgress = useRef(false);
+  const { 
+    canAttemptReconnection, 
+    markReconnectionAttempt, 
+    resetReconnectionAttempts 
+  } = useNetworkReconnection();
   
   // Handle network reconnection
   useEffect(() => {
-    // When connection is restored
+    // When connection is restored from an offline state
     if (isOnline && wasOffline.current && mounted.current && !recoveryInProgress.current) {
+      // Check if we can attempt reconnection based on cooldown rules
+      if (!canAttemptReconnection()) {
+        console.log("Network reconnection throttled, skipping auth refresh");
+        return;
+      }
+      
       console.log("Network reconnected, checking authentication state");
       recoveryInProgress.current = true;
+      markReconnectionAttempt();
       
       const recoverSession = async () => {
         try {
@@ -55,6 +68,7 @@ export const useNetworkAuth = ({
                 console.log("Successfully retrieved session after network reconnection");
                 setSession(sessionData.session);
                 setUser(sessionData.session.user);
+                resetReconnectionAttempts(); // Successfully reconnected
               } else {
                 // No session found, clear state
                 console.log("No session found after network reconnection");
@@ -66,6 +80,7 @@ export const useNetworkAuth = ({
               console.log("Successfully refreshed session after network reconnection");
               setSession(data.session);
               setUser(data.session.user);
+              resetReconnectionAttempts(); // Successfully reconnected
             }
           } else {
             // No existing session, check if there is one on the server
@@ -74,6 +89,7 @@ export const useNetworkAuth = ({
               console.log("Found session after network reconnection");
               setSession(sessionData.session);
               setUser(sessionData.session.user);
+              resetReconnectionAttempts(); // Successfully reconnected
               
               // Show toast only once
               if (!hasToastRef.current) {
@@ -98,5 +114,17 @@ export const useNetworkAuth = ({
     
     // Update offline status for next comparison
     wasOffline.current = !isOnline;
-  }, [isOnline, session, mounted, setSession, setUser, setLoading, hasToastRef, authInitialized]);
+  }, [
+    isOnline, 
+    session, 
+    mounted, 
+    setSession, 
+    setUser, 
+    setLoading, 
+    hasToastRef, 
+    authInitialized, 
+    canAttemptReconnection, 
+    markReconnectionAttempt, 
+    resetReconnectionAttempts
+  ]);
 };
