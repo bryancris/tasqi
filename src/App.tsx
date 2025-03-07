@@ -1,6 +1,6 @@
 
 import { BrowserRouter } from 'react-router-dom';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { CalendarViewProvider } from './contexts/CalendarViewContext';
 import Dashboard from './pages/Dashboard';
 import { DashboardLayout } from './components/layouts/DashboardLayout';
@@ -39,7 +39,13 @@ function App() {
               {/* All protected routes use the ProtectedRoute component */}
               <Route element={<ProtectedRoute />}>
                 {/* Routes with DashboardLayout */}
-                <Route element={<MemoizedDashboardLayout />}>
+                <Route 
+                  element={
+                    <MemoizedDashboardLayout>
+                      <Outlet />
+                    </MemoizedDashboardLayout>
+                  }
+                >
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/dashboard/notes" element={<Notes />} />
                   <Route path="/dashboard/settings" element={<Settings />} />
