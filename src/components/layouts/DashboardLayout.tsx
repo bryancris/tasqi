@@ -9,6 +9,12 @@ import { useCalendarView } from "@/contexts/CalendarViewContext";
 import { useSupabaseSubscription } from "@/hooks/use-supabase-subscription";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 
+// Add iOS PWA detection
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                    (window.navigator as any).standalone === true;
+const isIOSPWA = isIOS && isStandalone;
+
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
@@ -31,14 +37,35 @@ export function DashboardLayout({
   useEffect(() => {
     if (!hasLoggedMount.current) {
       console.log("DashboardLayout mounted");
+      console.log("Is iOS PWA:", isIOSPWA);
       hasLoggedMount.current = true;
+    }
+    
+    // Add iOS PWA-specific meta tags for better WebView behavior
+    if (isIOSPWA) {
+      console.log("Configuring iOS PWA-specific settings");
+      
+      // Add meta tags for iOS if they don't exist
+      if (!document.querySelector('meta[name="apple-mobile-web-app-capable"]')) {
+        const appleMobileWebAppCapable = document.createElement('meta');
+        appleMobileWebAppCapable.setAttribute('name', 'apple-mobile-web-app-capable');
+        appleMobileWebAppCapable.setAttribute('content', 'yes');
+        document.head.appendChild(appleMobileWebAppCapable);
+      }
+      
+      if (!document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')) {
+        const statusBarStyle = document.createElement('meta');
+        statusBarStyle.setAttribute('name', 'apple-mobile-web-app-status-bar-style');
+        statusBarStyle.setAttribute('content', 'black-translucent');
+        document.head.appendChild(statusBarStyle);
+      }
     }
   }, []);
 
   return <div className="min-h-screen bg-white">
       {isMobile ? <>
           <MobileHeader />
-          <main className="flex-1 pb-16 pt-[72px] scrollbar-hide">
+          <main className={`flex-1 pb-16 pt-[72px] ${isIOSPWA ? 'ios-momentum-scroll' : 'scrollbar-hide'}`}>
             <ErrorBoundary fallback={<div className="p-4 text-center">Something went wrong loading the dashboard. Please refresh the page.</div>}>
               {children}
             </ErrorBoundary>

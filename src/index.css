@@ -34,9 +34,20 @@
   }
   body {
     @apply bg-background text-foreground min-h-screen;
+    overscroll-behavior-y: none; /* Prevent browser overscroll */
   }
   #root {
     @apply min-h-screen;
+  }
+  /* Enable momentum scrolling on iOS */
+  .ios-momentum-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+  /* Allow bounce effect on iOS PWA */
+  .ios-pull-to-refresh {
+    overflow-y: auto;
+    overscroll-behavior-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }
 
@@ -65,6 +76,16 @@
       #0099ff 100%
     );
     background-size: 200% 200%;
+  }
+  
+  /* Spinner animation for pull-to-refresh */
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  .pull-to-refresh-spinner {
+    animation: spin 1s linear infinite;
   }
   
   .text-gradient {

@@ -62,6 +62,7 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
     })
   );
 
+  // Filter tasks logic
   const shouldShowCompletedTask = (task: Task) => {
     return task.completed_at && isAfter(new Date(task.completed_at), todayStart);
   };
@@ -118,7 +119,7 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
   };
 
   return (
-    <div className="h-[calc(100vh-144px)] overflow-hidden px-4">
+    <div className="h-[calc(100vh-144px)] overflow-hidden px-4 ios-momentum-scroll">
       <Card className="h-full border-none shadow-none bg-transparent">
         <CardHeader className="pb-3 px-0">
           <div className="flex items-center justify-between">
@@ -138,7 +139,7 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="overflow-y-auto h-[calc(100%-5rem)] p-0">
+        <CardContent className="overflow-y-auto h-[calc(100%-5rem)] p-0 ios-momentum-scroll">
           {view === 'board' ? (
             <DndContext sensors={sensors} onDragEnd={onDragEnd}>
               <SortableContext items={draggableTaskIds} strategy={verticalListSortingStrategy}>
