@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 
@@ -55,13 +56,15 @@ export function useAppUpdate() {
       } catch (error) {
         console.error('Error with BroadcastChannel:', error);
         // Fallback to window event listener if BroadcastChannel fails
-        window.addEventListener('message', handleSWMessage);
-        cleanup = () => window.removeEventListener('message', handleSWMessage);
+        const windowObj: Window = window;
+        windowObj.addEventListener('message', handleSWMessage);
+        cleanup = () => windowObj.removeEventListener('message', handleSWMessage);
       }
     } else {
       // Fallback for browsers without BroadcastChannel support
-      window.addEventListener('message', handleSWMessage);
-      cleanup = () => window.removeEventListener('message', handleSWMessage);
+      const windowObj: Window = window;
+      windowObj.addEventListener('message', handleSWMessage);
+      cleanup = () => windowObj.removeEventListener('message', handleSWMessage);
     }
     
     // Return cleanup function
