@@ -15,6 +15,11 @@ describe('useNetworkDetection', () => {
     
     // Mock Date.now to control timing
     vi.spyOn(Date, 'now').mockImplementation(() => 1000);
+    
+    // Mock fetch for network verification
+    global.fetch = vi.fn().mockImplementation(() => 
+      Promise.resolve({ ok: true, status: 204 })
+    );
   });
   
   afterEach(() => {
@@ -44,11 +49,16 @@ describe('useNetworkDetection', () => {
     expect(result.current.isNetworkAvailable()).toBe(false);
   });
   
-  it('should debounce rapid online/offline changes', () => {
-    const { result } = renderHook(() => useNetworkDetection());
+  it('should debounce rapid online/offline changes', async () => {
+    const { result, waitForNextUpdate } = renderHook(() => useNetworkDetection());
     
     // Initially online
     expect(result.current.isOnline).toBe(true);
+    
+    // Mock successful network verification
+    global.fetch = vi.fn().mockImplementation(() => 
+      Promise.resolve({ ok: true, status: 204 })
+    );
     
     // Trigger offline event
     act(() => {
@@ -57,6 +67,8 @@ describe('useNetworkDetection', () => {
       window.dispatchEvent(new Event('offline'));
     });
     
+    // Should be offline after debounce
+    await vi.advanceTimersByTimeAsync(2000);
     expect(result.current.isOnline).toBe(false);
     
     // Trigger online event immediately - should be ignored due to debounce
@@ -71,12 +83,13 @@ describe('useNetworkDetection', () => {
     
     // Trigger online event after sufficient time
     act(() => {
-      // 6 seconds later - above threshold
-      vi.mocked(Date.now).mockReturnValue(8000); 
+      // 15 seconds later - above threshold
+      vi.mocked(Date.now).mockReturnValue(15000); 
       window.dispatchEvent(new Event('online'));
     });
     
-    // Should be online now
+    // Should become online after verification
+    await vi.advanceTimersByTimeAsync(4000);
     expect(result.current.isOnline).toBe(true);
   });
 });

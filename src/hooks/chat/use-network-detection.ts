@@ -2,24 +2,38 @@
 import { useState, useEffect, useRef } from 'react';
 
 /**
- * Constants for network detection
+ * Constants for network detection with increased debounce times
  */
 const NETWORK_DETECTION_CONSTANTS = {
-  MIN_TIME_BETWEEN_CHANGES_MS: 5000, // 5 second minimum between state changes
-  DEBOUNCE_ONLINE_MS: 2000,         // Additional debounce for online events
-  DEBOUNCE_OFFLINE_MS: 1000         // Shorter debounce for offline events
+  // Increased minimum time between state changes to reduce flickering
+  MIN_TIME_BETWEEN_CHANGES_MS: 10000, // 10 seconds minimum between state changes 
+  // Longer debounce for online events to ensure stability
+  DEBOUNCE_ONLINE_MS: 3000,          
+  // Faster response for offline events for better UX
+  DEBOUNCE_OFFLINE_MS: 1500,
+  // How many consecutive checks needed to confirm state change
+  CONSECUTIVE_CHECKS_REQUIRED: 2
 };
 
 /**
- * Hook to detect online/offline status with debouncing to prevent frequent toggles
+ * Hook to detect online/offline status with improved debouncing
+ * to prevent frequent toggles and false positive detections
  */
 export const useNetworkDetection = () => {
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
   const lastOnlineState = useRef<boolean>(navigator.onLine);
   const lastOnlineChangeTime = useRef<number>(Date.now());
   const debounceTimerRef = useRef<number | null>(null);
+  const consecutiveChecksRef = useRef<number>(0);
+  const isInitialMount = useRef<boolean>(true);
   
   useEffect(() => {
+    // Log initial state on mount only
+    if (isInitialMount.current) {
+      console.log(`Network detection initialized, online: ${navigator.onLine}`);
+      isInitialMount.current = false;
+    }
+    
     const clearDebounceTimer = () => {
       if (debounceTimerRef.current !== null) {
         window.clearTimeout(debounceTimerRef.current);
@@ -27,9 +41,12 @@ export const useNetworkDetection = () => {
       }
     };
 
+    // Handle stable online transition
     const handleOnline = () => {
       const now = Date.now();
-      // Only update if sufficient time has passed or this is a real state change
+      
+      // Only continue if sufficient time has passed since last state change
+      // or we're transitioning from a different state
       if (
         !lastOnlineState.current || 
         now - lastOnlineChangeTime.current > NETWORK_DETECTION_CONSTANTS.MIN_TIME_BETWEEN_CHANGES_MS
@@ -39,19 +56,40 @@ export const useNetworkDetection = () => {
         
         // Set a debounce timer for online detection to ensure stability
         debounceTimerRef.current = window.setTimeout(() => {
-          if (navigator.onLine) {  // Double-check online status before applying
-            console.log('Network connection restored (debounced)');
-            setIsOnline(true);
-            lastOnlineState.current = true;
-            lastOnlineChangeTime.current = Date.now();
+          // Verify network is actually available with a test request
+          verifyNetworkConnection().then(isReachable => {
+            if (isReachable && navigator.onLine) {
+              consecutiveChecksRef.current++;
+              
+              // Only update state after consecutive successful checks
+              if (consecutiveChecksRef.current >= NETWORK_DETECTION_CONSTANTS.CONSECUTIVE_CHECKS_REQUIRED) {
+                // Double-check online status before applying
+                if (!lastOnlineState.current) {
+                  console.log('Network connection restored (verified)');
+                  setIsOnline(true);
+                  lastOnlineState.current = true;
+                  lastOnlineChangeTime.current = Date.now();
+                  consecutiveChecksRef.current = 0;
+                }
+              } else {
+                // Schedule another check
+                debounceTimerRef.current = window.setTimeout(handleOnline, 1000);
+              }
+            } else {
+              // Reset consecutive checks counter on failure
+              consecutiveChecksRef.current = 0;
+            }
+            
             debounceTimerRef.current = null;
-          }
+          });
         }, NETWORK_DETECTION_CONSTANTS.DEBOUNCE_ONLINE_MS);
       }
     };
 
+    // Handle stable offline transition
     const handleOffline = () => {
       const now = Date.now();
+      
       // For offline state, we update with a shorter debounce for better UX
       if (
         lastOnlineState.current || 
@@ -62,19 +100,52 @@ export const useNetworkDetection = () => {
         
         // Set a shorter debounce timer for offline detection
         debounceTimerRef.current = window.setTimeout(() => {
-          if (!navigator.onLine) {  // Double-check offline status before applying
-            console.log('Network connection lost (debounced)');
-            setIsOnline(false);
-            lastOnlineState.current = false;
-            lastOnlineChangeTime.current = Date.now();
-            debounceTimerRef.current = null;
+          if (!navigator.onLine) {
+            // Double-check offline status before applying
+            if (lastOnlineState.current) {
+              console.log('Network connection lost (verified)');
+              setIsOnline(false);
+              lastOnlineState.current = false;
+              lastOnlineChangeTime.current = Date.now();
+            }
           }
+          debounceTimerRef.current = null;
         }, NETWORK_DETECTION_CONSTANTS.DEBOUNCE_OFFLINE_MS);
       }
     };
 
+    // Simple network verification with a lightweight request
+    // We'll use a HEAD request to a reliable endpoint
+    const verifyNetworkConnection = async (): Promise<boolean> => {
+      try {
+        // Create a controller to timeout the request
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        
+        // Make a HEAD request to a reliable endpoint
+        const response = await fetch('https://www.gstatic.com/generate_204', {
+          method: 'HEAD',
+          mode: 'no-cors',
+          cache: 'no-store',
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        return true;
+      } catch (error) {
+        console.log('Network verification failed:', error instanceof Error ? error.message : 'Unknown error');
+        return false;
+      }
+    };
+
+    // Set up event listeners
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+
+    // Run an initial verification if browser reports online
+    if (navigator.onLine) {
+      handleOnline();
+    }
 
     return () => {
       window.removeEventListener('online', handleOnline);
