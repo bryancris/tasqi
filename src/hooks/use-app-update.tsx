@@ -35,15 +35,22 @@ export function useAppUpdate() {
   // Setup broadcast channel listener
   useEffect(() => {
     // Check if broadcast channel is supported
-    if ('BroadcastChannel' in window) {
-      const broadcastChannel = new BroadcastChannel('sw-updates');
-      
-      broadcastChannel.addEventListener('message', handleSWMessage);
-      
-      return () => {
-        broadcastChannel.removeEventListener('message', handleSWMessage);
-        broadcastChannel.close();
-      };
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      try {
+        const broadcastChannel = new BroadcastChannel('sw-updates');
+        
+        broadcastChannel.addEventListener('message', handleSWMessage);
+        
+        return () => {
+          broadcastChannel.removeEventListener('message', handleSWMessage);
+          broadcastChannel.close();
+        };
+      } catch (error) {
+        console.error('Error with BroadcastChannel:', error);
+        // Fallback if there's an error with BroadcastChannel
+        window.addEventListener('message', handleSWMessage);
+        return () => window.removeEventListener('message', handleSWMessage);
+      }
     }
     
     // Fallback for browsers without BroadcastChannel
