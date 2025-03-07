@@ -31,6 +31,7 @@ export const useNetworkAuth = ({
 }: NetworkAuthProps) => {
   const wasOffline = useRef(false);
   const recoveryInProgress = useRef(false);
+  const lastIsOnlineState = useRef(isOnline);
   const { 
     canAttemptReconnection, 
     markReconnectionAttempt, 
@@ -39,15 +40,31 @@ export const useNetworkAuth = ({
   
   // Handle network reconnection
   useEffect(() => {
+    // Only process if there's an actual change in online status
+    if (isOnline === lastIsOnlineState.current) {
+      return;
+    }
+
+    // Remember last state
+    lastIsOnlineState.current = isOnline;
+
+    // Update offline status for next comparison
+    if (!isOnline) {
+      wasOffline.current = true;
+      return;
+    }
+
     // When connection is restored from an offline state
     if (isOnline && wasOffline.current && mounted.current && !recoveryInProgress.current) {
+      console.log("Network reconnected, checking authentication state");
+      
       // Check if we can attempt reconnection based on cooldown rules
       if (!canAttemptReconnection()) {
         console.log("Network reconnection throttled, skipping auth refresh");
         return;
       }
       
-      console.log("Network reconnected, checking authentication state");
+      // Set recovery flag to prevent multiple concurrent attempts
       recoveryInProgress.current = true;
       markReconnectionAttempt();
       
@@ -66,54 +83,66 @@ export const useNetworkAuth = ({
               const { data: sessionData } = await supabase.auth.getSession();
               if (sessionData?.session) {
                 console.log("Successfully retrieved session after network reconnection");
-                setSession(sessionData.session);
-                setUser(sessionData.session.user);
-                resetReconnectionAttempts(); // Successfully reconnected
+                if (mounted.current) {
+                  setSession(sessionData.session);
+                  setUser(sessionData.session.user);
+                  resetReconnectionAttempts(); // Successfully reconnected
+                }
               } else {
                 // No session found, clear state
                 console.log("No session found after network reconnection");
-                setSession(null);
-                setUser(null);
-                hasToastRef.current = false;
+                if (mounted.current) {
+                  setSession(null);
+                  setUser(null);
+                  hasToastRef.current = false;
+                }
               }
             } else if (data?.session) {
               console.log("Successfully refreshed session after network reconnection");
-              setSession(data.session);
-              setUser(data.session.user);
-              resetReconnectionAttempts(); // Successfully reconnected
+              if (mounted.current) {
+                setSession(data.session);
+                setUser(data.session.user);
+                resetReconnectionAttempts(); // Successfully reconnected
+              }
             }
           } else {
             // No existing session, check if there is one on the server
             const { data: sessionData } = await supabase.auth.getSession();
             if (sessionData?.session) {
               console.log("Found session after network reconnection");
-              setSession(sessionData.session);
-              setUser(sessionData.session.user);
-              resetReconnectionAttempts(); // Successfully reconnected
-              
-              // Show toast only once
-              if (!hasToastRef.current) {
-                toast.success("Reconnected and restored session");
-                hasToastRef.current = true;
+              if (mounted.current) {
+                setSession(sessionData.session);
+                setUser(sessionData.session.user);
+                resetReconnectionAttempts(); // Successfully reconnected
+                
+                // Show toast only once
+                if (!hasToastRef.current) {
+                  toast.success("Reconnected and restored session");
+                  hasToastRef.current = true;
+                }
               }
             }
           }
         } catch (error) {
           console.error("Error recovering session after network reconnection:", error);
         } finally {
+          // Reset the recovery flag only if we're still mounted
           if (mounted.current) {
             setLoading(false);
-            recoveryInProgress.current = false;
             authInitialized.current = true;
           }
+          // Always reset the progress flag to allow future recovery attempts
+          recoveryInProgress.current = false;
         }
       };
       
       recoverSession();
     }
     
-    // Update offline status for next comparison
-    wasOffline.current = !isOnline;
+    // Reset the offline flag after successful reconnection processing
+    if (isOnline) {
+      wasOffline.current = false;
+    }
   }, [
     isOnline, 
     session, 
