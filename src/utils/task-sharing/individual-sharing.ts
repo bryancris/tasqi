@@ -6,7 +6,8 @@ import { TaskData } from "./types";
 export async function shareWithIndividuals(
   taskData: TaskData,
   selectedUserIds: string[],
-  currentUserId: string
+  currentUserId: string,
+  initialStatus: string = 'pending'
 ) {
   const promises = selectedUserIds.map(async (userId) => {
     // Create shared task record
@@ -17,7 +18,7 @@ export async function shareWithIndividuals(
         shared_with_user_id: userId,
         shared_by_user_id: currentUserId,
         sharing_type: 'individual',
-        status: taskData.status === 'completed' ? 'completed' : 'pending'
+        status: initialStatus
       })
       .select()
       .single();
@@ -34,7 +35,7 @@ export async function shareWithIndividuals(
         task_id: taskData.id,
         assignee_id: userId,
         assigned_by_id: currentUserId,
-        status: taskData.status === 'completed' ? 'completed' : 'pending'
+        status: initialStatus
       });
 
     if (assignmentError) {

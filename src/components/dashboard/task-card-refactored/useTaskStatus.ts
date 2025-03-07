@@ -61,116 +61,53 @@ export function useTaskStatus(task: Task) {
       
       const userId = userData.user.id;
 
+      // UPDATED APPROACH: Use a transaction to ensure consistency
       let updateSuccess = false;
       
-      if (task.shared) {
-        console.log('Handling shared task completion for task:', task.title, task);
+      // First step: Always update the main task status directly
+      const { error: mainTaskError } = await supabase
+        .from('tasks')
+        .update({ 
+          status: newStatus,
+          completed_at: completedAt
+        })
+        .eq('id', task.id);
         
-        try {
-          // First, find the correct shared task record for this user
-          const userSharedTask = task.shared_tasks?.find(
-            st => st.shared_with_user_id === userId
-          );
+      if (mainTaskError) {
+        console.error('Error updating main task:', mainTaskError);
+        toast.error('Failed to update task status');
+        return false;
+      }
+      
+      // Second step: Handle shared task records
+      if (task.shared) {
+        console.log('Updating shared tasks for task:', task.id);
+        
+        // Update ALL shared task records to maintain consistency
+        const { error: allSharedTasksError } = await supabase
+          .from('shared_tasks')
+          .update({ 
+            status: newStatus === 'completed' ? 'completed' : 'pending'
+          })
+          .eq('task_id', task.id);
           
-          if (userSharedTask) {
-            console.log('Found shared task record:', userSharedTask);
-            
-            // 1. Update the shared task status
-            const { error: sharedUpdateError } = await supabase
-              .from('shared_tasks')
-              .update({ 
-                status: newStatus === 'completed' ? 'completed' : 'pending'
-              })
-              .eq('id', userSharedTask.id)
-              .eq('shared_with_user_id', userId);
-
-            if (sharedUpdateError) {
-              throw sharedUpdateError;
-            }
-            
-            // 2. IMPORTANT: Also update the main task record to maintain the completed state
-            // This is the key part that was missing before
-            const { error: taskUpdateError } = await supabase
-              .from('tasks')
-              .update({ 
-                status: newStatus,
-                completed_at: completedAt
-              })
-              .eq('id', task.id);
-              
-            if (taskUpdateError) {
-              throw taskUpdateError;
-            }
-            
-            updateSuccess = true;
-            console.log('Both shared task and main task updated successfully');
-          } else {
-            // Fallback for when we don't find the specific shared task
-            console.log('No specific shared task found, updating by task_id');
-            
-            // 1. Update shared_tasks table
-            const { error: fallbackSharedError } = await supabase
-              .from('shared_tasks')
-              .update({ 
-                status: newStatus === 'completed' ? 'completed' : 'pending'
-              })
-              .eq('task_id', task.id)
-              .eq('shared_with_user_id', userId);
-              
-            if (fallbackSharedError) {
-              throw fallbackSharedError;
-            }
-            
-            // 2. Update the main task record
-            const { error: fallbackTaskError } = await supabase
-              .from('tasks')
-              .update({ 
-                status: newStatus,
-                completed_at: completedAt
-              })
-              .eq('id', task.id);
-              
-            if (fallbackTaskError) {
-              throw fallbackTaskError;
-            }
-            
-            updateSuccess = true;
-            console.log('Task updated with fallback method successfully');
-          }
-        } catch (error) {
-          console.error('Error updating shared task:', error);
-          toast.error('Failed to update task status');
+        if (allSharedTasksError) {
+          console.error('Error updating all shared tasks:', allSharedTasksError);
+          toast.error('Failed to synchronize shared status');
           return false;
         }
+        
+        updateSuccess = true;
+        console.log('Successfully updated main task and all shared tasks');
       } else {
-        console.log('Updating owned task');
-        // Update the main task record directly for tasks the user owns
-        try {
-          const { error: updateError } = await supabase
-            .from('tasks')
-            .update({ 
-              status: newStatus,
-              completed_at: completedAt
-            })
-            .eq('id', task.id);
-
-          if (updateError) {
-            throw updateError;
-          }
-          
-          updateSuccess = true;
-          console.log('Task updated successfully');
-        } catch (error) {
-          console.error('Error updating task:', error);
-          toast.error('Failed to update task status');
-          return false;
-        }
+        updateSuccess = true;
+        console.log('Successfully updated non-shared task');
       }
 
       if (updateSuccess) {
         toast.success(newStatus === 'completed' ? 'Task completed' : 'Task uncompleted');
         
-        // Trigger a fast refresh for related queries
+        // Trigger a fast refresh for related queries with a short delay
         invalidateTasks(100);
       }
 

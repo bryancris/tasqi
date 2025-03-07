@@ -16,7 +16,7 @@ export async function shareTask({
     // Get the task's current status to preserve it, now selecting all required fields
     const { data: taskData, error: taskError } = await supabase
       .from('tasks')
-      .select('id, title, description, status, date, start_time, end_time, priority, position, user_id, owner_id')
+      .select('id, title, description, status, date, start_time, end_time, priority, position, user_id, owner_id, completed_at')
       .eq('id', taskId)
       .single();
 
@@ -31,6 +31,10 @@ export async function shareTask({
       console.warn('Invalid priority value:', taskData.priority);
     }
 
+    // Get the current completed status to ensure we share the correct status
+    const isCompleted = taskData.status === 'completed';
+    const sharedTaskStatus = isCompleted ? 'completed' : 'pending';
+
     // Ensure the task data has the correct status type
     const validatedTaskData: TaskData = {
       ...taskData,
@@ -40,7 +44,7 @@ export async function shareTask({
 
     // Share based on type
     if (sharingType === 'individual') {
-      const results = await shareWithIndividuals(validatedTaskData, selectedUserIds, currentUserId);
+      const results = await shareWithIndividuals(validatedTaskData, selectedUserIds, currentUserId, sharedTaskStatus);
       const errors = results.filter(result => !result);
 
       if (errors.length > 0) {
@@ -55,7 +59,7 @@ export async function shareTask({
         toast.success(`Task shared with ${selectedUserIds.length} users`);
       }
     } else {
-      await shareWithGroup(validatedTaskData, selectedGroupId, currentUserId);
+      await shareWithGroup(validatedTaskData, selectedGroupId, currentUserId, sharedTaskStatus);
       toast.success('Task shared with group successfully');
     }
 
@@ -63,12 +67,7 @@ export async function shareTask({
     const { error: updateError } = await supabase
       .from('tasks')
       .update({ 
-        shared: true,
-        status: validatedTaskData.status,
-        date: validatedTaskData.date,
-        start_time: validatedTaskData.start_time,
-        end_time: validatedTaskData.end_time,
-        priority: validatedTaskData.priority
+        shared: true
       })
       .eq('id', taskId);
 

@@ -41,8 +41,7 @@ export function useTasks() {
     }
 
     console.log('Fetched owned tasks:', ownedTasks?.length || 0);
-    console.log('First owned task shared_tasks:', ownedTasks?.[0]?.shared_tasks);
-
+    
     // Then get tasks shared with the user - fetch fully joined data
     const { data: sharedWithUserTasks, error: sharedTasksError } = await supabase
       .from('shared_tasks')
@@ -64,22 +63,31 @@ export function useTasks() {
     }
 
     console.log('Fetched shared tasks:', sharedWithUserTasks?.length || 0);
-    if (sharedWithUserTasks?.length > 0) {
-      console.log('Sample shared task:', sharedWithUserTasks[0]);
-    }
-
+    
     // Process shared tasks to match the Task interface
     const processedSharedTasks = sharedWithUserTasks
       .filter(st => st.task) // Filter out null tasks
       .map(sharedTask => {
         const task = sharedTask.task;
         
+        // IMPORTANT: For shared tasks, we need to determine the status from the shared_task record
+        // This is the source of truth for this user's view of the task
+        let effectiveStatus: Task['status'];
+        
+        // Use the shared_task status as the source of truth
+        if (sharedTask.status === 'completed') {
+          effectiveStatus = 'completed';
+        } else {
+          // If not completed, use the appropriate scheduled/unscheduled status
+          effectiveStatus = task.date ? 'scheduled' : 'unscheduled';
+        }
+        
         // Ensure all required properties have default values
         const processedTask = {
           ...task,
           // Required properties with defaults
           assignees: task.assignees || [],
-          completed_at: task.completed_at || null,
+          completed_at: effectiveStatus === 'completed' ? (task.completed_at || new Date().toISOString()) : null,
           created_at: task.created_at || new Date().toISOString(),
           date: task.date || null,
           description: task.description || null,
@@ -96,9 +104,8 @@ export function useTasks() {
           updated_at: task.updated_at || new Date().toISOString(),
           // Set shared flag
           shared: true,
-          // Use the status from shared_tasks for shared tasks since that's the authoritative status for this user
-          status: sharedTask.status === 'completed' ? 'completed' : 
-                  (task.date ? 'scheduled' : 'unscheduled'),
+          // Use the effective status based on shared_task status
+          status: effectiveStatus,
           // Ensure shared_tasks is an array containing at least this sharing reference
           shared_tasks: task.shared_tasks && task.shared_tasks.length > 0 
             ? task.shared_tasks 
@@ -150,15 +157,6 @@ export function useTasks() {
     });
 
     console.log('Total tasks after processing:', allTasks.length);
-    
-    // Validate shared tasks data
-    const sharedTasksCount = allTasks.filter(task => task.shared).length;
-    console.log(`Found ${sharedTasksCount} tasks with shared=true`);
-    
-    const tasksWithSharedTasksArray = allTasks.filter(task => 
-      task.shared_tasks && Array.isArray(task.shared_tasks) && task.shared_tasks.length > 0
-    ).length;
-    console.log(`Found ${tasksWithSharedTasksArray} tasks with non-empty shared_tasks array`);
     
     return allTasks as Task[];
   };

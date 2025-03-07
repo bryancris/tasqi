@@ -6,7 +6,8 @@ import { TaskData } from "./types";
 export async function shareWithGroup(
   taskData: TaskData,
   groupId: string,
-  currentUserId: string
+  currentUserId: string,
+  initialStatus: string = 'pending'
 ) {
   const parsedGroupId = parseInt(groupId, 10);
 
@@ -18,7 +19,7 @@ export async function shareWithGroup(
       group_id: parsedGroupId,
       shared_by_user_id: currentUserId,
       sharing_type: 'group',
-      status: taskData.status === 'completed' ? 'completed' : 'pending'
+      status: initialStatus
     })
     .select()
     .single();
@@ -48,7 +49,7 @@ export async function shareWithGroup(
           task_id: taskData.id,
           assignee_id: member.trusted_user_id,
           assigned_by_id: currentUserId,
-          status: taskData.status === 'completed' ? 'completed' : 'pending'
+          status: initialStatus
         });
 
       if (assignmentError) {
