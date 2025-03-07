@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 
@@ -43,7 +42,7 @@ export function useAppUpdate() {
 
     let cleanup: (() => void) | undefined;
 
-    // Check if broadcast channel is supported and set up appropriate listeners
+    // Use explicit type checking for each branch to keep TypeScript happy
     if ('BroadcastChannel' in window) {
       try {
         const broadcastChannel = new BroadcastChannel('sw-updates');
@@ -55,14 +54,12 @@ export function useAppUpdate() {
         };
       } catch (error) {
         console.error('Error with BroadcastChannel:', error);
-        // Fallback within BroadcastChannel support branch
-        if (typeof window !== 'undefined') {
-          window.addEventListener('message', handleSWMessage);
-          cleanup = () => window.removeEventListener('message', handleSWMessage);
-        }
+        // Fallback to window event listener if BroadcastChannel fails
+        window.addEventListener('message', handleSWMessage);
+        cleanup = () => window.removeEventListener('message', handleSWMessage);
       }
-    } else if (typeof window !== 'undefined') {
-      // Separate fallback for browsers without BroadcastChannel
+    } else {
+      // Fallback for browsers without BroadcastChannel support
       window.addEventListener('message', handleSWMessage);
       cleanup = () => window.removeEventListener('message', handleSWMessage);
     }
