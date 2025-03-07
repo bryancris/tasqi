@@ -35,11 +35,11 @@ export function useEmailSignIn() {
       // If we got here, authentication succeeded
       toast.success("Sign in successful");
 
-      // Set the auth success flag as a backup in case the session context isn't updated
+      // Set the auth success flag
       window.localStorage.setItem('auth_success', 'true');
       console.log("Auth success flag set in localStorage");
       
-      // For extra safety - ensure the session is explicitly set and refreshed
+      // For extra safety - ensure the session is explicitly set
       if (data.session) {
         // First, ensure the session is properly stored by explicitly setting it
         await supabase.auth.setSession({
@@ -47,10 +47,24 @@ export function useEmailSignIn() {
           refresh_token: data.session.refresh_token
         });
         
-        // Redirect with a slight delay to allow auth context to update
-        setTimeout(() => {
+        // Add a small delay to allow Supabase to process the auth state change
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // Redirect to dashboard
+        navigate("/dashboard", { replace: true });
+      } else {
+        // This should rarely happen but just in case
+        console.warn("Sign in successful but no session provided by Supabase");
+        
+        // Try to get the session
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData?.session) {
           navigate("/dashboard", { replace: true });
-        }, 300);
+        } else {
+          // Last resort - navigate but display a message
+          navigate("/dashboard", { replace: true });
+          toast.warning("Authentication state uncertain. You may need to sign in again if you see any issues.");
+        }
       }
       
       return true;

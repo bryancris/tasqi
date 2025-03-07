@@ -12,10 +12,12 @@ import { Spinner } from "@/components/ui/spinner";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Auth = () => {
   const [activeTab, setActiveTab] = useState("signin");
   const [showReset, setShowReset] = useState(false);
+  const [isManualChecking, setIsManualChecking] = useState(false);
   const { session, loading, initialized, error } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -33,6 +35,43 @@ const Auth = () => {
     });
   }, [session, loading, initialized, location.pathname]);
   
+  // Add a timeout to force progress if we're stuck loading
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    
+    if (loading && !isManualChecking) {
+      timeoutId = setTimeout(() => {
+        console.log("Auth page: Loading timed out, manually checking session");
+        setIsManualChecking(true);
+        
+        // Manually check session
+        const checkSession = async () => {
+          try {
+            const { data } = await supabase.auth.getSession();
+            
+            if (data?.session) {
+              console.log("Auth page: Manual check found session, redirecting");
+              navigate("/dashboard", { replace: true });
+            } else {
+              console.log("Auth page: Manual check found no session");
+              // Just let the user see the login screen
+              setIsManualChecking(false);
+            }
+          } catch (error) {
+            console.error("Auth page: Manual session check failed", error);
+            setIsManualChecking(false);
+          }
+        };
+        
+        checkSession();
+      }, 3000); // 3 seconds timeout
+    }
+    
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [loading, navigate, isManualChecking]);
+  
   // If we have a confirmed session, redirect to dashboard
   useEffect(() => {
     if (initialized && !loading && session) {
@@ -42,7 +81,7 @@ const Auth = () => {
   }, [session, navigate, initialized, loading]);
 
   // If still loading auth state, show loading indicator
-  if ((loading && !initialized) || (initialized && session)) {
+  if ((loading && !isManualChecking) || (initialized && session)) {
     return (
       <div className="min-h-screen bg-[#1a1b3b] flex items-center justify-center p-4">
         <div className="flex flex-col items-center gap-3">

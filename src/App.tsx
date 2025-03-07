@@ -15,6 +15,7 @@ import Chat from './pages/Chat';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Toaster } from './components/ui/sonner';
 import { memo } from 'react';
+import { AuthProvider } from './contexts/auth';
 
 // Memoize the DashboardLayout component to prevent unnecessary re-renders
 const MemoizedDashboardLayout = memo(DashboardLayout);
@@ -26,49 +27,51 @@ function App() {
 
   return (
     <BrowserRouter>
-      <Toaster />
-      <CalendarViewProvider>
-        <DragDropContext onDragEnd={onDragEnd}>
-          <div className="app">
-            <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/auth/update-password" element={<Auth />} />
-              
-              {/* All protected routes use the ProtectedRoute component */}
-              <Route element={<ProtectedRoute />}>
-                {/* Routes with DashboardLayout */}
-                <Route 
-                  element={
-                    <MemoizedDashboardLayout>
-                      <Outlet />
-                    </MemoizedDashboardLayout>
-                  }
-                >
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/dashboard/notes" element={<Notes />} />
-                  <Route path="/dashboard/settings" element={<Settings />} />
-                  <Route path="/dashboard/analytics" element={<Analytics />} />
-                  <Route path="/dashboard/self-care" element={<SelfCare />} />
-                  <Route path="/dashboard/tasks" element={<Dashboard />} />
-                  <Route path="/dashboard/week" element={<Dashboard />} />
-                  <Route path="/dashboard/monthly" element={<Dashboard />} />
-                  <Route path="/dashboard/yearly" element={<Dashboard />} />
+      <AuthProvider>
+        <Toaster />
+        <CalendarViewProvider>
+          <DragDropContext onDragEnd={onDragEnd}>
+            <div className="app">
+              <Routes>
+                {/* Public routes */}
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/auth/update-password" element={<Auth />} />
+                
+                {/* All protected routes use the ProtectedRoute component */}
+                <Route element={<ProtectedRoute />}>
+                  {/* Routes with DashboardLayout */}
+                  <Route 
+                    element={
+                      <MemoizedDashboardLayout>
+                        <Outlet />
+                      </MemoizedDashboardLayout>
+                    }
+                  >
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/dashboard/notes" element={<Notes />} />
+                    <Route path="/dashboard/settings" element={<Settings />} />
+                    <Route path="/dashboard/analytics" element={<Analytics />} />
+                    <Route path="/dashboard/self-care" element={<SelfCare />} />
+                    <Route path="/dashboard/tasks" element={<Dashboard />} />
+                    <Route path="/dashboard/week" element={<Dashboard />} />
+                    <Route path="/dashboard/monthly" element={<Dashboard />} />
+                    <Route path="/dashboard/yearly" element={<Dashboard />} />
+                  </Route>
+                  
+                  {/* Standalone protected routes */}
+                  <Route path="/notes" element={<Notes />} />
+                  <Route path="/chat" element={<Chat />} />
+                  <Route path="/dashboard/chat" element={<Chat />} />
                 </Route>
                 
-                {/* Standalone protected routes */}
-                <Route path="/notes" element={<Notes />} />
-                <Route path="/chat" element={<Chat />} />
-                <Route path="/dashboard/chat" element={<Chat />} />
-              </Route>
-              
-              {/* Fallback route */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </div>
-        </DragDropContext>
-      </CalendarViewProvider>
+                {/* Fallback route */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </div>
+          </DragDropContext>
+        </CalendarViewProvider>
+      </AuthProvider>
     </BrowserRouter>
   );
 }
