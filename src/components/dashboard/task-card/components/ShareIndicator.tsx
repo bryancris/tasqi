@@ -77,7 +77,10 @@ function ShareIndicatorComponent({ task, assignmentInfo }: ShareIndicatorProps) 
     return "Shared task";
   };
 
-  const handleShareIndicatorClick = () => {
+  const handleShareIndicatorClick = (e: React.MouseEvent) => {
+    // Stop propagation to prevent opening the task edit drawer
+    e.stopPropagation();
+    
     if (isMobile) {
       setShowSharingInfo(true);
     }

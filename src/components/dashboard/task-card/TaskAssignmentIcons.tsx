@@ -39,7 +39,10 @@ export function TaskAssignmentIcons({ task, assignmentInfo }: TaskAssignmentIcon
   const isGroupTask = task.shared_tasks?.some(st => st.sharing_type === 'group');
   
   // Helper to handle click or hover based on device
-  const handleInteraction = () => {
+  const handleInteraction = (e: React.MouseEvent) => {
+    // Stop propagation to prevent opening the task edit drawer
+    e.stopPropagation();
+    
     if (isMobile) {
       setShowSharingInfo(true);
     }
