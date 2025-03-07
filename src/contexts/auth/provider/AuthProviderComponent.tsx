@@ -17,7 +17,10 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
   // Refs
   const mounted = useRef(true);
   const hasToastRef = useRef(false);
-  const authSubscription = useRef<{ unsubscribe: () => void } | null>(null);
+  const authStateSubscription = useRef<{ unsubscribe: () => void } | null>(null);
+  const authCheckInProgress = useRef(false);
+  const lastAuthEventTime = useRef(Date.now());
+  const authEventThrottleMs = 300; // Throttle rapidly firing auth events
   
   // Network status
   const { isOnline } = useNetworkDetection();
@@ -39,9 +42,56 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  // Helper for safely updating auth state
+  const updateAuthState = (newSession: Session | null) => {
+    // Don't update if component unmounted
+    if (!mounted.current) return;
+
+    const now = Date.now();
+    
+    // Throttle rapid updates (prevent race conditions)
+    if (now - lastAuthEventTime.current < authEventThrottleMs) {
+      // Queue update after throttle period
+      setTimeout(() => updateAuthState(newSession), authEventThrottleMs);
+      return;
+    }
+    
+    lastAuthEventTime.current = now;
+    
+    if (newSession) {
+      console.log("Updating auth state with session");
+      setSession(newSession);
+      setUser(newSession.user);
+      
+      // Show success toast only once
+      if (!hasToastRef.current) {
+        toast.success("Successfully signed in", {
+          id: "auth-success",
+          duration: 3000,
+        });
+        hasToastRef.current = true;
+        // Store success flag in localStorage as backup
+        window.localStorage.setItem('auth_success', 'true');
+      }
+    } else {
+      setSession(null);
+      setUser(null);
+      // Only clear flag if explicitly clearing session
+      hasToastRef.current = false;
+      window.localStorage.removeItem('auth_success');
+    }
+    
+    setLoading(false);
+    setInitialized(true);
+  };
+
   // Initialize auth once on mount
   useEffect(() => {
     console.log("Auth provider initializing");
+    
+    // Prevent multiple simultaneous checks
+    if (authCheckInProgress.current) return;
+    authCheckInProgress.current = true;
     
     // Set up auth state subscription
     const setupAuth = async () => {
@@ -54,53 +104,41 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
           setAuthError(sessionError);
           setLoading(false);
           setInitialized(true);
+          authCheckInProgress.current = false;
           return;
         }
         
         // Update state with session if it exists
         if (sessionData?.session) {
           console.log("Found existing session during initialization");
-          setSession(sessionData.session);
-          setUser(sessionData.session.user);
-          
-          // Show success toast (only once)
-          if (!hasToastRef.current) {
-            toast.success("Successfully signed in", {
-              id: "auth-success",
-              duration: 3000,
-            });
-            hasToastRef.current = true;
-          }
+          updateAuthState(sessionData.session);
         } else {
           console.log("No session found during initialization");
           // Check if we have the auth success flag but no session
           const authSuccess = window.localStorage.getItem('auth_success');
+          
           if (authSuccess === 'true') {
             console.log("Auth success flag found but no session during initialization, refreshing");
             // Try to refresh the session one more time
-            const { data: refreshData } = await supabase.auth.refreshSession();
-            if (refreshData?.session) {
+            const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+            
+            if (refreshError) {
+              console.error("Error refreshing session:", refreshError);
+              // Clear invalid auth state
+              window.localStorage.removeItem('auth_success');
+              updateAuthState(null);
+            } else if (refreshData?.session) {
               console.log("Found session after refresh attempt");
-              setSession(refreshData.session);
-              setUser(refreshData.session.user);
-              
-              if (!hasToastRef.current) {
-                toast.success("Successfully signed in", {
-                  id: "auth-success",
-                  duration: 3000,
-                });
-                hasToastRef.current = true;
-              }
+              updateAuthState(refreshData.session);
             } else {
               // If still no session, remove the flag
               window.localStorage.removeItem('auth_success');
+              updateAuthState(null);
             }
+          } else {
+            updateAuthState(null);
           }
         }
-        
-        // Complete initialization regardless of session existence
-        setLoading(false);
-        setInitialized(true);
         
         // Set up auth state change listener
         const { data } = supabase.auth.onAuthStateChange((event, newSession) => {
@@ -109,33 +147,16 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
           if (!mounted.current) return;
           
           if (event === 'SIGNED_OUT') {
-            setSession(null);
-            setUser(null);
-            hasToastRef.current = false;
-            window.localStorage.removeItem('auth_success');
+            updateAuthState(null);
           } 
           else if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') && newSession) {
             console.log("Setting session from auth state change", event);
-            
-            // Add a safety flag to localStorage in case we lose context
-            window.localStorage.setItem('auth_success', 'true');
-            
-            setSession(newSession);
-            setUser(newSession.user);
-            
-            // Show success toast (only once)
-            if (!hasToastRef.current && event === 'SIGNED_IN') {
-              toast.success("Successfully signed in", {
-                id: "auth-success",
-                duration: 3000,
-              });
-              hasToastRef.current = true;
-            }
+            updateAuthState(newSession);
           }
         });
         
         // Store subscription for cleanup
-        authSubscription.current = data.subscription;
+        authStateSubscription.current = data.subscription;
         
       } catch (error) {
         console.error("Error setting up auth:", error);
@@ -144,6 +165,8 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
         }
         setLoading(false);
         setInitialized(true);
+      } finally {
+        authCheckInProgress.current = false;
       }
     };
     
@@ -154,9 +177,9 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
     return () => {
       mounted.current = false;
       
-      if (authSubscription.current) {
+      if (authStateSubscription.current) {
         console.log("Cleaning up auth subscription");
-        authSubscription.current.unsubscribe();
+        authStateSubscription.current.unsubscribe();
       }
     };
   }, []);
@@ -168,21 +191,24 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
       console.log("Network reconnected, refreshing auth state");
       const refreshSession = async () => {
         try {
+          // Prevent multiple refreshes
+          if (authCheckInProgress.current) return;
+          authCheckInProgress.current = true;
+          
           const { data, error } = await supabase.auth.getSession();
           if (error) throw error;
           
           if (data.session) {
-            setSession(data.session);
-            setUser(data.session.user);
+            updateAuthState(data.session);
           } else {
             // Session lost
-            setSession(null);
-            setUser(null);
-            hasToastRef.current = false;
-            window.localStorage.removeItem('auth_success');
+            updateAuthState(null);
           }
         } catch (error) {
           console.error("Error refreshing session after reconnect:", error);
+          // Don't clear auth state on temporary errors
+        } finally {
+          authCheckInProgress.current = false;
         }
       };
       

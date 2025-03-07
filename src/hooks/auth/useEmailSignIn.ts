@@ -35,37 +35,22 @@ export function useEmailSignIn() {
       // If we got here, authentication succeeded
       toast.success("Sign in successful");
 
-      // Use a more reliable approach for session handling
+      // Set the auth success flag as a backup in case the session context isn't updated
+      window.localStorage.setItem('auth_success', 'true');
+      console.log("Auth success flag set in localStorage");
+      
+      // For extra safety - ensure the session is explicitly set and refreshed
       if (data.session) {
-        // Store sign-in success in localStorage to help with potential state loss
-        window.localStorage.setItem('auth_success', 'true');
-        console.log("Auth success flag set in localStorage");
-        
         // First, ensure the session is properly stored by explicitly setting it
         await supabase.auth.setSession({
           access_token: data.session.access_token,
           refresh_token: data.session.refresh_token
         });
         
-        // Then force a refresh to ensure state is consistent
-        await supabase.auth.refreshSession();
-        
-        // Redirect with a delay to allow context to update
-        console.log("Sign in successful, redirecting to dashboard");
-        
-        // Attempt to redirect multiple times with increasing delays
-        // to ensure navigation happens after auth context is updated
+        // Redirect with a slight delay to allow auth context to update
         setTimeout(() => {
           navigate("/dashboard", { replace: true });
-        }, 100);
-        
-        setTimeout(() => {
-          // Check if we're still on the auth page (indicating first redirect failed)
-          if (window.location.pathname.includes('/auth')) {
-            console.log("First redirect attempt may have failed, trying again");
-            navigate("/dashboard", { replace: true });
-          }
-        }, 500);
+        }, 300);
       }
       
       return true;
@@ -76,7 +61,6 @@ export function useEmailSignIn() {
       toast.error(error.message || "Sign in failed. Please try again.");
       return false;
     } finally {
-      // Important: Always reset loading state, even on success
       setIsLoading(false);
     }
   };
