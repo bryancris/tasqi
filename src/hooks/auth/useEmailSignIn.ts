@@ -35,21 +35,37 @@ export function useEmailSignIn() {
       // If we got here, authentication succeeded
       toast.success("Sign in successful");
 
-      // Store sign-in success in localStorage to help with potential state loss
+      // Use a more reliable approach for session handling
       if (data.session) {
+        // Store sign-in success in localStorage to help with potential state loss
         window.localStorage.setItem('auth_success', 'true');
         console.log("Auth success flag set in localStorage");
         
-        // Force a redirect to dashboard after successful sign-in
-        console.log("Sign in successful, redirecting to dashboard");
+        // First, ensure the session is properly stored by explicitly setting it
+        await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token
+        });
         
-        // First, try refreshing the session to ensure it's properly stored
+        // Then force a refresh to ensure state is consistent
         await supabase.auth.refreshSession();
         
-        // Then redirect with a small delay to allow context to update
+        // Redirect with a delay to allow context to update
+        console.log("Sign in successful, redirecting to dashboard");
+        
+        // Attempt to redirect multiple times with increasing delays
+        // to ensure navigation happens after auth context is updated
         setTimeout(() => {
           navigate("/dashboard", { replace: true });
-        }, 800); // Increased delay to give auth context more time to update
+        }, 100);
+        
+        setTimeout(() => {
+          // Check if we're still on the auth page (indicating first redirect failed)
+          if (window.location.pathname.includes('/auth')) {
+            console.log("First redirect attempt may have failed, trying again");
+            navigate("/dashboard", { replace: true });
+          }
+        }, 500);
       }
       
       return true;

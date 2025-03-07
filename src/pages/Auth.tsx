@@ -12,11 +12,12 @@ import { Spinner } from "@/components/ui/spinner";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client"; // Added missing import
+import { supabase } from "@/integrations/supabase/client";
 
 const Auth = () => {
   const [activeTab, setActiveTab] = useState("signin");
   const [showReset, setShowReset] = useState(false);
+  const [isCheckingSession, setIsCheckingSession] = useState(false);
   const { session, loading, initialized, error } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -26,33 +27,53 @@ const Auth = () => {
   
   // For debugging
   useEffect(() => {
-    console.log("Auth component state:", { 
+    console.log("Auth component initial state:", { 
       hasSession: !!session, 
       loading, 
       initialized,
       path: location.pathname
     });
     
-    // Check for auth success flag from localStorage
+    // Check for auth success flag from localStorage immediately on mount
     const authSuccess = window.localStorage.getItem('auth_success');
-    if (authSuccess === 'true' && !session && initialized) {
-      console.log("Auth success flag found in localStorage but no session in context");
-      // We'll remove the flag to prevent loops
-      window.localStorage.removeItem('auth_success');
+    if (authSuccess === 'true' && !session && initialized && !isCheckingSession) {
+      console.log("Auth success flag found, forcing session check");
+      setIsCheckingSession(true);
       
-      // Force a session refresh
+      // Force a session refresh with a more robust approach
       const checkSession = async () => {
-        console.log("Manually checking session after finding auth_success flag");
-        const { data } = await supabase.auth.getSession();
-        if (data.session) {
-          console.log("Found session after manual check, redirecting");
-          navigate("/dashboard", { replace: true });
+        try {
+          console.log("Performing thorough session check");
+          
+          // First try refreshing the session
+          const refreshResult = await supabase.auth.refreshSession();
+          console.log("Session refresh result:", refreshResult.data.session ? "Session found" : "No session");
+          
+          // Then get current session
+          const { data } = await supabase.auth.getSession();
+          
+          if (data.session) {
+            console.log("Found valid session after check, redirecting to dashboard");
+            window.localStorage.removeItem('auth_success');
+            
+            // Add a small delay to ensure context is updated
+            setTimeout(() => {
+              navigate("/dashboard", { replace: true });
+            }, 200);
+          } else {
+            console.log("No session found after thorough check");
+            window.localStorage.removeItem('auth_success');
+          }
+        } catch (err) {
+          console.error("Error checking session:", err);
+        } finally {
+          setIsCheckingSession(false);
         }
       };
       
       checkSession();
     }
-  }, [session, loading, initialized, location.pathname, navigate]);
+  }, [session, loading, initialized, location.pathname, navigate, isCheckingSession]);
   
   // If we have a confirmed session, redirect to dashboard
   useEffect(() => {
@@ -62,8 +83,8 @@ const Auth = () => {
     }
   }, [session, navigate]);
 
-  // If still loading auth state, show loading indicator
-  if (loading && !initialized) {
+  // If still loading auth state or checking session, show loading indicator
+  if ((loading && !initialized) || isCheckingSession) {
     return (
       <div className="min-h-screen bg-[#1a1b3b] flex items-center justify-center p-4">
         <div className="flex flex-col items-center gap-3">

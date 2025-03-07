@@ -13,13 +13,15 @@ import SelfCare from './pages/SelfCare';
 import Chat from './pages/Chat';
 import { useAuth } from './contexts/auth';
 import { Spinner } from './components/ui/spinner';
-import { memo, useEffect } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { Toaster } from './components/ui/sonner';
 import { supabase } from './integrations/supabase/client';
 
 const ProtectedRoute = memo(({ children }: { children: React.ReactNode }) => {
   const { session, loading, initialized } = useAuth();
   const location = useLocation();
+  const [isCheckingSession, setIsCheckingSession] = useState(false);
+  const [hasSession, setHasSession] = useState<boolean | null>(null);
   
   // Debug logging
   useEffect(() => {
@@ -27,22 +29,48 @@ const ProtectedRoute = memo(({ children }: { children: React.ReactNode }) => {
       hasSession: !!session, 
       loading, 
       initialized, 
-      path: location.pathname 
+      path: location.pathname,
+      isCheckingSession
     });
     
-    // Check for auth success flag from localStorage if we don't have a session
-    if (!session && initialized && !loading) {
+    // If we don't have a session in context but auth is initialized and not loading
+    if (!session && initialized && !loading && !isCheckingSession) {
       const authSuccess = window.localStorage.getItem('auth_success');
+      
+      // If we have the auth_success flag, perform a manual session check
       if (authSuccess === 'true') {
         console.log("Auth success flag found but no session in context");
-        // Try to refresh the session
+        setIsCheckingSession(true);
+        
         const checkSession = async () => {
-          console.log("Manually checking session in ProtectedRoute");
-          const { data } = await supabase.auth.getSession();
-          if (data.session) {
-            console.log("Found session after manual check in ProtectedRoute");
-            // We'll keep the flag until we actually have a session in context
-          } else {
+          try {
+            console.log("Manually checking session in ProtectedRoute");
+            
+            // Try to refresh the session first
+            const refreshResult = await supabase.auth.refreshSession();
+            
+            // Then get the current session
+            const { data } = await supabase.auth.getSession();
+            
+            if (data.session || refreshResult.data.session) {
+              console.log("Found session after manual check in ProtectedRoute");
+              setHasSession(true);
+              
+              // Keep the flag for context to pick up, it will be removed when context updates
+              setTimeout(() => {
+                console.log("Found session after manual check, redirecting");
+                setIsCheckingSession(false);
+              }, 100);
+            } else {
+              console.log("No session found after manual check in ProtectedRoute");
+              window.localStorage.removeItem('auth_success');
+              setHasSession(false);
+              setIsCheckingSession(false);
+            }
+          } catch (err) {
+            console.error("Error checking session in ProtectedRoute:", err);
+            setHasSession(false);
+            setIsCheckingSession(false);
             window.localStorage.removeItem('auth_success');
           }
         };
@@ -50,24 +78,26 @@ const ProtectedRoute = memo(({ children }: { children: React.ReactNode }) => {
         checkSession();
       }
     }
-  }, [session, loading, initialized, location.pathname]);
+  }, [session, loading, initialized, location.pathname, isCheckingSession]);
   
-  // Show loading state if not yet fully initialized
-  if (loading && !initialized) {
+  // Show loading state if not yet fully initialized or checking session
+  if ((loading && !initialized) || isCheckingSession) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-[#1a1b3b]">
         <Spinner className="h-8 w-8 text-primary" />
-        <p className="mt-4 text-sm text-gray-300">Loading your account...</p>
+        <p className="mt-4 text-sm text-gray-300">Verifying your account...</p>
       </div>
     );
   }
   
-  if (!session) {
-    console.log("No session found, redirecting to auth page");
-    return <Navigate to="/auth" replace state={{ from: location }} />;
+  // Allow access if we have a session in context or we found one manually
+  if (session || hasSession === true) {
+    return <>{children}</>;
   }
-
-  return <>{children}</>;
+  
+  // Otherwise redirect to auth
+  console.log("No session found, redirecting to auth page");
+  return <Navigate to="/auth" replace state={{ from: location }} />;
 });
 
 const AuthRoute = memo(({ children }: { children: React.ReactNode }) => {
