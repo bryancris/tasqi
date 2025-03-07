@@ -89,7 +89,7 @@ export const useAuthInitialization = ({
     isDevelopment: isDevMode.current
   });
 
-  // Use network reconnection hook
+  // Use network reconnection hook with fixed parameter structure
   useNetworkAuth({
     isOnline,
     session,
