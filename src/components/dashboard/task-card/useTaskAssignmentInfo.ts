@@ -52,11 +52,17 @@ export function useTaskAssignmentInfo(task: Task): TaskAssignmentInfo {
     };
 
     const checkSharedTaskInfo = async () => {
-      if (task.shared) {
-        console.log("Checking shared task info for task:", task.id, task.title, task);
+      // Debug logging
+      console.log(`Checking sharing info for task ${task.id} - "${task.title}"`);
+      console.log(`Task shared flag: ${task.shared}`);
+      console.log(`Task shared_tasks:`, task.shared_tasks);
+      
+      // Check if task has shared flag or shared_tasks array
+      if (task.shared || (task.shared_tasks && task.shared_tasks.length > 0)) {
+        console.log("Task has sharing information:", task.id, task.title);
         
-        // Check if shared_tasks is available in the task object
-        if (task.shared_tasks && task.shared_tasks.length > 0) {
+        // Check if shared_tasks is available and is an array in the task object
+        if (Array.isArray(task.shared_tasks) && task.shared_tasks.length > 0) {
           console.log("Using shared_tasks from task object:", task.shared_tasks);
           
           // Check if current user shared this task with someone
@@ -108,8 +114,8 @@ export function useTaskAssignmentInfo(task: Task): TaskAssignmentInfo {
           return;
         }
         
-        // If shared_tasks not available in the task object, query the database
-        console.log("No shared_tasks in task object, querying database");
+        // If shared_tasks not available or not an array in the task object, query the database
+        console.log("No valid shared_tasks in task object, querying database");
         
         const { data: sharedTasks } = await supabase
           .from('shared_tasks')

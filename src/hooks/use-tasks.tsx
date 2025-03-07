@@ -22,7 +22,7 @@ export function useTasks() {
       throw new Error('User not authenticated');
     }
     
-    // First get tasks owned by user
+    // First get tasks owned by user with explicit inclusion of shared_tasks
     const { data: ownedTasks, error: tasksError } = await supabase
       .from('tasks')
       .select(`
@@ -41,8 +41,9 @@ export function useTasks() {
     }
 
     console.log('Fetched owned tasks:', ownedTasks?.length || 0);
+    console.log('First owned task shared_tasks:', ownedTasks?.[0]?.shared_tasks);
 
-    // Then get tasks shared with the user
+    // Then get tasks shared with the user - fetch fully joined data
     const { data: sharedWithUserTasks, error: sharedTasksError } = await supabase
       .from('shared_tasks')
       .select(`
@@ -50,7 +51,8 @@ export function useTasks() {
         task:tasks(
           *,
           assignments:task_assignments(*),
-          task_attachments(*)
+          task_attachments(*),
+          shared_tasks(*)
         )
       `)
       .eq('shared_with_user_id', userId);
@@ -62,6 +64,9 @@ export function useTasks() {
     }
 
     console.log('Fetched shared tasks:', sharedWithUserTasks?.length || 0);
+    if (sharedWithUserTasks?.length > 0) {
+      console.log('Sample shared task:', sharedWithUserTasks[0]);
+    }
 
     // Process shared tasks to match the Task interface
     const processedSharedTasks = sharedWithUserTasks
@@ -89,13 +94,15 @@ export function useTasks() {
           start_time: task.start_time || null,
           time_spent: task.time_spent || 0,
           updated_at: task.updated_at || new Date().toISOString(),
-          // Custom property for shared tasks
+          // Set shared flag
           shared: true,
           // Use the status from shared_tasks for shared tasks since that's the authoritative status for this user
           status: sharedTask.status === 'completed' ? 'completed' : 
                   (task.date ? 'scheduled' : 'unscheduled'),
-          // Include the shared_tasks record for reference
-          shared_tasks: [sharedTask]
+          // Ensure shared_tasks is an array containing at least this sharing reference
+          shared_tasks: task.shared_tasks && task.shared_tasks.length > 0 
+            ? task.shared_tasks 
+            : [sharedTask]
         };
 
         return processedTask as Task;
@@ -103,6 +110,11 @@ export function useTasks() {
 
     // Process owned tasks to ensure they have all required properties
     const processedOwnedTasks = (ownedTasks || []).map(task => {
+      // Ensure shared_tasks is always an array
+      if (task.shared && (!task.shared_tasks || !Array.isArray(task.shared_tasks))) {
+        console.warn(`Task ${task.id} is marked as shared but has no shared_tasks array`);
+      }
+      
       // Ensure all required properties have default values for owned tasks as well
       return {
         ...task,
@@ -123,7 +135,7 @@ export function useTasks() {
         start_time: task.start_time || null,
         time_spent: task.time_spent || 0,
         updated_at: task.updated_at || new Date().toISOString(),
-        shared_tasks: task.shared_tasks || [] // Ensure shared_tasks is always defined
+        shared_tasks: Array.isArray(task.shared_tasks) ? task.shared_tasks : [] // Ensure shared_tasks is always an array
       } as Task;
     });
 
@@ -138,6 +150,16 @@ export function useTasks() {
     });
 
     console.log('Total tasks after processing:', allTasks.length);
+    
+    // Validate shared tasks data
+    const sharedTasksCount = allTasks.filter(task => task.shared).length;
+    console.log(`Found ${sharedTasksCount} tasks with shared=true`);
+    
+    const tasksWithSharedTasksArray = allTasks.filter(task => 
+      task.shared_tasks && Array.isArray(task.shared_tasks) && task.shared_tasks.length > 0
+    ).length;
+    console.log(`Found ${tasksWithSharedTasksArray} tasks with non-empty shared_tasks array`);
+    
     return allTasks as Task[];
   };
 
