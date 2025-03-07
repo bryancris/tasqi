@@ -58,11 +58,56 @@ const SheetContent = React.forwardRef<
 >(({ side = "right", className, children, ...props }, ref) => {
   // Using a ref to track if we're in the process of closing the sheet
   const isClosingRef = React.useRef(false);
+  const sheetIdRef = React.useRef<string>(`sheet-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`);
+  
+  // On first render, store this sheet's ID
+  React.useEffect(() => {
+    // Create a global registry if it doesn't exist
+    if (typeof window !== 'undefined') {
+      (window as any).__activeSheets = (window as any).__activeSheets || {};
+      (window as any).__activeSheets[sheetIdRef.current] = true;
+      
+      return () => {
+        // Clean up registry on unmount
+        if ((window as any).__activeSheets) {
+          delete (window as any).__activeSheets[sheetIdRef.current];
+        }
+      };
+    }
+  }, []);
   
   React.useEffect(() => {
-    // Clean up the closing state if component unmounts
+    // This function will run when a sheet is closed with any outside click
+    const handleGlobalClicks = (e: MouseEvent) => {
+      // If this is a sharing indicator-related sheet being closed
+      if (isClosingRef.current || (window as any).__closingSharingSheet) {
+        // Check if the click target is within any sharing-indicator
+        const isSharingRelated = 
+          e.target instanceof HTMLElement &&
+          (e.target.closest('[data-sharing-indicator]') || 
+           e.target.closest('[data-sharing-sheet-id]'));
+        
+        if (isSharingRelated) {
+          e.stopPropagation();
+          e.preventDefault();
+          
+          // Create a single-use capture handler to catch any follow-up events
+          const blockNextClick = (evt: MouseEvent) => {
+            evt.stopPropagation();
+            evt.preventDefault();
+            document.removeEventListener('click', blockNextClick, true);
+          };
+          
+          document.addEventListener('click', blockNextClick, { capture: true, once: true });
+          return false;
+        }
+      }
+    };
+    
+    // Add this handler with capture to ensure it runs before other handlers
+    document.addEventListener('click', handleGlobalClicks, true);
     return () => {
-      isClosingRef.current = false;
+      document.removeEventListener('click', handleGlobalClicks, true);
     };
   }, []);
   
@@ -72,14 +117,52 @@ const SheetContent = React.forwardRef<
       <SheetPrimitive.Content
         ref={ref}
         className={cn(sheetVariants({ side }), className)}
+        data-sheet-id={sheetIdRef.current}
         onCloseAutoFocus={(e) => {
           // Prevent auto-focus behavior which can trigger unwanted interactions
           e.preventDefault();
           if (props.onCloseAutoFocus) props.onCloseAutoFocus(e);
         }}
         onPointerDownOutside={(e) => {
-          // Set the closing flag when a pointer down outside event occurs
+          // Track that we're closing the sheet
           isClosingRef.current = true;
+          
+          // Check for data attribute to identify sharing interactions
+          const isSharingRelated = 
+            e.target instanceof HTMLElement && 
+            (e.target.closest('[data-sharing-indicator]') || 
+             e.target.closest('[data-sharing-sheet-id]'));
+          
+          // Special handling for sharing-related sheets
+          if (isSharingRelated) {
+            // Mark this as a sharing sheet interaction
+            (window as any).__closingSharingSheet = sheetIdRef.current;
+            
+            // Block all events immediately
+            const blockEvents = (evt: Event) => {
+              evt.stopPropagation();
+              evt.preventDefault();
+              return false;
+            };
+            
+            // Add short-lived but aggressive event blocking
+            document.addEventListener('click', blockEvents, { capture: true });
+            document.addEventListener('mousedown', blockEvents, { capture: true });
+            document.addEventListener('pointerdown', blockEvents, { capture: true });
+            
+            // Clean up after a short delay
+            setTimeout(() => {
+              document.removeEventListener('click', blockEvents, { capture: true });
+              document.removeEventListener('mousedown', blockEvents, { capture: true });
+              document.removeEventListener('pointerdown', blockEvents, { capture: true });
+              
+              if ((window as any).__closingSharingSheet === sheetIdRef.current) {
+                (window as any).__closingSharingSheet = null;
+              }
+              
+              isClosingRef.current = false;
+            }, 500);
+          }
           
           // Prevent closing the sheet when clicking on calendar or popover elements
           if (e.target instanceof HTMLElement) {
@@ -110,30 +193,25 @@ const SheetContent = React.forwardRef<
             }
           }
           
-          // If this is a closing event from a sharing indicator, prevent parent events
-          if (
-            e.target instanceof HTMLElement && 
-            (e.target.closest('[data-sharing-indicator]') || isClosingRef.current)
-          ) {
-            // Add a global click blocker that will run once
-            const blockClickEvents = (evt: MouseEvent) => {
-              evt.stopPropagation();
-              evt.preventDefault();
-              document.removeEventListener('click', blockClickEvents, true);
-            };
-            
-            document.addEventListener('click', blockClickEvents, { 
-              capture: true, 
-              once: true 
-            });
-          }
-          
           if (props.onPointerDownOutside) props.onPointerDownOutside(e);
         }}
         // Add handlers for animation events
+        onAnimationStart={(e) => {
+          // If this is a closing animation starting
+          if (e.animationName.includes('out') || e.animationName.includes('close')) {
+            isClosingRef.current = true;
+          }
+          
+          if (props.onAnimationStart) props.onAnimationStart(e);
+        }}
         onAnimationEnd={(e) => {
           // Check if this is the closing animation ending
-          if (e.animationName.includes('out') || e.animationName.includes('closed')) {
+          if (e.animationName.includes('out') || e.animationName.includes('close')) {
+            // Add safety delay before allowing other interactions
+            setTimeout(() => {
+              isClosingRef.current = false;
+            }, 100);
+            
             // If this is a closing animation, add an event blocker
             const blockClickEvents = (evt: MouseEvent) => {
               evt.stopPropagation();
@@ -152,7 +230,40 @@ const SheetContent = React.forwardRef<
         {...props}
       >
         {children}
-        <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
+        <SheetPrimitive.Close 
+          className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary"
+          onClick={(e) => {
+            // When closing via the X button, ensure we block propagation
+            if (e.target instanceof HTMLElement && 
+                (e.target.closest('[data-sharing-sheet-id]') ||
+                 document.querySelector('[data-sharing-sheet-id]'))) {
+              // Mark this as a sharing sheet close
+              (window as any).__closingSharingSheet = sheetIdRef.current;
+              
+              // Add super aggressive event blocking
+              const blockAllEvents = (evt: Event) => {
+                evt.stopPropagation();
+                evt.preventDefault();
+                return false;
+              };
+              
+              document.addEventListener('click', blockAllEvents, { capture: true });
+              document.addEventListener('mousedown', blockAllEvents, { capture: true });
+              document.addEventListener('mouseup', blockAllEvents, { capture: true });
+              
+              // Clean up after a delay
+              setTimeout(() => {
+                document.removeEventListener('click', blockAllEvents, { capture: true });
+                document.removeEventListener('mousedown', blockAllEvents, { capture: true });
+                document.removeEventListener('mouseup', blockAllEvents, { capture: true });
+                
+                if ((window as any).__closingSharingSheet === sheetIdRef.current) {
+                  (window as any).__closingSharingSheet = null;
+                }
+              }, 500);
+            }
+          }}
+        >
           <X className="h-4 w-4" />
           <span className="sr-only">Close</span>
         </SheetPrimitive.Close>

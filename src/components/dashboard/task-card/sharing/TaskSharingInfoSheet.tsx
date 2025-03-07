@@ -34,31 +34,57 @@ export function TaskSharingInfoSheet({
   onOpenChange 
 }: TaskSharingInfoSheetProps) {
   const preventClickRef = useRef(false);
+  const uniqueIdRef = useRef<string>(`sharing-sheet-${Date.now()}`);
   
-  // When the sheet closes, we need to prevent the next click from opening the task drawer
+  // When the component mounts, store its ID in a global registry
   useEffect(() => {
-    if (!open && preventClickRef.current) {
-      // Create a one-time event blocker that captures and stops all click events
-      const clickBlocker = (e: MouseEvent) => {
-        e.stopPropagation();
-        e.preventDefault();
-        // Remove itself after execution
-        document.removeEventListener('click', clickBlocker, true);
-        preventClickRef.current = false;
-      };
-      
-      // Add the blocker with capture phase to ensure it runs before other handlers
-      document.addEventListener('click', clickBlocker, { capture: true, once: true });
-      
-      // Also clear the flag after a short timeout as a fallback
-      const timeout = setTimeout(() => {
-        document.removeEventListener('click', clickBlocker, true);
-        preventClickRef.current = false;
-      }, 300);
+    // Create a global registry if it doesn't exist
+    if (typeof window !== 'undefined') {
+      (window as any).__activeSharingSheets = (window as any).__activeSharingSheets || {};
+      (window as any).__activeSharingSheets[uniqueIdRef.current] = true;
       
       return () => {
-        clearTimeout(timeout);
-        document.removeEventListener('click', clickBlocker, true);
+        // Clean up registry on unmount
+        if ((window as any).__activeSharingSheets) {
+          delete (window as any).__activeSharingSheets[uniqueIdRef.current];
+        }
+      };
+    }
+  }, []);
+  
+  // When the sheet opens or closes, handle event prevention
+  useEffect(() => {
+    if (!open && preventClickRef.current) {
+      const blockAllEvents = (e: Event) => {
+        e.stopPropagation();
+        e.preventDefault();
+        return false;
+      };
+      
+      // Block all types of events that might lead to unwanted interactions
+      document.addEventListener('click', blockAllEvents, { capture: true });
+      document.addEventListener('mousedown', blockAllEvents, { capture: true });
+      document.addEventListener('mouseup', blockAllEvents, { capture: true });
+      document.addEventListener('pointerdown', blockAllEvents, { capture: true });
+      document.addEventListener('pointerup', blockAllEvents, { capture: true });
+      
+      // Remove blocks after a delay
+      const timeoutId = setTimeout(() => {
+        document.removeEventListener('click', blockAllEvents, { capture: true });
+        document.removeEventListener('mousedown', blockAllEvents, { capture: true });
+        document.removeEventListener('mouseup', blockAllEvents, { capture: true });
+        document.removeEventListener('pointerdown', blockAllEvents, { capture: true });
+        document.removeEventListener('pointerup', blockAllEvents, { capture: true });
+        preventClickRef.current = false;
+      }, 500);
+      
+      return () => {
+        clearTimeout(timeoutId);
+        document.removeEventListener('click', blockAllEvents, { capture: true });
+        document.removeEventListener('mousedown', blockAllEvents, { capture: true });
+        document.removeEventListener('mouseup', blockAllEvents, { capture: true });
+        document.removeEventListener('pointerdown', blockAllEvents, { capture: true });
+        document.removeEventListener('pointerup', blockAllEvents, { capture: true });
       };
     }
   }, [open]);
@@ -68,6 +94,16 @@ export function TaskSharingInfoSheet({
     if (!newOpen) {
       // Set the prevention flag when sheet is being closed
       preventClickRef.current = true;
+      
+      // Mark this interaction as a sharing sheet close
+      (window as any).__closingSharingSheet = uniqueIdRef.current;
+      
+      // Remove the marker after a delay
+      setTimeout(() => {
+        if ((window as any).__closingSharingSheet === uniqueIdRef.current) {
+          (window as any).__closingSharingSheet = null;
+        }
+      }, 500);
     }
     
     onOpenChange(newOpen);
@@ -81,11 +117,15 @@ export function TaskSharingInfoSheet({
         onPointerDownOutside={(e) => {
           // Additional direct prevention on pointer events outside the sheet
           e.preventDefault();
+          e.stopPropagation();
         }}
         onInteractOutside={(e) => {
           // Prevent any kind of outside interaction from propagating
+          e.preventDefault();
           e.stopPropagation();
         }}
+        // Add a data attribute to help with targeting specific elements in event handlers
+        data-sharing-sheet-id={uniqueIdRef.current}
       >
         <SheetHeader className="text-left">
           <SheetTitle className="flex items-center gap-2 text-xl">

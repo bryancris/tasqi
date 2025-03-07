@@ -31,9 +31,16 @@ export function handleSharingInteraction(
   isMobile: boolean, 
   setShowSharingInfo: (show: boolean) => void
 ): void {
-  // More aggressive prevention of event propagation
+  // Create multiple layers of event stopping to ensure propagation is truly halted
   e.stopPropagation();
   e.preventDefault();
+  e.nativeEvent.stopImmediatePropagation();
+  e.nativeEvent.stopPropagation();
+  e.nativeEvent.preventDefault();
+  
+  // Set a flag to track this interaction
+  const sharedDataId = `share-interaction-${Date.now()}`;
+  (window as any).__lastShareInteraction = sharedDataId;
   
   if (isMobile) {
     // For mobile, we show the sharing info sheet
@@ -46,20 +53,29 @@ export function handleSharingInteraction(
     }
   }
   
-  // Use a more forceful approach to stop clicks
-  // This helps prevent the task edit drawer from opening
+  // Use a more forceful approach to stop clicks by adding multiple event capture handlers
+  const preventClicks = (evt: MouseEvent) => {
+    evt.stopPropagation();
+    evt.preventDefault();
+    return false;
+  };
+  
+  // Create a blocking layer that will capture ANY click in the next 500ms
+  document.addEventListener('click', preventClicks, { capture: true });
+  document.addEventListener('mousedown', preventClicks, { capture: true });
+  document.addEventListener('mouseup', preventClicks, { capture: true });
+  
+  // Remove the blocking after a reasonable timeout
   setTimeout(() => {
-    const clickBlocker = (evt: MouseEvent) => {
-      evt.stopPropagation();
-      evt.preventDefault();
-      document.removeEventListener('click', clickBlocker, true);
-    };
+    document.removeEventListener('click', preventClicks, { capture: true });
+    document.removeEventListener('mousedown', preventClicks, { capture: true });
+    document.removeEventListener('mouseup', preventClicks, { capture: true });
     
-    document.addEventListener('click', clickBlocker, { 
-      capture: true, 
-      once: true 
-    });
-  }, 0);
+    // Clean up our tracking flag
+    if ((window as any).__lastShareInteraction === sharedDataId) {
+      (window as any).__lastShareInteraction = null;
+    }
+  }, 500);
 }
 
 /**
