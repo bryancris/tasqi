@@ -15,7 +15,9 @@ export function useAppUpdate() {
       setUpdateAvailable(true);
       
       // Dispatch custom event for components that need to know
-      window.dispatchEvent(new CustomEvent('sw-update-found'));
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('sw-update-found'));
+      }
       
       toast.info('A new update is available', { id: 'update-available' });
     } else if (event.data && event.data.type === 'ACTIVATED') {
@@ -23,19 +25,24 @@ export function useAppUpdate() {
       toast.success('Update activated successfully', { id: 'update-activated' });
       
       // Set a flag to show success message after reload
-      localStorage.setItem('app_update_status', 'complete');
-      
-      // Reload after a brief delay
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('app_update_status', 'complete');
+        
+        // Reload after a brief delay
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      }
     }
   }, []);
 
   // Setup broadcast channel listener
   useEffect(() => {
+    // Only run this effect in browser environments
+    if (typeof window === 'undefined') return;
+
     // Check if broadcast channel is supported
-    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+    if ('BroadcastChannel' in window) {
       try {
         const broadcastChannel = new BroadcastChannel('sw-updates');
         
@@ -60,6 +67,9 @@ export function useAppUpdate() {
 
   // Check for update status on mount
   useEffect(() => {
+    // Only run in browser environments
+    if (typeof window === 'undefined') return;
+    
     const checkUpdateComplete = () => {
       const updateStatus = localStorage.getItem('app_update_status');
       
