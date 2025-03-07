@@ -44,6 +44,7 @@ function GroupTaskIndicatorComponent({
         <div 
           className={baseProps.className}
           onClick={baseProps.onClick}
+          data-sharing-indicator="true"
         >
           <Users className="w-4 h-4 text-[#22C55E]" />
           <span className="text-xs truncate">Group</span>
@@ -52,7 +53,10 @@ function GroupTaskIndicatorComponent({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className={`${baseProps.className} ${baseProps.cursor}`}>
+              <div 
+                className={`${baseProps.className} ${baseProps.cursor}`}
+                data-sharing-indicator="true"
+              >
                 <Users className="w-4 h-4 text-[#22C55E]" />
                 <span className="text-xs truncate">Group</span>
               </div>

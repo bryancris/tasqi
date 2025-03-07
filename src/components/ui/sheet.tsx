@@ -55,52 +55,111 @@ interface SheetContentProps
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
->(({ side = "right", className, children, ...props }, ref) => (
-  <SheetPortal>
-    <SheetOverlay />
-    <SheetPrimitive.Content
-      ref={ref}
-      className={cn(sheetVariants({ side }), className)}
-      onPointerDownOutside={(e) => {
-        // Prevent closing the sheet when clicking on calendar or popover elements
-        if (e.target instanceof HTMLElement) {
-          // Check for any calendar-related elements
-          if (e.target.closest('.rdp') || 
-              e.target.closest('.react-calendar') || 
-              e.target.closest('.calendar') || 
-              e.target.closest('[data-radix-popper-content-wrapper]') ||
-              e.target.closest('[data-radix-popup-content]') ||
-              e.target.closest('.DayPicker') ||
-              e.target.closest('.DayPicker-Month') ||
-              e.target.closest('.DayPicker-Day') ||
-              document.querySelector('[data-radix-popper-content-wrapper]')?.contains(e.target) ||
-              document.querySelector('.z-\\[9999\\]')?.contains(e.target)) {
-            console.log("Preventing sheet close due to calendar interaction");
-            e.preventDefault();
-            return;
+>(({ side = "right", className, children, ...props }, ref) => {
+  // Using a ref to track if we're in the process of closing the sheet
+  const isClosingRef = React.useRef(false);
+  
+  React.useEffect(() => {
+    // Clean up the closing state if component unmounts
+    return () => {
+      isClosingRef.current = false;
+    };
+  }, []);
+  
+  return (
+    <SheetPortal>
+      <SheetOverlay />
+      <SheetPrimitive.Content
+        ref={ref}
+        className={cn(sheetVariants({ side }), className)}
+        onCloseAutoFocus={(e) => {
+          // Prevent auto-focus behavior which can trigger unwanted interactions
+          e.preventDefault();
+          if (props.onCloseAutoFocus) props.onCloseAutoFocus(e);
+        }}
+        onPointerDownOutside={(e) => {
+          // Set the closing flag when a pointer down outside event occurs
+          isClosingRef.current = true;
+          
+          // Prevent closing the sheet when clicking on calendar or popover elements
+          if (e.target instanceof HTMLElement) {
+            // Check for any calendar-related elements
+            if (e.target.closest('.rdp') || 
+                e.target.closest('.react-calendar') || 
+                e.target.closest('.calendar') || 
+                e.target.closest('[data-radix-popper-content-wrapper]') ||
+                e.target.closest('[data-radix-popup-content]') ||
+                e.target.closest('.DayPicker') ||
+                e.target.closest('.DayPicker-Month') ||
+                e.target.closest('.DayPicker-Day') ||
+                document.querySelector('[data-radix-popper-content-wrapper]')?.contains(e.target) ||
+                document.querySelector('.z-\\[9999\\]')?.contains(e.target)) {
+              console.log("Preventing sheet close due to calendar interaction");
+              e.preventDefault();
+              return;
+            }
           }
-        }
-        
-        // Check if the clicked element is part of an open popover
-        const popoverElements = document.querySelectorAll('[role="dialog"][data-state="open"]');
-        for (const element of popoverElements) {
-          if (element.contains(e.target as Node)) {
-            console.log("Preventing sheet close due to popover interaction");
-            e.preventDefault();
-            return;
+          
+          // Check if the clicked element is part of an open popover
+          const popoverElements = document.querySelectorAll('[role="dialog"][data-state="open"]');
+          for (const element of popoverElements) {
+            if (element.contains(e.target as Node)) {
+              console.log("Preventing sheet close due to popover interaction");
+              e.preventDefault();
+              return;
+            }
           }
-        }
-      }}
-      {...props}
-    >
-      {children}
-      <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
-        <X className="h-4 w-4" />
-        <span className="sr-only">Close</span>
-      </SheetPrimitive.Close>
-    </SheetPrimitive.Content>
-  </SheetPortal>
-))
+          
+          // If this is a closing event from a sharing indicator, prevent parent events
+          if (
+            e.target instanceof HTMLElement && 
+            (e.target.closest('[data-sharing-indicator]') || isClosingRef.current)
+          ) {
+            // Add a global click blocker that will run once
+            const blockClickEvents = (evt: MouseEvent) => {
+              evt.stopPropagation();
+              evt.preventDefault();
+              document.removeEventListener('click', blockClickEvents, true);
+            };
+            
+            document.addEventListener('click', blockClickEvents, { 
+              capture: true, 
+              once: true 
+            });
+          }
+          
+          if (props.onPointerDownOutside) props.onPointerDownOutside(e);
+        }}
+        // Add handlers for animation events
+        onAnimationEnd={(e) => {
+          // Check if this is the closing animation ending
+          if (e.animationName.includes('out') || e.animationName.includes('closed')) {
+            // If this is a closing animation, add an event blocker
+            const blockClickEvents = (evt: MouseEvent) => {
+              evt.stopPropagation();
+              evt.preventDefault();
+              document.removeEventListener('click', blockClickEvents, true);
+            };
+            
+            document.addEventListener('click', blockClickEvents, { 
+              capture: true, 
+              once: true 
+            });
+          }
+          
+          if (props.onAnimationEnd) props.onAnimationEnd(e);
+        }}
+        {...props}
+      >
+        {children}
+        <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
+          <X className="h-4 w-4" />
+          <span className="sr-only">Close</span>
+        </SheetPrimitive.Close>
+      </SheetPrimitive.Content>
+    </SheetPortal>
+  );
+})
 SheetContent.displayName = SheetPrimitive.Content.displayName
 
 const SheetHeader = ({

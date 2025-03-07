@@ -2,7 +2,7 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Task } from "../../TaskBoard";
 import { TaskAssignmentInfo } from "../types";
-import { useEffect, useRef } from "react";
+import { useRef, useEffect } from "react";
 import { SharingDetailsHeader } from "./sharing-info/SharingDetailsHeader";
 import { SharingDetailsContent } from "./sharing-info/SharingDetailsContent";
 import { SharingDetailsList } from "./sharing-info/SharingDetailsList";
@@ -33,36 +33,41 @@ export function TaskSharingInfoSheet({
   open, 
   onOpenChange 
 }: TaskSharingInfoSheetProps) {
-  const ignoreClickRef = useRef(false);
+  const preventClickRef = useRef(false);
   
-  // Use effect to set a flag that will prevent the task edit drawer from opening
-  // when this sheet is closed
+  // When the sheet closes, we need to prevent the next click from opening the task drawer
   useEffect(() => {
-    if (!open && ignoreClickRef.current) {
-      // This runs after the sheet is closed
-      // Set a timeout to reset the flag after all event handlers have run
-      const timeout = setTimeout(() => {
-        ignoreClickRef.current = false;
-      }, 100);
+    if (!open && preventClickRef.current) {
+      // Create a one-time event blocker that captures and stops all click events
+      const clickBlocker = (e: MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+        // Remove itself after execution
+        document.removeEventListener('click', clickBlocker, true);
+        preventClickRef.current = false;
+      };
       
-      return () => clearTimeout(timeout);
-    }
-    
-    if (open) {
-      // When sheet is opened, set the flag to true
-      ignoreClickRef.current = true;
+      // Add the blocker with capture phase to ensure it runs before other handlers
+      document.addEventListener('click', clickBlocker, { capture: true, once: true });
+      
+      // Also clear the flag after a short timeout as a fallback
+      const timeout = setTimeout(() => {
+        document.removeEventListener('click', clickBlocker, true);
+        preventClickRef.current = false;
+      }, 300);
+      
+      return () => {
+        clearTimeout(timeout);
+        document.removeEventListener('click', clickBlocker, true);
+      };
     }
   }, [open]);
 
-  // Create a custom handler for the onOpenChange event
+  // Custom handler for the onOpenChange event
   const handleOpenChange = (newOpen: boolean) => {
-    // Prevent click events from bubbling when sheet is being closed
     if (!newOpen) {
-      // Intercept and prevent other click/touch events for a short period
-      document.body.addEventListener('click', (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-      }, { capture: true, once: true });
+      // Set the prevention flag when sheet is being closed
+      preventClickRef.current = true;
     }
     
     onOpenChange(newOpen);
@@ -70,7 +75,18 @@ export function TaskSharingInfoSheet({
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent side="bottom" className="max-h-96 rounded-t-xl">
+      <SheetContent 
+        side="bottom" 
+        className="max-h-96 rounded-t-xl"
+        onPointerDownOutside={(e) => {
+          // Additional direct prevention on pointer events outside the sheet
+          e.preventDefault();
+        }}
+        onInteractOutside={(e) => {
+          // Prevent any kind of outside interaction from propagating
+          e.stopPropagation();
+        }}
+      >
         <SheetHeader className="text-left">
           <SheetTitle className="flex items-center gap-2 text-xl">
             <SharingDetailsHeader task={task} assignmentInfo={assignmentInfo} />

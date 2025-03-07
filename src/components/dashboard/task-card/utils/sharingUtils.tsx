@@ -31,13 +31,35 @@ export function handleSharingInteraction(
   isMobile: boolean, 
   setShowSharingInfo: (show: boolean) => void
 ): void {
-  // Stop propagation to prevent opening the task edit drawer
+  // More aggressive prevention of event propagation
   e.stopPropagation();
   e.preventDefault();
   
   if (isMobile) {
+    // For mobile, we show the sharing info sheet
     setShowSharingInfo(true);
+  } else {
+    // On desktop, the tooltip already shows info, but we could
+    // still show the detailed sheet if clicked (not just hovered)
+    if (e.type === 'click') {
+      setShowSharingInfo(true);
+    }
   }
+  
+  // Use a more forceful approach to stop clicks
+  // This helps prevent the task edit drawer from opening
+  setTimeout(() => {
+    const clickBlocker = (evt: MouseEvent) => {
+      evt.stopPropagation();
+      evt.preventDefault();
+      document.removeEventListener('click', clickBlocker, true);
+    };
+    
+    document.addEventListener('click', clickBlocker, { 
+      capture: true, 
+      once: true 
+    });
+  }, 0);
 }
 
 /**
@@ -59,7 +81,8 @@ export function getSharingBaseProps(
 } {
   return {
     className: "flex items-center gap-1 text-white/80",
-    onClick: isMobile ? handleInteraction : undefined,
+    // On desktop, we want both click and hover behavior
+    onClick: handleInteraction,
     cursor: isMobile ? "cursor-pointer" : "cursor-help"
   };
 }

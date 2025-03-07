@@ -50,6 +50,7 @@ function SharedByMeIndicatorComponent({
         <div 
           className={baseProps.className}
           onClick={baseProps.onClick}
+          data-sharing-indicator="true"
         >
           <ArrowRight className="w-4 h-4" />
           <span className="text-xs truncate">Assigned</span>
@@ -58,7 +59,10 @@ function SharedByMeIndicatorComponent({
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className={`${baseProps.className} ${baseProps.cursor}`}>
+              <div 
+                className={`${baseProps.className} ${baseProps.cursor}`}
+                data-sharing-indicator="true"
+              >
                 <ArrowRight className="w-4 h-4" />
                 <span className="text-xs truncate">Assigned</span>
               </div>
