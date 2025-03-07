@@ -6,6 +6,7 @@ import { useRef, useEffect } from "react";
 import { SharingDetailsHeader } from "./sharing-info/SharingDetailsHeader";
 import { SharingDetailsContent } from "./sharing-info/SharingDetailsContent";
 import { SharingDetailsList } from "./sharing-info/SharingDetailsList";
+import { addEventBlockers } from "@/components/ui/sheet/sheet-utils";
 
 /**
  * TaskSharingInfoSheet
@@ -52,58 +53,48 @@ export function TaskSharingInfoSheet({
     }
   }, []);
   
-  // When the sheet opens or closes, handle event prevention
+  // Setup a pre-close handler to block events BEFORE the sheet starts closing
   useEffect(() => {
     if (!open && preventClickRef.current) {
-      const blockAllEvents = (e: Event) => {
-        e.stopPropagation();
-        e.preventDefault();
-        return false;
-      };
-      
-      // Block all types of events that might lead to unwanted interactions
-      document.addEventListener('click', blockAllEvents, { capture: true });
-      document.addEventListener('mousedown', blockAllEvents, { capture: true });
-      document.addEventListener('mouseup', blockAllEvents, { capture: true });
-      document.addEventListener('pointerdown', blockAllEvents, { capture: true });
-      document.addEventListener('pointerup', blockAllEvents, { capture: true });
-      
-      // Remove blocks after a delay
-      const timeoutId = setTimeout(() => {
-        document.removeEventListener('click', blockAllEvents, { capture: true });
-        document.removeEventListener('mousedown', blockAllEvents, { capture: true });
-        document.removeEventListener('mouseup', blockAllEvents, { capture: true });
-        document.removeEventListener('pointerdown', blockAllEvents, { capture: true });
-        document.removeEventListener('pointerup', blockAllEvents, { capture: true });
+      // Add event blocker immediately when sheet is about to close
+      const cleanup = addEventBlockers(800, () => {
         preventClickRef.current = false;
-      }, 500);
+      });
       
-      return () => {
-        clearTimeout(timeoutId);
-        document.removeEventListener('click', blockAllEvents, { capture: true });
-        document.removeEventListener('mousedown', blockAllEvents, { capture: true });
-        document.removeEventListener('mouseup', blockAllEvents, { capture: true });
-        document.removeEventListener('pointerdown', blockAllEvents, { capture: true });
-        document.removeEventListener('pointerup', blockAllEvents, { capture: true });
-      };
+      return cleanup;
     }
   }, [open]);
 
   // Custom handler for the onOpenChange event
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
+      // Before closing, add protection
+      console.log("Sharing sheet closing - adding protection");
+      
       // Set the prevention flag when sheet is being closed
       preventClickRef.current = true;
       
       // Mark this interaction as a sharing sheet close
       (window as any).__closingSharingSheet = uniqueIdRef.current;
+      (window as any).__isClosingSharingSheet = true;
       
-      // Remove the marker after a delay
+      // Block any pending click events
+      const stopImmediatePropagation = (e: MouseEvent) => {
+        e.stopImmediatePropagation();
+        e.stopPropagation();
+        e.preventDefault();
+      };
+      
+      document.addEventListener('click', stopImmediatePropagation, { capture: true });
+      
+      // Remove the marker and event blocker after a delay
       setTimeout(() => {
         if ((window as any).__closingSharingSheet === uniqueIdRef.current) {
           (window as any).__closingSharingSheet = null;
+          (window as any).__isClosingSharingSheet = false;
         }
-      }, 500);
+        document.removeEventListener('click', stopImmediatePropagation, { capture: true });
+      }, 800);
     }
     
     onOpenChange(newOpen);
@@ -113,16 +104,10 @@ export function TaskSharingInfoSheet({
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetContent 
         side="bottom" 
-        className="max-h-96 rounded-t-xl"
+        className="max-h-96 rounded-t-xl z-[60]"
         onPointerDownOutside={(e) => {
           // Additional direct prevention on pointer events outside the sheet
           e.preventDefault();
-          e.stopPropagation();
-        }}
-        onInteractOutside={(e) => {
-          // Prevent any kind of outside interaction from propagating
-          e.preventDefault();
-          e.stopPropagation();
         }}
         // Add a data attribute to help with targeting specific elements in event handlers
         data-sharing-sheet-id={uniqueIdRef.current}

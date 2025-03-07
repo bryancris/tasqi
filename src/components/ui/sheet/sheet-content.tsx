@@ -51,17 +51,31 @@ export const SheetContent = React.forwardRef<
     onCloseAutoFocus: props.onCloseAutoFocus
   });
   
+  // Determine if this is a sharing-related sheet based on props or className
+  const isSharingSheet = 
+    props['data-sharing-sheet-id'] || 
+    className?.includes('sharing') || 
+    false;
+  
   return (
     <SheetPortal>
       <SheetOverlay />
       <SheetPrimitive.Content
         ref={ref}
-        className={cn(sheetVariants({ side }), className)}
+        className={cn(sheetVariants({ side }), className, {
+          // Add extra z-index if this is a sharing sheet to ensure it's on top
+          'z-[60]': isSharingSheet
+        })}
         data-sheet-id={sheetId}
+        // These event handlers handle special cases for sheet interaction
         onCloseAutoFocus={handleCloseAutoFocus}
         onPointerDownOutside={handlePointerDownOutside}
         onAnimationStart={handleAnimationStart}
         onAnimationEnd={handleAnimationEnd}
+        // Add a longer exit animation for sharing sheets
+        style={{
+          ...(isSharingSheet ? { '--sheet-exit-duration': '600ms' } as React.CSSProperties : {})
+        }}
         {...props}
       >
         {children}

@@ -114,9 +114,13 @@ export function isPopoverElement(target: Node | null): boolean {
  * Check if element is related to sharing functionality
  */
 export function isSharingRelated(element: HTMLElement): boolean {
+  if (!element) return false;
+  
   return !!(
     element.closest('[data-sharing-indicator]') || 
-    element.closest('[data-sharing-sheet-id]')
+    element.closest('[data-sharing-sheet-id]') ||
+    element.hasAttribute('data-sharing-indicator') ||
+    element.hasAttribute('data-sharing-sheet-id')
   );
 }
 
@@ -141,17 +145,22 @@ export const SheetRegistry = {
   },
   
   markClosingSharingSheet(id: string): void {
-    (window as any).__closingSharingSheet = id;
-    
-    // Clear after delay
-    setTimeout(() => {
-      if ((window as any).__closingSharingSheet === id) {
-        (window as any).__closingSharingSheet = null;
-      }
-    }, 500);
+    if (typeof window !== 'undefined') {
+      (window as any).__closingSharingSheet = id;
+      // Set a global flag to track closing state
+      (window as any).__isClosingSharingSheet = true;
+      
+      // Clear after delay
+      setTimeout(() => {
+        if ((window as any).__closingSharingSheet === id) {
+          (window as any).__closingSharingSheet = null;
+          (window as any).__isClosingSharingSheet = false;
+        }
+      }, 800); // Longer delay to ensure all events are blocked
+    }
   },
   
   isClosingSharingSheet(): boolean {
-    return !!(window as any).__closingSharingSheet;
+    return !!(window as any).__closingSharingSheet || !!(window as any).__isClosingSharingSheet;
   }
 };

@@ -1,6 +1,7 @@
 
 import { Task } from "../../TaskBoard";
 import { TaskAssignmentInfo } from "../types";
+import { addEventBlockers } from "@/components/ui/sheet/sheet-utils";
 
 /**
  * Shared utilities for task sharing components
@@ -41,41 +42,54 @@ export function handleSharingInteraction(
   // Set a flag to track this interaction
   const sharedDataId = `share-interaction-${Date.now()}`;
   (window as any).__lastShareInteraction = sharedDataId;
+  (window as any).__sharingIndicatorClicked = true;
   
-  if (isMobile) {
-    // For mobile, we show the sharing info sheet
-    setShowSharingInfo(true);
-  } else {
-    // On desktop, the tooltip already shows info, but we could
-    // still show the detailed sheet if clicked (not just hovered)
-    if (e.type === 'click') {
+  // Add immediate event blockers
+  addEventBlockers(100);
+  
+  // Use requestAnimationFrame to ensure DOM updates before showing sharing info
+  requestAnimationFrame(() => {
+    if (isMobile) {
+      // For mobile, we show the sharing info sheet
       setShowSharingInfo(true);
+    } else {
+      // On desktop, the tooltip already shows info, but we could
+      // still show the detailed sheet if clicked (not just hovered)
+      if (e.type === 'click') {
+        setShowSharingInfo(true);
+      }
     }
-  }
+  });
   
-  // Use a more forceful approach to stop clicks by adding multiple event capture handlers
-  const preventClicks = (evt: MouseEvent) => {
+  // Add extra protection by blocking events in the capture phase
+  // This ensures that no clicks get through to task cards underneath
+  const preventCapture = (evt: Event) => {
     evt.stopPropagation();
     evt.preventDefault();
     return false;
   };
   
-  // Create a blocking layer that will capture ANY click in the next 500ms
-  document.addEventListener('click', preventClicks, { capture: true });
-  document.addEventListener('mousedown', preventClicks, { capture: true });
-  document.addEventListener('mouseup', preventClicks, { capture: true });
+  // Add these handlers with { capture: true } to intercept events early
+  document.addEventListener('click', preventCapture, { capture: true });
+  document.addEventListener('mousedown', preventCapture, { capture: true });
+  document.addEventListener('mouseup', preventCapture, { capture: true });
+  document.addEventListener('pointerdown', preventCapture, { capture: true });
+  document.addEventListener('pointerup', preventCapture, { capture: true });
   
   // Remove the blocking after a reasonable timeout
   setTimeout(() => {
-    document.removeEventListener('click', preventClicks, { capture: true });
-    document.removeEventListener('mousedown', preventClicks, { capture: true });
-    document.removeEventListener('mouseup', preventClicks, { capture: true });
+    document.removeEventListener('click', preventCapture, { capture: true });
+    document.removeEventListener('mousedown', preventCapture, { capture: true });
+    document.removeEventListener('mouseup', preventCapture, { capture: true });
+    document.removeEventListener('pointerdown', preventCapture, { capture: true });
+    document.removeEventListener('pointerup', preventCapture, { capture: true });
     
     // Clean up our tracking flag
     if ((window as any).__lastShareInteraction === sharedDataId) {
       (window as any).__lastShareInteraction = null;
+      (window as any).__sharingIndicatorClicked = false;
     }
-  }, 500);
+  }, 300);
 }
 
 /**

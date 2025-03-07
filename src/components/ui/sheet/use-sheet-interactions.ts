@@ -1,5 +1,5 @@
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useCallback } from "react";
 import { 
   generateSheetId, 
   addEventBlockers, 
@@ -31,43 +31,39 @@ export function useSheetInteractions({
   // Register this sheet when mounted
   useEffect(() => {
     SheetRegistry.registerSheet(sheetIdRef.current);
-    return () => {
-      SheetRegistry.unregisterSheet(sheetIdRef.current);
-    };
-  }, []);
-  
-  // Handler for global clicks
-  useEffect(() => {
-    const handleGlobalClicks = (e: MouseEvent) => {
-      // If this is a sharing indicator-related sheet being closed
+    
+    // Set up a global click interceptor to prevent clicks right after closing
+    const interceptGlobalClicks = (e: MouseEvent) => {
       if (isClosingRef.current || SheetRegistry.isClosingSharingSheet()) {
-        // Check if the click target is within any sharing-related element
-        if (e.target instanceof HTMLElement && isSharingRelated(e.target)) {
-          e.stopPropagation();
-          e.preventDefault();
+        // If we're in a closing state, find if the event target is related to sharing
+        if (e.target instanceof HTMLElement) {
+          // Check entire path for sharing-related elements
+          const path = e.composedPath();
+          const hasSharingRelated = path.some(el => 
+            el instanceof HTMLElement && isSharingRelated(el)
+          );
           
-          // Create a single-use capture handler to catch any follow-up events
-          const blockNextClick = (evt: MouseEvent) => {
-            evt.stopPropagation();
-            evt.preventDefault();
-            document.removeEventListener('click', blockNextClick, true);
-          };
-          
-          document.addEventListener('click', blockNextClick, { capture: true, once: true });
-          return false;
+          if (hasSharingRelated) {
+            console.log("Intercepting click during sheet closing - sharing related");
+            e.stopPropagation();
+            e.preventDefault();
+            return false;
+          }
         }
       }
     };
     
-    // Add this handler with capture to ensure it runs before other handlers
-    document.addEventListener('click', handleGlobalClicks, true);
+    // Use capture phase to intercept before other handlers
+    document.addEventListener('click', interceptGlobalClicks, { capture: true });
+    
     return () => {
-      document.removeEventListener('click', handleGlobalClicks, true);
+      SheetRegistry.unregisterSheet(sheetIdRef.current);
+      document.removeEventListener('click', interceptGlobalClicks, { capture: true });
     };
   }, []);
   
   // Custom handlers for component props
-  const handlePointerDownOutside = (event: PointerDownOutsideEvent) => {
+  const handlePointerDownOutside = useCallback((event: PointerDownOutsideEvent) => {
     // Mark that we're closing the sheet
     isClosingRef.current = true;
     
@@ -80,9 +76,13 @@ export function useSheetInteractions({
       SheetRegistry.markClosingSharingSheet(sheetIdRef.current);
       
       // Block all events immediately
-      addEventBlockers(500, () => {
+      addEventBlockers(800, () => {
         isClosingRef.current = false;
       });
+      
+      // Prevent the default closing behavior for sharing-related interactions
+      event.preventDefault();
+      return;
     }
     
     // Prevent closing the sheet when clicking on special elements
@@ -96,34 +96,60 @@ export function useSheetInteractions({
     if (onPointerDownOutside) {
       onPointerDownOutside(event);
     }
-  };
+  }, [onPointerDownOutside]);
   
-  const handleCloseAutoFocus = (event: Event) => {
+  const handleCloseAutoFocus = useCallback((event: Event) => {
     // Prevent auto-focus behavior which can trigger unwanted interactions
     event.preventDefault();
+    
+    // If this is a sharing-related closure, enforce stricter blocking
+    if (SheetRegistry.isClosingSharingSheet()) {
+      console.log("Adding extra event blockers for sharing sheet close");
+      addEventBlockers(800);
+    }
+    
     if (onCloseAutoFocus) onCloseAutoFocus(event);
-  };
+  }, [onCloseAutoFocus]);
   
-  const handleAnimationStart = (e: React.AnimationEvent) => {
+  const handleAnimationStart = useCallback((e: React.AnimationEvent) => {
     // If this is a closing animation starting
     if (e.animationName.includes('out') || e.animationName.includes('close')) {
       isClosingRef.current = true;
+      
+      // If it's a sharing-related sheet, add extra protection
+      if (document.querySelector('[data-sharing-sheet-id]')) {
+        SheetRegistry.markClosingSharingSheet(sheetIdRef.current);
+        
+        // Add a global click blocker immediately
+        const blockClickEvents = (evt: MouseEvent) => {
+          evt.stopPropagation();
+          evt.preventDefault();
+          return false;
+        };
+        
+        document.addEventListener('click', blockClickEvents, { capture: true });
+        
+        // Remove after delay
+        setTimeout(() => {
+          document.removeEventListener('click', blockClickEvents, { capture: true });
+        }, 800);
+      }
     }
-  };
+  }, []);
   
-  const handleAnimationEnd = (e: React.AnimationEvent) => {
+  const handleAnimationEnd = useCallback((e: React.AnimationEvent) => {
     // Check if this is the closing animation ending
     if (e.animationName.includes('out') || e.animationName.includes('close')) {
       // Add safety delay before allowing other interactions
       setTimeout(() => {
         isClosingRef.current = false;
-      }, 100);
+      }, 500);
       
       // If this is a closing animation, add an event blocker
       const blockClickEvents = (evt: MouseEvent) => {
         evt.stopPropagation();
         evt.preventDefault();
-        document.removeEventListener('click', blockClickEvents, true);
+        document.removeEventListener('click', blockClickEvents, { capture: true });
       };
       
       document.addEventListener('click', blockClickEvents, { 
@@ -131,20 +157,27 @@ export function useSheetInteractions({
         once: true 
       });
     }
-  };
+  }, []);
   
-  const handleCloseClick = (e: React.MouseEvent) => {
+  const handleCloseClick = useCallback((e: React.MouseEvent) => {
     // When closing via the X button, ensure we block propagation
-    if (e.target instanceof HTMLElement && 
-        (e.target.closest('[data-sharing-sheet-id]') ||
-         document.querySelector('[data-sharing-sheet-id]'))) {
-      // Mark this as a sharing sheet close
-      SheetRegistry.markClosingSharingSheet(sheetIdRef.current);
-      
-      // Add aggressive event blocking
-      addEventBlockers(500);
+    if (e.target instanceof HTMLElement) {
+      const sharingElement = e.target.closest('[data-sharing-sheet-id]') || 
+                             document.querySelector('[data-sharing-sheet-id]');
+                             
+      if (sharingElement) {
+        // Mark this as a sharing sheet close
+        SheetRegistry.markClosingSharingSheet(sheetIdRef.current);
+        
+        // Add aggressive event blocking
+        addEventBlockers(800);
+        
+        // Stop propagation immediately
+        e.stopPropagation();
+        e.preventDefault();
+      }
     }
-  };
+  }, []);
   
   return {
     sheetId: sheetIdRef.current,
