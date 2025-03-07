@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
@@ -10,26 +11,36 @@ export const ProtectedRoute = () => {
   const location = useLocation();
   const [isCheckingSession, setIsCheckingSession] = useState(false);
   
+  // Effect to handle final session check if needed
   useEffect(() => {
     const authSuccess = window.localStorage.getItem('auth_success');
     
+    // If auth success flag exists but no session in context, do a final check
     if (!session && initialized && !loading && !isCheckingSession && authSuccess === 'true') {
       console.log("ProtectedRoute: Auth success flag found but no session in context, performing final check");
       setIsCheckingSession(true);
       
       const finalSessionCheck = async () => {
         try {
+          // First try refreshing the session
           const refreshResult = await supabase.auth.refreshSession();
-          const { data } = await supabase.auth.getSession();
           
-          if (refreshResult.data.session || data.session) {
-            console.log("ProtectedRoute: Found session after final check");
-            setTimeout(() => {
-              setIsCheckingSession(false);
-            }, 500);
+          // If refresh succeeds or we can get a session, we're good
+          if (refreshResult.data.session) {
+            console.log("ProtectedRoute: Found session after refresh");
+            setIsCheckingSession(false);
             return;
           }
           
+          // One last getSession check
+          const { data } = await supabase.auth.getSession();
+          if (data.session) {
+            console.log("ProtectedRoute: Found session after final check");
+            setIsCheckingSession(false);
+            return;
+          }
+          
+          // If we still don't have a session, remove flag and redirect
           console.log("ProtectedRoute: No session found after final check");
           window.localStorage.removeItem('auth_success');
           navigate("/auth", { 
@@ -52,6 +63,7 @@ export const ProtectedRoute = () => {
     }
   }, [session, loading, initialized, navigate, location.pathname, isCheckingSession]);
   
+  // Redirect to login if no session
   useEffect(() => {
     if (!loading && !isCheckingSession && initialized && !session) {
       console.log("ProtectedRoute: No session found, redirecting to auth");
@@ -62,6 +74,7 @@ export const ProtectedRoute = () => {
     }
   }, [session, loading, initialized, navigate, location.pathname, isCheckingSession]);
 
+  // Show loading spinner while checking auth
   if (loading || isCheckingSession || !initialized) {
     return (
       <div className="flex items-center justify-center h-screen bg-background">
@@ -73,9 +86,11 @@ export const ProtectedRoute = () => {
     );
   }
 
+  // If we have a session, render child routes
   if (session) {
     return <Outlet />;
   }
 
+  // Fallback while redirecting
   return null;
 };
