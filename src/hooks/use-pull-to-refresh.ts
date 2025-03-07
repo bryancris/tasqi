@@ -142,7 +142,7 @@ export function usePullToRefresh({
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    visibility: pullDistance > 0 ? 'visible' : 'hidden',
+    visibility: pullDistance > 0 ? 'visible' as const : 'hidden' as const,
     opacity: Math.min(pullDistance / pullDownThreshold, 1),
     transform: `translateY(${pullDistance > 0 ? pullDistance : 0}px)`
   };
