@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -70,10 +71,17 @@ export function TaskCardBase({ task, index, isDraggable = false, view = 'daily',
     ...listeners,
   } : {};
 
+  // We need to adapt the handleClick function to match the expected signatures
+  // by creating a wrapper that doesn't pass the event parameter
+  const handleClickWrapper = () => {
+    // This is a wrapper function with no parameters to match the expected signature
+    // The actual event handling is done by attaching directly to the card container
+  };
+
   const renderCard = () => {
     const cardProps = {
       task: localTask,
-      onClick: handleClick,
+      onClick: handleClickWrapper, // Use the wrapper function that takes no parameters
       onComplete,
       dragHandleProps
     };
@@ -90,11 +98,14 @@ export function TaskCardBase({ task, index, isDraggable = false, view = 'daily',
 
   return (
     <>
-      <div className={cn(
-        "transition-all duration-200 transform",
-        "hover:translate-y-[-2px]",
-        isDragging && "opacity-50 scale-105"
-      )}>
+      <div 
+        className={cn(
+          "transition-all duration-200 transform",
+          "hover:translate-y-[-2px]",
+          isDragging && "opacity-50 scale-105"
+        )}
+        onClick={handleClick} // Attach the click handler with event parameter here
+      >
         {renderCard()}
       </div>
       <EditTaskDrawer
