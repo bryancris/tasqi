@@ -80,6 +80,7 @@ function ShareIndicatorComponent({ task, assignmentInfo }: ShareIndicatorProps) 
   const handleShareIndicatorClick = (e: React.MouseEvent) => {
     // Stop propagation to prevent opening the task edit drawer
     e.stopPropagation();
+    e.preventDefault();
     
     if (isMobile) {
       setShowSharingInfo(true);

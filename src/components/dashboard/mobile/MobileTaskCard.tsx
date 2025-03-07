@@ -29,6 +29,14 @@ export function MobileTaskCard({ task, onComplete, onClick, dragHandleProps }: M
 
   const timeDisplay = getTimeDisplay();
   
+  // Handle container click differently to prevent issues with nested click events
+  const handleContainerClick = (e: React.MouseEvent) => {
+    // Check if the click is coming directly from the container and not from a child element
+    if (e.currentTarget === e.target) {
+      onClick();
+    }
+  };
+  
   return (
     <div 
       className={cn(
@@ -38,7 +46,7 @@ export function MobileTaskCard({ task, onComplete, onClick, dragHandleProps }: M
         getPriorityColor(task.priority),
         task.shared && "ring-2 ring-[#9b87f5]"
       )}
-      onClick={onClick}
+      onClick={handleContainerClick}
     >
       <div className="flex items-center gap-4 flex-1">
         <div {...dragHandleProps} className="cursor-grab active:cursor-grabbing touch-none">

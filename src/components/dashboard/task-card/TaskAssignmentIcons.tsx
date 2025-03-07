@@ -42,6 +42,7 @@ export function TaskAssignmentIcons({ task, assignmentInfo }: TaskAssignmentIcon
   const handleInteraction = (e: React.MouseEvent) => {
     // Stop propagation to prevent opening the task edit drawer
     e.stopPropagation();
+    e.preventDefault();
     
     if (isMobile) {
       setShowSharingInfo(true);

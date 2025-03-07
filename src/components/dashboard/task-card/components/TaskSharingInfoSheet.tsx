@@ -3,6 +3,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Share2, ArrowRight, Users } from "lucide-react";
 import { Task } from "../../TaskBoard";
 import { TaskAssignmentInfo } from "../types";
+import { useEffect, useRef } from "react";
 
 interface TaskSharingInfoSheetProps {
   task: Task;
@@ -17,6 +18,41 @@ export function TaskSharingInfoSheet({
   open, 
   onOpenChange 
 }: TaskSharingInfoSheetProps) {
+  const ignoreClickRef = useRef(false);
+  
+  // Use effect to set a flag that will prevent the task edit drawer from opening
+  // when this sheet is closed
+  useEffect(() => {
+    if (!open && ignoreClickRef.current) {
+      // This runs after the sheet is closed
+      // Set a timeout to reset the flag after all event handlers have run
+      const timeout = setTimeout(() => {
+        ignoreClickRef.current = false;
+      }, 100);
+      
+      return () => clearTimeout(timeout);
+    }
+    
+    if (open) {
+      // When sheet is opened, set the flag to true
+      ignoreClickRef.current = true;
+    }
+  }, [open]);
+
+  // Create a custom handler for the onOpenChange event
+  const handleOpenChange = (newOpen: boolean) => {
+    // Prevent click events from bubbling when sheet is being closed
+    if (!newOpen) {
+      // Intercept and prevent other click/touch events for a short period
+      document.body.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+      }, { capture: true, once: true });
+    }
+    
+    onOpenChange(newOpen);
+  };
+
   const {
     assignerName,
     assigneeName,
@@ -105,7 +141,7 @@ export function TaskSharingInfoSheet({
   const sharingDetails = getSharingDetails();
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetContent side="bottom" className="max-h-96 rounded-t-xl">
         <SheetHeader className="text-left">
           <SheetTitle className="flex items-center gap-2 text-xl">
