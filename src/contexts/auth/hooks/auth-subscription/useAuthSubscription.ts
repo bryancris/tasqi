@@ -180,7 +180,7 @@ export const useAuthSubscription = ({
           authInitialized.current = true;
           if (setInitialized) setInitialized(true);
         }
-      }, AUTH_TIMEOUT_MS + (isDevelopment ? 1000 : 0)); // Reduced from 2000ms additional time
+      }, AUTH_TIMEOUT_MS + (isDevelopment ? 1000 : 0)); // Additional time for dev mode
       
       return data.subscription;
     } catch (error) {
