@@ -41,6 +41,8 @@ export function useAppUpdate() {
     // Only run this effect in browser environments
     if (typeof window === 'undefined') return;
 
+    let cleanup: (() => void) | undefined;
+
     // Check if broadcast channel is supported
     if ('BroadcastChannel' in window) {
       try {
@@ -48,7 +50,7 @@ export function useAppUpdate() {
         
         broadcastChannel.addEventListener('message', handleSWMessage);
         
-        return () => {
+        cleanup = () => {
           broadcastChannel.removeEventListener('message', handleSWMessage);
           broadcastChannel.close();
         };
@@ -56,13 +58,16 @@ export function useAppUpdate() {
         console.error('Error with BroadcastChannel:', error);
         // Fallback if there's an error with BroadcastChannel
         window.addEventListener('message', handleSWMessage);
-        return () => window.removeEventListener('message', handleSWMessage);
+        cleanup = () => window.removeEventListener('message', handleSWMessage);
       }
+    } else {
+      // Fallback for browsers without BroadcastChannel
+      window.addEventListener('message', handleSWMessage);
+      cleanup = () => window.removeEventListener('message', handleSWMessage);
     }
     
-    // Fallback for browsers without BroadcastChannel
-    window.addEventListener('message', handleSWMessage);
-    return () => window.removeEventListener('message', handleSWMessage);
+    // Return cleanup function
+    return cleanup;
   }, [handleSWMessage]);
 
   // Check for update status on mount
