@@ -19,9 +19,7 @@ export function isGroupTask(task: Task): boolean {
 }
 
 /**
- * Handles the interaction for sharing info display
- * This function is used by all sharing indicator components to handle
- * click events and control the display of sharing information sheets
+ * Enhanced sharing interaction handler with more robust event blocking
  * 
  * @param e The mouse event
  * @param isMobile Whether the app is running on mobile
@@ -43,6 +41,11 @@ export function handleSharingInteraction(
     if (e.nativeEvent.preventDefault) e.nativeEvent.preventDefault();
   }
   
+  // Add special data attributes to identify this interaction
+  if (e.target instanceof Element) {
+    e.target.setAttribute('data-sharing-indicator-clicked', 'true');
+  }
+  
   // Mark the event as handled directly on the event object
   (e as any).__sharingIndicatorHandled = true;
   
@@ -50,9 +53,10 @@ export function handleSharingInteraction(
   const sharedDataId = `share-interaction-${Date.now()}`;
   (window as any).__lastShareInteraction = sharedDataId;
   (window as any).__sharingIndicatorClicked = true;
+  (window as any).sharingIndicatorClickTime = Date.now();
   
   // Add immediate event blockers
-  addEventBlockers(100);
+  addEventBlockers(150);
   
   // Use requestAnimationFrame to ensure DOM updates before showing sharing info
   requestAnimationFrame(() => {
@@ -68,12 +72,24 @@ export function handleSharingInteraction(
     }
   });
   
+  // Capture active elements to prevent default clicks
+  const activeElement = document.activeElement;
+  if (activeElement instanceof HTMLElement) {
+    activeElement.blur();
+  }
+  
   // Add extra protection by blocking events in the capture phase
   // This ensures that no clicks get through to task cards underneath
   const preventCapture = (evt: Event) => {
-    evt.stopPropagation();
-    evt.preventDefault();
-    return false;
+    // Check if this event is within 200ms of our sharing click
+    const now = Date.now();
+    const sharingClickTime = (window as any).sharingIndicatorClickTime || 0;
+    
+    if (now - sharingClickTime < 200) {
+      evt.stopPropagation();
+      evt.preventDefault();
+      return false;
+    }
   };
   
   // Add these handlers with { capture: true } to intercept events early
@@ -95,6 +111,7 @@ export function handleSharingInteraction(
     if ((window as any).__lastShareInteraction === sharedDataId) {
       (window as any).__lastShareInteraction = null;
       (window as any).__sharingIndicatorClicked = false;
+      (window as any).sharingIndicatorClickTime = 0;
     }
   }, 300);
 }
@@ -115,11 +132,14 @@ export function getSharingBaseProps(
   className: string;
   onClick?: (e: React.MouseEvent) => void;
   cursor: string;
+  "data-sharing-indicator": string;
+  "aria-label": string;
 } {
   return {
     className: "flex items-center gap-1 text-white/80 sharing-indicator",
-    // On desktop, we want both click and hover behavior
     onClick: handleInteraction,
-    cursor: isMobile ? "cursor-pointer" : "cursor-help"
+    cursor: isMobile ? "cursor-pointer" : "cursor-help",
+    "data-sharing-indicator": "true",
+    "aria-label": "Sharing information"
   };
 }
