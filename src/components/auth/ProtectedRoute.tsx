@@ -4,8 +4,9 @@ import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { Spinner } from "@/components/ui/spinner";
 import { supabase } from "@/integrations/supabase/client";
+import { isDevAuthBypassed, isDevelopmentMode } from "@/contexts/auth/provider/constants";
 
-const MAX_WAIT_TIME = 5000; // 5 seconds max to wait for auth
+const MAX_WAIT_TIME = isDevelopmentMode() ? 8000 : 5000; // Longer timeout in dev mode
 
 export const ProtectedRoute = () => {
   const { session, loading, initialized } = useAuth();
@@ -14,6 +15,10 @@ export const ProtectedRoute = () => {
   const [redirectInProgress, setRedirectInProgress] = useState(false);
   const [manualCheckInProgress, setManualCheckInProgress] = useState(false);
   const [manualSessionCheck, setManualSessionCheck] = useState<boolean | null>(null);
+  const [waitingTooLong, setWaitingTooLong] = useState(false);
+  
+  // For dev mode, immediately check if bypass is enabled
+  const bypassAuth = isDevAuthBypassed();
   
   // Log current status for debugging
   console.log("[ProtectedRoute] Status:", { 
@@ -23,6 +28,8 @@ export const ProtectedRoute = () => {
     redirectInProgress,
     manualCheckInProgress,
     manualSessionFound: manualSessionCheck,
+    devMode: isDevelopmentMode(),
+    bypassAuth,
     path: location.pathname 
   });
   
@@ -54,6 +61,13 @@ export const ProtectedRoute = () => {
     }
   }, [manualCheckInProgress]);
   
+  // In dev mode with bypass enabled, render children immediately
+  useEffect(() => {
+    if (isDevelopmentMode() && bypassAuth) {
+      console.log("[ProtectedRoute] Dev mode with auth bypass enabled, skipping protection");
+    }
+  }, [bypassAuth]);
+  
   // If auth is taking too long, perform a manual check
   useEffect(() => {
     let timeoutId: NodeJS.Timeout | null = null;
@@ -65,14 +79,30 @@ export const ProtectedRoute = () => {
       }, 2000); // Wait 2 seconds before manual check
     }
     
+    // If we've been waiting for a really long time, flag it
+    if (loading && !initialized && !waitingTooLong) {
+      const longWaitTimeout = setTimeout(() => {
+        setWaitingTooLong(true);
+      }, 5000); // After 5 seconds, show different message
+      
+      return () => {
+        clearTimeout(longWaitTimeout);
+      };
+    }
+    
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [loading, initialized, manualSessionCheck, manualCheckInProgress, performManualSessionCheck]);
+  }, [loading, initialized, manualSessionCheck, manualCheckInProgress, performManualSessionCheck, waitingTooLong]);
   
   // Effect to handle the actual redirection
   useEffect(() => {
     let timeoutId: NodeJS.Timeout | null = null;
+    
+    // In dev mode with bypass enabled, skip all checks
+    if (isDevelopmentMode() && bypassAuth) {
+      return;
+    }
     
     // 1. When everything is initialized and we know the auth state
     const canProceed = initialized && !loading;
@@ -143,8 +173,14 @@ export const ProtectedRoute = () => {
     location.pathname, 
     redirectInProgress,
     manualCheckInProgress,
-    manualSessionCheck
+    manualSessionCheck,
+    bypassAuth
   ]);
+
+  // In dev mode with bypass, render the children immediately
+  if (isDevelopmentMode() && bypassAuth) {
+    return <Outlet />;
+  }
 
   // Show loading spinner while checking auth
   if ((loading || !initialized) && !manualSessionCheck) {
@@ -152,7 +188,16 @@ export const ProtectedRoute = () => {
       <div className="flex items-center justify-center h-screen bg-background">
         <div className="flex flex-col items-center gap-3">
           <Spinner className="h-8 w-8 text-primary" />
-          <p className="text-slate-400">Verifying your account...</p>
+          <p className="text-slate-400">
+            {waitingTooLong 
+              ? "Still verifying your account... taking longer than usual" 
+              : "Verifying your account..."}
+          </p>
+          {waitingTooLong && (
+            <p className="text-xs text-slate-500 max-w-md text-center mt-2">
+              If this persists, try refreshing the page or clearing your browser storage.
+            </p>
+          )}
         </div>
       </div>
     );

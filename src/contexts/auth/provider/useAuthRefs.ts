@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { isDevelopmentMode } from "./constants";
+import { isDevelopmentMode, isDevAuthBypassed, isAuthForceInitialized } from "./constants";
 
 /**
  * Hook to manage all refs used in auth provider
@@ -17,9 +17,15 @@ export const useAuthRefs = () => {
   const authSetupComplete = useRef(false);
   const initializationCount = useRef(0);
   const isDevMode = useRef(isDevelopmentMode());
+  const devBypassEnabled = useRef(isDevAuthBypassed());
+  const authForceInitialized = useRef(isAuthForceInitialized());
   
   // Timekeeping
   const lastMountTimestamp = useRef(Date.now());
+  
+  // Manual check status (for dev mode)
+  const manualSessionCheckComplete = useRef(false);
+  const manualSessionFound = useRef<boolean | null>(null);
 
   return {
     mounted,
@@ -29,6 +35,10 @@ export const useAuthRefs = () => {
     authSetupComplete,
     initializationCount,
     isDevMode,
-    lastMountTimestamp
+    devBypassEnabled,
+    authForceInitialized,
+    lastMountTimestamp,
+    manualSessionCheckComplete,
+    manualSessionFound
   };
 };

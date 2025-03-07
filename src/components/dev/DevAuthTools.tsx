@@ -6,10 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { useAuth } from '@/contexts/auth';
+import { isDevelopmentMode, forceAuthInitialized } from '@/contexts/auth/provider/constants';
 
-const isDev = () => process.env.NODE_ENV === 'development' ||
-                 window.location.hostname === 'localhost' ||
-                 window.location.hostname === '127.0.0.1';
+const isDev = isDevelopmentMode;
 
 export function DevAuthTools() {
   const [expanded, setExpanded] = useState(false);
@@ -34,7 +33,7 @@ export function DevAuthTools() {
     
     // Force application to reload with new settings
     if (newValue) {
-      sessionStorage.setItem('force_auth_initialized', 'true');
+      forceAuthInitialized(true);
       toast.success("Development mode: Auth bypass enabled", {
         duration: 3000,
       });
@@ -44,6 +43,7 @@ export function DevAuthTools() {
         window.location.reload();
       }, 500);
     } else {
+      // Clear forced initialization when disabling bypass
       sessionStorage.removeItem('force_auth_initialized');
       toast.info("Development mode: Auth bypass disabled", {
         duration: 3000,
@@ -54,6 +54,15 @@ export function DevAuthTools() {
         window.location.reload();
       }, 500);
     }
+  };
+  
+  // Force auth to be initialized immediately (for development testing)
+  const forceAuthInit = () => {
+    forceAuthInitialized(true);
+    toast.success("Auth forced to initialized state, reloading...");
+    setTimeout(() => {
+      window.location.reload();
+    }, 500);
   };
   
   // Only show in development mode
@@ -113,6 +122,17 @@ export function DevAuthTools() {
             <Badge variant="outline" className={bypassAuth ? "bg-blue-800/30" : "bg-gray-800"}>
               {bypassAuth ? "Auth Bypassed" : "Normal Auth"}
             </Badge>
+          </div>
+          
+          <div className="flex gap-2 mt-2">
+            <Button
+              size="sm"
+              variant="secondary"
+              className="flex-1"
+              onClick={forceAuthInit}
+            >
+              Force Initialize
+            </Button>
           </div>
           
           <div className="pt-2 border-t border-gray-700 mt-2">

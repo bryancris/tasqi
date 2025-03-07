@@ -1,5 +1,12 @@
 
 import { useCallback } from "react";
+import { 
+  isDevelopmentMode,
+  forceAuthInitialized,
+  isAuthForceInitialized,
+  saveDevAuthState,
+  getDevAuthState
+} from "../provider/constants";
 
 /**
  * Hook for handling development mode authentication testing
@@ -9,7 +16,7 @@ export const useDevModeAuth = () => {
   const isHotReload = (() => {
     try {
       // Only check in development mode
-      if (process.env.NODE_ENV !== 'development') return false;
+      if (!isDevelopmentMode()) return false;
       
       // Check if we've stored a timestamp for hot reload detection
       const lastMountStr = sessionStorage.getItem('auth_last_mount_time');
@@ -22,8 +29,8 @@ export const useDevModeAuth = () => {
       const lastMount = parseInt(lastMountStr, 10);
       const now = Date.now();
       
-      // If it's been less than 1 second since last mount, it's likely a hot reload
-      const isHotReload = now - lastMount < 1000;
+      // If it's been less than 2 seconds since last mount, it's likely a hot reload
+      const isHotReload = now - lastMount < 2000;
       
       // Update the timestamp
       sessionStorage.setItem('auth_last_mount_time', now.toString());
@@ -35,56 +42,61 @@ export const useDevModeAuth = () => {
   })();
   
   // Get last known auth state from storage
-  const lastKnownAuthState = (() => {
-    try {
-      const stored = localStorage.getItem('dev_auth_state');
-      if (stored) {
-        return JSON.parse(stored);
-      }
-      return null;
-    } catch (e) {
-      return null;
-    }
-  })();
+  const lastKnownAuthState = getDevAuthState();
   
   // Force auth to be initialized in development mode
-  const forceAuthInitialized = useCallback(() => {
-    try {
-      if (process.env.NODE_ENV === 'development') {
-        sessionStorage.setItem('force_auth_initialized', 'true');
-        console.log("Development mode: Forced auth initialized for future loads");
-      }
-    } catch (e) {
-      console.warn("Could not set force_auth_initialized", e);
-    }
+  const forceAuthInitializedFn = useCallback((value = true) => {
+    forceAuthInitialized(value);
   }, []);
   
   // Check if we've forced initialization
   const checkForceInitialized = useCallback(() => {
-    try {
-      return sessionStorage.getItem('force_auth_initialized') === 'true';
-    } catch (e) {
-      return false;
-    }
+    return isAuthForceInitialized();
   }, []);
   
   // Save current auth state
   const saveAuthState = useCallback((hasSession: boolean) => {
+    saveDevAuthState(hasSession);
+  }, []);
+  
+  // Clear dev mode auth state
+  const clearDevAuthState = useCallback(() => {
     try {
-      localStorage.setItem('dev_auth_state', JSON.stringify({
-        hasSession,
-        timestamp: Date.now()
-      }));
+      if (isDevelopmentMode()) {
+        localStorage.removeItem('dev_auth_state');
+        sessionStorage.removeItem('force_auth_initialized');
+        sessionStorage.removeItem('dev_bypass_auth');
+        console.log("Development mode: Cleared all auth state");
+      }
     } catch (e) {
-      console.warn("Could not save auth state", e);
+      console.warn("Could not clear dev auth state", e);
+    }
+  }, []);
+  
+  // Helper to enable dev mode bypass quickly
+  const enableDevBypass = useCallback(() => {
+    try {
+      if (isDevelopmentMode()) {
+        sessionStorage.setItem('dev_bypass_auth', 'true');
+        forceAuthInitialized(true);
+        console.log("Development mode: Enabled auth bypass and forced initialization");
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.warn("Could not enable dev bypass", e);
+      return false;
     }
   }, []);
   
   return {
     isHotReload,
     lastKnownAuthState,
-    forceAuthInitialized,
+    forceAuthInitialized: forceAuthInitializedFn,
     checkForceInitialized,
-    saveAuthState
+    saveAuthState,
+    clearDevAuthState,
+    enableDevBypass,
+    isDevelopmentMode: isDevelopmentMode()
   };
 };
