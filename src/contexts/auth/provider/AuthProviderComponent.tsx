@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { AuthContext } from "../AuthContext";
 import { useNetworkDetection } from "@/hooks/chat/use-network-detection";
 import { supabase } from "@/integrations/supabase/client";
-import { useSignOut } from "../hooks";
 
 export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // State
@@ -19,7 +18,6 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
   const mounted = useRef(true);
   const hasToastRef = useRef(false);
   const authSubscription = useRef<{ unsubscribe: () => void } | null>(null);
-  const initTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Network status
   const { isOnline } = useNetworkDetection();
@@ -43,15 +41,6 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
   // Initialize auth once on mount
   useEffect(() => {
     console.log("Auth provider initializing");
-    
-    // Ensure we don't get stuck in loading state
-    initTimeoutRef.current = setTimeout(() => {
-      if (mounted.current && loading) {
-        console.log("Auth initialization timed out, forcing completion");
-        setLoading(false);
-        setInitialized(true);
-      }
-    }, 3000);
     
     // Set up auth state subscription
     const setupAuth = async () => {
@@ -85,6 +74,10 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
           console.log("No session found during initialization");
         }
         
+        // Complete initialization regardless of session existence
+        setLoading(false);
+        setInitialized(true);
+        
         // Set up auth state change listener
         const { data } = supabase.auth.onAuthStateChange((event, newSession) => {
           console.log(`Auth state change event: ${event}`);
@@ -97,6 +90,7 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
             hasToastRef.current = false;
           } 
           else if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') && newSession) {
+            console.log("Setting session from auth state change", event);
             setSession(newSession);
             setUser(newSession.user);
             
@@ -114,10 +108,6 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
         // Store subscription for cleanup
         authSubscription.current = data.subscription;
         
-        // Complete initialization
-        setLoading(false);
-        setInitialized(true);
-        
       } catch (error) {
         console.error("Error setting up auth:", error);
         if (error instanceof Error) {
@@ -134,10 +124,6 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
     // Cleanup on unmount
     return () => {
       mounted.current = false;
-      
-      if (initTimeoutRef.current) {
-        clearTimeout(initTimeoutRef.current);
-      }
       
       if (authSubscription.current) {
         console.log("Cleaning up auth subscription");

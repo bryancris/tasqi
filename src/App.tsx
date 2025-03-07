@@ -14,11 +14,21 @@ import SelfCare from './pages/SelfCare';
 import Chat from './pages/Chat';
 import { useAuth } from './contexts/auth';
 import { Spinner } from './components/ui/spinner';
-import { memo } from 'react';
+import { memo, useEffect } from 'react';
 
 const ProtectedRoute = memo(({ children }: { children: React.ReactNode }) => {
   const { session, loading, initialized } = useAuth();
   const location = useLocation();
+  
+  // Debug logging
+  useEffect(() => {
+    console.log("ProtectedRoute check:", { 
+      hasSession: !!session, 
+      loading, 
+      initialized, 
+      path: location.pathname 
+    });
+  }, [session, loading, initialized, location.pathname]);
   
   // Show loading state if not yet fully initialized
   if (loading && !initialized) {
@@ -31,6 +41,7 @@ const ProtectedRoute = memo(({ children }: { children: React.ReactNode }) => {
   }
   
   if (!session) {
+    console.log("No session found, redirecting to auth page");
     return <Navigate to="/auth" replace state={{ from: location }} />;
   }
 
@@ -39,6 +50,15 @@ const ProtectedRoute = memo(({ children }: { children: React.ReactNode }) => {
 
 const AuthRoute = memo(({ children }: { children: React.ReactNode }) => {
   const { session, loading, initialized } = useAuth();
+  
+  // Debug logging
+  useEffect(() => {
+    console.log("AuthRoute check:", { 
+      hasSession: !!session, 
+      loading, 
+      initialized 
+    });
+  }, [session, loading, initialized]);
   
   // Show loading state if not yet fully initialized
   if (loading && !initialized) {
@@ -52,6 +72,7 @@ const AuthRoute = memo(({ children }: { children: React.ReactNode }) => {
   
   // Redirect if session exists and initialization is complete
   if (session && initialized) {
+    console.log("Session exists, redirecting to dashboard");
     return <Navigate to="/dashboard" replace />;
   }
 

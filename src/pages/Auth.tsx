@@ -23,6 +23,15 @@ const Auth = () => {
   // Check if we're on the update password route
   const isUpdatePasswordRoute = location.pathname === "/auth/update-password";
   
+  // For debugging
+  useEffect(() => {
+    console.log("Auth component state:", { 
+      hasSession: !!session, 
+      loading, 
+      initialized 
+    });
+  }, [session, loading, initialized]);
+  
   // If we have a confirmed session, redirect to dashboard
   useEffect(() => {
     if (session && initialized) {

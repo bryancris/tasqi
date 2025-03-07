@@ -28,7 +28,7 @@ export function useEmailSignIn() {
 
       if (error) throw error;
       
-      console.log("Sign in successful", data.session ? "Session exists" : "No session");
+      console.log("Sign in successful", data.session ? "Session exists" : "No session", "User:", data.user?.email);
       
       // If we got here, authentication succeeded
       toast.success("Sign in successful");
