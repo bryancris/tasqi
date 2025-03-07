@@ -26,6 +26,9 @@ export function TaskCardBase({ task, index, isDraggable = false, view = 'daily',
   
   // Track if we're currently processing a sharing indicator click
   const sharingClickInProgress = useRef(false);
+  
+  // Create a ref to track the last click time
+  const lastClickTimeRef = useRef(0);
 
   useEffect(() => {
     setLocalTask(task);
@@ -52,8 +55,24 @@ export function TaskCardBase({ task, index, isDraggable = false, view = 'daily',
 
   // This function opens the edit drawer when clicking on the main card content
   const handleCardClick = (e: React.MouseEvent) => {
-    // Don't open edit drawer if sharing click is in progress
-    if (sharingClickInProgress.current) {
+    // Always record the last click time
+    const now = Date.now();
+    lastClickTimeRef.current = now;
+    
+    // Get sharing state from window globals (set by ShareIndicator and TaskSharingInfoSheet)
+    const sharingClickTime = (window as any).sharingIndicatorClickTime || 0;
+    const sharingSheetCloseTime = (window as any).sharingSheetCloseTime || 0;
+    const isClosingSheet = (window as any).__isClosingSharingSheet;
+    
+    // Check various conditions where we should NOT open the edit drawer
+    const recentSharingClick = now - sharingClickTime < 1500;
+    const recentSheetClose = now - sharingSheetCloseTime < 1500;
+    
+    // Don't open if any sharing-related activity is happening
+    if (sharingClickInProgress.current || recentSharingClick || recentSheetClose || isClosingSheet) {
+      console.log("Blocking card click due to sharing interaction");
+      e.stopPropagation();
+      e.preventDefault();
       return;
     }
 
@@ -68,11 +87,20 @@ export function TaskCardBase({ task, index, isDraggable = false, view = 'daily',
     
     // If it's a sharing indicator click, don't open the drawer
     if (isSharingIndicator) {
+      console.log("Blocking card click due to sharing indicator target");
       e.stopPropagation();
       return;
     }
     
-    // Open the edit drawer for clicks on the main content
+    // Also check if the event has been marked as handled by sharing indicator
+    if ((e as any).__sharingIndicatorHandled) {
+      console.log("Blocking card click due to __sharingIndicatorHandled flag");
+      e.stopPropagation();
+      return;
+    }
+    
+    // Only if we pass all checks, open the edit drawer
+    console.log("Opening edit drawer");
     setIsEditDrawerOpen(true);
   };
 
@@ -84,15 +112,18 @@ export function TaskCardBase({ task, index, isDraggable = false, view = 'daily',
     // Stop propagation to prevent bubbling to card container
     e.stopPropagation();
     
-    // Reset the flag after a short delay
+    // Reset the flag after a longer delay
     setTimeout(() => {
       sharingClickInProgress.current = false;
-    }, 100);
+    }, 1000);
   };
 
   // Add event listener to capture sharing indicator clicks at the document level
   useEffect(() => {
     const sharingClickHandler = (e: MouseEvent) => {
+      // Skip if the target isn't an element
+      if (!(e.target instanceof Element)) return;
+      
       const target = e.target as Element;
       const isSharingIndicator = 
         target.closest('[data-sharing-indicator="true"]') ||
@@ -104,20 +135,46 @@ export function TaskCardBase({ task, index, isDraggable = false, view = 'daily',
         // Mark sharing clicks to prevent drawer from opening
         sharingClickInProgress.current = true;
         
-        // Reset after a short delay
+        // Set a global flag with timestamp
+        (window as any).sharingIndicatorClickTime = Date.now();
+        
+        // Reset after a longer delay
         setTimeout(() => {
           sharingClickInProgress.current = false;
-        }, 100);
+        }, 1000);
       }
     };
 
-    // Capture phase to handle events before they reach the card
+    // Get all click events in the capture phase before they reach components
     document.addEventListener('mousedown', sharingClickHandler, { capture: true });
     document.addEventListener('click', sharingClickHandler, { capture: true });
     
     return () => {
       document.removeEventListener('mousedown', sharingClickHandler, { capture: true });
       document.removeEventListener('click', sharingClickHandler, { capture: true });
+    };
+  }, []);
+
+  // When sheet closes, prevent task drawer from opening
+  useEffect(() => {
+    const handleGlobalClick = (e: MouseEvent) => {
+      // Check if we're in a sharing sheet closing state
+      const isClosingSheet = (window as any).__isClosingSharingSheet;
+      const sharingSheetCloseTime = (window as any).__sharingSheetCloseTime || 0;
+      const timeSinceClose = Date.now() - sharingSheetCloseTime;
+      
+      // If sheet is closing or closed recently (within 1500ms), block card clicks
+      if (isClosingSheet || timeSinceClose < 1500) {
+        e.stopPropagation();
+        e.preventDefault();
+      }
+    };
+    
+    // Add a document-level click handler to capture all clicks
+    document.addEventListener('click', handleGlobalClick, { capture: true });
+    
+    return () => {
+      document.removeEventListener('click', handleGlobalClick, { capture: true });
     };
   }, []);
 
@@ -169,7 +226,12 @@ export function TaskCardBase({ task, index, isDraggable = false, view = 'daily',
         <div 
           className="absolute inset-0 z-10 pointer-events-none"
           onClickCapture={(e) => {
-            if (sharingClickInProgress.current) {
+            // Protect against post-sheet-close clicks
+            const sharingSheetCloseTime = (window as any).__sharingSheetCloseTime || 0;
+            const timeSinceClose = Date.now() - sharingSheetCloseTime;
+            
+            if (sharingClickInProgress.current || (timeSinceClose < 1500)) {
+              console.log("Blocking click via onClickCapture");
               e.stopPropagation();
             }
           }}

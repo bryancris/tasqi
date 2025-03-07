@@ -1,11 +1,10 @@
 
-import { memo, useState, useCallback } from "react";
+import { memo, useState } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { TaskAssignmentInfo } from "../types";
 import { Task } from "../../TaskBoard";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { TaskSharingInfoSheet } from "../sharing/TaskSharingInfoSheet";
-import { handleSharingInteraction } from "../utils/sharingUtils";
 
 interface ShareIndicatorProps {
   task: Task;
@@ -78,32 +77,33 @@ function ShareIndicatorComponent({ task, assignmentInfo }: ShareIndicatorProps) 
     return "Shared task";
   };
 
-  const handleShareIndicatorClick = useCallback((e: React.MouseEvent) => {
-    // Always mark these events with the sharing-indicator data attribute
+  // Simple click handler that sets a global flag and shows the sheet on mobile
+  const handleClick = (e: React.MouseEvent) => {
+    // Set the global sharing indicator flag with timestamp
+    window.__sharingIndicatorClickTime = Date.now();
+    
+    // Mark event as handled by sharing indicator
+    e.__sharingIndicatorHandled = true;
+    
+    // Add a data attribute for easier identification
     (e.target as HTMLElement).setAttribute('data-sharing-indicator-clicked', 'true');
     
-    // We need to stop propagation at every level
+    // Stop propagation at all levels
     e.stopPropagation();
     e.nativeEvent.stopImmediatePropagation();
     
-    // Mark the event as handled
-    (e as any).__sharingIndicatorHandled = true;
-    (window as any).__sharingIndicatorClicked = true;
-    
-    // Set a global flag on window for 100ms
-    (window as any).sharingIndicatorClickTime = Date.now();
-    
+    // For mobile, show the sharing info sheet
     if (isMobile) {
       setShowSharingInfo(true);
     }
-  }, [isMobile]);
+  };
 
   return (
     <>
       {isMobile ? (
         <div 
           className="w-2 bg-[#8B5CF6] h-full absolute right-0 top-0 rounded-r-xl cursor-pointer sharing-indicator" 
-          onClick={handleShareIndicatorClick}
+          onClick={handleClick}
           onMouseDown={(e) => e.stopPropagation()}
           data-sharing-indicator="true"
           aria-label="Sharing information"
@@ -114,7 +114,7 @@ function ShareIndicatorComponent({ task, assignmentInfo }: ShareIndicatorProps) 
             <TooltipTrigger asChild>
               <div 
                 className="w-2 bg-[#8B5CF6] h-full absolute right-0 top-0 rounded-r-xl cursor-help sharing-indicator" 
-                onClick={handleShareIndicatorClick}
+                onClick={handleClick}
                 onMouseDown={(e) => e.stopPropagation()}
                 data-sharing-indicator="true"
                 aria-label="Sharing information"

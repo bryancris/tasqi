@@ -32,6 +32,10 @@ export function addEventBlockers(
   duration: number = 500,
   cleanupCallback?: () => void
 ): () => void {
+  // Set a global flag to indicate event blocking is active
+  (window as any).__eventBlockersActive = true;
+  (window as any).__eventBlockersStartTime = Date.now();
+  
   // Add multiple event listeners to catch all types of interactions
   document.addEventListener('click', blockAllEvents, { capture: true });
   document.addEventListener('mousedown', blockAllEvents, { capture: true });
@@ -61,6 +65,32 @@ export function removeEventBlockers(): void {
   document.removeEventListener('mouseup', blockAllEvents, { capture: true });
   document.removeEventListener('pointerdown', blockAllEvents, { capture: true });
   document.removeEventListener('pointerup', blockAllEvents, { capture: true });
+  
+  // Reset the global flag
+  (window as any).__eventBlockersActive = false;
+}
+
+/**
+ * Check if event blockers are currently active
+ */
+export function areEventBlockersActive(): boolean {
+  // Check if blockers are active
+  const blockersActive = (window as any).__eventBlockersActive;
+  
+  // If blockers are active, also check if they've been active for more than 3 seconds
+  // This helps prevent bugs where blockers get stuck active
+  if (blockersActive) {
+    const startTime = (window as any).__eventBlockersStartTime || 0;
+    const currentTime = Date.now();
+    
+    // If blockers have been active for more than 3 seconds, they're probably stuck
+    if (currentTime - startTime > 3000) {
+      removeEventBlockers();
+      return false;
+    }
+  }
+  
+  return blockersActive || false;
 }
 
 /**
@@ -149,18 +179,32 @@ export const SheetRegistry = {
       (window as any).__closingSharingSheet = id;
       // Set a global flag to track closing state
       (window as any).__isClosingSharingSheet = true;
+      (window as any).__sharingSheetCloseTime = Date.now();
       
-      // Clear after delay
+      // Clear after longer delay (1500ms instead of 800ms)
       setTimeout(() => {
         if ((window as any).__closingSharingSheet === id) {
           (window as any).__closingSharingSheet = null;
           (window as any).__isClosingSharingSheet = false;
         }
-      }, 800); // Longer delay to ensure all events are blocked
+      }, 1500); 
     }
   },
   
   isClosingSharingSheet(): boolean {
-    return !!(window as any).__closingSharingSheet || !!(window as any).__isClosingSharingSheet;
+    if (typeof window === 'undefined') return false;
+    
+    const isClosing = !!(window as any).__closingSharingSheet || !!(window as any).__isClosingSharingSheet;
+    
+    // Also check if the closing happened recently (within 1500ms)
+    if (!isClosing) {
+      const closeTime = (window as any).__sharingSheetCloseTime || 0;
+      const now = Date.now();
+      const timeSinceClose = now - closeTime;
+      
+      return timeSinceClose < 1500;
+    }
+    
+    return isClosing;
   }
 };

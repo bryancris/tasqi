@@ -34,34 +34,20 @@ export function TaskSharingInfoSheet({
   open, 
   onOpenChange 
 }: TaskSharingInfoSheetProps) {
-  const preventClickRef = useRef(false);
   const uniqueIdRef = useRef<string>(`sharing-sheet-${Date.now()}`);
   
-  // When the component mounts, store its ID in a global registry
+  // Create a global flag to track when the sheet is closing
   useEffect(() => {
-    // Create a global registry if it doesn't exist
-    if (typeof window !== 'undefined') {
-      (window as any).__activeSharingSheets = (window as any).__activeSharingSheets || {};
-      (window as any).__activeSharingSheets[uniqueIdRef.current] = true;
+    if (!open) {
+      // If the sheet is closing, set global flags and block events
+      (window as any).__isClosingSharingSheet = true;
+      (window as any).__sharingSheetCloseTime = Date.now();
       
-      return () => {
-        // Clean up registry on unmount
-        if ((window as any).__activeSharingSheets) {
-          delete (window as any).__activeSharingSheets[uniqueIdRef.current];
-        }
-      };
-    }
-  }, []);
-  
-  // Setup a pre-close handler to block events BEFORE the sheet starts closing
-  useEffect(() => {
-    if (!open && preventClickRef.current) {
-      // Add event blocker immediately when sheet is about to close
-      const cleanup = addEventBlockers(800, () => {
-        preventClickRef.current = false;
+      // Block all events for 1000ms when closing
+      addEventBlockers(1000, () => {
+        // After delay, clear the closing state
+        (window as any).__isClosingSharingSheet = false;
       });
-      
-      return cleanup;
     }
   }, [open]);
 
@@ -71,14 +57,12 @@ export function TaskSharingInfoSheet({
       // Before closing, add protection
       console.log("Sharing sheet closing - adding protection");
       
-      // Set the prevention flag when sheet is being closed
-      preventClickRef.current = true;
-      
       // Mark this interaction as a sharing sheet close
       (window as any).__closingSharingSheet = uniqueIdRef.current;
       (window as any).__isClosingSharingSheet = true;
+      (window as any).__sharingSheetCloseTime = Date.now();
       
-      // Block any pending click events
+      // Block click events for 1200ms (longer than animation)
       const stopImmediatePropagation = (e: MouseEvent) => {
         e.stopImmediatePropagation();
         e.stopPropagation();
@@ -87,14 +71,16 @@ export function TaskSharingInfoSheet({
       
       document.addEventListener('click', stopImmediatePropagation, { capture: true });
       
-      // Remove the marker and event blocker after a delay
+      // Remove the event blocker and clean up global flags after delay
       setTimeout(() => {
+        document.removeEventListener('click', stopImmediatePropagation, { capture: true });
+        
+        // Reset all flags
         if ((window as any).__closingSharingSheet === uniqueIdRef.current) {
           (window as any).__closingSharingSheet = null;
           (window as any).__isClosingSharingSheet = false;
         }
-        document.removeEventListener('click', stopImmediatePropagation, { capture: true });
-      }, 800);
+      }, 1200);
     }
     
     onOpenChange(newOpen);

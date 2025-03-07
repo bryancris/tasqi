@@ -49,14 +49,12 @@ export function handleSharingInteraction(
   // Mark the event as handled directly on the event object
   (e as any).__sharingIndicatorHandled = true;
   
-  // Create global flags to track this interaction
-  const sharedDataId = `share-interaction-${Date.now()}`;
-  (window as any).__lastShareInteraction = sharedDataId;
+  // Create global flags to track this interaction - used by TaskCardBase
   (window as any).__sharingIndicatorClicked = true;
   (window as any).sharingIndicatorClickTime = Date.now();
   
-  // Add immediate event blockers
-  addEventBlockers(150);
+  // Add longer-lasting event blockers (1000ms instead of 150ms)
+  addEventBlockers(1000);
   
   // Use requestAnimationFrame to ensure DOM updates before showing sharing info
   requestAnimationFrame(() => {
@@ -81,11 +79,11 @@ export function handleSharingInteraction(
   // Add extra protection by blocking events in the capture phase
   // This ensures that no clicks get through to task cards underneath
   const preventCapture = (evt: Event) => {
-    // Check if this event is within 200ms of our sharing click
+    // Check if this event is within 1000ms of our sharing click
     const now = Date.now();
     const sharingClickTime = (window as any).sharingIndicatorClickTime || 0;
     
-    if (now - sharingClickTime < 200) {
+    if (now - sharingClickTime < 1000) {
       evt.stopPropagation();
       evt.preventDefault();
       return false;
@@ -99,7 +97,7 @@ export function handleSharingInteraction(
   document.addEventListener('pointerdown', preventCapture, { capture: true });
   document.addEventListener('pointerup', preventCapture, { capture: true });
   
-  // Remove the blocking after a reasonable timeout
+  // Remove the blocking after a reasonable timeout (1000ms instead of 300ms)
   setTimeout(() => {
     document.removeEventListener('click', preventCapture, { capture: true });
     document.removeEventListener('mousedown', preventCapture, { capture: true });
@@ -108,12 +106,9 @@ export function handleSharingInteraction(
     document.removeEventListener('pointerup', preventCapture, { capture: true });
     
     // Clean up our tracking flag
-    if ((window as any).__lastShareInteraction === sharedDataId) {
-      (window as any).__lastShareInteraction = null;
-      (window as any).__sharingIndicatorClicked = false;
-      (window as any).sharingIndicatorClickTime = 0;
-    }
-  }, 300);
+    (window as any).__sharingIndicatorClicked = false;
+    (window as any).sharingIndicatorClickTime = 0;
+  }, 1000);
 }
 
 /**
