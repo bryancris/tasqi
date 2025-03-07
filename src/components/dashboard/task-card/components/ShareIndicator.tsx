@@ -1,8 +1,10 @@
 
-import { memo } from "react";
+import { memo, useState } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { TaskAssignmentInfo } from "../types";
 import { Task } from "../../TaskBoard";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { TaskSharingInfoSheet } from "./TaskSharingInfoSheet";
 
 interface ShareIndicatorProps {
   task: Task;
@@ -10,6 +12,9 @@ interface ShareIndicatorProps {
 }
 
 function ShareIndicatorComponent({ task, assignmentInfo }: ShareIndicatorProps) {
+  const [showSharingInfo, setShowSharingInfo] = useState(false);
+  const isMobile = useIsMobile();
+  
   if (!task.shared) return null;
 
   const getShareTooltipText = () => {
@@ -72,21 +77,43 @@ function ShareIndicatorComponent({ task, assignmentInfo }: ShareIndicatorProps) 
     return "Shared task";
   };
 
+  const handleShareIndicatorClick = () => {
+    if (isMobile) {
+      setShowSharingInfo(true);
+    }
+  };
+
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className="w-2 bg-[#8B5CF6] h-full absolute right-0 top-0 rounded-r-xl cursor-help" />
-        </TooltipTrigger>
-        <TooltipContent 
-          className="bg-gray-800 text-white border-gray-700 text-xs z-50"
-          side="left"
-          sideOffset={5}
-        >
-          {getShareTooltipText()}
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <>
+      {isMobile ? (
+        <div 
+          className="w-2 bg-[#8B5CF6] h-full absolute right-0 top-0 rounded-r-xl cursor-pointer" 
+          onClick={handleShareIndicatorClick}
+        />
+      ) : (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="w-2 bg-[#8B5CF6] h-full absolute right-0 top-0 rounded-r-xl cursor-help" />
+            </TooltipTrigger>
+            <TooltipContent 
+              className="bg-gray-800 text-white border-gray-700 text-xs z-50"
+              side="left"
+              sideOffset={5}
+            >
+              {getShareTooltipText()}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
+      
+      <TaskSharingInfoSheet
+        task={task}
+        assignmentInfo={assignmentInfo}
+        open={showSharingInfo}
+        onOpenChange={setShowSharingInfo}
+      />
+    </>
   );
 }
 
