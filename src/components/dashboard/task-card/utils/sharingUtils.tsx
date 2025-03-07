@@ -56,7 +56,7 @@ export function handleSharingInteraction(
   
   // Create global flags to track this interaction - used by TaskCardBase
   window.__sharingIndicatorClicked = true;
-  window.sharingIndicatorClickTime = Date.now();
+  window.__sharingIndicatorClickTime = Date.now();
   
   // Add longer-lasting event blockers (1000ms instead of 150ms)
   addEventBlockers(1000);
@@ -86,7 +86,7 @@ export function handleSharingInteraction(
   const preventCapture = (evt: Event) => {
     // Check if this event is within 1000ms of our sharing click
     const now = Date.now();
-    const sharingClickTime = window.sharingIndicatorClickTime || 0;
+    const sharingClickTime = window.__sharingIndicatorClickTime || 0;
     
     if (now - sharingClickTime < 1000) {
       evt.stopPropagation();
@@ -112,7 +112,7 @@ export function handleSharingInteraction(
     
     // Clean up our tracking flag
     window.__sharingIndicatorClicked = false;
-    window.sharingIndicatorClickTime = 0;
+    window.__sharingIndicatorClickTime = 0;
   }, 1000);
 }
 
