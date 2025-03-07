@@ -6,11 +6,11 @@ import { useState, useEffect, useRef } from 'react';
  */
 const NETWORK_DETECTION_CONSTANTS = {
   // Increased minimum time between state changes to reduce flickering
-  MIN_TIME_BETWEEN_CHANGES_MS: 10000, // 10 seconds minimum between state changes 
+  MIN_TIME_BETWEEN_CHANGES_MS: 15000, // 15 seconds minimum between state changes 
   // Longer debounce for online events to ensure stability
-  DEBOUNCE_ONLINE_MS: 3000,          
+  DEBOUNCE_ONLINE_MS: 5000,          
   // Faster response for offline events for better UX
-  DEBOUNCE_OFFLINE_MS: 1500,
+  DEBOUNCE_OFFLINE_MS: 2000,
   // How many consecutive checks needed to confirm state change
   CONSECUTIVE_CHECKS_REQUIRED: 2
 };
@@ -26,6 +26,7 @@ export const useNetworkDetection = () => {
   const debounceTimerRef = useRef<number | null>(null);
   const consecutiveChecksRef = useRef<number>(0);
   const isInitialMount = useRef<boolean>(true);
+  const stabilityTimerRef = useRef<number | null>(null);
   
   useEffect(() => {
     // Log initial state on mount only
@@ -41,6 +42,13 @@ export const useNetworkDetection = () => {
       }
     };
 
+    const clearStabilityTimer = () => {
+      if (stabilityTimerRef.current !== null) {
+        window.clearTimeout(stabilityTimerRef.current);
+        stabilityTimerRef.current = null;
+      }
+    };
+
     // Handle stable online transition
     const handleOnline = () => {
       const now = Date.now();
@@ -51,8 +59,9 @@ export const useNetworkDetection = () => {
         !lastOnlineState.current || 
         now - lastOnlineChangeTime.current > NETWORK_DETECTION_CONSTANTS.MIN_TIME_BETWEEN_CHANGES_MS
       ) {
-        // Clear any existing debounce timer
+        // Clear any existing timers
         clearDebounceTimer();
+        clearStabilityTimer();
         
         // Set a debounce timer for online detection to ensure stability
         debounceTimerRef.current = window.setTimeout(() => {
@@ -70,9 +79,14 @@ export const useNetworkDetection = () => {
                   lastOnlineState.current = true;
                   lastOnlineChangeTime.current = Date.now();
                   consecutiveChecksRef.current = 0;
+                  
+                  // Set a stability timer - don't allow any state changes during this period
+                  stabilityTimerRef.current = window.setTimeout(() => {
+                    stabilityTimerRef.current = null;
+                  }, NETWORK_DETECTION_CONSTANTS.MIN_TIME_BETWEEN_CHANGES_MS);
                 }
               } else {
-                // Schedule another check
+                // Schedule another check if we need more confirmations
                 debounceTimerRef.current = window.setTimeout(handleOnline, 1000);
               }
             } else {
@@ -91,9 +105,11 @@ export const useNetworkDetection = () => {
       const now = Date.now();
       
       // For offline state, we update with a shorter debounce for better UX
+      // but still respect the minimum time between changes
       if (
-        lastOnlineState.current || 
-        now - lastOnlineChangeTime.current > NETWORK_DETECTION_CONSTANTS.MIN_TIME_BETWEEN_CHANGES_MS
+        (lastOnlineState.current || 
+        now - lastOnlineChangeTime.current > NETWORK_DETECTION_CONSTANTS.MIN_TIME_BETWEEN_CHANGES_MS) &&
+        stabilityTimerRef.current === null // Don't change if in stability period
       ) {
         // Clear any existing debounce timer
         clearDebounceTimer();
@@ -151,10 +167,11 @@ export const useNetworkDetection = () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
       clearDebounceTimer();
+      clearStabilityTimer();
     };
   }, []);
 
-  // Add a function to check network availability
+  // Function to check network availability
   const isNetworkAvailable = () => isOnline;
 
   return { 
