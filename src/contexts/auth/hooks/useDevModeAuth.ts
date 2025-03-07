@@ -87,6 +87,19 @@ export const useDevModeAuth = () => {
     }
   }, []);
   
+  // Check if we should skip the auth timeout in dev mode
+  const shouldSkipAuthTimeout = useCallback(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const skipFromUrl = urlParams.get('skip_auth_timeout') === 'true';
+      
+      return isDevelopmentMode() && 
+             (sessionStorage.getItem('skip_auth_timeout') === 'true' || skipFromUrl);
+    } catch (e) {
+      return false;
+    }
+  }, []);
+  
   // Helper to enable dev mode bypass quickly
   const enableDevBypass = useCallback(() => {
     try {
@@ -122,6 +135,24 @@ export const useDevModeAuth = () => {
     }
   }, []);
   
+  // Force completion of auth loading state in dev mode
+  const forceAuthLoadingComplete = useCallback(() => {
+    try {
+      if (isDevelopmentMode()) {
+        console.log("Development mode: Forcing auth loading to complete");
+        sessionStorage.setItem('force_auth_complete', 'true');
+        
+        // Force a page reload to apply the change
+        window.location.reload();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.warn("Could not force auth loading completion", e);
+      return false;
+    }
+  }, []);
+  
   return {
     isHotReload,
     lastKnownAuthState,
@@ -130,7 +161,9 @@ export const useDevModeAuth = () => {
     saveAuthState,
     clearDevAuthState,
     isDevBypassEnabled,
+    shouldSkipAuthTimeout,
     enableDevBypass,
+    forceAuthLoadingComplete,
     isDevelopmentMode: isDevelopmentMode()
   };
 };

@@ -4,26 +4,29 @@ import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
 import { Spinner } from "@/components/ui/spinner";
 import { isDevelopmentMode } from "@/contexts/auth/provider/constants";
+import { useDevModeAuth } from "@/contexts/auth/hooks/useDevModeAuth";
+import { Button } from "@/components/ui/button";
 
 // Maximum wait time before forcing redirect
 const MAX_WAIT_TIME = isDevelopmentMode() ? 5000 : 3000;
 
 export const ProtectedRoute = () => {
   const { session, loading, initialized } = useAuth();
+  const { 
+    isDevBypassEnabled, 
+    enableDevBypass, 
+    shouldSkipAuthTimeout,
+    forceAuthLoadingComplete 
+  } = useDevModeAuth();
+  
   const navigate = useNavigate();
   const location = useLocation();
   const [redirectInProgress, setRedirectInProgress] = useState(false);
   const [waitingTooLong, setWaitingTooLong] = useState(false);
+  const [stuckInLoading, setStuckInLoading] = useState(false);
   
   // Check if dev mode auth bypass is enabled
-  const isAuthBypassed = (() => {
-    try {
-      return isDevelopmentMode() && 
-             (sessionStorage.getItem('dev_bypass_auth') === 'true' || location.search.includes('dev_bypass=true'));
-    } catch (e) {
-      return false;
-    }
-  })();
+  const isAuthBypassed = isDevBypassEnabled();
   
   // Log auth state for debugging
   useEffect(() => {
@@ -33,10 +36,12 @@ export const ProtectedRoute = () => {
         loading, 
         initialized, 
         isAuthBypassed, 
-        redirectInProgress 
+        redirectInProgress,
+        stuckInLoading,
+        waitingTooLong
       });
     }
-  }, [session, loading, initialized, isAuthBypassed, redirectInProgress]);
+  }, [session, loading, initialized, isAuthBypassed, redirectInProgress, stuckInLoading, waitingTooLong]);
   
   // In dev mode with bypass enabled, render children immediately
   if (isDevelopmentMode() && isAuthBypassed) {
@@ -49,7 +54,7 @@ export const ProtectedRoute = () => {
     return <Outlet />;
   }
   
-  // If we've been waiting for a really long time, show different message
+  // Check if we've been waiting for too long
   useEffect(() => {
     if (loading && !initialized && !waitingTooLong) {
       const timeoutId = setTimeout(() => {
@@ -60,10 +65,33 @@ export const ProtectedRoute = () => {
     }
   }, [loading, initialized, waitingTooLong]);
   
+  // Detect if we're potentially stuck in loading
+  useEffect(() => {
+    // Skip the stuck detection if we're using the auth timeout skip in dev mode
+    if (shouldSkipAuthTimeout()) return;
+    
+    if (loading && !initialized && !stuckInLoading) {
+      const stuckTimeoutId = setTimeout(() => {
+        if (loading && !initialized) {
+          console.log("[ProtectedRoute] Auth appears to be stuck in loading state");
+          setStuckInLoading(true);
+        }
+      }, 8000); // Much longer timeout to detect truly stuck states
+      
+      return () => clearTimeout(stuckTimeoutId);
+    }
+  }, [loading, initialized, stuckInLoading, shouldSkipAuthTimeout]);
+  
   // Effect to handle the actual redirection
   useEffect(() => {
     // If already redirecting, do nothing
     if (redirectInProgress) return;
+    
+    // Skip redirect timeout in dev mode if configured
+    if (shouldSkipAuthTimeout()) {
+      console.log("[ProtectedRoute] Auth timeout check disabled in dev mode");
+      return;
+    }
     
     // Wait for auth to be initialized or loading to complete
     if (loading && !initialized) {
@@ -97,7 +125,7 @@ export const ProtectedRoute = () => {
         });
       }
     }
-  }, [session, loading, initialized, navigate, location.pathname, redirectInProgress]);
+  }, [session, loading, initialized, navigate, location.pathname, redirectInProgress, shouldSkipAuthTimeout]);
 
   // Show loading spinner while checking auth
   if ((loading && !initialized) || (!session && !redirectInProgress)) {
@@ -110,19 +138,46 @@ export const ProtectedRoute = () => {
               ? "Still verifying your account... taking longer than usual" 
               : "Verifying your account..."}
           </p>
-          {waitingTooLong && (
+          
+          {(waitingTooLong || stuckInLoading) && (
             <div className="text-xs text-slate-500 max-w-md text-center mt-2">
               <p className="mb-1">If this persists, try refreshing the page or clearing your browser storage.</p>
               {isDevelopmentMode() && (
-                <button 
-                  onClick={() => {
-                    sessionStorage.setItem('dev_bypass_auth', 'true');
-                    window.location.reload();
-                  }}
-                  className="underline text-blue-500 mt-2"
-                >
-                  Enable dev bypass and reload
-                </button>
+                <div className="flex flex-col gap-2 mt-3">
+                  <Button 
+                    onClick={() => {
+                      enableDevBypass();
+                      window.location.reload();
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="text-blue-500 border-blue-500"
+                  >
+                    Enable dev bypass and reload
+                  </Button>
+                  
+                  <Button
+                    onClick={forceAuthLoadingComplete}
+                    variant="outline"
+                    size="sm"
+                    className="text-green-500 border-green-500"
+                  >
+                    Force auth loading completion
+                  </Button>
+                  
+                  <Button
+                    onClick={() => {
+                      localStorage.clear();
+                      sessionStorage.clear();
+                      window.location.reload();
+                    }}
+                    variant="outline"
+                    size="sm"
+                    className="text-red-500 border-red-500"
+                  >
+                    Clear all storage and reload
+                  </Button>
+                </div>
               )}
             </div>
           )}

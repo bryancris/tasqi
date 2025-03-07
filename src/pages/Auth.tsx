@@ -10,11 +10,15 @@ import { useAuth } from "@/contexts/auth";
 import { Navigate, useNavigate, useLocation } from "react-router-dom";
 import { Spinner } from "@/components/ui/spinner";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { useDevModeAuth } from "@/contexts/auth/hooks/useDevModeAuth";
+import { isDevelopmentMode } from "@/contexts/auth/provider/constants";
 
 const Auth = () => {
   const [activeTab, setActiveTab] = useState("signin");
   const [showReset, setShowReset] = useState(false);
+  const [authStuck, setAuthStuck] = useState(false);
   const { session, loading, initialized } = useAuth();
+  const { enableDevBypass, forceAuthLoadingComplete } = useDevModeAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -27,6 +31,20 @@ const Auth = () => {
     initialized,
     path: location.pathname
   });
+  
+  // Detect if auth is stuck in loading
+  useEffect(() => {
+    if (loading && !initialized) {
+      const stuckTimeoutId = setTimeout(() => {
+        if (loading && !initialized) {
+          console.log("[Auth] Auth appears to be stuck in loading state");
+          setAuthStuck(true);
+        }
+      }, 5000);
+      
+      return () => clearTimeout(stuckTimeoutId);
+    }
+  }, [loading, initialized]);
   
   // If we have a session and are initialized, redirect to dashboard
   useEffect(() => {
@@ -44,6 +62,47 @@ const Auth = () => {
         <div className="flex flex-col items-center gap-3">
           <Spinner className="h-8 w-8 text-white" />
           <p className="text-white/70">Checking authentication status...</p>
+          
+          {authStuck && isDevelopmentMode() && (
+            <div className="bg-white/10 p-4 rounded-md mt-4 max-w-md">
+              <p className="text-white text-sm mb-3">Developer Tools: Authentication appears to be stuck</p>
+              <div className="flex flex-col gap-2">
+                <Button 
+                  onClick={() => {
+                    enableDevBypass();
+                    window.location.reload();
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="text-blue-300 border-blue-500"
+                >
+                  Enable dev bypass
+                </Button>
+                
+                <Button
+                  onClick={forceAuthLoadingComplete}
+                  variant="outline"
+                  size="sm"
+                  className="text-green-300 border-green-500"
+                >
+                  Force auth completion
+                </Button>
+                
+                <Button
+                  onClick={() => {
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    window.location.reload();
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="text-red-300 border-red-500"
+                >
+                  Clear storage & reload
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
