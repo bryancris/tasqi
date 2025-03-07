@@ -1,4 +1,3 @@
-
 import { BrowserRouter } from 'react-router-dom';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { CalendarViewProvider } from './contexts/CalendarViewContext';
@@ -16,6 +15,7 @@ import { useAuth } from './contexts/auth';
 import { Spinner } from './components/ui/spinner';
 import { memo, useEffect } from 'react';
 import { Toaster } from './components/ui/sonner';
+import { supabase } from './integrations/supabase/client';
 
 const ProtectedRoute = memo(({ children }: { children: React.ReactNode }) => {
   const { session, loading, initialized } = useAuth();
@@ -29,6 +29,27 @@ const ProtectedRoute = memo(({ children }: { children: React.ReactNode }) => {
       initialized, 
       path: location.pathname 
     });
+    
+    // Check for auth success flag from localStorage if we don't have a session
+    if (!session && initialized && !loading) {
+      const authSuccess = window.localStorage.getItem('auth_success');
+      if (authSuccess === 'true') {
+        console.log("Auth success flag found but no session in context");
+        // Try to refresh the session
+        const checkSession = async () => {
+          console.log("Manually checking session in ProtectedRoute");
+          const { data } = await supabase.auth.getSession();
+          if (data.session) {
+            console.log("Found session after manual check in ProtectedRoute");
+            // We'll keep the flag until we actually have a session in context
+          } else {
+            window.localStorage.removeItem('auth_success');
+          }
+        };
+        
+        checkSession();
+      }
+    }
   }, [session, loading, initialized, location.pathname]);
   
   // Show loading state if not yet fully initialized

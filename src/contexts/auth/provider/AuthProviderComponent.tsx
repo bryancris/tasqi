@@ -30,6 +30,7 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
         setSession(null);
         setUser(null);
         hasToastRef.current = false;
+        window.localStorage.removeItem('auth_success');
         toast.success("Successfully signed out");
       }
     } catch (error) {
@@ -72,6 +73,29 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
           }
         } else {
           console.log("No session found during initialization");
+          // Check if we have the auth success flag but no session
+          const authSuccess = window.localStorage.getItem('auth_success');
+          if (authSuccess === 'true') {
+            console.log("Auth success flag found but no session during initialization, refreshing");
+            // Try to refresh the session one more time
+            const { data: refreshData } = await supabase.auth.refreshSession();
+            if (refreshData?.session) {
+              console.log("Found session after refresh attempt");
+              setSession(refreshData.session);
+              setUser(refreshData.session.user);
+              
+              if (!hasToastRef.current) {
+                toast.success("Successfully signed in", {
+                  id: "auth-success",
+                  duration: 3000,
+                });
+                hasToastRef.current = true;
+              }
+            } else {
+              // If still no session, remove the flag
+              window.localStorage.removeItem('auth_success');
+            }
+          }
         }
         
         // Complete initialization regardless of session existence
@@ -88,14 +112,19 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
             setSession(null);
             setUser(null);
             hasToastRef.current = false;
+            window.localStorage.removeItem('auth_success');
           } 
           else if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') && newSession) {
             console.log("Setting session from auth state change", event);
+            
+            // Add a safety flag to localStorage in case we lose context
+            window.localStorage.setItem('auth_success', 'true');
+            
             setSession(newSession);
             setUser(newSession.user);
             
             // Show success toast (only once)
-            if (!hasToastRef.current) {
+            if (!hasToastRef.current && event === 'SIGNED_IN') {
               toast.success("Successfully signed in", {
                 id: "auth-success",
                 duration: 3000,
@@ -150,6 +179,7 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
             setSession(null);
             setUser(null);
             hasToastRef.current = false;
+            window.localStorage.removeItem('auth_success');
           }
         } catch (error) {
           console.error("Error refreshing session after reconnect:", error);

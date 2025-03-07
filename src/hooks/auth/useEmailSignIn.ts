@@ -35,13 +35,21 @@ export function useEmailSignIn() {
       // If we got here, authentication succeeded
       toast.success("Sign in successful");
 
-      // Force a redirect to dashboard after successful sign-in
-      // This provides a more direct route than waiting for context updates
+      // Store sign-in success in localStorage to help with potential state loss
       if (data.session) {
+        window.localStorage.setItem('auth_success', 'true');
+        console.log("Auth success flag set in localStorage");
+        
+        // Force a redirect to dashboard after successful sign-in
         console.log("Sign in successful, redirecting to dashboard");
+        
+        // First, try refreshing the session to ensure it's properly stored
+        await supabase.auth.refreshSession();
+        
+        // Then redirect with a small delay to allow context to update
         setTimeout(() => {
           navigate("/dashboard", { replace: true });
-        }, 500); // Small delay to allow toast to be seen
+        }, 800); // Increased delay to give auth context more time to update
       }
       
       return true;

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -31,7 +30,27 @@ const Auth = () => {
       initialized,
       path: location.pathname
     });
-  }, [session, loading, initialized, location.pathname]);
+    
+    // Check for auth success flag from localStorage
+    const authSuccess = window.localStorage.getItem('auth_success');
+    if (authSuccess === 'true' && !session && initialized) {
+      console.log("Auth success flag found in localStorage but no session in context");
+      // We'll remove the flag to prevent loops
+      window.localStorage.removeItem('auth_success');
+      
+      // Force a session refresh
+      const checkSession = async () => {
+        console.log("Manually checking session after finding auth_success flag");
+        const { data } = await supabase.auth.getSession();
+        if (data.session) {
+          console.log("Found session after manual check, redirecting");
+          navigate("/dashboard", { replace: true });
+        }
+      };
+      
+      checkSession();
+    }
+  }, [session, loading, initialized, location.pathname, navigate]);
   
   // If we have a confirmed session, redirect to dashboard
   useEffect(() => {
