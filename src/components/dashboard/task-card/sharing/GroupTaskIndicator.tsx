@@ -7,6 +7,16 @@ import { TaskAssignmentInfo } from "../types";
 import { TaskSharingInfoSheet } from "../components/TaskSharingInfoSheet";
 import { getSharingBaseProps, handleSharingInteraction } from "../utils/sharingUtils";
 
+/**
+ * GroupTaskIndicator
+ * 
+ * This component displays an indicator for tasks that are shared with a group.
+ * It shows a Users icon with "Group" text and provides additional information
+ * through either a tooltip (on desktop) or a slide-up sheet (on mobile).
+ * 
+ * The component is optimized with memo to prevent unnecessary re-renders.
+ */
+
 interface GroupTaskIndicatorProps {
   task: Task;
   assignmentInfo: TaskAssignmentInfo;

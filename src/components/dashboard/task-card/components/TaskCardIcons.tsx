@@ -7,6 +7,20 @@ import { hasVoiceNote, hasFileAttachments } from "../taskCardUtils";
 import { TaskAssignmentIcons } from "../TaskAssignmentIcons";
 import { TaskAssignmentInfo } from "../types";
 
+/**
+ * TaskCardIcons
+ * 
+ * This component displays the collection of icons on a task card, including:
+ * - All-day indicator (sun icon)
+ * - Reminder indicator (bell icon)
+ * - Voice note indicator (mic icon)
+ * - File attachment indicator (paperclip icon)
+ * - Assignment/sharing indicators (via TaskAssignmentIcons)
+ * 
+ * Each icon visually represents a specific feature or state of the task,
+ * helping users quickly identify task properties without reading details.
+ */
+
 interface TaskCardIconsProps {
   task: Task;
   assignmentInfo: TaskAssignmentInfo;

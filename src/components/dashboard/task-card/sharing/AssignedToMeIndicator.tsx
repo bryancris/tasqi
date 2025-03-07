@@ -7,6 +7,16 @@ import { TaskAssignmentInfo } from "../types";
 import { TaskSharingInfoSheet } from "../components/TaskSharingInfoSheet";
 import { getSharingBaseProps, handleSharingInteraction } from "../utils/sharingUtils";
 
+/**
+ * AssignedToMeIndicator
+ * 
+ * This component displays an indicator showing that a task has been assigned to the current user
+ * by another user. It shows a Share2 icon with "From" text and provides information
+ * about who assigned the task through either a tooltip (on desktop) or a slide-up sheet (on mobile).
+ * 
+ * The component is optimized with memo to prevent unnecessary re-renders.
+ */
+
 interface AssignedToMeIndicatorProps {
   task: Task;
   assignmentInfo: TaskAssignmentInfo;

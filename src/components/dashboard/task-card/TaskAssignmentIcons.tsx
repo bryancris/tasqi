@@ -10,6 +10,24 @@ import { AssignedToMeIndicator } from "./sharing/AssignedToMeIndicator";
 import { SharedByMeIndicator } from "./sharing/SharedByMeIndicator";
 import { SharedWithMeIndicator } from "./sharing/SharedWithMeIndicator";
 
+/**
+ * TaskAssignmentIcons
+ * 
+ * This component serves as a router/dispatcher for different sharing indicators
+ * based on the task's sharing status. It determines which type of sharing indicator
+ * to display by examining the task's properties and assignment information.
+ * 
+ * The component was refactored from a large monolithic file into smaller,
+ * more focused components to improve maintainability and code organization.
+ * 
+ * It handles:
+ * - Group tasks (via GroupTaskIndicator)
+ * - Tasks assigned by the current user (via AssignedByMeIndicator)
+ * - Tasks assigned to the current user (via AssignedToMeIndicator)
+ * - Tasks shared by the current user (via SharedByMeIndicator)
+ * - Tasks shared with the current user (via SharedWithMeIndicator)
+ */
+
 interface TaskAssignmentIconsProps {
   task: Task;
   assignmentInfo: TaskAssignmentInfo;

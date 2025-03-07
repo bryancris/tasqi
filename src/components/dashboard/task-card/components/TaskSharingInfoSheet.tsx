@@ -5,6 +5,20 @@ import { Task } from "../../TaskBoard";
 import { TaskAssignmentInfo } from "../types";
 import { useEffect, useRef } from "react";
 
+/**
+ * TaskSharingInfoSheet
+ * 
+ * This component provides a modal/sheet interface for displaying detailed information
+ * about task sharing and assignment. It's used by all sharing indicator components
+ * to show who a task is shared with or who assigned it.
+ * 
+ * The component handles:
+ * 1. Showing appropriate sharing details based on assignment type
+ * 2. Preventing event propagation to parent components when closed
+ * 3. Displaying different icons and descriptions based on sharing type
+ * 4. Formatting timestamps for sharing events
+ */
+
 interface TaskSharingInfoSheetProps {
   task: Task;
   assignmentInfo: TaskAssignmentInfo;
