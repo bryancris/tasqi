@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { useAuth } from '@/contexts/auth';
-import { isDevelopmentMode, forceAuthInitialized } from '@/contexts/auth/provider/constants';
+import { isDevelopmentMode } from '@/contexts/auth/provider/constants';
 
 const isDev = isDevelopmentMode;
 
@@ -17,52 +17,89 @@ export function DevAuthTools() {
   
   // Check if dev mode auth bypass is enabled on mount
   useEffect(() => {
-    const savedBypass = sessionStorage.getItem('dev_bypass_auth');
-    if (savedBypass === 'true') {
-      setBypassAuth(true);
-    }
+    const checkBypassState = () => {
+      try {
+        const savedBypass = sessionStorage.getItem('dev_bypass_auth');
+        setBypassAuth(savedBypass === 'true');
+      } catch (e) {
+        console.error("Error checking bypass state:", e);
+      }
+    };
+    
+    checkBypassState();
+    
+    // Check again if localStorage changes
+    const handleStorageChange = () => {
+      checkBypassState();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
   
   // Toggle dev mode auth bypass
   const toggleBypass = () => {
-    const newValue = !bypassAuth;
-    setBypassAuth(newValue);
-    
-    // Store in sessionStorage
-    sessionStorage.setItem('dev_bypass_auth', newValue.toString());
-    
-    // Force application to reload with new settings
-    if (newValue) {
-      forceAuthInitialized(true);
-      toast.success("Development mode: Auth bypass enabled", {
-        duration: 3000,
-      });
+    try {
+      const newValue = !bypassAuth;
+      setBypassAuth(newValue);
+      
+      // Store in sessionStorage
+      sessionStorage.setItem('dev_bypass_auth', newValue.toString());
+      
+      // Force initialization state if turning on bypass
+      if (newValue) {
+        sessionStorage.setItem('force_auth_initialized', 'true');
+        toast.success("Development mode: Auth bypass enabled", {
+          duration: 3000,
+        });
+      } else {
+        // Remove forced initialization when disabling bypass
+        sessionStorage.removeItem('force_auth_initialized');
+        toast.info("Development mode: Auth bypass disabled", {
+          duration: 3000,
+        });
+      }
       
       // Reload the page to apply the changes
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
-    } else {
-      // Clear forced initialization when disabling bypass
-      sessionStorage.removeItem('force_auth_initialized');
-      toast.info("Development mode: Auth bypass disabled", {
-        duration: 3000,
-      });
-      
-      // Reload the page to apply the changes
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
+      window.location.reload();
+    } catch (e) {
+      console.error("Error toggling bypass:", e);
+      toast.error("Failed to toggle auth bypass");
     }
   };
   
   // Force auth to be initialized immediately (for development testing)
   const forceAuthInit = () => {
-    forceAuthInitialized(true);
-    toast.success("Auth forced to initialized state, reloading...");
-    setTimeout(() => {
-      window.location.reload();
-    }, 500);
+    try {
+      sessionStorage.setItem('force_auth_initialized', 'true');
+      toast.success("Auth forced to initialized state, reloading...");
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+    } catch (e) {
+      console.error("Error forcing auth init:", e);
+      toast.error("Failed to force auth initialization");
+    }
+  };
+  
+  // Reset all auth state
+  const resetAuthState = () => {
+    try {
+      localStorage.removeItem('dev_auth_state');
+      sessionStorage.removeItem('force_auth_initialized');
+      sessionStorage.removeItem('dev_bypass_auth');
+      sessionStorage.removeItem('auth_last_mount_time');
+      
+      toast.success("Auth state reset, reloading...");
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+    } catch (e) {
+      console.error("Error resetting auth state:", e);
+      toast.error("Failed to reset auth state");
+    }
   };
   
   // Only show in development mode
@@ -133,6 +170,15 @@ export function DevAuthTools() {
             >
               Force Initialize
             </Button>
+            
+            <Button
+              size="sm"
+              variant="secondary"
+              className="flex-1"
+              onClick={resetAuthState}
+            >
+              Reset Auth State
+            </Button>
           </div>
           
           <div className="pt-2 border-t border-gray-700 mt-2">
@@ -143,7 +189,7 @@ export function DevAuthTools() {
               onClick={() => {
                 localStorage.clear();
                 sessionStorage.clear();
-                toast.success("Storage cleared, reloading...");
+                toast.success("All storage cleared, reloading...");
                 setTimeout(() => window.location.reload(), 1000);
               }}
             >

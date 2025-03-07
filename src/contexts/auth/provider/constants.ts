@@ -72,8 +72,8 @@ export const getDevAuthState = () => {
     const stored = localStorage.getItem('dev_auth_state');
     if (stored) {
       const parsed = JSON.parse(stored);
-      // Only use if it's recent (last 5 minutes)
-      if (parsed && Date.now() - parsed.timestamp < 5 * 60 * 1000) {
+      // Only use if it's recent (last 10 minutes)
+      if (parsed && Date.now() - parsed.timestamp < 10 * 60 * 1000) {
         return parsed;
       }
     }

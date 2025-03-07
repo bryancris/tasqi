@@ -1,11 +1,16 @@
+
 import React, { useState, useEffect, useMemo } from "react";
 import { Session } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { AuthContext } from "../AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuthRefs } from "./useAuthRefs";
-import { useAuthSubscription, useNetworkAuth } from "../hooks";
+import { useAuthSubscription } from "../hooks/auth-subscription";
+import { useNetworkAuth } from "../hooks/network-auth";
 import { useDevModeAuth } from "../hooks/useDevModeAuth";
+
+// Create a static variable for tracking instances
+const AUTH_PROVIDER_INSTANCES = { count: 0 };
 
 // Detect if online for network status tracking
 const useOnlineStatus = () => {
@@ -32,20 +37,15 @@ const useOnlineStatus = () => {
 };
 
 export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Only create one instance at the module level
-  // Track if we already have an instance
-  const instanceRef = React.useRef<boolean>(false);
-  
+  // Track instances to prevent multiple providers
   useEffect(() => {
-    if (instanceRef.current) {
+    AUTH_PROVIDER_INSTANCES.count++;
+    if (AUTH_PROVIDER_INSTANCES.count > 1) {
       console.warn("[AuthProvider] Multiple instances detected - this should be a singleton");
-    } else {
-      instanceRef.current = true;
     }
     
-    // Cleanup on unmount
     return () => {
-      instanceRef.current = false;
+      AUTH_PROVIDER_INSTANCES.count--;
     };
   }, []);
   
@@ -58,26 +58,28 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
   
   // Get online status
   const isOnline = useOnlineStatus();
-  console.log("Network detection initialized, online:", isOnline);
   
   // Get refs
   const {
     mounted,
     hasToastRef,
     authStateSubscription,
-    authSetupAttempt,
-    authSetupComplete,
-    initializationCount,
-    isDevMode,
-    lastMountTimestamp
+    isDevMode
   } = useAuthRefs();
   
   // Get dev mode helpers
-  const { 
-    isHotReload, 
-    lastKnownAuthState,
-    saveAuthState
-  } = useDevModeAuth();
+  const { isDevBypassEnabled, lastKnownAuthState } = useDevModeAuth();
+  
+  // Fast path for dev mode bypass
+  useEffect(() => {
+    if (isDevMode.current && isDevBypassEnabled() && loading) {
+      console.log("Development mode: Auth bypass enabled, skipping normal initialization");
+      if (mounted.current) {
+        setLoading(false);
+        setInitialized(true);
+      }
+    }
+  }, [isDevMode, loading, mounted]);
   
   // Use the auth subscription hook
   const { 
@@ -108,13 +110,6 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
     hasToastRef
   });
   
-  // Track session changes to save state in dev mode
-  useEffect(() => {
-    if (isDevMode.current && session) {
-      saveAuthState(true);
-    }
-  }, [session, saveAuthState, isDevMode]);
-  
   // Sign out handler
   const handleSignOut = async () => {
     try {
@@ -127,87 +122,44 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
         return;
       }
       
-      // Supabase auth listener will update state
-      console.log("[AuthProvider] Sign out request successful");
+      // Clear state immediately to prevent flashes of authenticated content
+      clearAuthState();
+      console.log("[AuthProvider] Sign out successful");
     } catch (error) {
       console.error("[AuthProvider] Error signing out:", error);
       toast.error("Failed to sign out");
     }
   };
 
-  // Perform initial auth check on mount - only once
+  // Perform initial auth setup - only once
   useEffect(() => {
-    const currentMountTime = Date.now();
-    const timeSinceLastMount = currentMountTime - lastMountTimestamp.current;
-    lastMountTimestamp.current = currentMountTime;
+    console.log("[AuthProvider] Initializing auth provider");
     
-    // Detect potential hot reload (very quick remount)
-    const isProbableHotReload = isDevMode.current && 
-                              (isHotReload || timeSinceLastMount < 300);
-    
-    console.log("[AuthProvider] Initializing (SINGLE INSTANCE)", 
-                "Count:", initializationCount.current, 
-                "Dev mode:", isDevMode.current,
-                "Hot reload detected:", isProbableHotReload);
-    
-    // In development mode with hot reload, reset setup state
-    if (isProbableHotReload && isDevMode.current) {
-      console.log("Hot reload detected, resetting auth setup state");
-      authSetupAttempt.current = false;
-      authSetupComplete.current = false;
-    }
-    
-    // Prevent duplicate initialization after component remounts
-    if (authSetupComplete.current && !isProbableHotReload) {
-      console.log("[AuthProvider] Already initialized, skipping");
+    // Skip if using dev bypass
+    if (isDevMode.current && isDevBypassEnabled()) {
+      console.log("Development mode: Auth bypass enabled, skipping normal setup");
+      setLoading(false);
+      setInitialized(true);
       return;
     }
     
-    // Track initialization attempts (useful for debugging)
-    initializationCount.current += 1;
-    
-    // Set attempt flag to prevent duplicate setups
-    if (authSetupAttempt.current) {
-      console.log("Auth setup already attempted, waiting for completion");
-      return;
+    // Setup auth subscription and store it
+    const subscription = setupAuthSubscription();
+    if (subscription) {
+      authStateSubscription.current = subscription;
     }
     
-    authSetupAttempt.current = true;
-    
-    // Only proceed if we haven't fully completed setup
-    if (!authSetupComplete.current) {
-      authSetupComplete.current = true;
+    // Cleanup on unmount
+    return () => {
+      console.log("[AuthProvider] Cleaning up auth provider");
+      mounted.current = false;
       
-      // Setup auth subscription
-      const subscription = setupAuthSubscription();
-      if (subscription) {
-        console.log("Auth subscription set up successfully");
-        authStateSubscription.current = subscription;
-      } else {
-        console.warn("Auth subscription setup failed");
-        // Force state to initialized after failure
-        setLoading(false);
-        setInitialized(true);
-      }
-      
-      // Cleanup function
-      return () => {
-        console.log("[AuthProvider] Cleaning up");
-        
-        mounted.current = false;
-        
-        // Only cleanup subscription if we're truly unmounting, not just in dev mode hot reload
-        if (authStateSubscription.current && !isDevMode.current) {
-          cleanupAuthSubscription();
-          authStateSubscription.current = null;
-        } else if (isDevMode.current) {
-          console.log("Dev mode: Preserving auth subscription during hot reload");
-        }
-      };
-    }
+      // Clean up auth subscription
+      cleanupAuthSubscription();
+    };
   }, []); // Empty dependency array to ensure this only runs once
 
-  // Create context value - keep this at the end
+  // Create context value
   const contextValue = useMemo(
     () => ({
       session,

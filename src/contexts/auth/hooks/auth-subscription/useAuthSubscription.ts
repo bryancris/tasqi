@@ -1,11 +1,7 @@
-
 import { useCallback, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import { toast } from "sonner";
-import { useAuthDebounce } from "./useAuthDebounce";
-import { useAuthEventHandler } from "./useAuthEventHandler";
-import { useSessionCheck } from "./useSessionCheck";
 import { AUTH_TIMEOUT_MS, AUTH_DEBOUNCE_MS, DEV_AUTH_DEBOUNCE_MS, MAX_AUTH_INIT_ATTEMPTS } from "./constants";
 
 type AuthSubscriptionProps = {
@@ -17,6 +13,14 @@ type AuthSubscriptionProps = {
   setInitialized?: (initialized: boolean) => void;
   setAuthError?: (error: Error | null) => void;
   isDevelopment?: boolean;
+};
+
+// Static reference to track global subscription state
+const GLOBAL_AUTH_STATE = {
+  subscription: null as { unsubscribe: () => void } | null,
+  initialized: false,
+  authChecked: false,
+  subscriberCount: 0
 };
 
 /**
@@ -32,12 +36,11 @@ export const useAuthSubscription = ({
   setAuthError,
   isDevelopment = false,
 }: AuthSubscriptionProps) => {
-  // Refs for tracking state
-  const authStateSubscription = useRef<{ unsubscribe: () => void } | null>(null);
-  const authInitialized = useRef(false);
+  // Refs for tracking local state
+  const pendingUpdates = useRef<NodeJS.Timeout | null>(null);
+  const lastRefreshTime = useRef(0);
+  const debugCount = useRef(0);
   const setupAttempted = useRef(false);
-  const initAttemptCount = useRef(0);
-  const firstSetupTimestamp = useRef(0);
   
   // Use a shorter debounce in dev mode to prevent too many updates
   const debounceTime = isDevelopment ? DEV_AUTH_DEBOUNCE_MS : AUTH_DEBOUNCE_MS;
@@ -53,8 +56,37 @@ export const useAuthSubscription = ({
   }, [mounted, setSession, setUser, hasToastRef]);
 
   // Auth state update handler (with debouncing)
-  const { debouncedUpdate, clearPendingUpdates } = useAuthDebounce({ debounceTime });
-  
+  const debouncedUpdate = useCallback((
+    updateFn: (session: Session | null) => void,
+    newSession: Session | null
+  ) => {
+    const now = Date.now();
+    
+    // Cancel any pending updates
+    if (pendingUpdates.current) {
+      clearTimeout(pendingUpdates.current);
+      pendingUpdates.current = null;
+    }
+    
+    // Debounce rapidly firing auth updates
+    if (now - lastRefreshTime.current < debounceTime) {
+      debugCount.current++;
+      console.log(`Debouncing auth update #${debugCount.current} (${debounceTime}ms)`);
+      
+      pendingUpdates.current = setTimeout(() => {
+        console.log(`Processing debounced auth update #${debugCount.current}`);
+        lastRefreshTime.current = Date.now();
+        updateFn(newSession);
+      }, debounceTime);
+      
+      return;
+    }
+    
+    // Otherwise, update immediately
+    lastRefreshTime.current = now;
+    updateFn(newSession);
+  }, [debounceTime]);
+
   // Handle auth state updates
   const updateAuthState = useCallback((newSession: Session | null) => {
     const updateState = (session: Session | null) => {
@@ -73,7 +105,7 @@ export const useAuthSubscription = ({
         if (setAuthError) setAuthError(null);
         
         // Mark as initialized
-        authInitialized.current = true;
+        GLOBAL_AUTH_STATE.initialized = true;
         if (setInitialized) setInitialized(true);
         
         // Show success toast on sign in (only once)
@@ -91,7 +123,7 @@ export const useAuthSubscription = ({
         setLoading(false);
         
         // Mark as initialized even with no session
-        authInitialized.current = true;
+        GLOBAL_AUTH_STATE.initialized = true;
         if (setInitialized) setInitialized(true);
       }
     };
@@ -100,64 +132,156 @@ export const useAuthSubscription = ({
   }, [setSession, setUser, setLoading, hasToastRef, setInitialized, clearAuthState, debouncedUpdate, setAuthError, mounted]);
 
   // Session checking logic
-  const { checkExistingSession } = useSessionCheck({
-    updateAuthState,
-    clearAuthState,
-    setLoading,
-    setInitialized,
-    setAuthError,
-    mounted,
-    isDevelopment
-  });
+  const checkExistingSession = useCallback(async () => {
+    if (GLOBAL_AUTH_STATE.authChecked) {
+      console.log("Session already checked previously, skipping duplicate check");
+      return;
+    }
+    
+    try {
+      console.log("Checking for existing session...");
+      const { data, error } = await supabase.auth.getSession();
+      
+      // Mark that we've performed a session check globally
+      GLOBAL_AUTH_STATE.authChecked = true;
+      
+      if (error) {
+        console.error("Error retrieving session:", error);
+        if (setAuthError) setAuthError(error);
+        
+        // In development, don't get stuck in loading
+        if (isDevelopment) {
+          setTimeout(() => {
+            if (mounted.current) {
+              console.log("Dev mode: Error checking session, forcing completion");
+              clearAuthState();
+              setLoading(false);
+              if (setInitialized) setInitialized(true);
+              GLOBAL_AUTH_STATE.initialized = true;
+            }
+          }, 800);
+        }
+        return;
+      }
+      
+      if (data?.session) {
+        console.log("Found existing session during initialization");
+        updateAuthState(data.session);
+      } else {
+        console.log("No existing session found during initialization");
+        
+        // Explicitly clear state
+        clearAuthState();
+        
+        // In development, set loading to false after a short delay to prevent flicker
+        if (isDevelopment) {
+          setTimeout(() => {
+            if (mounted.current) {
+              console.log("Dev mode: No session found, forcing completion");
+              setLoading(false);
+              if (setInitialized) setInitialized(true);
+              GLOBAL_AUTH_STATE.initialized = true;
+            }
+          }, 500); // Reduced time
+        } else {
+          // In production, update immediately
+          setLoading(false);
+          if (setInitialized) setInitialized(true);
+          GLOBAL_AUTH_STATE.initialized = true;
+        }
+      }
+    } catch (err) {
+      console.error("Session check failed:", err);
+      if (setAuthError && err instanceof Error) setAuthError(err);
+      
+      // Make sure we don't get stuck
+      setTimeout(() => {
+        if (mounted.current) {
+          console.log("Error during session check, forcing completion");
+          clearAuthState();
+          setLoading(false);
+          if (setInitialized) setInitialized(true);
+          GLOBAL_AUTH_STATE.initialized = true;
+        }
+      }, 800);
+    }
+  }, [updateAuthState, clearAuthState, setLoading, setInitialized, setAuthError, mounted, isDevelopment]);
 
   // Auth event handling
-  const { handleAuthEvent } = useAuthEventHandler({
-    updateAuthState,
-    clearAuthState,
-    setLoading,
-    setInitialized,
-    mounted
-  });
-
-  // Reset attempt counter on hot reload in development
-  useEffect(() => {
-    if (isDevelopment) {
-      const now = Date.now();
-      // If this is the first time, set timestamp
-      if (firstSetupTimestamp.current === 0) {
-        firstSetupTimestamp.current = now;
-      }
-      // If this hook is re-instantiated within a short time, it's likely a hot reload
-      else if (now - firstSetupTimestamp.current < 500) {
-        console.log("Detected hook re-instantiation due to hot reload, resetting state");
-        setupAttempted.current = false;
-        initAttemptCount.current = 0;
+  const handleAuthEvent = useCallback((
+    event: string,
+    newSession: Session | null
+  ) => {
+    console.log(`Auth state change event: ${event}, hasSession: ${!!newSession}`);
+    
+    if (!mounted.current) {
+      console.log("Component unmounted, ignoring auth state change");
+      return;
+    }
+    
+    if (event === 'SIGNED_OUT') {
+      clearAuthState();
+      console.log("Signed out, auth state cleared");
+      setLoading(false);
+      if (setInitialized) setInitialized(true);
+      GLOBAL_AUTH_STATE.initialized = true;
+    } 
+    else if (event === 'SIGNED_IN' && newSession) {
+      console.log("Signed in event received with session");
+      updateAuthState(newSession);
+    } 
+    else if (event === 'TOKEN_REFRESHED' && newSession) {
+      console.log('Token refreshed successfully');
+      updateAuthState(newSession);
+    } 
+    else if (event === 'USER_UPDATED' && newSession) {
+      console.log('User updated');
+      updateAuthState(newSession);
+    }
+    else if (event === 'INITIAL_SESSION') {
+      console.log("Initial session check complete");
+      if (newSession) {
+        console.log("Initial session found");
+        updateAuthState(newSession);
+      } else {
+        console.log("No initial session found");
+        clearAuthState();
+        setLoading(false);
+        if (setInitialized) setInitialized(true);
+        GLOBAL_AUTH_STATE.initialized = true;
       }
     }
-  }, [isDevelopment]);
+  }, [clearAuthState, updateAuthState, setLoading, setInitialized, mounted]);
 
   // Setup auth subscription
   const setupAuthSubscription = useCallback(() => {
-    // Never setup twice
-    if (authStateSubscription.current) {
-      console.log("Auth subscription already exists, reusing it");
-      return authStateSubscription.current;
+    // Track this component as a subscriber
+    GLOBAL_AUTH_STATE.subscriberCount++;
+    
+    // If we already have a global subscription, reuse it
+    if (GLOBAL_AUTH_STATE.subscription) {
+      console.log(`Reusing existing auth subscription (${GLOBAL_AUTH_STATE.subscriberCount} active subscribers)`);
+      
+      // If already initialized, update loading state
+      if (GLOBAL_AUTH_STATE.initialized) {
+        console.log("Auth already initialized, setting loading to false");
+        setLoading(false);
+        if (setInitialized) setInitialized(true);
+      }
+      
+      return GLOBAL_AUTH_STATE.subscription;
     }
     
-    if (setupAttempted.current && initAttemptCount.current >= MAX_AUTH_INIT_ATTEMPTS) {
-      console.log(`Max setup attempts (${MAX_AUTH_INIT_ATTEMPTS}) reached, forcing completion`);
-      setLoading(false);
-      if (setInitialized) setInitialized(true);
-      authInitialized.current = true;
+    // Prevent multiple setup attempts
+    if (setupAttempted.current) {
+      console.log("Auth setup already attempted in this component instance");
       return null;
     }
-
-    setupAttempted.current = true;
-    initAttemptCount.current++;
     
-    console.log("Setting up auth state subscription", 
-                isDevelopment ? "(development mode)" : "",
-                `attempt ${initAttemptCount.current}/${MAX_AUTH_INIT_ATTEMPTS}`);
+    setupAttempted.current = true;
+    
+    console.log("Setting up NEW auth state subscription", 
+                isDevelopment ? "(development mode)" : "");
     
     try {
       // First get current session to handle initial state faster
@@ -168,16 +292,16 @@ export const useAuthSubscription = ({
         handleAuthEvent(event, newSession);
       });
       
-      // Store the subscription for cleanup
-      authStateSubscription.current = data.subscription;
+      // Store the subscription globally
+      GLOBAL_AUTH_STATE.subscription = data.subscription;
       console.log("Auth subscription setup successful");
       
       // Set a timeout to ensure we don't get stuck in loading
       setTimeout(() => {
-        if (mounted.current && !authInitialized.current) {
+        if (mounted.current && !GLOBAL_AUTH_STATE.initialized) {
           console.log("Auth initialization timed out, forcing to not loading");
           setLoading(false);
-          authInitialized.current = true;
+          GLOBAL_AUTH_STATE.initialized = true;
           if (setInitialized) setInitialized(true);
         }
       }, AUTH_TIMEOUT_MS + (isDevelopment ? 1000 : 0)); // Additional time for dev mode
@@ -186,7 +310,7 @@ export const useAuthSubscription = ({
     } catch (error) {
       console.error("Error setting up auth subscription:", error);
       setLoading(false);
-      authInitialized.current = true;
+      GLOBAL_AUTH_STATE.initialized = true;
       if (setInitialized) setInitialized(true);
       if (setAuthError && error instanceof Error) setAuthError(error);
       return null;
@@ -196,20 +320,39 @@ export const useAuthSubscription = ({
   // Cleanup function
   const cleanupAuthSubscription = useCallback(() => {
     // Clear any pending debounced updates
-    clearPendingUpdates();
-    
-    if (authStateSubscription.current) {
-      console.log("Unsubscribing from auth state");
-      authStateSubscription.current.unsubscribe();
-      authStateSubscription.current = null;
+    if (pendingUpdates.current) {
+      clearTimeout(pendingUpdates.current);
+      pendingUpdates.current = null;
     }
-  }, [clearPendingUpdates]);
+    
+    // Decrement subscriber count
+    GLOBAL_AUTH_STATE.subscriberCount = Math.max(0, GLOBAL_AUTH_STATE.subscriberCount - 1);
+    console.log(`Auth subscriber removed (${GLOBAL_AUTH_STATE.subscriberCount} remaining)`);
+    
+    // Only clean up the global subscription if no active subscribers
+    if (GLOBAL_AUTH_STATE.subscriberCount === 0 && GLOBAL_AUTH_STATE.subscription) {
+      console.log("All subscribers removed, cleaning up global auth subscription");
+      GLOBAL_AUTH_STATE.subscription.unsubscribe();
+      GLOBAL_AUTH_STATE.subscription = null;
+      GLOBAL_AUTH_STATE.initialized = false;
+      GLOBAL_AUTH_STATE.authChecked = false;
+      console.log("Global auth state reset");
+    }
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      console.log("Auth subscriber component unmounting");
+      cleanupAuthSubscription();
+    };
+  }, [cleanupAuthSubscription]);
 
   // Return the isInitialized state and the setup/cleanup functions
   return {
     setupAuthSubscription,
     cleanupAuthSubscription,
-    isInitialized: authInitialized,
+    isInitialized: { current: GLOBAL_AUTH_STATE.initialized },
     clearAuthState
   };
 };

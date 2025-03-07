@@ -51,14 +51,8 @@ const Auth = () => {
 
   // If already authenticated, redirect to dashboard
   if (session) {
-    return (
-      <div className="min-h-screen bg-[#1a1b3b] flex items-center justify-center p-4">
-        <div className="flex flex-col items-center gap-3">
-          <Spinner className="h-8 w-8 text-white" />
-          <p className="text-white/70">Redirecting to dashboard...</p>
-        </div>
-      </div>
-    );
+    const from = location.state?.from || "/dashboard";
+    return <Navigate to={from} replace />;
   }
 
   return (

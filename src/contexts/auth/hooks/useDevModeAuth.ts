@@ -73,6 +73,16 @@ export const useDevModeAuth = () => {
     }
   }, []);
   
+  // Check if dev mode bypass is enabled
+  const isDevBypassEnabled = useCallback(() => {
+    try {
+      return isDevelopmentMode() && 
+             sessionStorage.getItem('dev_bypass_auth') === 'true';
+    } catch (e) {
+      return false;
+    }
+  }, []);
+  
   // Helper to enable dev mode bypass quickly
   const enableDevBypass = useCallback(() => {
     try {
@@ -96,6 +106,7 @@ export const useDevModeAuth = () => {
     checkForceInitialized,
     saveAuthState,
     clearDevAuthState,
+    isDevBypassEnabled,
     enableDevBypass,
     isDevelopmentMode: isDevelopmentMode()
   };
