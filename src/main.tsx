@@ -13,46 +13,61 @@ const queryClient = new QueryClient();
 // Track if we're in development mode to tune performance
 const isDev = process.env.NODE_ENV === 'development';
 
-// Service worker registration
-if ('serviceWorker' in navigator && !isDev) {
-  // Only register service worker in production
-  window.addEventListener('load', () => {
-    // Register service worker but don't block app rendering
-    navigator.serviceWorker.register('/registerSW.js')
-      .then(registration => {
+// Register service worker with improved error handling
+const registerServiceWorker = async () => {
+  if (!('serviceWorker' in navigator)) {
+    console.log('❌ Service workers not supported in this browser');
+    return;
+  }
+  
+  if (isDev) {
+    console.log('🔨 Development mode: Service Worker disabled');
+    return;
+  }
+
+  try {
+    // Wait for window load event to avoid competing for browser resources
+    // during the critical initial page load
+    window.addEventListener('load', async () => {
+      try {
+        const registration = await navigator.serviceWorker.register('/registerSW.js');
         console.log('✅ SW registered:', registration.scope);
         
-        // Handle updates
+        // Setup update handler
         registration.addEventListener('updatefound', () => {
           const newWorker = registration.installing;
           if (newWorker) {
             newWorker.addEventListener('statechange', () => {
+              // When the new service worker is installed and ready to take over
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                // New content is available
-                const event = new CustomEvent('updateAvailable');
-                window.dispatchEvent(event);
+                console.log('🔄 New content is available. Notifying user...');
+                // Dispatch event for the UI to show update notification
+                window.dispatchEvent(new CustomEvent('sw-update-found'));
               }
             });
           }
         });
-      })
-      .catch(error => {
-        // Log error but don't block app functionality
-        console.warn('⚠️ SW registration failed, app will work without offline capabilities:', error);
-      });
-  });
+      } catch (error) {
+        console.warn('⚠️ SW registration failed:', error);
+      }
+    });
 
-  // Handle service worker updates
-  let refreshing = false;
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (!refreshing) {
-      refreshing = true;
-      window.location.reload();
-    }
-  });
-} else if (isDev) {
-  console.log('🔨 Development mode: Service Worker disabled');
-}
+    // Handle service worker updates and reload
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) {
+        refreshing = true;
+        console.log('🔄 Service worker controller changed, reloading...');
+        window.location.reload();
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error during service worker registration:', error);
+  }
+};
+
+// Call the service worker registration function
+registerServiceWorker();
 
 const root = document.getElementById("root");
 if (!root) throw new Error('Root element not found');
