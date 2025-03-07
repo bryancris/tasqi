@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SignInForm } from "@/components/auth/SignInForm";
@@ -13,6 +13,7 @@ import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Auth = () => {
   const [activeTab, setActiveTab] = useState("signin");
@@ -21,6 +22,7 @@ const Auth = () => {
   const { session, loading, initialized, error } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const manualCheckAttempted = useRef(false);
   
   // Check if we're on the update password route
   const isUpdatePasswordRoute = location.pathname === "/auth/update-password";
@@ -39,19 +41,32 @@ const Auth = () => {
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
     
-    if (loading && !isManualChecking) {
+    if (loading && !isManualChecking && !manualCheckAttempted.current) {
       timeoutId = setTimeout(() => {
         console.log("Auth page: Loading timed out, manually checking session");
+        manualCheckAttempted.current = true;
         setIsManualChecking(true);
         
         // Manually check session
         const checkSession = async () => {
           try {
-            const { data } = await supabase.auth.getSession();
+            const { data, error } = await supabase.auth.getSession();
+            
+            if (error) throw error;
             
             if (data?.session) {
               console.log("Auth page: Manual check found session, redirecting");
-              navigate("/dashboard", { replace: true });
+              // Try to do a refresh as well to update the context
+              try {
+                await supabase.auth.refreshSession();
+              } catch (e) {
+                console.warn("Session refresh failed but continuing anyway", e);
+              }
+              
+              // Use a short delay before redirecting to allow time for AuthProvider to update
+              setTimeout(() => {
+                navigate("/dashboard", { replace: true });
+              }, 100);
             } else {
               console.log("Auth page: Manual check found no session");
               // Just let the user see the login screen
@@ -59,6 +74,7 @@ const Auth = () => {
             }
           } catch (error) {
             console.error("Auth page: Manual session check failed", error);
+            toast.error("Could not verify authentication state. Please try logging in again.");
             setIsManualChecking(false);
           }
         };

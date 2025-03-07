@@ -41,29 +41,40 @@ export function useEmailSignIn() {
       
       // For extra safety - ensure the session is explicitly set
       if (data.session) {
-        // First, ensure the session is properly stored by explicitly setting it
-        await supabase.auth.setSession({
-          access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token
-        });
-        
-        // Add a small delay to allow Supabase to process the auth state change
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        // Redirect to dashboard
-        navigate("/dashboard", { replace: true });
+        try {
+          // First, ensure the session is properly stored by explicitly setting it
+          await supabase.auth.setSession({
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token
+          });
+          
+          // Add a small delay to allow Supabase to process the auth state change
+          await new Promise(resolve => setTimeout(resolve, 300));
+          
+          // Redirect to dashboard
+          navigate("/dashboard", { replace: true });
+        } catch (e) {
+          console.error("Error setting session:", e);
+          // Still try to navigate even if this fails
+          navigate("/dashboard", { replace: true });
+        }
       } else {
         // This should rarely happen but just in case
         console.warn("Sign in successful but no session provided by Supabase");
         
-        // Try to get the session
-        const { data: sessionData } = await supabase.auth.getSession();
-        if (sessionData?.session) {
+        // Try to explicitly get the session
+        try {
+          const { data: sessionData } = await supabase.auth.getSession();
+          if (sessionData?.session) {
+            navigate("/dashboard", { replace: true });
+          } else {
+            // Force a page reload to try to get a fresh state
+            window.location.href = "/dashboard";
+          }
+        } catch (e) {
+          console.error("Error getting session after sign in:", e);
+          // Last resort - try to navigate anyway
           navigate("/dashboard", { replace: true });
-        } else {
-          // Last resort - navigate but display a message
-          navigate("/dashboard", { replace: true });
-          toast.warning("Authentication state uncertain. You may need to sign in again if you see any issues.");
         }
       }
       
