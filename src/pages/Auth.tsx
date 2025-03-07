@@ -38,7 +38,7 @@ const Auth = () => {
   }, [session, loading, initialized, navigate, location.state]);
 
   // If still checking auth state, show loading indicator
-  if (loading || !initialized) {
+  if (loading && !initialized) {
     return (
       <div className="min-h-screen bg-[#1a1b3b] flex items-center justify-center p-4">
         <div className="flex flex-col items-center gap-3">

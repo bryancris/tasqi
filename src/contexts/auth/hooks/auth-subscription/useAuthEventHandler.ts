@@ -9,7 +9,6 @@ type AuthEventHandlerProps = {
   setLoading: (loading: boolean) => void;
   setInitialized?: (initialized: boolean) => void;
   mounted: React.MutableRefObject<boolean>;
-  devMode?: boolean;
 };
 
 /**
@@ -20,8 +19,7 @@ export const useAuthEventHandler = ({
   clearAuthState,
   setLoading,
   setInitialized,
-  mounted,
-  devMode = false
+  mounted
 }: AuthEventHandlerProps) => {
   
   // Process auth events
@@ -30,7 +28,7 @@ export const useAuthEventHandler = ({
     newSession: Session | null
   ) => {
     if (!mounted.current) {
-      console.log(`${devMode ? '[DEV] ' : ''}Component unmounted, ignoring auth state change`);
+      console.log("Component unmounted, ignoring auth state change");
       return;
     }
     
@@ -91,20 +89,13 @@ export const useAuthEventHandler = ({
         }
         break;
         
-      case 'PASSWORD_RECOVERY':
-        console.log("Password recovery event received");
-        // Don't update session here, just mark as initialized
-        setLoading(false);
-        if (setInitialized) setInitialized(true);
-        break;
-        
       default:
         console.log(`Unhandled auth event: ${event}`);
         // For unknown events, ensure we're not stuck loading
         setLoading(false);
         if (setInitialized) setInitialized(true);
     }
-  }, [clearAuthState, mounted, setLoading, updateAuthState, setInitialized, devMode]);
+  }, [clearAuthState, mounted, setLoading, updateAuthState, setInitialized]);
 
   return { handleAuthEvent };
 };

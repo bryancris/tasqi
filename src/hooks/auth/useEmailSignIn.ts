@@ -38,12 +38,18 @@ export function useEmailSignIn() {
       
       // If we got here, authentication succeeded
       toast.success("Sign in successful");
-
-      // Set the auth success flag to help detect successful authentication
-      window.localStorage.setItem('auth_success', 'true');
-      console.log("[useEmailSignIn] Auth success flag set in localStorage");
       
-      // Let the Auth component handle redirection
+      // The auth provider will handle the session update through onAuthStateChange
+      
+      // Navigate after auth
+      setTimeout(() => {
+        // Get the location to redirect to (from the router state or default to dashboard)
+        const state = window.history.state?.usr;
+        const from = state?.from || "/dashboard";
+        console.log("[useEmailSignIn] Redirecting to:", from);
+        navigate(from, { replace: true });
+      }, 300);
+      
       return true;
     } catch (error: any) {
       console.error("[useEmailSignIn] Sign in error:", error);

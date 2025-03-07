@@ -51,7 +51,7 @@ export const useSessionCheck = ({
               setLoading(false);
               if (setInitialized) setInitialized(true);
             }
-          }, 800); // Reduced from 1000ms
+          }, 800);
         }
       }
     } catch (err) {

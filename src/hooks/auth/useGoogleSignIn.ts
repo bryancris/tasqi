@@ -5,38 +5,42 @@ import { toast } from "sonner";
 
 export function useGoogleSignIn() {
   const [isLoading, setIsLoading] = useState(false);
+  const [authError, setAuthError] = useState<Error | null>(null);
 
   const signInWithGoogle = async () => {
     setIsLoading(true);
-    
+    setAuthError(null);
+
     try {
-      console.log("Initiating Google sign in...");
+      console.log("[useGoogleSignIn] Initiating sign in with Google...");
       
       const { error, data } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/dashboard`
+          redirectTo: window.location.origin + '/auth',
         }
       });
 
-      console.log("Google sign in response:", error ? "Error occurred" : "No error", 
-                  data?.url ? "Redirect URL exists" : "No redirect URL");
-
       if (error) throw error;
       
-      // No need to reset Google loading state here as we're redirecting
+      console.log("[useGoogleSignIn] Google OAuth started, waiting for redirect");
+      
+      // No toast here since we're redirecting to Google
+      // The auth mechanism will handle redirects after successful auth
       return true;
     } catch (error: any) {
-      console.error("Google sign in error:", error);
-      
+      console.error("[useGoogleSignIn] Google sign in error:", error);
+      setAuthError(error);
       toast.error(error.message || "Google sign in failed. Please try again.");
-      setIsLoading(false);
       return false;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return {
     isLoading,
-    signInWithGoogle
+    signInWithGoogle,
+    error: authError
   };
 }

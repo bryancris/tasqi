@@ -1,12 +1,12 @@
 
-import { useRef, useCallback, useEffect } from "react";
+import { useCallback, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import { toast } from "sonner";
-import { AUTH_TIMEOUT_MS, AUTH_DEBOUNCE_MS, DEV_AUTH_DEBOUNCE_MS, MAX_AUTH_INIT_ATTEMPTS } from "./constants";
 import { useAuthDebounce } from "./useAuthDebounce";
 import { useAuthEventHandler } from "./useAuthEventHandler";
 import { useSessionCheck } from "./useSessionCheck";
+import { AUTH_TIMEOUT_MS, AUTH_DEBOUNCE_MS, DEV_AUTH_DEBOUNCE_MS, MAX_AUTH_INIT_ATTEMPTS } from "./constants";
 
 type AuthSubscriptionProps = {
   mounted: React.MutableRefObject<boolean>;
