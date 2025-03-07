@@ -12,6 +12,7 @@ export const ProtectedRoute = () => {
   const location = useLocation();
   const [isCheckingSession, setIsCheckingSession] = useState(false);
   const [manualCheckComplete, setManualCheckComplete] = useState(false);
+  const [redirectedToAuth, setRedirectedToAuth] = useState(false);
   
   console.log("[ProtectedRoute] Status:", 
     { hasSession: !!session, loading, initialized, path: location.pathname });
@@ -25,29 +26,34 @@ export const ProtectedRoute = () => {
     }
     
     // If auth is fully initialized and no session, redirect
-    if (!loading && initialized && !session && !isCheckingSession) {
+    // Also make sure we don't redirect again if we already did
+    if (!loading && initialized && !session && !isCheckingSession && !redirectedToAuth) {
       console.log("[ProtectedRoute] No session found after initialization, redirecting to auth");
       // Clear any stale auth flags
       window.localStorage.removeItem('auth_success');
+      setRedirectedToAuth(true);
+      
       navigate("/auth", { 
         replace: true,
         state: { from: location.pathname } 
       });
     }
-  }, [session, loading, initialized, navigate, location.pathname, isCheckingSession]);
+  }, [session, loading, initialized, navigate, location.pathname, isCheckingSession, redirectedToAuth]);
   
   // Add a timeout for manual session check if auth is taking too long
   useEffect(() => {
-    if (loading && !manualCheckComplete && !isCheckingSession) {
+    // Only check if we're still loading, haven't completed a manual check,
+    // aren't currently checking, and haven't redirected yet
+    if (loading && !manualCheckComplete && !isCheckingSession && !redirectedToAuth) {
       const timeoutId = setTimeout(() => {
         console.log("[ProtectedRoute] Auth taking too long, performing manual check");
         setIsCheckingSession(true);
         performManualSessionCheck();
-      }, 1000); // Reduced from 1500ms
+      }, 1000); // Reduced timeout
       
       return () => clearTimeout(timeoutId);
     }
-  }, [loading, isCheckingSession, manualCheckComplete]);
+  }, [loading, isCheckingSession, manualCheckComplete, redirectedToAuth]);
   
   // Manual session check function
   const performManualSessionCheck = async () => {
@@ -68,21 +74,31 @@ export const ProtectedRoute = () => {
       } else {
         console.log("[ProtectedRoute] Manual check found no session");
         
-        // No session, redirect to auth
+        // No session, redirect to auth - only if we haven't already
+        if (!redirectedToAuth) {
+          window.localStorage.removeItem('auth_success');
+          setRedirectedToAuth(true);
+          
+          navigate("/auth", { 
+            replace: true,
+            state: { from: location.pathname } 
+          });
+        }
+      }
+    } catch (error) {
+      console.error("[ProtectedRoute] Error in manual session check", error);
+      
+      // Only show toast and redirect if we haven't already
+      if (!redirectedToAuth) {
+        toast.error("Authentication error. Please sign in again.");
         window.localStorage.removeItem('auth_success');
+        setRedirectedToAuth(true);
+        
         navigate("/auth", { 
           replace: true,
           state: { from: location.pathname } 
         });
       }
-    } catch (error) {
-      console.error("[ProtectedRoute] Error in manual session check", error);
-      toast.error("Authentication error. Please sign in again.");
-      window.localStorage.removeItem('auth_success');
-      navigate("/auth", { 
-        replace: true,
-        state: { from: location.pathname } 
-      });
     } finally {
       setIsCheckingSession(false);
       setManualCheckComplete(true);

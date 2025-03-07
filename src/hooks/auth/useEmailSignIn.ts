@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 
 export function useEmailSignIn() {
   const [isLoading, setIsLoading] = useState(false);
+  const [authError, setAuthError] = useState<Error | null>(null);
   const navigate = useNavigate();
 
   const signInWithEmail = async (email: string, password: string) => {
@@ -19,6 +20,7 @@ export function useEmailSignIn() {
     }
     
     setIsLoading(true);
+    setAuthError(null);
 
     try {
       console.log("[useEmailSignIn] Initiating sign in with email...");
@@ -41,48 +43,21 @@ export function useEmailSignIn() {
       window.localStorage.setItem('auth_success', 'true');
       console.log("[useEmailSignIn] Auth success flag set in localStorage");
       
-      // Explicitly refresh session to ensure it's stored correctly
-      if (data.session) {
+      // Before navigation, wait a short period to allow auth state to propagate
+      setTimeout(() => {
         try {
-          await supabase.auth.setSession({
-            access_token: data.session.access_token,
-            refresh_token: data.session.refresh_token
-          });
-          
-          // Short delay to allow auth state to update
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
-          // Navigate to dashboard
           navigate("/dashboard", { replace: true });
-          return true;
         } catch (e) {
-          console.error("[useEmailSignIn] Error setting session:", e);
-          // Try to navigate anyway
-          navigate("/dashboard", { replace: true });
-          return true;
+          console.error("[useEmailSignIn] Navigation error:", e);
+          // As a fallback, use window.location
+          window.location.href = "/dashboard";
         }
-      } else {
-        console.warn("[useEmailSignIn] Sign in successful but no session provided");
-        
-        // Try to get the session explicitly
-        try {
-          const { data: sessionData } = await supabase.auth.getSession();
-          if (sessionData?.session) {
-            navigate("/dashboard", { replace: true });
-            return true;
-          } else {
-            // As a last resort, force reload
-            window.location.href = "/dashboard";
-            return true;
-          }
-        } catch (e) {
-          console.error("[useEmailSignIn] Error getting session after sign in:", e);
-          navigate("/dashboard", { replace: true });
-          return true;
-        }
-      }
+      }, 300);
+      
+      return true;
     } catch (error: any) {
       console.error("[useEmailSignIn] Sign in error:", error);
+      setAuthError(error);
       toast.error(error.message || "Sign in failed. Please try again.");
       return false;
     } finally {
@@ -92,6 +67,7 @@ export function useEmailSignIn() {
 
   return {
     isLoading,
-    signInWithEmail
+    signInWithEmail,
+    error: authError
   };
 }

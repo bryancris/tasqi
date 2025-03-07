@@ -21,6 +21,7 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
   const pendingTimeout = useRef<NodeJS.Timeout | null>(null);
   const lastEvent = useRef<string | null>(null);
   const authInitalized = useRef(false);
+  const authCheckStartTime = useRef(Date.now());
   
   // Network status
   const { isOnline } = useNetworkDetection();
@@ -28,6 +29,7 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
   // Sign out handler
   const handleSignOut = async () => {
     try {
+      console.log("[AuthProvider] Signing out...");
       await supabase.auth.signOut();
       if (mounted.current) {
         setSession(null);
@@ -37,7 +39,7 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
         toast.success("Successfully signed out");
       }
     } catch (error) {
-      console.error("Error signing out:", error);
+      console.error("[AuthProvider] Error signing out:", error);
       toast.error("Failed to sign out");
     }
   };
@@ -45,6 +47,7 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
   // Get current session and set up auth listener
   useEffect(() => {
     console.log("[AuthProvider] Initializing (SINGLE INSTANCE)");
+    authCheckStartTime.current = Date.now();
     
     // Set a timeout to prevent endless loading state
     const timeoutId = setTimeout(() => {
@@ -121,7 +124,8 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
       if (!mounted.current) return;
       
       // Prevent handling duplicate events
-      if (lastEvent.current === event && Date.now() - new Date().getTime() < 300) {
+      const now = Date.now();
+      if (lastEvent.current === event && now - authCheckStartTime.current < 300) {
         console.log("[AuthProvider] Skipping duplicate event");
         return;
       }

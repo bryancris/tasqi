@@ -19,6 +19,7 @@ const Auth = () => {
   const [activeTab, setActiveTab] = useState("signin");
   const [showReset, setShowReset] = useState(false);
   const [isManualChecking, setIsManualChecking] = useState(false);
+  const [navigationAttempted, setNavigationAttempted] = useState(false);
   const { session, loading, initialized, error } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -31,16 +32,18 @@ const Auth = () => {
     hasSession: !!session, 
     loading, 
     initialized,
-    path: location.pathname
+    path: location.pathname,
+    navigationAttempted
   });
   
   // If we have a confirmed session, redirect to dashboard
   useEffect(() => {
-    if (session) {
+    if (session && !navigationAttempted) {
       console.log("[Auth] Session exists, redirecting to dashboard");
+      setNavigationAttempted(true);
       navigate("/dashboard", { replace: true });
     }
-  }, [session, navigate]);
+  }, [session, navigate, navigationAttempted]);
 
   // Add a fallback for when auth is taking too long
   useEffect(() => {
@@ -61,8 +64,11 @@ const Auth = () => {
             
             if (data?.session) {
               console.log("[Auth] Manual check found session, redirecting");
-              // Force a refresh for a clean state
-              window.location.href = "/dashboard";
+              if (!navigationAttempted) {
+                setNavigationAttempted(true);
+                // Force a refresh for a clean state
+                window.location.href = "/dashboard";
+              }
             } else {
               console.log("[Auth] Manual check found no session");
               setIsManualChecking(false);
@@ -75,16 +81,16 @@ const Auth = () => {
         };
         
         checkSession();
-      }, 2000); // Reduced from 3000ms
+      }, 2000); // Reduced timeout
     }
     
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [loading, navigate, isManualChecking]);
+  }, [loading, navigate, isManualChecking, navigationAttempted]);
 
   // If still loading auth state, show loading indicator
-  if ((loading && !isManualChecking) || (initialized && session)) {
+  if ((loading && !isManualChecking) || (initialized && session && !navigationAttempted)) {
     return (
       <div className="min-h-screen bg-[#1a1b3b] flex items-center justify-center p-4">
         <div className="flex flex-col items-center gap-3">
