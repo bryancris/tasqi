@@ -4,7 +4,7 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/comp
 import { TaskAssignmentInfo } from "../types";
 import { Task } from "../../TaskBoard";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { TaskSharingInfoSheet } from "./TaskSharingInfoSheet";
+import { TaskSharingInfoSheet } from "../sharing/TaskSharingInfoSheet";
 
 interface ShareIndicatorProps {
   task: Task;
