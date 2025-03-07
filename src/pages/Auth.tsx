@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SignInForm } from "@/components/auth/SignInForm";
@@ -10,94 +10,52 @@ import { useAuth } from "@/contexts/auth";
 import { Navigate, useNavigate, useLocation } from "react-router-dom";
 import { Spinner } from "@/components/ui/spinner";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
 const Auth = () => {
   const [activeTab, setActiveTab] = useState("signin");
   const [showReset, setShowReset] = useState(false);
-  const [isManualChecking, setIsManualChecking] = useState(false);
-  const [navigationAttempted, setNavigationAttempted] = useState(false);
-  const { session, loading, initialized, error } = useAuth();
+  const { session, loading, initialized } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const manualCheckComplete = useRef(false);
   
   // Check if we're on the update password route
   const isUpdatePasswordRoute = location.pathname === "/auth/update-password";
   
-  console.log("[Auth] Component state:", { 
+  console.log("[Auth] Page state:", { 
     hasSession: !!session, 
     loading, 
     initialized,
-    path: location.pathname,
-    navigationAttempted
+    path: location.pathname
   });
   
-  // If we have a confirmed session, redirect to dashboard
+  // If we have a session and are initialized, redirect to dashboard
   useEffect(() => {
-    if (session && !navigationAttempted) {
-      console.log("[Auth] Session exists, redirecting to dashboard");
-      setNavigationAttempted(true);
-      navigate("/dashboard", { replace: true });
+    if (session && initialized && !loading) {
+      const from = location.state?.from || "/dashboard";
+      console.log("[Auth] Session exists, redirecting to:", from);
+      navigate(from, { replace: true });
     }
-  }, [session, navigate, navigationAttempted]);
+  }, [session, loading, initialized, navigate, location.state]);
 
-  // Add a fallback for when auth is taking too long
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-    
-    if (loading && !isManualChecking && !manualCheckComplete.current) {
-      timeoutId = setTimeout(() => {
-        console.log("[Auth] Loading timed out, manually checking session");
-        manualCheckComplete.current = true;
-        setIsManualChecking(true);
-        
-        // Manually check session
-        const checkSession = async () => {
-          try {
-            const { data, error } = await supabase.auth.getSession();
-            
-            if (error) throw error;
-            
-            if (data?.session) {
-              console.log("[Auth] Manual check found session, redirecting");
-              if (!navigationAttempted) {
-                setNavigationAttempted(true);
-                // Force a refresh for a clean state
-                window.location.href = "/dashboard";
-              }
-            } else {
-              console.log("[Auth] Manual check found no session");
-              setIsManualChecking(false);
-            }
-          } catch (error) {
-            console.error("[Auth] Manual session check failed", error);
-            toast.error("Could not verify authentication state. Please try logging in again.");
-            setIsManualChecking(false);
-          }
-        };
-        
-        checkSession();
-      }, 2000); // Reduced timeout
-    }
-    
-    return () => {
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, [loading, navigate, isManualChecking, navigationAttempted]);
-
-  // If still loading auth state, show loading indicator
-  if ((loading && !isManualChecking) || (initialized && session && !navigationAttempted)) {
+  // If still checking auth state, show loading indicator
+  if (loading || !initialized) {
     return (
       <div className="min-h-screen bg-[#1a1b3b] flex items-center justify-center p-4">
         <div className="flex flex-col items-center gap-3">
           <Spinner className="h-8 w-8 text-white" />
-          <p className="text-white/70">
-            {session ? "Redirecting to dashboard..." : "Verifying authentication..."}
-          </p>
+          <p className="text-white/70">Checking authentication status...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If already authenticated, redirect to dashboard
+  if (session) {
+    return (
+      <div className="min-h-screen bg-[#1a1b3b] flex items-center justify-center p-4">
+        <div className="flex flex-col items-center gap-3">
+          <Spinner className="h-8 w-8 text-white" />
+          <p className="text-white/70">Redirecting to dashboard...</p>
         </div>
       </div>
     );
@@ -117,16 +75,6 @@ const Auth = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {/* Show any auth errors */}
-            {error && (
-              <Alert variant="destructive" className="mb-4">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  {error.message || "An authentication error occurred. Please try again."}
-                </AlertDescription>
-              </Alert>
-            )}
-            
             {isUpdatePasswordRoute ? (
               <div className="space-y-4">
                 <ResetPasswordForm />

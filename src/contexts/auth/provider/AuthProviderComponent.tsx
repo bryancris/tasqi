@@ -3,7 +3,6 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Session } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { AuthContext } from "../AuthContext";
-import { useNetworkDetection } from "@/hooks/chat/use-network-detection";
 import { supabase } from "@/integrations/supabase/client";
 
 export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -18,14 +17,10 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
   const mounted = useRef(true);
   const hasToastRef = useRef(false);
   const authSubscription = useRef<{ unsubscribe: () => void } | null>(null);
-  const pendingTimeout = useRef<NodeJS.Timeout | null>(null);
-  const lastEvent = useRef<string | null>(null);
-  const authInitalized = useRef(false);
-  const authCheckStartTime = useRef(Date.now());
+  const authInitStartTimeRef = useRef(Date.now());
+  const authTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const initAttemptCount = useRef(0);
   
-  // Network status
-  const { isOnline } = useNetworkDetection();
-
   // Sign out handler
   const handleSignOut = async () => {
     try {
@@ -47,16 +42,23 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
   // Get current session and set up auth listener
   useEffect(() => {
     console.log("[AuthProvider] Initializing (SINGLE INSTANCE)");
-    authCheckStartTime.current = Date.now();
+    
+    // Prevent multiple initialization attempts
+    initAttemptCount.current += 1;
+    if (initAttemptCount.current > 1) {
+      console.warn(`[AuthProvider] Detected multiple initialization attempts (${initAttemptCount.current})`);
+    }
+    
+    authInitStartTimeRef.current = Date.now();
     
     // Set a timeout to prevent endless loading state
-    const timeoutId = setTimeout(() => {
+    authTimeoutRef.current = setTimeout(() => {
       if (mounted.current && loading && !initialized) {
-        console.log("[AuthProvider] Initialization timed out, forcing completion");
+        console.warn("[AuthProvider] Initialization timed out after 3s, forcing completion");
         setLoading(false);
         setInitialized(true);
       }
-    }, 2500);
+    }, 3000);
     
     // Check for existing session first
     const getCurrentSession = async () => {
@@ -80,7 +82,6 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
             setUser(data.session.user);
             setLoading(false);
             setInitialized(true);
-            authInitalized.current = true;
             
             // Show success toast only once
             if (!hasToastRef.current) {
@@ -96,7 +97,6 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
             setUser(null);
             setLoading(false);
             setInitialized(true);
-            authInitalized.current = true;
             window.localStorage.removeItem('auth_success');
           }
         }
@@ -105,7 +105,6 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
         if (mounted.current) {
           setLoading(false);
           setInitialized(true);
-          authInitalized.current = true;
           if (error instanceof Error) {
             setAuthError(error);
           }
@@ -122,15 +121,6 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
       
       // Skip events if component unmounted
       if (!mounted.current) return;
-      
-      // Prevent handling duplicate events
-      const now = Date.now();
-      if (lastEvent.current === event && now - authCheckStartTime.current < 300) {
-        console.log("[AuthProvider] Skipping duplicate event");
-        return;
-      }
-      
-      lastEvent.current = event;
       
       // Handle different auth events
       if (event === 'SIGNED_OUT') {
@@ -186,7 +176,6 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
             setUser(newSession.user);
             setLoading(false);
             setInitialized(true);
-            authInitalized.current = true;
             
             // Show success toast only once
             if (!hasToastRef.current) {
@@ -201,7 +190,6 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
             setUser(null);
             setLoading(false);
             setInitialized(true);
-            authInitalized.current = true;
           }
         }
       }
@@ -214,52 +202,18 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
     return () => {
       console.log("[AuthProvider] Cleaning up");
       mounted.current = false;
-      clearTimeout(timeoutId);
       
-      if (pendingTimeout.current) {
-        clearTimeout(pendingTimeout.current);
+      if (authTimeoutRef.current) {
+        clearTimeout(authTimeoutRef.current);
+        authTimeoutRef.current = null;
       }
       
       if (authSubscription.current) {
         authSubscription.current.unsubscribe();
+        authSubscription.current = null;
       }
     };
   }, []);
-  
-  // Handle network connectivity changes
-  useEffect(() => {
-    // When coming back online, refresh auth if we have a session
-    if (isOnline && initialized && session) {
-      console.log("[AuthProvider] Network reconnected, refreshing auth state");
-      
-      const refreshSession = async () => {
-        try {
-          const { data, error } = await supabase.auth.getSession();
-          if (error) throw error;
-          
-          if (data.session) {
-            console.log("[AuthProvider] Session refreshed after reconnect");
-            if (mounted.current) {
-              setSession(data.session);
-              setUser(data.session.user);
-            }
-          } else {
-            console.log("[AuthProvider] No session found after reconnect");
-            if (mounted.current) {
-              setSession(null);
-              setUser(null);
-              hasToastRef.current = false;
-              window.localStorage.removeItem('auth_success');
-            }
-          }
-        } catch (error) {
-          console.error("[AuthProvider] Error refreshing session after reconnect:", error);
-        }
-      };
-      
-      refreshSession();
-    }
-  }, [isOnline, initialized, session]);
 
   // Create context value
   const contextValue = useMemo(

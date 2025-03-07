@@ -43,17 +43,7 @@ export function useEmailSignIn() {
       window.localStorage.setItem('auth_success', 'true');
       console.log("[useEmailSignIn] Auth success flag set in localStorage");
       
-      // Before navigation, wait a short period to allow auth state to propagate
-      setTimeout(() => {
-        try {
-          navigate("/dashboard", { replace: true });
-        } catch (e) {
-          console.error("[useEmailSignIn] Navigation error:", e);
-          // As a fallback, use window.location
-          window.location.href = "/dashboard";
-        }
-      }, 300);
-      
+      // Let the Auth component handle redirection
       return true;
     } catch (error: any) {
       console.error("[useEmailSignIn] Sign in error:", error);
