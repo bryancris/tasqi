@@ -9,6 +9,11 @@ import { addEventBlockers } from "@/components/ui/sheet/sheet-utils";
  * to provide consistent behavior and appearance.
  */
 
+// Define custom interface for mouse events with our added properties
+interface ExtendedMouseEvent extends React.MouseEvent {
+  __sharingIndicatorHandled?: boolean;
+}
+
 /**
  * Determines if a task is shared with a group
  * @param task The task to check for group sharing
@@ -26,7 +31,7 @@ export function isGroupTask(task: Task): boolean {
  * @param setShowSharingInfo Function to control display of sharing info
  */
 export function handleSharingInteraction(
-  e: React.MouseEvent, 
+  e: ExtendedMouseEvent, 
   isMobile: boolean, 
   setShowSharingInfo: (show: boolean) => void
 ): void {
@@ -47,11 +52,11 @@ export function handleSharingInteraction(
   }
   
   // Mark the event as handled directly on the event object
-  (e as any).__sharingIndicatorHandled = true;
+  e.__sharingIndicatorHandled = true;
   
   // Create global flags to track this interaction - used by TaskCardBase
-  (window as any).__sharingIndicatorClicked = true;
-  (window as any).sharingIndicatorClickTime = Date.now();
+  window.__sharingIndicatorClicked = true;
+  window.sharingIndicatorClickTime = Date.now();
   
   // Add longer-lasting event blockers (1000ms instead of 150ms)
   addEventBlockers(1000);
@@ -81,7 +86,7 @@ export function handleSharingInteraction(
   const preventCapture = (evt: Event) => {
     // Check if this event is within 1000ms of our sharing click
     const now = Date.now();
-    const sharingClickTime = (window as any).sharingIndicatorClickTime || 0;
+    const sharingClickTime = window.sharingIndicatorClickTime || 0;
     
     if (now - sharingClickTime < 1000) {
       evt.stopPropagation();
@@ -106,8 +111,8 @@ export function handleSharingInteraction(
     document.removeEventListener('pointerup', preventCapture, { capture: true });
     
     // Clean up our tracking flag
-    (window as any).__sharingIndicatorClicked = false;
-    (window as any).sharingIndicatorClickTime = 0;
+    window.__sharingIndicatorClicked = false;
+    window.sharingIndicatorClickTime = 0;
   }, 1000);
 }
 

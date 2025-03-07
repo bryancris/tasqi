@@ -11,6 +11,11 @@ interface ShareIndicatorProps {
   assignmentInfo: TaskAssignmentInfo;
 }
 
+// Define custom property for mouse events
+interface ExtendedMouseEvent extends React.MouseEvent {
+  __sharingIndicatorHandled?: boolean;
+}
+
 function ShareIndicatorComponent({ task, assignmentInfo }: ShareIndicatorProps) {
   const [showSharingInfo, setShowSharingInfo] = useState(false);
   const isMobile = useIsMobile();
@@ -78,7 +83,7 @@ function ShareIndicatorComponent({ task, assignmentInfo }: ShareIndicatorProps) 
   };
 
   // Simple click handler that sets a global flag and shows the sheet on mobile
-  const handleClick = (e: React.MouseEvent) => {
+  const handleClick = (e: ExtendedMouseEvent) => {
     // Set the global sharing indicator flag with timestamp
     window.__sharingIndicatorClickTime = Date.now();
     

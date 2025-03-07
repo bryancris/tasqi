@@ -48,6 +48,15 @@ declare global {
     webkitSpeechRecognition: {
       new(): SpeechRecognition;
     };
+    // Add our custom sharing-related properties
+    __sharingIndicatorClickTime?: number;
+    __sharingIndicatorClicked?: boolean;
+    __eventBlockersActive?: boolean;
+    __eventBlockersStartTime?: number;
+    __activeSheets?: Record<string, boolean>;
+    __closingSharingSheet?: string | null;
+    __isClosingSharingSheet?: boolean;
+    __sharingSheetCloseTime?: number;
   }
   
   interface WindowEventMap {
