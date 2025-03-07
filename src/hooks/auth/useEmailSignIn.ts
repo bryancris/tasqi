@@ -21,7 +21,7 @@ export function useEmailSignIn() {
     setIsLoading(true);
 
     try {
-      console.log("Initiating sign in with email...");
+      console.log("[useEmailSignIn] Initiating sign in with email...");
       
       const { error, data } = await supabase.auth.signInWithPassword({
         email,
@@ -30,59 +30,59 @@ export function useEmailSignIn() {
 
       if (error) throw error;
       
-      console.log("Sign in successful", data.session ? "Session exists" : "No session", "User:", data.user?.email);
+      console.log("[useEmailSignIn] Sign in successful", 
+                 data.session ? "Session exists" : "No session", 
+                 "User:", data.user?.email);
       
       // If we got here, authentication succeeded
       toast.success("Sign in successful");
 
-      // Set the auth success flag
+      // Set the auth success flag to help detect successful authentication
       window.localStorage.setItem('auth_success', 'true');
-      console.log("Auth success flag set in localStorage");
+      console.log("[useEmailSignIn] Auth success flag set in localStorage");
       
-      // For extra safety - ensure the session is explicitly set
+      // Explicitly refresh session to ensure it's stored correctly
       if (data.session) {
         try {
-          // First, ensure the session is properly stored by explicitly setting it
           await supabase.auth.setSession({
             access_token: data.session.access_token,
             refresh_token: data.session.refresh_token
           });
           
-          // Add a small delay to allow Supabase to process the auth state change
-          await new Promise(resolve => setTimeout(resolve, 300));
+          // Short delay to allow auth state to update
+          await new Promise(resolve => setTimeout(resolve, 100));
           
-          // Redirect to dashboard
+          // Navigate to dashboard
           navigate("/dashboard", { replace: true });
+          return true;
         } catch (e) {
-          console.error("Error setting session:", e);
-          // Still try to navigate even if this fails
+          console.error("[useEmailSignIn] Error setting session:", e);
+          // Try to navigate anyway
           navigate("/dashboard", { replace: true });
+          return true;
         }
       } else {
-        // This should rarely happen but just in case
-        console.warn("Sign in successful but no session provided by Supabase");
+        console.warn("[useEmailSignIn] Sign in successful but no session provided");
         
-        // Try to explicitly get the session
+        // Try to get the session explicitly
         try {
           const { data: sessionData } = await supabase.auth.getSession();
           if (sessionData?.session) {
             navigate("/dashboard", { replace: true });
+            return true;
           } else {
-            // Force a page reload to try to get a fresh state
+            // As a last resort, force reload
             window.location.href = "/dashboard";
+            return true;
           }
         } catch (e) {
-          console.error("Error getting session after sign in:", e);
-          // Last resort - try to navigate anyway
+          console.error("[useEmailSignIn] Error getting session after sign in:", e);
           navigate("/dashboard", { replace: true });
+          return true;
         }
       }
-      
-      return true;
-      
     } catch (error: any) {
-      console.error("Sign in error:", error);
-      
+      console.error("[useEmailSignIn] Sign in error:", error);
       toast.error(error.message || "Sign in failed. Please try again.");
       return false;
     } finally {

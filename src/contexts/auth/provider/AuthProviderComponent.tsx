@@ -17,9 +17,10 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
   // Refs for preventing race conditions
   const mounted = useRef(true);
   const hasToastRef = useRef(false);
-  const isInitializingRef = useRef(true);
-  const lastRefreshTime = useRef(0);
-  const pendingRefresh = useRef<NodeJS.Timeout | null>(null);
+  const authSubscription = useRef<{ unsubscribe: () => void } | null>(null);
+  const pendingTimeout = useRef<NodeJS.Timeout | null>(null);
+  const lastEvent = useRef<string | null>(null);
+  const authInitalized = useRef(false);
   
   // Network status
   const { isOnline } = useNetworkDetection();
@@ -41,39 +42,27 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  // Simple debounce for auth state updates to prevent multiple rapid refreshes
-  const debouncedAuthUpdate = (fn: () => void, delay = 300) => {
-    if (pendingRefresh.current) {
-      clearTimeout(pendingRefresh.current);
-    }
-    
-    pendingRefresh.current = setTimeout(() => {
-      fn();
-      pendingRefresh.current = null;
-    }, delay);
-  };
-
   // Get current session and set up auth listener
   useEffect(() => {
-    console.log("Auth provider initializing");
+    console.log("[AuthProvider] Initializing (SINGLE INSTANCE)");
     
     // Set a timeout to prevent endless loading state
     const timeoutId = setTimeout(() => {
       if (mounted.current && loading && !initialized) {
-        console.log("Auth initialization timed out, forcing completion");
+        console.log("[AuthProvider] Initialization timed out, forcing completion");
         setLoading(false);
         setInitialized(true);
       }
-    }, 3000); // Reduced from 5000ms
+    }, 2500);
     
     // Check for existing session first
     const getCurrentSession = async () => {
       try {
-        console.log("Checking for existing session...");
+        console.log("[AuthProvider] Checking for existing session...");
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error("Error getting session:", error);
+          console.error("[AuthProvider] Error getting session:", error);
           setAuthError(error);
           setLoading(false);
           setInitialized(true);
@@ -82,13 +71,13 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
         
         // If we have a session, update state
         if (data?.session) {
-          console.log("Found existing session during initialization");
+          console.log("[AuthProvider] Found existing session");
           if (mounted.current) {
             setSession(data.session);
             setUser(data.session.user);
             setLoading(false);
             setInitialized(true);
-            isInitializingRef.current = false;
+            authInitalized.current = true;
             
             // Show success toast only once
             if (!hasToastRef.current) {
@@ -98,23 +87,22 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
             }
           }
         } else {
-          console.log("No session found during initialization");
-          // Just set initialized
+          console.log("[AuthProvider] No session found");
           if (mounted.current) {
             setSession(null);
             setUser(null);
             setLoading(false);
             setInitialized(true);
-            isInitializingRef.current = false;
+            authInitalized.current = true;
             window.localStorage.removeItem('auth_success');
           }
         }
       } catch (error) {
-        console.error("Error during auth initialization:", error);
+        console.error("[AuthProvider] Error during auth initialization:", error);
         if (mounted.current) {
           setLoading(false);
           setInitialized(true);
-          isInitializingRef.current = false;
+          authInitalized.current = true;
           if (error instanceof Error) {
             setAuthError(error);
           }
@@ -127,37 +115,22 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
     
     // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
-      console.log(`Auth state change event: ${event}, hasSession: ${!!newSession}`);
+      console.log(`[AuthProvider] Auth state change event: ${event}, hasSession: ${!!newSession}`);
       
       // Skip events if component unmounted
       if (!mounted.current) return;
       
-      // Prevent multiple rapid updates
-      const now = Date.now();
-      if (now - lastRefreshTime.current < 300) {
-        console.log("Debouncing rapid auth event");
-        
-        // For important events, still process but with debounce
-        if (['SIGNED_IN', 'SIGNED_OUT', 'USER_UPDATED'].includes(event)) {
-          debouncedAuthUpdate(() => {
-            handleAuthStateChange(event, newSession);
-          });
-        }
-        
+      // Prevent handling duplicate events
+      if (lastEvent.current === event && Date.now() - new Date().getTime() < 300) {
+        console.log("[AuthProvider] Skipping duplicate event");
         return;
       }
       
-      lastRefreshTime.current = now;
-      handleAuthStateChange(event, newSession);
-    });
-    
-    // Helper to handle auth state changes
-    function handleAuthStateChange(event: string, newSession: Session | null) {
-      if (!mounted.current) return;
+      lastEvent.current = event;
       
       // Handle different auth events
       if (event === 'SIGNED_OUT') {
-        console.log("Signed out event received");
+        console.log("[AuthProvider] Signed out event received");
         if (mounted.current) {
           setSession(null);
           setUser(null);
@@ -168,7 +141,7 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
         }
       } 
       else if (event === 'SIGNED_IN' && newSession) {
-        console.log("Signed in event received with session");
+        console.log("[AuthProvider] Signed in event received with session");
         if (mounted.current) {
           setSession(newSession);
           setUser(newSession.user);
@@ -183,8 +156,8 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
           }
         }
       }
-      else if ((event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') && newSession) {
-        console.log(`${event} event received`);
+      else if (event === 'TOKEN_REFRESHED' && newSession) {
+        console.log(`[AuthProvider] Token refreshed event received`);
         if (mounted.current) {
           setSession(newSession);
           setUser(newSession.user);
@@ -192,19 +165,60 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
           setInitialized(true);
         }
       }
-    }
+      else if (event === 'USER_UPDATED' && newSession) {
+        console.log('[AuthProvider] User updated event received');
+        if (mounted.current) {
+          setSession(newSession);
+          setUser(newSession.user);
+          setLoading(false);
+          setInitialized(true);
+        }
+      }
+      else if (event === 'INITIAL_SESSION') {
+        console.log("[AuthProvider] Initial session check: ", newSession ? "Session exists" : "No session");
+        if (newSession) {
+          if (mounted.current) {
+            setSession(newSession);
+            setUser(newSession.user);
+            setLoading(false);
+            setInitialized(true);
+            authInitalized.current = true;
+            
+            // Show success toast only once
+            if (!hasToastRef.current) {
+              toast.success("Successfully signed in");
+              hasToastRef.current = true;
+              window.localStorage.setItem('auth_success', 'true');
+            }
+          }
+        } else {
+          if (mounted.current) {
+            setSession(null);
+            setUser(null);
+            setLoading(false);
+            setInitialized(true);
+            authInitalized.current = true;
+          }
+        }
+      }
+    });
+    
+    // Store auth subscription for cleanup
+    authSubscription.current = subscription;
     
     // Clean up on unmount
     return () => {
+      console.log("[AuthProvider] Cleaning up");
       mounted.current = false;
       clearTimeout(timeoutId);
       
-      if (pendingRefresh.current) {
-        clearTimeout(pendingRefresh.current);
-        pendingRefresh.current = null;
+      if (pendingTimeout.current) {
+        clearTimeout(pendingTimeout.current);
       }
       
-      subscription.unsubscribe();
+      if (authSubscription.current) {
+        authSubscription.current.unsubscribe();
+      }
     };
   }, []);
   
@@ -212,16 +226,7 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     // When coming back online, refresh auth if we have a session
     if (isOnline && initialized && session) {
-      console.log("Network reconnected, refreshing auth state");
-      
-      // Prevent excessive refreshes
-      const now = Date.now();
-      if (now - lastRefreshTime.current < 10000) {
-        console.log("Skipping refresh due to recent update");
-        return;
-      }
-      
-      lastRefreshTime.current = now;
+      console.log("[AuthProvider] Network reconnected, refreshing auth state");
       
       const refreshSession = async () => {
         try {
@@ -229,13 +234,13 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
           if (error) throw error;
           
           if (data.session) {
-            console.log("Session refreshed after network reconnect");
+            console.log("[AuthProvider] Session refreshed after reconnect");
             if (mounted.current) {
               setSession(data.session);
               setUser(data.session.user);
             }
           } else {
-            console.log("No session found after network reconnect");
+            console.log("[AuthProvider] No session found after reconnect");
             if (mounted.current) {
               setSession(null);
               setUser(null);
@@ -244,7 +249,7 @@ export const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({
             }
           }
         } catch (error) {
-          console.error("Error refreshing session after reconnect:", error);
+          console.error("[AuthProvider] Error refreshing session after reconnect:", error);
         }
       };
       

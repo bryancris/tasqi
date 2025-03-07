@@ -22,29 +22,34 @@ const Auth = () => {
   const { session, loading, initialized, error } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const manualCheckAttempted = useRef(false);
+  const manualCheckComplete = useRef(false);
   
   // Check if we're on the update password route
   const isUpdatePasswordRoute = location.pathname === "/auth/update-password";
   
-  // For debugging
-  useEffect(() => {
-    console.log("Auth component initial state:", { 
-      hasSession: !!session, 
-      loading, 
-      initialized,
-      path: location.pathname
-    });
-  }, [session, loading, initialized, location.pathname]);
+  console.log("[Auth] Component state:", { 
+    hasSession: !!session, 
+    loading, 
+    initialized,
+    path: location.pathname
+  });
   
-  // Add a timeout to force progress if we're stuck loading
+  // If we have a confirmed session, redirect to dashboard
+  useEffect(() => {
+    if (session) {
+      console.log("[Auth] Session exists, redirecting to dashboard");
+      navigate("/dashboard", { replace: true });
+    }
+  }, [session, navigate]);
+
+  // Add a fallback for when auth is taking too long
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
     
-    if (loading && !isManualChecking && !manualCheckAttempted.current) {
+    if (loading && !isManualChecking && !manualCheckComplete.current) {
       timeoutId = setTimeout(() => {
-        console.log("Auth page: Loading timed out, manually checking session");
-        manualCheckAttempted.current = true;
+        console.log("[Auth] Loading timed out, manually checking session");
+        manualCheckComplete.current = true;
         setIsManualChecking(true);
         
         // Manually check session
@@ -55,46 +60,28 @@ const Auth = () => {
             if (error) throw error;
             
             if (data?.session) {
-              console.log("Auth page: Manual check found session, redirecting");
-              // Try to do a refresh as well to update the context
-              try {
-                await supabase.auth.refreshSession();
-              } catch (e) {
-                console.warn("Session refresh failed but continuing anyway", e);
-              }
-              
-              // Use a short delay before redirecting to allow time for AuthProvider to update
-              setTimeout(() => {
-                navigate("/dashboard", { replace: true });
-              }, 100);
+              console.log("[Auth] Manual check found session, redirecting");
+              // Force a refresh for a clean state
+              window.location.href = "/dashboard";
             } else {
-              console.log("Auth page: Manual check found no session");
-              // Just let the user see the login screen
+              console.log("[Auth] Manual check found no session");
               setIsManualChecking(false);
             }
           } catch (error) {
-            console.error("Auth page: Manual session check failed", error);
+            console.error("[Auth] Manual session check failed", error);
             toast.error("Could not verify authentication state. Please try logging in again.");
             setIsManualChecking(false);
           }
         };
         
         checkSession();
-      }, 3000); // 3 seconds timeout
+      }, 2000); // Reduced from 3000ms
     }
     
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
     };
   }, [loading, navigate, isManualChecking]);
-  
-  // If we have a confirmed session, redirect to dashboard
-  useEffect(() => {
-    if (initialized && !loading && session) {
-      console.log("Auth page: Session exists, redirecting to dashboard");
-      navigate("/dashboard", { replace: true });
-    }
-  }, [session, navigate, initialized, loading]);
 
   // If still loading auth state, show loading indicator
   if ((loading && !isManualChecking) || (initialized && session)) {

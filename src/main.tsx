@@ -6,7 +6,6 @@ import App from './App.tsx'
 import './index.css'
 import { Toaster } from "@/components/ui/toaster";
 import { NotificationsProvider } from '@/components/notifications/NotificationsManager';
-import { AuthProvider } from '@/contexts/AuthContext';
 
 const queryClient = new QueryClient();
 
@@ -115,12 +114,10 @@ if (!root) throw new Error('Root element not found');
 createRoot(root).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <NotificationsProvider>
-          <App />
-          <Toaster />
-        </NotificationsProvider>
-      </AuthProvider>
+      <NotificationsProvider>
+        <App />
+        <Toaster />
+      </NotificationsProvider>
     </QueryClientProvider>
   </React.StrictMode>
 );

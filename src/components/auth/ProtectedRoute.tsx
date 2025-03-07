@@ -11,62 +11,48 @@ export const ProtectedRoute = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isCheckingSession, setIsCheckingSession] = useState(false);
-  const [checkAttempts, setCheckAttempts] = useState(0);
   const [manualCheckComplete, setManualCheckComplete] = useState(false);
   
-  // First, handle the case where we have a session already
+  console.log("[ProtectedRoute] Status:", 
+    { hasSession: !!session, loading, initialized, path: location.pathname });
+  
+  // First, handle the case where auth is initialized
   useEffect(() => {
-    console.log("ProtectedRoute mounted with session state:", 
-                !!session, 
-                "loading:", loading, 
-                "initialized:", initialized);
-    
+    // If we have a session, allow access
     if (session) {
-      // We already have a session, no need to check further
-      console.log("ProtectedRoute: Valid session exists, allowing access");
+      console.log("[ProtectedRoute] Valid session exists, allowing access");
       return;
     }
     
-    // We'll perform a manual check if auth is taking too long
+    // If auth is fully initialized and no session, redirect
+    if (!loading && initialized && !session && !isCheckingSession) {
+      console.log("[ProtectedRoute] No session found after initialization, redirecting to auth");
+      // Clear any stale auth flags
+      window.localStorage.removeItem('auth_success');
+      navigate("/auth", { 
+        replace: true,
+        state: { from: location.pathname } 
+      });
+    }
+  }, [session, loading, initialized, navigate, location.pathname, isCheckingSession]);
+  
+  // Add a timeout for manual session check if auth is taking too long
+  useEffect(() => {
     if (loading && !manualCheckComplete && !isCheckingSession) {
       const timeoutId = setTimeout(() => {
-        console.log("ProtectedRoute: Auth taking too long, performing manual session check");
+        console.log("[ProtectedRoute] Auth taking too long, performing manual check");
+        setIsCheckingSession(true);
         performManualSessionCheck();
-      }, 1500);
+      }, 1000); // Reduced from 1500ms
       
       return () => clearTimeout(timeoutId);
     }
-  }, [session, loading, initialized]);
+  }, [loading, isCheckingSession, manualCheckComplete]);
   
-  // If we don't have a session after initialization, redirect to auth
-  useEffect(() => {
-    if (!loading && !isCheckingSession && initialized && !session && manualCheckComplete) {
-      // If we have the auth success flag but no session, try one last check
-      const authSuccess = window.localStorage.getItem('auth_success');
-      
-      if (authSuccess === 'true' && checkAttempts < 2) {
-        console.log("ProtectedRoute: Auth success flag found but no session in context, performing final check");
-        setIsCheckingSession(true);
-        setCheckAttempts(prev => prev + 1);
-        
-        finalSessionCheck();
-      } else {
-        // No session and no auth flag or exceeded attempts, redirect to auth
-        console.log("ProtectedRoute: No session found, redirecting to auth");
-        window.localStorage.removeItem('auth_success');
-        navigate("/auth", { 
-          replace: true,
-          state: { from: location.pathname } 
-        });
-      }
-    }
-  }, [session, loading, initialized, navigate, location.pathname, isCheckingSession, checkAttempts, manualCheckComplete]);
-
-  // Manual session check function for when auth is taking too long
+  // Manual session check function
   const performManualSessionCheck = async () => {
     try {
-      console.log("ProtectedRoute: Performing manual session check");
-      setIsCheckingSession(true);
+      console.log("[ProtectedRoute] Performing manual session check");
       
       const { data, error } = await supabase.auth.getSession();
       
@@ -75,45 +61,22 @@ export const ProtectedRoute = () => {
       }
       
       if (data.session) {
-        console.log("ProtectedRoute: Manual check found valid session");
-        // We'll let the AuthProvider handle setting the session
-        // Just wait for the next render cycle
-      } else {
-        console.log("ProtectedRoute: Manual check found no session");
-        // Continue with redirect on next cycle
-      }
-    } catch (error) {
-      console.error("ProtectedRoute: Error in manual session check", error);
-    } finally {
-      setIsCheckingSession(false);
-      setManualCheckComplete(true);
-    }
-  };
-  
-  // Final session check as a last resort
-  const finalSessionCheck = async () => {
-    try {
-      // Use the refresh session API which is more reliable
-      const { data, error } = await supabase.auth.refreshSession();
-      
-      if (error) throw error;
-      
-      if (data?.session) {
-        console.log("ProtectedRoute: Found session after refresh");
-        // Force a refresh to ensure we get the updated session
+        console.log("[ProtectedRoute] Manual check found valid session");
+        // Force a quick reload to update the auth context properly
         window.location.reload();
         return;
-      } 
-      
-      // If we still don't have a session, redirect to auth
-      console.log("ProtectedRoute: No session found after final check, redirecting to auth");
-      window.localStorage.removeItem('auth_success');
-      navigate("/auth", { 
-        replace: true,
-        state: { from: location.pathname } 
-      });
+      } else {
+        console.log("[ProtectedRoute] Manual check found no session");
+        
+        // No session, redirect to auth
+        window.localStorage.removeItem('auth_success');
+        navigate("/auth", { 
+          replace: true,
+          state: { from: location.pathname } 
+        });
+      }
     } catch (error) {
-      console.error("Error in final session check:", error);
+      console.error("[ProtectedRoute] Error in manual session check", error);
       toast.error("Authentication error. Please sign in again.");
       window.localStorage.removeItem('auth_success');
       navigate("/auth", { 
@@ -122,6 +85,7 @@ export const ProtectedRoute = () => {
       });
     } finally {
       setIsCheckingSession(false);
+      setManualCheckComplete(true);
     }
   };
 
