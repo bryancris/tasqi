@@ -2,9 +2,11 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 export function useEmailSignIn() {
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const signInWithEmail = async (email: string, password: string) => {
     if (!email.trim() || !password.trim()) {
@@ -32,6 +34,16 @@ export function useEmailSignIn() {
       
       // If we got here, authentication succeeded
       toast.success("Sign in successful");
+
+      // Force a redirect to dashboard after successful sign-in
+      // This provides a more direct route than waiting for context updates
+      if (data.session) {
+        console.log("Sign in successful, redirecting to dashboard");
+        setTimeout(() => {
+          navigate("/dashboard", { replace: true });
+        }, 500); // Small delay to allow toast to be seen
+      }
+      
       return true;
       
     } catch (error: any) {

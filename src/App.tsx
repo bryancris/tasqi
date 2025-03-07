@@ -15,6 +15,7 @@ import Chat from './pages/Chat';
 import { useAuth } from './contexts/auth';
 import { Spinner } from './components/ui/spinner';
 import { memo, useEffect } from 'react';
+import { Toaster } from './components/ui/sonner';
 
 const ProtectedRoute = memo(({ children }: { children: React.ReactNode }) => {
   const { session, loading, initialized } = useAuth();
@@ -88,6 +89,7 @@ function App() {
 
   return (
     <BrowserRouter>
+      <Toaster />
       <CalendarViewProvider>
         <DragDropContext onDragEnd={onDragEnd}>
           <div className="app">

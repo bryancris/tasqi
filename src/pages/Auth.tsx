@@ -28,17 +28,18 @@ const Auth = () => {
     console.log("Auth component state:", { 
       hasSession: !!session, 
       loading, 
-      initialized 
+      initialized,
+      path: location.pathname
     });
-  }, [session, loading, initialized]);
+  }, [session, loading, initialized, location.pathname]);
   
   // If we have a confirmed session, redirect to dashboard
   useEffect(() => {
-    if (session && initialized) {
+    if (session) {
       console.log("Auth page: Session exists, redirecting to dashboard");
       navigate("/dashboard", { replace: true });
     }
-  }, [session, initialized, navigate]);
+  }, [session, navigate]);
 
   // If still loading auth state, show loading indicator
   if (loading && !initialized) {
