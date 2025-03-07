@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { Task } from "../../TaskBoard";
 import { TaskAssignmentInfo } from "../types";
-import { TaskSharingInfoSheet } from "../components/TaskSharingInfoSheet";
+import { TaskSharingInfoSheet } from "./TaskSharingInfoSheet";
 import { getSharingBaseProps, handleSharingInteraction } from "../utils/sharingUtils";
 
 /**
