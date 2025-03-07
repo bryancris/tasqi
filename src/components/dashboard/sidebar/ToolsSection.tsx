@@ -10,14 +10,14 @@ export function ToolsSection() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const location = useLocation();
   
-  // Check for both /notes and /dashboard/notes paths
-  const isNotesActive = location.pathname === '/notes' || location.pathname === '/dashboard/notes';
+  // Update to check for only /dashboard/notes path
+  const isNotesActive = location.pathname === '/dashboard/notes';
   const isAnalyticsActive = location.pathname === '/dashboard/analytics';
   const isSelfCareActive = location.pathname === '/dashboard/self-care';
 
   return (
     <div className="space-y-2">
-      <Link to="/notes">
+      <Link to="/dashboard/notes">
         <Button 
           variant="ghost" 
           className={cn(

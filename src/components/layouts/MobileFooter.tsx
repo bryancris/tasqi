@@ -86,10 +86,10 @@ export function MobileFooter({ activePage }: { activePage?: string }) {
         </DropdownMenu>
 
         <Link 
-          to="/notes"
+          to="/dashboard/notes"
           className={cn(
             "flex flex-col items-center p-2",
-            location.pathname === '/notes' ? "text-[#D946EF]" : "text-gray-500"
+            location.pathname === '/dashboard/notes' ? "text-[#D946EF]" : "text-gray-500"
           )}
         >
           <FileText className="h-6 w-6" />

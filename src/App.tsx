@@ -60,9 +60,11 @@ function App() {
                   </Route>
                   
                   {/* Standalone protected routes */}
-                  <Route path="/notes" element={<Notes />} />
                   <Route path="/chat" element={<Chat />} />
                   <Route path="/dashboard/chat" element={<Chat />} />
+                  
+                  {/* Redirect old /notes path to /dashboard/notes */}
+                  <Route path="/notes" element={<Navigate to="/dashboard/notes" replace />} />
                 </Route>
                 
                 {/* Fallback route */}

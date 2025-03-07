@@ -8,7 +8,7 @@ import { NoteForm } from "./NoteForm";
 import { NoteList } from "./NoteList";
 import { Note } from "./types";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/auth";
 import { isDevAuthBypassed } from "@/contexts/auth/provider/constants";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
