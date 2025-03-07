@@ -8,10 +8,14 @@ import {
   isSharingRelated,
   SheetRegistry 
 } from "./sheet-utils";
+import * as SheetPrimitive from "@radix-ui/react-dialog";
+
+// Define proper types for Radix events
+type PointerDownOutsideEvent = CustomEvent<{ originalEvent: PointerEvent }>;
 
 interface UseSheetInteractionsProps {
   side: "top" | "right" | "bottom" | "left";
-  onPointerDownOutside?: (e: PointerEvent) => void;
+  onPointerDownOutside?: (e: PointerDownOutsideEvent) => void;
   onCloseAutoFocus?: (e: Event) => void;
 }
 
@@ -63,12 +67,15 @@ export function useSheetInteractions({
   }, []);
   
   // Custom handlers for component props
-  const handlePointerDownOutside = (e: React.PointerEvent) => {
+  const handlePointerDownOutside = (event: PointerDownOutsideEvent) => {
     // Mark that we're closing the sheet
     isClosingRef.current = true;
     
     // Check for sharing-related interactions
-    if (e.target instanceof HTMLElement && isSharingRelated(e.target)) {
+    const target = event.target as HTMLElement;
+    const originalTarget = event.detail.originalEvent.target as HTMLElement;
+    
+    if (isSharingRelated(originalTarget)) {
       // Mark this as a sharing sheet interaction
       SheetRegistry.markClosingSharingSheet(sheetIdRef.current);
       
@@ -79,24 +86,22 @@ export function useSheetInteractions({
     }
     
     // Prevent closing the sheet when clicking on special elements
-    if (e.target instanceof HTMLElement) {
-      if (isSpecialElement(e.target) || isPopoverElement(e.target)) {
-        console.log("Preventing sheet close due to special element interaction");
-        e.preventDefault();
-        return;
-      }
+    if (isSpecialElement(originalTarget) || isPopoverElement(originalTarget)) {
+      console.log("Preventing sheet close due to special element interaction");
+      event.preventDefault();
+      return;
     }
     
     // Call original handler if provided
     if (onPointerDownOutside) {
-      onPointerDownOutside(e);
+      onPointerDownOutside(event);
     }
   };
   
-  const handleCloseAutoFocus = (e: React.FocusEvent) => {
+  const handleCloseAutoFocus = (event: Event) => {
     // Prevent auto-focus behavior which can trigger unwanted interactions
-    e.preventDefault();
-    if (onCloseAutoFocus) onCloseAutoFocus(e);
+    event.preventDefault();
+    if (onCloseAutoFocus) onCloseAutoFocus(event);
   };
   
   const handleAnimationStart = (e: React.AnimationEvent) => {

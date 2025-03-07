@@ -26,6 +26,9 @@ const sheetVariants = cva(
   }
 )
 
+// Define proper types for Radix events
+type PointerDownOutsideEvent = CustomEvent<{ originalEvent: PointerEvent }>;
+
 interface SheetContentProps
   extends React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content>,
   VariantProps<typeof sheetVariants> {}
@@ -44,7 +47,7 @@ export const SheetContent = React.forwardRef<
     handleCloseClick
   } = useSheetInteractions({
     side,
-    onPointerDownOutside: props.onPointerDownOutside,
+    onPointerDownOutside: props.onPointerDownOutside as ((e: PointerDownOutsideEvent) => void) | undefined,
     onCloseAutoFocus: props.onCloseAutoFocus
   });
   
