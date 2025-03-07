@@ -1,3 +1,4 @@
+
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -42,63 +43,37 @@ export default defineConfig(({ mode }) => ({
         ]
       },
       devOptions: {
-        enabled: mode !== 'development',
-        suppressWarnings: true,
+        enabled: true,
         type: 'module',
         navigateFallback: 'index.html'
       },
       workbox: {
-        globPatterns: ['**/favicon.ico', '**/pwa-*.png', '**/index.html'],
-        globIgnores: [
-          '**/node_modules/**',
-          '**/.vite/**', 
-          '**/*.map',
-          '**/src/**/*.ts',
-          '**/src/**/*.tsx',
-          '**/src/**'
-        ],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        // Don't fallback on document based (HTML) requests
+        // This helps avoid issues with client-side routing
+        navigationPreload: true,
         runtimeCaching: [
           {
-            urlPattern: ({ url }) => {
-              const exactRoutes = ['/', '/dashboard', '/notes', '/settings'];
-              return exactRoutes.includes(url.pathname) || 
-                     exactRoutes.some(route => url.pathname === route + '/');
-            },
-            handler: 'NetworkFirst',
+            urlPattern: /^https:\/\/fonts\.googleapis\.com/,
+            handler: 'CacheFirst',
             options: {
-              cacheName: 'app-routes',
+              cacheName: 'google-fonts-cache',
               expiration: {
                 maxEntries: 10,
-                maxAgeSeconds: 60 * 60
+                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
               }
             }
           },
           {
-            urlPattern: ({ url }) => {
-              const isSupabaseAPI = url.origin === 'https://mcwlzrikidzgxexnccju.supabase.co';
-              const isAuthEndpoint = url.pathname.includes('/auth/');
-              
-              if (isSupabaseAPI && isAuthEndpoint) {
-                return false;
-              }
-              
-              return isSupabaseAPI && url.pathname.includes('/rest/v1/');
-            },
-            handler: 'StaleWhileRevalidate',
+            urlPattern: /^https:\/\/mcwlzrikidzgxexnccju\.supabase\.co/,
+            handler: 'NetworkFirst',
             options: {
               cacheName: 'api-cache',
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 5 * 60
+                maxAgeSeconds: 5 * 60 // 5 minutes
               }
             }
-          },
-          {
-            urlPattern: ({ url }) => {
-              return url.origin === 'https://mcwlzrikidzgxexnccju.supabase.co' && 
-                     url.pathname.includes('/auth/');
-            },
-            handler: 'NetworkOnly'
           },
           {
             urlPattern: /\.(js|css)$/,
@@ -107,7 +82,7 @@ export default defineConfig(({ mode }) => ({
               cacheName: 'static-resources',
               expiration: {
                 maxEntries: 30,
-                maxAgeSeconds: 24 * 60 * 60
+                maxAgeSeconds: 24 * 60 * 60 // 24 hours
               }
             }
           },
@@ -118,14 +93,14 @@ export default defineConfig(({ mode }) => ({
               cacheName: 'assets',
               expiration: {
                 maxEntries: 30,
-                maxAgeSeconds: 7 * 24 * 60 * 60
+                maxAgeSeconds: 7 * 24 * 60 * 60 // 7 days
               }
             }
           }
         ],
         cleanupOutdatedCaches: true,
-        clientsClaim: mode === 'production',
-        skipWaiting: mode === 'production'
+        skipWaiting: true,
+        clientsClaim: true
       }
     })
   ].filter(Boolean),
@@ -135,11 +110,14 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    // Ensure assets have consistent names between builds
     rollupOptions: {
-      input: {
-        main: path.resolve(__dirname, 'index.html')
-      },
       output: {
+        entryFileNames: 'assets/[name].[hash].js',
+        chunkFileNames: 'assets/[name].[hash].js',
+        assetFileNames: 'assets/[name].[hash].[ext]',
         manualChunks: {
           vendor: [
             'react',

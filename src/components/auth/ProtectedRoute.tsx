@@ -19,15 +19,33 @@ export const ProtectedRoute = () => {
   const isAuthBypassed = (() => {
     try {
       return isDevelopmentMode() && 
-             sessionStorage.getItem('dev_bypass_auth') === 'true';
+             (sessionStorage.getItem('dev_bypass_auth') === 'true' || location.search.includes('dev_bypass=true'));
     } catch (e) {
       return false;
     }
   })();
   
+  // Log auth state for debugging
+  useEffect(() => {
+    if (isDevelopmentMode()) {
+      console.log("[ProtectedRoute] Auth state:", { 
+        session: !!session, 
+        loading, 
+        initialized, 
+        isAuthBypassed, 
+        redirectInProgress 
+      });
+    }
+  }, [session, loading, initialized, isAuthBypassed, redirectInProgress]);
+  
   // In dev mode with bypass enabled, render children immediately
   if (isDevelopmentMode() && isAuthBypassed) {
     console.log("[ProtectedRoute] Dev mode with auth bypass enabled, skipping protection");
+    // Auto-enable the bypass for future page loads in this session
+    if (sessionStorage.getItem('dev_bypass_auth') !== 'true') {
+      sessionStorage.setItem('dev_bypass_auth', 'true');
+      console.log("[ProtectedRoute] Enabled auth bypass for this session");
+    }
     return <Outlet />;
   }
   
@@ -93,9 +111,20 @@ export const ProtectedRoute = () => {
               : "Verifying your account..."}
           </p>
           {waitingTooLong && (
-            <p className="text-xs text-slate-500 max-w-md text-center mt-2">
-              If this persists, try refreshing the page or clearing your browser storage.
-            </p>
+            <div className="text-xs text-slate-500 max-w-md text-center mt-2">
+              <p className="mb-1">If this persists, try refreshing the page or clearing your browser storage.</p>
+              {isDevelopmentMode() && (
+                <button 
+                  onClick={() => {
+                    sessionStorage.setItem('dev_bypass_auth', 'true');
+                    window.location.reload();
+                  }}
+                  className="underline text-blue-500 mt-2"
+                >
+                  Enable dev bypass and reload
+                </button>
+              )}
+            </div>
           )}
         </div>
       </div>

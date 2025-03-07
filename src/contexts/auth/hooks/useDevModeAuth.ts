@@ -76,8 +76,12 @@ export const useDevModeAuth = () => {
   // Check if dev mode bypass is enabled
   const isDevBypassEnabled = useCallback(() => {
     try {
+      // Also check URL parameters for bypass
+      const urlParams = new URLSearchParams(window.location.search);
+      const bypassFromUrl = urlParams.get('dev_bypass') === 'true';
+      
       return isDevelopmentMode() && 
-             sessionStorage.getItem('dev_bypass_auth') === 'true';
+             (sessionStorage.getItem('dev_bypass_auth') === 'true' || bypassFromUrl);
     } catch (e) {
       return false;
     }
@@ -90,6 +94,25 @@ export const useDevModeAuth = () => {
         sessionStorage.setItem('dev_bypass_auth', 'true');
         forceAuthInitialized(true);
         console.log("Development mode: Enabled auth bypass and forced initialization");
+        
+        // Add a visible indicator for dev mode on the page
+        const existingIndicator = document.getElementById('dev-mode-indicator');
+        if (!existingIndicator) {
+          const indicator = document.createElement('div');
+          indicator.id = 'dev-mode-indicator';
+          indicator.style.position = 'fixed';
+          indicator.style.bottom = '10px';
+          indicator.style.right = '10px';
+          indicator.style.backgroundColor = 'rgba(255, 0, 0, 0.7)';
+          indicator.style.color = 'white';
+          indicator.style.padding = '5px 10px';
+          indicator.style.borderRadius = '4px';
+          indicator.style.fontSize = '10px';
+          indicator.style.zIndex = '9999';
+          indicator.textContent = 'DEV MODE';
+          document.body.appendChild(indicator);
+        }
+        
         return true;
       }
       return false;
