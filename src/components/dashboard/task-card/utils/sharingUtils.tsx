@@ -32,14 +32,21 @@ export function handleSharingInteraction(
   isMobile: boolean, 
   setShowSharingInfo: (show: boolean) => void
 ): void {
-  // Create multiple layers of event stopping to ensure propagation is truly halted
-  e.stopPropagation();
-  e.preventDefault();
-  e.nativeEvent.stopImmediatePropagation();
-  e.nativeEvent.stopPropagation();
-  e.nativeEvent.preventDefault();
+  // Enhanced event stopping to ensure propagation is truly halted
+  if (e.stopPropagation) e.stopPropagation();
+  if (e.preventDefault) e.preventDefault();
   
-  // Set a flag to track this interaction
+  // Stop native event propagation for maximum protection
+  if (e.nativeEvent) {
+    if (e.nativeEvent.stopImmediatePropagation) e.nativeEvent.stopImmediatePropagation();
+    if (e.nativeEvent.stopPropagation) e.nativeEvent.stopPropagation();
+    if (e.nativeEvent.preventDefault) e.nativeEvent.preventDefault();
+  }
+  
+  // Mark the event as handled directly on the event object
+  (e as any).__sharingIndicatorHandled = true;
+  
+  // Create global flags to track this interaction
   const sharedDataId = `share-interaction-${Date.now()}`;
   (window as any).__lastShareInteraction = sharedDataId;
   (window as any).__sharingIndicatorClicked = true;
@@ -110,7 +117,7 @@ export function getSharingBaseProps(
   cursor: string;
 } {
   return {
-    className: "flex items-center gap-1 text-white/80",
+    className: "flex items-center gap-1 text-white/80 sharing-indicator",
     // On desktop, we want both click and hover behavior
     onClick: handleInteraction,
     cursor: isMobile ? "cursor-pointer" : "cursor-help"

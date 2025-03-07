@@ -82,6 +82,9 @@ function ShareIndicatorComponent({ task, assignmentInfo }: ShareIndicatorProps) 
     e.stopPropagation();
     e.preventDefault();
     
+    // Mark the event as handled
+    (e as any).__sharingIndicatorHandled = true;
+    
     if (isMobile) {
       setShowSharingInfo(true);
     }
@@ -93,17 +96,22 @@ function ShareIndicatorComponent({ task, assignmentInfo }: ShareIndicatorProps) 
         <div 
           className="w-2 bg-[#8B5CF6] h-full absolute right-0 top-0 rounded-r-xl cursor-pointer" 
           onClick={handleShareIndicatorClick}
+          data-sharing-indicator="true"
         />
       ) : (
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="w-2 bg-[#8B5CF6] h-full absolute right-0 top-0 rounded-r-xl cursor-help" />
+              <div 
+                className="w-2 bg-[#8B5CF6] h-full absolute right-0 top-0 rounded-r-xl cursor-help" 
+                data-sharing-indicator="true"
+              />
             </TooltipTrigger>
             <TooltipContent 
               className="bg-gray-800 text-white border-gray-700 text-xs z-50"
               side="left"
               sideOffset={5}
+              data-sharing-indicator="true"
             >
               {getShareTooltipText()}
             </TooltipContent>

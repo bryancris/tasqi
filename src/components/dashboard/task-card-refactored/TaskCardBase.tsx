@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -23,7 +22,6 @@ export function TaskCardBase({ task, index, isDraggable = false, view = 'daily',
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [localTask, setLocalTask] = useState(task);
 
-  // Update local task when the prop changes
   useEffect(() => {
     setLocalTask(task);
   }, [task]);
@@ -47,7 +45,21 @@ export function TaskCardBase({ task, index, isDraggable = false, view = 'daily',
     opacity: isDragging ? 0.5 : undefined,
   };
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
+    if (
+      (e as any).__sharingIndicatorHandled || 
+      e.target instanceof Element && (
+        e.target.closest('[data-sharing-indicator="true"]') ||
+        e.target.closest('.sharing-indicator') ||
+        e.target.getAttribute('data-sharing-indicator') === 'true' ||
+        e.target.classList.contains('sharing-indicator')
+      ) || 
+      (window as any).__sharingIndicatorClicked
+    ) {
+      console.log('Sharing indicator clicked, blocking task edit drawer');
+      return;
+    }
+    
     setIsEditDrawerOpen(true);
   };
 
