@@ -40,6 +40,13 @@ export default defineConfig(({ mode }) => ({
             type: 'image/png',
             purpose: 'any maskable'
           }
+        ],
+        shortcuts: [
+          {
+            name: 'Dashboard',
+            url: '/dashboard',
+            description: 'View your tasks'
+          }
         ]
       },
       devOptions: {
