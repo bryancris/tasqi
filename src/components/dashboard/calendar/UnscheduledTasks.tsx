@@ -1,6 +1,6 @@
 
 import { Task } from "../TaskBoard";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Droppable, Draggable } from "react-beautiful-dnd";
 import { cn } from "@/lib/utils";
 import { getPriorityColor } from "@/utils/taskColors";
@@ -12,16 +12,13 @@ interface UnscheduledTasksProps {
 export function UnscheduledTasks({ tasks }: UnscheduledTasksProps) {
   return (
     <Card className="w-80 h-full border-none shadow-none">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base font-medium">Unscheduled Tasks</CardTitle>
-      </CardHeader>
       <Droppable droppableId="unscheduled">
         {(provided, snapshot) => (
           <CardContent 
             ref={provided.innerRef}
             {...provided.droppableProps}
             className={cn(
-              "space-y-2 min-h-[100px] rounded-md p-2",
+              "space-y-2 min-h-[100px] rounded-md p-2 pt-6", // Added pt-6 to maintain spacing after header removal
               snapshot.isDraggingOver && "bg-[#33C3F0]/10"
             )}
           >
