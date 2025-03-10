@@ -1,4 +1,3 @@
-
 import * as SheetPrimitive from "@radix-ui/react-dialog"
 import { cva, type VariantProps } from "class-variance-authority"
 import * as React from "react"
@@ -31,12 +30,14 @@ type PointerDownOutsideEvent = CustomEvent<{ originalEvent: PointerEvent }>;
 
 interface SheetContentProps
   extends React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content>,
-  VariantProps<typeof sheetVariants> {}
+  VariantProps<typeof sheetVariants> {
+  onOpenChange?: (open: boolean) => void;
+}
 
 export const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
->(({ side = "right", className, children, ...props }, ref) => {
+>(({ side = "right", className, children, onOpenChange, ...props }, ref) => {
   const {
     sheetId,
     handlePointerDownOutside,
@@ -116,7 +117,7 @@ export const SheetContent = React.forwardRef<
   }, [isSharingSheet, sheetId, isIOSPwaApp]);
 
   // Enhanced close handler that works better for iOS PWA
-  const enhancedCloseHandler = React.useCallback((e: React.MouseEvent | React.TouchEvent) => {
+  const enhancedCloseHandler = React.useCallback((e: React.MouseEvent<Element> | React.TouchEvent<Element>) => {
     console.log(`📱 Sheet close button ${e.type} (sharing: ${isSharingSheet}, iOS PWA: ${isIOSPwaApp})`);
 
     // Prevent default and stop propagation
@@ -127,7 +128,7 @@ export const SheetContent = React.forwardRef<
       e.nativeEvent.stopPropagation();
       e.nativeEvent.preventDefault();
       
-      if (e.nativeEvent.stopImmediatePropagation) {
+      if ('stopImmediatePropagation' in e.nativeEvent) {
         e.nativeEvent.stopImmediatePropagation();
       }
     }
@@ -154,9 +155,9 @@ export const SheetContent = React.forwardRef<
         // Manually trigger the onOpenChange callback after a small delay
         // to ensure this event completes first
         setTimeout(() => {
-          if (props.onOpenChange) {
+          if (onOpenChange) {
             console.log("🔄 iOS PWA: Manually closing sheet via onOpenChange");
-            props.onOpenChange(false);
+            onOpenChange(false);
           }
         }, 50);
       }, 0);
@@ -198,7 +199,7 @@ export const SheetContent = React.forwardRef<
     if (handleCloseClick) {
       handleCloseClick(e);
     }
-  }, [handleCloseClick, isSharingSheet, isIOSPwaApp, sheetId, props.onOpenChange]);
+  }, [handleCloseClick, isSharingSheet, isIOSPwaApp, sheetId, onOpenChange]);
 
   return (
     <SheetPortal>
