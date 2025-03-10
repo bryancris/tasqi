@@ -21,6 +21,7 @@ export function useSheetInteractions({
   const {
     sheetId,
     isClosingRef,
+    isClosing,
     handleAnimationStart,
     handleAnimationEnd
   } = useSheetLifecycle();
@@ -46,6 +47,7 @@ export function useSheetInteractions({
   
   return {
     sheetId,
+    isClosing,
     handlePointerDownOutside,
     handleCloseAutoFocus,
     handleAnimationStart,

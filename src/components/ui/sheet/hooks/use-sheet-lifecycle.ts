@@ -7,9 +7,12 @@ import { isIOSPWA } from "@/utils/platform-detection";
  * Hook to handle sheet lifecycle events (mounting, unmounting, animation)
  */
 export function useSheetLifecycle(isSharingSheet: boolean = false) {
-  // Create refs to track state
-  const isClosingRef = React.useRef(false);
+  // Create a ref to track state
+  const isClosingRef = React.useRef<boolean>(false);
   const sheetIdRef = React.useRef<string>(generateSheetId());
+  
+  // Track closing state with a state variable too
+  const [isClosing, setIsClosing] = React.useState(false);
   
   // Check if running on iOS PWA for platform-specific behavior
   const isIOSPwaApp = isIOSPWA();
@@ -26,7 +29,9 @@ export function useSheetLifecycle(isSharingSheet: boolean = false) {
   const handleAnimationStart = React.useCallback((e: React.AnimationEvent) => {
     // If this is a closing animation starting
     if (e.animationName.includes('out') || e.animationName.includes('close')) {
+      // Set both the ref and state
       isClosingRef.current = true;
+      setIsClosing(true);
       
       // If it's a sharing-related sheet, add extra protection
       if (document.querySelector('[data-sharing-sheet-id]')) {
@@ -61,6 +66,7 @@ export function useSheetLifecycle(isSharingSheet: boolean = false) {
       // Add safety delay before allowing other interactions
       setTimeout(() => {
         isClosingRef.current = false;
+        setIsClosing(false);
       }, safetyDelay);
       
       // If this is a closing animation, add an event blocker
@@ -106,6 +112,7 @@ export function useSheetLifecycle(isSharingSheet: boolean = false) {
   return {
     sheetId: sheetIdRef.current,
     isClosingRef,
+    isClosing,
     handleAnimationStart,
     handleAnimationEnd
   };

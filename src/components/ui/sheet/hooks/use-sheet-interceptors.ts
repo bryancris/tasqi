@@ -25,11 +25,16 @@ export function useSheetInterceptors({
   // Check if running on iOS PWA for platform-specific behavior
   const isIOSPwaApp = isIOSPWA();
   
+  // Create a local state to track closing state
+  const [isClosing, setIsClosing] = React.useState(false);
+  
   // Handle external pointer events (clicks outside the sheet)
   const handlePointerDownOutside = React.useCallback((event: PointerDownOutsideEvent) => {
-    // Mark that we're closing the sheet
-    if (isClosingRef.current) return;
-    isClosingRef.current = true;
+    // Check if already closing
+    if (isClosingRef.current || isClosing) return;
+    
+    // Update local closing state
+    setIsClosing(true);
     
     // Check for sharing-related interactions
     const target = event.target as HTMLElement;
@@ -44,7 +49,7 @@ export function useSheetInterceptors({
       
       // Block all events immediately
       addEventBlockers(blockDuration, () => {
-        isClosingRef.current = false;
+        setIsClosing(false);
       });
       
       // Prevent the default closing behavior for sharing-related interactions
@@ -56,6 +61,7 @@ export function useSheetInterceptors({
     if (isSpecialElement(originalTarget) || isPopoverElement(originalTarget)) {
       console.log("Preventing sheet close due to special element interaction");
       event.preventDefault();
+      setIsClosing(false);
       return;
     }
     
@@ -63,7 +69,7 @@ export function useSheetInterceptors({
     if (onPointerDownOutside) {
       onPointerDownOutside(event);
     }
-  }, [onPointerDownOutside, isIOSPwaApp, sheetId, isClosingRef]);
+  }, [onPointerDownOutside, isIOSPwaApp, sheetId, isClosingRef, isClosing]);
   
   // Handle auto-focus events when sheet is closing
   const handleCloseAutoFocus = React.useCallback((event: Event) => {
@@ -79,10 +85,11 @@ export function useSheetInterceptors({
     }
     
     if (onCloseAutoFocus) onCloseAutoFocus(event);
-  }, [onCloseAutoFocus, isIOSPwaApp, isClosingRef]);
+  }, [onCloseAutoFocus, isIOSPwaApp]);
   
   return {
     handlePointerDownOutside,
-    handleCloseAutoFocus
+    handleCloseAutoFocus,
+    isClosing
   };
 }
