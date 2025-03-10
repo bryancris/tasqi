@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
@@ -153,7 +152,7 @@ serve(async (req) => {
 
     // Generate the AI response
     console.log("Generating AI response for:", message.substring(0, 30) + "...");
-    const aiResponse = await generateAIResponse(message, chatHistory, openaiApiKey);
+    const aiResponse = await generateAIResponse(message, chatHistory, openaiApiKey, userId);
     console.log("AI response generated:", aiResponse.substring(0, 30) + "...");
 
     // Store the AI response
