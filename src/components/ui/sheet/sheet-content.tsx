@@ -5,6 +5,7 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 import { SheetCloseButton, SheetOverlay, SheetPortal } from "./sheet-primitives"
 import { useSheetInteractions } from "./use-sheet-interactions"
+import { isIOSPWA } from "@/utils/platform-detection"
 
 // Define sheet animation variants
 const sheetVariants = cva(
@@ -57,6 +58,13 @@ export const SheetContent = React.forwardRef<
     className?.includes('sharing') || 
     false;
   
+  // Determine if this is running on iOS PWA
+  const isIOSPwaApp = isIOSPWA();
+  
+  // Adjust the z-index and animation duration for iOS PWA sharing sheets
+  const iosPwaZIndex = isIOSPwaApp && isSharingSheet ? 999 : undefined;
+  const iosPwaExitDuration = isIOSPwaApp && isSharingSheet ? '800ms' : undefined;
+  
   return (
     <SheetPortal>
       <SheetOverlay />
@@ -64,7 +72,8 @@ export const SheetContent = React.forwardRef<
         ref={ref}
         className={cn(sheetVariants({ side }), className, {
           // Add extra z-index if this is a sharing sheet to ensure it's on top
-          'z-[60]': isSharingSheet
+          'z-[60]': isSharingSheet,
+          'z-[999]': iosPwaZIndex
         })}
         data-sheet-id={sheetId}
         // These event handlers handle special cases for sheet interaction
@@ -72,9 +81,11 @@ export const SheetContent = React.forwardRef<
         onPointerDownOutside={handlePointerDownOutside}
         onAnimationStart={handleAnimationStart}
         onAnimationEnd={handleAnimationEnd}
-        // Add a longer exit animation for sharing sheets
+        // Add a longer exit animation for sharing sheets and even longer for iOS PWA
         style={{
-          ...(isSharingSheet ? { '--sheet-exit-duration': '600ms' } as React.CSSProperties : {})
+          ...(isSharingSheet ? { 
+            '--sheet-exit-duration': iosPwaExitDuration || '600ms' 
+          } as React.CSSProperties : {})
         }}
         {...props}
       >

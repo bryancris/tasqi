@@ -82,6 +82,17 @@
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: auto;
   }
+  
+  /* Special styling for iOS PWA sharing sheets */
+  .ios-pwa-sharing-sheet {
+    z-index: 999 !important;
+  }
+  
+  /* Special styling to prevent edit drawer opening after closing sharing sheet */
+  [data-sharing-shield="true"] {
+    pointer-events: all !important;
+    touch-action: none !important;
+  }
 }
 
 @layer utilities {

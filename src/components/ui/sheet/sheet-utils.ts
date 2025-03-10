@@ -3,6 +3,7 @@
  * Utility functions for the Sheet component
  * Contains helper functions for event handling, ID generation, etc.
  */
+import { isIOSPWA } from "@/utils/platform-detection";
 
 /**
  * Generate a unique ID for a sheet
@@ -36,12 +37,44 @@ export function addEventBlockers(
   (window as any).__eventBlockersActive = true;
   (window as any).__eventBlockersStartTime = Date.now();
   
+  // Check for iOS PWA to apply platform-specific behaviors
+  const isIOSPwaApp = isIOSPWA();
+  
   // Add multiple event listeners to catch all types of interactions
   document.addEventListener('click', blockAllEvents, { capture: true });
   document.addEventListener('mousedown', blockAllEvents, { capture: true });
   document.addEventListener('mouseup', blockAllEvents, { capture: true });
   document.addEventListener('pointerdown', blockAllEvents, { capture: true });
   document.addEventListener('pointerup', blockAllEvents, { capture: true });
+  
+  // For iOS PWA, also block touchstart events which can cause drawer to open
+  if (isIOSPwaApp) {
+    const blockTouchStart = (e: TouchEvent) => {
+      if (e.target instanceof Element) {
+        // Only block touchstart on task cards, not on control elements
+        const isTaskCard = e.target.closest('[role="button"]') && 
+                         !e.target.closest('button') && 
+                         !e.target.closest('[data-radix-dialog-close]');
+                         
+        if (isTaskCard) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }
+    };
+    
+    document.addEventListener('touchstart', blockTouchStart, { 
+      capture: true,
+      passive: false // Required to make preventDefault work
+    });
+    
+    // Remove touchstart blockers after a shorter time
+    setTimeout(() => {
+      document.removeEventListener('touchstart', blockTouchStart, { 
+        capture: true 
+      });
+    }, Math.min(duration, 500));
+  }
   
   // Set timeout to remove blockers
   const timeoutId = setTimeout(() => {
@@ -181,13 +214,15 @@ export const SheetRegistry = {
       (window as any).__isClosingSharingSheet = true;
       (window as any).__sharingSheetCloseTime = Date.now();
       
-      // Clear after longer delay (1500ms instead of 800ms)
+      // Clear after platform-specific delay
+      const timeoutDuration = isIOSPWA() ? 2000 : 1500;
+      
       setTimeout(() => {
         if ((window as any).__closingSharingSheet === id) {
           (window as any).__closingSharingSheet = null;
           (window as any).__isClosingSharingSheet = false;
         }
-      }, 1500); 
+      }, timeoutDuration); 
     }
   },
   
@@ -196,13 +231,15 @@ export const SheetRegistry = {
     
     const isClosing = !!(window as any).__closingSharingSheet || !!(window as any).__isClosingSharingSheet;
     
-    // Also check if the closing happened recently (within 1500ms)
+    // Also check if the closing happened recently
     if (!isClosing) {
       const closeTime = (window as any).__sharingSheetCloseTime || 0;
       const now = Date.now();
+      // Use platform-specific timeout
+      const timeoutDuration = isIOSPWA() ? 2000 : 1500;
       const timeSinceClose = now - closeTime;
       
-      return timeSinceClose < 1500;
+      return timeSinceClose < timeoutDuration;
     }
     
     return isClosing;

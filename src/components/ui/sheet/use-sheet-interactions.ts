@@ -8,6 +8,7 @@ import {
   isSharingRelated,
   SheetRegistry 
 } from "./sheet-utils";
+import { isIOSPWA } from "@/utils/platform-detection";
 import * as SheetPrimitive from "@radix-ui/react-dialog";
 
 // Define proper types for Radix events
@@ -27,6 +28,9 @@ export function useSheetInteractions({
   // Create refs to track state
   const isClosingRef = useRef(false);
   const sheetIdRef = useRef<string>(generateSheetId());
+  
+  // Check if running on iOS PWA for platform-specific behavior
+  const isIOSPwaApp = isIOSPWA();
   
   // Register this sheet when mounted
   useEffect(() => {
@@ -56,11 +60,43 @@ export function useSheetInteractions({
     // Use capture phase to intercept before other handlers
     document.addEventListener('click', interceptGlobalClicks, { capture: true });
     
+    // For iOS PWA, also intercept touchstart events which can trigger drawer opening
+    if (isIOSPwaApp) {
+      const interceptTouchStart = (e: TouchEvent) => {
+        if (isClosingRef.current || SheetRegistry.isClosingSharingSheet()) {
+          // Only for task card interactions
+          if (e.target instanceof HTMLElement) {
+            const isTaskCard = e.target.closest('[role="button"]') && 
+                             !e.target.closest('button') && 
+                             !e.target.closest('[data-radix-dialog-close]');
+                             
+            if (isTaskCard) {
+              console.log("Intercepting touchstart during sheet closing on task card");
+              e.preventDefault();
+              e.stopPropagation();
+              return false;
+            }
+          }
+        }
+      };
+      
+      document.addEventListener('touchstart', interceptTouchStart, { 
+        capture: true,
+        passive: false
+      });
+      
+      return () => {
+        SheetRegistry.unregisterSheet(sheetIdRef.current);
+        document.removeEventListener('click', interceptGlobalClicks, { capture: true });
+        document.removeEventListener('touchstart', interceptTouchStart, { capture: true });
+      };
+    }
+    
     return () => {
       SheetRegistry.unregisterSheet(sheetIdRef.current);
       document.removeEventListener('click', interceptGlobalClicks, { capture: true });
     };
-  }, []);
+  }, [isIOSPwaApp]);
   
   // Custom handlers for component props
   const handlePointerDownOutside = useCallback((event: PointerDownOutsideEvent) => {
@@ -75,8 +111,11 @@ export function useSheetInteractions({
       // Mark this as a sharing sheet interaction
       SheetRegistry.markClosingSharingSheet(sheetIdRef.current);
       
+      // Block duration longer for iOS PWA
+      const blockDuration = isIOSPwaApp ? 1500 : 800;
+      
       // Block all events immediately
-      addEventBlockers(800, () => {
+      addEventBlockers(blockDuration, () => {
         isClosingRef.current = false;
       });
       
@@ -96,7 +135,7 @@ export function useSheetInteractions({
     if (onPointerDownOutside) {
       onPointerDownOutside(event);
     }
-  }, [onPointerDownOutside]);
+  }, [onPointerDownOutside, isIOSPwaApp]);
   
   const handleCloseAutoFocus = useCallback((event: Event) => {
     // Prevent auto-focus behavior which can trigger unwanted interactions
@@ -105,11 +144,13 @@ export function useSheetInteractions({
     // If this is a sharing-related closure, enforce stricter blocking
     if (SheetRegistry.isClosingSharingSheet()) {
       console.log("Adding extra event blockers for sharing sheet close");
-      addEventBlockers(800);
+      // Block duration longer for iOS PWA
+      const blockDuration = isIOSPwaApp ? 1500 : 800;
+      addEventBlockers(blockDuration);
     }
     
     if (onCloseAutoFocus) onCloseAutoFocus(event);
-  }, [onCloseAutoFocus]);
+  }, [onCloseAutoFocus, isIOSPwaApp]);
   
   const handleAnimationStart = useCallback((e: React.AnimationEvent) => {
     // If this is a closing animation starting
@@ -129,21 +170,27 @@ export function useSheetInteractions({
         
         document.addEventListener('click', blockClickEvents, { capture: true });
         
+        // Block duration longer for iOS PWA
+        const blockDuration = isIOSPwaApp ? 1500 : 800;
+        
         // Remove after delay
         setTimeout(() => {
           document.removeEventListener('click', blockClickEvents, { capture: true });
-        }, 800);
+        }, blockDuration);
       }
     }
-  }, []);
+  }, [isIOSPwaApp]);
   
   const handleAnimationEnd = useCallback((e: React.AnimationEvent) => {
     // Check if this is the closing animation ending
     if (e.animationName.includes('out') || e.animationName.includes('close')) {
+      // Block duration longer for iOS PWA (delay setting isClosingRef to false)
+      const safetyDelay = isIOSPwaApp ? 800 : 500;
+      
       // Add safety delay before allowing other interactions
       setTimeout(() => {
         isClosingRef.current = false;
-      }, 500);
+      }, safetyDelay);
       
       // If this is a closing animation, add an event blocker
       const blockClickEvents = (evt: MouseEvent) => {
@@ -156,8 +203,34 @@ export function useSheetInteractions({
         capture: true, 
         once: true 
       });
+      
+      // For iOS PWA, also block touchstart 
+      if (isIOSPwaApp) {
+        const blockTouchEvents = (evt: TouchEvent) => {
+          // Only block task card interactions
+          if (evt.target instanceof HTMLElement) {
+            const isTaskCard = evt.target.closest('[role="button"]') && 
+                             !evt.target.closest('button') && 
+                             !evt.target.closest('[data-radix-dialog-close]');
+                             
+            if (isTaskCard) {
+              evt.preventDefault();
+              evt.stopPropagation();
+            }
+          }
+        };
+        
+        document.addEventListener('touchstart', blockTouchEvents, {
+          capture: true,
+          passive: false
+        });
+        
+        setTimeout(() => {
+          document.removeEventListener('touchstart', blockTouchEvents, { capture: true });
+        }, 800);
+      }
     }
-  }, []);
+  }, [isIOSPwaApp]);
   
   const handleCloseClick = useCallback((e: React.MouseEvent) => {
     // When closing via the X button, ensure we block propagation
@@ -169,15 +242,39 @@ export function useSheetInteractions({
         // Mark this as a sharing sheet close
         SheetRegistry.markClosingSharingSheet(sheetIdRef.current);
         
+        // Block duration longer for iOS PWA
+        const blockDuration = isIOSPwaApp ? 1500 : 800;
+        
         // Add aggressive event blocking
-        addEventBlockers(800);
+        addEventBlockers(blockDuration);
         
         // Stop propagation immediately
         e.stopPropagation();
         e.preventDefault();
+        
+        // For iOS PWA, add an extra shield element to block all interactions
+        if (isIOSPwaApp) {
+          const overlay = document.createElement('div');
+          overlay.style.position = 'fixed';
+          overlay.style.top = '0';
+          overlay.style.left = '0';
+          overlay.style.right = '0';
+          overlay.style.bottom = '0';
+          overlay.style.zIndex = '998';
+          overlay.style.backgroundColor = 'transparent';
+          overlay.setAttribute('data-sharing-shield', 'true');
+          document.body.appendChild(overlay);
+          
+          // Remove the shield after animation completes
+          setTimeout(() => {
+            if (document.body.contains(overlay)) {
+              document.body.removeChild(overlay);
+            }
+          }, 800);
+        }
       }
     }
-  }, []);
+  }, [isIOSPwaApp]);
   
   return {
     sheetId: sheetIdRef.current,

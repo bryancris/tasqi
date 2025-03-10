@@ -7,6 +7,7 @@ import { SharingDetailsHeader } from "./sharing-info/SharingDetailsHeader";
 import { SharingDetailsContent } from "./sharing-info/SharingDetailsContent";
 import { SharingDetailsList } from "./sharing-info/SharingDetailsList";
 import { addEventBlockers } from "@/components/ui/sheet/sheet-utils";
+import { isIOSPWA, markSharingSheetClosing } from "@/utils/platform-detection";
 
 /**
  * TaskSharingInfoSheet
@@ -35,21 +36,48 @@ export function TaskSharingInfoSheet({
   onOpenChange 
 }: TaskSharingInfoSheetProps) {
   const uniqueIdRef = useRef<string>(`sharing-sheet-${Date.now()}`);
+  const isIOSPwaApp = isIOSPWA();
   
   // Create a global flag to track when the sheet is closing
   useEffect(() => {
     if (!open) {
       // If the sheet is closing, set global flags and block events
-      (window as any).__isClosingSharingSheet = true;
-      (window as any).__sharingSheetCloseTime = Date.now();
+      markSharingSheetClosing(uniqueIdRef.current);
       
-      // Block all events for 1000ms when closing
-      addEventBlockers(1000, () => {
+      // Add platform-specific blocking duration - longer for iOS PWA
+      const blockDuration = isIOSPwaApp ? 2000 : 1000;
+      
+      // Block all events when closing
+      addEventBlockers(blockDuration, () => {
         // After delay, clear the closing state
         (window as any).__isClosingSharingSheet = false;
       });
+      
+      // For iOS PWA, we need extra protection against the edit drawer opening
+      if (isIOSPwaApp) {
+        console.log("iOS PWA: Adding extra protection for sharing sheet close");
+        
+        // Lock the screen briefly with a transparent overlay
+        const overlay = document.createElement('div');
+        overlay.style.position = 'fixed';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.right = '0';
+        overlay.style.bottom = '0';
+        overlay.style.zIndex = '999';
+        overlay.style.backgroundColor = 'transparent';
+        overlay.setAttribute('data-sharing-shield', 'true');
+        document.body.appendChild(overlay);
+        
+        // Remove the overlay after a delay
+        setTimeout(() => {
+          if (document.body.contains(overlay)) {
+            document.body.removeChild(overlay);
+          }
+        }, 300);
+      }
     }
-  }, [open]);
+  }, [open, isIOSPwaApp]);
 
   // Custom handler for the onOpenChange event
   const handleOpenChange = (newOpen: boolean) => {
@@ -58,11 +86,10 @@ export function TaskSharingInfoSheet({
       console.log("Sharing sheet closing - adding protection");
       
       // Mark this interaction as a sharing sheet close
-      (window as any).__closingSharingSheet = uniqueIdRef.current;
-      (window as any).__isClosingSharingSheet = true;
-      (window as any).__sharingSheetCloseTime = Date.now();
+      markSharingSheetClosing(uniqueIdRef.current);
       
-      // Block click events for 1200ms (longer than animation)
+      // Block click events - longer duration for iOS PWA
+      const blockDuration = isIOSPwaApp ? 2000 : 1200;
       const stopImmediatePropagation = (e: MouseEvent) => {
         e.stopImmediatePropagation();
         e.stopPropagation();
@@ -74,13 +101,26 @@ export function TaskSharingInfoSheet({
       // Remove the event blocker and clean up global flags after delay
       setTimeout(() => {
         document.removeEventListener('click', stopImmediatePropagation, { capture: true });
+      }, blockDuration);
+      
+      // For iOS PWA, prevent touchstart events which can trigger drawer opening
+      if (isIOSPwaApp) {
+        const blockTouchStart = (e: TouchEvent) => {
+          if (e.target instanceof Element) {
+            // Only block touchstart on the main interface, not on control elements
+            if (!e.target.closest('button') && !e.target.closest('[role="button"]')) {
+              e.preventDefault();
+              e.stopPropagation();
+            }
+          }
+        };
         
-        // Reset all flags
-        if ((window as any).__closingSharingSheet === uniqueIdRef.current) {
-          (window as any).__closingSharingSheet = null;
-          (window as any).__isClosingSharingSheet = false;
-        }
-      }, 1200);
+        document.addEventListener('touchstart', blockTouchStart, { capture: true });
+        
+        setTimeout(() => {
+          document.removeEventListener('touchstart', blockTouchStart, { capture: true });
+        }, 500);
+      }
     }
     
     onOpenChange(newOpen);
@@ -90,7 +130,7 @@ export function TaskSharingInfoSheet({
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetContent 
         side="bottom" 
-        className="max-h-96 rounded-t-xl z-[60]"
+        className={`max-h-96 rounded-t-xl z-[60] ${isIOSPwaApp ? 'ios-pwa-sharing-sheet' : ''}`}
         onPointerDownOutside={(e) => {
           // Additional direct prevention on pointer events outside the sheet
           e.preventDefault();
