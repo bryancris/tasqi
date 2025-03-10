@@ -45,20 +45,20 @@ export function TaskSharingInfoSheet({
     if (previousOpenState.current === true && open === false) {
       console.log("📱 Sharing sheet is closing - adding protection");
       
-      // Mark this sheet as closing with enhanced protection
+      // Mark this sheet as closing with protection
       markSharingSheetClosing(uniqueIdRef.current);
       
-      // Use our extreme protection for iOS PWA
+      // Use protection for iOS PWA - but less aggressive
       if (isIOSPwaApp) {
-        console.log("📱 iOS PWA: Adding extreme protection for sharing sheet close");
+        console.log("📱 iOS PWA: Adding protection for sharing sheet close");
         
-        // Add shield overlay with extended duration
-        addShieldOverlay(3500);
+        // Add shield overlay with shorter duration
+        addShieldOverlay(1500);
         
-        // Add platform-specific blocking - extra aggressive for iOS PWA
-        const blockDuration = 3000; // Much longer than before
+        // Add selective blocking for iOS PWA
+        const blockDuration = 1500; // Reduced from 3000ms
         
-        // Block all events when closing with our most aggressive blocker
+        // Block only essential events with more selective criteria
         addEventBlockers(blockDuration, () => {
           console.log("📱 iOS PWA: Event blockers removed after timeout");
           // After delay, clear the closing state
@@ -66,7 +66,7 @@ export function TaskSharingInfoSheet({
         });
       } else {
         // Standard protection for other platforms
-        const blockDuration = 1500;
+        const blockDuration = 800;
         addEventBlockers(blockDuration, () => {
           (window as any).__isClosingSharingSheet = false;
         });
@@ -77,7 +77,7 @@ export function TaskSharingInfoSheet({
     previousOpenState.current = open;
   }, [open, isIOSPwaApp]);
 
-  // Custom handler for the onOpenChange event
+  // Custom handler for the onOpenChange event - simplified
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
       // Before closing, add protection
@@ -86,54 +86,58 @@ export function TaskSharingInfoSheet({
       // Mark this interaction as a sharing sheet close
       markSharingSheetClosing(uniqueIdRef.current);
       
-      // Use extreme protection for iOS PWA
+      // Use less aggressive protection for iOS PWA
       if (isIOSPwaApp) {
-        console.log("📱 iOS PWA: Using extreme protection for sharing sheet close");
+        console.log("📱 iOS PWA: Using protection for sharing sheet close");
         
-        // Add transparent shield overlay with longer duration
-        addShieldOverlay(3500);
+        // Add transparent shield overlay with shorter duration
+        addShieldOverlay(1500);
         
-        // Block events with a very long duration
-        const blockDuration = 3000;
+        // Block events for a shorter duration and more selectively
+        const blockDuration = 1500; // Reduced from 3000ms
         
-        // Add aggressive event blocking on all interaction types
-        const stopAllEvents = (e: Event) => {
-          console.log(`📱 Blocking event: ${e.type}`);
-          e.stopImmediatePropagation();
-          e.stopPropagation();
-          if (e.cancelable) e.preventDefault();
-          return false;
+        // Add selective event blocking - only block task card interactions
+        const stopTaskCardEvents = (e: Event) => {
+          if (e.target instanceof Element) {
+            // Only block interactions with task cards, not with UI controls
+            const isTaskCard = e.target.closest('.task-card') || 
+                             e.target.closest('[data-task-card]');
+                             
+            if (isTaskCard) {
+              console.log(`📱 Blocking event: ${e.type} on task card`);
+              e.stopPropagation();
+              if (e.cancelable) e.preventDefault();
+              return false;
+            }
+          }
+          return true;
         };
         
-        document.addEventListener('click', stopAllEvents, { capture: true });
-        document.addEventListener('mousedown', stopAllEvents, { capture: true });
-        document.addEventListener('mouseup', stopAllEvents, { capture: true });
-        document.addEventListener('touchstart', stopAllEvents, { capture: true, passive: false });
-        document.addEventListener('touchend', stopAllEvents, { capture: true, passive: false });
-        document.addEventListener('touchmove', stopAllEvents, { capture: true, passive: false });
-        document.addEventListener('pointerdown', stopAllEvents, { capture: true });
-        document.addEventListener('pointerup', stopAllEvents, { capture: true });
+        // Only add event listeners for essential events
+        document.addEventListener('click', stopTaskCardEvents, { capture: true });
+        document.addEventListener('touchstart', stopTaskCardEvents, { capture: true, passive: false });
         
         // Remove the event blockers after delay
         setTimeout(() => {
-          document.removeEventListener('click', stopAllEvents, { capture: true });
-          document.removeEventListener('mousedown', stopAllEvents, { capture: true });
-          document.removeEventListener('mouseup', stopAllEvents, { capture: true });
-          document.removeEventListener('touchstart', stopAllEvents, { capture: true });
-          document.removeEventListener('touchend', stopAllEvents, { capture: true });
-          document.removeEventListener('touchmove', stopAllEvents, { capture: true });
-          document.removeEventListener('pointerdown', stopAllEvents, { capture: true });
-          document.removeEventListener('pointerup', stopAllEvents, { capture: true });
+          document.removeEventListener('click', stopTaskCardEvents, { capture: true });
+          document.removeEventListener('touchstart', stopTaskCardEvents, { capture: true });
           
-          console.log("📱 iOS PWA: Removed extreme protection event handlers");
+          console.log("📱 iOS PWA: Removed protection event handlers");
         }, blockDuration);
       } else {
         // Less aggressive blocking for non-iOS platforms
-        const blockDuration = 1500;
+        const blockDuration = 800;
         const stopImmediatePropagation = (e: MouseEvent) => {
-          e.stopImmediatePropagation();
-          e.stopPropagation();
-          e.preventDefault();
+          // Only block task card interactions
+          if (e.target instanceof Element) {
+            const isTaskCard = e.target.closest('.task-card') || 
+                             e.target.closest('[data-task-card]');
+                             
+            if (isTaskCard) {
+              e.stopPropagation();
+              e.preventDefault();
+            }
+          }
         };
         
         document.addEventListener('click', stopImmediatePropagation, { capture: true });
@@ -153,16 +157,16 @@ export function TaskSharingInfoSheet({
         side="bottom" 
         className={`max-h-96 rounded-t-xl z-[60] ${isIOSPwaApp ? 'ios-pwa-sharing-sheet' : ''}`}
         onPointerDownOutside={(e) => {
-          // Additional direct prevention on pointer events outside the sheet
+          // Simplified prevention on pointer events outside the sheet
           e.preventDefault();
           
           if (isIOSPwaApp) {
             console.log("📱 iOS PWA: Pointer outside sharing sheet - adding protection");
-            // Add the shield overlay for iOS
-            addShieldOverlay(3500);
+            // Add shorter shield overlay for iOS
+            addShieldOverlay(1500);
           }
         }}
-        // Add a data attribute to help with targeting specific elements in event handlers
+        // Add a data attribute to help with targeting
         data-sharing-sheet-id={uniqueIdRef.current}
       >
         <SheetHeader className="text-left">

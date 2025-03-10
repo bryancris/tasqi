@@ -69,10 +69,10 @@ export const SheetContent = React.forwardRef<
       console.log(`📱 Registered sharing sheet ${sheetId}`);
       
       return () => {
-        // Aggressive protection on unmount for iOS PWA
+        // Less aggressive protection on unmount for iOS PWA
         if (isIOSPwaApp) {
-          console.log(`📱 iOS PWA: Adding extreme protection on sharing sheet unmount`);
-          addShieldOverlay(3500); // Use the new shield function with longer duration
+          console.log(`📱 iOS PWA: Adding protection on sharing sheet unmount`);
+          addShieldOverlay(1500); // Shorter duration
         }
       };
     }
@@ -82,8 +82,8 @@ export const SheetContent = React.forwardRef<
   const enhancedCloseHandler = React.useCallback((e: React.MouseEvent) => {
     if (isSharingSheet && isIOSPwaApp) {
       console.log(`📱 iOS PWA: Enhanced sharing sheet close handler activated`);
-      // Add extreme protection before normal handler
-      addShieldOverlay(3500);
+      // Add protection before normal handler, but with shorter duration
+      addShieldOverlay(1500);
     }
     
     // Call the original handler
@@ -94,7 +94,7 @@ export const SheetContent = React.forwardRef<
   
   // Adjust the z-index and animation duration for iOS PWA sharing sheets
   const iosPwaZIndex = isIOSPwaApp && isSharingSheet ? 999 : undefined;
-  const iosPwaExitDuration = isIOSPwaApp && isSharingSheet ? '1500ms' : undefined;
+  const iosPwaExitDuration = isIOSPwaApp && isSharingSheet ? '1200ms' : undefined;
   
   return (
     <SheetPortal>
@@ -113,7 +113,7 @@ export const SheetContent = React.forwardRef<
         onPointerDownOutside={handlePointerDownOutside}
         onAnimationStart={handleAnimationStart}
         onAnimationEnd={handleAnimationEnd}
-        // Add a longer exit animation for sharing sheets and even longer for iOS PWA
+        // Add a slightly longer exit animation for sharing sheets
         style={{
           ...(isSharingSheet ? { 
             '--sheet-exit-duration': iosPwaExitDuration || '600ms' 

@@ -53,20 +53,20 @@ export function markSharingSheetClosing(id: string) {
   // Log for debugging
   console.log(`🛡️ Marked sharing sheet ${id} as closing with protection`);
   
-  // Auto-clear after longer delay for iOS PWA - much longer than before
+  // Auto-clear after shorter delay for iOS PWA - reduced from previous values
   if (isIOSPWA()) {
     setTimeout(() => {
       if ((window as any).__closingSharingSheet === id) {
         console.log(`🛡️ Clearing sharing sheet ${id} close state (iOS PWA)`);
         (window as any).__closingSharingSheet = null;
         (window as any).__isClosingSharingSheet = false;
-        // Keep protection active for longer
+        // Keep protection active for shorter time
         setTimeout(() => {
           console.log(`🛡️ Clearing sharing protection active state (iOS PWA)`);
           (window as any).__sharingProtectionActive = false;
-        }, 1000); // Extra 1s of protection
+        }, 500); // Reduced from 1000ms to 500ms
       }
-    }, 3000); // Extended from 2000 to 3000ms
+    }, 1500); // Reduced from 3000ms to 1500ms
   } else {
     // Standard timeout for other platforms
     setTimeout(() => {
@@ -76,12 +76,12 @@ export function markSharingSheetClosing(id: string) {
         (window as any).__isClosingSharingSheet = false;
         (window as any).__sharingProtectionActive = false;
       }
-    }, 1500);
+    }, 800); // Reduced from 1500ms
   }
 }
 
-// New function for extreme protection - forcibly prevents any drawer opening
-export function addShieldOverlay(duration: number = 3000) {
+// New function for shield overlay - modifications to be less aggressive
+export function addShieldOverlay(duration: number = 1500) {
   // Create a shield element that blocks all interactions
   const shield = document.createElement('div');
   shield.id = 'ios-pwa-shield-' + Date.now();
@@ -100,24 +100,34 @@ export function addShieldOverlay(duration: number = 3000) {
   
   console.log(`🛡️ Added shield overlay with duration ${duration}ms`);
   
-  // Add event listeners to the shield to block everything
-  function blockEvent(e: Event) {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log(`🛡️ Shield blocked event: ${e.type}`);
-    return false;
-  }
+  // Event listeners only for essential events
+  const blockEvent = (e: Event) => {
+    // Only block clicks/touches on task cards, not on UI controls
+    if (e.target instanceof Element) {
+      // Check if this is a task card or sharing element
+      const isTaskCard = e.target.closest('.task-card') || 
+                    e.target.closest('[data-task-card]');
+      
+      // If it's a task card, block the event
+      if (isTaskCard) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log(`🛡️ Shield blocked event: ${e.type} on task card`);
+        return false;
+      }
+      
+      // Otherwise, let the event through
+      return true;
+    }
+    return true;
+  };
   
+  // Only block these essential events
   shield.addEventListener('touchstart', blockEvent, { capture: true, passive: false });
-  shield.addEventListener('touchmove', blockEvent, { capture: true, passive: false });
   shield.addEventListener('touchend', blockEvent, { capture: true, passive: false });
   shield.addEventListener('click', blockEvent, { capture: true });
-  shield.addEventListener('mousedown', blockEvent, { capture: true });
-  shield.addEventListener('mouseup', blockEvent, { capture: true });
-  shield.addEventListener('pointerdown', blockEvent, { capture: true });
-  shield.addEventListener('pointerup', blockEvent, { capture: true });
   
-  // Remove after specified duration
+  // Remove after shorter duration
   setTimeout(() => {
     if (document.body.contains(shield)) {
       document.body.removeChild(shield);
