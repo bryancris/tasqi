@@ -7,7 +7,7 @@ import { SharingDetailsHeader } from "./sharing-info/SharingDetailsHeader";
 import { SharingDetailsContent } from "./sharing-info/SharingDetailsContent";
 import { SharingDetailsList } from "./sharing-info/SharingDetailsList";
 import { addEventBlockers } from "@/components/ui/sheet/sheet-utils";
-import { isIOSPWA, markSharingSheetClosing } from "@/utils/platform-detection";
+import { isIOSPWA, markSharingSheetClosing, addShieldOverlay } from "@/utils/platform-detection";
 
 /**
  * TaskSharingInfoSheet
@@ -37,46 +37,44 @@ export function TaskSharingInfoSheet({
 }: TaskSharingInfoSheetProps) {
   const uniqueIdRef = useRef<string>(`sharing-sheet-${Date.now()}`);
   const isIOSPwaApp = isIOSPWA();
+  const previousOpenState = useRef(open);
   
-  // Create a global flag to track when the sheet is closing
+  // Track when the sheet is transitioning from open to closed
   useEffect(() => {
-    if (!open) {
-      // If the sheet is closing, set global flags and block events
+    // Only run this when the sheet is closing (open changes from true to false)
+    if (previousOpenState.current === true && open === false) {
+      console.log("📱 Sharing sheet is closing - adding protection");
+      
+      // Mark this sheet as closing with enhanced protection
       markSharingSheetClosing(uniqueIdRef.current);
       
-      // Add platform-specific blocking duration - longer for iOS PWA
-      const blockDuration = isIOSPwaApp ? 2000 : 1000;
-      
-      // Block all events when closing
-      addEventBlockers(blockDuration, () => {
-        // After delay, clear the closing state
-        (window as any).__isClosingSharingSheet = false;
-      });
-      
-      // For iOS PWA, we need extra protection against the edit drawer opening
+      // Use our extreme protection for iOS PWA
       if (isIOSPwaApp) {
-        console.log("iOS PWA: Adding extra protection for sharing sheet close");
+        console.log("📱 iOS PWA: Adding extreme protection for sharing sheet close");
         
-        // Lock the screen briefly with a transparent overlay
-        const overlay = document.createElement('div');
-        overlay.style.position = 'fixed';
-        overlay.style.top = '0';
-        overlay.style.left = '0';
-        overlay.style.right = '0';
-        overlay.style.bottom = '0';
-        overlay.style.zIndex = '999';
-        overlay.style.backgroundColor = 'transparent';
-        overlay.setAttribute('data-sharing-shield', 'true');
-        document.body.appendChild(overlay);
+        // Add shield overlay with extended duration
+        addShieldOverlay(3500);
         
-        // Remove the overlay after a delay
-        setTimeout(() => {
-          if (document.body.contains(overlay)) {
-            document.body.removeChild(overlay);
-          }
-        }, 300);
+        // Add platform-specific blocking - extra aggressive for iOS PWA
+        const blockDuration = 3000; // Much longer than before
+        
+        // Block all events when closing with our most aggressive blocker
+        addEventBlockers(blockDuration, () => {
+          console.log("📱 iOS PWA: Event blockers removed after timeout");
+          // After delay, clear the closing state
+          (window as any).__isClosingSharingSheet = false;
+        });
+      } else {
+        // Standard protection for other platforms
+        const blockDuration = 1500;
+        addEventBlockers(blockDuration, () => {
+          (window as any).__isClosingSharingSheet = false;
+        });
       }
     }
+    
+    // Update our ref for the next render
+    previousOpenState.current = open;
   }, [open, isIOSPwaApp]);
 
   // Custom handler for the onOpenChange event
@@ -88,38 +86,61 @@ export function TaskSharingInfoSheet({
       // Mark this interaction as a sharing sheet close
       markSharingSheetClosing(uniqueIdRef.current);
       
-      // Block click events - longer duration for iOS PWA
-      const blockDuration = isIOSPwaApp ? 2000 : 1200;
-      const stopImmediatePropagation = (e: MouseEvent) => {
-        e.stopImmediatePropagation();
-        e.stopPropagation();
-        e.preventDefault();
-      };
-      
-      document.addEventListener('click', stopImmediatePropagation, { capture: true });
-      
-      // Remove the event blocker and clean up global flags after delay
-      setTimeout(() => {
-        document.removeEventListener('click', stopImmediatePropagation, { capture: true });
-      }, blockDuration);
-      
-      // For iOS PWA, prevent touchstart events which can trigger drawer opening
+      // Use extreme protection for iOS PWA
       if (isIOSPwaApp) {
-        const blockTouchStart = (e: TouchEvent) => {
-          if (e.target instanceof Element) {
-            // Only block touchstart on the main interface, not on control elements
-            if (!e.target.closest('button') && !e.target.closest('[role="button"]')) {
-              e.preventDefault();
-              e.stopPropagation();
-            }
-          }
+        console.log("📱 iOS PWA: Using extreme protection for sharing sheet close");
+        
+        // Add transparent shield overlay with longer duration
+        addShieldOverlay(3500);
+        
+        // Block events with a very long duration
+        const blockDuration = 3000;
+        
+        // Add aggressive event blocking on all interaction types
+        const stopAllEvents = (e: Event) => {
+          console.log(`📱 Blocking event: ${e.type}`);
+          e.stopImmediatePropagation();
+          e.stopPropagation();
+          if (e.cancelable) e.preventDefault();
+          return false;
         };
         
-        document.addEventListener('touchstart', blockTouchStart, { capture: true });
+        document.addEventListener('click', stopAllEvents, { capture: true });
+        document.addEventListener('mousedown', stopAllEvents, { capture: true });
+        document.addEventListener('mouseup', stopAllEvents, { capture: true });
+        document.addEventListener('touchstart', stopAllEvents, { capture: true, passive: false });
+        document.addEventListener('touchend', stopAllEvents, { capture: true, passive: false });
+        document.addEventListener('touchmove', stopAllEvents, { capture: true, passive: false });
+        document.addEventListener('pointerdown', stopAllEvents, { capture: true });
+        document.addEventListener('pointerup', stopAllEvents, { capture: true });
+        
+        // Remove the event blockers after delay
+        setTimeout(() => {
+          document.removeEventListener('click', stopAllEvents, { capture: true });
+          document.removeEventListener('mousedown', stopAllEvents, { capture: true });
+          document.removeEventListener('mouseup', stopAllEvents, { capture: true });
+          document.removeEventListener('touchstart', stopAllEvents, { capture: true });
+          document.removeEventListener('touchend', stopAllEvents, { capture: true });
+          document.removeEventListener('touchmove', stopAllEvents, { capture: true });
+          document.removeEventListener('pointerdown', stopAllEvents, { capture: true });
+          document.removeEventListener('pointerup', stopAllEvents, { capture: true });
+          
+          console.log("📱 iOS PWA: Removed extreme protection event handlers");
+        }, blockDuration);
+      } else {
+        // Less aggressive blocking for non-iOS platforms
+        const blockDuration = 1500;
+        const stopImmediatePropagation = (e: MouseEvent) => {
+          e.stopImmediatePropagation();
+          e.stopPropagation();
+          e.preventDefault();
+        };
+        
+        document.addEventListener('click', stopImmediatePropagation, { capture: true });
         
         setTimeout(() => {
-          document.removeEventListener('touchstart', blockTouchStart, { capture: true });
-        }, 500);
+          document.removeEventListener('click', stopImmediatePropagation, { capture: true });
+        }, blockDuration);
       }
     }
     
@@ -134,6 +155,12 @@ export function TaskSharingInfoSheet({
         onPointerDownOutside={(e) => {
           // Additional direct prevention on pointer events outside the sheet
           e.preventDefault();
+          
+          if (isIOSPwaApp) {
+            console.log("📱 iOS PWA: Pointer outside sharing sheet - adding protection");
+            // Add the shield overlay for iOS
+            addShieldOverlay(3500);
+          }
         }}
         // Add a data attribute to help with targeting specific elements in event handlers
         data-sharing-sheet-id={uniqueIdRef.current}

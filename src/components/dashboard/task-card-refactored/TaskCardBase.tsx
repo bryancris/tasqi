@@ -67,23 +67,43 @@ export function TaskCardBase({ task, index, isDraggable = false, view = 'daily',
     const { 
       isClosingSharingSheet, 
       sharingSheetCloseTime, 
-      sharingIndicatorClickTime 
+      sharingIndicatorClickTime,
+      sharingProtectionActive,
+      sharingProtectionStartTime
     } = getSharingState();
     
     // Check various conditions where we should NOT open the edit drawer
-    const recentSharingClick = now - sharingIndicatorClickTime < 1500;
+    const recentSharingClick = now - sharingIndicatorClickTime < 3000; // Extended time
     
-    // On iOS PWA, we use a longer delay to prevent opening edit drawer after sheet close
-    const sharingCloseDelay = isIOSPwaApp ? 2000 : 1500;
+    // On iOS PWA, we use a much longer delay to prevent opening edit drawer after sheet close
+    const sharingCloseDelay = isIOSPwaApp ? 3500 : 1500; // Much longer for iOS
     const recentSheetClose = now - sharingSheetCloseTime < sharingCloseDelay;
     
+    // Check if sharing protection is active
+    const protectionActive = sharingProtectionActive;
+    const recentProtection = now - sharingProtectionStartTime < 3500; // Also check time
+    
+    // Enhanced check for shield element
+    const sharingShield = document.querySelector('[data-sharing-shield="true"]');
+    
     // Don't open if any sharing-related activity is happening
-    if (sharingClickInProgress.current || recentSharingClick || recentSheetClose || isClosingSharingSheet) {
-      console.log("Blocking card click due to sharing interaction:", {
+    if (
+      sharingClickInProgress.current || 
+      recentSharingClick || 
+      recentSheetClose || 
+      isClosingSharingSheet ||
+      protectionActive ||
+      recentProtection ||
+      sharingShield
+    ) {
+      console.log("Blocking card click due to sharing protection:", {
         sharingClickInProgress: sharingClickInProgress.current,
         recentSharingClick,
         recentSheetClose,
-        isClosingSharingSheet
+        isClosingSharingSheet,
+        protectionActive,
+        recentProtection,
+        sharingShield: !!sharingShield
       });
       e.stopPropagation();
       e.preventDefault();
@@ -113,13 +133,23 @@ export function TaskCardBase({ task, index, isDraggable = false, view = 'daily',
       return;
     }
     
-    // Also check for sharing shield
-    const sharingShield = document.querySelector('[data-sharing-shield="true"]');
-    if (sharingShield) {
-      console.log("Blocking card click due to active sharing shield");
+    // Extreme check for iOS PWA - check if any sheet closed recently
+    if (isIOSPwaApp && (now - sharingSheetCloseTime < 4000)) { // Very long timeout
+      console.log("📱 iOS PWA: Blocking card click due to recent sheet close");
       e.stopPropagation();
       e.preventDefault();
       return;
+    }
+    
+    // Additional check for iOS PWA - check if any animated element is currently animating
+    if (isIOSPwaApp) {
+      const animatingElements = document.querySelectorAll('[data-state="closed"]');
+      if (animatingElements.length > 0) {
+        console.log("📱 iOS PWA: Blocking card click due to animating elements");
+        e.stopPropagation();
+        e.preventDefault();
+        return;
+      }
     }
     
     // Only if we pass all checks, open the edit drawer
@@ -138,7 +168,7 @@ export function TaskCardBase({ task, index, isDraggable = false, view = 'daily',
     // Reset the flag after a longer delay
     setTimeout(() => {
       sharingClickInProgress.current = false;
-    }, 1000);
+    }, 3000); // Extended from 1000ms
   };
 
   // Add event listener to capture sharing indicator clicks at the document level
@@ -161,10 +191,24 @@ export function TaskCardBase({ task, index, isDraggable = false, view = 'daily',
         // Set a global flag with timestamp
         (window as any).sharingIndicatorClickTime = Date.now();
         
-        // Reset after a longer delay
+        // For iOS PWA, set additional protection
+        if (isIOSPwaApp) {
+          (window as any).__sharingProtectionActive = true;
+          (window as any).__sharingProtectionStartTime = Date.now();
+        }
+        
+        // Reset after a longer delay for iOS PWA
+        const timeoutDuration = isIOSPwaApp ? 3000 : 1000;
         setTimeout(() => {
           sharingClickInProgress.current = false;
-        }, 1000);
+          
+          // For iOS PWA, also clear the protection after a delay
+          if (isIOSPwaApp) {
+            setTimeout(() => {
+              (window as any).__sharingProtectionActive = false;
+            }, 1000); // Extra 1s
+          }
+        }, timeoutDuration);
       }
     };
 
@@ -172,32 +216,78 @@ export function TaskCardBase({ task, index, isDraggable = false, view = 'daily',
     document.addEventListener('mousedown', sharingClickHandler, { capture: true });
     document.addEventListener('click', sharingClickHandler, { capture: true });
     
+    // For iOS PWA, also capture touchstart events
+    if (isIOSPwaApp) {
+      const touchStartHandler = (e: TouchEvent) => {
+        if (!(e.target instanceof Element)) return;
+        
+        const target = e.target as Element;
+        const isSharingIndicator = 
+          target.closest('[data-sharing-indicator="true"]') ||
+          target.closest('.sharing-indicator') ||
+          target.getAttribute?.('data-sharing-indicator') === 'true' ||
+          target.classList?.contains('sharing-indicator');
+        
+        if (isSharingIndicator) {
+          // Mark sharing touches to prevent drawer from opening
+          sharingClickInProgress.current = true;
+          
+          // Set a global flag with timestamp
+          (window as any).sharingIndicatorClickTime = Date.now();
+          (window as any).__sharingProtectionActive = true;
+          (window as any).__sharingProtectionStartTime = Date.now();
+          
+          // Prevent default
+          e.preventDefault();
+        }
+      };
+      
+      document.addEventListener('touchstart', touchStartHandler, { 
+        capture: true,
+        passive: false
+      });
+      
+      return () => {
+        document.removeEventListener('mousedown', sharingClickHandler, { capture: true });
+        document.removeEventListener('click', sharingClickHandler, { capture: true });
+        document.removeEventListener('touchstart', touchStartHandler, { capture: true });
+      };
+    }
+    
     return () => {
       document.removeEventListener('mousedown', sharingClickHandler, { capture: true });
       document.removeEventListener('click', sharingClickHandler, { capture: true });
     };
-  }, []);
+  }, [isIOSPwaApp]);
 
   // When sheet closes, prevent task drawer from opening
   useEffect(() => {
     const handleGlobalClick = (e: MouseEvent) => {
       // Check if we're in a sharing sheet closing state
-      const { isClosingSharingSheet, sharingSheetCloseTime } = getSharingState();
+      const { 
+        isClosingSharingSheet, 
+        sharingSheetCloseTime,
+        sharingProtectionActive 
+      } = getSharingState();
       
       // Use longer timeout for iOS PWA
-      const timeoutDuration = isIOSPwaApp ? 2000 : 1500;
+      const timeoutDuration = isIOSPwaApp ? 4000 : 1500; // Much longer for iOS
       const timeSinceClose = Date.now() - sharingSheetCloseTime;
       
       // If sheet is closing or closed recently, block card clicks
-      if (isClosingSharingSheet || timeSinceClose < timeoutDuration) {
+      if (isClosingSharingSheet || timeSinceClose < timeoutDuration || sharingProtectionActive) {
         if (e.target instanceof Element) {
-          // Don't block clicks on UI controls
-          const isControlElement = e.target.closest('button') || 
-                                 e.target.closest('[role="button"]') ||
+          // Don't block clicks on UI controls that are safe
+          const isControlElement = e.target.closest('button:not([data-task-card])') || 
+                                 e.target.closest('[role="button"]:not([data-task-card])') ||
                                  e.target.closest('input') ||
                                  e.target.closest('a');
                                  
-          if (!isControlElement) {
+          // But still block any task card clicks
+          const isTaskCard = e.target.closest('.task-card') || 
+                           e.target.closest('[data-task-card]');
+          
+          if (!isControlElement || isTaskCard) {
             console.log("Blocking click due to recent sharing sheet close");
             e.stopPropagation();
             e.preventDefault();
@@ -212,17 +302,25 @@ export function TaskCardBase({ task, index, isDraggable = false, view = 'daily',
     // iOS-specific touchstart handler with higher priority
     if (isIOSPwaApp) {
       const handleTouchStart = (e: TouchEvent) => {
-        const { isClosingSharingSheet, sharingSheetCloseTime } = getSharingState();
+        const { 
+          isClosingSharingSheet, 
+          sharingSheetCloseTime,
+          sharingProtectionActive 
+        } = getSharingState();
         const timeSinceClose = Date.now() - sharingSheetCloseTime;
         
-        // More aggressive blocking for iOS PWA
-        if (isClosingSharingSheet || timeSinceClose < 2000) {
+        // More aggressive blocking for iOS PWA - longer timeouts
+        if (isClosingSharingSheet || timeSinceClose < 4000 || sharingProtectionActive) {
           if (e.target instanceof Element) {
             // Only allow touchstart on true UI controls
-            const isControlElement = e.target.closest('button') || 
-                                   e.target.closest('[role="button"]');
+            const isControlElement = e.target.closest('button:not([data-task-card])') || 
+                                   e.target.closest('[role="button"]:not([data-task-card])');
                                    
-            if (!isControlElement) {
+            // But always block task card touches
+            const isTaskCard = e.target.closest('.task-card') || 
+                             e.target.closest('[data-task-card]');
+                             
+            if (!isControlElement || isTaskCard) {
               console.log("Blocking touchstart due to recent sharing sheet close");
               e.preventDefault();
               e.stopPropagation();
@@ -285,26 +383,40 @@ export function TaskCardBase({ task, index, isDraggable = false, view = 'daily',
         className={cn(
           "transition-all duration-200 transform relative",
           "hover:translate-y-[-2px]",
-          isDragging && "opacity-50 scale-105"
+          isDragging && "opacity-50 scale-105",
+          "task-card" // Add a class for easy selection
         )}
         onClick={handleCardClick}
         role="button"
         tabIndex={0}
+        data-task-card="true" // Add data attribute for targeting
       >
         {/* Apply a capturing click handler to the container for enhanced protection */}
         <div 
           className="absolute inset-0 z-10 pointer-events-none"
+          data-task-card-protection="true"
           onClickCapture={(e) => {
             // Protect against post-sheet-close clicks
-            const { sharingSheetCloseTime, isClosingSharingSheet } = getSharingState();
+            const { 
+              sharingSheetCloseTime, 
+              isClosingSharingSheet,
+              sharingProtectionActive 
+            } = getSharingState();
             const timeSinceClose = Date.now() - sharingSheetCloseTime;
             
             // Use platform-specific timeout
-            const timeoutDuration = isIOSPwaApp ? 2000 : 1500;
+            const timeoutDuration = isIOSPwaApp ? 4000 : 1500;
             
-            if (sharingClickInProgress.current || isClosingSharingSheet || (timeSinceClose < timeoutDuration)) {
+            // Check for any protection condition
+            if (
+              sharingClickInProgress.current || 
+              isClosingSharingSheet || 
+              (timeSinceClose < timeoutDuration) ||
+              sharingProtectionActive
+            ) {
               console.log("Blocking click via onClickCapture");
               e.stopPropagation();
+              e.preventDefault();
             }
           }}
         />

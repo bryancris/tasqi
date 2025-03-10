@@ -5,7 +5,7 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 import { SheetCloseButton, SheetOverlay, SheetPortal } from "./sheet-primitives"
 import { useSheetInteractions } from "./use-sheet-interactions"
-import { isIOSPWA } from "@/utils/platform-detection"
+import { isIOSPWA, addShieldOverlay } from "@/utils/platform-detection"
 
 // Define sheet animation variants
 const sheetVariants = cva(
@@ -61,9 +61,40 @@ export const SheetContent = React.forwardRef<
   // Determine if this is running on iOS PWA
   const isIOSPwaApp = isIOSPWA();
   
+  // Save a reference to whether this is a sharing sheet for use in interaction handlers
+  React.useEffect(() => {
+    if (isSharingSheet) {
+      // Set a reference on window for extreme cases
+      (window as any).__lastActiveSharingSheetId = sheetId;
+      console.log(`📱 Registered sharing sheet ${sheetId}`);
+      
+      return () => {
+        // Aggressive protection on unmount for iOS PWA
+        if (isIOSPwaApp) {
+          console.log(`📱 iOS PWA: Adding extreme protection on sharing sheet unmount`);
+          addShieldOverlay(3500); // Use the new shield function with longer duration
+        }
+      };
+    }
+  }, [isSharingSheet, sheetId, isIOSPwaApp]);
+  
+  // Enhanced close handler specifically for sharing sheets
+  const enhancedCloseHandler = React.useCallback((e: React.MouseEvent) => {
+    if (isSharingSheet && isIOSPwaApp) {
+      console.log(`📱 iOS PWA: Enhanced sharing sheet close handler activated`);
+      // Add extreme protection before normal handler
+      addShieldOverlay(3500);
+    }
+    
+    // Call the original handler
+    if (handleCloseClick) {
+      handleCloseClick(e);
+    }
+  }, [handleCloseClick, isSharingSheet, isIOSPwaApp]);
+  
   // Adjust the z-index and animation duration for iOS PWA sharing sheets
   const iosPwaZIndex = isIOSPwaApp && isSharingSheet ? 999 : undefined;
-  const iosPwaExitDuration = isIOSPwaApp && isSharingSheet ? '800ms' : undefined;
+  const iosPwaExitDuration = isIOSPwaApp && isSharingSheet ? '1500ms' : undefined;
   
   return (
     <SheetPortal>
@@ -76,6 +107,7 @@ export const SheetContent = React.forwardRef<
           'z-[999]': iosPwaZIndex
         })}
         data-sheet-id={sheetId}
+        data-ios-pwa-sharing={isIOSPwaApp && isSharingSheet ? "true" : undefined}
         // These event handlers handle special cases for sheet interaction
         onCloseAutoFocus={handleCloseAutoFocus}
         onPointerDownOutside={handlePointerDownOutside}
@@ -90,7 +122,7 @@ export const SheetContent = React.forwardRef<
         {...props}
       >
         {children}
-        <SheetCloseButton onClick={handleCloseClick} />
+        <SheetCloseButton onClick={enhancedCloseHandler} />
       </SheetPrimitive.Content>
     </SheetPortal>
   );
