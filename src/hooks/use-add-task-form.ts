@@ -18,7 +18,7 @@ export function useAddTaskForm({ initialDate }: UseAddTaskFormProps = {}) {
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [priority, setPriority] = useState<TaskPriority>("medium");
-  const [reminderEnabled, setReminderEnabled] = useState(false);
+  const [reminderEnabled, setReminderEnabled] = useState(false); // Changed default to false
   const [reminderTime, setReminderTime] = useState(15);
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -33,7 +33,7 @@ export function useAddTaskForm({ initialDate }: UseAddTaskFormProps = {}) {
     setStartTime("");
     setEndTime("");
     setPriority("medium");
-    setReminderEnabled(false);
+    setReminderEnabled(false); // Also reset to false
     setReminderTime(15);
     setSubtasks([]);
   };
@@ -72,3 +72,4 @@ export function useAddTaskForm({ initialDate }: UseAddTaskFormProps = {}) {
     }
   };
 }
+
