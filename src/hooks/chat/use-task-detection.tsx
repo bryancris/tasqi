@@ -8,25 +8,40 @@ import { useQueryClient } from "@tanstack/react-query";
 export function useTaskDetection() {
   const queryClient = useQueryClient();
 
-  // Check if a message contains EXPLICIT task-related commands
-  // This is updated to be much more strict and only detect explicit task requests
+  // Check if a message contains task-related commands or implicit tasks
+  // Updated to detect more natural language that implies tasks
   const isTaskRelated = useCallback((content: string): boolean => {
-    // Only detect explicit task creation commands
+    // Detect explicit task commands
     const taskCreationCommands = [
       'create task', 'add task', 'make task', 'schedule task',
       'create a task', 'add a task', 'make a task', 'schedule a task',
       'create new task', 'add new task', 'create reminder',
-      'add to my tasks', 'add to tasks', 'put on my task list',
-      'create to-do', 'add to-do', 'add to do'
+      'add to my tasks', 'add to tasks', 'put on my task list'
+    ];
+    
+    // Detect implied tasks with action-related phrases
+    const impliedTaskIndicators = [
+      'i need to', 'i have to', 'i should', 'i must', 'don\'t forget to',
+      'remember to', 'got to', 'gotta', 'i want to', 'we need to',
+      'we have to', 'we should', 'need to finish', 'have to complete',
+      'deadline', 'due', 'appointment', 'meeting', 'schedule'
     ];
     
     const lowerContent = content.toLowerCase();
+    
+    // Check for explicit commands first
     const containsExplicitCommand = taskCreationCommands.some(cmd => 
       lowerContent.includes(cmd)
     );
     
-    console.log('Message task related?', containsExplicitCommand, content);
-    return containsExplicitCommand;
+    // Then check for implied tasks
+    const containsImpliedTask = impliedTaskIndicators.some(indicator => 
+      lowerContent.includes(indicator)
+    );
+    
+    const isTask = containsExplicitCommand || containsImpliedTask;
+    console.log('Message task related?', isTask, content);
+    return isTask;
   }, []);
 
   // Process a message as a task

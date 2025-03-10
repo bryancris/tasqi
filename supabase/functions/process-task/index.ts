@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -102,12 +101,8 @@ serve(async (req) => {
               Convert relative dates (today, tomorrow, next week, etc) to actual dates.
               If no priority is specified, default to "low".
               
-              IMPORTANT: Only extract tasks if the user is EXPLICITLY requesting to create one.
-              If the user is just mentioning something they need to do without explicitly asking to create a task, respond with:
-              {
-                "task": null,
-                "response": "Would you like me to create a task for this? Please confirm if you'd like me to add this to your tasks."
-              }
+              IMPORTANT: Be proactive about identifying tasks. Any activity, responsibility, or deadline that the user mentions should be considered a potential task.
+              Don't require the user to explicitly say "create a task" - identify implied tasks from their messages.
               
               Example response format:
               {

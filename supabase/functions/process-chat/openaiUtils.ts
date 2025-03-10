@@ -118,7 +118,7 @@ export async function generateAIResponse(
       });
     }
 
-    // Enhanced system prompt with memory - UPDATED to be less aggressive about task creation
+    // Updated system prompt that's more proactive about task creation
     const systemPrompt = `You are a helpful AI assistant in a task management app. Help the user manage their tasks, timers, and provide assistance.
                   Today's date is ${new Date().toISOString().split('T')[0]}.
                   Be concise in your responses. If the user asks to set a timer, asks about a timer, or wants to cancel a timer, inform them that you'll handle that request.
@@ -127,11 +127,11 @@ export async function generateAIResponse(
                   ${memorySection}
                   
                   IMPORTANT TASK CREATION GUIDELINES:
-                  - Only create tasks when the user EXPLICITLY asks for one using phrases like "create a task", "add task", etc.
-                  - DO NOT create tasks for general statements or questions.
-                  - For example, if user says "I need to go to Walmart" do NOT create a task unless they explicitly ask you to.
-                  - If in doubt, ASK the user if they want to create a task instead of automatically creating one.
-                  - NEVER assume the user wants a task created unless they clearly state it.`;
+                  - Be helpful and proactive about creating tasks when the user mentions activities, deadlines, or responsibilities.
+                  - Create tasks for statements like "I need to go to Walmart" or "I have to finish the report by Friday" without asking for confirmation.
+                  - When creating a task, simply confirm you've done so: "I've created a task for you to go to Walmart" or similar.
+                  - Don't create tasks for casual statements or opinions unrelated to activities.
+                  - The user prefers tasks to be created without confirmation prompts to keep the workflow efficient.`;
 
     // Build messages array for OpenAI
     const messages = [

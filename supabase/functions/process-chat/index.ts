@@ -102,21 +102,23 @@ serve(async (req) => {
       // Continue with normal processing if timer intent fails
     }
 
-    // Check for EXPLICIT task commands - much less aggressive now
+    // Check for task-related content - now also looking for implied tasks
     try {
-      // Only look for explicit task commands
-      const taskCommands = [
+      // Look for both explicit task commands and implied tasks
+      const taskKeywords = [
+        // Explicit commands
         'create task', 'add task', 'make task', 'schedule task',
         'create a task', 'add a task', 'make a task', 'schedule a task',
-        'create new task', 'add new task', 'create reminder',
-        'add to my tasks', 'add to tasks', 'put on my task list'
+        // Implied tasks
+        'i need to', 'i have to', 'i should', 'i must', 'need to finish',
+        'due', 'deadline', 'appointment', 'meeting', 'don\'t forget'
       ];
       
       const lowerMessage = message.toLowerCase();
-      const isExplicitTaskCommand = taskCommands.some(cmd => lowerMessage.includes(cmd));
+      const hasTaskIndication = taskKeywords.some(kw => lowerMessage.includes(kw));
       
-      if (isExplicitTaskCommand) {
-        console.log("Detected explicit task command in message:", message);
+      if (hasTaskIndication) {
+        console.log("Detected potential task in message:", message);
         
         // Try to create a task
         const { data: taskData, error: taskError } = await supabase.functions.invoke('process-task', {
@@ -161,14 +163,13 @@ serve(async (req) => {
     // Store the AI response
     await storeAIMessage(supabase, aiResponse, userId);
 
-    // Extract task details if present (but don't be as aggressive about it)
+    // Extract task details if present in response
     const taskDetails = extractTaskDetails(aiResponse);
-    const responseIndicatesTask = aiResponse.toLowerCase().includes("created a task") &&
-                                  (aiResponse.toLowerCase().includes("as you requested") ||
-                                   message.toLowerCase().includes("create a task") ||
-                                   message.toLowerCase().includes("add task"));
+    const responseIndicatesTask = aiResponse.toLowerCase().includes("created a task") ||
+                                  aiResponse.toLowerCase().includes("added a task") ||
+                                  aiResponse.toLowerCase().includes("scheduled a task");
 
-    // If the response explicitly indicates a task but we don't have task details, try to create one only for explicit requests
+    // If the response indicates a task but we don't have task details, try to create one
     if (responseIndicatesTask && !taskDetails) {
       try {
         console.log("Response indicates task creation but no task details, creating task from message:", message);
