@@ -118,7 +118,7 @@ export async function generateAIResponse(
       });
     }
 
-    // Enhanced system prompt with memory
+    // Enhanced system prompt with memory - UPDATED to be less aggressive about task creation
     const systemPrompt = `You are a helpful AI assistant in a task management app. Help the user manage their tasks, timers, and provide assistance.
                   Today's date is ${new Date().toISOString().split('T')[0]}.
                   Be concise in your responses. If the user asks to set a timer, asks about a timer, or wants to cancel a timer, inform them that you'll handle that request.
@@ -126,10 +126,12 @@ export async function generateAIResponse(
                   MEMORY INFORMATION:
                   ${memorySection}
                   
-                  IMPORTANT: Be proactive about creating tasks. If a user message mentions any activity that could be a task, like "I need to go to Walmart" or "Remember to call mom", 
-                  ALWAYS respond by CONFIRMING you've created a task. Use phrases like "I've created a task for you to..." or "I've added that to your tasks."
-                  
-                  Never respond with uncertain language like "Would you like me to create a task?" Instead, be decisive and create the task.`;
+                  IMPORTANT TASK CREATION GUIDELINES:
+                  - Only create tasks when the user EXPLICITLY asks for one using phrases like "create a task", "add task", etc.
+                  - DO NOT create tasks for general statements or questions.
+                  - For example, if user says "I need to go to Walmart" do NOT create a task unless they explicitly ask you to.
+                  - If in doubt, ASK the user if they want to create a task instead of automatically creating one.
+                  - NEVER assume the user wants a task created unless they clearly state it.`;
 
     // Build messages array for OpenAI
     const messages = [

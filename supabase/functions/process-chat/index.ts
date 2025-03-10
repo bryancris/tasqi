@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
@@ -101,21 +102,23 @@ serve(async (req) => {
       // Continue with normal processing if timer intent fails
     }
 
-    // Check for task commands - ENHANCED to be more aggressive with task detection
+    // Check for EXPLICIT task commands - much less aggressive now
     try {
-      // Use more aggressive task detection - if it contains any action verbs or places, consider it a task
-      const containsTaskLanguage = /\b(go|get|pick|buy|call|email|visit|remember|need|want|should|must|have to|check|do|make|send|write|read|clean|wash|cook|prepare|attend|meet|schedule|organize|pay|finish|complete|work on|take|bring|drop|deliver|order|cancel|update|review|watch|listen)\b/i.test(message);
-      const containsPlaces = /\b(store|walmart|target|grocery|market|shop|mall|office|home|school|library|bank|restaurant|cafe|gym|park|doctor|dentist|hospital|pharmacy|gas station)\b/i.test(message);
+      // Only look for explicit task commands
+      const taskCommands = [
+        'create task', 'add task', 'make task', 'schedule task',
+        'create a task', 'add a task', 'make a task', 'schedule a task',
+        'create new task', 'add new task', 'create reminder',
+        'add to my tasks', 'add to tasks', 'put on my task list'
+      ];
       
-      const mightBeTask = containsTaskLanguage || containsPlaces || 
-                         message.toLowerCase().includes("to") || 
-                         message.toLowerCase().includes("task") ||
-                         message.length < 60; // Short messages are often tasks
+      const lowerMessage = message.toLowerCase();
+      const isExplicitTaskCommand = taskCommands.some(cmd => lowerMessage.includes(cmd));
       
-      if (mightBeTask) {
-        console.log("Detected potential task in message:", message);
+      if (isExplicitTaskCommand) {
+        console.log("Detected explicit task command in message:", message);
         
-        // Directly try to create a task rather than checking if it's a command
+        // Try to create a task
         const { data: taskData, error: taskError } = await supabase.functions.invoke('process-task', {
           body: { message, userId }
         });
@@ -158,18 +161,14 @@ serve(async (req) => {
     // Store the AI response
     await storeAIMessage(supabase, aiResponse, userId);
 
-    // Extract task details if present or if the response indicates a task was created
+    // Extract task details if present (but don't be as aggressive about it)
     const taskDetails = extractTaskDetails(aiResponse);
-    const responseIndicatesTask = aiResponse.toLowerCase().includes("created a task") ||
-                                 aiResponse.toLowerCase().includes("added a task") ||
-                                 aiResponse.toLowerCase().includes("scheduled a task") ||
-                                 aiResponse.toLowerCase().includes("i've added") || 
-                                 aiResponse.toLowerCase().includes("added to your tasks") ||
-                                 aiResponse.toLowerCase().includes("i've created") ||
-                                 aiResponse.toLowerCase().includes("created the task") ||
-                                 aiResponse.toLowerCase().includes("made a task");
+    const responseIndicatesTask = aiResponse.toLowerCase().includes("created a task") &&
+                                  (aiResponse.toLowerCase().includes("as you requested") ||
+                                   message.toLowerCase().includes("create a task") ||
+                                   message.toLowerCase().includes("add task"));
 
-    // If the response indicates a task but we don't have task details, try to create one
+    // If the response explicitly indicates a task but we don't have task details, try to create one only for explicit requests
     if (responseIndicatesTask && !taskDetails) {
       try {
         console.log("Response indicates task creation but no task details, creating task from message:", message);
@@ -206,7 +205,7 @@ serve(async (req) => {
       JSON.stringify({ 
         response: aiResponse,
         task: taskDetails,
-        taskCreated: !!(taskDetails || responseIndicatesTask) // More aggressively mark as task created
+        taskCreated: !!(taskDetails || responseIndicatesTask)
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

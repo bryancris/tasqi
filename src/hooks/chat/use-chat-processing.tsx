@@ -71,8 +71,9 @@ export function useChatProcessing() {
         }
       }
       
-      // Check if message might be task-related
+      // Only check for task intent if there's an EXPLICIT task request
       if (taskDetection.isTaskRelated(userMessage.content)) {
+        console.log('📝 Explicit task request detected, processing as task');
         const taskResult = await taskDetection.processAsTask(userMessage.content, user.id);
         
         if (taskResult.success) {
@@ -87,8 +88,10 @@ export function useChatProcessing() {
       console.log('💬 Processing as regular chat message');
       const response = await invokeProcessChat(userMessage.content, user.id);
       
-      // Check if response contains task confirmation but no task was created
-      if (response?.response && typeof response.response === 'string' && !response.taskCreated) {
+      // Only check for task confirmation if it seems like AI intended to create a task
+      if (response?.response && typeof response.response === 'string' && 
+          !response.taskCreated && taskDetection.hasTaskConfirmation(response.response)) {
+        
         const extractResult = await taskDetection.tryExtractTaskFromResponse(
           userMessage.content, 
           user.id, 

@@ -8,23 +8,25 @@ import { useQueryClient } from "@tanstack/react-query";
 export function useTaskDetection() {
   const queryClient = useQueryClient();
 
-  // Check if a message contains task-related keywords
+  // Check if a message contains EXPLICIT task-related commands
+  // This is updated to be much more strict and only detect explicit task requests
   const isTaskRelated = useCallback((content: string): boolean => {
-    const taskRelatedTerms = [
-      'create task', 'new task', 'add task', 'schedule task', 'remind me to', 
-      'set a task', 'make a task', 'add to my tasks', 'schedule a', 'create a task',
-      'add a task', 'set a reminder', 'schedule this', 'create an event', 'create reminder',
-      'note down', 'write down', 'add to calendar', 'put on my schedule', 'remember to',
-      'don\'t forget to', 'need to', 'have to', 'should', 'pick up', 'meeting', 'appointment',
-      'deadline', 'due', 'finish', 'complete', 'attend', 'go to', 'call', 'email'
+    // Only detect explicit task creation commands
+    const taskCreationCommands = [
+      'create task', 'add task', 'make task', 'schedule task',
+      'create a task', 'add a task', 'make a task', 'schedule a task',
+      'create new task', 'add new task', 'create reminder',
+      'add to my tasks', 'add to tasks', 'put on my task list',
+      'create to-do', 'add to-do', 'add to do'
     ];
     
-    const mightBeTaskRelated = taskRelatedTerms.some(term => 
-      content.toLowerCase().includes(term)
-    ) || /\b(at|on|tomorrow|today|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b/i.test(content);
+    const lowerContent = content.toLowerCase();
+    const containsExplicitCommand = taskCreationCommands.some(cmd => 
+      lowerContent.includes(cmd)
+    );
     
-    console.log('Message task related?', mightBeTaskRelated, content);
-    return mightBeTaskRelated;
+    console.log('Message task related?', containsExplicitCommand, content);
+    return containsExplicitCommand;
   }, []);
 
   // Process a message as a task
