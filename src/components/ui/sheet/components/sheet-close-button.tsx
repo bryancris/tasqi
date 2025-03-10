@@ -1,7 +1,7 @@
 
 import { X } from "lucide-react";
 import * as React from "react";
-import { useSheetCloseHandler, CombinedEvent } from "../hooks/use-sheet-close-handler";
+import { useSheetCloseHandler, CombinedEvent } from "../hooks/close-handler";
 import { isIOSPWA } from "@/utils/platform-detection";
 
 interface SheetCloseButtonProps {
