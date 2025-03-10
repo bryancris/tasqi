@@ -1,8 +1,13 @@
 
-import { CustomEvent } from '@radix-ui/react-dialog';
 import { addShieldOverlay } from '@/utils/platform-detection';
 
-type PointerDownOutsideEvent = CustomEvent<{ originalEvent: PointerEvent }>;
+// Define the correct type for PointerDownOutsideEvent
+type PointerDownOutsideEvent = {
+  preventDefault: () => void;
+  detail: {
+    originalEvent: PointerEvent;
+  };
+};
 
 interface SharingSheetPointerHandlerProps {
   isIOSPwaApp: boolean;

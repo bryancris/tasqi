@@ -1,3 +1,4 @@
+
 import * as SheetPrimitive from "@radix-ui/react-dialog"
 import { cva, type VariantProps } from "class-variance-authority"
 import * as React from "react"
@@ -47,7 +48,7 @@ export const SheetContent = React.forwardRef<
     handleCloseClick
   } = useSheetInteractions({
     side,
-    onPointerDownOutside: props.onPointerDownOutside as ((e: PointerDownOutsideEvent) => void) | undefined,
+    onPointerDownOutside: props.onPointerDownOutside as ((e: any) => void) | undefined,
     onCloseAutoFocus: props.onCloseAutoFocus
   });
 
@@ -57,6 +58,9 @@ export const SheetContent = React.forwardRef<
     false;
 
   const isIOSPwaApp = isIOSPWA();
+
+  // Type definition to properly handle both mouse and touch events
+  type CombinedEvent = React.MouseEvent<Element> | React.TouchEvent<Element>;
 
   React.useEffect(() => {
     if (isSharingSheet) {
@@ -117,7 +121,7 @@ export const SheetContent = React.forwardRef<
   }, [isSharingSheet, sheetId, isIOSPwaApp]);
 
   // Enhanced close handler that works better for iOS PWA
-  const enhancedCloseHandler = React.useCallback((e: React.MouseEvent<Element> | React.TouchEvent<Element>) => {
+  const enhancedCloseHandler = React.useCallback((e: CombinedEvent) => {
     console.log(`📱 Sheet close button ${e.type} (sharing: ${isSharingSheet}, iOS PWA: ${isIOSPwaApp})`);
 
     // Prevent default and stop propagation
@@ -196,8 +200,9 @@ export const SheetContent = React.forwardRef<
       }, 6000);
     }
 
-    if (handleCloseClick) {
-      handleCloseClick(e);
+    // Pass the event to handleCloseClick only if it's a mouse event
+    if (handleCloseClick && 'button' in e) {
+      handleCloseClick(e as React.MouseEvent<Element, MouseEvent>);
     }
   }, [handleCloseClick, isSharingSheet, isIOSPwaApp, sheetId, onOpenChange]);
 
