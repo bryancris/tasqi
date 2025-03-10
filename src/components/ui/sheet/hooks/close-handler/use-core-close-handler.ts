@@ -46,11 +46,12 @@ export function useCoreCloseHandler({
     }
 
     // Manually trigger the onOpenChange callback to close the sheet
-    setTimeout(() => {
-      if (onOpenChange) {
+    if (onOpenChange) {
+      setTimeout(() => {
+        console.log("Closing sheet via onOpenChange");
         onOpenChange(false);
-      }
-    }, 0);
+      }, 0);
+    }
 
     // Handle the mouse click event if a handler was provided
     if (handleCloseClick && 'button' in e) {

@@ -16,6 +16,9 @@ export function useSheetCloseButton({ sheetId }: UseSheetCloseButtonProps) {
     (window as any).__closeButtonPressTime = Date.now();
     
     console.log(`Sheet ${sheetId} close button clicked`);
+    
+    // This function now only handles the click event recording
+    // The actual closing is handled by the enhanced handler in useSheetCloseHandler
   }, [sheetId]);
   
   return { handleCloseClick };

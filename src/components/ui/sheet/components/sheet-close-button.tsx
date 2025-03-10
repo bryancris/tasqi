@@ -19,7 +19,7 @@ export function SheetCloseButton({
 }: SheetCloseButtonProps) {
   const isIOSPwaApp = isIOSPWA();
   
-  // Use the enhanced close handler
+  // Use the enhanced close handler with all required props
   const { enhancedCloseHandler } = useSheetCloseHandler({
     isSharingSheet,
     sheetId,
@@ -35,6 +35,7 @@ export function SheetCloseButton({
       onClick={enhancedCloseHandler}
       onTouchEnd={enhancedCloseHandler}
       data-sheet-close="true"
+      aria-label="Close"
     >
       <X className="h-4 w-4" />
       <span className="sr-only">Close</span>
