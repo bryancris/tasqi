@@ -55,3 +55,30 @@ export function isIOSPWA(): boolean {
 export function isAndroidPWA(): boolean {
   return isAndroid() && isPWA();
 }
+
+// Reset stuck platform protection states
+export function resetProtectionStates(): void {
+  console.log("🧹 Resetting all protection states");
+  
+  // Reset all protection flags
+  (window as any).__isClosingSharingSheet = false;
+  (window as any).__sharingProtectionActive = false;
+  (window as any).__extremeProtectionActive = false;
+  (window as any).__activeShields = 0;
+  
+  // Clean up body classes
+  document.body.classList.remove('ios-pwa-sharing-active');
+}
+
+// Get platform info for debugging
+export function getPlatformInfo(): Record<string, boolean | string> {
+  return {
+    isIOS: isIOS(),
+    isPWA: isPWA(),
+    isAndroid: isAndroid(),
+    isMobile: isMobileDevice(),
+    isIOSPWA: isIOSPWA(),
+    isAndroidPWA: isAndroidPWA(),
+    userAgent: navigator.userAgent
+  };
+}

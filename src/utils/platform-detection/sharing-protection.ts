@@ -16,7 +16,7 @@ export function getSharingState() {
   };
 }
 
-// Set global sharing sheet status with drastically enhanced protection for iOS PWA
+// Set global sharing sheet status with reliable protection
 export function markSharingSheetClosing(id: string) {
   const isIOSPwaApp = isIOSPWA();
   const closeId = `${id}-${Date.now()}`;
@@ -29,50 +29,78 @@ export function markSharingSheetClosing(id: string) {
   (window as any).__sharingProtectionStartTime = Date.now();
   (window as any).__lastSheetCloseId = closeId;
   
-  // Extreme protection specifically for iOS PWA
+  // Extreme protection for iOS PWA
   if (isIOSPwaApp) {
     (window as any).__extremeProtectionActive = true;
     (window as any).__extremeProtectionStartTime = Date.now();
   }
   
-  // Log for debugging
-  console.log(`🛡️ Marked sharing sheet ${id} as closing with EXTREME protection (iOS PWA: ${isIOSPwaApp})`);
+  console.log(`🛡️ Marked sharing sheet ${id} as closing with protection (iOS PWA: ${isIOSPwaApp})`);
   
-  // MUCH longer timeouts for iOS PWA
+  // Set appropriate timeouts based on platform
+  const standardDelay = isIOSPwaApp ? 3500 : 2000;
+  const protectionDelay = isIOSPwaApp ? 4000 : 2500;
+  const extremeDelay = isIOSPwaApp ? 5000 : 3000;
+  
+  // First layer: Clear sheet close state
+  const timeoutOne = setTimeout(() => {
+    if ((window as any).__closingSharingSheet === id) {
+      console.log(`🛡️ Clearing sharing sheet ${id} close state (Layer 1)`);
+      (window as any).__closingSharingSheet = null;
+      (window as any).__isClosingSharingSheet = false;
+    }
+  }, standardDelay);
+  
+  // Second layer: Keep protection active longer
+  const timeoutTwo = setTimeout(() => {
+    if ((window as any).__lastSheetCloseId === closeId) {
+      console.log(`🛡️ Clearing sharing protection active state (Layer 2)`);
+      (window as any).__sharingProtectionActive = false;
+    }
+  }, protectionDelay);
+  
+  // Third layer for iOS PWA
+  let timeoutThree: ReturnType<typeof setTimeout> | null = null;
   if (isIOSPwaApp) {
-    // First layer: Clear sheet close state after a longer delay
-    setTimeout(() => {
-      if ((window as any).__closingSharingSheet === id) {
-        console.log(`🛡️ Clearing sharing sheet ${id} close state (iOS PWA Layer 1)`);
-        (window as any).__closingSharingSheet = null;
-        (window as any).__isClosingSharingSheet = false;
-      }
-    }, 5000); // Extended from 3000ms to 5000ms
-    
-    // Second layer: Keep protection active longer
-    setTimeout(() => {
+    timeoutThree = setTimeout(() => {
       if ((window as any).__lastSheetCloseId === closeId) {
-        console.log(`🛡️ Clearing sharing protection active state (iOS PWA Layer 2)`);
-        (window as any).__sharingProtectionActive = false;
-      }
-    }, 6000); // Extended from 2000ms to 6000ms
-    
-    // Third layer: Clear extreme protection after even longer
-    setTimeout(() => {
-      if ((window as any).__lastSheetCloseId === closeId) {
-        console.log(`🛡️ Clearing extreme protection (iOS PWA Layer 3)`);
+        console.log(`🛡️ Clearing extreme protection (Layer 3)`);
         (window as any).__extremeProtectionActive = false;
       }
-    }, 7000); // Additional final layer
-  } else {
-    // Standard timeout for other platforms (still increased)
-    setTimeout(() => {
-      if ((window as any).__closingSharingSheet === id) {
-        console.log(`🛡️ Clearing sharing sheet ${id} close state (standard)`);
-        (window as any).__closingSharingSheet = null;
-        (window as any).__isClosingSharingSheet = false;
-        (window as any).__sharingProtectionActive = false;
-      }
-    }, 2500); // Extended from 1500ms to 2500ms
+    }, extremeDelay);
   }
+  
+  // Safety fallback to clear ALL protections after a longer time
+  const fallbackTimeout = setTimeout(() => {
+    console.log(`🛡️ Fallback timeout clearing all protections`);
+    (window as any).__closingSharingSheet = null;
+    (window as any).__isClosingSharingSheet = false;
+    (window as any).__sharingProtectionActive = false;
+    (window as any).__extremeProtectionActive = false;
+  }, isIOSPwaApp ? 7000 : 5000);
+  
+  // Return cleanup function
+  return () => {
+    clearTimeout(timeoutOne);
+    clearTimeout(timeoutTwo);
+    if (timeoutThree) clearTimeout(timeoutThree);
+    clearTimeout(fallbackTimeout);
+    
+    console.log(`🛡️ Manually cleared sheet timeouts for ${id}`);
+    (window as any).__closingSharingSheet = null;
+    (window as any).__isClosingSharingSheet = false;
+    (window as any).__sharingProtectionActive = false;
+    (window as any).__extremeProtectionActive = false;
+  };
+}
+
+// Clear all protection states (useful for cleanup)
+export function clearAllProtectionStates() {
+  (window as any).__closingSharingSheet = null;
+  (window as any).__isClosingSharingSheet = false;
+  (window as any).__sharingProtectionActive = false;
+  (window as any).__extremeProtectionActive = false;
+  (window as any).__activeShields = 0;
+  
+  console.log("🧹 Cleared all sharing protection states");
 }
