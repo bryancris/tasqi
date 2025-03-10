@@ -1,16 +1,19 @@
 
-import * as SheetPrimitive from "@radix-ui/react-dialog";
-import { X } from "lucide-react";
-import * as React from "react";
-import { cn } from "@/lib/utils";
+import * as SheetPrimitive from "@radix-ui/react-dialog"
+import * as React from "react"
+import { cn } from "@/lib/utils"
 
-// Basic components with minimal customization
-export const SheetTrigger = SheetPrimitive.Trigger;
-export const SheetClose = SheetPrimitive.Close;
-export const SheetPortal = SheetPrimitive.Portal;
+// Sheet Trigger
+const SheetTrigger = SheetPrimitive.Trigger
 
-// Sheet Overlay with styling
-export const SheetOverlay = React.forwardRef<
+// Sheet Close
+const SheetClose = SheetPrimitive.Close
+
+// Sheet Portal
+const SheetPortal = SheetPrimitive.Portal
+
+// Sheet Overlay
+const SheetOverlay = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof SheetPrimitive.Overlay>
 >(({ className, ...props }, ref) => (
@@ -22,26 +25,11 @@ export const SheetOverlay = React.forwardRef<
     {...props}
     ref={ref}
   />
-));
-SheetOverlay.displayName = SheetPrimitive.Overlay.displayName;
+))
+SheetOverlay.displayName = SheetPrimitive.Overlay.displayName
 
-// Close button component
-export const SheetCloseButton = ({ 
-  onClick 
-}: { 
-  onClick?: (e: React.MouseEvent) => void 
-}) => (
-  <SheetPrimitive.Close 
-    className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary"
-    onClick={onClick}
-  >
-    <X className="h-4 w-4" />
-    <span className="sr-only">Close</span>
-  </SheetPrimitive.Close>
-);
-
-// Header components
-export const SheetHeader = ({
+// Sheet Header
+const SheetHeader = ({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
@@ -52,10 +40,11 @@ export const SheetHeader = ({
     )}
     {...props}
   />
-);
-SheetHeader.displayName = "SheetHeader";
+)
+SheetHeader.displayName = "SheetHeader"
 
-export const SheetFooter = ({
+// Sheet Footer
+const SheetFooter = ({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
@@ -66,10 +55,11 @@ export const SheetFooter = ({
     )}
     {...props}
   />
-);
-SheetFooter.displayName = "SheetFooter";
+)
+SheetFooter.displayName = "SheetFooter"
 
-export const SheetTitle = React.forwardRef<
+// Sheet Title
+const SheetTitle = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Title>,
   React.ComponentPropsWithoutRef<typeof SheetPrimitive.Title>
 >(({ className, ...props }, ref) => (
@@ -78,10 +68,11 @@ export const SheetTitle = React.forwardRef<
     className={cn("text-lg font-semibold text-foreground", className)}
     {...props}
   />
-));
-SheetTitle.displayName = SheetPrimitive.Title.displayName;
+))
+SheetTitle.displayName = SheetPrimitive.Title.displayName
 
-export const SheetDescription = React.forwardRef<
+// Sheet Description
+const SheetDescription = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Description>,
   React.ComponentPropsWithoutRef<typeof SheetPrimitive.Description>
 >(({ className, ...props }, ref) => (
@@ -90,5 +81,16 @@ export const SheetDescription = React.forwardRef<
     className={cn("text-sm text-muted-foreground", className)}
     {...props}
   />
-));
-SheetDescription.displayName = SheetPrimitive.Description.displayName;
+))
+SheetDescription.displayName = SheetPrimitive.Description.displayName
+
+export {
+  SheetTrigger,
+  SheetClose,
+  SheetPortal,
+  SheetOverlay,
+  SheetHeader,
+  SheetFooter,
+  SheetTitle,
+  SheetDescription,
+}

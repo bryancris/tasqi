@@ -1,76 +1,51 @@
 
-import * as React from "react";
-import { SheetRegistry } from "../sheet-utils";
-import { isIOSPWA } from "@/utils/platform-detection";
+import { useEffect } from 'react';
 
 /**
- * Hook to add global event interceptors for iOS PWA and sharing sheets
+ * Hook to apply global event interceptors for improved sheet behavior
+ * This helps prevent issues with stuck sheets and animations
  */
 export function useGlobalInterceptors() {
-  const isIOSPwaApp = isIOSPWA();
-  
-  // Set up a global click interceptor to prevent clicks right after closing
-  React.useEffect(() => {
-    const interceptGlobalClicks = (e: MouseEvent) => {
-      if (SheetRegistry.isClosingSharingSheet()) {
-        // If we're in a closing state, find if the event target is related to sharing
-        if (e.target instanceof HTMLElement) {
-          // Check entire path for sharing-related elements
-          const path = e.composedPath();
-          const hasSharingRelated = path.some(el => 
-            el instanceof HTMLElement && 
-            (el.closest('[data-sharing-indicator]') || 
-             el.closest('[data-sharing-sheet-id]') ||
-             el.hasAttribute('data-sharing-indicator') ||
-             el.hasAttribute('data-sharing-sheet-id'))
-          );
-          
-          if (hasSharingRelated) {
-            console.log("Intercepting click during sheet closing - sharing related");
-            e.stopPropagation();
-            e.preventDefault();
-            return false;
+  useEffect(() => {
+    // When a user navigates with keyboard or mouse 
+    // during a sheet transition, we need to clean up
+    const handleUserInteraction = () => {
+      const blockersActive = (window as any).__eventBlockersActive;
+      const startTime = (window as any).__eventBlockersStartTime || 0;
+      const currentTime = Date.now();
+      
+      // If blockers have been active for more than 3 seconds, 
+      // they're probably stuck and need to be cleared
+      if (blockersActive && currentTime - startTime > 3000) {
+        console.log('🧹 Cleaning up stuck event blockers from global interceptor');
+        
+        try {
+          // Using any method available in global scope to clean up
+          if (typeof (window as any).removeEventBlockers === 'function') {
+            (window as any).removeEventBlockers();
           }
+          
+          // Reset general flags
+          (window as any).__eventBlockersActive = false;
+          (window as any).__isClosingSharingSheet = false;
+          (window as any).__sharingProtectionActive = false;
+        } catch (error) {
+          console.error('Error cleaning up blockers:', error);
         }
       }
     };
     
-    // Use capture phase to intercept before other handlers
-    document.addEventListener('click', interceptGlobalClicks, { capture: true });
-    
-    // For iOS PWA, also intercept touchstart events which can trigger drawer opening
-    if (isIOSPwaApp) {
-      const interceptTouchStart = (e: TouchEvent) => {
-        if (SheetRegistry.isClosingSharingSheet()) {
-          // Only for task card interactions
-          if (e.target instanceof HTMLElement) {
-            const isTaskCard = e.target.closest('[role="button"]') && 
-                             !e.target.closest('button') && 
-                             !e.target.closest('[data-radix-dialog-close]');
-                             
-            if (isTaskCard) {
-              console.log("Intercepting touchstart during sheet closing on task card");
-              e.preventDefault();
-              e.stopPropagation();
-              return false;
-            }
-          }
-        }
-      };
-      
-      document.addEventListener('touchstart', interceptTouchStart, { 
-        capture: true,
-        passive: false
-      });
-      
-      return () => {
-        document.removeEventListener('click', interceptGlobalClicks, { capture: true });
-        document.removeEventListener('touchstart', interceptTouchStart, { capture: true });
-      };
-    }
+    // Add listeners for various user interactions
+    window.addEventListener('click', handleUserInteraction, { passive: true });
+    window.addEventListener('keydown', handleUserInteraction, { passive: true });
+    window.addEventListener('touchstart', handleUserInteraction, { passive: true });
     
     return () => {
-      document.removeEventListener('click', interceptGlobalClicks, { capture: true });
+      window.removeEventListener('click', handleUserInteraction);
+      window.removeEventListener('keydown', handleUserInteraction);
+      window.removeEventListener('touchstart', handleUserInteraction);
     };
-  }, [isIOSPwaApp]);
+  }, []);
+  
+  return null;
 }

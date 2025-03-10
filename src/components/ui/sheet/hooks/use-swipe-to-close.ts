@@ -20,7 +20,7 @@ export function useSwipeToClose({
   threshold = 0.4, // 40% of the element's height/width
   velocityThreshold = 0.4 // px/ms
 }: SwipeToCloseProps) {
-  // Only support top and bottom sides for now
+  // For now we'll only support bottom sheets (which we use for task forms on mobile)
   const isVertical = side === 'top' || side === 'bottom';
   const shouldTrackSwipe = isVertical;
   
