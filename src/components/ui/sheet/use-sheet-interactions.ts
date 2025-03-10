@@ -9,7 +9,6 @@ import {
   SheetRegistry 
 } from "./sheet-utils";
 import { isIOSPWA } from "@/utils/platform-detection";
-import * as SheetPrimitive from "@radix-ui/react-dialog";
 
 // Define proper types for Radix events
 type PointerDownOutsideEvent = CustomEvent<{ originalEvent: PointerEvent }>;
