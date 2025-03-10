@@ -26,6 +26,12 @@ export function SheetCloseButton({
     handleCloseClick,
     onOpenChange
   });
+
+  // Log when component mounts
+  React.useEffect(() => {
+    console.log(`SheetCloseButton mounted for sheet ${sheetId}`);
+    return () => console.log(`SheetCloseButton unmounted for sheet ${sheetId}`);
+  }, [sheetId]);
   
   return (
     <button
@@ -34,8 +40,12 @@ export function SheetCloseButton({
       }`}
       onClick={enhancedCloseHandler}
       onTouchEnd={enhancedCloseHandler}
+      onTouchStart={(e) => e.stopPropagation()} // Prevent touch events from reaching the sheet
       data-sheet-close="true"
+      data-sheet-id={sheetId}
       aria-label="Close"
+      role="button"
+      tabIndex={0}
     >
       <X className="h-4 w-4" />
       <span className="sr-only">Close</span>

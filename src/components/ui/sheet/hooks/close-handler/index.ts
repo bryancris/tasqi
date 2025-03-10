@@ -15,6 +15,7 @@ interface UseSheetCloseHandlerProps {
 
 /**
  * Main hook that combines core close handling with iOS PWA enhancements
+ * This is kept for backward compatibility but is no longer the primary close handler
  */
 export function useSheetCloseHandler({
   isSharingSheet,
@@ -38,12 +39,25 @@ export function useSheetCloseHandler({
 
   // Enhanced close handler that combines both approaches
   const enhancedCloseHandler = React.useCallback((e: CombinedEvent) => {
+    console.log(`[Legacy] Sheet ${sheetId} close button triggered via ${e.type}`);
+    
     // First handle the basic close operations
     handleBasicClose(e);
     
     // Then apply iOS PWA specific protections if needed
     applyIOSPWAProtections(e);
-  }, [handleBasicClose, applyIOSPWAProtections]);
+    
+    // Directly call onOpenChange to ensure the sheet closes
+    if (onOpenChange) {
+      setTimeout(() => {
+        try {
+          onOpenChange(false);
+        } catch (err) {
+          console.error('Error in legacy close handler:', err);
+        }
+      }, 10);
+    }
+  }, [handleBasicClose, applyIOSPWAProtections, sheetId, onOpenChange]);
 
   return { enhancedCloseHandler };
 }
