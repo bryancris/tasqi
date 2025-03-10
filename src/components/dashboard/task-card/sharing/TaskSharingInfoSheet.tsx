@@ -1,7 +1,8 @@
+
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Task } from "../../TaskBoard";
 import { TaskAssignmentInfo } from "../types";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useCallback } from "react";
 import { SharingDetailsHeader } from "./sharing-info/SharingDetailsHeader";
 import { SharingDetailsContent } from "./sharing-info/SharingDetailsContent";
 import { SharingDetailsList } from "./sharing-info/SharingDetailsList";
@@ -99,7 +100,7 @@ export function TaskSharingInfoSheet({
     previousOpenState.current = open;
   }, [open, isIOSPwaApp]);
 
-  const handleOpenChange = (newOpen: boolean) => {
+  const handleOpenChange = useCallback((newOpen: boolean) => {
     if (!newOpen) {
       console.log("Sharing sheet closing via onOpenChange");
       
@@ -139,7 +140,29 @@ export function TaskSharingInfoSheet({
     }
     
     onOpenChange(newOpen);
-  };
+  }, [onOpenChange, isIOSPwaApp]);
+
+  // Force-close the sheet after a delay on iOS PWA
+  // This is a fallback mechanism in case normal closing fails
+  useEffect(() => {
+    if (isIOSPwaApp && open) {
+      const closeButtonCheckInterval = setInterval(() => {
+        // Check if close button was pressed but sheet didn't close
+        const closeButtonPressed = (window as any).__closeButtonPressed;
+        const closeButtonPressTime = (window as any).__closeButtonPressTime || 0;
+        const timeSincePress = Date.now() - closeButtonPressTime;
+        
+        if (closeButtonPressed && timeSincePress > 300 && timeSincePress < 5000) {
+          console.log("📱 iOS PWA: Detected close button press but sheet still open. Force closing...");
+          onOpenChange(false);
+          (window as any).__closeButtonPressed = false;
+          clearInterval(closeButtonCheckInterval);
+        }
+      }, 500);
+      
+      return () => clearInterval(closeButtonCheckInterval);
+    }
+  }, [isIOSPwaApp, open, onOpenChange]);
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
@@ -147,6 +170,7 @@ export function TaskSharingInfoSheet({
         side="bottom" 
         className={`max-h-96 rounded-t-xl z-[60] ${isIOSPwaApp ? 'ios-pwa-sharing-sheet' : ''}`}
         data-sharing-sheet-id={uniqueIdRef.current}
+        onOpenChange={handleOpenChange}
         onPointerDownOutside={(e) => {
           // Aggressive prevention on pointer events outside the sheet
           e.preventDefault();

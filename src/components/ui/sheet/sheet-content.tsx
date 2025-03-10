@@ -1,3 +1,4 @@
+
 import * as SheetPrimitive from "@radix-ui/react-dialog"
 import { cva, type VariantProps } from "class-variance-authority"
 import * as React from "react"
@@ -114,11 +115,22 @@ export const SheetContent = React.forwardRef<
     }
   }, [isSharingSheet, sheetId, isIOSPwaApp]);
 
-  const enhancedCloseHandler = React.useCallback((e: React.MouseEvent) => {
-    console.log(`📱 Sheet close button clicked (sharing: ${isSharingSheet}, iOS PWA: ${isIOSPwaApp})`);
+  // Enhanced close handler that works better for iOS PWA
+  const enhancedCloseHandler = React.useCallback((e: React.MouseEvent | React.TouchEvent) => {
+    console.log(`📱 Sheet close button ${e.type} (sharing: ${isSharingSheet}, iOS PWA: ${isIOSPwaApp})`);
 
+    // Prevent default and stop propagation
     e.stopPropagation();
     e.preventDefault();
+
+    if (e.nativeEvent) {
+      e.nativeEvent.stopPropagation();
+      e.nativeEvent.preventDefault();
+      
+      if (e.nativeEvent.stopImmediatePropagation) {
+        e.nativeEvent.stopImmediatePropagation();
+      }
+    }
 
     if (isSharingSheet) {
       (window as any).__isClosingSharingSheet = true;
@@ -126,11 +138,28 @@ export const SheetContent = React.forwardRef<
       (window as any).__lastSheetCloseId = `${sheetId}-${Date.now()}`;
     }
 
+    // For iOS PWA, add more aggressive protection
     if (isSharingSheet && isIOSPwaApp) {
-      console.log(`📱 iOS PWA: Adding close button protection`);
+      console.log(`📱 iOS PWA: Adding special close button protection`);
 
       (window as any).__extremeProtectionActive = true;
       (window as any).__extremeProtectionStartTime = Date.now();
+      (window as any).__closeButtonPressed = true;
+      (window as any).__closeButtonPressTime = Date.now();
+
+      // Add an empty timeout to force the event loop to process the current events
+      setTimeout(() => {
+        console.log("🔄 iOS PWA: Processing close button press...");
+        
+        // Manually trigger the onOpenChange callback after a small delay
+        // to ensure this event completes first
+        setTimeout(() => {
+          if (props.onOpenChange) {
+            console.log("🔄 iOS PWA: Manually closing sheet via onOpenChange");
+            props.onOpenChange(false);
+          }
+        }, 50);
+      }, 0);
 
       addShieldOverlay(6000);
 
@@ -169,7 +198,7 @@ export const SheetContent = React.forwardRef<
     if (handleCloseClick) {
       handleCloseClick(e);
     }
-  }, [handleCloseClick, isSharingSheet, isIOSPwaApp, sheetId]);
+  }, [handleCloseClick, isSharingSheet, isIOSPwaApp, sheetId, props.onOpenChange]);
 
   return (
     <SheetPortal>
@@ -191,14 +220,30 @@ export const SheetContent = React.forwardRef<
         {...props}
       >
         {children}
-        <SheetPrimitive.Close 
+        {/* Enhanced close button for better iOS PWA support */}
+        <div 
           className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
           onClick={enhancedCloseHandler}
+          onTouchStart={isIOSPwaApp ? enhancedCloseHandler : undefined}
+          onTouchEnd={(e) => {
+            if (isIOSPwaApp) {
+              console.log("📱 iOS PWA: TouchEnd on close button");
+              e.preventDefault();
+              e.stopPropagation();
+            }
+          }}
           data-sheet-close="true"
+          role="button"
+          tabIndex={0}
+          aria-label="Close"
+          style={{ 
+            padding: isIOSPwaApp ? '12px' : '8px',
+            touchAction: 'manipulation'
+          }}
         >
-          <X className="h-4 w-4" />
+          <X className={isIOSPwaApp ? "h-5 w-5" : "h-4 w-4"} />
           <span className="sr-only">Close</span>
-        </SheetPrimitive.Close>
+        </div>
       </SheetPrimitive.Content>
     </SheetPortal>
   );
