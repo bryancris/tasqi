@@ -8,6 +8,7 @@ import { SheetOverlay, SheetPortal } from "./sheet-primitives"
 import { useSheetInteractions } from "./use-sheet-interactions"
 import { isIOSPWA } from "@/utils/platform-detection"
 import { useSharingSheetEffect } from "./hooks/use-sharing-sheet-effect"
+import { useSwipeToClose } from "./hooks/use-swipe-to-close"
 
 const sheetVariants = cva(
   "fixed z-50 gap-4 bg-background p-6 shadow-lg transition ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:duration-500 overflow-hidden flex flex-col",
@@ -42,6 +43,7 @@ export const SheetContent = React.forwardRef<
 >(({ side = "right", className, children, onOpenChange, ...props }, ref) => {
   const {
     sheetId,
+    isClosing,
     handlePointerDownOutside,
     handleCloseAutoFocus,
     handleAnimationStart,
@@ -66,6 +68,37 @@ export const SheetContent = React.forwardRef<
     isSharingSheet,
     sheetId
   });
+  
+  // Handler for swipe to close
+  const handleClose = React.useCallback(() => {
+    if (onOpenChange) {
+      onOpenChange(false);
+    }
+  }, [onOpenChange]);
+  
+  // Use swipe to close hook
+  const {
+    handleTouchStart,
+    handleTouchMove,
+    handleTouchEnd,
+    handleTouchCancel,
+    swipeTransform,
+    isSwiping
+  } = useSwipeToClose({
+    onClose: handleClose,
+    isClosing,
+    side
+  });
+  
+  // Generate styling based on swipe state
+  const swipeStyle = React.useMemo(() => {
+    if (!isSwiping && !swipeTransform) return {};
+    
+    return {
+      transform: swipeTransform,
+      transition: isSwiping ? 'none' : 'transform 0.2s ease-out'
+    } as React.CSSProperties;
+  }, [isSwiping, swipeTransform]);
 
   return (
     <SheetPortal>
@@ -79,13 +112,28 @@ export const SheetContent = React.forwardRef<
         onPointerDownOutside={handlePointerDownOutside}
         onAnimationStart={handleAnimationStart}
         onAnimationEnd={handleAnimationEnd}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchCancel}
+        onPointerDown={handleTouchStart}
+        onPointerMove={handleTouchMove}
+        onPointerUp={handleTouchEnd}
+        onPointerCancel={handleTouchCancel}
         style={{
           ...(isSharingSheet ? { 
             '--sheet-exit-duration': isIOSPwaApp ? '6000ms' : '2000ms' 
-          } as React.CSSProperties : {})
+          } as React.CSSProperties : {}),
+          ...swipeStyle
         }}
         {...props}
       >
+        {/* Add a visual handle indicator for swipe on mobile */}
+        <div 
+          className="w-12 h-1 bg-gray-300 rounded-full mx-auto -mt-2 mb-2 opacity-70" 
+          aria-hidden="true"
+        />
+        
         {children}
         <SheetCloseButton 
           isSharingSheet={isSharingSheet}

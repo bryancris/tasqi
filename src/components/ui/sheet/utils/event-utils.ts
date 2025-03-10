@@ -20,6 +20,15 @@ export function blockAllEvents(evt: Event): boolean {
       console.log('🔄 Not blocking event for close button');
       return true; // Allow event to proceed for close buttons
     }
+    
+    // Don't block events for the swipe handle indicator
+    const isSwipeHandle = 
+      evt.target.classList.contains('swipe-handle') || 
+      evt.target.closest('.swipe-handle');
+      
+    if (isSwipeHandle) {
+      return true; // Allow swipe handle events
+    }
   }
   
   // Block all other events
@@ -60,6 +69,15 @@ export function addEventBlockers(
         return true;
       }
       
+      // Don't block events for the swipe handle indicator
+      const isSwipeHandle = 
+        e.target.classList.contains('swipe-handle') || 
+        e.target.closest('.swipe-handle');
+        
+      if (isSwipeHandle && (e.type === 'touchstart' || e.type === 'touchmove' || e.type === 'pointerdown' || e.type === 'pointermove')) {
+        return true; // Allow swipe handle events
+      }
+      
       // For non-close button elements, block the event
       e.stopPropagation();
       e.preventDefault();
@@ -89,6 +107,15 @@ export function addEventBlockers(
         if (isCloseButton) {
           console.log(`🔄 Allowing touch event on close button`);
           return true;
+        }
+        
+        // Don't block events for the swipe handle indicator
+        const isSwipeHandle = 
+          e.target.classList.contains('swipe-handle') || 
+          e.target.closest('.swipe-handle');
+          
+        if (isSwipeHandle && (e.type === 'touchstart' || e.type === 'touchmove')) {
+          return true; // Allow swipe handle events for touch events
         }
         
         // Only block touchstart on task cards, not on control elements

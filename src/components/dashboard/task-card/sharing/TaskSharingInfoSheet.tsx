@@ -7,6 +7,7 @@ import { SharingSheetContent } from "./components/SharingSheetContent";
 import { useSharingSheetEffects } from "./hooks/useSharingSheetEffects";
 import { useSharingSheetPointerHandler } from "./components/SharingSheetPointerHandler";
 import { useForceCloseSheet } from "./hooks/useForceCloseSheet";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 /**
  * TaskSharingInfoSheet
@@ -42,12 +43,15 @@ export function TaskSharingInfoSheet({
   const { handlePointerDownOutside } = useSharingSheetPointerHandler({
     isIOSPwaApp
   });
+  
+  // Check if we're on mobile
+  const isMobile = useIsMobile();
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetContent 
         side="bottom" 
-        className={`max-h-96 rounded-t-xl z-[60] ${isIOSPwaApp ? 'ios-pwa-sharing-sheet' : ''}`}
+        className={`max-h-96 rounded-t-xl z-[60] ${isIOSPwaApp ? 'ios-pwa-sharing-sheet' : ''} ${isMobile ? 'pb-12' : 'pb-8'}`}
         data-sharing-sheet-id={uniqueIdRef.current}
         onOpenChange={handleOpenChange}
         onPointerDownOutside={handlePointerDownOutside}

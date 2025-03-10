@@ -1,3 +1,4 @@
+
 /**
  * Platform detection utilities
  * Provides consistent platform detection across the app
@@ -25,9 +26,34 @@ export function isPWA(): boolean {
   }
 }
 
+// Check if the device is Android
+export function isAndroid(): boolean {
+  try {
+    return /Android/i.test(navigator.userAgent);
+  } catch (error) {
+    console.error('Error checking Android:', error);
+    return false;
+  }
+}
+
+// Check if we're on a mobile device
+export function isMobileDevice(): boolean {
+  try {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  } catch (error) {
+    console.error('Error checking mobile device:', error);
+    return false;
+  }
+}
+
 // Combined check for iOS PWA
 export function isIOSPWA(): boolean {
   return isIOS() && isPWA();
+}
+
+// Combined check for Android PWA
+export function isAndroidPWA(): boolean {
+  return isAndroid() && isPWA();
 }
 
 // Get global status of sharing interactions with more details
