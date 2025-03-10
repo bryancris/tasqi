@@ -85,8 +85,7 @@ export function getSharingBaseProps(
   const isIOSPwaApp = isIOSPWA();
   
   return {
-    className: "flex items
--center gap-1 text-white/80 sharing-indicator",
+    className: "flex items-center gap-1 text-white/80 sharing-indicator",
     onClick: handleInteraction,
     onTouchStart: isIOSPwaApp ? handleInteraction : undefined, // Add touchstart for iOS PWA
     cursor: isMobile ? "cursor-pointer" : "cursor-help",
