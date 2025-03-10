@@ -43,30 +43,52 @@ export function TaskSharingInfoSheet({
   useEffect(() => {
     // Only run this when the sheet is closing (open changes from true to false)
     if (previousOpenState.current === true && open === false) {
-      console.log("📱 Sharing sheet is closing - adding protection");
+      console.log("📱 Sharing sheet is closing - adding maximum protection");
       
-      // Mark this sheet as closing with protection
+      // Mark this sheet as closing with extended protection
       markSharingSheetClosing(uniqueIdRef.current);
       
-      // Use protection for iOS PWA - but less aggressive
+      // Add extended protection for iOS PWA with a much longer duration
       if (isIOSPwaApp) {
-        console.log("📱 iOS PWA: Adding protection for sharing sheet close");
+        console.log("📱 iOS PWA: Adding maximum protection for sharing sheet close");
         
-        // Add shield overlay with shorter duration
-        addShieldOverlay(1500);
+        // Add shield overlay with significantly longer duration
+        addShieldOverlay(3000);
         
-        // Add selective blocking for iOS PWA
-        const blockDuration = 1500; // Reduced from 3000ms
+        // Add complete blocking for iOS PWA
+        const blockDuration = 3000; // Significantly increased
         
-        // Block only essential events with more selective criteria
-        addEventBlockers(blockDuration, () => {
+        // Block all task card events
+        const blockTaskCardEvents = (e: Event) => {
+          if (e.target instanceof Element) {
+            const isTaskCard = e.target.closest('.task-card') || 
+                          e.target.closest('[data-task-card]');
+            
+            if (isTaskCard) {
+              console.log(`📱 iOS PWA: Blocking ${e.type} on task card`);
+              e.preventDefault();
+              e.stopPropagation();
+              return false;
+            }
+          }
+        };
+        
+        // Add document-level blockers for maximum protection
+        document.addEventListener('click', blockTaskCardEvents, { capture: true });
+        document.addEventListener('touchstart', blockTaskCardEvents, { capture: true, passive: false });
+        
+        // Remove the event blockers after extended delay
+        setTimeout(() => {
+          document.removeEventListener('click', blockTaskCardEvents, { capture: true });
+          document.removeEventListener('touchstart', blockTaskCardEvents, { capture: true });
           console.log("📱 iOS PWA: Event blockers removed after timeout");
+          
           // After delay, clear the closing state
           (window as any).__isClosingSharingSheet = false;
-        });
+        }, blockDuration);
       } else {
         // Standard protection for other platforms
-        const blockDuration = 800;
+        const blockDuration = 1500; // Increased
         addEventBlockers(blockDuration, () => {
           (window as any).__isClosingSharingSheet = false;
         });
@@ -77,31 +99,28 @@ export function TaskSharingInfoSheet({
     previousOpenState.current = open;
   }, [open, isIOSPwaApp]);
 
-  // Custom handler for the onOpenChange event - simplified
+  // Custom handler for the onOpenChange event
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
-      // Before closing, add protection
-      console.log("Sharing sheet closing - adding protection");
+      // Before closing, add maximum protection
+      console.log("Sharing sheet closing - adding maximum protection");
       
       // Mark this interaction as a sharing sheet close
       markSharingSheetClosing(uniqueIdRef.current);
       
-      // Use less aggressive protection for iOS PWA
+      // Use maximum protection for iOS PWA
       if (isIOSPwaApp) {
-        console.log("📱 iOS PWA: Using protection for sharing sheet close");
+        console.log("📱 iOS PWA: Using maximum protection for sharing sheet close");
         
-        // Add transparent shield overlay with shorter duration
-        addShieldOverlay(1500);
+        // Add aggressive shield overlay with long duration
+        addShieldOverlay(3000);
         
-        // Block events for a shorter duration and more selectively
-        const blockDuration = 1500; // Reduced from 3000ms
-        
-        // Add selective event blocking - only block task card interactions
-        const stopTaskCardEvents = (e: Event) => {
+        // Block ALL task card events for a long duration
+        const blockTaskCardEvents = (e: Event) => {
           if (e.target instanceof Element) {
-            // Only block interactions with task cards, not with UI controls
+            // Block interactions with task cards
             const isTaskCard = e.target.closest('.task-card') || 
-                             e.target.closest('[data-task-card]');
+                           e.target.closest('[data-task-card]');
                              
             if (isTaskCard) {
               console.log(`📱 Blocking event: ${e.type} on task card`);
@@ -113,20 +132,20 @@ export function TaskSharingInfoSheet({
           return true;
         };
         
-        // Only add event listeners for essential events
-        document.addEventListener('click', stopTaskCardEvents, { capture: true });
-        document.addEventListener('touchstart', stopTaskCardEvents, { capture: true, passive: false });
+        // Add document-level event blockers for maximum protection
+        document.addEventListener('click', blockTaskCardEvents, { capture: true });
+        document.addEventListener('touchstart', blockTaskCardEvents, { capture: true, passive: false });
         
-        // Remove the event blockers after delay
+        // Remove the event blockers after long delay
         setTimeout(() => {
-          document.removeEventListener('click', stopTaskCardEvents, { capture: true });
-          document.removeEventListener('touchstart', stopTaskCardEvents, { capture: true });
+          document.removeEventListener('click', blockTaskCardEvents, { capture: true });
+          document.removeEventListener('touchstart', blockTaskCardEvents, { capture: true });
           
           console.log("📱 iOS PWA: Removed protection event handlers");
-        }, blockDuration);
+        }, 3000);
       } else {
         // Less aggressive blocking for non-iOS platforms
-        const blockDuration = 800;
+        const blockDuration = 1500; // Increased
         const stopImmediatePropagation = (e: MouseEvent) => {
           // Only block task card interactions
           if (e.target instanceof Element) {
@@ -157,13 +176,37 @@ export function TaskSharingInfoSheet({
         side="bottom" 
         className={`max-h-96 rounded-t-xl z-[60] ${isIOSPwaApp ? 'ios-pwa-sharing-sheet' : ''}`}
         onPointerDownOutside={(e) => {
-          // Simplified prevention on pointer events outside the sheet
+          // Aggressive prevention on pointer events outside the sheet
           e.preventDefault();
           
           if (isIOSPwaApp) {
-            console.log("📱 iOS PWA: Pointer outside sharing sheet - adding protection");
-            // Add shorter shield overlay for iOS
-            addShieldOverlay(1500);
+            console.log("📱 iOS PWA: Pointer outside sharing sheet - adding maximum protection");
+            // Add shield overlay for iOS
+            addShieldOverlay(3000);
+            
+            // Block all task card events
+            const blockTaskCardEvents = (evt: Event) => {
+              if (evt.target instanceof Element) {
+                const isTaskCard = evt.target.closest('.task-card') || 
+                              evt.target.closest('[data-task-card]');
+                
+                if (isTaskCard) {
+                  evt.preventDefault();
+                  evt.stopPropagation();
+                  return false;
+                }
+              }
+            };
+            
+            // Add document-level blockers
+            document.addEventListener('click', blockTaskCardEvents, { capture: true });
+            document.addEventListener('touchstart', blockTaskCardEvents, { capture: true, passive: false });
+            
+            // Remove after protection period
+            setTimeout(() => {
+              document.removeEventListener('click', blockTaskCardEvents, { capture: true });
+              document.removeEventListener('touchstart', blockTaskCardEvents, { capture: true });
+            }, 3000);
           }
         }}
         // Add a data attribute to help with targeting

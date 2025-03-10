@@ -1,3 +1,4 @@
+
 /**
  * Platform detection utilities
  * Provides consistent platform detection across the app
@@ -53,7 +54,7 @@ export function markSharingSheetClosing(id: string) {
   // Log for debugging
   console.log(`🛡️ Marked sharing sheet ${id} as closing with protection`);
   
-  // Auto-clear after shorter delay for iOS PWA - reduced from previous values
+  // Significantly extended timeouts for iOS PWA
   if (isIOSPWA()) {
     setTimeout(() => {
       if ((window as any).__closingSharingSheet === id) {
@@ -64,9 +65,9 @@ export function markSharingSheetClosing(id: string) {
         setTimeout(() => {
           console.log(`🛡️ Clearing sharing protection active state (iOS PWA)`);
           (window as any).__sharingProtectionActive = false;
-        }, 500); // Reduced from 1000ms to 500ms
+        }, 2000); // Extended from 500ms to 2000ms
       }
-    }, 1500); // Reduced from 3000ms to 1500ms
+    }, 3000); // Extended from 1500ms to 3000ms
   } else {
     // Standard timeout for other platforms
     setTimeout(() => {
@@ -76,12 +77,15 @@ export function markSharingSheetClosing(id: string) {
         (window as any).__isClosingSharingSheet = false;
         (window as any).__sharingProtectionActive = false;
       }
-    }, 800); // Reduced from 1500ms
+    }, 1500); // Extended from 800ms
   }
 }
 
-// New function for shield overlay - modifications to be less aggressive
+// Improved shield overlay - much more aggressive for iOS PWA
 export function addShieldOverlay(duration: number = 1500) {
+  const isIOSPwaApp = isIOSPWA();
+  const actualDuration = isIOSPwaApp ? Math.max(duration, 3000) : duration;
+  
   // Create a shield element that blocks all interactions
   const shield = document.createElement('div');
   shield.id = 'ios-pwa-shield-' + Date.now();
@@ -98,42 +102,86 @@ export function addShieldOverlay(duration: number = 1500) {
   // Add to body
   document.body.appendChild(shield);
   
-  console.log(`🛡️ Added shield overlay with duration ${duration}ms`);
+  console.log(`🛡️ Added shield overlay with duration ${actualDuration}ms (iOS PWA: ${isIOSPwaApp})`);
   
-  // Event listeners only for essential events
+  // Event listeners for all events
   const blockEvent = (e: Event) => {
-    // Only block clicks/touches on task cards, not on UI controls
-    if (e.target instanceof Element) {
-      // Check if this is a task card or sharing element
-      const isTaskCard = e.target.closest('.task-card') || 
-                    e.target.closest('[data-task-card]');
-      
-      // If it's a task card, block the event
-      if (isTaskCard) {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log(`🛡️ Shield blocked event: ${e.type} on task card`);
-        return false;
+    // Block ALL events on task cards for iOS PWA
+    if (isIOSPwaApp) {
+      if (e.target instanceof Element) {
+        const isTaskCard = e.target.closest('.task-card') || 
+                      e.target.closest('[data-task-card]');
+        
+        if (isTaskCard) {
+          console.log(`🛡️ Shield blocked ${e.type} on task card (iOS PWA)`);
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }
       }
-      
-      // Otherwise, let the event through
-      return true;
+    } else {
+      // For non-iOS, only block task card interactions 
+      if (e.target instanceof Element) {
+        const isTaskCard = e.target.closest('.task-card') || 
+                      e.target.closest('[data-task-card]');
+        
+        if (isTaskCard) {
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }
+      }
     }
     return true;
   };
   
-  // Only block these essential events
+  // Block more events for iOS PWA
   shield.addEventListener('touchstart', blockEvent, { capture: true, passive: false });
   shield.addEventListener('touchend', blockEvent, { capture: true, passive: false });
   shield.addEventListener('click', blockEvent, { capture: true });
   
-  // Remove after shorter duration
+  if (isIOSPwaApp) {
+    shield.addEventListener('mousedown', blockEvent, { capture: true });
+    shield.addEventListener('mouseup', blockEvent, { capture: true });
+    shield.addEventListener('pointerdown', blockEvent, { capture: true });
+    shield.addEventListener('pointerup', blockEvent, { capture: true });
+  }
+  
+  // For iOS PWA, also add document-level handlers for maximum protection
+  if (isIOSPwaApp) {
+    const blockCardEvents = (e: Event) => {
+      if (e.target instanceof Element) {
+        const isTaskCard = e.target.closest('.task-card') || 
+                      e.target.closest('[data-task-card]');
+        
+        if (isTaskCard) {
+          console.log(`🛡️ Document-level blocker: ${e.type} on task card`);
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }
+      }
+    };
+    
+    // Use both capture and bubble phase for maximum protection
+    document.addEventListener('click', blockCardEvents, { capture: true });
+    document.addEventListener('touchstart', blockCardEvents, { capture: true, passive: false });
+    
+    // Remove document handlers after protection period
+    setTimeout(() => {
+      document.removeEventListener('click', blockCardEvents, { capture: true });
+      document.removeEventListener('touchstart', blockCardEvents, { capture: true });
+      console.log(`🛡️ Removed document-level blockers after ${actualDuration}ms`);
+    }, actualDuration);
+  }
+  
+  // Remove shield after duration
   setTimeout(() => {
     if (document.body.contains(shield)) {
       document.body.removeChild(shield);
-      console.log(`🛡️ Removed shield overlay after ${duration}ms`);
+      console.log(`🛡️ Removed shield overlay after ${actualDuration}ms`);
     }
-  }, duration);
+  }, actualDuration);
   
   // Return a function to manually remove the shield
   return () => {

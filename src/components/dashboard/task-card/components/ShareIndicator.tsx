@@ -84,41 +84,93 @@ function ShareIndicatorComponent({ task, assignmentInfo }: ShareIndicatorProps) 
     return "Shared task";
   };
 
-  // Improved click handler for iOS PWA compatibility
+  // Dramatically improved click handler for iOS PWA compatibility
   const handleClick = (e: ExtendedMouseEvent) => {
-    console.log("ShareIndicator clicked - opening sharing info");
+    // Log interaction
+    console.log("ShareIndicator clicked - maximum protection enabled");
     
-    // Set the global sharing indicator flag with timestamp
+    // Set global flags
     (window as any).sharingIndicatorClickTime = Date.now();
+    (window as any).__sharingProtectionActive = true;
+    (window as any).__sharingProtectionStartTime = Date.now();
     
-    // Mark event as handled by sharing indicator
+    // Mark event as handled directly on the event
     e.__sharingIndicatorHandled = true;
     
-    // Special handling for iOS PWA
+    // Prevent all possible propagation at every level
+    e.stopPropagation();
+    e.preventDefault();
+    
+    // Stop native event propagation
+    if (e.nativeEvent) {
+      if (e.nativeEvent.stopImmediatePropagation) e.nativeEvent.stopImmediatePropagation();
+      if (e.nativeEvent.stopPropagation) e.nativeEvent.stopPropagation();
+      if (e.nativeEvent.preventDefault) e.nativeEvent.preventDefault();
+    }
+    
+    // Add document level protection
     if (isIOSPwaApp) {
-      // Add a short protection period
+      // Block task card clicks immediately at document level
+      const blockTaskCardEvents = (evt: Event) => {
+        if (evt.target instanceof Element) {
+          const isTaskCard = evt.target.closest('.task-card') || 
+                        evt.target.closest('[data-task-card]');
+          
+          if (isTaskCard && !evt.target.closest('[data-sharing-indicator="true"]')) {
+            console.log(`📱 iOS PWA: Blocking ${evt.type} on task card after indicator click`);
+            evt.preventDefault();
+            evt.stopPropagation();
+            return false;
+          }
+        }
+      };
+      
+      // Add blockers with capture
+      document.addEventListener('click', blockTaskCardEvents, { capture: true });
+      document.addEventListener('touchstart', blockTaskCardEvents, { capture: true, passive: false });
+      
+      // Remove after longer delay
+      setTimeout(() => {
+        document.removeEventListener('click', blockTaskCardEvents, { capture: true });
+        document.removeEventListener('touchstart', blockTaskCardEvents, { capture: true });
+        console.log("📱 iOS PWA: Removed sharing indicator click blockers");
+        
+        // Clear protection flags
+        (window as any).__sharingProtectionActive = false;
+      }, 2000);
+    }
+    
+    // For mobile, show the sharing info sheet after a small delay
+    if (isMobile) {
+      // Use requestAnimationFrame for a smoother transition
+      requestAnimationFrame(() => {
+        setShowSharingInfo(true);
+      });
+    }
+  };
+
+  // Improved touch handlers for iOS PWA
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (isIOSPwaApp) {
+      console.log("ShareIndicator touchstart on iOS PWA - maximum protection");
+      
+      // Prevent default and stop propagation
+      e.stopPropagation();
+      
+      // Skip preventDefault to allow the touch to register
+      // But add flags to track this interaction
+      (window as any).sharingIndicatorClickTime = Date.now();
       (window as any).__sharingProtectionActive = true;
       (window as any).__sharingProtectionStartTime = Date.now();
       
-      // Clear after a shorter delay
+      // Set a clear timeout to open the sheet with a slight delay
+      // This prevents conflicts with other touch events
       setTimeout(() => {
-        (window as any).__sharingProtectionActive = false;
-      }, 500); // Short protection
+        if (!showSharingInfo) {
+          setShowSharingInfo(true);
+        }
+      }, 50);
     }
-    
-    // Stop propagation at all levels to prevent task card click
-    e.stopPropagation();
-    if (e.nativeEvent && e.nativeEvent.stopImmediatePropagation) {
-      e.nativeEvent.stopImmediatePropagation();
-    }
-    
-    // For mobile, show the sharing info sheet
-    if (isMobile) {
-      setShowSharingInfo(true);
-    }
-    
-    // For debugging
-    console.log("Sharing indicator clicked, showing info:", isMobile);
   };
 
   return (
@@ -128,23 +180,7 @@ function ShareIndicatorComponent({ task, assignmentInfo }: ShareIndicatorProps) 
           className="w-2 bg-[#8B5CF6] h-full absolute right-0 top-0 rounded-r-xl cursor-pointer sharing-indicator" 
           onClick={handleClick}
           onMouseDown={(e) => e.stopPropagation()}
-          onTouchStart={(e) => {
-            // Special touch handling for iOS PWA
-            if (isIOSPwaApp) {
-              console.log("ShareIndicator touchstart on iOS PWA");
-              
-              // Stop propagation at all levels
-              e.stopPropagation();
-              
-              // Mark the sharing click
-              (window as any).sharingIndicatorClickTime = Date.now();
-              
-              // Open the sheet after a small delay to prevent conflicts
-              setTimeout(() => {
-                setShowSharingInfo(true);
-              }, 50);
-            }
-          }}
+          onTouchStart={handleTouchStart}
           data-sharing-indicator="true"
           aria-label="Sharing information"
         />

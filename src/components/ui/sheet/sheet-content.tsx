@@ -69,32 +69,101 @@ export const SheetContent = React.forwardRef<
       console.log(`📱 Registered sharing sheet ${sheetId}`);
       
       return () => {
-        // Less aggressive protection on unmount for iOS PWA
+        // More aggressive protection on unmount for iOS PWA
         if (isIOSPwaApp) {
-          console.log(`📱 iOS PWA: Adding protection on sharing sheet unmount`);
-          addShieldOverlay(1500); // Shorter duration
+          console.log(`📱 iOS PWA: Adding maximum protection on sharing sheet unmount`);
+          addShieldOverlay(3000); // Significantly longer duration
+          
+          // Set extreme protection - block all task card interactions for 3 seconds
+          const blockTaskCardEvents = (e: Event) => {
+            if (e.target instanceof Element) {
+              const isTaskCard = e.target.closest('.task-card') || 
+                            e.target.closest('[data-task-card]');
+              
+              if (isTaskCard) {
+                console.log(`📱 iOS PWA: Blocking ${e.type} on task card after sheet unmount`);
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+              }
+            }
+          };
+          
+          // Add document-level blockers
+          document.addEventListener('click', blockTaskCardEvents, { capture: true });
+          document.addEventListener('touchstart', blockTaskCardEvents, { capture: true, passive: false });
+          
+          // Remove after protection period
+          setTimeout(() => {
+            document.removeEventListener('click', blockTaskCardEvents, { capture: true });
+            document.removeEventListener('touchstart', blockTaskCardEvents, { capture: true });
+            console.log(`📱 iOS PWA: Removed unmount blockers after 3000ms`);
+          }, 3000);
         }
       };
     }
   }, [isSharingSheet, sheetId, isIOSPwaApp]);
   
-  // Enhanced close handler specifically for sharing sheets
+  // Completely revamped close handler specifically for sharing sheets
   const enhancedCloseHandler = React.useCallback((e: React.MouseEvent) => {
+    console.log(`📱 Sheet close handler activated (sharing: ${isSharingSheet}, iOS PWA: ${isIOSPwaApp})`);
+    
+    // Always stop propagation to prevent any possible bubbling
+    e.stopPropagation();
+    e.preventDefault();
+    
+    // For all platforms, mark that a sharing sheet is closing
+    if (isSharingSheet) {
+      console.log(`📱 Marking sharing sheet ${sheetId} as closing`);
+      (window as any).__isClosingSharingSheet = true;
+      (window as any).__sharingSheetCloseTime = Date.now();
+    }
+    
+    // Maximum protection for iOS PWA sharing sheets
     if (isSharingSheet && isIOSPwaApp) {
-      console.log(`📱 iOS PWA: Enhanced sharing sheet close handler activated`);
-      // Add protection before normal handler, but with shorter duration
-      addShieldOverlay(1500);
+      console.log(`📱 iOS PWA: Maximum protection for sharing sheet close`);
+      
+      // Create a capture phase event blocker immediately
+      const blockAllEvents = (evt: Event) => {
+        if (evt.target instanceof Element) {
+          const isTaskCard = evt.target.closest('.task-card') || 
+                        evt.target.closest('[data-task-card]');
+          
+          if (isTaskCard) {
+            console.log(`📱 iOS PWA: Blocking event ${evt.type} in capture phase`);
+            evt.preventDefault();
+            evt.stopPropagation();
+            return false;
+          }
+        }
+      };
+      
+      // Add event blockers in capture phase
+      document.addEventListener('touchstart', blockAllEvents, { capture: true, passive: false });
+      document.addEventListener('click', blockAllEvents, { capture: true });
+      
+      // Extended shield overlay
+      addShieldOverlay(3000);
+      
+      // Clean up event blockers after delay
+      setTimeout(() => {
+        document.removeEventListener('touchstart', blockAllEvents, { capture: true });
+        document.removeEventListener('click', blockAllEvents, { capture: true });
+        console.log(`📱 iOS PWA: Removed close handler blockers after 3000ms`);
+      }, 3000);
     }
     
     // Call the original handler
     if (handleCloseClick) {
       handleCloseClick(e);
     }
-  }, [handleCloseClick, isSharingSheet, isIOSPwaApp]);
+  }, [handleCloseClick, isSharingSheet, isIOSPwaApp, sheetId]);
   
   // Adjust the z-index and animation duration for iOS PWA sharing sheets
   const iosPwaZIndex = isIOSPwaApp && isSharingSheet ? 999 : undefined;
-  const iosPwaExitDuration = isIOSPwaApp && isSharingSheet ? '1200ms' : undefined;
+  
+  // Use long exit duration for iOS PWA sharing sheets to ensure animations finish
+  const iosPwaExitDuration = isIOSPwaApp && isSharingSheet ? '3000ms' : undefined;
   
   return (
     <SheetPortal>
@@ -113,10 +182,10 @@ export const SheetContent = React.forwardRef<
         onPointerDownOutside={handlePointerDownOutside}
         onAnimationStart={handleAnimationStart}
         onAnimationEnd={handleAnimationEnd}
-        // Add a slightly longer exit animation for sharing sheets
+        // Add a much longer exit animation for sharing sheets on iOS PWA
         style={{
           ...(isSharingSheet ? { 
-            '--sheet-exit-duration': iosPwaExitDuration || '600ms' 
+            '--sheet-exit-duration': iosPwaExitDuration || '1200ms' 
           } as React.CSSProperties : {})
         }}
         {...props}
