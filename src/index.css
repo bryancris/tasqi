@@ -32,22 +32,55 @@
   * {
     @apply border-border;
   }
+  
+  html {
+    height: 100%;
+    width: 100%;
+    overscroll-behavior-y: none; /* Global prevention of overscroll */
+  }
+  
   body {
     @apply bg-background text-foreground min-h-screen;
-    overscroll-behavior-y: none; /* Prevent browser overscroll */
+    overscroll-behavior-y: none; /* Prevent browser overscroll globally */
+    position: fixed; /* Required for iOS PWA to work properly */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
   }
+  
   #root {
     @apply min-h-screen;
+    height: 100%;
+    width: 100%;
+    overflow: hidden; /* Prevent overflow at root level */
   }
+  
   /* Enable momentum scrolling on iOS */
   .ios-momentum-scroll {
     -webkit-overflow-scrolling: touch;
   }
-  /* Allow bounce effect on iOS PWA */
+  
+  /* Allow bounce effect for iOS PWA pull-to-refresh */
   .ios-pull-to-refresh {
     overflow-y: auto;
-    overscroll-behavior-y: auto;
+    overscroll-behavior-y: auto !important;
     -webkit-overflow-scrolling: touch;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Special styling for iOS PWA main content */
+  .ios-pwa-main {
+    position: fixed;
+    top: 72px; 
+    left: 0;
+    right: 0;
+    bottom: 56px; /* Account for the footer height */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: auto;
   }
 }
 

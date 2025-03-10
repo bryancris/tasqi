@@ -136,6 +136,12 @@ self.addEventListener('message', (event) => {
     self.skipWaiting().then(() => {
       console.log('Skip waiting successfully called');
     });
+  } else if (event.data && event.data.type === 'REFRESH') {
+    // Support for manual refresh triggered from the app
+    broadcastChannel.postMessage({
+      type: 'REFRESH_TRIGGERED',
+      timestamp: new Date().toISOString()
+    });
   }
 });
 
@@ -152,6 +158,22 @@ self.addEventListener('controllerchange', () => {
 self.addEventListener('fetch', (event) => {
   // Skip cross-origin requests
   if (!event.request.url.startsWith(self.location.origin)) return;
+  
+  // Support for pull-to-refresh
+  if (event.request.headers.get('purpose') === 'pull-to-refresh') {
+    console.log('Pull-to-refresh detected in service worker');
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        return new Response(JSON.stringify({ 
+          success: false, 
+          message: 'Offline' 
+        }), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+      })
+    );
+    return;
+  }
   
   // Only handle navigation requests (HTML pages)
   if (event.request.mode === 'navigate') {

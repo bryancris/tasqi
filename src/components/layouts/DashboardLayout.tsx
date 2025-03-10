@@ -59,13 +59,17 @@ export function DashboardLayout({
         statusBarStyle.setAttribute('content', 'black-translucent');
         document.head.appendChild(statusBarStyle);
       }
+      
+      // We may need to add this for iOS to allow pull-to-refresh in PWA mode
+      document.documentElement.style.setProperty('overscroll-behavior-y', 'auto');
+      document.body.style.setProperty('overscroll-behavior-y', 'auto');
     }
   }, []);
 
   return <div className="min-h-screen bg-white">
       {isMobile ? <>
           <MobileHeader />
-          <main className={`flex-1 pb-16 pt-[72px] ${isIOSPWA ? 'ios-momentum-scroll' : 'scrollbar-hide'}`}>
+          <main className={`flex-1 pb-16 pt-[72px] ${isIOSPWA ? 'ios-pwa-main' : 'scrollbar-hide'}`}>
             <ErrorBoundary fallback={<div className="p-4 text-center">Something went wrong loading the dashboard. Please refresh the page.</div>}>
               {children}
             </ErrorBoundary>

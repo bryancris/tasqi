@@ -20,6 +20,8 @@ export function usePullToRefresh({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
   const startYRef = useRef(0);
+  const lastTouchYRef = useRef(0);
+  const scrollTopAtStartRef = useRef(0);
   const pullContainerRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
 
@@ -35,22 +37,46 @@ export function usePullToRefresh({
     (window.navigator as any).standalone === true
   ).current;
 
-  const shouldEnablePullToRefresh = isPWA ? isStandalone : true;
+  const isIOSPWA = isIOS && isStandalone;
+  const shouldEnablePullToRefresh = isPWA ? true : true; // Always enable for now
 
   // Handle pull start
   const handleTouchStart = useCallback((e: TouchEvent) => {
-    // Only enable pull-to-refresh at the top of the page
-    if (window.scrollY > 0) return;
+    if (!contentRef.current) return;
+    
+    // Save the scroll position at the start of touch
+    scrollTopAtStartRef.current = contentRef.current.scrollTop;
+    
+    // Only enable pull-to-refresh when at the top of the content
+    if (scrollTopAtStartRef.current > 5) {
+      return;
+    }
     
     startYRef.current = e.touches[0].clientY;
+    lastTouchYRef.current = e.touches[0].clientY;
     setIsPulling(true);
+    
+    console.log('Touch start at Y:', startYRef.current, 'ScrollTop:', scrollTopAtStartRef.current);
   }, []);
 
   // Handle touch move for pull effect
   const handleTouchMove = useCallback((e: TouchEvent) => {
-    if (!isPulling || isRefreshing || window.scrollY > 0) return;
-
+    if (!isPulling || isRefreshing) return;
+    if (!contentRef.current) return;
+    
     const currentY = e.touches[0].clientY;
+    lastTouchYRef.current = currentY;
+    
+    // Critical: iOS PWA needs to check scroll position DURING the move
+    // since bounce effects can change scrollTop dynamically
+    const currentScrollTop = contentRef.current.scrollTop;
+    
+    // If we've scrolled down, don't do pull-to-refresh
+    if (currentScrollTop > 5) {
+      setPullDistance(0);
+      return;
+    }
+    
     const diff = currentY - startYRef.current;
     
     // Only consider downward movement
@@ -63,15 +89,19 @@ export function usePullToRefresh({
     const newDistance = Math.min(diff * 0.5, maxPullDownDistance);
     setPullDistance(newDistance);
 
-    // Prevent default to disable browser's native pull-to-refresh on iOS
-    if (isIOS && newDistance > 0) {
+    // For iOS in PWA mode, we MUST prevent default to disable the native bounce
+    // This is critical for it to work properly
+    if (isIOSPWA && currentScrollTop <= 0 && diff > 10) {
       e.preventDefault();
+      console.log('Preventing default for iOS PWA', { diff, newDistance });
     }
-  }, [isPulling, isRefreshing, maxPullDownDistance, isIOS]);
+  }, [isPulling, isRefreshing, maxPullDownDistance, isIOSPWA]);
 
   // Handle touch end
   const handleTouchEnd = useCallback(() => {
     if (!isPulling || isRefreshing) return;
+    
+    console.log('Touch end, pull distance:', pullDistance, 'threshold:', pullDownThreshold);
     
     if (pullDistance >= pullDownThreshold) {
       // Trigger refresh
@@ -108,8 +138,18 @@ export function usePullToRefresh({
     const contentElement = contentRef.current;
     if (!contentElement) return;
     
-    contentElement.addEventListener('touchstart', handleTouchStart, { passive: !isIOS });
-    contentElement.addEventListener('touchmove', handleTouchMove, { passive: !isIOS });
+    // For iOS PWA, we need to use { passive: false } to make preventDefault work
+    const passiveOption = isIOSPWA ? { passive: false } : { passive: !isIOS };
+    
+    console.log('Setting up pull-to-refresh listeners', { 
+      isIOS, 
+      isStandalone, 
+      isIOSPWA, 
+      passiveOption 
+    });
+    
+    contentElement.addEventListener('touchstart', handleTouchStart, passiveOption);
+    contentElement.addEventListener('touchmove', handleTouchMove, passiveOption);
     contentElement.addEventListener('touchend', handleTouchEnd);
     
     return () => {
@@ -122,7 +162,8 @@ export function usePullToRefresh({
     handleTouchStart, 
     handleTouchMove, 
     handleTouchEnd, 
-    isIOS
+    isIOS,
+    isIOSPWA
   ]);
 
   // Prepare style for container
@@ -166,5 +207,6 @@ export function usePullToRefresh({
     contentStyle,
     refreshIndicatorStyle,
     pullDistance,
+    isIOSPWA,
   };
 }

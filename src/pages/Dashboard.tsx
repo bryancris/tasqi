@@ -12,6 +12,12 @@ import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
 
+// Check if running on iOS as PWA
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                     (window.navigator as any).standalone === true;
+const isIOSPWA = isIOS && isStandalone;
+
 export default function Dashboard() {
   // Proper hook usage - call at top level unconditionally 
   useTaskNotifications();
@@ -35,26 +41,33 @@ export default function Dashboard() {
         duration: 2000,
         position: "top-center"
       });
+      return true;
     } catch (error) {
       console.error("Error refreshing data:", error);
       toast.error("Failed to refresh data");
+      return false;
     }
   }, [refetch]);
   
-  // Initialize pull-to-refresh
+  // Initialize pull-to-refresh with improved iOS PWA settings
   const {
     containerRef,
     contentRef,
     isRefreshing,
     containerStyle,
     contentStyle,
-    refreshIndicatorStyle
+    refreshIndicatorStyle,
+    isIOSPWA: isPWADetected
   } = usePullToRefresh({
     onRefresh: handleRefresh,
     pullDownThreshold: 80,
     refreshIndicatorHeight: 50,
     isPWA: true
   });
+  
+  useEffect(() => {
+    console.log("Dashboard mounted with isIOSPWA:", isIOSPWA, "detected:", isPWADetected);
+  }, [isPWADetected]);
   
   // Update the view based on the current path on mount and when path changes
   useEffect(() => {
@@ -93,7 +106,7 @@ export default function Dashboard() {
       <div 
         ref={contentRef}
         style={contentStyle}
-        className="p-4 py-0 px-[10px] h-full ios-momentum-scroll ios-pull-to-refresh"
+        className={`p-4 py-0 px-[10px] h-full overflow-y-auto ios-momentum-scroll ${isIOSPWA ? 'ios-pull-to-refresh' : ''}`}
       >
         {view === 'weekly' ? (
           <WeeklyCalendar />
@@ -106,7 +119,7 @@ export default function Dashboard() {
         )}
         
         {/* This hidden element helps iOS detect the bounce effect */}
-        <div className="h-px w-full -mb-px"></div>
+        {isIOSPWA && <div className="h-px w-full -mb-px"></div>}
       </div>
     </div>
   );

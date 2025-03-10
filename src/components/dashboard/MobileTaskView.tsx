@@ -11,6 +11,12 @@ import { TimelineSection } from "./timeline/TimelineSection";
 import { useQueryClient } from "@tanstack/react-query";
 import { useDebouncedTaskRefresh } from "@/hooks/use-debounced-task-refresh";
 
+// iOS PWA detection
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                     (window.navigator as any).standalone === true;
+const isIOSPWA = isIOS && isStandalone;
+
 export interface MobileTaskViewProps {
   tasks: Task[];
   selectedDate: Date;
@@ -119,7 +125,7 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
   };
 
   return (
-    <div className="h-[calc(100vh-144px)] overflow-hidden px-4 ios-momentum-scroll">
+    <div className={`h-[calc(100vh-144px)] overflow-hidden px-4 ${isIOSPWA ? 'ios-pull-to-refresh' : 'ios-momentum-scroll'}`}>
       <Card className="h-full border-none shadow-none bg-transparent">
         <CardHeader className="pb-3 px-0">
           <div className="flex items-center justify-between">
@@ -139,7 +145,7 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="overflow-y-auto h-[calc(100%-5rem)] p-0 ios-momentum-scroll">
+        <CardContent className={`overflow-y-auto h-[calc(100%-5rem)] p-0 ${isIOSPWA ? 'ios-pull-to-refresh' : 'ios-momentum-scroll'}`}>
           {view === 'board' ? (
             <DndContext sensors={sensors} onDragEnd={onDragEnd}>
               <SortableContext items={draggableTaskIds} strategy={verticalListSortingStrategy}>
