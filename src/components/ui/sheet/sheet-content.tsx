@@ -1,4 +1,3 @@
-
 import * as SheetPrimitive from "@radix-ui/react-dialog"
 import { cva, type VariantProps } from "class-variance-authority"
 import * as React from "react"
@@ -130,49 +129,45 @@ export const SheetContent = React.forwardRef<
     }
   }, [isSharingSheet, sheetId, isIOSPwaApp]);
   
-  // Completely revamped close handler with extreme protection for iOS PWA
+  // Completely revamped close handler with enhanced iOS PWA support
   const enhancedCloseHandler = React.useCallback((e: React.MouseEvent) => {
-    console.log(`📱 Sheet close handler activated (sharing: ${isSharingSheet}, iOS PWA: ${isIOSPwaApp})`);
+    console.log(`📱 Sheet close button clicked (sharing: ${isSharingSheet}, iOS PWA: ${isIOSPwaApp})`);
     
-    // Always stop propagation to prevent any possible bubbling
+    // Mark the event as a close button interaction
     e.stopPropagation();
     e.preventDefault();
     
     // Set standard sharing sheet closing flags
     if (isSharingSheet) {
-      console.log(`📱 Marking sharing sheet ${sheetId} as closing`);
       (window as any).__isClosingSharingSheet = true;
       (window as any).__sharingSheetCloseTime = Date.now();
       (window as any).__lastSheetCloseId = `${sheetId}-${Date.now()}`;
     }
     
-    // Extreme protection for iOS PWA sharing sheets
+    // Enhanced protection specifically for iOS PWA sharing sheets
     if (isSharingSheet && isIOSPwaApp) {
-      console.log(`📱 iOS PWA: EXTREME protection for sharing sheet close`);
+      console.log(`📱 iOS PWA: Adding close button protection`);
       
-      // Set extreme protection flags
+      // Set protection flags
       (window as any).__extremeProtectionActive = true;
       (window as any).__extremeProtectionStartTime = Date.now();
       
-      // Add shield overlay with very long duration
+      // Add shield overlay with extended duration
       addShieldOverlay(6000);
       
-      // Create a multi-layered capture phase event blocker immediately
-      const blockAllEvents = (evt: Event) => {
+      // Create blocking functions for different event types
+      const blockTaskCardEvents = (evt: Event) => {
         if (evt.target instanceof Element) {
-          // Enhanced task card detection
           const isTaskCard = evt.target.closest('.task-card') || 
                         evt.target.closest('[data-task-card]') ||
-                        evt.target.closest('[role="button"]') ||
-                        (evt.target.getAttribute && evt.target.getAttribute('data-task-card') === 'true');
+                        evt.target.closest('[role="button"]');
           
-          // Skip controls and sharing indicators
-          const isControl = evt.target.closest('button') ||
-                      evt.target.closest('[data-radix-dialog-close]') ||
-                      evt.target.closest('[data-sharing-indicator="true"]');
+          // Don't block control elements
+          const isControl = evt.target.closest('[data-sheet-close]') ||
+                       evt.target.closest('button') ||
+                       evt.target.closest('[data-radix-dialog-close]');
           
           if (isTaskCard && !isControl) {
-            console.log(`📱 iOS PWA: Blocking event ${evt.type} in capture phase`);
             evt.preventDefault();
             evt.stopPropagation();
             return false;
@@ -180,29 +175,19 @@ export const SheetContent = React.forwardRef<
         }
       };
       
-      // Add multiple layers of event blockers in capture phase
-      document.addEventListener('touchstart', blockAllEvents, { capture: true, passive: false });
-      document.addEventListener('touchend', blockAllEvents, { capture: true, passive: false });
-      document.addEventListener('click', blockAllEvents, { capture: true });
-      document.addEventListener('mousedown', blockAllEvents, { capture: true });
+      // Add multi-layer event blocking
+      document.addEventListener('click', blockTaskCardEvents, { capture: true });
+      document.addEventListener('touchstart', blockTaskCardEvents, { capture: true, passive: false });
+      document.addEventListener('touchend', blockTaskCardEvents, { capture: true, passive: false });
       
-      // Remove in phases for maximum protection duration
+      // Remove in phases
       setTimeout(() => {
-        document.removeEventListener('touchstart', blockAllEvents, { capture: true });
-        document.removeEventListener('touchend', blockAllEvents, { capture: true });
-        console.log(`📱 iOS PWA: Removed first layer of close handler blockers after 4000ms`);
+        document.removeEventListener('touchstart', blockTaskCardEvents, { capture: true });
+        document.removeEventListener('touchend', blockTaskCardEvents, { capture: true });
       }, 4000);
       
       setTimeout(() => {
-        document.removeEventListener('click', blockAllEvents, { capture: true });
-        document.removeEventListener('mousedown', blockAllEvents, { capture: true });
-        console.log(`📱 iOS PWA: Removed second layer of close handler blockers after 6000ms`);
-        
-        // Only clear extreme protection if this was the originator
-        const originTime = (window as any).__extremeProtectionStartTime;
-        if (originTime && Date.now() - originTime > 5900) {
-          (window as any).__extremeProtectionActive = false;
-        }
+        document.removeEventListener('click', blockTaskCardEvents, { capture: true });
       }, 6000);
     }
     
@@ -211,40 +196,35 @@ export const SheetContent = React.forwardRef<
       handleCloseClick(e);
     }
   }, [handleCloseClick, isSharingSheet, isIOSPwaApp, sheetId]);
-  
-  // Adjust the z-index and animation duration for iOS PWA sharing sheets
-  const iosPwaZIndex = isIOSPwaApp && isSharingSheet ? 999 : undefined;
-  
-  // Use much longer exit duration for iOS PWA sharing sheets to ensure animations finish
-  const iosPwaExitDuration = isIOSPwaApp && isSharingSheet ? '6000ms' : undefined;
-  
+
   return (
     <SheetPortal>
       <SheetOverlay />
       <SheetPrimitive.Content
         ref={ref}
-        className={cn(sheetVariants({ side }), className, {
-          // Add extra z-index if this is a sharing sheet to ensure it's on top
-          'z-[60]': isSharingSheet,
-          'z-[999]': iosPwaZIndex
-        })}
+        className={cn(sheetVariants({ side }), className)}
         data-sheet-id={sheetId}
         data-ios-pwa-sharing={isIOSPwaApp && isSharingSheet ? "true" : undefined}
-        // These event handlers handle special cases for sheet interaction
         onCloseAutoFocus={handleCloseAutoFocus}
         onPointerDownOutside={handlePointerDownOutside}
         onAnimationStart={handleAnimationStart}
         onAnimationEnd={handleAnimationEnd}
-        // Add a much longer exit animation for sharing sheets on iOS PWA
         style={{
           ...(isSharingSheet ? { 
-            '--sheet-exit-duration': iosPwaExitDuration || '2000ms' 
+            '--sheet-exit-duration': isIOSPwaApp ? '6000ms' : '2000ms' 
           } as React.CSSProperties : {})
         }}
         {...props}
       >
         {children}
-        <SheetCloseButton onClick={enhancedCloseHandler} />
+        <SheetPrimitive.Close 
+          className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
+          onClick={enhancedCloseHandler}
+          data-sheet-close="true"
+        >
+          <X className="h-4 w-4" />
+          <span className="sr-only">Close</span>
+        </SheetPrimitive.Close>
       </SheetPrimitive.Content>
     </SheetPortal>
   );

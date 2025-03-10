@@ -125,7 +125,7 @@ export function addShieldOverlay(duration: number = 1500) {
   shield.style.left = '0';
   shield.style.right = '0';
   shield.style.bottom = '0';
-  shield.style.zIndex = '9999'; // Extreme z-index
+  shield.style.zIndex = '998'; // Below close button
   shield.style.backgroundColor = 'transparent';
   shield.style.touchAction = 'none';
   shield.setAttribute('data-sharing-shield', 'true');
@@ -146,7 +146,12 @@ export function addShieldOverlay(duration: number = 1500) {
                       e.target.closest('[role="button"]') ||
                       (e.target.getAttribute && e.target.getAttribute('data-task-card') === 'true');
         
-        if (isTaskCard) {
+        // Allow close button and controls
+        const isControl = e.target.closest('[data-sheet-close]') ||
+                     e.target.closest('button') ||
+                     e.target.closest('[data-radix-dialog-close]');
+        
+        if (isTaskCard && !isControl) {
           console.log(`🛡️ Shield ${shieldId} blocked ${e.type} on task card (iOS PWA)`);
           e.preventDefault();
           e.stopPropagation();
@@ -197,7 +202,8 @@ export function addShieldOverlay(duration: number = 1500) {
         const isSharingControl = e.target.closest('[data-sharing-indicator]') ||
                           e.target.closest('.sharing-indicator') ||
                           e.target.closest('[data-radix-dialog-close]') ||
-                          e.target.closest('button');
+                          e.target.closest('button') ||
+                          e.target.closest('[data-sheet-close]');
         
         if (isTaskCard && !isSharingControl) {
           console.log(`🛡️ Document-level blocker: ${e.type} on task card through shield ${shieldId}`);
