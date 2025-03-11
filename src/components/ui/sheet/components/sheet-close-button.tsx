@@ -17,36 +17,35 @@ export function SheetCloseButton({
   onOpenChange
 }: SheetCloseButtonProps) {
   const isIOSPwaApp = isIOSPWA();
-  
-  // Simple but robust close handler that prioritizes the sheet actually closing
+
+  // Simplified, direct close handler that prioritizes closing the sheet
   const handleClose = React.useCallback((e: React.MouseEvent<Element, MouseEvent> | React.TouchEvent<Element>) => {
-    console.log(`SheetCloseButton clicked/touched for sheet ${sheetId}`);
+    console.log(`⭐ SheetCloseButton X clicked/touched for sheet ${sheetId}`);
     
-    // Prevent event bubbling to avoid potential conflicts
+    // Prevent event bubbling
     e.stopPropagation();
     e.preventDefault();
     
-    // Track the click via the original handler
+    // Analytics tracking through the original handler
     if ('button' in e) {
       handleCloseClick(e as React.MouseEvent<Element, MouseEvent>);
     }
     
-    // Most important part: ALWAYS call onOpenChange to ensure the sheet closes
+    // DIRECT SHEET CLOSING - Most important part
     if (onOpenChange) {
-      console.log(`Directly calling onOpenChange(false) for sheet ${sheetId}`);
-      
-      // Small timeout to ensure event handling is complete
+      console.log(`✅ Directly calling onOpenChange(false) for sheet ${sheetId}`);
+      // Use setTimeout for more reliable closing
       setTimeout(() => {
         onOpenChange(false);
-      }, 10);
+      }, 0);
     } else {
-      console.warn(`No onOpenChange provided for sheet ${sheetId} - cannot close programmatically`);
+      console.warn(`❌ No onOpenChange provided for sheet ${sheetId} - cannot close programmatically`);
     }
   }, [handleCloseClick, sheetId, onOpenChange]);
 
-  // Log when component mounts
+  // Log when component mounts to verify props
   React.useEffect(() => {
-    console.log(`SheetCloseButton mounted for sheet ${sheetId}, onOpenChange present: ${!!onOpenChange}`);
+    console.log(`🔍 SheetCloseButton mounted for sheet ${sheetId}, onOpenChange present: ${!!onOpenChange}`);
     return () => console.log(`SheetCloseButton unmounted for sheet ${sheetId}`);
   }, [sheetId, onOpenChange]);
   

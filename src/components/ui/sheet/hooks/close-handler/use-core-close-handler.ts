@@ -13,7 +13,7 @@ interface UseCoreCloseHandlerProps {
 
 /**
  * Core hook for handling sheet close events
- * Manages basic event handling and cleanup
+ * Simplified for reliability
  */
 export function useCoreCloseHandler({
   isSharingSheet,
@@ -21,41 +21,47 @@ export function useCoreCloseHandler({
   onOpenChange,
   handleCloseClick
 }: UseCoreCloseHandlerProps) {
-  // Basic close handler that handles prevention of event propagation
+  // Direct close handler that prioritizes sheet closing
   const handleBasicClose = React.useCallback((e: CombinedEvent) => {
-    console.log(`📱 Sheet close button ${e.type} (sharing: ${isSharingSheet})`);
+    console.log(`🔴 Sheet ${sheetId} core close handler triggered via ${e.type}`);
 
-    // Prevent default and stop propagation
+    // Prevent event propagation
     e.stopPropagation();
     e.preventDefault();
 
     if (e.nativeEvent) {
       e.nativeEvent.stopPropagation();
       e.nativeEvent.preventDefault();
-      
-      if ('stopImmediatePropagation' in e.nativeEvent) {
-        e.nativeEvent.stopImmediatePropagation();
-      }
     }
 
-    // Set global flags for tracking sheet closure
-    if (isSharingSheet) {
-      (window as any).__isClosingSharingSheet = true;
-      (window as any).__sharingSheetCloseTime = Date.now();
-      (window as any).__lastSheetCloseId = `${sheetId}-${Date.now()}`;
-    }
+    // Set flags for debugging
+    (window as any).__isClosingSheet = true;
+    (window as any).__sheetCloseTime = Date.now();
+    (window as any).__lastSheetCloseId = `${sheetId}-${Date.now()}`;
 
-    // Manually trigger the onOpenChange callback to close the sheet
+    // The most important part - directly close the sheet
     if (onOpenChange) {
+      console.log(`🔴 Directly closing sheet ${sheetId} via onOpenChange(false)`);
+      
+      // Use setTimeout for more reliable execution
       setTimeout(() => {
-        console.log("Closing sheet via onOpenChange");
-        onOpenChange(false);
+        try {
+          onOpenChange(false);
+        } catch (err) {
+          console.error('Error in core close handler:', err);
+        }
       }, 0);
+    } else {
+      console.warn(`No onOpenChange provided for sheet ${sheetId}`);
     }
 
-    // Handle the mouse click event if a handler was provided
+    // Call tracking handler
     if (handleCloseClick && 'button' in e) {
-      handleCloseClick(e as React.MouseEvent<Element, MouseEvent>);
+      try {
+        handleCloseClick(e as React.MouseEvent<Element, MouseEvent>);
+      } catch (err) {
+        console.error('Error in click tracking:', err);
+      }
     }
   }, [handleCloseClick, isSharingSheet, sheetId, onOpenChange]);
 

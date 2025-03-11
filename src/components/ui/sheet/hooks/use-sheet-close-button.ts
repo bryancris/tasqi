@@ -8,11 +8,10 @@ interface UseSheetCloseButtonProps {
 /**
  * Hook to handle sheet close button interactions
  * This hook is now only responsible for tracking the click event
- * The actual closing logic has been moved to useSheetCloseHandler
+ * The actual closing logic has been moved to SheetCloseButton component directly
  */
 export function useSheetCloseButton({ sheetId }: UseSheetCloseButtonProps) {
   // Handle close button click - this now only records the event
-  // The actual closing happens in useSheetCloseHandler
   const handleCloseClick = useCallback((e: React.MouseEvent<Element, MouseEvent>) => {
     console.log(`Sheet ${sheetId} close button clicked - tracking event`);
     

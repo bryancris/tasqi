@@ -62,7 +62,7 @@ export const SheetContent = React.forwardRef<
     false;
 
   const isIOSPwaApp = isIOSPWA();
-
+  
   // Use custom hook for sharing sheet effects
   useSharingSheetEffect({
     isSharingSheet,
@@ -72,9 +72,10 @@ export const SheetContent = React.forwardRef<
   // Handler for swipe to close
   const handleClose = React.useCallback(() => {
     if (onOpenChange) {
+      console.log(`SheetContent calling onOpenChange(false) for sheet ${sheetId}`);
       onOpenChange(false);
     }
-  }, [onOpenChange]);
+  }, [onOpenChange, sheetId]);
   
   // Use swipe to close hook
   const {
@@ -99,6 +100,12 @@ export const SheetContent = React.forwardRef<
       transition: isSwiping ? 'none' : 'transform 0.2s ease-out'
     } as React.CSSProperties;
   }, [isSwiping, swipeTransform]);
+
+  // Log when the SheetContent mounts to verify onOpenChange presence
+  React.useEffect(() => {
+    console.log(`SheetContent mounted for sheet ${sheetId}, onOpenChange present: ${!!onOpenChange}`);
+    return () => console.log(`SheetContent unmounted for sheet ${sheetId}`);
+  }, [sheetId, onOpenChange]);
 
   return (
     <SheetPortal>
