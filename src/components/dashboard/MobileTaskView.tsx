@@ -58,13 +58,16 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
       // Fix for iOS PWA pull-to-refresh scrolling issues
       const handleScroll = () => {
         // Reset the top padding when user scrolls back up
-        if (contentRef.current && contentRef.current.scrollTop <= 0) {
+        if (contentRef.current && contentRef.current.scrollTop <= 5) {
           contentRef.current.style.paddingTop = '0px';
         }
       };
       
       const currentContent = contentRef.current;
       currentContent.addEventListener('scroll', handleScroll, { passive: true });
+      
+      // Reset any padding on component mount
+      currentContent.style.paddingTop = '0px';
       
       return () => {
         currentContent?.removeEventListener('scroll', handleScroll);
@@ -144,10 +147,16 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
     invalidateTasks(150);
   };
 
+  // Use dynamic height calculation based on device
+  const containerStyle = isIOSPwaApp 
+    ? { height: 'calc(100% - 16px)', maxHeight: 'calc(100% - 16px)' }
+    : { height: 'calc(100vh - 144px)' };
+
   return (
     <div 
       ref={containerRef}
-      className={`h-[calc(100vh-144px)] overflow-hidden px-4 ${isIOSPwaApp ? 'ios-pwa-container' : ''}`}
+      className={`overflow-hidden px-4 ${isIOSPwaApp ? 'ios-pwa-container' : ''}`}
+      style={containerStyle}
     >
       <Card className="h-full border-none shadow-none bg-transparent">
         <CardHeader className="pb-3 px-0">
@@ -170,7 +179,9 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
         </CardHeader>
         <CardContent 
           ref={contentRef}
-          className={`overflow-y-auto h-[calc(100%-5rem)] p-0 pb-8 ${isIOSPwaApp ? 'ios-pwa-content' : 'ios-momentum-scroll'}`}
+          className={`overflow-y-auto p-0 pb-8 ${isIOSPwaApp 
+            ? 'ios-pwa-content ios-momentum-scroll' 
+            : 'ios-momentum-scroll h-[calc(100%-5rem)]'}`}
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
           {view === 'board' ? (
@@ -180,7 +191,7 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
               collisionDetection={pointerWithin} // Use pointer intersection for better mobile detection
             >
               <SortableContext items={draggableTaskIds} strategy={verticalListSortingStrategy}>
-                <div className="flex flex-col gap-2 pb-4">
+                <div className="flex flex-col gap-2 pb-4 pt-1">
                   {sortedTasks.map((task, index) => (
                     <TaskCard
                       key={task.id}
@@ -207,7 +218,7 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
           )}
           
           {/* Add a spacer div at the bottom to prevent content from being cut off */}
-          <div className={`h-8 w-full ${isIOSPwaApp ? 'ios-bottom-spacer' : ''}`}></div>
+          <div className={`w-full ${isIOSPwaApp ? 'ios-bottom-spacer' : 'h-8'}`}></div>
         </CardContent>
       </Card>
     </div>

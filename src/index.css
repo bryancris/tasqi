@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -121,29 +120,39 @@
     pointer-events: none !important;
   }
   
-  /* New - iOS PWA container and content fixes for dead space issues */
+  /* Revised iOS PWA container and content fixes for dead space issues */
   .ios-pwa-container {
-    position: relative;
+    position: relative !important;
     overflow: hidden !important;
-    height: calc(100vh - 144px) !important;
-    max-height: calc(100vh - 144px) !important;
+    height: calc(100% - 8px) !important;
+    max-height: calc(100% - 8px) !important;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
   }
   
   .ios-pwa-content {
     height: 100% !important;
-    max-height: calc(100% - 0.5rem) !important;
+    max-height: calc(100% - 0.25rem) !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
     transform: translateZ(0); /* Force GPU acceleration */
     will-change: transform; /* Hint for performance */
-    padding-bottom: 4rem !important; /* Extra padding to ensure content isn't cut off */
+    padding-bottom: 2rem !important; /* Extra padding to ensure content isn't cut off */
+    padding-top: 0 !important; /* No extra padding at top to avoid dead space */
+    margin-top: 0 !important;
   }
   
-  /* Add extra space at the bottom to prevent content from being hidden under the pull-to-refresh area */
+  /* Revised bottom spacer for iOS */
   .ios-bottom-spacer {
-    height: 4rem !important;
+    height: 3rem !important;
     width: 100%;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
+  }
+  
+  /* Add special fix for the pull-to-refresh reset */
+  .ios-pwa-ptr-reset {
+    transition: padding-top 0.3s ease-out !important;
+    padding-top: 0 !important;
   }
 }
 

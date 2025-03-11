@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { isIOSPWA } from '@/utils/platform-detection';
 
@@ -25,6 +26,7 @@ export function usePullToRefresh({
   const pullContainerRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const hasMovedRef = useRef(false);
+  const animationFrameRef = useRef<number | null>(null);
 
   // Check if current environment is iOS
   const isIOS = useRef(
@@ -50,13 +52,25 @@ export function usePullToRefresh({
     
     // Additional reset for iOS PWA - ensure content is properly positioned
     if (iosPwaDetected && contentRef.current) {
+      // Cancel any pending animation frame
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+      
+      // Reset any added padding
+      contentRef.current.style.paddingTop = '0px';
+      contentRef.current.classList.add('ios-pwa-ptr-reset');
+      
+      // Ensure scroll position is at top
+      if (contentRef.current.scrollTop > 0) {
+        contentRef.current.scrollTop = 0;
+      }
+      
+      // Remove transition class after animation completes
       setTimeout(() => {
         if (contentRef.current) {
-          // Reset any added padding
-          contentRef.current.style.paddingTop = '0px';
-          
-          // Ensure scroll position is at top
-          contentRef.current.scrollTop = 0;
+          contentRef.current.classList.remove('ios-pwa-ptr-reset');
         }
       }, 300);
     }
@@ -119,10 +133,21 @@ export function usePullToRefresh({
     if (iosPwaDetected && currentScrollTop <= 0 && diff > 10) {
       e.preventDefault();
       
-      // Use padding-top for iOS PWA instead of transform for better behavior
-      if (contentRef.current) {
-        contentRef.current.style.paddingTop = `${newDistance}px`;
+      // Cancel any pending animation frame
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
       }
+      
+      // Schedule update for better performance
+      animationFrameRef.current = requestAnimationFrame(() => {
+        if (contentRef.current) {
+          // Use padding-top for iOS PWA instead of transform for better behavior
+          contentRef.current.style.paddingTop = `${newDistance}px`;
+          
+          // Remove transition class during active pull
+          contentRef.current.classList.remove('ios-pwa-ptr-reset');
+        }
+      });
       
       console.log('iOS PWA pull handling', { diff, newDistance });
     }
@@ -163,6 +188,12 @@ export function usePullToRefresh({
       // Reset without refreshing
       resetPullState();
     }
+    
+    // Cancel any pending animation frame
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
   }, [
     isPulling, 
     isRefreshing, 
@@ -173,6 +204,15 @@ export function usePullToRefresh({
     resetPullState,
     iosPwaDetected
   ]);
+
+  // Cleanup animation frames on unmount
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
 
   // Set up event listeners
   useEffect(() => {
@@ -209,6 +249,21 @@ export function usePullToRefresh({
     iosPwaDetected
   ]);
 
+  // Force reset any leftover padding (additional safeguard)
+  useEffect(() => {
+    if (iosPwaDetected && contentRef.current && !isRefreshing && !isPulling) {
+      const resetPadding = () => {
+        if (contentRef.current) {
+          contentRef.current.style.paddingTop = '0px';
+        }
+      };
+      
+      resetPadding();
+      // Double-check after a delay
+      setTimeout(resetPadding, 500);
+    }
+  }, [iosPwaDetected, isRefreshing, isPulling]);
+
   // Prepare style for container
   const containerStyle = {
     position: 'relative' as const,
@@ -236,6 +291,8 @@ export function usePullToRefresh({
     height: '100%',
     overflowY: 'auto' as const,
     WebkitOverflowScrolling: 'touch' as const,
+    paddingTop: '0px',
+    marginTop: '0px',
   } : {
     transform: `translateY(${pullDistance}px)`,
     transition: isRefreshing || (!isPulling && pullDistance > 0)

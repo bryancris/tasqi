@@ -27,6 +27,7 @@ export default function Dashboard() {
   const location = useLocation();
   const { refetch } = useTasks();
   const contentWrapperRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const isIOSPwaApp = isIOSPWA();
   
   // Handle refresh function for pull-to-refresh
@@ -49,12 +50,13 @@ export default function Dashboard() {
   // Initialize pull-to-refresh with improved iOS PWA settings
   const {
     containerRef,
-    contentRef,
+    contentRef: pullContentRef,
     isRefreshing,
     containerStyle,
     contentStyle,
     refreshIndicatorStyle,
-    isIOSPWA: isPWADetected
+    isIOSPWA: isPWADetected,
+    resetPullState
   } = usePullToRefresh({
     onRefresh: handleRefresh,
     pullDownThreshold: 80,
@@ -64,27 +66,47 @@ export default function Dashboard() {
   
   // Fix iOS PWA dead space issue after pull-to-refresh
   useEffect(() => {
-    if (isIOSPwaApp && contentRef.current) {
-      const resetScrollPosition = () => {
-        // Reset content position when refresh is done
-        if (!isRefreshing && contentRef.current) {
-          contentRef.current.scrollTop = 0;
-          
-          // Reset any potential extra padding
-          setTimeout(() => {
-            if (contentRef.current) {
-              contentRef.current.style.paddingTop = '0px';
-            }
-          }, 300);
+    if (isIOSPwaApp) {
+      // More robust cleanup after refresh completes
+      if (!isRefreshing && pullContentRef.current) {
+        console.log("Cleanup after refresh");
+        
+        // Force scroll position reset
+        if (pullContentRef.current.scrollTop > 0) {
+          pullContentRef.current.scrollTop = 0;
         }
-      };
-      
-      resetScrollPosition();
+        
+        // Add class for transition and reset padding
+        pullContentRef.current.classList.add('ios-pwa-ptr-reset');
+        pullContentRef.current.style.paddingTop = '0px';
+        
+        // Remove class after transition completes
+        setTimeout(() => {
+          if (pullContentRef.current) {
+            pullContentRef.current.classList.remove('ios-pwa-ptr-reset');
+          }
+        }, 350);
+        
+        // Additional cleanup with a slight delay
+        setTimeout(() => {
+          resetPullState();
+          
+          if (pullContentRef.current) {
+            pullContentRef.current.style.paddingTop = '0px';
+          }
+        }, 100);
+      }
     }
-  }, [isRefreshing, isIOSPwaApp]);
+  }, [isRefreshing, isIOSPwaApp, resetPullState]);
   
   useEffect(() => {
     console.log("Dashboard mounted with isIOSPWA:", isIOSPwaApp, "detected:", isPWADetected);
+    
+    // Clean up any leftover padding on initial mount for iOS PWA
+    if (isIOSPwaApp && pullContentRef.current) {
+      console.log("Cleaning up initial padding");
+      pullContentRef.current.style.paddingTop = '0px';
+    }
   }, [isPWADetected, isIOSPwaApp]);
   
   // Update the view based on the current path on mount and when path changes
@@ -124,11 +146,16 @@ export default function Dashboard() {
       <div
         ref={contentWrapperRef}
         className={`relative w-full h-full ${isIOSPwaApp ? 'ios-pwa-wrapper' : ''}`}
+        style={{ paddingTop: 0, marginTop: 0 }}
       >
         {/* Main content */}
         <div 
-          ref={contentRef}
-          style={contentStyle}
+          ref={pullContentRef}
+          style={{
+            ...contentStyle,
+            paddingTop: 0,
+            marginTop: 0
+          }}
           className={`p-4 py-0 px-[10px] h-full overflow-y-auto ios-momentum-scroll ${isIOSPwaApp ? 'ios-pull-to-refresh' : ''}`}
         >
           {view === 'weekly' ? (
@@ -145,7 +172,7 @@ export default function Dashboard() {
           {isIOSPwaApp && <div className="h-px w-full -mb-px"></div>}
           
           {/* Add a spacer div at the bottom to prevent content from being cut off */}
-          {isIOSPwaApp && <div className="h-16 w-full"></div>}
+          {isIOSPwaApp && <div className="h-12 w-full"></div>}
         </div>
       </div>
     </div>
