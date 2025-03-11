@@ -81,9 +81,11 @@ export function TaskCardBase({ task, index, isDraggable = false, view = 'daily',
     setIsEditDrawerOpen(true);
   };
 
-  // Handle complete button click
-  const handleComplete = async (e: React.MouseEvent | React.TouchEvent) => {
-    e.stopPropagation();
+  // Handle complete button click with proper type signatures
+  const handleComplete = async (e?: React.MouseEvent | React.TouchEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
     isCompletingRef.current = true;
 
     try {
@@ -107,19 +109,19 @@ export function TaskCardBase({ task, index, isDraggable = false, view = 'daily',
   } : {};
 
   const renderCard = () => {
-    const cardProps = {
+    const commonProps = {
       task: localTask,
-      onComplete: handleComplete,
-      dragHandleProps
+      dragHandleProps,
+      onClick: handleCardInteraction
     };
 
     switch (view) {
       case 'weekly':
-        return <WeeklyTaskCard {...cardProps} />;
+        return <WeeklyTaskCard {...commonProps} onComplete={handleComplete} />;
       case 'monthly':
-        return <MonthlyTaskCard {...cardProps} />;
+        return <MonthlyTaskCard {...commonProps} onComplete={handleComplete} />;
       default:
-        return <DailyTaskCard {...cardProps} />;
+        return <DailyTaskCard {...commonProps} onComplete={handleComplete} />;
     }
   };
 
@@ -134,8 +136,6 @@ export function TaskCardBase({ task, index, isDraggable = false, view = 'daily',
           "task-card",
           isIOSPwaApp && "ios-pwa-task-card"
         )}
-        onClick={handleCardInteraction}
-        onTouchEnd={handleCardInteraction}
         role="button"
         tabIndex={0}
         data-task-card="true"
