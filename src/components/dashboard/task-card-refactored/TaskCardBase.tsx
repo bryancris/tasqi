@@ -109,19 +109,43 @@ export function TaskCardBase({ task, index, isDraggable = false, view = 'daily',
   } : {};
 
   const renderCard = () => {
-    const commonProps = {
-      task: localTask,
-      dragHandleProps,
-      onClick: handleCardInteraction
+    // Create wrapper functions without parameters to match the expected function signatures
+    const handleCardClick = () => {
+      setIsEditDrawerOpen(true);
+    };
+    
+    const handleTaskComplete = () => {
+      handleComplete();
     };
 
     switch (view) {
       case 'weekly':
-        return <WeeklyTaskCard {...commonProps} onComplete={handleComplete} />;
+        return (
+          <WeeklyTaskCard 
+            task={localTask}
+            dragHandleProps={dragHandleProps}
+            onClick={handleCardClick}
+            onComplete={handleTaskComplete}
+          />
+        );
       case 'monthly':
-        return <MonthlyTaskCard {...commonProps} onComplete={handleComplete} />;
+        return (
+          <MonthlyTaskCard 
+            task={localTask}
+            dragHandleProps={dragHandleProps}
+            onClick={handleCardClick}
+            onComplete={handleTaskComplete}
+          />
+        );
       default:
-        return <DailyTaskCard {...commonProps} onComplete={handleComplete} />;
+        return (
+          <DailyTaskCard 
+            task={localTask}
+            dragHandleProps={dragHandleProps}
+            onClick={handleCardClick}
+            onComplete={handleTaskComplete}
+          />
+        );
     }
   };
 
@@ -139,6 +163,7 @@ export function TaskCardBase({ task, index, isDraggable = false, view = 'daily',
         role="button"
         tabIndex={0}
         data-task-card="true"
+        onClick={handleCardInteraction}
       >
         {renderCard()}
       </div>
