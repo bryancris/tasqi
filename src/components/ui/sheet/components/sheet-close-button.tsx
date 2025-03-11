@@ -18,35 +18,64 @@ export function SheetCloseButton({
 }: SheetCloseButtonProps) {
   const isIOSPwaApp = isIOSPWA();
 
-  // Simplified, direct close handler that prioritizes closing the sheet
+  // Simplified direct close handler for button clicks and touches
   const handleClose = React.useCallback((e: React.MouseEvent<Element, MouseEvent> | React.TouchEvent<Element>) => {
-    console.log(`⭐ SheetCloseButton X clicked/touched for sheet ${sheetId}`);
-    
     // Prevent event bubbling
     e.stopPropagation();
     e.preventDefault();
     
-    // Analytics tracking through the original handler
+    console.log(`⭐ SheetCloseButton X clicked for sheet ${sheetId}, onOpenChange present: ${!!onOpenChange}`);
+    
+    // Call original tracking handler
     if ('button' in e) {
-      handleCloseClick(e as React.MouseEvent<Element, MouseEvent>);
+      try {
+        handleCloseClick(e as React.MouseEvent<Element, MouseEvent>);
+      } catch (err) {
+        console.error('Error in tracking click handler:', err);
+      }
     }
     
     // DIRECT SHEET CLOSING - Most important part
     if (onOpenChange) {
       console.log(`✅ Directly calling onOpenChange(false) for sheet ${sheetId}`);
-      // Use setTimeout for more reliable closing
+      
+      // Use both immediate and timeout calls for reliability
+      try {
+        onOpenChange(false); // Try immediate close
+      } catch (err) {
+        console.error('Error in immediate sheet close:', err);
+      }
+      
+      // Also try with timeout as fallback
       setTimeout(() => {
-        onOpenChange(false);
+        try {
+          if (onOpenChange) onOpenChange(false);
+        } catch (err) {
+          console.error('Error in delayed sheet close:', err);
+        }
       }, 0);
     } else {
-      console.warn(`❌ No onOpenChange provided for sheet ${sheetId} - cannot close programmatically`);
+      console.error(`❌ No onOpenChange provided for sheet ${sheetId} - cannot close programmatically`);
     }
   }, [handleCloseClick, sheetId, onOpenChange]);
 
-  // Log when component mounts to verify props
+  // Debug: log to console when the component mounts
   React.useEffect(() => {
     console.log(`🔍 SheetCloseButton mounted for sheet ${sheetId}, onOpenChange present: ${!!onOpenChange}`);
-    return () => console.log(`SheetCloseButton unmounted for sheet ${sheetId}`);
+    
+    // Make onOpenChange globally available for debugging (remove in production)
+    if (process.env.NODE_ENV !== 'production') {
+      (window as any)[`sheetCloseButton_${sheetId}`] = {
+        hasCloseHandler: !!onOpenChange
+      };
+    }
+    
+    return () => {
+      console.log(`SheetCloseButton unmounted for sheet ${sheetId}`);
+      if (process.env.NODE_ENV !== 'production') {
+        delete (window as any)[`sheetCloseButton_${sheetId}`];
+      }
+    }
   }, [sheetId, onOpenChange]);
   
   return (
@@ -59,6 +88,7 @@ export function SheetCloseButton({
       onTouchStart={(e) => e.stopPropagation()} // Prevent touch events from reaching the sheet
       data-sheet-close="true"
       data-sheet-id={sheetId}
+      data-has-handler={!!onOpenChange ? "true" : "false"}
       aria-label="Close"
       role="button"
       tabIndex={0}

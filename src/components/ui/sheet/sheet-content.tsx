@@ -72,8 +72,10 @@ export const SheetContent = React.forwardRef<
   // Handler for swipe to close
   const handleClose = React.useCallback(() => {
     if (onOpenChange) {
-      console.log(`SheetContent calling onOpenChange(false) for sheet ${sheetId}`);
+      console.log(`⭐ SheetContent calling onOpenChange(false) for sheet ${sheetId}`);
       onOpenChange(false);
+    } else {
+      console.log(`❌ SheetContent has no onOpenChange for sheet ${sheetId}`);
     }
   }, [onOpenChange, sheetId]);
   
@@ -142,6 +144,8 @@ export const SheetContent = React.forwardRef<
         />
         
         {children}
+        
+        {/* IMPORTANT: Directly pass onOpenChange to SheetCloseButton */}
         <SheetCloseButton 
           isSharingSheet={isSharingSheet}
           sheetId={sheetId}

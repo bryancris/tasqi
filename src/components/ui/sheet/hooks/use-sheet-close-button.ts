@@ -19,6 +19,14 @@ export function useSheetCloseButton({ sheetId }: UseSheetCloseButtonProps) {
     (window as any).__closeButtonPressed = true;
     (window as any).__closeButtonPressTime = Date.now();
     (window as any).__closeButtonSheetId = sheetId;
+    
+    // Add additional debug info
+    (window as any).__closeButtonEvent = {
+      type: e.type,
+      target: e.target instanceof Element ? e.target.tagName : 'unknown',
+      currentTarget: e.currentTarget instanceof Element ? e.currentTarget.tagName : 'unknown',
+      timeStamp: e.timeStamp
+    };
   }, [sheetId]);
   
   return { handleCloseClick };

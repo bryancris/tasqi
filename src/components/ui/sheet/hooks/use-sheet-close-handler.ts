@@ -20,11 +20,16 @@ export function useSheetCloseHandler({
 }: UseSheetCloseHandlerProps) {
   // Direct handler that prioritizes closing the sheet
   const enhancedCloseHandler = useCallback((e: CombinedEvent) => {
-    console.log(`Sheet ${sheetId} direct close handler triggered via ${e.type}`);
+    console.log(`⚡ Sheet ${sheetId} direct close handler triggered via ${e.type}`);
     
     // Prevent default and stop propagation
     if (e.stopPropagation) e.stopPropagation();
     if (e.preventDefault) e.preventDefault();
+    
+    if (e.nativeEvent) {
+      e.nativeEvent.stopPropagation();
+      e.nativeEvent.preventDefault();
+    }
 
     // Track for debugging
     (window as any).__closeHandlerTriggered = true;
@@ -42,18 +47,25 @@ export function useSheetCloseHandler({
 
     // MOST IMPORTANT: Actually close the sheet
     if (onOpenChange) {
-      console.log(`Directly closing sheet ${sheetId} via onOpenChange(false)`);
+      console.log(`⭐ Directly closing sheet ${sheetId} via onOpenChange(false)`);
       
-      // Small timeout to ensure reliability
+      // Try immediate close
+      try {
+        onOpenChange(false);
+      } catch (err) {
+        console.error('Error in immediate sheet close:', err);
+      }
+      
+      // Also use timeout for extra reliability
       setTimeout(() => {
         try {
-          onOpenChange(false);
+          if (onOpenChange) onOpenChange(false);
         } catch (err) {
-          console.error('Error closing sheet:', err);
+          console.error('Error in delayed sheet close:', err);
         }
       }, 0);
     } else {
-      console.warn(`Cannot close sheet ${sheetId}: onOpenChange not provided`);
+      console.error(`❌ Cannot close sheet ${sheetId}: onOpenChange not provided`);
     }
   }, [handleCloseClick, sheetId, onOpenChange, isSharingSheet]);
   
