@@ -51,12 +51,31 @@
     width: 100%;
     height: 100%;
   }
+
+  body.scrollable-page {
+    position: relative !important;
+    overflow-y: auto !important;
+    overscroll-behavior-y: auto !important;
+    height: auto !important;
+    min-height: 100vh !important;
+  }
+
+  .scrollable-page .content-container {
+    height: auto !important;
+    min-height: 100vh !important;
+    overflow-y: visible !important;
+  }
   
   #root {
     @apply min-h-screen;
     height: 100%;
     width: 100%;
     overflow: hidden;
+  }
+
+  body.scrollable-page #root {
+    overflow: visible !important;
+    height: auto !important;
   }
   
   .ios-momentum-scroll {

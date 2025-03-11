@@ -13,8 +13,18 @@ import {
 import HeroSection from "@/components/home/HeroSection";
 import FeatureSection from "@/components/home/FeatureSection";
 import NavButtons from "@/components/home/NavButtons";
+import { useEffect } from "react";
 
 const Index = () => {
+  // Add scrollable class to body when this component mounts and remove it when it unmounts
+  useEffect(() => {
+    document.body.classList.add('scrollable-page');
+    
+    return () => {
+      document.body.classList.remove('scrollable-page');
+    };
+  }, []);
+
   const aiProductivityFeatures = [
     {
       icon: MessageSquare,
@@ -80,7 +90,7 @@ const Index = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-white text-gray-900 py-12 px-4 md:px-8">
+      <div className="min-h-screen bg-white text-gray-900 py-12 px-4 md:px-8 content-container">
         <NavButtons />
         <HeroSection />
         <FeatureSection title="AI-Powered Productivity" features={aiProductivityFeatures} />
