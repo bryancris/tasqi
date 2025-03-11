@@ -48,22 +48,11 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
     };
   }, [queryClient, invalidateTasks, cleanup]);
 
+  // Simplified iOS scroll handler
   useEffect(() => {
     if (isIOSPwaApp && contentRef.current) {
-      const handleScroll = () => {
-        if (contentRef.current && contentRef.current.scrollTop <= 5) {
-          contentRef.current.style.paddingTop = '0px';
-        }
-      };
-      
-      const currentContent = contentRef.current;
-      currentContent.addEventListener('scroll', handleScroll, { passive: true });
-      
-      currentContent.style.paddingTop = '0px';
-      
-      return () => {
-        currentContent?.removeEventListener('scroll', handleScroll);
-      };
+      // Apply iOS-specific fixes
+      contentRef.current.style.paddingTop = '0px';
     }
   }, [isIOSPwaApp]);
 
@@ -112,21 +101,27 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
     invalidateTasks(150);
   };
 
-  const containerStyle = isIOSPwaApp 
-    ? { height: '100%' }
-    : { height: 'calc(100vh - 144px)' };
+  // Simplified container style calculation
+  const containerStyle = { 
+    height: isIOSPwaApp ? '100%' : 'calc(100vh - 144px)',
+    paddingTop: 0,
+    marginTop: 0
+  };
 
   return (
     <div 
       ref={containerRef}
-      className={`px-4 ${isIOSPwaApp ? 'ios-pwa-container' : ''}`}
+      className={`${isIOSPwaApp ? 'ios-pwa-container' : ''}`}
       style={containerStyle}
     >
       <Card className="h-full border-none shadow-none bg-transparent">
-        <MobileTaskBoardHeader 
-          view={view} 
-          onViewChange={setView} 
-        />
+        {/* Apply ios-pwa-fixed-header class to ensure header is visible */}
+        <div className={`${isIOSPwaApp ? 'ios-pwa-fixed-header' : ''}`}>
+          <MobileTaskBoardHeader 
+            view={view} 
+            onViewChange={setView} 
+          />
+        </div>
         <CardContent 
           ref={contentRef}
           className={`overflow-y-auto p-0 pb-8 ${isIOSPwaApp 
@@ -147,6 +142,7 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
             />
           )}
           
+          {/* Add bottom spacer to prevent content from being hidden behind bottom bar */}
           <div className={`w-full ${isIOSPwaApp ? 'h-[calc(env(safe-area-inset-bottom)+1rem)]' : 'h-8'}`}></div>
         </CardContent>
       </Card>

@@ -64,36 +64,19 @@ export default function Dashboard() {
     isPWA: true
   });
   
-  // Fix iOS PWA dead space issue after pull-to-refresh
+  // Improved iOS PWA handling after pull-to-refresh
   useEffect(() => {
     if (isIOSPwaApp) {
-      // More robust cleanup after refresh completes
+      // Only run cleanup when refresh ends
       if (!isRefreshing && pullContentRef.current) {
-        console.log("Cleanup after refresh");
+        console.log("Cleanup after refresh completed");
         
-        // Force scroll position reset
-        if (pullContentRef.current.scrollTop > 0) {
-          pullContentRef.current.scrollTop = 0;
-        }
-        
-        // Add class for transition and reset padding
-        pullContentRef.current.classList.add('ios-pwa-ptr-reset');
+        // Reset scroll position and padding
         pullContentRef.current.style.paddingTop = '0px';
         
-        // Remove class after transition completes
-        setTimeout(() => {
-          if (pullContentRef.current) {
-            pullContentRef.current.classList.remove('ios-pwa-ptr-reset');
-          }
-        }, 350);
-        
-        // Additional cleanup with a slight delay
+        // Reset pull state after a short delay
         setTimeout(() => {
           resetPullState();
-          
-          if (pullContentRef.current) {
-            pullContentRef.current.style.paddingTop = '0px';
-          }
         }, 100);
       }
     }
@@ -124,12 +107,6 @@ export default function Dashboard() {
       setView('tasks');
     }
   }, [location.pathname, setView]);
-  
-  // Only log when view changes
-  useEffect(() => {
-    console.log("Dashboard view changed to:", view);
-    console.log("Selected date:", selectedDate);
-  }, [view, selectedDate]);
   
   return (
     <div 
@@ -168,11 +145,9 @@ export default function Dashboard() {
             <TaskBoard selectedDate={selectedDate} onDateChange={setSelectedDate} />
           )}
           
-          {/* This hidden element helps iOS detect the bounce effect */}
+          {/* Helper elements for iOS PWA */}
           {isIOSPwaApp && <div className="h-px w-full -mb-px"></div>}
-          
-          {/* Add a spacer div at the bottom to prevent content from being cut off */}
-          {isIOSPwaApp && <div className="h-12 w-full"></div>}
+          {isIOSPwaApp && <div className="h-16 w-full"></div>}
         </div>
       </div>
     </div>
