@@ -1,4 +1,3 @@
-
 import { Task } from "./TaskBoard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TaskCard } from "./TaskCard";
@@ -29,18 +28,15 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
   const contentRef = useRef<HTMLDivElement>(null);
   const isIOSPwaApp = isIOSPWA();
   
-  // Create a subscription to task updates
   useEffect(() => {
     console.log("Setting up mobile view task subscription");
     
-    // Listen for query invalidations
     const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
-      // Check if tasks query was modified
       if (event.type === 'updated' || event.type === 'added' || event.type === 'removed') {
         if (Array.isArray(event.query?.queryKey) && 
             event.query?.queryKey[0] === 'tasks') {
           console.log('Task query updated in MobileTaskView, refreshing');
-          invalidateTasks(200); // Use a 200ms debounce delay for mobile
+          invalidateTasks(200);
         }
       }
     });
@@ -52,12 +48,9 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
     };
   }, [queryClient, invalidateTasks, cleanup]);
 
-  // Effect to fix iOS PWA scroll position after pull-to-refresh
   useEffect(() => {
     if (isIOSPwaApp && contentRef.current) {
-      // Fix for iOS PWA pull-to-refresh scrolling issues
       const handleScroll = () => {
-        // Reset the top padding when user scrolls back up
         if (contentRef.current && contentRef.current.scrollTop <= 5) {
           contentRef.current.style.paddingTop = '0px';
         }
@@ -66,7 +59,6 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
       const currentContent = contentRef.current;
       currentContent.addEventListener('scroll', handleScroll, { passive: true });
       
-      // Reset any padding on component mount
       currentContent.style.paddingTop = '0px';
       
       return () => {
@@ -75,40 +67,35 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
     }
   }, [isIOSPwaApp]);
 
-  // Configure better sensors for mobile touch interactions
   const sensors = useSensors(
     useSensor(MouseSensor, {
       activationConstraint: {
-        distance: 5, // Reduced from 10 to make it more responsive
+        distance: 5,
       },
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 150, // Reduced from 250ms to be more responsive
-        tolerance: 8, // Increased from 5px to be more forgiving
-        distance: 5, // Add distance constraint to prevent accidental drags during scrolling
+        delay: 150,
+        tolerance: 8,
+        distance: 5,
       },
     })
   );
 
-  // Filter tasks logic
   const shouldShowCompletedTask = (task: Task) => {
     return task.completed_at && isAfter(new Date(task.completed_at), todayStart);
   };
 
   const filterTasks = (task: Task) => {
     try {
-      // Always show unscheduled tasks
       if (task.status === 'unscheduled') {
         return true;
       }
       
-      // Show completed tasks from today
       if (task.status === 'completed') {
         return shouldShowCompletedTask(task);
       }
       
-      // For scheduled tasks, check if they match the selected date
       if (task.status === 'scheduled' || task.status === 'in_progress' || 
           task.status === 'stuck' || task.status === 'event') {
         if (!task.date) return false;
@@ -127,7 +114,6 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
     .sort((a, b) => {
       if (a.status === 'completed' && b.status !== 'completed') return 1;
       if (a.status !== 'completed' && b.status === 'completed') return -1;
-      // Events should appear at the top
       if (a.status === 'event' && b.status !== 'event') return -1;
       if (a.status !== 'event' && b.status === 'event') return 1;
       return (a.position || 0) - (b.position || 0);
@@ -137,25 +123,22 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
     .filter(task => task.status !== 'completed')
     .map(task => task.id);
 
-  // Enhanced onComplete function with refetch
   const handleComplete = () => {
     console.log("Task completed, refreshing tasks");
     if (onComplete) {
       onComplete();
     }
-    // Also trigger a task refresh with shorter delay
     invalidateTasks(150);
   };
 
-  // Use dynamic height calculation based on device
   const containerStyle = isIOSPwaApp 
-    ? { height: 'calc(100% - 16px)', maxHeight: 'calc(100% - 16px)' }
+    ? { height: '100%' }
     : { height: 'calc(100vh - 144px)' };
 
   return (
     <div 
       ref={containerRef}
-      className={`overflow-hidden px-4 ${isIOSPwaApp ? 'ios-pwa-container' : ''}`}
+      className={`px-4 ${isIOSPwaApp ? 'ios-pwa-container' : ''}`}
       style={containerStyle}
     >
       <Card className="h-full border-none shadow-none bg-transparent">
@@ -180,15 +163,14 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
         <CardContent 
           ref={contentRef}
           className={`overflow-y-auto p-0 pb-8 ${isIOSPwaApp 
-            ? 'ios-pwa-content ios-momentum-scroll' 
+            ? 'ios-pwa-content' 
             : 'ios-momentum-scroll h-[calc(100%-5rem)]'}`}
-          style={{ WebkitOverflowScrolling: 'touch' }}
         >
           {view === 'board' ? (
             <DndContext 
               sensors={sensors} 
               onDragEnd={onDragEnd}
-              collisionDetection={pointerWithin} // Use pointer intersection for better mobile detection
+              collisionDetection={pointerWithin}
             >
               <SortableContext items={draggableTaskIds} strategy={verticalListSortingStrategy}>
                 <div className="flex flex-col gap-2 pb-4 pt-1">
@@ -217,8 +199,7 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
             />
           )}
           
-          {/* Add a spacer div at the bottom to prevent content from being cut off */}
-          <div className={`w-full ${isIOSPwaApp ? 'ios-bottom-spacer' : 'h-8'}`}></div>
+          <div className={`w-full ${isIOSPwaApp ? 'h-[calc(env(safe-area-inset-bottom)+1rem)]' : 'h-8'}`}></div>
         </CardContent>
       </Card>
     </div>

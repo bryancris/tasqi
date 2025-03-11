@@ -1,7 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
- 
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -29,9 +29,7 @@
     --ios-pwa-protection-duration: 3500ms;
     --ios-pwa-sheet-exit-duration: 1200ms;
   }
-}
- 
-@layer base {
+  
   * {
     @apply border-border;
   }
@@ -39,13 +37,13 @@
   html {
     height: 100%;
     width: 100%;
-    overscroll-behavior-y: none; /* Global prevention of overscroll */
+    overscroll-behavior-y: none;
   }
   
   body {
     @apply bg-background text-foreground min-h-screen;
-    overscroll-behavior-y: none; /* Prevent browser overscroll globally */
-    position: fixed; /* Required for iOS PWA to work properly */
+    overscroll-behavior-y: none;
+    position: fixed;
     top: 0;
     left: 0;
     right: 0;
@@ -58,15 +56,13 @@
     @apply min-h-screen;
     height: 100%;
     width: 100%;
-    overflow: hidden; /* Prevent overflow at root level */
+    overflow: hidden;
   }
   
-  /* Enable momentum scrolling on iOS */
   .ios-momentum-scroll {
     -webkit-overflow-scrolling: touch;
   }
   
-  /* Allow bounce effect for iOS PWA pull-to-refresh */
   .ios-pull-to-refresh {
     overflow-y: auto;
     overscroll-behavior-y: auto !important;
@@ -74,24 +70,23 @@
     -webkit-tap-highlight-color: transparent;
   }
   
-  /* Special styling for iOS PWA main content */
   .ios-pwa-main {
     position: fixed;
-    top: 72px; 
+    top: 0;
     left: 0;
     right: 0;
-    bottom: 56px; /* Account for the footer height */
+    bottom: 56px;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: auto;
+    padding-top: env(safe-area-inset-top);
+    height: calc(100% - env(safe-area-inset-bottom) - 56px);
   }
   
-  /* Special styling for iOS PWA sharing sheets */
   .ios-pwa-sharing-sheet {
     z-index: 999 !important;
   }
   
-  /* Improved sharing shield for iOS PWA */
   [data-sharing-shield="true"] {
     pointer-events: all !important;
     touch-action: none !important;
@@ -104,13 +99,11 @@
     background-color: transparent !important;
   }
   
-  /* New - Add data attributes for easy styling of sharing sheets */
   [data-ios-pwa-sharing="true"] {
     --radix-sheet-content-duration: var(--ios-pwa-sheet-exit-duration) !important;
     z-index: 9999 !important;
   }
   
-  /* New - Explicitly disable pointer events during protection period */
   html.ios-pwa-protection-active {
     pointer-events: none !important;
   }
@@ -120,36 +113,33 @@
     pointer-events: none !important;
   }
   
-  /* Revised iOS PWA container and content fixes for dead space issues */
   .ios-pwa-container {
     position: relative !important;
     overflow: hidden !important;
-    height: calc(100% - 8px) !important;
-    max-height: calc(100% - 8px) !important;
+    height: 100% !important;
+    max-height: 100% !important;
     margin-top: 0 !important;
-    padding-top: 0 !important;
+    padding-top: env(safe-area-inset-top) !important;
   }
   
   .ios-pwa-content {
-    height: 100% !important;
-    max-height: calc(100% - 0.25rem) !important;
+    height: calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+    max-height: calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
-    transform: translateZ(0); /* Force GPU acceleration */
-    will-change: transform; /* Hint for performance */
-    padding-bottom: 2rem !important; /* Extra padding to ensure content isn't cut off */
-    padding-top: 0 !important; /* No extra padding at top to avoid dead space */
+    transform: translateZ(0);
+    will-change: transform;
+    padding-bottom: env(safe-area-inset-bottom) !important;
+    padding-top: 72px !important;
     margin-top: 0 !important;
   }
   
-  /* Revised bottom spacer for iOS */
   .ios-bottom-spacer {
     height: 3rem !important;
     width: 100%;
     margin-bottom: 1rem;
   }
   
-  /* Add special fix for the pull-to-refresh reset */
   .ios-pwa-ptr-reset {
     transition: padding-top 0.3s ease-out !important;
     padding-top: 0 !important;

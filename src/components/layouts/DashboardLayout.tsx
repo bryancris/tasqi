@@ -69,7 +69,7 @@ export function DashboardLayout({
   return <div className="min-h-screen bg-white">
       {isMobile ? <>
           <MobileHeader />
-          <main className={`flex-1 pb-16 pt-[72px] ${isIOSPWA ? 'ios-pwa-main' : 'scrollbar-hide'}`}>
+          <main className={`flex-1 pb-16 ${isIOSPWA ? 'ios-pwa-main' : 'pt-[72px] scrollbar-hide'}`}>
             <ErrorBoundary fallback={<div className="p-4 text-center">Something went wrong loading the dashboard. Please refresh the page.</div>}>
               {children}
             </ErrorBoundary>
