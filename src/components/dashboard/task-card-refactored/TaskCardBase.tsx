@@ -30,6 +30,7 @@ export function TaskCardBase({ task, index, isDraggable = false, view = 'daily',
   const touchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isDraggingRef = useRef(false);
   const isCompletingRef = useRef(false);
+  const touchStartPositionRef = useRef<{x: number, y: number} | null>(null);
 
   useEffect(() => {
     setLocalTask(task);
@@ -59,14 +60,14 @@ export function TaskCardBase({ task, index, isDraggable = false, view = 'daily',
     isDraggingRef.current = isDragging;
   }, [isDragging]);
 
-  // Handle card interactions
+  // Handle card interactions - don't open drawer if user is dragging
   const handleCardInteraction = (e: React.MouseEvent | React.TouchEvent) => {
     // Don't open if we're dragging or completing
     if (isDraggingRef.current || isCompletingRef.current) {
       return;
     }
 
-    // Check if click/touch is on a sharing indicator or complete button
+    // Check if click/touch is on a sharing indicator or complete button or drag handle
     const target = e.target as HTMLElement;
     if (
       target.closest('[data-sharing-indicator="true"]') ||
@@ -79,6 +80,41 @@ export function TaskCardBase({ task, index, isDraggable = false, view = 'daily',
 
     // Open the drawer
     setIsEditDrawerOpen(true);
+  };
+
+  // Handle touch start to track potential drag
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!isDraggable) return;
+    
+    // Store touch start position
+    const touch = e.touches[0];
+    touchStartPositionRef.current = {
+      x: touch.clientX,
+      y: touch.clientY
+    };
+  };
+
+  // Handle touch move to decide if it's a drag
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDraggable || !touchStartPositionRef.current) return;
+    
+    const touch = e.touches[0];
+    const deltaX = Math.abs(touch.clientX - touchStartPositionRef.current.x);
+    const deltaY = Math.abs(touch.clientY - touchStartPositionRef.current.y);
+    
+    // If moved more than 10px in any direction, consider it a drag attempt
+    if (deltaX > 10 || deltaY > 10) {
+      isDraggingRef.current = true;
+    }
+  };
+
+  // Reset touch tracking on touch end
+  const handleTouchEnd = () => {
+    // Wait a bit before resetting dragging state to allow for click events
+    setTimeout(() => {
+      isDraggingRef.current = false;
+      touchStartPositionRef.current = null;
+    }, 50);
   };
 
   // Handle complete button click with proper type signatures
@@ -109,7 +145,7 @@ export function TaskCardBase({ task, index, isDraggable = false, view = 'daily',
   } : {};
 
   const renderCard = () => {
-    // Create wrapper functions without parameters to match the expected function signatures
+    // Create wrapper functions without parameters to match expected signatures
     const handleCardClick = () => {
       setIsEditDrawerOpen(true);
     };
@@ -164,6 +200,9 @@ export function TaskCardBase({ task, index, isDraggable = false, view = 'daily',
         tabIndex={0}
         data-task-card="true"
         onClick={handleCardInteraction}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
         {renderCard()}
       </div>

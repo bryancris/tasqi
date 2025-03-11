@@ -2,7 +2,7 @@
 import { Task } from "./TaskBoard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TaskCard } from "./TaskCard";
-import { DndContext, MouseSensor, TouchSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
+import { DndContext, MouseSensor, TouchSensor, useSensor, useSensors, DragEndEvent, pointerWithin } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { startOfDay, isAfter, parseISO, isSameDay } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -54,16 +54,18 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
     };
   }, [queryClient, invalidateTasks, cleanup]);
 
+  // Configure better sensors for mobile touch interactions
   const sensors = useSensors(
     useSensor(MouseSensor, {
       activationConstraint: {
-        distance: 10,
+        distance: 5, // Reduced from 10 to make it more responsive
       },
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 250,
-        tolerance: 5,
+        delay: 150, // Reduced from 250ms to be more responsive
+        tolerance: 8, // Increased from 5px to be more forgiving
+        distance: 5, // Add distance constraint to prevent accidental drags during scrolling
       },
     })
   );
@@ -147,9 +149,13 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
         </CardHeader>
         <CardContent className={`overflow-y-auto h-[calc(100%-5rem)] p-0 ${isIOSPWA ? 'ios-pull-to-refresh' : 'ios-momentum-scroll'}`}>
           {view === 'board' ? (
-            <DndContext sensors={sensors} onDragEnd={onDragEnd}>
+            <DndContext 
+              sensors={sensors} 
+              onDragEnd={onDragEnd}
+              collisionDetection={pointerWithin} // Use pointer intersection for better mobile detection
+            >
               <SortableContext items={draggableTaskIds} strategy={verticalListSortingStrategy}>
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2 pb-4">
                   {sortedTasks.map((task, index) => (
                     <TaskCard
                       key={task.id}
