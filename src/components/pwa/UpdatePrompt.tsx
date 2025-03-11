@@ -14,7 +14,7 @@ export function UpdatePrompt() {
     let refreshing = false;
     let broadcastChannel: BroadcastChannel | null = null;
     
-    const setupServiceWorkerListeners = () => {
+    const setupServiceWorkerListeners = async () => {
       try {
         // Create a broadcast channel for service worker communication
         broadcastChannel = new BroadcastChannel('sw-updates');
@@ -35,87 +35,51 @@ export function UpdatePrompt() {
             }
           }
         });
-        
-        // Setup other listeners for service worker state changes
+
         if ('serviceWorker' in navigator) {
-          // Check if there's already a controlling service worker
-          if (navigator.serviceWorker.controller) {
-            console.log('Service worker is already controlling the page');
-          }
+          // Get service worker registration
+          const reg = await navigator.serviceWorker.ready;
+          setRegistration(reg);
           
-          // Handle new service worker installation
-          navigator.serviceWorker.addEventListener('controllerchange', () => {
-            console.log('Service worker controller changed');
-            if (!refreshing) {
-              refreshing = true;
-              window.location.reload();
-            }
-          });
+          // Check for updates immediately
+          await reg.update();
           
-          // Get service worker registration to check for updates
-          navigator.serviceWorker.ready.then((reg) => {
-            console.log('Service worker ready');
-            setRegistration(reg);
+          // Setup update waiting handler
+          const handleUpdateFound = () => {
+            const newWorker = reg.installing || reg.waiting;
             
-            // Check for updates immediately and then on regular intervals
-            const checkForUpdates = async () => {
-              console.log('Checking for service worker updates...');
-              try {
-                await reg.update();
-              } catch (error) {
-                console.error('Error checking for updates:', error);
-              }
-            };
-            
-            // Initial check
-            checkForUpdates();
-            
-            // Check every 30 minutes
-            const updateInterval = setInterval(checkForUpdates, 30 * 60 * 1000);
-            
-            // Setup update waiting handler
-            const handleUpdateFound = () => {
-              const newWorker = reg.installing || reg.waiting;
-              
-              if (newWorker) {
-                console.log('New service worker state:', newWorker.state);
-                
-                newWorker.addEventListener('statechange', () => {
-                  console.log('Service worker state changed to:', newWorker.state);
-                  
-                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                    console.log('New service worker installed and waiting');
+            if (newWorker) {
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // Only show update prompt if we have a new version waiting
+                  const currentHash = localStorage.getItem('sw-hash');
+                  if (newWorker.scriptURL && currentHash !== newWorker.scriptURL) {
                     setShowUpdatePrompt(true);
                     setUpdateReady(true);
-                    
-                    // Also notify via toast
-                    toast('Update available', {
-                      description: 'A new version is available. Refresh to update.',
-                      action: {
-                        label: 'Update',
-                        onClick: () => applyUpdate()
-                      }
-                    });
+                    // Store new hash
+                    localStorage.setItem('sw-hash', newWorker.scriptURL);
                   }
-                });
-              }
-            };
-            
-            // Check if an update is already waiting
-            if (reg.waiting) {
-              console.log('Update already waiting');
+                }
+              });
+            }
+          };
+          
+          // Check if an update is already waiting
+          if (reg.waiting) {
+            const currentHash = localStorage.getItem('sw-hash');
+            if (reg.waiting.scriptURL && currentHash !== reg.waiting.scriptURL) {
               setShowUpdatePrompt(true);
               setUpdateReady(true);
+              localStorage.setItem('sw-hash', reg.waiting.scriptURL);
             }
-            
-            // Listen for future updates
-            reg.addEventListener('updatefound', handleUpdateFound);
-            
-            return () => {
-              clearInterval(updateInterval);
-              reg.removeEventListener('updatefound', handleUpdateFound);
-            };
-          });
+          }
+          
+          // Listen for future updates
+          reg.addEventListener('updatefound', handleUpdateFound);
+          
+          return () => {
+            reg.removeEventListener('updatefound', handleUpdateFound);
+          };
         }
       } catch (error) {
         console.error('Error setting up service worker listeners:', error);
@@ -140,7 +104,6 @@ export function UpdatePrompt() {
     
     if (registration.waiting) {
       // Send message to service worker to skip waiting
-      console.log('Sending SKIP_WAITING message to service worker');
       registration.waiting.postMessage({ type: 'SKIP_WAITING' });
       
       try {
@@ -156,38 +119,6 @@ export function UpdatePrompt() {
       window.location.reload();
     }
   };
-  
-  // Handle network status changes
-  useEffect(() => {
-    const handleOnline = () => {
-      console.log('Network is online');
-      toast.success('You are back online', {
-        description: 'Your network connection has been restored.'
-      });
-      
-      // If service worker is registered, check for updates when coming back online
-      if (registration) {
-        registration.update().catch(err => {
-          console.error('Error updating service worker after coming online:', err);
-        });
-      }
-    };
-    
-    const handleOffline = () => {
-      console.log('Network is offline');
-      toast.error('You are offline', {
-        description: 'Some features may be limited. We\'ll sync your changes when you\'re back online.'
-      });
-    };
-    
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, [registration]);
   
   if (!showUpdatePrompt || !updateReady) {
     return null;
