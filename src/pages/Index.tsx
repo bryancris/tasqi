@@ -9,6 +9,15 @@ import {
   Smartphone,
   BarChart3,
   Shield,
+  Calendar,
+  Timer,
+  HeartPulse,
+  Notebook,
+  Users,
+  Sparkles,
+  PanelLeft,
+  MoveHorizontal,
+  Star
 } from "lucide-react";
 import HeroSection from "@/components/home/HeroSection";
 import FeatureSection from "@/components/home/FeatureSection";
@@ -25,66 +34,87 @@ const Index = () => {
     };
   }, []);
 
-  const aiProductivityFeatures = [
+  const aiTaskManagementFeatures = [
     {
       icon: MessageSquare,
       title: "Natural Language & Voice",
-      description: "Create and manage tasks using natural language. Our advanced AI understands your intent and handles the details.",
+      description: "Create and manage tasks using natural language or voice commands. Our AI understands your intent and handles all the details.",
       iconColor: "text-blue-600"
-    },
-    {
-      icon: Wand2,
-      title: "AI Task Enhancement",
-      description: "Get smart suggestions for priorities, deadlines, and dependencies. Vision API processes task-related images.",
-      iconColor: "text-purple-600"
     },
     {
       icon: Brain,
-      title: "Intelligent Chat",
-      description: "Chat naturally with your AI assistant for task clarification and management. Handles recurring tasks and conflicts.",
+      title: "Intelligent Assistant",
+      description: "Chat naturally with your AI assistant for task management, clarifications, and getting personalized productivity advice.",
+      iconColor: "text-purple-600"
+    },
+    {
+      icon: Wand2,
+      title: "Smart Task Management",
+      description: "Get AI suggestions for priorities, deadlines, and dependencies. Automatic categorization and organization of your tasks.",
       iconColor: "text-green-600"
     }
   ];
 
-  const specializedAgentsFeatures = [
+  const productivityToolsFeatures = [
     {
-      icon: ListTodo,
-      title: "Task Planning Agent",
-      description: "Intelligent agent that helps break down complex projects into manageable tasks, setting realistic milestones and schedule.",
+      icon: Notebook,
+      title: "Smart Notes",
+      description: "Take notes with voice dictation, organize them by color, and easily link them to related tasks for seamless workflow.",
       iconColor: "text-cyan-600"
     },
     {
-      icon: Clock4,
-      title: "Time Management Agent",
-      description: "Monitors your work patterns, suggests optimal time slots for tasks, and helps you keep up with deadlines effectively.",
+      icon: Timer,
+      title: "Pomodoro Timer",
+      description: "Built-in focus timer helps you work efficiently with customizable work and break intervals.",
       iconColor: "text-blue-600"
     },
     {
-      icon: Bell,
-      title: "Priority Assistant",
-      description: "Smart agent that analyzes task importance, adjusts priorities based on deadlines, and helps maintain optimal workflow.",
-      iconColor: "text-purple-600"
+      icon: HeartPulse,
+      title: "Self Care",
+      description: "Track your mental wellbeing, physical wellness, and personal growth. Set daily rituals and emotional care practices.",
+      iconColor: "text-pink-600"
     }
   ];
 
-  const mobileFirstFeatures = [
+  const organizationFeatures = [
     {
-      icon: Smartphone,
-      title: "Mobile Excellence",
-      description: "Install as a PWA with offline support. Responsive design ensures a great experience on any device.",
-      iconColor: "text-pink-600"
+      icon: Calendar,
+      title: "Multiple Calendar Views",
+      description: "View your tasks in daily, weekly, monthly, or yearly views. Easily navigate between different time perspectives.",
+      iconColor: "text-amber-600"
     },
     {
+      icon: MoveHorizontal,
+      title: "Drag & Drop Interface",
+      description: "Intuitive drag and drop functionality to rearrange tasks, adjust schedules, and manage priorities with ease.",
+      iconColor: "text-indigo-600"
+    },
+    {
+      icon: Users,
+      title: "Task Sharing & Collaboration",
+      description: "Share tasks with trusted users, create group tasks, and collaborate efficiently on shared projects.",
+      iconColor: "text-green-600"
+    }
+  ];
+
+  const additionalFeatures = [
+    {
       icon: BarChart3,
-      title: "Productivity Insights",
-      description: "Track task completion, analyze patterns, and monitor habit formation with detailed statistics.",
-      iconColor: "text-yellow-600"
+      title: "Analytics Dashboard",
+      description: "Visualize your productivity patterns, track completion rates, and gain insights into your work habits.",
+      iconColor: "text-violet-600"
+    },
+    {
+      icon: Bell,
+      title: "Smart Notifications",
+      description: "Customizable notification system for task deadlines, reminders, and shared task updates across all your devices.",
+      iconColor: "text-orange-600"
     },
     {
       icon: Shield,
-      title: "Secure & Customizable",
-      description: "End-to-end authentication keeps your data safe. Personalize with dark/light mode and themes.",
-      iconColor: "text-green-600"
+      title: "Secure & Private",
+      description: "End-to-end authentication keeps your data safe. All your information stays private and secure.",
+      iconColor: "text-red-600"
     }
   ];
 
@@ -93,9 +123,10 @@ const Index = () => {
       <div className="min-h-screen bg-white text-gray-900 py-12 px-4 md:px-8 content-container">
         <NavButtons />
         <HeroSection />
-        <FeatureSection title="AI-Powered Productivity" features={aiProductivityFeatures} />
-        <FeatureSection title="Specialized AI Agents" features={specializedAgentsFeatures} />
-        <FeatureSection title="Mobile First & Data Driven" features={mobileFirstFeatures} />
+        <FeatureSection title="AI Task Management" features={aiTaskManagementFeatures} />
+        <FeatureSection title="Productivity Tools" features={productivityToolsFeatures} />
+        <FeatureSection title="Smart Organization" features={organizationFeatures} />
+        <FeatureSection title="Additional Features" features={additionalFeatures} />
       </div>
     </>
   );
