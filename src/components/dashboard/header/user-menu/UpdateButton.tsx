@@ -10,7 +10,7 @@ export function UpdateButton({ isStandalone }: { isStandalone: boolean }) {
   
   const {
     updateServiceWorker,
-    needRefresh: [needRefresh],
+    needRefresh: [needRefresh, setNeedRefresh],
   } = useRegisterSW({
     onRegisteredSW(swUrl, registration) {
       console.log('Service Worker registered:', swUrl);
