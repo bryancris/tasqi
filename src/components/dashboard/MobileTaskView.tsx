@@ -6,16 +6,11 @@ import { DndContext, MouseSensor, TouchSensor, useSensor, useSensors, DragEndEve
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { startOfDay, isAfter, parseISO, isSameDay } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { TimelineSection } from "./timeline/TimelineSection";
 import { useQueryClient } from "@tanstack/react-query";
 import { useDebouncedTaskRefresh } from "@/hooks/use-debounced-task-refresh";
-
-// iOS PWA detection
-const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
-                     (window.navigator as any).standalone === true;
-const isIOSPWA = isIOS && isStandalone;
+import { isIOSPWA } from "@/utils/platform-detection";
 
 export interface MobileTaskViewProps {
   tasks: Task[];
@@ -30,7 +25,10 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
   const todayStart = startOfDay(new Date());
   const queryClient = useQueryClient();
   const { invalidateTasks, cleanup } = useDebouncedTaskRefresh();
-
+  const containerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const isIOSPwaApp = isIOSPWA();
+  
   // Create a subscription to task updates
   useEffect(() => {
     console.log("Setting up mobile view task subscription");
@@ -53,6 +51,26 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
       cleanup();
     };
   }, [queryClient, invalidateTasks, cleanup]);
+
+  // Effect to fix iOS PWA scroll position after pull-to-refresh
+  useEffect(() => {
+    if (isIOSPwaApp && contentRef.current) {
+      // Fix for iOS PWA pull-to-refresh scrolling issues
+      const handleScroll = () => {
+        // Reset the top padding when user scrolls back up
+        if (contentRef.current && contentRef.current.scrollTop <= 0) {
+          contentRef.current.style.paddingTop = '0px';
+        }
+      };
+      
+      const currentContent = contentRef.current;
+      currentContent.addEventListener('scroll', handleScroll, { passive: true });
+      
+      return () => {
+        currentContent?.removeEventListener('scroll', handleScroll);
+      };
+    }
+  }, [isIOSPwaApp]);
 
   // Configure better sensors for mobile touch interactions
   const sensors = useSensors(
@@ -127,7 +145,10 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
   };
 
   return (
-    <div className={`h-[calc(100vh-144px)] overflow-hidden px-4 ${isIOSPWA ? 'ios-pull-to-refresh' : 'ios-momentum-scroll'}`}>
+    <div 
+      ref={containerRef}
+      className={`h-[calc(100vh-144px)] overflow-hidden px-4 ${isIOSPwaApp ? 'ios-pwa-container' : ''}`}
+    >
       <Card className="h-full border-none shadow-none bg-transparent">
         <CardHeader className="pb-3 px-0">
           <div className="flex items-center justify-between">
@@ -147,7 +168,11 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
             </Button>
           </div>
         </CardHeader>
-        <CardContent className={`overflow-y-auto h-[calc(100%-5rem)] p-0 ${isIOSPWA ? 'ios-pull-to-refresh' : 'ios-momentum-scroll'}`}>
+        <CardContent 
+          ref={contentRef}
+          className={`overflow-y-auto h-[calc(100%-5rem)] p-0 pb-8 ${isIOSPwaApp ? 'ios-pwa-content' : 'ios-momentum-scroll'}`}
+          style={{ WebkitOverflowScrolling: 'touch' }}
+        >
           {view === 'board' ? (
             <DndContext 
               sensors={sensors} 
@@ -180,6 +205,9 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
               onDateChange={onDateChange}
             />
           )}
+          
+          {/* Add a spacer div at the bottom to prevent content from being cut off */}
+          <div className={`h-8 w-full ${isIOSPwaApp ? 'ios-bottom-spacer' : ''}`}></div>
         </CardContent>
       </Card>
     </div>

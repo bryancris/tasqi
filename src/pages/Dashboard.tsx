@@ -1,5 +1,5 @@
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import { useTaskNotifications } from "@/hooks/use-task-notifications";
 import { TaskBoard } from "@/components/dashboard/TaskBoard";
 import { WeeklyCalendar } from "@/components/dashboard/WeeklyCalendar";
@@ -11,12 +11,7 @@ import { useTasks } from "@/hooks/use-tasks";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
-
-// Check if running on iOS as PWA
-const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
-                     (window.navigator as any).standalone === true;
-const isIOSPWA = isIOS && isStandalone;
+import { isIOSPWA } from "@/utils/platform-detection";
 
 export default function Dashboard() {
   // Proper hook usage - call at top level unconditionally 
@@ -31,6 +26,8 @@ export default function Dashboard() {
   
   const location = useLocation();
   const { refetch } = useTasks();
+  const contentWrapperRef = useRef<HTMLDivElement>(null);
+  const isIOSPwaApp = isIOSPWA();
   
   // Handle refresh function for pull-to-refresh
   const handleRefresh = useCallback(async () => {
@@ -65,9 +62,30 @@ export default function Dashboard() {
     isPWA: true
   });
   
+  // Fix iOS PWA dead space issue after pull-to-refresh
   useEffect(() => {
-    console.log("Dashboard mounted with isIOSPWA:", isIOSPWA, "detected:", isPWADetected);
-  }, [isPWADetected]);
+    if (isIOSPwaApp && contentRef.current) {
+      const resetScrollPosition = () => {
+        // Reset content position when refresh is done
+        if (!isRefreshing && contentRef.current) {
+          contentRef.current.scrollTop = 0;
+          
+          // Reset any potential extra padding
+          setTimeout(() => {
+            if (contentRef.current) {
+              contentRef.current.style.paddingTop = '0px';
+            }
+          }, 300);
+        }
+      };
+      
+      resetScrollPosition();
+    }
+  }, [isRefreshing, isIOSPwaApp]);
+  
+  useEffect(() => {
+    console.log("Dashboard mounted with isIOSPWA:", isIOSPwaApp, "detected:", isPWADetected);
+  }, [isPWADetected, isIOSPwaApp]);
   
   // Update the view based on the current path on mount and when path changes
   useEffect(() => {
@@ -102,24 +120,33 @@ export default function Dashboard() {
         <Spinner className="w-6 h-6 text-primary pull-to-refresh-spinner" />
       </div>
       
-      {/* Main content */}
-      <div 
-        ref={contentRef}
-        style={contentStyle}
-        className={`p-4 py-0 px-[10px] h-full overflow-y-auto ios-momentum-scroll ${isIOSPWA ? 'ios-pull-to-refresh' : ''}`}
+      {/* Main content wrapper with scroll fix for iOS */}
+      <div
+        ref={contentWrapperRef}
+        className={`relative w-full h-full ${isIOSPwaApp ? 'ios-pwa-wrapper' : ''}`}
       >
-        {view === 'weekly' ? (
-          <WeeklyCalendar />
-        ) : view === 'monthly' ? (
-          <Calendar initialDate={selectedDate} onDateSelect={setSelectedDate} />
-        ) : view === 'yearly' ? (
-          <YearlyCalendar onDateSelect={setSelectedDate} />
-        ) : (
-          <TaskBoard selectedDate={selectedDate} onDateChange={setSelectedDate} />
-        )}
-        
-        {/* This hidden element helps iOS detect the bounce effect */}
-        {isIOSPWA && <div className="h-px w-full -mb-px"></div>}
+        {/* Main content */}
+        <div 
+          ref={contentRef}
+          style={contentStyle}
+          className={`p-4 py-0 px-[10px] h-full overflow-y-auto ios-momentum-scroll ${isIOSPwaApp ? 'ios-pull-to-refresh' : ''}`}
+        >
+          {view === 'weekly' ? (
+            <WeeklyCalendar />
+          ) : view === 'monthly' ? (
+            <Calendar initialDate={selectedDate} onDateSelect={setSelectedDate} />
+          ) : view === 'yearly' ? (
+            <YearlyCalendar onDateSelect={setSelectedDate} />
+          ) : (
+            <TaskBoard selectedDate={selectedDate} onDateChange={setSelectedDate} />
+          )}
+          
+          {/* This hidden element helps iOS detect the bounce effect */}
+          {isIOSPwaApp && <div className="h-px w-full -mb-px"></div>}
+          
+          {/* Add a spacer div at the bottom to prevent content from being cut off */}
+          {isIOSPwaApp && <div className="h-16 w-full"></div>}
+        </div>
       </div>
     </div>
   );

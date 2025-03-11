@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -118,6 +119,31 @@
   html.ios-pwa-protection-active button:not([data-radix-dialog-close]),
   html.ios-pwa-protection-active [role="button"]:not([data-radix-dialog-close]) {
     pointer-events: none !important;
+  }
+  
+  /* New - iOS PWA container and content fixes for dead space issues */
+  .ios-pwa-container {
+    position: relative;
+    overflow: hidden !important;
+    height: calc(100vh - 144px) !important;
+    max-height: calc(100vh - 144px) !important;
+  }
+  
+  .ios-pwa-content {
+    height: 100% !important;
+    max-height: calc(100% - 0.5rem) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    transform: translateZ(0); /* Force GPU acceleration */
+    will-change: transform; /* Hint for performance */
+    padding-bottom: 4rem !important; /* Extra padding to ensure content isn't cut off */
+  }
+  
+  /* Add extra space at the bottom to prevent content from being hidden under the pull-to-refresh area */
+  .ios-bottom-spacer {
+    height: 4rem !important;
+    width: 100%;
+    margin-bottom: 2rem;
   }
 }
 

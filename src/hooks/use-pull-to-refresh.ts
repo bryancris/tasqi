@@ -1,5 +1,5 @@
-
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { isIOSPWA } from '@/utils/platform-detection';
 
 interface PullToRefreshOptions {
   onRefresh: () => Promise<any>;
@@ -24,6 +24,7 @@ export function usePullToRefresh({
   const scrollTopAtStartRef = useRef(0);
   const pullContainerRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
+  const hasMovedRef = useRef(false);
 
   // Check if current environment is iOS
   const isIOS = useRef(
@@ -37,8 +38,29 @@ export function usePullToRefresh({
     (window.navigator as any).standalone === true
   ).current;
 
-  const isIOSPWA = isIOS && isStandalone;
+  // Use the platform detection utility
+  const iosPwaDetected = isIOSPWA();
   const shouldEnablePullToRefresh = isPWA ? true : true; // Always enable for now
+
+  // Reset pull state when refresh completes
+  const resetPullState = useCallback(() => {
+    setPullDistance(0);
+    setIsPulling(false);
+    hasMovedRef.current = false;
+    
+    // Additional reset for iOS PWA - ensure content is properly positioned
+    if (iosPwaDetected && contentRef.current) {
+      setTimeout(() => {
+        if (contentRef.current) {
+          // Reset any added padding
+          contentRef.current.style.paddingTop = '0px';
+          
+          // Ensure scroll position is at top
+          contentRef.current.scrollTop = 0;
+        }
+      }, 300);
+    }
+  }, [iosPwaDetected]);
 
   // Handle pull start
   const handleTouchStart = useCallback((e: TouchEvent) => {
@@ -55,6 +77,7 @@ export function usePullToRefresh({
     startYRef.current = e.touches[0].clientY;
     lastTouchYRef.current = e.touches[0].clientY;
     setIsPulling(true);
+    hasMovedRef.current = false;
     
     console.log('Touch start at Y:', startYRef.current, 'ScrollTop:', scrollTopAtStartRef.current);
   }, []);
@@ -84,51 +107,71 @@ export function usePullToRefresh({
       setPullDistance(0);
       return;
     }
+    
+    // Mark that we've actually moved
+    hasMovedRef.current = true;
 
     // Apply resistance to the pull
     const newDistance = Math.min(diff * 0.5, maxPullDownDistance);
     setPullDistance(newDistance);
 
-    // For iOS in PWA mode, we MUST prevent default to disable the native bounce
-    // This is critical for it to work properly
-    if (isIOSPWA && currentScrollTop <= 0 && diff > 10) {
+    // For iOS in PWA mode, we need to apply special handling
+    if (iosPwaDetected && currentScrollTop <= 0 && diff > 10) {
       e.preventDefault();
-      console.log('Preventing default for iOS PWA', { diff, newDistance });
+      
+      // Use padding-top for iOS PWA instead of transform for better behavior
+      if (contentRef.current) {
+        contentRef.current.style.paddingTop = `${newDistance}px`;
+      }
+      
+      console.log('iOS PWA pull handling', { diff, newDistance });
     }
-  }, [isPulling, isRefreshing, maxPullDownDistance, isIOSPWA]);
+  }, [isPulling, isRefreshing, maxPullDownDistance, iosPwaDetected]);
 
   // Handle touch end
   const handleTouchEnd = useCallback(() => {
     if (!isPulling || isRefreshing) return;
+    
+    // Only trigger refresh if we actually moved
+    if (!hasMovedRef.current) {
+      resetPullState();
+      return;
+    }
     
     console.log('Touch end, pull distance:', pullDistance, 'threshold:', pullDownThreshold);
     
     if (pullDistance >= pullDownThreshold) {
       // Trigger refresh
       setIsRefreshing(true);
-      setPullDistance(refreshIndicatorHeight);
+      
+      // For iOS PWA, keep padding at refresh indicator height
+      if (iosPwaDetected && contentRef.current) {
+        contentRef.current.style.paddingTop = `${refreshIndicatorHeight}px`;
+      } else {
+        setPullDistance(refreshIndicatorHeight);
+      }
       
       // Execute refresh callback
       onRefresh()
         .finally(() => {
           setTimeout(() => {
             setIsRefreshing(false);
-            setPullDistance(0);
+            resetPullState();
           }, 300); // Slight delay for better UX
         });
     } else {
       // Reset without refreshing
-      setPullDistance(0);
+      resetPullState();
     }
-    
-    setIsPulling(false);
   }, [
     isPulling, 
     isRefreshing, 
     pullDistance, 
     pullDownThreshold, 
     refreshIndicatorHeight, 
-    onRefresh
+    onRefresh,
+    resetPullState,
+    iosPwaDetected
   ]);
 
   // Set up event listeners
@@ -139,12 +182,12 @@ export function usePullToRefresh({
     if (!contentElement) return;
     
     // For iOS PWA, we need to use { passive: false } to make preventDefault work
-    const passiveOption = isIOSPWA ? { passive: false } : { passive: !isIOS };
+    const passiveOption = iosPwaDetected ? { passive: false } : { passive: !isIOS };
     
     console.log('Setting up pull-to-refresh listeners', { 
       isIOS, 
       isStandalone, 
-      isIOSPWA, 
+      iosPwaDetected, 
       passiveOption 
     });
     
@@ -163,7 +206,7 @@ export function usePullToRefresh({
     handleTouchMove, 
     handleTouchEnd, 
     isIOS,
-    isIOSPWA
+    iosPwaDetected
   ]);
 
   // Prepare style for container
@@ -183,20 +226,24 @@ export function usePullToRefresh({
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    visibility: pullDistance > 0 ? 'visible' as const : 'hidden' as const,
+    visibility: pullDistance > 0 || isRefreshing ? 'visible' as const : 'hidden' as const,
     opacity: Math.min(pullDistance / pullDownThreshold, 1),
-    transform: `translateY(${pullDistance > 0 ? pullDistance : 0}px)`
+    transform: iosPwaDetected ? 'none' : `translateY(${pullDistance > 0 ? pullDistance : 0}px)`
   };
 
-  // Prepare style for the content
-  const contentStyle = {
+  // Prepare style for the content - different for iOS PWA vs standard
+  const contentStyle = iosPwaDetected ? {
+    height: '100%',
+    overflowY: 'auto' as const,
+    WebkitOverflowScrolling: 'touch' as const,
+  } : {
     transform: `translateY(${pullDistance}px)`,
     transition: isRefreshing || (!isPulling && pullDistance > 0)
       ? 'transform 0.2s ease-out'
       : 'none',
     height: '100%',
     overflowY: 'auto' as const,
-    WebkitOverflowScrolling: 'touch' as const, // Enables momentum scrolling on iOS
+    WebkitOverflowScrolling: 'touch' as const,
   };
 
   return {
@@ -207,6 +254,7 @@ export function usePullToRefresh({
     contentStyle,
     refreshIndicatorStyle,
     pullDistance,
-    isIOSPWA,
+    isIOSPWA: iosPwaDetected,
+    resetPullState
   };
 }
