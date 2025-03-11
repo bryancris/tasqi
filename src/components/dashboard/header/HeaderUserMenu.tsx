@@ -17,6 +17,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { UserAvatar } from "./user-menu/UserAvatar";
 import { UserInfo } from "./user-menu/UserInfo";
 import { InstallButton } from "./user-menu/InstallButton";
+import { UpdateButton } from "./user-menu/UpdateButton";
 import { useInstallPrompt } from "@/hooks/use-install-prompt";
 
 export function HeaderUserMenu() {
@@ -78,6 +79,7 @@ export function HeaderUserMenu() {
           deferredPrompt={deferredPrompt}
           setDeferredPrompt={setDeferredPrompt}
         />
+        <UpdateButton isStandalone={isStandalone} />
         <DropdownMenuItem onClick={handleLogout} disabled={isLoggingOut}>
           {isLoggingOut ? (
             <>
