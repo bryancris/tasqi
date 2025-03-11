@@ -16,14 +16,6 @@ const bgSyncPlugin = new BackgroundSyncPlugin('apiQueue', {
       // Process all requests in the queue
       await queue.process();
       console.log('Background sync processed successfully');
-      // Notify clients about successful sync
-      const clients = await self.clients.matchAll();
-      clients.forEach(client => {
-        client.postMessage({
-          type: 'BACKGROUND_SYNC_COMPLETED',
-          timestamp: new Date().toISOString()
-        });
-      });
     } catch (error) {
       console.error('Background sync failed:', error);
     }
@@ -104,54 +96,13 @@ registerRoute(
 // Handle installation and activation
 self.addEventListener('install', (event) => {
   console.log('Service worker installed');
-  self.skipWaiting();
+  self.skipWaiting(); // Skip waiting to activate immediately
 });
 
 self.addEventListener('activate', (event) => {
   console.log('Service worker activated');
   // Claim clients immediately so the service worker starts controlling current pages
   event.waitUntil(self.clients.claim());
-});
-
-// Use a more reliable broadcast channel implementation
-let broadcastChannel;
-try {
-  broadcastChannel = new BroadcastChannel('sw-updates');
-} catch (error) {
-  console.error('BroadcastChannel not supported:', error);
-  // Fallback for browsers not supporting BroadcastChannel
-  broadcastChannel = {
-    postMessage: (data) => {
-      self.clients.matchAll().then(clients => {
-        clients.forEach(client => client.postMessage(data));
-      });
-    }
-  };
-}
-
-// Message handling for update/refresh
-self.addEventListener('message', (event) => {
-  console.log('Service worker received message:', event.data);
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting().then(() => {
-      console.log('Skip waiting successfully called');
-    });
-  } else if (event.data && event.data.type === 'REFRESH') {
-    // Support for manual refresh triggered from the app
-    broadcastChannel.postMessage({
-      type: 'REFRESH_TRIGGERED',
-      timestamp: new Date().toISOString()
-    });
-  }
-});
-
-// Send notification when service worker takes control
-self.addEventListener('controllerchange', () => {
-  console.log('Controller changed, notifying clients');
-  broadcastChannel.postMessage({ 
-    type: 'ACTIVATED',
-    timestamp: new Date().toISOString()
-  });
 });
 
 // Handle offline fallbacks more gracefully

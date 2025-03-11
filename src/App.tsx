@@ -16,7 +16,6 @@ import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Toaster } from './components/ui/sonner';
 import { memo } from 'react';
 import { AuthProvider } from './contexts/auth';
-import { UpdatePrompt } from './components/pwa/UpdatePrompt';
 
 // Memoize the DashboardLayout component to prevent unnecessary re-renders
 const MemoizedDashboardLayout = memo(DashboardLayout);
@@ -30,7 +29,6 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <Toaster />
-        <UpdatePrompt />
         <CalendarViewProvider>
           <DragDropContext onDragEnd={onDragEnd}>
             <div className="app">

@@ -59,6 +59,8 @@ export default defineConfig(({ mode }) => ({
         // Don't fallback on document based (HTML) requests
         // This helps avoid issues with client-side routing
         navigationPreload: true,
+        skipWaiting: true, // Enable immediate activation
+        clientsClaim: true, // Take control of clients immediately
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com/,
@@ -105,9 +107,7 @@ export default defineConfig(({ mode }) => ({
             }
           }
         ],
-        cleanupOutdatedCaches: true,
-        skipWaiting: true,
-        clientsClaim: true
+        cleanupOutdatedCaches: true
       }
     })
   ].filter(Boolean),
