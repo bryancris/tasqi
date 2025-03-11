@@ -1,3 +1,4 @@
+
 import { Task } from "./TaskBoard";
 import { Card, CardContent } from "@/components/ui/card";
 import { startOfDay, isAfter, parseISO, isSameDay } from "date-fns";
@@ -8,6 +9,7 @@ import { useDebouncedTaskRefresh } from "@/hooks/use-debounced-task-refresh";
 import { isIOSPWA } from "@/utils/platform-detection";
 import { MobileTaskBoardHeader } from "./mobile/MobileTaskBoardHeader";
 import { MobileTaskList } from "./mobile/MobileTaskList";
+import { DragEndEvent } from "@dnd-kit/core";
 
 export interface MobileTaskViewProps {
   tasks: Task[];
