@@ -17,15 +17,12 @@ import { Spinner } from "@/components/ui/spinner";
 import { UserAvatar } from "./user-menu/UserAvatar";
 import { UserInfo } from "./user-menu/UserInfo";
 import { InstallButton } from "./user-menu/InstallButton";
-import { UpdateButton } from "./user-menu/UpdateButton";
 import { useInstallPrompt } from "@/hooks/use-install-prompt";
-import { useAppUpdate } from "@/hooks/use-app-update";
 
 export function HeaderUserMenu() {
   const { session, handleSignOut } = useAuth();
   const navigate = useNavigate();
   const { deferredPrompt, isStandalone, installable, setDeferredPrompt } = useInstallPrompt();
-  const { isChecking, setIsChecking } = useAppUpdate();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   
   const userDisplayName = session?.user.user_metadata?.full_name || 
@@ -80,10 +77,6 @@ export function HeaderUserMenu() {
           installable={installable}
           deferredPrompt={deferredPrompt}
           setDeferredPrompt={setDeferredPrompt}
-        />
-        <UpdateButton
-          isChecking={isChecking}
-          setIsChecking={setIsChecking}
         />
         <DropdownMenuItem onClick={handleLogout} disabled={isLoggingOut}>
           {isLoggingOut ? (
