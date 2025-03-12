@@ -29,7 +29,7 @@ export function useTaskNotifications() {
     try {
       // For test notifications, just dismiss them
       // Convert to string for comparison to avoid type errors
-      if (task.id === 999999 || String(task.id) === "999999") {
+      if (String(task.id) === "999999") {
         toast.success('Test task completed');
         return;
       }
@@ -76,7 +76,54 @@ export function useTaskNotifications() {
     }
   };
 
-  // Define checkForUpcomingTasks before it's used
+  // Define showTaskNotification before it's used in checkForUpcomingTasks
+  const showTaskNotification = useCallback(async (task: Task, type: 'reminder' | 'shared' | 'assignment' = 'reminder') => {
+    if (!isMountedRef.current) return false;
+    
+    try {
+      console.log('🔔 Showing notification:', {
+        taskId: task.id,
+        type,
+        title: task.title
+      });
+
+      // Show browser notification if window is not focused
+      await showBrowserNotification(task, type);
+
+      // Play notification sound
+      await playNotificationSound();
+
+      // IMPORTANT: ALWAYS convert referenceId to string for consistent handling
+      const referenceIdString = String(task.id);
+      
+      console.log('📱 Creating notification with referenceId:', referenceIdString, 'Type:', typeof referenceIdString);
+
+      // Show in-app notification with task ID reference as string
+      showNotification({
+        title: type === 'reminder' ? 'Task Reminder' :
+               type === 'shared' ? 'Task Shared' :
+               'New Task Assignment',
+        message: task.title,
+        type: 'info',
+        persistent: true,
+        referenceId: referenceIdString,
+        referenceType: 'task',
+        action: {
+          label: 'Complete Task',
+          onClick: () => void handleTaskComplete(task)
+        }
+      });
+
+      return true;
+    } catch (error) {
+      if (isMountedRef.current) {
+        console.error('❌ Error showing notification:', error);
+      }
+      return false;
+    }
+  }, [showNotification]);
+
+  // Define checkForUpcomingTasks after showTaskNotification is defined
   const checkForUpcomingTasks = useCallback(async (tasks: Task[]) => {
     if (!isMountedRef.current) return;
     
@@ -136,52 +183,6 @@ export function useTaskNotifications() {
       }
     }
   }, [showTaskNotification]);
-
-  const showTaskNotification = useCallback(async (task: Task, type: 'reminder' | 'shared' | 'assignment' = 'reminder') => {
-    if (!isMountedRef.current) return false;
-    
-    try {
-      console.log('🔔 Showing notification:', {
-        taskId: task.id,
-        type,
-        title: task.title
-      });
-
-      // Show browser notification if window is not focused
-      await showBrowserNotification(task, type);
-
-      // Play notification sound
-      await playNotificationSound();
-
-      // IMPORTANT: ALWAYS convert referenceId to string for consistent handling
-      const referenceIdString = String(task.id);
-      
-      console.log('📱 Creating notification with referenceId:', referenceIdString, 'Type:', typeof referenceIdString);
-
-      // Show in-app notification with task ID reference as string
-      showNotification({
-        title: type === 'reminder' ? 'Task Reminder' :
-               type === 'shared' ? 'Task Shared' :
-               'New Task Assignment',
-        message: task.title,
-        type: 'info',
-        persistent: true,
-        referenceId: referenceIdString,
-        referenceType: 'task',
-        action: {
-          label: 'Complete Task',
-          onClick: () => void handleTaskComplete(task)
-        }
-      });
-
-      return true;
-    } catch (error) {
-      if (isMountedRef.current) {
-        console.error('❌ Error showing notification:', error);
-      }
-      return false;
-    }
-  }, [showNotification]);
 
   useEffect(() => {
     console.log('🔔 Task notifications hook initialized');
