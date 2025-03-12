@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { NotificationButtons } from "./notification-buttons";
 import { useQueryClient } from "@tanstack/react-query";
 import { handleStart } from "./notification-handlers";
+import { debugLogNotification } from "@/utils/notifications/debug-utils";
 
 export interface AlertNotificationProps {
   open: boolean;
@@ -47,29 +48,23 @@ export function AlertNotification({
   const queryClient = useQueryClient();
   const buttonRef = React.useRef<HTMLButtonElement>(null);
 
+  // Debug log the notification details
   React.useEffect(() => {
-    console.log('🔍 EXACT Notification Details:', {
-      title: `"${title}"`,
-      titleLength: title.length,
-      titleCharCodes: Array.from(title).map(c => c.charCodeAt(0)),
+    debugLogNotification({
+      title,
       message,
       type,
-      referenceId,
-      reference_type,
-      allProps: { open, title, message, type, action, index, referenceId, reference_type }
-    });
-  }, [title, referenceId, reference_type, message, type, open, action, index]);
+      reference_id: referenceId,
+      reference_type
+    }, 'AlertNotification render');
+  }, [title, message, type, referenceId, reference_type]);
 
-  // Focus management - ensure focus is properly contained within the dialog
+  // Focus management
   React.useEffect(() => {
     if (open) {
-      // Small delay to ensure the dialog is fully rendered
       const timeoutId = setTimeout(() => {
-        if (buttonRef.current) {
-          buttonRef.current.focus();
-        }
+        buttonRef.current?.focus();
       }, 50);
-      
       return () => clearTimeout(timeoutId);
     }
   }, [open]);
@@ -95,23 +90,10 @@ export function AlertNotification({
   };
 
   // Logic to determine if buttons should be shown
-  // 1. If it's explicitly a task notification with reference_type='task'
-  // 2. OR if it's a reminder notification with a reference ID (for backward compatibility)
   const isTaskNotification = reference_type === 'task' || 
-                            (title.toLowerCase().includes('task') && 
-                             title.toLowerCase().includes('reminder'));
+    (title.toLowerCase().includes('task') && title.toLowerCase().includes('reminder'));
   
   const showButtons = isTaskNotification && referenceId !== undefined && referenceId !== null;
-  
-  console.log('🔘 Enhanced button visibility check:', {
-    title,
-    showButtons,
-    isTaskNotification,
-    referenceType: reference_type,
-    hasReferenceId: referenceId !== undefined && referenceId !== null,
-    referenceIdType: typeof referenceId,
-    referenceIdValue: referenceId
-  });
 
   return (
     <AlertDialog open={open}>
@@ -147,6 +129,7 @@ export function AlertNotification({
         >
           <X className="h-4 w-4 text-gray-500" />
         </button>
+
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2 text-[#6D4AFF]">
             <AlarmClock className="h-5 w-5" />
@@ -157,6 +140,7 @@ export function AlertNotification({
             <div className="text-sm text-[#1A1F2C]/60">Inbox</div>
           </AlertDialogDescription>
         </AlertDialogHeader>
+
         <AlertDialogFooter className="flex-col sm:flex-col gap-3 sm:gap-3 mt-2 items-start">
           {showButtons && (
             <NotificationButtons
