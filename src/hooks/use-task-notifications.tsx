@@ -32,7 +32,6 @@ export function useTaskNotifications() {
       // Create a simplified test notification with a consistent structure
       // that directly shows in the UI with action buttons
       showNotification({
-        id: "test-notification",
         title: "Task Reminder",
         message: "This is a test notification with action buttons",
         type: "info",
@@ -40,9 +39,7 @@ export function useTaskNotifications() {
         priority: "high",
         referenceId: "999999",  // String format
         referenceType: "task",  // MUST be "task" to trigger task-specific buttons
-        created_at: new Date().toISOString(),
-        read: false,
-        user_id: "test-user"
+        group: "test-notification"
       });
     } else {
       console.log('❌ Cannot trigger test notification - component unmounted');
