@@ -57,7 +57,7 @@ export function HeaderUserMenu() {
       title: "Task Reminder",
       message: "This is a test notification with action buttons",
       type: "info",
-      reference_id: 999999, // Using a numeric ID instead of string
+      reference_id: "999999", // Convert numeric ID to string
       reference_type: "task",
       persistent: true
     });
