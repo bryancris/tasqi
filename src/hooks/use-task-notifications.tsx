@@ -36,7 +36,6 @@ export function useTaskNotifications() {
         message: "This is a test notification with action buttons",
         type: "info",
         persistent: true,
-        priority: "high",
         referenceId: "999999",  // String format
         referenceType: "task",  // MUST be "task" to trigger task-specific buttons
         group: "test-notification"
