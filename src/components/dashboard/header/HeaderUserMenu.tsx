@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -49,8 +50,9 @@ export function HeaderUserMenu() {
   };
 
   const handleTestNotification = () => {
-    console.log('🔔 Triggering test notification');
+    console.log('🔔 Triggering test task notification with buttons');
     
+    // Create task notification with explicit reference data
     showNotification({
       title: "Task Reminder",
       message: "This is a test notification with action buttons",
@@ -60,7 +62,15 @@ export function HeaderUserMenu() {
       persistent: true
     });
     
-    console.log('✅ Test notification triggered');
+    console.log('✅ Test task notification triggered');
+    
+    // Log exact notification details to help debug
+    console.log('📋 Notification details sent:', {
+      title: "Task Reminder",
+      titleLength: "Task Reminder".length,
+      referenceId: "999999",
+      referenceType: "task"
+    });
   };
 
   return (

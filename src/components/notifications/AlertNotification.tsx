@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import {
   AlertDialog,
@@ -46,16 +47,17 @@ export function AlertNotification({
   const queryClient = useQueryClient();
 
   React.useEffect(() => {
-    console.log('🔔 Notification Details:', {
-      title,
+    console.log('🔍 EXACT Notification Details:', {
+      title: `"${title}"`,
+      titleLength: title.length,
+      titleCharCodes: Array.from(title).map(c => c.charCodeAt(0)),
       message,
       type,
       referenceId,
       reference_type,
-      hasButtons: title === 'Task Reminder',
-      referenceType: typeof referenceId
+      allProps: { open, title, message, type, action, index, referenceId, reference_type }
     });
-  }, [title, referenceId, reference_type, message, type]);
+  }, [title, referenceId, reference_type, message, type, open, action, index]);
 
   const handleDone = async () => {
     try {
@@ -77,12 +79,24 @@ export function AlertNotification({
     }
   };
 
-  const showButtons = title === 'Task Reminder';
+  // More flexible conditions for showing buttons
+  // Show buttons if title contains "Task" and "Reminder" (case-insensitive), and has a reference ID
+  const showButtons = (
+    title.toLowerCase().includes('task') && 
+    title.toLowerCase().includes('reminder') && 
+    (referenceId !== undefined && referenceId !== null)
+  );
   
-  console.log('Button visibility check:', {
+  console.log('🔘 Button visibility check:', {
     title,
     showButtons,
-    hasReferenceId: !!referenceId
+    titleIncludes: {
+      task: title.toLowerCase().includes('task'),
+      reminder: title.toLowerCase().includes('reminder'),
+    },
+    hasReferenceId: referenceId !== undefined && referenceId !== null,
+    referenceIdType: typeof referenceId,
+    referenceIdValue: referenceId
   });
 
   return (

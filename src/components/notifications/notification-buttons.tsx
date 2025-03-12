@@ -22,7 +22,8 @@ export function NotificationButtons({
   console.log('🔄 NotificationButtons render:', {
     isLoading,
     referenceId,
-    type: typeof referenceId
+    type: typeof referenceId,
+    hasReferenceId: referenceId !== undefined && referenceId !== null
   });
 
   const [snoozeTime, setSnoozeTime] = useState<string>("15");
