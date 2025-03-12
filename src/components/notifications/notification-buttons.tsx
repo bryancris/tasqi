@@ -50,12 +50,8 @@ export function NotificationButtons({
     }
   };
 
-  // Don't render anything if there's no reference ID
-  if (referenceId === null || referenceId === undefined) {
-    console.log('NotificationButtons not rendering buttons - no reference ID');
-    return null;
-  }
-
+  // Render buttons regardless of whether we have a referenceId or not
+  // This ensures buttons show up for test notifications
   return (
     <>
       <div className="flex gap-2 items-center">

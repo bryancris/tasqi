@@ -6,7 +6,7 @@ import { DropdownMenu, DropdownMenuTrigger } from "@/components/ui/dropdown-menu
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { NotificationList } from "./notifications/NotificationList";
-import { useNotifications, useNotifications as useAlertNotifications, Notification } from "@/components/notifications/NotificationsManager";
+import { useNotifications, Notification } from "@/components/notifications/NotificationsManager";
 import { useQueryClient } from "@tanstack/react-query";
 
 export function HeaderNotifications() {
@@ -14,7 +14,7 @@ export function HeaderNotifications() {
   const [isOpen, setIsOpen] = useState(false);
   const { notifications } = useNotifications();
   const queryClient = useQueryClient();
-  const { showNotification } = useAlertNotifications();
+  const { showNotification } = useNotifications();
 
   const handleNotificationClick = async (notification: Notification) => {
     console.log('📬 Handling notification click:', {
@@ -30,10 +30,14 @@ export function HeaderNotifications() {
         return oldData.filter(n => n.id !== notification.id);
       });
 
+      // Force the type to the expected "info" | "success" | "warning" | "error"
+      // This ensures type safety
+      const notificationType = (notification.type || "info") as "info" | "success" | "warning" | "error";
+      
       showNotification({
         title: notification.title,
         message: notification.message,
-        type: 'info',
+        type: notificationType,
         reference_id: notification.reference_id,
         reference_type: notification.reference_type,
         persistent: true,
@@ -46,7 +50,7 @@ export function HeaderNotifications() {
       const { error } = await supabase
         .from('notifications')
         .delete()
-        .match({ id: notification.id });  // Using match instead of eq for type safety
+        .match({ id: notification.id });
 
       if (error) {
         throw error;

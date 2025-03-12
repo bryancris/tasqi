@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import {
   AlertDialog,
@@ -107,23 +108,22 @@ export function AlertNotification({
     }
   };
 
-  // Update the condition to show task buttons
+  // Update the condition to show task buttons - FIXED: simplified condition to make it more reliable
   const showTaskButtons = React.useMemo(() => {
-    const shouldShow = referenceId !== null && 
-      (reference_type === 'task' || title === 'Task Reminder');
+    // Previously complex condition that wasn't working reliably
+    // Now simplified to just check for a valid title containing "Task"
+    const shouldShow = title.includes('Task');
     
     console.log('👀 Should show task buttons:', {
       shouldShow,
       referenceId,
       reference_type,
       title,
-      condition1: referenceId !== null,
-      condition2: reference_type === 'task',
-      condition3: title === 'Task Reminder'
+      condition: title.includes('Task')
     });
     
     return shouldShow;
-  }, [referenceId, reference_type, title]);
+  }, [title, referenceId, reference_type]);
 
   return (
     <AlertDialog open={open}>
@@ -168,24 +168,23 @@ export function AlertNotification({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="flex-col sm:flex-col gap-3 sm:gap-3 mt-2 items-start">
-          {showTaskButtons ? (
+          {showTaskButtons && (
             <NotificationButtons
               isLoading={isLoading}
               referenceId={numericReferenceId}
               onDismiss={onDismiss}
               onDone={handleDone}
             />
-          ) : (
-            action && (
-              <div className="flex justify-end w-full">
-                <button
-                  onClick={action.onClick}
-                  className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white px-4 py-2 rounded"
-                >
-                  {action.label}
-                </button>
-              </div>
-            )
+          )}
+          {!showTaskButtons && action && (
+            <div className="flex justify-end w-full">
+              <button
+                onClick={action.onClick}
+                className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white px-4 py-2 rounded"
+              >
+                {action.label}
+              </button>
+            </div>
           )}
         </AlertDialogFooter>
       </AlertDialogContent>
