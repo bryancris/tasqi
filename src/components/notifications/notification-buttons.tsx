@@ -3,13 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Clock, Check } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { isTestNotification } from "@/utils/notifications/debug-utils";
+import { useTaskCompletion } from "@/hooks/notifications/use-task-completion";
 
 interface NotificationButtonsProps {
   isLoading: string | null;
   referenceId: number | string | null | undefined;
   onDismiss: () => void;
-  onDone: () => void;
-  isDialogOpen?: boolean;
   isTestNotification?: boolean;
 }
 
@@ -17,21 +17,17 @@ export const NotificationButtons = ({
   isLoading,
   referenceId,
   onDismiss,
-  onDone,
-  isDialogOpen = false,
-  isTestNotification = false
+  isTestNotification: isTest = false
 }: NotificationButtonsProps) => {
-  // Enhanced logging to debug the component rendering
   console.log('🔘 RENDERING NotificationButtons:', { 
     referenceId, 
     referenceIdType: typeof referenceId, 
     referenceIdValue: referenceId ? String(referenceId) : "undefined",
-    isTestNotification,
-    isDialogOpen
+    isTest
   });
 
-  const [snoozeTime, setSnoozeTime] = useState<string>("15");
   const [isSnoozing, setIsSnoozing] = useState<boolean>(false);
+  const { handleTaskComplete } = useTaskCompletion();
 
   const handleSnoozeClick = () => {
     console.log('⏰ Snooze clicked for notification:', referenceId);
@@ -39,20 +35,44 @@ export const NotificationButtons = ({
     
     // Simple simulation for demonstration
     setTimeout(() => {
-      toast.success(`Task snoozed for ${snoozeTime} minutes`);
+      toast.success(`Task snoozed for 15 minutes`);
       setIsSnoozing(false);
       onDismiss();
     }, 1000);
   };
 
-  // Simple buttons that always render
+  const handleCompleteTask = async () => {
+    if (!referenceId) return;
+    
+    console.log('✅ Complete button clicked for notification with referenceId:', referenceId);
+    
+    if (isTest || isTestNotification(referenceId)) {
+      setTimeout(() => {
+        toast.success("Test task completed");
+        onDismiss();
+      }, 1000);
+      return;
+    }
+    
+    try {
+      const task = { id: referenceId };
+      await handleTaskComplete(task as any);
+      toast.success("Task completed");
+    } catch (error) {
+      console.error('Error completing task:', error);
+      toast.error("Failed to complete task");
+    } finally {
+      onDismiss();
+    }
+  };
+
   return (
     <div 
       className="flex w-full flex-col sm:flex-row justify-between gap-2 mt-4 border-t pt-3"
       data-has-reference-id={referenceId ? "true" : "false"}
       data-reference-id={String(referenceId)}
       data-reference-id-type={typeof referenceId}
-      data-test-notification={isTestNotification ? "true" : "false"}
+      data-test-notification={isTest ? "true" : "false"}
       data-component="notification-buttons"
     >
       <Button
@@ -80,7 +100,7 @@ export const NotificationButtons = ({
       <Button
         variant="default"
         size="sm"
-        onClick={onDone}
+        onClick={handleCompleteTask}
         disabled={!!isLoading || isSnoozing}
         className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white flex items-center gap-2"
         tabIndex={0}

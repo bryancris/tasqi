@@ -2,7 +2,6 @@
 import * as React from "react";
 import { AlarmClock } from "lucide-react";
 import { AlertDialogHeader, AlertDialogTitle, AlertDialogDescription } from "@/components/ui/alert-dialog";
-import { cn } from "@/lib/utils";
 
 interface NotificationHeaderProps {
   title: string;
