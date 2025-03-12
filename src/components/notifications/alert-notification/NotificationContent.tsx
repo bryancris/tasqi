@@ -5,7 +5,11 @@ import { AlertDialogFooter } from "@/components/ui/alert-dialog";
 import { NotificationButtons } from "../notification-buttons";
 import { toast } from "sonner";
 import { handleStart } from "../notification-handlers";
-import { debugLogNotification, validateTaskNotification } from "@/utils/notifications/debug-utils";
+import { 
+  debugLogNotification, 
+  validateTaskNotification, 
+  isTestNotification 
+} from "@/utils/notifications/debug-utils";
 
 interface NotificationContentProps {
   title: string;
@@ -42,8 +46,6 @@ export const NotificationContent = ({
       referenceIdValue: String(referenceId),
       referenceType,
       title,
-      showButtons: referenceId !== undefined && referenceId !== null && 
-                  (referenceType === 'task' || title?.toLowerCase().includes('task')),
       isDialogOpen
     });
     
@@ -56,9 +58,8 @@ export const NotificationContent = ({
     }, 'NotificationContent render');
     
     // Extra validation for test notifications
-    if (referenceId === "999999" || referenceId === 999999) {
+    if (isTestNotification(referenceId)) {
       console.log('🧪 Test notification validation:', {
-        hasButtons: isTaskNotification,
         referenceId,
         referenceIdType: typeof referenceId,
         isValidTestNotification: true
@@ -71,7 +72,7 @@ export const NotificationContent = ({
       setIsLoading('done');
       
       // Special handling for test task notification
-      if (referenceId === "999999" || referenceId === 999999) {
+      if (isTestNotification(referenceId)) {
         console.log('Test notification - simulating completion');
         await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
         toast.success('Test task completed');
@@ -96,37 +97,39 @@ export const NotificationContent = ({
   };
 
   // Check if this is a notification that should show buttons
-  // Simplified the logic to make it more reliable
-  const isTaskNotification = 
-    // Always show buttons for test notifications with ID 999999
-    referenceId === "999999" || referenceId === 999999 ||
-    // For regular task notifications
-    (referenceId !== undefined && referenceId !== null && 
-     (referenceType === 'task' || title?.toLowerCase().includes('task')));
+  // First check for test notification with ID 999999
+  const isTaskNotification = React.useMemo(() => {
+    // First check for test notification
+    if (isTestNotification(referenceId)) {
+      return true;
+    }
+    
+    // Regular checks for task notifications
+    return (
+      referenceId !== undefined && 
+      referenceId !== null && 
+      (
+        referenceType === 'task' || 
+        title?.toLowerCase().includes('task')
+      )
+    );
+  }, [referenceId, referenceType, title]);
   
   console.log('📢 Button display decision:', {
     referenceId,
     referenceIdType: typeof referenceId,
     referenceType,
     title,
-    isTaskNotification
+    isTaskNotification,
+    isTestNotification: isTestNotification(referenceId)
   });
 
-  // Extra validation specifically for test notifications
-  React.useEffect(() => {
-    if (isTaskNotification && (referenceId === "999999" || referenceId === 999999)) {
-      validateTaskNotification({
-        title,
-        message,
-        type,
-        referenceId,
-        referenceType
-      });
-    }
-  }, [title, message, type, referenceId, referenceType, isTaskNotification]);
-
   return (
-    <AlertDialogFooter className="flex-col sm:flex-col gap-3 sm:gap-3 mt-2 items-start">
+    <AlertDialogFooter 
+      className="flex-col sm:flex-col gap-3 sm:gap-3 mt-2 items-start"
+      data-has-task-buttons={isTaskNotification ? "true" : "false"}
+      data-test-notification={isTestNotification(referenceId) ? "true" : "false"}
+    >
       {isTaskNotification ? (
         <NotificationButtons
           isLoading={isLoading}

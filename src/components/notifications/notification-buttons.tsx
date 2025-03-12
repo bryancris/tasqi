@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState, useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { handleSnooze } from "./notification-handlers";
+import { isTestNotification } from "@/utils/notifications/debug-utils";
 
 interface NotificationButtonsProps {
   isLoading: string | null;
@@ -22,24 +23,30 @@ export const NotificationButtons = ({
   isDialogOpen = false
 }: NotificationButtonsProps) => {
   console.log('🔵 RENDERING NotificationButtons with referenceId:', referenceId, 
-    'Type:', typeof referenceId);
+    'Type:', typeof referenceId, 
+    'IsTestNotification:', isTestNotification(referenceId));
 
   const [snoozeTime, setSnoozeTime] = useState<string>("15");
   const [isSnoozing, setIsSnoozing] = useState<boolean>(false);
   const completeButtonRef = useRef<HTMLButtonElement>(null);
   const queryClient = useQueryClient();
+  const [hasFocused, setHasFocused] = useState<boolean>(false);
 
   // Focus the complete button after dialog is fully open
   useEffect(() => {
-    if (isDialogOpen && completeButtonRef.current) {
+    if (isDialogOpen && completeButtonRef.current && !hasFocused) {
       // Small delay to ensure DOM is ready
-      setTimeout(() => {
+      const focusTimer = setTimeout(() => {
         if (completeButtonRef.current) {
           completeButtonRef.current.focus();
+          setHasFocused(true);
+          console.log('✓ Set focus on complete button');
         }
-      }, 150);
+      }, 250);
+      
+      return () => clearTimeout(focusTimer);
     }
-  }, [isDialogOpen]);
+  }, [isDialogOpen, hasFocused]);
 
   const handleSnoozeClick = async () => {
     if (referenceId === undefined || referenceId === null) {
@@ -51,7 +58,7 @@ export const NotificationButtons = ({
     setIsSnoozing(true);
     try {
       // For test notifications with ID 999999, just simulate a successful snooze
-      if (referenceId === "999999" || referenceId === 999999) {
+      if (isTestNotification(referenceId)) {
         console.log('Test notification detected - simulating snooze');
         await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
         onDismiss();
@@ -73,12 +80,17 @@ export const NotificationButtons = ({
       isNull: referenceId === null,
       isUndefined: referenceId === undefined,
       stringValue: String(referenceId),
-      isTestNotification: referenceId === "999999" || referenceId === 999999
+      isTestNotification: isTestNotification(referenceId)
     });
   }, [referenceId]);
 
   return (
-    <div className="flex w-full flex-col sm:flex-row justify-between gap-2">
+    <div 
+      className="flex w-full flex-col sm:flex-row justify-between gap-2"
+      data-has-reference-id={referenceId ? "true" : "false"}
+      data-reference-id-type={typeof referenceId}
+      data-test-notification={isTestNotification(referenceId) ? "true" : "false"}
+    >
       <div className="flex gap-2 items-center">
         <Select 
           value={snoozeTime} 
@@ -108,6 +120,7 @@ export const NotificationButtons = ({
           disabled={!!isLoading || isSnoozing}
           className="text-[#1A1F2C]"
           tabIndex={0}
+          aria-label="Snooze task"
         >
           {isSnoozing ? (
             <>
@@ -128,6 +141,7 @@ export const NotificationButtons = ({
         disabled={!!isLoading || isSnoozing}
         className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white"
         tabIndex={0}
+        aria-label="Complete task"
       >
         {isLoading === 'done' ? (
           <>

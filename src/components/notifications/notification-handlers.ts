@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { QueryClient } from "@tanstack/react-query";
+import { isTestNotification } from "@/utils/notifications/debug-utils";
 
 export const handleStart = async (
   referenceId: number | string,
@@ -9,18 +10,18 @@ export const handleStart = async (
   onDismiss: () => void
 ) => {
   try {
-    // Always convert referenceId to number
-    const taskId = typeof referenceId === 'string' ? parseInt(referenceId, 10) : referenceId;
-    
-    console.log('🚀 Processing task with ID:', taskId, 'Type:', typeof taskId, 'Original:', referenceId);
-    
-    // Special case for test notifications (ID 999999)
-    if (taskId === 999999) {
+    // Extra validation for test notification
+    if (isTestNotification(referenceId)) {
       console.log('✅ Test task processing completed');
       toast.success('Test task completed');
       onDismiss();
       return;
     }
+    
+    // Always convert referenceId to number
+    const taskId = typeof referenceId === 'string' ? parseInt(referenceId, 10) : referenceId;
+    
+    console.log('🚀 Processing task with ID:', taskId, 'Type:', typeof taskId, 'Original:', referenceId);
     
     // Get current user
     const { data: { user } } = await supabase.auth.getUser();
@@ -83,18 +84,18 @@ export const handleSnooze = async (
   onDismiss: () => void
 ) => {
   try {
-    // Always convert referenceId to number
-    const taskId = typeof referenceId === 'string' ? parseInt(referenceId, 10) : referenceId;
-    
-    console.log('⏰ Snoozing task with ID:', taskId, 'Type:', typeof taskId, 'for', minutes, 'minutes');
-    
-    // Special case for test notifications (ID 999999)
-    if (taskId === 999999) {
+    // Extra validation for test notification
+    if (isTestNotification(referenceId)) {
       console.log('✅ Test task snooze completed');
       toast.success(`Task snoozed for ${minutes} minutes`);
       onDismiss();
       return;
     }
+    
+    // Always convert referenceId to number
+    const taskId = typeof referenceId === 'string' ? parseInt(referenceId, 10) : referenceId;
+    
+    console.log('⏰ Snoozing task with ID:', taskId, 'Type:', typeof taskId, 'for', minutes, 'minutes');
     
     // Get current user
     const { data: { user } } = await supabase.auth.getUser();
