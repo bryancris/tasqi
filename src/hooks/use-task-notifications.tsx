@@ -22,22 +22,27 @@ export function useTaskNotifications() {
   const { showTaskNotification } = useTaskNotificationDisplay();
   const { checkForUpcomingTasks } = useTaskChecker();
 
-  // Function to trigger a test notification - CRITICALLY IMPORTANT for testing
+  // Improved test notification function with guaranteed structure
   const triggerTestNotification = () => {
     console.log('🧪 Triggering test notification with ID: 999999');
     
     if (isMountedRef.current) {
-      // Using constant ID for test notifications
       console.log(`✅ Creating test notification with ID: 999999, type: task`);
       
-      // Create a very simple test notification structure to guarantee buttons work
+      // Create a simplified test notification with a consistent structure
+      // that directly shows in the UI with action buttons
       showNotification({
-        title: 'Task Reminder',
-        message: 'This is a test notification with action buttons',
-        type: 'info',
+        id: "test-notification",
+        title: "Task Reminder",
+        message: "This is a test notification with action buttons",
+        type: "info",
         persistent: true,
-        referenceId: "999999",  // String format for consistency
-        referenceType: 'task'   // Always include referenceType: 'task'
+        priority: "high",
+        referenceId: "999999",  // String format
+        referenceType: "task",  // MUST be "task" to trigger task-specific buttons
+        created_at: new Date().toISOString(),
+        read: false,
+        user_id: "test-user"
       });
     } else {
       console.log('❌ Cannot trigger test notification - component unmounted');

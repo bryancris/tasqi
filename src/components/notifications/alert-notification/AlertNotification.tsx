@@ -40,6 +40,7 @@ export function AlertNotification({
   const isMobile = useIsMobile();
   const closeButtonRef = React.useRef<HTMLButtonElement>(null);
   const [isTestNotification, setIsTestNotification] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState<string | null>(null);
   
   // Log notification render and details
   React.useEffect(() => {
@@ -63,13 +64,21 @@ export function AlertNotification({
     }
   }, [title, message, referenceId, type, open]);
 
-  // SIMPLE placeholder button handlers with console logging
-  const handleSnooze = () => {
-    console.log('PLACEHOLDER Snooze clicked for notification:', referenceId);
+  // Direct handler functions - no need to rely on other components
+  const handleComplete = () => {
+    console.log('✅ Complete button clicked for notification:', referenceId);
+    setIsLoading('done');
+    
+    // Simulate a delay then dismiss
+    setTimeout(() => {
+      setIsLoading(null);
+      onDismiss();
+    }, 1000);
   };
 
-  const handleComplete = () => {
-    console.log('PLACEHOLDER Complete clicked for notification:', referenceId);
+  const handleSnooze = () => {
+    console.log('⏰ Snooze button clicked for notification:', referenceId);
+    onDismiss();
   };
 
   return (
@@ -119,41 +128,45 @@ export function AlertNotification({
           referenceId={referenceId} 
         />
 
-        {/* ALWAYS SHOW BUTTONS - using the dedicated buttons component or fallback */}
-        {referenceType === 'task' || isTestNotification ? (
-          <NotificationButtons
-            isLoading={null}
-            referenceId={referenceId}
-            onDismiss={onDismiss}
-            onDone={handleComplete}
-            isDialogOpen={open}
-            isTestNotification={isTestNotification}
-          />
-        ) : (
-          <div className="mt-4 border-t pt-3" data-testid="fallback-buttons">
-            <div className="flex justify-between gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleSnooze}
-                className="flex items-center gap-2"
-              >
-                <Clock className="h-4 w-4" />
-                <span>Snooze</span>
-              </Button>
-              
-              <Button
-                variant="default"
-                size="sm"
-                onClick={handleComplete}
-                className="bg-purple-500 hover:bg-purple-600 text-white flex items-center gap-2"
-              >
-                <Check className="h-4 w-4" />
-                <span>Complete</span>
-              </Button>
-            </div>
+        {/* ALWAYS RENDER BUTTONS - no conditional logic */}
+        <div className="flex w-full flex-col sm:flex-row justify-between gap-2 mt-4 border-t pt-3">
+          <div className="flex gap-2 items-center">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSnooze}
+              disabled={!!isLoading}
+              className="text-[#1A1F2C] flex items-center gap-2"
+              tabIndex={0}
+              aria-label="Snooze task"
+            >
+              <Clock className="h-4 w-4" />
+              Snooze
+            </Button>
           </div>
-        )}
+
+          <Button
+            variant="default"
+            size="sm"
+            onClick={handleComplete}
+            disabled={!!isLoading}
+            className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white flex items-center gap-2"
+            tabIndex={0}
+            aria-label="Complete task"
+          >
+            {isLoading === 'done' ? (
+              <>
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                Processing
+              </>
+            ) : (
+              <>
+                <Check className="h-4 w-4" />
+                Complete
+              </>
+            )}
+          </Button>
+        </div>
       </AlertDialogContent>
     </AlertDialog>
   );
