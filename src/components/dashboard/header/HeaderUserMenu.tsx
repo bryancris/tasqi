@@ -53,7 +53,7 @@ export function HeaderUserMenu() {
     const notificationData = {
       title: "Task Reminder",
       message: "This is a test notification with action buttons",
-      type: "info",
+      type: "info" as const,
       reference_id: "999999",
       reference_type: "task",
       persistent: true
