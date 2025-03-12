@@ -82,6 +82,15 @@ export function AlertNotification({
     }
   }, [open]);
 
+  // Simple placeholder button handlers that just log to console
+  const handleSnooze = () => {
+    console.log('Snooze placeholder clicked', { snoozeTime });
+  };
+
+  const handleComplete = () => {
+    console.log('Complete placeholder clicked');
+  };
+
   return (
     <AlertDialog open={open}>
       <AlertDialogContent
@@ -129,7 +138,7 @@ export function AlertNotification({
           referenceId={referenceId} 
         />
 
-        {/* ALWAYS SHOW PLACEHOLDER BUTTONS */}
+        {/* ALWAYS VISIBLE PLACEHOLDER BUTTONS */}
         <div className="mt-4 border-t pt-3">
           <div className="flex w-full flex-col sm:flex-row justify-between gap-2">
             <div className="flex gap-2 items-center">
@@ -156,7 +165,7 @@ export function AlertNotification({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => console.log('Snooze placeholder clicked')}
+                onClick={handleSnooze}
                 className="text-[#1A1F2C]"
                 tabIndex={0}
                 aria-label="Snooze task"
@@ -170,7 +179,7 @@ export function AlertNotification({
             <Button
               variant="default"
               size="sm"
-              onClick={() => console.log('Complete placeholder clicked')}
+              onClick={handleComplete}
               className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white"
               tabIndex={0}
               aria-label="Complete task"
