@@ -79,21 +79,13 @@ export function AlertNotification({
     }
   };
 
-  // More flexible conditions for showing buttons
-  // Show buttons if title contains "Task" and "Reminder" (case-insensitive), and has a reference ID
-  const showButtons = (
-    title.toLowerCase().includes('task') && 
-    title.toLowerCase().includes('reminder') && 
-    (referenceId !== undefined && referenceId !== null)
-  );
+  // Show buttons if it's a task notification with a reference ID
+  const showButtons = (reference_type === 'task' && referenceId !== undefined && referenceId !== null);
   
   console.log('🔘 Button visibility check:', {
     title,
     showButtons,
-    titleIncludes: {
-      task: title.toLowerCase().includes('task'),
-      reminder: title.toLowerCase().includes('reminder'),
-    },
+    referenceType: reference_type,
     hasReferenceId: referenceId !== undefined && referenceId !== null,
     referenceIdType: typeof referenceId,
     referenceIdValue: referenceId

@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Settings, LogOut, Bell } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useState } from "react";
 import { Spinner } from "@/components/ui/spinner";
@@ -47,6 +47,10 @@ export function HeaderUserMenu() {
     } finally {
       setIsLoggingOut(false);
     }
+  };
+
+  const handleNavigateToSettings = () => {
+    navigate('/dashboard/settings');
   };
 
   const handleTestNotification = () => {
@@ -91,11 +95,9 @@ export function HeaderUserMenu() {
           />
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link to="/dashboard/settings" className="w-full flex items-center">
-            <Settings className="mr-2 h-4 w-4" />
-            Settings
-          </Link>
+        <DropdownMenuItem onClick={handleNavigateToSettings}>
+          <Settings className="mr-2 h-4 w-4" />
+          Settings
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleTestNotification}>
           <Bell className="mr-2 h-4 w-4" />
