@@ -138,10 +138,6 @@ export function AlertNotification({
           type === 'info' && 'border-l-4 border-l-[#9b87f5] bg-[#F8F7FF]'
         )}
         onEscapeKeyDown={onDismiss}
-        onInteractOutside={(e) => {
-          // Prevent closing when interacting outside but don't stop propagation
-          e.preventDefault();
-        }}
       >
         <button
           ref={buttonRef}
