@@ -51,6 +51,14 @@ export function useNotificationHandlers(
     const id = Math.random().toString(36).substr(2, 9);
     const now = new Date().toISOString();
     
+    // Log the received notification for debugging
+    console.log('📩 Creating notification:', {
+      ...notification,
+      id,
+      now,
+      userId
+    });
+    
     if (!navigator.onLine) {
       setOfflineQueue(prev => [...prev, {
         ...notification,
@@ -75,7 +83,9 @@ export function useNotificationHandlers(
     if (!document.hasFocus()) {
       try {
         await showBrowserNotification({
-          id: parseInt(notification.reference_id || '0'),
+          id: typeof notification.reference_id === 'string' 
+              ? parseInt(notification.reference_id) 
+              : (notification.reference_id as number) || 0,
           title: notification.title,
           description: notification.message,
           priority: 'high'
@@ -93,6 +103,8 @@ export function useNotificationHandlers(
       )?.group;
 
       const group = existingGroup || Math.random().toString(36).substr(2, 9);
+      
+      // Create new notification and preserve reference_id and reference_type
       const newNotification = { 
         ...notification, 
         id,
@@ -101,7 +113,13 @@ export function useNotificationHandlers(
         user_id: userId || '',
         group,
         persistent: isPersistent,
+        // Explicitly preserve these properties for clarity
+        reference_id: notification.reference_id,
+        reference_type: notification.reference_type
       };
+      
+      // Log the notification being added to state
+      console.log('📌 Adding notification to state:', newNotification);
       
       if (prev.length >= MAX_VISIBLE_NOTIFICATIONS) {
         const [oldest, ...rest] = prev;

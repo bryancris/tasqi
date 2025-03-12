@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { NotificationButtons } from "./notification-buttons";
 import { useQueryClient } from "@tanstack/react-query";
 import { handleStart } from "./notification-handlers";
-import { debugLogNotification } from "@/utils/notifications/debug-utils";
+import { debugLogNotification, validateTaskNotification } from "@/utils/notifications/debug-utils";
 
 export interface AlertNotificationProps {
   open: boolean;
@@ -48,7 +48,7 @@ export function AlertNotification({
   const queryClient = useQueryClient();
   const buttonRef = React.useRef<HTMLButtonElement>(null);
 
-  // Debug log the notification details
+  // Extended debug logging
   React.useEffect(() => {
     debugLogNotification({
       title,
@@ -57,6 +57,14 @@ export function AlertNotification({
       reference_id: referenceId,
       reference_type
     }, 'AlertNotification render');
+    
+    // Add specific validation check
+    console.log('🎯 Notification Button Validation:', validateTaskNotification({
+      title,
+      reference_id: referenceId,
+      reference_type
+    }));
+    
   }, [title, message, type, referenceId, reference_type]);
 
   // Focus management
@@ -74,7 +82,7 @@ export function AlertNotification({
       setIsLoading('done');
       
       if (referenceId) {
-        console.log('Processing task with ID:', referenceId);
+        console.log('Processing task with ID:', referenceId, 'Type:', typeof referenceId);
         await handleStart(referenceId, queryClient, onDismiss);
       } else if (action?.onClick) {
         await action.onClick();
@@ -89,11 +97,25 @@ export function AlertNotification({
     }
   };
 
-  // Logic to determine if buttons should be shown
+  // Logic to determine if buttons should be shown - with improved type handling
   const isTaskNotification = reference_type === 'task' || 
     (title.toLowerCase().includes('task') && title.toLowerCase().includes('reminder'));
   
-  const showButtons = isTaskNotification && referenceId !== undefined && referenceId !== null;
+  // Fixed condition to properly check for null or undefined referenceId
+  const hasValidReferenceId = referenceId !== undefined && referenceId !== null;
+  
+  // Log the final button visibility determination
+  const showButtons = isTaskNotification && hasValidReferenceId;
+  
+  // Extra debugging for visibility conditions
+  console.log('🔘 Button visibility check:', {
+    showButtons,
+    isTaskNotification,
+    hasValidReferenceId,
+    referenceType: reference_type,
+    referenceIdType: typeof referenceId,
+    referenceIdValue: referenceId
+  });
 
   return (
     <AlertDialog open={open}>

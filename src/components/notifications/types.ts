@@ -10,7 +10,7 @@ export interface Notification {
   };
   read: boolean;
   created_at: string;
-  reference_id?: string | null;
+  reference_id?: string | number | null;
   reference_type?: string | null;
   user_id: string;
   group?: string;

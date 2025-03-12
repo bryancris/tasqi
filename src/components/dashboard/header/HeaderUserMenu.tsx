@@ -76,7 +76,7 @@ export function HeaderUserMenu() {
         title: "Task Reminder",
         message: "This is a test notification with action buttons",
         type: "info" as const,
-        reference_id: "999999",
+        reference_id: "999999", // Make sure this is a string
         reference_type: "task",
         persistent: true
       });

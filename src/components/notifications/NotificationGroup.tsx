@@ -15,7 +15,7 @@ interface NotificationGroupProps {
     message: string;
     type?: 'info' | 'success' | 'warning' | 'error';
     priority?: 'high' | 'normal' | 'low';
-    reference_id?: string | null;
+    reference_id?: string | number | null;
     reference_type?: string | null;
   }>;
   onDismissGroup: (groupId: string) => void;
