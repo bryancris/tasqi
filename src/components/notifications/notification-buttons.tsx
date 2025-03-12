@@ -51,9 +51,8 @@ export function NotificationButtons({
     }
   };
 
-  // Always render buttons - they will be conditionally displayed by the parent component
   return (
-    <>
+    <div className="flex w-full flex-col sm:flex-row justify-between gap-2">
       <div className="flex gap-2 items-center">
         <Select 
           value={snoozeTime} 
@@ -110,6 +109,6 @@ export function NotificationButtons({
           'Complete'
         )}
       </Button>
-    </>
+    </div>
   );
 }
