@@ -10,7 +10,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { NotificationHeader } from "./NotificationHeader";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { debugLogNotification } from "@/utils/notifications/debug-utils";
 
 export interface AlertNotificationProps {
   open: boolean;
@@ -40,29 +39,22 @@ export function AlertNotification({
 }: AlertNotificationProps) {
   const isMobile = useIsMobile();
   const closeButtonRef = React.useRef<HTMLButtonElement>(null);
-  const dialogContentRef = React.useRef<HTMLDivElement>(null);
   const [snoozeTime, setSnoozeTime] = React.useState<string>("15");
   
-  // Track when dialog is fully open
-  const [isFullyOpen, setIsFullyOpen] = React.useState(false);
-  
   React.useEffect(() => {
-    console.log('🔔 Alert Notification render:', {
+    console.log('🔔 Alert Notification rendered:', {
       title,
       message,
       referenceId: referenceId,
-      type
+      type,
+      isOpen: open
     });
 
-    // Log additional debug information
-    debugLogNotification({
-      title,
-      message,
-      type,
-      referenceId,
-      referenceType
-    }, 'AlertNotification component');
-  }, [title, message, referenceId, type, referenceType]);
+    // Log when notification is actually displayed
+    if (open) {
+      console.log('⚠️ NOTIFICATION IS OPEN - ID:', referenceId);
+    }
+  }, [title, message, referenceId, type, open]);
 
   // Handle focusing the close button when dialog opens
   React.useEffect(() => {
@@ -71,18 +63,14 @@ export function AlertNotification({
       const timeoutId = setTimeout(() => {
         if (closeButtonRef.current) {
           closeButtonRef.current.focus();
-          setIsFullyOpen(true);
         }
       }, 100);
       
-      return () => {
-        clearTimeout(timeoutId);
-        setIsFullyOpen(false);
-      };
+      return () => clearTimeout(timeoutId);
     }
   }, [open]);
 
-  // Simple placeholder button handlers that just log to console
+  // Simple placeholder button handlers with console logging
   const handleSnooze = () => {
     console.log('Snooze placeholder clicked', { snoozeTime });
   };
@@ -94,7 +82,6 @@ export function AlertNotification({
   return (
     <AlertDialog open={open}>
       <AlertDialogContent
-        ref={dialogContentRef}
         className={cn(
           "max-w-sm m-0 transform-none transition-all duration-300 ease-in-out",
           "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
@@ -121,6 +108,7 @@ export function AlertNotification({
         onEscapeKeyDown={onDismiss}
         aria-modal="true"
         role="dialog"
+        data-testid="alert-notification-content"
       >
         <button
           ref={closeButtonRef}
@@ -139,7 +127,7 @@ export function AlertNotification({
         />
 
         {/* ALWAYS VISIBLE PLACEHOLDER BUTTONS */}
-        <div className="mt-4 border-t pt-3">
+        <div className="mt-4 border-t pt-3" data-testid="notification-buttons">
           <div className="flex w-full flex-col sm:flex-row justify-between gap-2">
             <div className="flex gap-2 items-center">
               <Select 
