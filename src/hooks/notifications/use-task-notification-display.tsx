@@ -33,7 +33,7 @@ export function useTaskNotificationDisplay() {
       
       console.log('📱 Creating notification with referenceId:', referenceIdString, 'Type:', typeof referenceIdString);
 
-      // Show in-app notification with task ID reference as string
+      // Show in-app notification with SIMPLIFIED structure to ensure buttons work
       showNotification({
         title: type === 'reminder' ? 'Task Reminder' :
                type === 'shared' ? 'Task Shared' :
@@ -42,11 +42,7 @@ export function useTaskNotificationDisplay() {
         type: 'info',
         persistent: true,
         referenceId: referenceIdString,
-        referenceType: 'task',
-        action: {
-          label: 'Complete Task',
-          onClick: () => void handleTaskComplete(task)
-        }
+        referenceType: 'task'
       });
 
       return true;

@@ -15,7 +15,7 @@ interface NotificationContentProps {
   isDialogOpen?: boolean;
 }
 
-// This component is completely deprecated now - we've moved all functionality directly to AlertNotification
+// This component is completely deprecated and returns null
 export const NotificationContent = ({
   title,
   message,

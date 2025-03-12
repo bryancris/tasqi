@@ -55,27 +55,13 @@ export function AlertNotification({
     }
   }, [title, message, referenceId, type, open]);
 
-  // Handle focusing the close button when dialog opens
-  React.useEffect(() => {
-    if (open) {
-      // Use a short delay to ensure the dialog has fully opened and rendered
-      const timeoutId = setTimeout(() => {
-        if (closeButtonRef.current) {
-          closeButtonRef.current.focus();
-        }
-      }, 100);
-      
-      return () => clearTimeout(timeoutId);
-    }
-  }, [open]);
-
-  // Simple placeholder button handlers with console logging
+  // SIMPLE placeholder button handlers with console logging
   const handleSnooze = () => {
-    console.log('Snooze placeholder clicked - BASIC VERSION');
+    console.log('PLACEHOLDER Snooze clicked for notification:', referenceId);
   };
 
   const handleComplete = () => {
-    console.log('Complete placeholder clicked - BASIC VERSION');
+    console.log('PLACEHOLDER Complete clicked for notification:', referenceId);
   };
 
   return (
@@ -114,7 +100,6 @@ export function AlertNotification({
           onClick={onDismiss}
           className="absolute right-4 top-4 p-1 rounded-full hover:bg-gray-100 transition-colors"
           aria-label="Close notification"
-          tabIndex={0}
         >
           <X className="h-4 w-4 text-gray-500" />
         </button>
@@ -125,8 +110,8 @@ export function AlertNotification({
           referenceId={referenceId} 
         />
 
-        {/* VERY BASIC PLACEHOLDER BUTTONS - GUARANTEED TO SHOW */}
-        <div className="mt-4 border-t pt-3" data-testid="notification-buttons">
+        {/* ALWAYS SHOW SIMPLE PLACEHOLDER BUTTONS */}
+        <div className="mt-4 border-t pt-3" data-testid="placeholder-buttons">
           <div className="flex justify-between gap-2">
             <Button
               variant="outline"
