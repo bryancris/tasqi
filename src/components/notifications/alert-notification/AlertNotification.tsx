@@ -10,7 +10,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { NotificationHeader } from "./NotificationHeader";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "sonner";
 import { debugLogNotification } from "@/utils/notifications/debug-utils";
 
 export interface AlertNotificationProps {
@@ -43,25 +42,15 @@ export function AlertNotification({
   const closeButtonRef = React.useRef<HTMLButtonElement>(null);
   const dialogContentRef = React.useRef<HTMLDivElement>(null);
   const [snoozeTime, setSnoozeTime] = React.useState<string>("15");
-  const [isLoading, setIsLoading] = React.useState<string | null>(null);
-
+  
   // Track when dialog is fully open
   const [isFullyOpen, setIsFullyOpen] = React.useState(false);
-  
-  // SUPER SIMPLE TEST DETECTION - direct string comparison only
-  const isTestNotification = React.useMemo(() => {
-    return referenceId !== undefined && 
-           referenceId !== null && 
-           String(referenceId) === "999999";
-  }, [referenceId]);
   
   React.useEffect(() => {
     console.log('🔔 Alert Notification render:', {
       title,
       message,
       referenceId: referenceId,
-      referenceIdAsString: referenceId !== undefined && referenceId !== null ? String(referenceId) : "none",
-      isTestNotification,
       type
     });
 
@@ -73,7 +62,7 @@ export function AlertNotification({
       referenceId,
       referenceType
     }, 'AlertNotification component');
-  }, [title, message, referenceId, type, isTestNotification, referenceType]);
+  }, [title, message, referenceId, type, referenceType]);
 
   // Handle focusing the close button when dialog opens
   React.useEffect(() => {
@@ -92,32 +81,6 @@ export function AlertNotification({
       };
     }
   }, [open]);
-
-  // Handle snooze button click
-  const handleSnoozeClick = () => {
-    setIsLoading('snooze');
-    
-    // Simulate API call
-    setTimeout(() => {
-      console.log(`Snoozing task for ${snoozeTime} minutes`);
-      toast.success(`Task snoozed for ${snoozeTime} minutes`);
-      setIsLoading(null);
-      onDismiss();
-    }, 1000);
-  };
-
-  // Handle complete button click
-  const handleCompleteClick = () => {
-    setIsLoading('complete');
-    
-    // Simulate API call
-    setTimeout(() => {
-      console.log('Task completed');
-      toast.success('Task completed successfully');
-      setIsLoading(null);
-      onDismiss();
-    }, 1000);
-  };
 
   return (
     <AlertDialog open={open}>
@@ -144,7 +107,6 @@ export function AlertNotification({
           type === 'warning' && 'border-l-4 border-l-[#FEC6A1] bg-[#FFFAF5]',
           type === 'info' && 'border-l-4 border-l-[#9b87f5] bg-[#F8F7FF]'
         )}
-        data-test-notification={isTestNotification ? "true" : "false"}
         data-reference-id={referenceId !== undefined && referenceId !== null ? String(referenceId) : "none"}
         data-reference-type={referenceType || "none"}
         onEscapeKeyDown={onDismiss}
@@ -167,14 +129,13 @@ export function AlertNotification({
           referenceId={referenceId} 
         />
 
-        {/* ALWAYS SHOW ACTION BUTTONS - Simplified approach */}
+        {/* ALWAYS SHOW PLACEHOLDER BUTTONS */}
         <div className="mt-4 border-t pt-3">
           <div className="flex w-full flex-col sm:flex-row justify-between gap-2">
             <div className="flex gap-2 items-center">
               <Select 
                 value={snoozeTime} 
-                onValueChange={setSnoozeTime} 
-                disabled={!!isLoading}
+                onValueChange={setSnoozeTime}
               >
                 <SelectTrigger className="h-9 w-28 bg-white text-[#1A1F2C]" tabIndex={0}>
                   <div className="flex items-center gap-1.5">
@@ -195,48 +156,28 @@ export function AlertNotification({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleSnoozeClick}
-                disabled={isLoading !== null}
+                onClick={() => console.log('Snooze placeholder clicked')}
                 className="text-[#1A1F2C]"
                 tabIndex={0}
                 aria-label="Snooze task"
                 data-testid="snooze-button"
               >
-                {isLoading === 'snooze' ? (
-                  <>
-                    <div className="h-4 w-4 border-2 border-[#1A1F2C] border-t-transparent rounded-full animate-spin mr-2" />
-                    Snoozing
-                  </>
-                ) : (
-                  <>
-                    <Clock className="mr-2 h-4 w-4" />
-                    Snooze
-                  </>
-                )}
+                <Clock className="mr-2 h-4 w-4" />
+                Snooze
               </Button>
             </div>
 
             <Button
               variant="default"
               size="sm"
-              onClick={handleCompleteClick}
-              disabled={isLoading !== null}
+              onClick={() => console.log('Complete placeholder clicked')}
               className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white"
               tabIndex={0}
               aria-label="Complete task"
               data-testid="complete-button"
             >
-              {isLoading === 'complete' ? (
-                <>
-                  <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                  Processing
-                </>
-              ) : (
-                <>
-                  <Check className="mr-2 h-4 w-4" />
-                  Complete
-                </>
-              )}
+              <Check className="mr-2 h-4 w-4" />
+              Complete
             </Button>
           </div>
         </div>
