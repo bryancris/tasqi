@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Loader2, Clock } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { handleSnooze } from "./notification-handlers";
 
@@ -23,16 +23,35 @@ export function NotificationButtons({
   const [isSnoozing, setIsSnoozing] = useState<boolean>(false);
   const queryClient = useQueryClient();
 
+  // Debug log when component mounts or referenceId changes
+  useEffect(() => {
+    console.log('NotificationButtons rendered with referenceId:', referenceId, 
+      'type:', typeof referenceId, 
+      'should show buttons:', Boolean(referenceId));
+  }, [referenceId]);
+
   const handleSnoozeClick = async () => {
-    if (!referenceId) return;
+    if (!referenceId) {
+      console.error('Cannot snooze: No valid reference ID');
+      return;
+    }
     
+    console.log('Snoozing task with ID:', referenceId, 'for', snoozeTime, 'minutes');
     setIsSnoozing(true);
     try {
       await handleSnooze(referenceId, parseInt(snoozeTime), queryClient, onDismiss);
+    } catch (error) {
+      console.error('Error snoozing task:', error);
     } finally {
       setIsSnoozing(false);
     }
   };
+
+  // Don't render anything if there's no reference ID
+  if (referenceId === null || referenceId === undefined) {
+    console.log('NotificationButtons not rendering buttons - no reference ID');
+    return null;
+  }
 
   return (
     <>
@@ -76,24 +95,22 @@ export function NotificationButtons({
         </Button>
       </div>
 
-      {referenceId && (
-        <Button
-          variant="default"
-          size="sm"
-          onClick={onDone}
-          disabled={!!isLoading || isSnoozing}
-          className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white"
-        >
-          {isLoading === 'done' ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Processing
-            </>
-          ) : (
-            'Complete'
-          )}
-        </Button>
-      )}
+      <Button
+        variant="default"
+        size="sm"
+        onClick={onDone}
+        disabled={!!isLoading || isSnoozing}
+        className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white"
+      >
+        {isLoading === 'done' ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Processing
+          </>
+        ) : (
+          'Complete'
+        )}
+      </Button>
     </>
   );
 }

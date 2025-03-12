@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import {
   AlertDialog,
@@ -26,7 +27,8 @@ export interface AlertNotificationProps {
   };
   onDismiss: () => void;
   index?: number;
-  referenceId?: number | null;
+  referenceId?: number | string | null;
+  reference_type?: string | null;
 }
 
 export function AlertNotification({
@@ -38,19 +40,39 @@ export function AlertNotification({
   onDismiss,
   index = 0,
   referenceId,
+  reference_type,
 }: AlertNotificationProps) {
   const isMobile = useIsMobile();
   const [isLoading, setIsLoading] = React.useState<string | null>(null);
   const queryClient = useQueryClient();
 
+  // Convert string referenceId to number if needed
+  const numericReferenceId = React.useMemo(() => {
+    if (referenceId === null || referenceId === undefined) return null;
+    return typeof referenceId === 'string' ? parseInt(referenceId, 10) : referenceId;
+  }, [referenceId]);
+
+  // Log for debugging
+  React.useEffect(() => {
+    console.log('AlertNotification - Original referenceId:', referenceId, 
+      'Type:', typeof referenceId,
+      'Parsed numericReferenceId:', numericReferenceId,
+      'reference_type:', reference_type);
+  }, [referenceId, numericReferenceId, reference_type]);
+
   const handleDone = async () => {
     try {
       setIsLoading('done');
       
-      if (referenceId && title.toLowerCase().includes('task')) {
-        await handleStart(referenceId, queryClient, onDismiss);
+      // Only process tasks (not other notification types)
+      if (numericReferenceId && (reference_type === 'task' || title.toLowerCase().includes('task'))) {
+        console.log('Processing task completion for ID:', numericReferenceId);
+        await handleStart(numericReferenceId, queryClient, onDismiss);
       } else if (action?.onClick) {
+        console.log('Executing custom action handler');
         await action.onClick();
+      } else {
+        console.log('No action handler found, just dismissing');
       }
       
       onDismiss();
@@ -61,6 +83,10 @@ export function AlertNotification({
       setIsLoading(null);
     }
   };
+
+  // Determine if we should show task buttons
+  const showTaskButtons = numericReferenceId !== null && 
+    (reference_type === 'task' || title.toLowerCase().includes('task reminder'));
 
   return (
     <AlertDialog open={open}>
@@ -105,12 +131,25 @@ export function AlertNotification({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="flex-col sm:flex-col gap-3 sm:gap-3 mt-2 items-start">
-          <NotificationButtons
-            isLoading={isLoading}
-            referenceId={referenceId}
-            onDismiss={onDismiss}
-            onDone={handleDone}
-          />
+          {showTaskButtons ? (
+            <NotificationButtons
+              isLoading={isLoading}
+              referenceId={numericReferenceId}
+              onDismiss={onDismiss}
+              onDone={handleDone}
+            />
+          ) : (
+            action && (
+              <div className="flex justify-end w-full">
+                <button
+                  onClick={action.onClick}
+                  className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white px-4 py-2 rounded"
+                >
+                  {action.label}
+                </button>
+              </div>
+            )
+          )}
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
