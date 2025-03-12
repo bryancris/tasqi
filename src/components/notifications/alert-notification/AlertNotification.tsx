@@ -11,6 +11,7 @@ import { NotificationHeader } from "./NotificationHeader";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { debugLogNotification } from "@/utils/notifications/debug-utils";
 
 export interface AlertNotificationProps {
   open: boolean;
@@ -63,7 +64,16 @@ export function AlertNotification({
       isTestNotification,
       type
     });
-  }, [title, message, referenceId, type, isTestNotification]);
+
+    // Log additional debug information
+    debugLogNotification({
+      title,
+      message,
+      type,
+      referenceId,
+      referenceType
+    }, 'AlertNotification component');
+  }, [title, message, referenceId, type, isTestNotification, referenceType]);
 
   // Handle focusing the close button when dialog opens
   React.useEffect(() => {

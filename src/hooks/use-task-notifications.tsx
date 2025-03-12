@@ -36,7 +36,7 @@ export function useTaskNotifications() {
         message: 'This is a test notification with action buttons',
         type: 'info',
         persistent: true,
-        referenceId: 999999, // Using number directly to ensure proper comparison
+        referenceId: "999999", // Using string to ensure proper comparison
         referenceType: 'task'
       });
     } else {
