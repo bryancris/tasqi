@@ -9,15 +9,19 @@
  * @param stage The current stage in the notification pipeline
  */
 export function debugLogNotification(notification: any, stage: string) {
+  // Get reference ID from either naming convention
+  const referenceId = notification.referenceId || notification.reference_id;
+  const referenceType = notification.referenceType || notification.reference_type;
+  
   console.log(`🔍 Notification at ${stage}:`, {
     title: notification.title,
     titleLength: notification.title.length,
     titleCharCodes: Array.from(notification.title).map((c: string) => c.charCodeAt(0)),
     message: notification.message,
     type: notification.type,
-    referenceId: notification.reference_id || notification.referenceId,
-    reference_type: notification.reference_type || notification.referenceType,
-    isTask: (notification.reference_type === 'task') || (notification.referenceType === 'task'),
+    referenceId: referenceId, // Use standardized camelCase for logging
+    referenceType: referenceType, // Use standardized camelCase for logging
+    isTask: (referenceType === 'task'),
     properties: Object.keys(notification)
   });
 }
@@ -28,11 +32,14 @@ export function debugLogNotification(notification: any, stage: string) {
  * @returns An object containing validation results
  */
 export function validateTaskNotification(notification: any) {
-  const hasReferenceId = notification.reference_id !== undefined || notification.referenceId !== undefined;
-  const hasReferenceType = notification.reference_type !== undefined || notification.referenceType !== undefined;
+  // Support both naming conventions for backward compatibility
+  const hasReferenceId = notification.referenceId !== undefined || notification.reference_id !== undefined;
+  const hasReferenceType = notification.referenceType !== undefined || notification.reference_type !== undefined;
+  const referenceId = notification.referenceId || notification.reference_id;
+  const referenceType = notification.referenceType || notification.reference_type;
+  
   const isTaskType = 
-    (notification.reference_type === 'task') || 
-    (notification.referenceType === 'task') ||
+    (referenceType === 'task') ||
     (notification.title?.toLowerCase().includes('task') && notification.title?.toLowerCase().includes('reminder'));
 
   return {
@@ -40,7 +47,7 @@ export function validateTaskNotification(notification: any) {
     hasReferenceId,
     hasReferenceType,
     isTaskType,
-    referenceIdValue: notification.reference_id || notification.referenceId,
-    reference_type: notification.reference_type || notification.referenceType
+    referenceIdValue: referenceId,
+    referenceType: referenceType
   };
 }

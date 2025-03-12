@@ -20,8 +20,8 @@ export function HeaderNotifications() {
     console.log('📬 Handling notification click:', {
       notification,
       title: notification.title,
-      reference_id: notification.reference_id,
-      reference_type: notification.reference_type
+      referenceId: notification.referenceId, // Updated to camelCase
+      referenceType: notification.referenceType // Updated to camelCase
     });
 
     try {
@@ -38,10 +38,10 @@ export function HeaderNotifications() {
         title: notification.title,
         message: notification.message,
         type: notificationType,
-        reference_id: notification.reference_id,
-        reference_type: notification.reference_type,
+        referenceId: notification.referenceId, // Updated to camelCase
+        referenceType: notification.referenceType, // Updated to camelCase
         persistent: true,
-        action: notification.reference_type === 'task_share' && notification.reference_id ? {
+        action: notification.referenceType === 'task_share' && notification.referenceId ? { // Updated to camelCase
           label: 'View Task',
           onClick: () => navigate('/dashboard')
         } : undefined

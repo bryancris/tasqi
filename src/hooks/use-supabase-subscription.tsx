@@ -111,8 +111,8 @@ export function useSupabaseSubscription() {
               title: payload.new.title,
               message: payload.new.message,
               data: {
-                reference_id: payload.new.reference_id,
-                reference_type: 'task_assignment'
+                referenceId: payload.new.reference_id,
+                referenceType: 'task_assignment'
               }
             };
 
@@ -125,8 +125,8 @@ export function useSupabaseSubscription() {
               message: payload.new.message,
               type: 'info',
               persistent: true,
-              reference_id: payload.new.reference_id,
-              reference_type: 'task_assignment',
+              referenceId: payload.new.reference_id, // Updated to camelCase
+              referenceType: 'task_assignment', // Updated to camelCase
               action: {
                 label: 'View Task',
                 onClick: () => {

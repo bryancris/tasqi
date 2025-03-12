@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useCallback } from 'react';
 import { useTasks } from '@/hooks/use-tasks';
 import { Task } from '@/components/dashboard/TaskBoard';
@@ -93,8 +92,8 @@ export function useTaskNotifications() {
         message: task.title,
         type: 'info',
         persistent: true,
-        reference_id: task.id.toString(), // Convert number to string to match expected type
-        reference_type: 'task', // Explicitly identify this as a task
+        referenceId: task.id.toString(), // Updated to camelCase
+        referenceType: 'task', // Updated to camelCase
         action: {
           label: 'Complete Task',
           onClick: () => void handleTaskComplete(task)
@@ -192,4 +191,9 @@ export function useTaskNotifications() {
       console.log('🔔 Task notifications hook cleanup');
     };
   }, [tasks, checkForUpcomingTasks]);
+
+  return {
+    handleTaskComplete,
+    showTaskNotification
+  };
 }

@@ -15,8 +15,8 @@ export async function createTaskAssignmentNotification(
       title: isGroup ? 'New Group Task Assignment' : 'New Task Assignment',
       message: `${isGroup ? 'A new task has been shared with your group' : 'You have been assigned to'}: ${taskData.title}`,
       type: 'task_assignment',
-      reference_id: taskData.id.toString(),
-      reference_type: 'task'
+      referenceId: taskData.id.toString(), // Updated to camelCase
+      referenceType: 'task' // Updated to camelCase
     });
 
   if (notificationError) {
