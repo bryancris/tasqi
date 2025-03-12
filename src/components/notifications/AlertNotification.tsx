@@ -45,13 +45,15 @@ export function AlertNotification({
   const [isLoading, setIsLoading] = React.useState<string | null>(null);
   const queryClient = useQueryClient();
 
-  // Add debug logging
+  // Enhanced debug logging
   React.useEffect(() => {
-    console.log('AlertNotification props:', {
+    console.log('🔔 AlertNotification mounted:', {
       title,
       type,
       referenceId,
       reference_type,
+      rawReferenceId: referenceId,
+      referenceIdType: typeof referenceId,
       shouldShowButtons: referenceId !== null && 
         (reference_type === 'task' || title === 'Task Reminder')
     });
@@ -59,8 +61,18 @@ export function AlertNotification({
 
   // Convert string referenceId to number if needed
   const numericReferenceId = React.useMemo(() => {
+    console.log('🔢 Converting referenceId:', {
+      input: referenceId,
+      type: typeof referenceId
+    });
+    
     if (referenceId === null || referenceId === undefined) return null;
-    return typeof referenceId === 'string' ? parseInt(referenceId, 10) : referenceId;
+    const converted = typeof referenceId === 'string' ? parseInt(referenceId, 10) : referenceId;
+    console.log('🔢 Converted referenceId:', {
+      output: converted,
+      type: typeof converted
+    });
+    return converted;
   }, [referenceId]);
 
   // Log for debugging
@@ -96,8 +108,22 @@ export function AlertNotification({
   };
 
   // Update the condition to show task buttons
-  const showTaskButtons = referenceId !== null && 
-    (reference_type === 'task' || title === 'Task Reminder');
+  const showTaskButtons = React.useMemo(() => {
+    const shouldShow = referenceId !== null && 
+      (reference_type === 'task' || title === 'Task Reminder');
+    
+    console.log('👀 Should show task buttons:', {
+      shouldShow,
+      referenceId,
+      reference_type,
+      title,
+      condition1: referenceId !== null,
+      condition2: reference_type === 'task',
+      condition3: title === 'Task Reminder'
+    });
+    
+    return shouldShow;
+  }, [referenceId, reference_type, title]);
 
   return (
     <AlertDialog open={open}>

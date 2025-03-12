@@ -19,15 +19,18 @@ export function NotificationButtons({
   onDismiss,
   onDone
 }: NotificationButtonsProps) {
+  console.log('🔧 NotificationButtons render:', {
+    isLoading,
+    referenceId,
+    type: typeof referenceId
+  });
+
   const [snoozeTime, setSnoozeTime] = useState<string>("15");
   const [isSnoozing, setIsSnoozing] = useState<boolean>(false);
   const queryClient = useQueryClient();
 
-  // Debug log when component mounts or referenceId changes
   useEffect(() => {
-    console.log('NotificationButtons rendered with referenceId:', referenceId, 
-      'type:', typeof referenceId, 
-      'should show buttons:', Boolean(referenceId));
+    console.log('🔧 NotificationButtons mounted with referenceId:', referenceId);
   }, [referenceId]);
 
   const handleSnoozeClick = async () => {

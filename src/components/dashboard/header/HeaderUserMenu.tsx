@@ -49,16 +49,18 @@ export function HeaderUserMenu() {
   };
 
   const handleTestNotification = () => {
-    console.log('Triggering test task notification');
-    showNotification({
+    console.log('🔔 Triggering test task notification');
+    const notificationData = {
       title: "Task Reminder",
       message: "This is a test notification with action buttons",
       type: "info",
       reference_id: "999999",
       reference_type: "task",
       persistent: true
-    });
-    console.log('Test notification triggered');
+    };
+    console.log('📨 Sending notification data:', notificationData);
+    showNotification(notificationData);
+    console.log('✅ Test notification triggered');
   };
 
   return (

@@ -17,6 +17,13 @@ export function HeaderNotifications() {
   const { showNotification } = useAlertNotifications();
 
   const handleNotificationClick = async (notification: Notification) => {
+    console.log('📬 Handling notification click:', {
+      notification,
+      title: notification.title,
+      reference_id: notification.reference_id,
+      reference_type: notification.reference_type
+    });
+
     try {
       queryClient.setQueryData(['notifications'], (oldData: Notification[] | undefined) => {
         if (!oldData) return [];
@@ -27,6 +34,9 @@ export function HeaderNotifications() {
         title: notification.title,
         message: notification.message,
         type: 'info',
+        reference_id: notification.reference_id,
+        reference_type: notification.reference_type,
+        persistent: true,
         action: notification.reference_type === 'task_share' && notification.reference_id ? {
           label: 'View Task',
           onClick: () => navigate('/dashboard')
