@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { NotificationList } from "./notifications/NotificationList";
 import { useNotifications, Notification } from "@/components/notifications/NotificationsManager";
 import { useQueryClient } from "@tanstack/react-query";
+import { debugLogNotification } from "@/utils/notifications/debug-utils";
 
 export function HeaderNotifications() {
   const navigate = useNavigate();
@@ -20,9 +21,12 @@ export function HeaderNotifications() {
     console.log('📬 Handling notification click:', {
       notification,
       title: notification.title,
-      referenceId: notification.referenceId, // Updated to camelCase
-      referenceType: notification.referenceType // Updated to camelCase
+      referenceId: notification.referenceId, 
+      referenceType: notification.referenceType 
     });
+
+    // Debug log to trace properties
+    debugLogNotification(notification, 'HeaderNotifications - handleNotificationClick');
 
     try {
       queryClient.setQueryData(['notifications'], (oldData: Notification[] | undefined) => {
@@ -38,10 +42,10 @@ export function HeaderNotifications() {
         title: notification.title,
         message: notification.message,
         type: notificationType,
-        referenceId: notification.referenceId, // Updated to camelCase
-        referenceType: notification.referenceType, // Updated to camelCase
+        referenceId: notification.referenceId,
+        referenceType: notification.referenceType,
         persistent: true,
-        action: notification.referenceType === 'task_share' && notification.referenceId ? { // Updated to camelCase
+        action: notification.referenceType === 'task_share' && notification.referenceId ? {
           label: 'View Task',
           onClick: () => navigate('/dashboard')
         } : undefined

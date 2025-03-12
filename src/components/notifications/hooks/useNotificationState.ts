@@ -1,6 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { Notification } from '../types';
 import { useAuth } from '@/contexts/AuthContext';
+import { debugLogNotification } from '@/utils/notifications/debug-utils';
 
 const MAX_VISIBLE_NOTIFICATIONS = 4;
 const MAX_AGE_DAYS = 2; // Maximum age for non-persistent notifications
@@ -37,6 +39,12 @@ export function useNotificationState() {
           // Remove read notifications older than 24 hours
           return ageInDays < 1;
         });
+
+        // Debug log the loaded notifications
+        if (recent.length > 0) {
+          console.log(`📋 Loaded ${recent.length} notifications from storage`);
+          debugLogNotification(recent[0], 'useNotificationState - loaded from storage');
+        }
 
         return recent.slice(-MAX_VISIBLE_NOTIFICATIONS);
       }
@@ -75,6 +83,18 @@ export function useNotificationState() {
     if (!userId) return;
     
     try {
+      // Debug log the notifications before saving
+      if (notifications.length > 0) {
+        console.log(`💾 Saving ${notifications.length} notifications to storage`);
+        
+        // Check if notifications have all required properties
+        notifications.forEach((notification, index) => {
+          if (notification.referenceType === 'task') {
+            debugLogNotification(notification, `useNotificationState - saving to storage [${index}]`);
+          }
+        });
+      }
+      
       localStorage.setItem(STORAGE_KEY, JSON.stringify(notifications));
     } catch (error) {
       console.error('Error persisting notifications:', error);

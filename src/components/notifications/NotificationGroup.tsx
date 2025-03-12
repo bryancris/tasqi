@@ -5,7 +5,7 @@ import { Check, AlertTriangle, AlertCircle, Info } from "lucide-react";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogTitle } from "../ui/alert-dialog";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { debugLogNotification } from "@/utils/notifications/debug-utils";
+import { debugLogNotification, validateTaskNotification } from "@/utils/notifications/debug-utils";
 
 interface NotificationGroupProps {
   groupId: string;
@@ -15,8 +15,8 @@ interface NotificationGroupProps {
     message: string;
     type?: 'info' | 'success' | 'warning' | 'error';
     priority?: 'high' | 'normal' | 'low';
-    referenceId?: string | number | null;   // Changed from reference_id to camelCase
-    referenceType?: string | null;          // Changed from reference_type to camelCase
+    referenceId?: string | number | null;   
+    referenceType?: string | null;         
   }>;
   onDismissGroup: (groupId: string) => void;
 }
@@ -28,6 +28,8 @@ export function NotificationGroup({ groupId, notifications, onDismissGroup }: No
   // Debug log the first notification in this group
   if (notifications.length > 0) {
     debugLogNotification(notifications[0], `NotificationGroup (${groupId})`);
+    // Check if the notification should show action buttons
+    validateTaskNotification(notifications[0]);
   }
 
   const priorityOrder = { high: 0, normal: 1, low: 2 };

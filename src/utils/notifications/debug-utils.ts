@@ -9,19 +9,21 @@
  * @param stage The current stage in the notification pipeline
  */
 export function debugLogNotification(notification: any, stage: string) {
-  // Get reference ID from either naming convention
+  // Support both naming conventions for maximum compatibility during transition
   const referenceId = notification.referenceId || notification.reference_id;
   const referenceType = notification.referenceType || notification.reference_type;
   
   console.log(`🔍 Notification at ${stage}:`, {
     title: notification.title,
-    titleLength: notification.title.length,
-    titleCharCodes: Array.from(notification.title).map((c: string) => c.charCodeAt(0)),
+    titleLength: notification.title?.length,
+    titleCharCodes: notification.title ? Array.from(notification.title).map((c: string) => c.charCodeAt(0)) : [],
     message: notification.message,
     type: notification.type,
-    referenceId: referenceId, // Use standardized camelCase for logging
-    referenceType: referenceType, // Use standardized camelCase for logging
+    referenceId, // Use standardized camelCase for logging
+    referenceType, // Use standardized camelCase for logging
     isTask: (referenceType === 'task'),
+    isTaskBasedOnTitle: notification.title?.toLowerCase().includes('task') && notification.title?.toLowerCase().includes('reminder'),
+    showingButtons: (referenceType === 'task' && referenceId !== undefined && referenceId !== null),
     properties: Object.keys(notification)
   });
 }
@@ -42,12 +44,19 @@ export function validateTaskNotification(notification: any) {
     (referenceType === 'task') ||
     (notification.title?.toLowerCase().includes('task') && notification.title?.toLowerCase().includes('reminder'));
 
-  return {
-    isValid: hasReferenceId && isTaskType,
+  const validationResult = {
+    isValid: hasReferenceId && isTaskType && referenceId !== null,
     hasReferenceId,
     hasReferenceType,
     isTaskType,
     referenceIdValue: referenceId,
-    referenceType: referenceType
+    referenceTypeValue: referenceType,
+    referenceIdType: typeof referenceId,
+    referenceIdIsNull: referenceId === null,
+    referenceIdIsUndefined: referenceId === undefined
   };
+  
+  console.log('🧪 Notification validation:', validationResult);
+  
+  return validationResult;
 }

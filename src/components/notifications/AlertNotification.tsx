@@ -29,7 +29,7 @@ export interface AlertNotificationProps {
   onDismiss: () => void;
   index?: number;
   referenceId?: number | string | null;  // Already using camelCase
-  referenceType?: string | null;         // Changed from reference_type to camelCase
+  referenceType?: string | null;         // Already using camelCase
 }
 
 export function AlertNotification({
@@ -41,7 +41,7 @@ export function AlertNotification({
   onDismiss,
   index = 0,
   referenceId,
-  referenceType, // Changed from reference_type to camelCase
+  referenceType,
 }: AlertNotificationProps) {
   const isMobile = useIsMobile();
   const [isLoading, setIsLoading] = React.useState<string | null>(null);
@@ -50,27 +50,30 @@ export function AlertNotification({
 
   // Extended debug logging
   React.useEffect(() => {
+    // Initial notification debug log
     debugLogNotification({
       title,
       message,
       type,
-      reference_id: referenceId, // Keep original property name for debug utils
-      reference_type: referenceType // Keep original property name for debug utils
+      referenceId,
+      referenceType,
     }, 'AlertNotification render');
     
     // Add specific validation check
-    console.log('🎯 Notification Button Validation:', validateTaskNotification({
+    const validation = validateTaskNotification({
       title,
-      reference_id: referenceId,
-      reference_type: referenceType
-    }));
+      referenceId,
+      referenceType
+    });
     
     // Additional debug info for property types
     console.log('📋 Alert Notification Properties:', {
       title,
+      message,
+      type,
       referenceId,
       referenceIdType: typeof referenceId,
-      referenceIdValue: referenceId,
+      referenceIdValue: String(referenceId),
       referenceType,
       referenceTypeValue: referenceType
     });
@@ -109,12 +112,12 @@ export function AlertNotification({
 
   // Logic to determine if buttons should be shown - with improved type handling
   const isTaskNotification = referenceType === 'task' || 
-    (title.toLowerCase().includes('task') && title.toLowerCase().includes('reminder'));
+    (title?.toLowerCase().includes('task') && title?.toLowerCase().includes('reminder'));
   
   // Fixed condition to properly check for null or undefined referenceId
-  const hasValidReferenceId = referenceId !== undefined && referenceId !== null;
+  const hasValidReferenceId = referenceId !== undefined && referenceId !== null && referenceId !== '';
   
-  // Log the final button visibility determination
+  // Final button visibility determination
   const showButtons = isTaskNotification && hasValidReferenceId;
   
   // Extra debugging for visibility conditions
@@ -123,8 +126,12 @@ export function AlertNotification({
     isTaskNotification,
     hasValidReferenceId,
     referenceType,
+    referenceId,
     referenceIdType: typeof referenceId,
-    referenceIdValue: referenceId
+    referenceIdValue: String(referenceId),
+    titleContainsTask: title?.toLowerCase().includes('task'),
+    titleContainsReminder: title?.toLowerCase().includes('reminder'),
+    finalDecision: showButtons ? 'SHOWING BUTTONS' : 'HIDING BUTTONS'
   });
 
   return (

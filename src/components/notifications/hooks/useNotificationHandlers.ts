@@ -4,6 +4,7 @@ import { Notification } from '../types';
 import { playNotificationSound } from "@/utils/notifications/soundUtils";
 import { showBrowserNotification } from "@/utils/notifications/notificationUtils";
 import { useAuth } from '@/contexts/AuthContext';
+import { debugLogNotification } from '@/utils/notifications/debug-utils';
 
 const NOTIFICATION_TIMEOUT = 15000;
 const MAX_VISIBLE_NOTIFICATIONS = 4;
@@ -52,12 +53,21 @@ export function useNotificationHandlers(
     const now = new Date().toISOString();
     
     // Log the received notification for debugging
-    console.log('📩 Creating notification:', {
+    console.log('📩 Creating notification with properties:', {
       ...notification,
       id,
       now,
       userId
     });
+    
+    // Debug log to trace notification properties
+    debugLogNotification({
+      ...notification,
+      id,
+      read: false,
+      created_at: now,
+      user_id: userId || ''
+    }, 'showNotification - before processing');
     
     if (!navigator.onLine) {
       setOfflineQueue(prev => [...prev, {
@@ -104,7 +114,7 @@ export function useNotificationHandlers(
 
       const group = existingGroup || Math.random().toString(36).substr(2, 9);
       
-      // Create new notification with camelCase property names
+      // Create new notification preserving all original properties
       const newNotification = { 
         ...notification, 
         id,
@@ -117,6 +127,7 @@ export function useNotificationHandlers(
       
       // Log the notification being added to state
       console.log('📌 Adding notification to state:', newNotification);
+      debugLogNotification(newNotification, 'showNotification - adding to state');
       
       if (prev.length >= MAX_VISIBLE_NOTIFICATIONS) {
         const [oldest, ...rest] = prev;
