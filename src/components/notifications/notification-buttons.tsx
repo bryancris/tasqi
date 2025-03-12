@@ -31,7 +31,9 @@ export const NotificationButtons = ({
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    console.log('🔧 NotificationButtons mounted with referenceId:', referenceId);
+    console.log('🔧 NotificationButtons mounted with referenceId:', referenceId, 
+      'Type:', typeof referenceId,
+      'Valid for buttons:', referenceId !== undefined && referenceId !== null);
   }, [referenceId]);
 
   const handleSnoozeClick = async () => {

@@ -65,10 +65,15 @@ export function validateTaskNotification(notification: any) {
     referenceIdIsNull: referenceId === null,
     referenceIdIsUndefined: referenceId === undefined,
     hasValidReferenceId,
-    shouldShowButtons: hasValidReferenceId && isTaskType
+    shouldShowButtons: hasValidReferenceId && isTaskType,
+    // Add more detailed information for clearer debugging
+    titleContainsTask: notification.title?.toLowerCase().includes('task') || false,
+    titleIncludesReminder: notification.title?.toLowerCase().includes('reminder') || false,
+    messageContainsTask: notification.message?.toLowerCase().includes('task') || false,
+    buttonVisibilityCheck: `${hasValidReferenceId} && (${referenceType === 'task'} || ${notification.title?.toLowerCase().includes('task')})`
   };
   
-  console.log('🧪 Notification validation:', validationResult);
+  console.log('🧪 Enhanced notification validation:', validationResult);
   
   return validationResult;
 }
