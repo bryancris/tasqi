@@ -34,7 +34,7 @@ export const NotificationContent = ({
   const [isLoading, setIsLoading] = React.useState<string | null>(null);
   const queryClient = useQueryClient();
   
-  // New: DIRECT test ID check without any complex logic
+  // Check if this is a test notification (ID 999999)
   const isTestNotification = React.useMemo(() => {
     // Convert referenceId to string for comparison
     const stringId = referenceId !== undefined && referenceId !== null ? String(referenceId) : "";
@@ -45,7 +45,7 @@ export const NotificationContent = ({
     return result;
   }, [referenceId]);
 
-  // Log complete notification details for debugging
+  // Log notification details for debugging
   React.useEffect(() => {
     console.log('🧨 NOTIFICATION CONTENT MOUNTED:', { 
       title, 
@@ -94,61 +94,7 @@ export const NotificationContent = ({
     }
   };
 
-  // NEW APPROACH: SEPARATE RENDER PATH FOR TEST NOTIFICATIONS
-  // This guarantees test notifications always show buttons
-  if (isTestNotification) {
-    console.log('🚨 RENDERING TEST NOTIFICATION BUTTONS - ID: 999999');
-    
-    return (
-      <AlertDialogFooter 
-        className="flex-col sm:flex-col gap-3 sm:gap-3 mt-2 items-start"
-        data-testid="test-notification-buttons"
-        data-reference-id={String(referenceId)}
-      >
-        <NotificationButtons
-          isLoading={isLoading}
-          referenceId={referenceId}
-          onDismiss={onDismiss}
-          onDone={handleDone}
-          isDialogOpen={isDialogOpen}
-          isTestNotification={true}
-        />
-      </AlertDialogFooter>
-    );
-  }
-
-  // Regular task notifications path
-  const isTaskNotification = !!referenceId && 
-    (referenceType === 'task' || title?.toLowerCase().includes('task'));
-  
-  console.log('🔄 Regular notification - showing task buttons?', isTaskNotification);
-
-  return (
-    <AlertDialogFooter 
-      className="flex-col sm:flex-col gap-3 sm:gap-3 mt-2 items-start"
-      data-has-task-buttons={isTaskNotification ? "true" : "false"}
-      data-reference-id={referenceId ? String(referenceId) : "none"}
-    >
-      {isTaskNotification ? (
-        <NotificationButtons
-          isLoading={isLoading}
-          referenceId={referenceId}
-          onDismiss={onDismiss}
-          onDone={handleDone}
-          isDialogOpen={isDialogOpen}
-          isTestNotification={false}
-        />
-      ) : action ? (
-        <div className="flex justify-end w-full">
-          <button
-            onClick={action.onClick}
-            className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white px-4 py-2 rounded"
-            tabIndex={0}
-          >
-            {action.label}
-          </button>
-        </div>
-      ) : null}
-    </AlertDialogFooter>
-  );
-};
+  // Always return null from this component - we're not using it anymore
+  // This ensures it doesn't interfere with the direct rendering in AlertNotification
+  return null;
+}

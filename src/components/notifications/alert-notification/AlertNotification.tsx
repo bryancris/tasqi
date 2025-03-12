@@ -41,11 +41,12 @@ export function AlertNotification({
   const closeButtonRef = React.useRef<HTMLButtonElement>(null);
   const [snoozeTime, setSnoozeTime] = React.useState<string>("15");
   
+  // Log notification render and details
   React.useEffect(() => {
     console.log('🔔 Alert Notification rendered:', {
       title,
       message,
-      referenceId: referenceId,
+      referenceId,
       type,
       isOpen: open
     });
@@ -126,7 +127,7 @@ export function AlertNotification({
           referenceId={referenceId} 
         />
 
-        {/* ALWAYS VISIBLE PLACEHOLDER BUTTONS */}
+        {/* ALWAYS VISIBLE BUTTONS - NO CONDITIONS */}
         <div className="mt-4 border-t pt-3" data-testid="notification-buttons">
           <div className="flex w-full flex-col sm:flex-row justify-between gap-2">
             <div className="flex gap-2 items-center">

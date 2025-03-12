@@ -84,16 +84,7 @@ export const NotificationButtons = ({
     }
   };
 
-  // Additional debug log on mount
-  useEffect(() => {
-    console.log('🔔 NotificationButtons MOUNTED with referenceId:', 
-      referenceId,
-      'Type:', typeof referenceId,
-      'String value:', String(referenceId),
-      'isTestNotification:', isTestNotification
-    );
-  }, [referenceId, isTestNotification]);
-
+  // Simple buttons that always render
   return (
     <div 
       className="flex w-full flex-col sm:flex-row justify-between gap-2"
