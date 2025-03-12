@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import { handleStart } from "../notification-handlers";
 import { 
   debugLogNotification, 
-  validateTaskNotification, 
   isTestNotification 
 } from "@/utils/notifications/debug-utils";
 
@@ -38,20 +37,31 @@ export const NotificationContent = ({
   const [isLoading, setIsLoading] = React.useState<string | null>(null);
   const queryClient = useQueryClient();
   
-  // Check if this is a test notification - most critical check
-  const isTestNotificationInstance = isTestNotification(referenceId);
+  // Check if this is a test notification - FIRST CHECK BEFORE ANYTHING ELSE
+  const isTestNotificationInstance = React.useMemo(() => {
+    // Convert to string for consistent comparison
+    const idString = referenceId !== undefined && referenceId !== null ? String(referenceId) : "";
+    const result = idString === "999999"; 
+    console.log(`🧪 CRITICAL TEST NOTIFICATION CHECK: ID=${referenceId}, type=${typeof referenceId}, value="${idString}", RESULT=${result}`);
+    return result;
+  }, [referenceId]);
   
-  // Enhanced debugging on render
+  // On mount - always log the exact properties
   React.useEffect(() => {
     console.log('🔴 NotificationContent rendering with:', {
-      referenceId,
+      referenceId: referenceId,
       referenceIdType: typeof referenceId,
       referenceIdValue: referenceId ? String(referenceId) : "undefined/null",
       referenceType,
       title,
-      isDialogOpen,
-      isTestNotification: isTestNotificationInstance
+      isTestNotificationInstance,
+      shouldForceTaskButtons: isTestNotificationInstance
     });
+    
+    // Enhanced debugging for test notifications
+    if (isTestNotificationInstance) {
+      console.log(`🧪 TEST NOTIFICATION DETECTED - ID=${referenceId} - FORCING BUTTONS`);
+    }
     
     debugLogNotification({
       title,
@@ -91,22 +101,8 @@ export const NotificationContent = ({
     }
   };
 
-  // For debugging - let's explicitly log the decision process
-  const showButtons = isTestNotificationInstance || 
-    (referenceId !== undefined && referenceId !== null && 
-     (referenceType === 'task' || title?.toLowerCase().includes('task')));
-  
-  console.log('🔍 NotificationContent Button Decision:', {
-    isTestNotification: isTestNotificationInstance,
-    hasReferenceId: referenceId !== undefined && referenceId !== null,
-    isTaskType: referenceType === 'task',
-    hasTitleWithTask: title?.toLowerCase().includes('task'),
-    finalDecision: showButtons,
-    referenceId,
-    referenceIdType: typeof referenceId
-  });
-
-  // ALWAYS render buttons for test notifications
+  // SIMPLIFIED DESIGN: Always show task buttons for test notifications (ID 999999)
+  // and show task buttons for regular task notifications with referenceId and task reference
   if (isTestNotificationInstance) {
     console.log('🧪 TEST NOTIFICATION - FORCING BUTTONS DISPLAY');
     
@@ -115,6 +111,7 @@ export const NotificationContent = ({
         className="flex-col sm:flex-col gap-3 sm:gap-3 mt-2 items-start"
         data-has-task-buttons="true"
         data-test-notification="true"
+        data-reference-id={String(referenceId)}
       >
         <NotificationButtons
           isLoading={isLoading}
@@ -128,14 +125,18 @@ export const NotificationContent = ({
     );
   }
 
-  // For regular notifications
+  // For task notifications (has referenceId and either referenceType='task' or title contains 'task')
+  const isTaskNotification = referenceId !== undefined && referenceId !== null && 
+                            (referenceType === 'task' || title?.toLowerCase().includes('task'));
+
   return (
     <AlertDialogFooter 
       className="flex-col sm:flex-col gap-3 sm:gap-3 mt-2 items-start"
-      data-has-task-buttons={showButtons ? "true" : "false"}
+      data-has-task-buttons={isTaskNotification ? "true" : "false"}
       data-test-notification={isTestNotificationInstance ? "true" : "false"}
+      data-reference-id={referenceId ? String(referenceId) : "none"}
     >
-      {showButtons ? (
+      {isTaskNotification ? (
         <NotificationButtons
           isLoading={isLoading}
           referenceId={referenceId}

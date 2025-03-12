@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { NotificationHeader } from "./NotificationHeader";
 import { NotificationContent } from "./NotificationContent";
+import { isTestNotification } from "@/utils/notifications/debug-utils";
 
 export interface AlertNotificationProps {
   open: boolean;
@@ -43,6 +44,13 @@ export function AlertNotification({
   // Track when dialog is fully open
   const [isFullyOpen, setIsFullyOpen] = React.useState(false);
   
+  // Determine if this is a test notification - critical check
+  const isTestNotificationId = React.useMemo(() => {
+    const result = isTestNotification(referenceId);
+    console.log(`🧪 AlertNotification - Test ID check: ${referenceId} => ${result}`);
+    return result;
+  }, [referenceId]);
+  
   // Log every render with detailed information
   React.useEffect(() => {
     console.log('🔔 RENDERING AlertNotification with details:', {
@@ -50,14 +58,12 @@ export function AlertNotification({
       message,
       referenceId,
       referenceIdType: typeof referenceId,
-      referenceIdValue: String(referenceId),
+      referenceIdValue: referenceId !== undefined && referenceId !== null ? String(referenceId) : "undefined/null",
       referenceType,
       isTaskRelated: title?.toLowerCase().includes('task') || referenceType === 'task',
-      shouldHaveButtons: (referenceId !== undefined && referenceId !== null) && 
-                         (title?.toLowerCase().includes('task') || referenceType === 'task'),
-      isTestNotification: referenceId === "999999" || referenceId === 999999,
+      isTestNotification: isTestNotificationId,
     });
-  }, [title, message, referenceId, referenceType]);
+  }, [title, message, referenceId, referenceType, isTestNotificationId]);
 
   // Handle focusing the close button when dialog opens
   React.useEffect(() => {
@@ -76,9 +82,6 @@ export function AlertNotification({
       };
     }
   }, [open]);
-  
-  // Determine if this is a test notification
-  const isTestNotification = referenceId === "999999" || referenceId === 999999;
 
   return (
     <AlertDialog open={open}>
@@ -105,10 +108,11 @@ export function AlertNotification({
           type === 'warning' && 'border-l-4 border-l-[#FEC6A1] bg-[#FFFAF5]',
           type === 'info' && 'border-l-4 border-l-[#9b87f5] bg-[#F8F7FF]'
         )}
-        // Always set data-test-notification for test notifications with ID 999999
-        {...(isTestNotification ? { "data-test-notification": "999999" } : {})}
+        // Always set data attributes for debugging
+        data-test-notification={isTestNotificationId ? "true" : "false"}
+        data-reference-id={referenceId !== undefined && referenceId !== null ? String(referenceId) : "none"}
+        data-reference-type={referenceType || "none"}
         onEscapeKeyDown={onDismiss}
-        // Make sure we're not using aria-hidden on a focused element or its ancestor
         aria-modal="true"
         role="dialog"
       >
