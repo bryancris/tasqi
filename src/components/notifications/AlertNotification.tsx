@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import {
   AlertDialog,
@@ -48,9 +47,7 @@ export function AlertNotification({
   const queryClient = useQueryClient();
   const buttonRef = React.useRef<HTMLButtonElement>(null);
 
-  // Extended debug logging
   React.useEffect(() => {
-    // Initial notification debug log
     debugLogNotification({
       title,
       message,
@@ -59,14 +56,12 @@ export function AlertNotification({
       referenceType,
     }, 'AlertNotification render');
     
-    // Add specific validation check
     const validation = validateTaskNotification({
       title,
       referenceId,
       referenceType
     });
     
-    // Additional debug info for property types
     console.log('📋 Alert Notification Properties:', {
       title,
       message,
@@ -80,7 +75,6 @@ export function AlertNotification({
     
   }, [title, message, type, referenceId, referenceType]);
 
-  // Focus management
   React.useEffect(() => {
     if (open) {
       const timeoutId = setTimeout(() => {
@@ -110,28 +104,16 @@ export function AlertNotification({
     }
   };
 
-  // Logic to determine if buttons should be shown - with fixed conditions
-  const isTaskNotification = referenceType === 'task' || 
-    (title?.toLowerCase().includes('task') && title?.toLowerCase().includes('reminder'));
-  
-  // Simplified condition - treat string '999999' as valid
-  const hasValidReferenceId = Boolean(referenceId);
-  
-  // Final button visibility determination
+  const isTaskNotification = referenceType === 'task';
+  const hasValidReferenceId = referenceId !== undefined && referenceId !== null;
   const showButtons = isTaskNotification && hasValidReferenceId;
-  
-  // Extra debugging for visibility conditions
-  console.log('🔘 Button visibility check:', {
-    showButtons,
+
+  console.log('Button visibility check:', {
+    referenceId,
+    referenceType,
     isTaskNotification,
     hasValidReferenceId,
-    referenceType,
-    referenceId,
-    referenceIdType: typeof referenceId,
-    referenceIdValue: String(referenceId),
-    titleContainsTask: title?.toLowerCase().includes('task'),
-    titleContainsReminder: title?.toLowerCase().includes('reminder'),
-    finalDecision: showButtons ? 'SHOWING BUTTONS' : 'HIDING BUTTONS'
+    showButtons
   });
 
   return (

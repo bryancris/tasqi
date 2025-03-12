@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Loader2, Clock } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -13,12 +12,12 @@ interface NotificationButtonsProps {
   onDone: () => void;
 }
 
-export function NotificationButtons({
+export const NotificationButtons = ({
   isLoading,
   referenceId,
   onDismiss,
   onDone
-}: NotificationButtonsProps) {
+}: NotificationButtonsProps) => {
   console.log('🔄 NotificationButtons render with props:', {
     isLoading,
     referenceId,
@@ -112,4 +111,4 @@ export function NotificationButtons({
       </Button>
     </div>
   );
-}
+};
