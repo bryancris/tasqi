@@ -30,14 +30,14 @@ export function useTaskNotifications() {
       // Using constant ID for test notifications
       console.log(`✅ Creating test notification with ID: 999999, type: task`);
       
-      // Simplify test notification to ensure it works consistently
+      // Create a very simple test notification structure to guarantee buttons work
       showNotification({
         title: 'Task Reminder',
-        message: 'This is a test notification with placeholder buttons',
+        message: 'This is a test notification with action buttons',
         type: 'info',
         persistent: true,
-        referenceId: "999999",
-        referenceType: 'task'
+        referenceId: "999999",  // String format for consistency
+        referenceType: 'task'   // Always include referenceType: 'task'
       });
     } else {
       console.log('❌ Cannot trigger test notification - component unmounted');

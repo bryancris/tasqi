@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { NotificationHeader } from "./NotificationHeader";
 import { Button } from "@/components/ui/button";
+import { NotificationButtons } from "../notification-buttons";
 
 export interface AlertNotificationProps {
   open: boolean;
@@ -38,6 +39,7 @@ export function AlertNotification({
 }: AlertNotificationProps) {
   const isMobile = useIsMobile();
   const closeButtonRef = React.useRef<HTMLButtonElement>(null);
+  const [isTestNotification, setIsTestNotification] = React.useState(false);
   
   // Log notification render and details
   React.useEffect(() => {
@@ -49,6 +51,12 @@ export function AlertNotification({
       isOpen: open
     });
 
+    // Check if this is a test notification
+    if (referenceId === "999999" || referenceId === 999999) {
+      setIsTestNotification(true);
+      console.log('⚠️ TEST NOTIFICATION DETECTED - ID:', referenceId);
+    }
+    
     // Log when notification is actually displayed
     if (open) {
       console.log('⚠️ NOTIFICATION IS OPEN - ID:', referenceId);
@@ -90,6 +98,7 @@ export function AlertNotification({
         )}
         data-reference-id={referenceId !== undefined && referenceId !== null ? String(referenceId) : "none"}
         data-reference-type={referenceType || "none"}
+        data-test-notification={isTestNotification ? "true" : "false"}
         onEscapeKeyDown={onDismiss}
         aria-modal="true"
         role="dialog"
@@ -110,30 +119,41 @@ export function AlertNotification({
           referenceId={referenceId} 
         />
 
-        {/* ALWAYS SHOW SIMPLE PLACEHOLDER BUTTONS */}
-        <div className="mt-4 border-t pt-3" data-testid="placeholder-buttons">
-          <div className="flex justify-between gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSnooze}
-              className="flex items-center gap-2"
-            >
-              <Clock className="h-4 w-4" />
-              <span>Snooze</span>
-            </Button>
-            
-            <Button
-              variant="default"
-              size="sm"
-              onClick={handleComplete}
-              className="bg-purple-500 hover:bg-purple-600 text-white flex items-center gap-2"
-            >
-              <Check className="h-4 w-4" />
-              <span>Complete</span>
-            </Button>
+        {/* ALWAYS SHOW BUTTONS - using the dedicated buttons component or fallback */}
+        {referenceType === 'task' || isTestNotification ? (
+          <NotificationButtons
+            isLoading={null}
+            referenceId={referenceId}
+            onDismiss={onDismiss}
+            onDone={handleComplete}
+            isDialogOpen={open}
+            isTestNotification={isTestNotification}
+          />
+        ) : (
+          <div className="mt-4 border-t pt-3" data-testid="fallback-buttons">
+            <div className="flex justify-between gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSnooze}
+                className="flex items-center gap-2"
+              >
+                <Clock className="h-4 w-4" />
+                <span>Snooze</span>
+              </Button>
+              
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleComplete}
+                className="bg-purple-500 hover:bg-purple-600 text-white flex items-center gap-2"
+              >
+                <Check className="h-4 w-4" />
+                <span>Complete</span>
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </AlertDialogContent>
     </AlertDialog>
   );

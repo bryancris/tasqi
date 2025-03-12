@@ -84,10 +84,10 @@ export const NotificationButtons = ({
     }
   };
 
-  // Simple buttons that always render
+  // Simple buttons that always render regardless of conditions
   return (
     <div 
-      className="flex w-full flex-col sm:flex-row justify-between gap-2"
+      className="flex w-full flex-col sm:flex-row justify-between gap-2 mt-4 border-t pt-3"
       data-has-reference-id={referenceId ? "true" : "false"}
       data-reference-id={String(referenceId)}
       data-reference-id-type={typeof referenceId}
