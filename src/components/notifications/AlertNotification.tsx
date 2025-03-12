@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import {
   AlertDialog,
@@ -27,8 +28,8 @@ export interface AlertNotificationProps {
   };
   onDismiss: () => void;
   index?: number;
-  referenceId?: number | string | null;  // Already using camelCase
-  referenceType?: string | null;         // Already using camelCase
+  referenceId?: number | string | null;
+  referenceType?: string | null;
 }
 
 export function AlertNotification({
@@ -104,16 +105,30 @@ export function AlertNotification({
     }
   };
 
-  const isTaskNotification = referenceType === 'task';
-  const hasValidReferenceId = referenceId !== undefined && referenceId !== null;
-  const showButtons = isTaskNotification && hasValidReferenceId;
-
-  console.log('Button visibility check:', {
+  // Simplified logic - show buttons if this is a task and has any sort of referenceId
+  // We've struggled with the type checking, so let's make it very simple
+  console.log('🎯 Should show buttons? Checking:', {
+    title,
     referenceId,
     referenceType,
-    isTaskNotification,
-    hasValidReferenceId,
-    showButtons
+    referenceIdExists: referenceId !== undefined && referenceId !== null
+  });
+  
+  // Remove strict type checking that might be causing issues
+  const showButtons = (
+    // Either has referenceType === 'task'
+    (referenceType === 'task' || 
+    // Or has 'task' in the title
+    (title && title.toLowerCase().includes('task'))) && 
+    // AND has some value for referenceId (not null/undefined)
+    (referenceId !== undefined && referenceId !== null)
+  );
+  
+  console.log('🔘 FINAL BUTTON DECISION:', {
+    showButtons,
+    reason: showButtons ? 
+      'SHOWING BUTTONS ✅' : 
+      'HIDING BUTTONS ❌ - Failed condition check'
   });
 
   return (
@@ -159,6 +174,11 @@ export function AlertNotification({
           <AlertDialogDescription className="space-y-1">
             <div className="font-medium text-[#1A1F2C]">{message}</div>
             <div className="text-sm text-[#1A1F2C]/60">Inbox</div>
+            {referenceId && (
+              <div className="text-xs font-semibold text-[#1A1F2C]/70">
+                Task ID: {referenceId}
+              </div>
+            )}
           </AlertDialogDescription>
         </AlertDialogHeader>
 

@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Loader2, Clock } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,12 +19,11 @@ export const NotificationButtons = ({
   onDismiss,
   onDone
 }: NotificationButtonsProps) => {
-  console.log('🔄 NotificationButtons render with props:', {
+  console.log('⭐ NotificationButtons RENDERING with:', {
     isLoading,
     referenceId,
-    type: typeof referenceId,
-    hasReferenceId: referenceId !== undefined && referenceId !== null,
-    referenceIdString: String(referenceId)
+    referenceIdType: typeof referenceId,
+    referenceIdValue: String(referenceId)
   });
 
   const [snoozeTime, setSnoozeTime] = useState<string>("15");
@@ -35,12 +35,12 @@ export const NotificationButtons = ({
   }, [referenceId]);
 
   const handleSnoozeClick = async () => {
-    if (!referenceId) {
+    if (referenceId === undefined || referenceId === null) {
       console.error('Cannot snooze: No valid reference ID');
       return;
     }
     
-    console.log('Snoozing task with ID:', referenceId, 'for', snoozeTime, 'minutes');
+    console.log('⏰ Snoozing task with ID:', referenceId, 'for', snoozeTime, 'minutes');
     setIsSnoozing(true);
     try {
       await handleSnooze(referenceId, parseInt(snoozeTime), queryClient, onDismiss);
