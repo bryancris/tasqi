@@ -92,19 +92,19 @@ export const handleStart = async (
   const { error: taskError } = await supabase
     .from('tasks')
     .update({
-      status: 'in_progress',
-      is_tracking: true,
+      status: 'completed',
+      completed_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     })
     .eq('id', reference_id);
 
   if (taskError) {
-    console.error('Error starting task:', taskError);
-    toast.error('Failed to start task');
+    console.error('Error completing task:', taskError);
+    toast.error('Failed to complete task');
     return;
   }
 
-  toast.success('Task started');
+  toast.success('Task completed');
   await queryClient.invalidateQueries({ queryKey: ['tasks'] });
   onDismiss();
 };

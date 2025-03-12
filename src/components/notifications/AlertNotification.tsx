@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import {
   AlertDialog,
@@ -13,6 +12,8 @@ import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
 import { NotificationButtons } from "./notification-buttons";
+import { useQueryClient } from "@tanstack/react-query";
+import { handleStart } from "./notification-handlers";
 
 export interface AlertNotificationProps {
   open: boolean;
@@ -40,13 +41,18 @@ export function AlertNotification({
 }: AlertNotificationProps) {
   const isMobile = useIsMobile();
   const [isLoading, setIsLoading] = React.useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   const handleDone = async () => {
     try {
       setIsLoading('done');
-      if (action?.onClick) {
+      
+      if (referenceId && title.toLowerCase().includes('task')) {
+        await handleStart(referenceId, queryClient, onDismiss);
+      } else if (action?.onClick) {
         await action.onClick();
       }
+      
       onDismiss();
     } catch (error) {
       console.error('Error completing task:', error);
@@ -98,7 +104,7 @@ export function AlertNotification({
             <div className="text-sm text-[#1A1F2C]/60">Inbox</div>
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter className="flex-row justify-start gap-2 sm:gap-2 mt-2">
+        <AlertDialogFooter className="flex-col sm:flex-col gap-3 sm:gap-3 mt-2 items-start">
           <NotificationButtons
             isLoading={isLoading}
             referenceId={referenceId}
