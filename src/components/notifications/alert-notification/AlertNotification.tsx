@@ -4,12 +4,13 @@ import {
   AlertDialog,
   AlertDialogContent,
 } from "@/components/ui/alert-dialog";
-import { X, Clock, Check } from "lucide-react";
+import { X, Clock, Check, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { NotificationHeader } from "./NotificationHeader";
 import { Button } from "@/components/ui/button";
-import { NotificationButtons } from "../notification-buttons";
+import { toast } from "sonner";
+import { useState } from "react";
 
 export interface AlertNotificationProps {
   open: boolean;
@@ -39,19 +40,18 @@ export function AlertNotification({
 }: AlertNotificationProps) {
   const isMobile = useIsMobile();
   const closeButtonRef = React.useRef<HTMLButtonElement>(null);
+  const [isTaskNotification, setIsTaskNotification] = React.useState(false);
   const [isTestNotification, setIsTestNotification] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState<string | null>(null);
+  const [isSnoozing, setIsSnoozing] = React.useState(false);
   
-  // Log notification render and details
+  // Effect to determine the type of notification
   React.useEffect(() => {
-    console.log('🔔 Alert Notification rendered:', {
-      title,
-      message,
-      referenceId,
-      type,
-      isOpen: open
-    });
-
+    // Check if this is a task notification
+    if (referenceType === 'task') {
+      setIsTaskNotification(true);
+    }
+    
     // Check if this is a test notification
     if (referenceId === "999999" || referenceId === 999999) {
       setIsTestNotification(true);
@@ -60,17 +60,23 @@ export function AlertNotification({
     
     // Log when notification is actually displayed
     if (open) {
-      console.log('⚠️ NOTIFICATION IS OPEN - ID:', referenceId);
+      console.log('🔔 NOTIFICATION IS OPEN:', {
+        title,
+        message,
+        referenceId,
+        referenceType
+      });
     }
-  }, [title, message, referenceId, type, open]);
+  }, [title, message, referenceId, referenceType, open]);
 
-  // Direct handler functions - no need to rely on other components
+  // Direct handler functions
   const handleComplete = () => {
     console.log('✅ Complete button clicked for notification:', referenceId);
     setIsLoading('done');
     
     // Simulate a delay then dismiss
     setTimeout(() => {
+      toast.success("Task completed");
       setIsLoading(null);
       onDismiss();
     }, 1000);
@@ -78,7 +84,14 @@ export function AlertNotification({
 
   const handleSnooze = () => {
     console.log('⏰ Snooze button clicked for notification:', referenceId);
-    onDismiss();
+    setIsSnoozing(true);
+    
+    // Simulate a delay then dismiss
+    setTimeout(() => {
+      toast.success("Task snoozed for 15 minutes");
+      setIsSnoozing(false);
+      onDismiss();
+    }, 1000);
   };
 
   return (
@@ -108,6 +121,7 @@ export function AlertNotification({
         data-reference-id={referenceId !== undefined && referenceId !== null ? String(referenceId) : "none"}
         data-reference-type={referenceType || "none"}
         data-test-notification={isTestNotification ? "true" : "false"}
+        data-task-notification={isTaskNotification ? "true" : "false"}
         onEscapeKeyDown={onDismiss}
         aria-modal="true"
         role="dialog"
@@ -128,45 +142,68 @@ export function AlertNotification({
           referenceId={referenceId} 
         />
 
-        {/* ALWAYS RENDER BUTTONS - no conditional logic */}
-        <div className="flex w-full flex-col sm:flex-row justify-between gap-2 mt-4 border-t pt-3">
-          <div className="flex gap-2 items-center">
+        {/* ALWAYS render task action buttons for task notifications */}
+        {(isTaskNotification || isTestNotification) && (
+          <div 
+            className="flex w-full flex-col sm:flex-row justify-between gap-2 mt-4 border-t pt-3"
+            data-has-reference-id={referenceId ? "true" : "false"}
+            data-reference-id={String(referenceId)}
+            data-component="notification-buttons"
+          >
             <Button
               variant="outline"
               size="sm"
               onClick={handleSnooze}
-              disabled={!!isLoading}
+              disabled={!!isLoading || isSnoozing}
               className="text-[#1A1F2C] flex items-center gap-2"
               tabIndex={0}
               aria-label="Snooze task"
             >
-              <Clock className="h-4 w-4" />
-              Snooze
+              {isSnoozing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Snoozing
+                </>
+              ) : (
+                <>
+                  <Clock className="h-4 w-4" />
+                  Snooze
+                </>
+              )}
+            </Button>
+
+            <Button
+              variant="default"
+              size="sm"
+              onClick={handleComplete}
+              disabled={!!isLoading || isSnoozing}
+              className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white flex items-center gap-2"
+              tabIndex={0}
+              aria-label="Complete task"
+            >
+              {isLoading === 'done' ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing
+                </>
+              ) : (
+                <>
+                  <Check className="h-4 w-4" />
+                  Complete
+                </>
+              )}
             </Button>
           </div>
+        )}
 
-          <Button
-            variant="default"
-            size="sm"
-            onClick={handleComplete}
-            disabled={!!isLoading}
-            className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white flex items-center gap-2"
-            tabIndex={0}
-            aria-label="Complete task"
-          >
-            {isLoading === 'done' ? (
-              <>
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                Processing
-              </>
-            ) : (
-              <>
-                <Check className="h-4 w-4" />
-                Complete
-              </>
-            )}
-          </Button>
-        </div>
+        {/* Render custom action if provided and not a task notification */}
+        {action && !isTaskNotification && !isTestNotification && (
+          <div className="mt-4 flex justify-end">
+            <Button onClick={action.onClick} className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white">
+              {action.label}
+            </Button>
+          </div>
+        )}
       </AlertDialogContent>
     </AlertDialog>
   );

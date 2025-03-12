@@ -30,7 +30,7 @@ export function useTaskNotifications() {
       console.log(`✅ Creating test notification with ID: 999999, type: task`);
       
       // Create a simplified test notification with a consistent structure
-      // that directly shows in the UI with action buttons
+      // The referenceId and referenceType fields are crucial for button display
       showNotification({
         title: "Task Reminder",
         message: "This is a test notification with action buttons",
