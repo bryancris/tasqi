@@ -19,7 +19,7 @@ export const NotificationButtons = ({
   onDismiss,
   onDone
 }: NotificationButtonsProps) => {
-  console.log('⭐ NotificationButtons RENDERING with:', {
+  console.log('📣 RENDERING NotificationButtons component with:', {
     isLoading,
     referenceId,
     referenceIdType: typeof referenceId,

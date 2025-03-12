@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { NotificationButtons } from "./notification-buttons";
 import { useQueryClient } from "@tanstack/react-query";
 import { handleStart } from "./notification-handlers";
-import { debugLogNotification, validateTaskNotification } from "@/utils/notifications/debug-utils";
+import { debugLogNotification } from "@/utils/notifications/debug-utils";
 
 export interface AlertNotificationProps {
   open: boolean;
@@ -48,7 +48,17 @@ export function AlertNotification({
   const queryClient = useQueryClient();
   const buttonRef = React.useRef<HTMLButtonElement>(null);
 
+  // Enhanced console logging for debugging
   React.useEffect(() => {
+    console.log('💥 RENDERING AlertNotification with props:', {
+      title,
+      message,
+      referenceId: referenceId,
+      referenceIdType: typeof referenceId,
+      referenceIdValue: String(referenceId),
+      referenceType,
+    });
+    
     debugLogNotification({
       title,
       message,
@@ -56,24 +66,6 @@ export function AlertNotification({
       referenceId,
       referenceType,
     }, 'AlertNotification render');
-    
-    const validation = validateTaskNotification({
-      title,
-      referenceId,
-      referenceType
-    });
-    
-    console.log('📋 Alert Notification Properties:', {
-      title,
-      message,
-      type,
-      referenceId,
-      referenceIdType: typeof referenceId,
-      referenceIdValue: String(referenceId),
-      referenceType,
-      referenceTypeValue: referenceType
-    });
-    
   }, [title, message, type, referenceId, referenceType]);
 
   React.useEffect(() => {
@@ -105,30 +97,22 @@ export function AlertNotification({
     }
   };
 
-  // Simplified logic - show buttons if this is a task and has any sort of referenceId
-  // We've struggled with the type checking, so let's make it very simple
-  console.log('🎯 Should show buttons? Checking:', {
-    title,
-    referenceId,
-    referenceType,
-    referenceIdExists: referenceId !== undefined && referenceId !== null
-  });
+  // Extremely simplified logic to ensure buttons display
+  const isTaskNotification = 
+    (referenceType === 'task' || title?.toLowerCase().includes('task'));
   
-  // Remove strict type checking that might be causing issues
-  const showButtons = (
-    // Either has referenceType === 'task'
-    (referenceType === 'task' || 
-    // Or has 'task' in the title
-    (title && title.toLowerCase().includes('task'))) && 
-    // AND has some value for referenceId (not null/undefined)
-    (referenceId !== undefined && referenceId !== null)
-  );
+  const hasReferenceId = referenceId !== undefined && referenceId !== null;
   
-  console.log('🔘 FINAL BUTTON DECISION:', {
+  // Final decision for showing buttons
+  const showButtons = isTaskNotification && hasReferenceId;
+  
+  console.log('🚨 Button display decision:', {
+    isTaskNotification,
+    hasReferenceId,
     showButtons,
-    reason: showButtons ? 
-      'SHOWING BUTTONS ✅' : 
-      'HIDING BUTTONS ❌ - Failed condition check'
+    referenceId,
+    referenceIdType: typeof referenceId,
+    title,
   });
 
   return (
@@ -183,15 +167,14 @@ export function AlertNotification({
         </AlertDialogHeader>
 
         <AlertDialogFooter className="flex-col sm:flex-col gap-3 sm:gap-3 mt-2 items-start">
-          {showButtons && (
+          {showButtons ? (
             <NotificationButtons
               isLoading={isLoading}
               referenceId={referenceId}
               onDismiss={onDismiss}
               onDone={handleDone}
             />
-          )}
-          {!showButtons && action && (
+          ) : action ? (
             <div className="flex justify-end w-full">
               <button
                 onClick={action.onClick}
@@ -200,7 +183,7 @@ export function AlertNotification({
                 {action.label}
               </button>
             </div>
-          )}
+          ) : null}
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

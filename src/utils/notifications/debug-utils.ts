@@ -25,11 +25,8 @@ export function debugLogNotification(notification: any, stage: string) {
     referenceType, // Use standardized camelCase for logging
     isTask: (referenceType === 'task'),
     isTaskBasedOnTitle: notification.title?.toLowerCase().includes('task'),
-    showingButtons: (
-      (referenceType === 'task' || notification.title?.toLowerCase().includes('task')) && 
-      referenceId !== undefined && 
-      referenceId !== null
-    ),
+    showingButtons: Boolean(referenceId) && 
+      (referenceType === 'task' || notification.title?.toLowerCase().includes('task')),
     properties: Object.keys(notification)
   });
 }
@@ -46,7 +43,7 @@ export function validateTaskNotification(notification: any) {
   const referenceId = notification.referenceId || notification.reference_id;
   const referenceType = notification.referenceType || notification.reference_type;
   
-  // We consider ANY non-null, non-undefined referenceId as valid (including empty string)
+  // Consider ANY non-null, non-undefined referenceId as valid
   const hasValidReferenceId = referenceId !== undefined && referenceId !== null;
   
   // Check if it's task-related by type or title
@@ -67,7 +64,8 @@ export function validateTaskNotification(notification: any) {
     referenceIdType: typeof referenceId,
     referenceIdIsNull: referenceId === null,
     referenceIdIsUndefined: referenceId === undefined,
-    hasValidReferenceId
+    hasValidReferenceId,
+    shouldShowButtons: hasValidReferenceId && isTaskType
   };
   
   console.log('🧪 Notification validation:', validationResult);
