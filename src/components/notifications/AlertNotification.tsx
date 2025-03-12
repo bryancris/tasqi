@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import {
   AlertDialog,
@@ -46,6 +45,18 @@ export function AlertNotification({
   const [isLoading, setIsLoading] = React.useState<string | null>(null);
   const queryClient = useQueryClient();
 
+  // Add debug logging
+  React.useEffect(() => {
+    console.log('AlertNotification props:', {
+      title,
+      type,
+      referenceId,
+      reference_type,
+      shouldShowButtons: referenceId !== null && 
+        (reference_type === 'task' || title === 'Task Reminder')
+    });
+  }, [title, referenceId, reference_type]);
+
   // Convert string referenceId to number if needed
   const numericReferenceId = React.useMemo(() => {
     if (referenceId === null || referenceId === undefined) return null;
@@ -84,9 +95,9 @@ export function AlertNotification({
     }
   };
 
-  // Determine if we should show task buttons
-  const showTaskButtons = numericReferenceId !== null && 
-    (reference_type === 'task' || title.toLowerCase().includes('task reminder'));
+  // Update the condition to show task buttons
+  const showTaskButtons = referenceId !== null && 
+    (reference_type === 'task' || title === 'Task Reminder');
 
   return (
     <AlertDialog open={open}>

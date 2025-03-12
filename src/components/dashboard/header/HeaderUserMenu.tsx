@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -38,10 +37,8 @@ export function HeaderUserMenu() {
       setIsLoggingOut(true);
       await handleSignOut();
       
-      // Navigate after successful logout
       navigate('/auth', { replace: true });
       
-      // Only show toast if logged out successfully
       toast.success("Successfully logged out");
     } catch (error) {
       console.error('Logout error:', error);
@@ -52,16 +49,16 @@ export function HeaderUserMenu() {
   };
 
   const handleTestNotification = () => {
-    console.log('Triggering test notification with numeric ID and task in title');
+    console.log('Triggering test task notification');
     showNotification({
       title: "Task Reminder",
       message: "This is a test notification with action buttons",
       type: "info",
-      reference_id: "999999", // Convert numeric ID to string
+      reference_id: "999999",
       reference_type: "task",
       persistent: true
     });
-    toast.success("Test notification triggered");
+    console.log('Test notification triggered');
   };
 
   return (
