@@ -52,11 +52,12 @@ export function HeaderUserMenu() {
   };
 
   const handleTestNotification = () => {
+    console.log('Triggering test notification with numeric ID and task in title');
     showNotification({
-      title: "Test Notification",
+      title: "Task Reminder",
       message: "This is a test notification with action buttons",
       type: "info",
-      reference_id: "test-notification",
+      reference_id: 999999, // Using a numeric ID instead of string
       reference_type: "task",
       persistent: true
     });
