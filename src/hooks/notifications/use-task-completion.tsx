@@ -1,4 +1,23 @@
 
+/**
+ * Hook: useTaskCompletion
+ * 
+ * Purpose:
+ * - Provides functionality to mark tasks as complete
+ * - Handles both normal and shared tasks
+ * - Updates the database via Supabase
+ * - Invalidates related queries to refresh the UI
+ * 
+ * Important Notes:
+ * - Used by the task notification buttons to complete tasks
+ * - Special handling for test notifications (id="999999")
+ * - Updates both tasks and shared_tasks tables when needed
+ * 
+ * Example Usage:
+ * const { handleTaskComplete } = useTaskCompletion();
+ * await handleTaskComplete(task);
+ */
+
 import { Task } from '@/components/dashboard/TaskBoard';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';

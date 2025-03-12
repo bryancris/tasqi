@@ -1,3 +1,18 @@
+/**
+ * Component: NotificationsProvider
+ * 
+ * Purpose:
+ * - Main provider component for the notification system
+ * - Manages notification state and subscriptions
+ * - Groups notifications and renders them using NotificationGroup
+ * - Provides the useNotifications context for the app
+ * 
+ * Important Notes:
+ * - This is the root component of the notification system
+ * - Handles notification grouping by groupId
+ * - Manages online/offline notification queuing
+ * - Export useNotifications hook for global notification access
+ */
 
 import * as React from "react";
 import { useEffect, useRef, useState } from "react";

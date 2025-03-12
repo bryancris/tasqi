@@ -1,4 +1,3 @@
-
 import { cn } from "@/lib/utils";
 import { useNotifications } from "./context/NotificationsContext";
 import { Check, AlertTriangle, AlertCircle, Info, Clock, Loader2 } from "lucide-react";
@@ -31,7 +30,6 @@ export function NotificationGroup({ groupId, notifications, onDismissGroup }: No
   const [isLoading, setIsLoading] = useState<string | null>(null);
   const [isSnoozing, setIsSnoozing] = useState(false);
 
-  // Debug log to understand the actual notifications being rendered
   console.log('🧩 RENDERING NOTIFICATION GROUP:', {
     groupId,
     notificationCount: notifications.length,
@@ -44,10 +42,8 @@ export function NotificationGroup({ groupId, notifications, onDismissGroup }: No
     } : 'No notifications'
   });
 
-  // Debug log the first notification in this group
   if (notifications.length > 0) {
     debugLogNotification(notifications[0], `NotificationGroup (${groupId})`);
-    // Check if the notification should show action buttons
     const shouldShowButtons = validateTaskNotification(notifications[0]);
     console.log(`🔘 Should show buttons: ${shouldShowButtons} for group ${groupId}`);
   }
@@ -75,12 +71,10 @@ export function NotificationGroup({ groupId, notifications, onDismissGroup }: No
     onDismissGroup(groupId);
   };
 
-  // Check if this is a task notification group
   const isTaskNotificationGroup = notifications.some(notification => 
     notification.referenceType === 'task' && notification.referenceId
   );
 
-  // Check if this is a test notification group
   const isTestNotificationGroup = notifications.some(notification =>
     notification.referenceId === "999999" || notification.referenceId === 999999
   );
@@ -89,7 +83,6 @@ export function NotificationGroup({ groupId, notifications, onDismissGroup }: No
     console.log('⏰ Snooze clicked for notification group:', groupId);
     setIsSnoozing(true);
     
-    // Simulate a delay then dismiss
     setTimeout(() => {
       toast.success(`Task snoozed for 15 minutes`);
       setIsSnoozing(false);
@@ -100,14 +93,12 @@ export function NotificationGroup({ groupId, notifications, onDismissGroup }: No
   const handleCompleteTask = async () => {
     if (notifications.length === 0) return;
     
-    // Get the first notification's reference ID
     const notification = notifications[0];
     const referenceId = notification.referenceId;
     
     console.log('✅ Complete button clicked for notification with referenceId:', referenceId);
     setIsLoading('done');
     
-    // Handle test notification differently
     if (isTestNotification(referenceId)) {
       setTimeout(() => {
         toast.success("Test task completed");
@@ -117,10 +108,8 @@ export function NotificationGroup({ groupId, notifications, onDismissGroup }: No
       return;
     }
     
-    // Handle real task completion
     try {
       if (typeof referenceId === 'string' || typeof referenceId === 'number') {
-        // Create a simple task object with the ID for handleTaskComplete
         const task = { id: referenceId };
         await handleTaskComplete(task as any);
         toast.success("Task completed");
@@ -180,7 +169,6 @@ export function NotificationGroup({ groupId, notifications, onDismissGroup }: No
             </div>
           ))}
 
-          {/* Always show buttons for task notification groups */}
           {isTaskNotificationGroup && (
             <div className="flex w-full flex-col sm:flex-row justify-between gap-2 mt-4 border-t pt-3">
               <Button

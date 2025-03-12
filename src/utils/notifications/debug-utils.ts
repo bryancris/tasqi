@@ -1,5 +1,20 @@
 
 /**
+ * Utilities: Debug Utilities for Notifications
+ * 
+ * Purpose:
+ * - Provides debugging tools for the notification system
+ * - Helps trace notification properties and flow
+ * - Validates notification data for button display
+ * 
+ * Important Functions:
+ * - debugLogNotification: Logs notification details with source info
+ * - validateTaskNotification: Checks if a notification should show task buttons
+ * - isTestNotification: Detects test notifications by their ID
+ * - logNotificationDetails: Logs detailed notification properties for debugging
+ */
+
+/**
  * Debug utilities for notifications
  * These help trace notification related issues
  */

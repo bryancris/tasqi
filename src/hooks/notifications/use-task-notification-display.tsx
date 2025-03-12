@@ -1,4 +1,23 @@
 
+/**
+ * Hook: useTaskNotificationDisplay
+ * 
+ * Purpose:
+ * - Creates and displays notifications for tasks (reminders, shared tasks, assignments)
+ * - Formats notification data with consistent types
+ * - Ensures notifications have proper referenceId and referenceType for button display
+ * - Triggers browser notifications and sounds
+ * 
+ * Important Notes:
+ * - Always converts referenceId to string for consistent handling across the app
+ * - Sets referenceType as 'task' to ensure notification buttons are displayed
+ * - Used by the task notification system to show reminders
+ * 
+ * Example Usage:
+ * const { showTaskNotification } = useTaskNotificationDisplay();
+ * showTaskNotification(task, 'reminder', isMountedRef, handleTaskComplete);
+ */
+
 import { Task } from '@/components/dashboard/TaskBoard';
 import { useCallback } from 'react';
 import { useNotifications } from '@/hooks/notifications/use-notifications';

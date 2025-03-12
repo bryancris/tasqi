@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { detectPlatform } from '@/utils/notifications/platformDetection';
 import { useIOSPWANotifications } from './use-ios-pwa-notifications';
@@ -6,31 +5,43 @@ import { useWebNotifications } from './use-web-notifications';
 import { useNotifications as useNotificationsContext } from '@/components/notifications/context/NotificationsContext';
 
 /**
- * Platform-adaptive notifications hook
- * Automatically selects the appropriate notification implementation
- * based on the detected platform (iOS PWA or standard web)
+ * Hook: useNotifications
+ * 
+ * Purpose:
+ * - Platform-adaptive notification hook that works on different environments
+ * - Detects platform (iOS PWA vs standard web) and uses appropriate implementation
+ * - Provides unified interface for enabling, disabling, and showing notifications
+ * 
+ * Important Notes:
+ * - This is the main hook imported by components that need to show notifications
+ * - It uses platform-specific implementations under the hood
+ * - The showNotification method is the primary way to create notifications
+ * 
+ * Example Usage:
+ * const { showNotification, isSubscribed, enableNotifications } = useNotifications();
+ * showNotification({ 
+ *   title: 'Task Reminder', 
+ *   message: 'Complete your task',
+ *   referenceId: '123',
+ *   referenceType: 'task' 
+ * });
  */
+
 export function useNotifications() {
   const platform = detectPlatform();
   const isIOSPWA = platform === 'ios-pwa';
   
-  // Use the platform-specific hooks
   const iosPwaNotifications = useIOSPWANotifications();
   const webNotifications = useWebNotifications();
   
-  // Track combined state for last enable attempt
   const [lastEnableAttempt, setLastEnableAttempt] = useState(0);
   
-  // Select the appropriate implementation based on platform
   const implementation = isIOSPWA ? iosPwaNotifications : webNotifications;
   
-  // Get the notification context for showNotification
   const notificationContext = useNotificationsContext();
   
-  // Re-check subscription status after each enable attempt with a delay
   useEffect(() => {
     if (lastEnableAttempt > 0) {
-      // Add a slight delay to allow the backend operation to complete
       const timeoutId = setTimeout(() => {
         implementation.checkSubscriptionStatus();
       }, 1000);
@@ -39,7 +50,6 @@ export function useNotifications() {
     }
   }, [lastEnableAttempt, implementation]);
   
-  // Wrap the enable/disable functions to track attempts
   const enableNotifications = async () => {
     try {
       const result = await implementation.enableNotifications();

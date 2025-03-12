@@ -1,4 +1,22 @@
 
+/**
+ * Hook: useTaskChecker
+ * 
+ * Purpose:
+ * - Checks for upcoming tasks that need notifications
+ * - Calculates when tasks are due based on their scheduled time and reminder preferences
+ * - Tracks notification state to prevent duplicate notifications
+ * 
+ * Important Notes:
+ * - Uses the user's timezone for accurate scheduling
+ * - Implements rate limiting to prevent excessive checking
+ * - Only notifies for scheduled tasks with enabled reminders
+ * 
+ * Example Usage:
+ * const { checkForUpcomingTasks } = useTaskChecker();
+ * checkForUpcomingTasks(tasks, isMountedRef, notifiedTasksRef, showTaskNotification);
+ */
+
 import { Task } from '@/components/dashboard/TaskBoard';
 import { useCallback, useRef } from 'react';
 import { isToday, parseISO, isFuture } from 'date-fns';

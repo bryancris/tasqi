@@ -1,4 +1,20 @@
 
+/**
+ * Hook: useNotificationHandlers
+ * 
+ * Purpose:
+ * - Creates, displays, and manages notification lifecycle
+ * - Handles notification dismissal (individual and groups)
+ * - Manages notification timeouts and persistence
+ * - Triggers sound and browser notifications
+ * 
+ * Important Notes:
+ * - Core notification handling logic used by NotificationsProvider
+ * - Manages offline notification queuing
+ * - Ensures consistent notification data formatting
+ * - Used directly by the NotificationsProvider component
+ */
+
 import { useCallback } from 'react';
 import { Notification } from '../types';
 import { playNotificationSound } from "@/utils/notifications/soundUtils";

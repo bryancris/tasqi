@@ -1,3 +1,23 @@
+
+/**
+ * Hook: useTaskNotifications
+ * 
+ * Purpose:
+ * - Manages the task notification system by periodically checking for upcoming tasks
+ * - Tracks which tasks have already been notified to prevent duplicate notifications
+ * - Provides functions to show task notifications and test notifications
+ * - Cleans up resources when the component unmounts
+ * 
+ * Important Notes:
+ * - Uses a 60-second interval to check for upcoming tasks
+ * - Maintains a Set of already notified tasks to prevent duplicates
+ * - The test notification function is useful for debugging notification display
+ * 
+ * Example Usage:
+ * const { handleTaskComplete, showTaskNotification, triggerTestNotification } = useTaskNotifications();
+ * triggerTestNotification(); // To test notification display
+ */
+
 import { useEffect, useRef } from 'react';
 import { useTasks } from '@/hooks/use-tasks';
 import { useNotifications } from '@/hooks/notifications/use-notifications';
