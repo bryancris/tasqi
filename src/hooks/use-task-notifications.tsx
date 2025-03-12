@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useCallback } from 'react';
 import { useTasks } from '@/hooks/use-tasks';
 import { Task } from '@/components/dashboard/TaskBoard';
@@ -84,7 +85,7 @@ export function useTaskNotifications() {
       // Play notification sound
       await playNotificationSound();
 
-      // Show in-app notification with numeric task ID reference
+      // Show in-app notification with task ID reference converted to string
       showNotification({
         title: type === 'reminder' ? 'Task Reminder' :
                type === 'shared' ? 'Task Shared' :
@@ -92,7 +93,7 @@ export function useTaskNotifications() {
         message: task.title,
         type: 'info',
         persistent: true,
-        reference_id: task.id, // Pass the ID as a number, not a string
+        reference_id: task.id.toString(), // Convert number to string to match expected type
         reference_type: 'task', // Explicitly identify this as a task
         action: {
           label: 'Complete Task',

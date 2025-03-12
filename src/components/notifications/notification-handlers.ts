@@ -1,110 +1,128 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { addMinutes, setHours, setMinutes, startOfTomorrow } from "date-fns";
 import { QueryClient } from "@tanstack/react-query";
 
+export const handleStart = async (
+  referenceId: number | string,
+  queryClient: QueryClient,
+  onDismiss: () => void
+) => {
+  try {
+    // Convert string referenceId to number if needed
+    const taskId = typeof referenceId === 'string' ? parseInt(referenceId, 10) : referenceId;
+    
+    console.log('Processing task with ID:', taskId);
+    
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error('User not authenticated');
+      return;
+    }
+
+    // Determine if this is a shared task
+    const { data: sharedTask } = await supabase
+      .from('shared_tasks')
+      .select('*')
+      .eq('task_id', taskId)
+      .eq('shared_with_user_id', user.id)
+      .single();
+
+    if (sharedTask) {
+      // Update shared task status
+      const { error } = await supabase
+        .from('shared_tasks')
+        .update({ status: 'completed' })
+        .eq('task_id', taskId)
+        .eq('shared_with_user_id', user.id);
+
+      if (error) {
+        console.error('Error completing shared task:', error);
+        toast.error('Failed to complete task');
+        return;
+      }
+    } else {
+      // Update regular task status
+      const { error } = await supabase
+        .from('tasks')
+        .update({ 
+          status: 'completed',
+          completed_at: new Date().toISOString()
+        })
+        .eq('id', taskId);
+
+      if (error) {
+        console.error('Error completing task:', error);
+        toast.error('Failed to complete task');
+        return;
+      }
+    }
+
+    toast.success('Task completed');
+    await queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    onDismiss();
+  } catch (error) {
+    console.error('Unexpected error completing task:', error);
+    toast.error('An unexpected error occurred');
+  }
+};
+
 export const handleSnooze = async (
-  reference_id: number | null,
+  referenceId: number | string,
   minutes: number,
   queryClient: QueryClient,
   onDismiss: () => void
 ) => {
-  if (!reference_id) {
-    console.error('No task ID found');
-    return;
+  try {
+    // Convert string referenceId to number if needed
+    const taskId = typeof referenceId === 'string' ? parseInt(referenceId, 10) : referenceId;
+    
+    console.log('Snoozing task with ID:', taskId, 'for', minutes, 'minutes');
+    
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error('User not authenticated');
+      return;
+    }
+
+    // Calculate new reminder time
+    const now = new Date();
+    const snoozeUntil = new Date(now.getTime() + minutes * 60000); // minutes to milliseconds
+
+    // Determine if this is a shared task
+    const { data: sharedTask } = await supabase
+      .from('shared_tasks')
+      .select('*')
+      .eq('task_id', taskId)
+      .eq('shared_with_user_id', user.id)
+      .single();
+
+    if (sharedTask) {
+      // For shared tasks, we might handle this differently
+      toast.info(`Reminder snoozed for ${minutes} minutes`);
+    } else {
+      // Update task's snooze time
+      const { error } = await supabase
+        .from('tasks')
+        .update({ 
+          snoozed_until: snoozeUntil.toISOString()
+        })
+        .eq('id', taskId);
+
+      if (error) {
+        console.error('Error snoozing task:', error);
+        toast.error('Failed to snooze reminder');
+        return;
+      }
+    }
+
+    toast.success(`Reminder snoozed for ${minutes} minutes`);
+    await queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    onDismiss();
+  } catch (error) {
+    console.error('Unexpected error snoozing task:', error);
+    toast.error('An unexpected error occurred');
   }
-
-  console.log('Snoozing task:', { reference_id, minutes });
-
-  // First, get the current task data
-  const { data: currentTask, error: fetchError } = await supabase
-    .from('tasks')
-    .select('reschedule_count, date, start_time')
-    .eq('id', reference_id)
-    .single();
-
-  if (fetchError) {
-    console.error('Error fetching task:', fetchError);
-    toast.error('Failed to snooze task');
-    return;
-  }
-
-  const now = new Date();
-  let newReminderTime: Date;
-
-  if (minutes === 24 * 60) { // Tomorrow
-    newReminderTime = startOfTomorrow();
-    newReminderTime = setHours(newReminderTime, 9); // Set to 9 AM tomorrow
-    newReminderTime = setMinutes(newReminderTime, 0);
-  } else {
-    newReminderTime = addMinutes(now, minutes);
-  }
-
-  // Format the time as HH:mm
-  const newStartTime = `${String(newReminderTime.getHours()).padStart(2, '0')}:${String(newReminderTime.getMinutes()).padStart(2, '0')}`;
-
-  const { error: taskError } = await supabase
-    .from('tasks')
-    .update({
-      start_time: newStartTime,
-      date: newReminderTime.toISOString().split('T')[0],
-      reschedule_count: (currentTask?.reschedule_count ?? 0) + 1,
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', reference_id);
-
-  if (taskError) {
-    console.error('Error updating task:', taskError);
-    toast.error('Failed to snooze task');
-    return;
-  }
-
-  toast.success(`Task snoozed for ${minutes} minutes`);
-  await queryClient.invalidateQueries({ queryKey: ['tasks'] });
-  onDismiss();
-};
-
-export const handleEdit = async (
-  reference_id: number | null,
-  queryClient: QueryClient,
-  onDismiss: () => void
-) => {
-  if (!reference_id) {
-    console.error('No task ID found');
-    return;
-  }
-
-  onDismiss();
-  queryClient.setQueryData(['editTaskId'], reference_id);
-};
-
-export const handleStart = async (
-  reference_id: number | null,
-  queryClient: QueryClient,
-  onDismiss: () => void
-) => {
-  if (!reference_id) {
-    console.error('No task ID found');
-    return;
-  }
-
-  const { error: taskError } = await supabase
-    .from('tasks')
-    .update({
-      status: 'completed',
-      completed_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', reference_id);
-
-  if (taskError) {
-    console.error('Error completing task:', taskError);
-    toast.error('Failed to complete task');
-    return;
-  }
-
-  toast.success('Task completed');
-  await queryClient.invalidateQueries({ queryKey: ['tasks'] });
-  onDismiss();
 };
