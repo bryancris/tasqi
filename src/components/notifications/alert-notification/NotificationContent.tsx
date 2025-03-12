@@ -18,6 +18,7 @@ interface NotificationContentProps {
   onDismiss: () => void;
   referenceId?: number | string | null;
   referenceType?: string | null;
+  isDialogOpen?: boolean;
 }
 
 export const NotificationContent = ({
@@ -28,6 +29,7 @@ export const NotificationContent = ({
   onDismiss,
   referenceId,
   referenceType,
+  isDialogOpen = false,
 }: NotificationContentProps) => {
   const [isLoading, setIsLoading] = React.useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -41,7 +43,8 @@ export const NotificationContent = ({
       referenceType,
       title,
       showButtons: referenceId !== undefined && referenceId !== null && 
-                  (referenceType === 'task' || title?.toLowerCase().includes('task'))
+                  (referenceType === 'task' || title?.toLowerCase().includes('task')),
+      isDialogOpen
     });
     
     debugLogNotification({
@@ -51,7 +54,17 @@ export const NotificationContent = ({
       referenceId,
       referenceType,
     }, 'NotificationContent render');
-  }, [title, message, type, referenceId, referenceType]);
+    
+    // Extra validation for test notifications
+    if (referenceId === "999999" || referenceId === 999999) {
+      console.log('🧪 Test notification validation:', {
+        hasButtons: isTaskNotification,
+        referenceId,
+        referenceIdType: typeof referenceId,
+        isValidTestNotification: true
+      });
+    }
+  }, [title, message, type, referenceId, referenceType, isDialogOpen]);
 
   const handleDone = async () => {
     try {
@@ -99,6 +112,19 @@ export const NotificationContent = ({
     isTaskNotification
   });
 
+  // Extra validation specifically for test notifications
+  React.useEffect(() => {
+    if (isTaskNotification && (referenceId === "999999" || referenceId === 999999)) {
+      validateTaskNotification({
+        title,
+        message,
+        type,
+        referenceId,
+        referenceType
+      });
+    }
+  }, [title, message, type, referenceId, referenceType, isTaskNotification]);
+
   return (
     <AlertDialogFooter className="flex-col sm:flex-col gap-3 sm:gap-3 mt-2 items-start">
       {isTaskNotification ? (
@@ -107,12 +133,14 @@ export const NotificationContent = ({
           referenceId={referenceId}
           onDismiss={onDismiss}
           onDone={handleDone}
+          isDialogOpen={isDialogOpen}
         />
       ) : action ? (
         <div className="flex justify-end w-full">
           <button
             onClick={action.onClick}
             className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white px-4 py-2 rounded"
+            tabIndex={0}
           >
             {action.label}
           </button>

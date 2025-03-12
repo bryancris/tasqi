@@ -85,12 +85,12 @@ export function HeaderUserMenu() {
         title: "Task Reminder",
         message: "This is a test notification with action buttons",
         type: "info" as const,
-        referenceId: "999999", // Using exact string format
+        referenceId: "999999", // Using string format consistently
         referenceType: "task", // Must be lowercase "task"
         persistent: false // Make test notifications non-persistent
       });
       
-      console.log('✅ Test task notification triggered');
+      console.log('✅ Test task notification triggered with ID: 999999');
     }, 150);
   };
 

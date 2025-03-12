@@ -3,77 +3,119 @@
  * Utility functions for debugging notification issues
  */
 
-/**
- * Logs detailed information about a notification for debugging
- * @param notification The notification object to log
- * @param stage The current stage in the notification pipeline
- */
-export function debugLogNotification(notification: any, stage: string) {
-  // Support both naming conventions for maximum compatibility during transition
-  const referenceId = notification.referenceId || notification.reference_id;
-  const referenceType = notification.referenceType || notification.reference_type;
-  
-  console.log(`🔍 Notification at ${stage}:`, {
-    title: notification.title,
-    titleLength: notification.title?.length,
-    titleCharCodes: notification.title ? Array.from(notification.title).map((c: string) => c.charCodeAt(0)) : [],
-    message: notification.message,
-    type: notification.type,
-    referenceId, // Use standardized camelCase for logging
-    referenceIdValue: String(referenceId),
-    referenceIdType: typeof referenceId,
-    referenceType, // Use standardized camelCase for logging
-    isTask: (referenceType === 'task'),
-    isTaskBasedOnTitle: notification.title?.toLowerCase().includes('task'),
-    showingButtons: Boolean(referenceId) && 
-      (referenceType === 'task' || notification.title?.toLowerCase().includes('task')),
-    properties: Object.keys(notification)
-  });
+export interface DebugNotification {
+  title: string;
+  message: string;
+  type?: string;
+  referenceId?: number | string | null;
+  referenceType?: string | null;
+  [key: string]: any;
 }
 
 /**
- * Validates that a notification has the required properties for displaying buttons
- * @param notification The notification object to validate
- * @returns An object containing validation results
+ * Log detailed notification information for debugging
  */
-export function validateTaskNotification(notification: any) {
-  // Support both naming conventions for backward compatibility
-  const hasReferenceId = notification.referenceId !== undefined || notification.reference_id !== undefined;
-  const hasReferenceType = notification.referenceType !== undefined || notification.reference_type !== undefined;
-  const referenceId = notification.referenceId || notification.reference_id;
-  const referenceType = notification.referenceType || notification.reference_type;
-  
-  // Consider ANY non-null, non-undefined referenceId as valid
-  const hasValidReferenceId = referenceId !== undefined && referenceId !== null;
-  
-  // Check if it's task-related by type or title
-  const hasTaskType = referenceType === 'task';
-  const hasTaskInTitle = notification.title?.toLowerCase().includes('task') || false;
-  
-  const isTaskType = hasTaskType || hasTaskInTitle;
+export const debugLogNotification = (
+  notification: DebugNotification,
+  source: string
+) => {
+  const {
+    title,
+    message,
+    type,
+    referenceId,
+    referenceType,
+    ...rest
+  } = notification;
 
-  const validationResult = {
-    isValid: hasValidReferenceId && isTaskType,
+  // Convert title to character codes for debugging
+  const titleCharCodes = Array.from(title || '').map(char => char.charCodeAt(0));
+  
+  const isTask = referenceType === 'task' || 
+               title?.toLowerCase().includes('task') ||
+               message?.toLowerCase().includes('task');
+  
+  const isTaskBasedOnTitle = title?.toLowerCase().includes('task');
+  
+  const showingButtons = 
+    (referenceId !== undefined && referenceId !== null) &&
+    (referenceType === 'task' || title?.toLowerCase().includes('task'));
+
+  console.log(`🔍 Notification at ${source}:`, {
+    title,
+    titleLength: title?.length,
+    titleCharCodes,
+    message,
+    type,
+    referenceId,
+    referenceIdValue: referenceId !== undefined ? String(referenceId) : undefined,
+    referenceIdType: typeof referenceId,
+    referenceType,
+    isTask,
+    isTaskBasedOnTitle,
+    showingButtons,
+    properties: Object.keys({
+      title,
+      message,
+      type,
+      referenceId,
+      referenceType,
+      ...rest
+    })
+  });
+};
+
+/**
+ * Validate a notification to see if it should show task buttons
+ */
+export const validateTaskNotification = (notification: DebugNotification): boolean => {
+  const {
+    title,
+    referenceId,
+    referenceType
+  } = notification;
+
+  const isValid = !!title;
+  const hasReferenceId = referenceId !== undefined && referenceId !== null;
+  const hasReferenceType = !!referenceType;
+  const isTaskType = referenceType === 'task';
+  const hasTaskType = isTaskType;
+  const hasTaskInTitle = title?.toLowerCase().includes('task') || false;
+  const referenceIdValue = String(referenceId);
+  const referenceTypeValue = referenceType || '';
+  const referenceIdType = typeof referenceId;
+  const referenceIdIsNull = referenceId === null;
+  const referenceIdIsUndefined = referenceId === undefined;
+  const hasValidReferenceId = hasReferenceId && !referenceIdIsNull && !referenceIdIsUndefined;
+  
+  const shouldShowButtons = 
+    hasValidReferenceId && (isTaskType || hasTaskInTitle);
+  
+  const titleContainsTask = title?.toLowerCase().includes('task') || false;
+  const titleIncludesReminder = title?.toLowerCase().includes('reminder') || false;
+  const messageContainsTask = notification.message?.toLowerCase().includes('task') || false;
+  
+  const buttonVisibilityCheck = `${hasValidReferenceId} && (${isTaskType} || ${hasTaskInTitle})`;
+  
+  console.log('🧪 Enhanced notification validation:', {
+    isValid,
     hasReferenceId,
     hasReferenceType,
     isTaskType,
     hasTaskType,
     hasTaskInTitle,
-    referenceIdValue: String(referenceId),
-    referenceTypeValue: referenceType,
-    referenceIdType: typeof referenceId,
-    referenceIdIsNull: referenceId === null,
-    referenceIdIsUndefined: referenceId === undefined,
+    referenceIdValue,
+    referenceTypeValue,
+    referenceIdType,
+    referenceIdIsNull,
+    referenceIdIsUndefined,
     hasValidReferenceId,
-    shouldShowButtons: hasValidReferenceId && isTaskType,
-    // Add more detailed information for clearer debugging
-    titleContainsTask: notification.title?.toLowerCase().includes('task') || false,
-    titleIncludesReminder: notification.title?.toLowerCase().includes('reminder') || false,
-    messageContainsTask: notification.message?.toLowerCase().includes('task') || false,
-    buttonVisibilityCheck: `${hasValidReferenceId} && (${referenceType === 'task'} || ${notification.title?.toLowerCase().includes('task')})`
-  };
+    shouldShowButtons,
+    titleContainsTask,
+    titleIncludesReminder,
+    messageContainsTask,
+    buttonVisibilityCheck
+  });
   
-  console.log('🧪 Enhanced notification validation:', validationResult);
-  
-  return validationResult;
-}
+  return shouldShowButtons;
+};

@@ -37,8 +37,12 @@ export function AlertNotification({
   referenceType,
 }: AlertNotificationProps) {
   const isMobile = useIsMobile();
-  const buttonRef = React.useRef<HTMLButtonElement>(null);
+  const closeButtonRef = React.useRef<HTMLButtonElement>(null);
+  const dialogContentRef = React.useRef<HTMLDivElement>(null);
 
+  // Track when dialog is fully open
+  const [isFullyOpen, setIsFullyOpen] = React.useState(false);
+  
   // Log every render with detailed information
   React.useEffect(() => {
     console.log('🔔 RENDERING AlertNotification with details:', {
@@ -55,12 +59,21 @@ export function AlertNotification({
     });
   }, [title, message, referenceId, referenceType]);
 
+  // Handle focusing the close button when dialog opens
   React.useEffect(() => {
     if (open) {
+      // Use a short delay to ensure the dialog has fully opened and rendered
       const timeoutId = setTimeout(() => {
-        buttonRef.current?.focus();
-      }, 50);
-      return () => clearTimeout(timeoutId);
+        if (closeButtonRef.current) {
+          closeButtonRef.current.focus();
+          setIsFullyOpen(true);
+        }
+      }, 100);
+      
+      return () => {
+        clearTimeout(timeoutId);
+        setIsFullyOpen(false);
+      };
     }
   }, [open]);
   
@@ -70,6 +83,7 @@ export function AlertNotification({
   return (
     <AlertDialog open={open}>
       <AlertDialogContent
+        ref={dialogContentRef}
         className={cn(
           "max-w-sm m-0 transform-none transition-all duration-300 ease-in-out",
           "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
@@ -94,12 +108,16 @@ export function AlertNotification({
         // Always set data-test-notification for test notifications with ID 999999
         {...(isTestNotification ? { "data-test-notification": "999999" } : {})}
         onEscapeKeyDown={onDismiss}
+        // Make sure we're not using aria-hidden on a focused element or its ancestor
+        aria-modal="true"
+        role="dialog"
       >
         <button
-          ref={buttonRef}
+          ref={closeButtonRef}
           onClick={onDismiss}
           className="absolute right-4 top-4 p-1 rounded-full hover:bg-gray-100 transition-colors"
           aria-label="Close notification"
+          tabIndex={0}
         >
           <X className="h-4 w-4 text-gray-500" />
         </button>
@@ -118,6 +136,7 @@ export function AlertNotification({
           onDismiss={onDismiss}
           referenceId={referenceId}
           referenceType={referenceType}
+          isDialogOpen={isFullyOpen}
         />
       </AlertDialogContent>
     </AlertDialog>
