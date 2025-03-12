@@ -40,7 +40,7 @@ export const NotificationContent = ({
   
   // SIMPLIFIED: Log details on render
   React.useEffect(() => {
-    console.log('🔍 NotificationContent rendering with:', {
+    console.log('🔴 NotificationContent rendering with:', {
       referenceId,
       referenceIdType: typeof referenceId,
       referenceIdValue: String(referenceId),
@@ -88,35 +88,50 @@ export const NotificationContent = ({
     }
   };
 
-  // SIMPLIFIED: Direct check
-  const isTaskNotification = React.useMemo(() => {
-    // Test notifications always show buttons
-    if (isTestNotification(referenceId)) {
-      console.log('🧪 TEST NOTIFICATION DETECTED - SHOWING BUTTONS');
-      return true;
-    }
-    
-    // Regular checks for task notifications
-    const isValid = validateTaskNotification({
-      title,
-      message,
-      type,
-      referenceId,
-      referenceType,
-    });
-    
-    console.log('📢 Button display decision:', {
-      referenceId,
-      referenceIdType: typeof referenceId,
-      referenceType,
-      title,
-      isValid,
-      isTest: isTestNotification(referenceId)
-    });
-    
-    return isValid;
-  }, [referenceId, referenceType, title, message, type]);
+  // FORCED TEST NOTIFICATION CHECK:
+  // Always check for test notification first, and if it's a test notification (999999),
+  // always render buttons regardless of other conditions
+  const forceButtonsForTestNotification = isTestNotification(referenceId);
 
+  console.log('🧪 Button display decision:', {
+    forceButtonsForTestNotification,
+    referenceId,
+    referenceIdValue: String(referenceId),
+    referenceIdType: typeof referenceId,
+    isTestNotification: isTestNotification(referenceId)
+  });
+
+  // If this is a test notification, always show buttons
+  if (forceButtonsForTestNotification) {
+    console.log('🧪 TEST NOTIFICATION DETECTED - FORCING BUTTONS TO DISPLAY');
+    
+    return (
+      <AlertDialogFooter 
+        className="flex-col sm:flex-col gap-3 sm:gap-3 mt-2 items-start"
+        data-has-task-buttons="true"
+        data-test-notification="true"
+        data-forced-buttons="true"
+      >
+        <NotificationButtons
+          isLoading={isLoading}
+          referenceId={referenceId}
+          onDismiss={onDismiss}
+          onDone={handleDone}
+          isDialogOpen={isDialogOpen}
+        />
+      </AlertDialogFooter>
+    );
+  }
+
+  // For regular notifications
+  const isTaskNotification = validateTaskNotification({
+    title,
+    message,
+    type,
+    referenceId,
+    referenceType,
+  });
+  
   return (
     <AlertDialogFooter 
       className="flex-col sm:flex-col gap-3 sm:gap-3 mt-2 items-start"

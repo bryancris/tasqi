@@ -37,13 +37,12 @@ export const debugLogNotification = (
   
   const isTaskBasedOnTitle = title?.toLowerCase().includes('task');
   
-  // SIMPLIFIED: Use both string and number comparison for 999999
-  const isTestNotification = 
-    referenceId === 999999 || referenceId === "999999";
+  // Direct check for test notification ID
+  const isTestNotificationInstance = isTestNotification(referenceId);
   
   // SIMPLIFIED: This is the key calculation for showing buttons
   const showingButtons = 
-    (isTestNotification) || 
+    (isTestNotificationInstance) || 
     ((referenceId !== undefined && referenceId !== null) &&
      ((referenceType === 'task') || (title?.toLowerCase().includes('task'))));
 
@@ -59,7 +58,7 @@ export const debugLogNotification = (
     referenceType,
     isTask,
     isTaskBasedOnTitle,
-    isTestNotification,
+    isTestNotification: isTestNotificationInstance,
     showingButtons,
     properties: Object.keys({
       title,
@@ -73,18 +72,26 @@ export const debugLogNotification = (
 };
 
 /**
- * SIMPLIFIED: Just check referenceId directly - always check both string and number form
+ * Simple, direct check for test notification (ID 999999)
+ * This is the most important utility function - it must work correctly!
  */
 export const isTestNotification = (referenceId?: number | string | null): boolean => {
+  if (referenceId === null || referenceId === undefined) {
+    return false;
+  }
+  
+  // Check both string and number formats
   return referenceId === 999999 || referenceId === "999999";
 };
 
 /**
- * SIMPLIFIED: Much simpler validation with explicit test for 999999
+ * Validates that a notification should show task buttons
+ * For test notifications (999999), always returns true
  */
 export const validateTaskNotification = (notification: DebugNotification): boolean => {
   // TEST NOTIFICATION - highest priority check
   if (isTestNotification(notification.referenceId)) {
+    console.log('🧪 TEST NOTIFICATION VALIDATED - ID:', notification.referenceId);
     return true;
   }
   

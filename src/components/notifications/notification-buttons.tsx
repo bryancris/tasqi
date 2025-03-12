@@ -49,6 +49,12 @@ export const NotificationButtons = ({
   }, [isDialogOpen]);
 
   const handleSnoozeClick = async () => {
+    // Always log the exact reference ID value for debugging
+    console.log('⏰ Attempting to snooze task with ID:', referenceId, 
+      'Type:', typeof referenceId, 
+      'Value as string:', String(referenceId),
+      'Is test notification:', isTestNotification(referenceId));
+    
     // SIMPLIFIED: Just a direct check
     if (!referenceId) {
       console.error('Cannot snooze: No valid reference ID');
@@ -70,6 +76,7 @@ export const NotificationButtons = ({
       }
     } catch (error) {
       console.error('Error snoozing task:', error);
+      toast.error('Failed to snooze task');
     } finally {
       setIsSnoozing(false);
     }
@@ -83,6 +90,7 @@ export const NotificationButtons = ({
       data-reference-id={String(referenceId)}
       data-reference-id-type={typeof referenceId}
       data-test-notification={isTestNotification(referenceId) ? "true" : "false"}
+      data-component="notification-buttons"
     >
       <div className="flex gap-2 items-center">
         <Select 
