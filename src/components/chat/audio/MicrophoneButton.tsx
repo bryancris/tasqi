@@ -1,3 +1,4 @@
+
 import { Mic } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -14,6 +15,8 @@ export function MicrophoneButton({ isRecording, onClick }: MicrophoneButtonProps
       variant="ghost" 
       className={`h-8 w-8 relative ${isRecording ? 'text-red-500' : ''}`}
       onClick={onClick}
+      aria-label={isRecording ? "Stop recording" : "Start voice recording"}
+      title={isRecording ? "Stop recording" : "Click to use voice input"}
     >
       {isRecording && (
         <span className="absolute inset-0 animate-pulse">
