@@ -1,5 +1,7 @@
+
 import { cn } from "@/lib/utils";
 import { useNotifications } from "./NotificationsManager";
+import { Check, AlertTriangle, AlertCircle, Info } from "lucide-react";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogTitle } from "../ui/alert-dialog";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
