@@ -49,8 +49,16 @@ export function HeaderUserMenu() {
     }
   };
 
-  const handleNavigateToSettings = () => {
-    navigate('/dashboard/settings');
+  const handleNavigateToSettings = (e: React.MouseEvent) => {
+    // Prevent default to avoid any potential bubbling that might cause a page reload
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Settings button clicked, navigating programmatically');
+    
+    // Use setTimeout to ensure the dropdown has time to close properly
+    setTimeout(() => {
+      navigate('/dashboard/settings');
+    }, 10);
   };
 
   const handleTestNotification = () => {
@@ -95,7 +103,11 @@ export function HeaderUserMenu() {
           />
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleNavigateToSettings}>
+        <DropdownMenuItem onSelect={(e) => {
+          // Prevent the default selection behavior
+          e.preventDefault();
+          handleNavigateToSettings(e as unknown as React.MouseEvent);
+        }}>
           <Settings className="mr-2 h-4 w-4" />
           Settings
         </DropdownMenuItem>

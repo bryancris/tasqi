@@ -79,12 +79,19 @@ export function AlertNotification({
     }
   };
 
-  // Show buttons if it's a task notification with a reference ID
-  const showButtons = (reference_type === 'task' && referenceId !== undefined && referenceId !== null);
+  // Logic to determine if buttons should be shown
+  // 1. If it's explicitly a task notification with reference_type='task'
+  // 2. OR if it's a reminder notification with a reference ID (for backward compatibility)
+  const isTaskNotification = reference_type === 'task' || 
+                            (title.toLowerCase().includes('task') && 
+                             title.toLowerCase().includes('reminder'));
   
-  console.log('🔘 Button visibility check:', {
+  const showButtons = isTaskNotification && referenceId !== undefined && referenceId !== null;
+  
+  console.log('🔘 Enhanced button visibility check:', {
     title,
     showButtons,
+    isTaskNotification,
     referenceType: reference_type,
     hasReferenceId: referenceId !== undefined && referenceId !== null,
     referenceIdType: typeof referenceId,
