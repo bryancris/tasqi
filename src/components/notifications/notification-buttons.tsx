@@ -35,7 +35,14 @@ export const NotificationButtons = ({
     console.log('⏰ Snoozing task with ID:', referenceId, 'for', snoozeTime, 'minutes');
     setIsSnoozing(true);
     try {
-      await handleSnooze(referenceId, parseInt(snoozeTime), queryClient, onDismiss);
+      // For test notifications with ID 999999, just simulate a successful snooze
+      if (referenceId === "999999" || referenceId === 999999) {
+        console.log('Test notification detected - simulating snooze');
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
+        onDismiss();
+      } else {
+        await handleSnooze(referenceId, parseInt(snoozeTime), queryClient, onDismiss);
+      }
     } catch (error) {
       console.error('Error snoozing task:', error);
     } finally {

@@ -50,7 +50,8 @@ export function AlertNotification({
       referenceType,
       isTaskRelated: title?.toLowerCase().includes('task') || referenceType === 'task',
       shouldHaveButtons: (referenceId !== undefined && referenceId !== null) && 
-                         (title?.toLowerCase().includes('task') || referenceType === 'task')
+                         (title?.toLowerCase().includes('task') || referenceType === 'task'),
+      isTestNotification: referenceId === "999999" || referenceId === 999999,
     });
   }, [title, message, referenceId, referenceType]);
 

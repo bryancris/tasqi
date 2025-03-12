@@ -54,6 +54,15 @@ export const NotificationContent = ({
     try {
       setIsLoading('done');
       
+      // Special handling for test task notification
+      if (referenceId === "999999" || referenceId === 999999) {
+        console.log('Test notification - simulating completion');
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
+        toast.success('Test task completed');
+        onDismiss();
+        return;
+      }
+      
       if (referenceId) {
         console.log('Processing task with ID:', referenceId, 'Type:', typeof referenceId);
         await handleStart(referenceId, queryClient, onDismiss);
@@ -70,38 +79,22 @@ export const NotificationContent = ({
     }
   };
 
-  // SIMPLIFIED BUTTON LOGIC - This is the key change
-  // Only check for a valid reference ID (non-null, non-undefined)
-  // For demo/test notifications, we'll show buttons for any notification with referenceId
+  // EXTREMELY SIMPLIFIED BUTTON LOGIC
+  // Always show buttons for task-related notifications with referenceId
   const hasReferenceId = referenceId !== undefined && referenceId !== null;
   
-  // If this is a task notification OR has the word "task" in the title, and has a reference ID, show the buttons
-  const isTaskRelated = referenceType === 'task' || title?.toLowerCase().includes('task');
-  
-  // Final decision for showing buttons - simplified logic
-  const showButtons = hasReferenceId && isTaskRelated;
-  
-  console.log('📢 SIMPLIFIED Button display decision:', {
+  console.log('📢 Button display decision:', {
     hasReferenceId,
-    isTaskRelated,
-    showButtons,
     referenceId,
     referenceIdType: typeof referenceId,
-    referenceIdValue: String(referenceId),
+    referenceType,
     title,
+    showButtons: hasReferenceId && (referenceType === 'task' || title?.toLowerCase().includes('task')),
   });
 
-  // Run validation on the notification for detailed logs
-  if (referenceId !== undefined) {
-    const validation = validateTaskNotification({
-      title,
-      message,
-      type,
-      referenceId,
-      referenceType,
-    });
-    console.log('🧪 NotificationContent validation:', validation);
-  }
+  // For test notifications with ID 999999, ALWAYS show buttons
+  const isTestNotification = referenceId === "999999" || referenceId === 999999;
+  const showButtons = isTestNotification || (hasReferenceId && (referenceType === 'task' || title?.toLowerCase().includes('task')));
 
   return (
     <AlertDialogFooter className="flex-col sm:flex-col gap-3 sm:gap-3 mt-2 items-start">

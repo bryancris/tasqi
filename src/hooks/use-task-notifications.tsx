@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useCallback } from 'react';
 import { useTasks } from '@/hooks/use-tasks';
 import { Task } from '@/components/dashboard/TaskBoard';
@@ -27,6 +26,12 @@ export function useTaskNotifications() {
 
   const handleTaskComplete = async (task: Task) => {
     try {
+      // For test notifications, just dismiss them
+      if (task.id === 999999 || task.id === "999999") {
+        toast.success('Test task completed');
+        return;
+      }
+      
       const user = (await supabase.auth.getUser()).data.user;
       if (!user) {
         toast.error('User not authenticated');
@@ -85,7 +90,7 @@ export function useTaskNotifications() {
       // Play notification sound
       await playNotificationSound();
 
-      // IMPORTANT: Set explicit string type for the referenceId to ensure consistent handling
+      // IMPORTANT: ALWAYS convert referenceId to string for consistent handling
       const referenceIdString = String(task.id);
       
       console.log('📱 Creating notification with referenceId:', referenceIdString, 'Type:', typeof referenceIdString);
@@ -113,7 +118,45 @@ export function useTaskNotifications() {
       }
       return false;
     }
-  }, [showNotification, queryClient]);
+  }, [showNotification]);
+
+  useEffect(() => {
+    console.log('🔔 Task notifications hook initialized');
+    isMountedRef.current = true;
+    
+    // For testing purposes, show a test notification
+    setTimeout(() => {
+      if (isMountedRef.current) {
+        console.log('Creating test notification with ID 999999');
+        showNotification({
+          title: 'Task Reminder',
+          message: 'This is a test notification with action buttons',
+          type: 'info',
+          persistent: true,
+          referenceId: "999999",  // Use string format consistently
+          referenceType: 'task',
+        });
+      }
+    }, 3000);
+    
+    // Initial check on mount if we have tasks
+    if (tasks.length > 0) {
+      void checkForUpcomingTasks(tasks);
+    }
+
+    const intervalId = setInterval(() => {
+      if (isMountedRef.current && tasks.length > 0) {
+        void checkForUpcomingTasks(tasks);
+      }
+    }, NOTIFICATION_CHECK_INTERVAL);
+
+    // Cleanup function
+    return () => {
+      isMountedRef.current = false;
+      clearInterval(intervalId);
+      console.log('🔔 Task notifications hook cleanup');
+    };
+  }, [tasks, checkForUpcomingTasks, showNotification]);
 
   const checkForUpcomingTasks = useCallback(async (tasks: Task[]) => {
     if (!isMountedRef.current) return;
@@ -174,29 +217,6 @@ export function useTaskNotifications() {
       }
     }
   }, [showTaskNotification]);
-
-  useEffect(() => {
-    console.log('🔔 Task notifications hook initialized');
-    isMountedRef.current = true;
-    
-    // Initial check on mount if we have tasks
-    if (tasks.length > 0) {
-      void checkForUpcomingTasks(tasks);
-    }
-
-    const intervalId = setInterval(() => {
-      if (isMountedRef.current && tasks.length > 0) {
-        void checkForUpcomingTasks(tasks);
-      }
-    }, NOTIFICATION_CHECK_INTERVAL);
-
-    // Cleanup function
-    return () => {
-      isMountedRef.current = false;
-      clearInterval(intervalId);
-      console.log('🔔 Task notifications hook cleanup');
-    };
-  }, [tasks, checkForUpcomingTasks]);
 
   return {
     handleTaskComplete,
