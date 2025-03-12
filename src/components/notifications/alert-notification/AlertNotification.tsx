@@ -9,7 +9,6 @@ import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { NotificationHeader } from "./NotificationHeader";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export interface AlertNotificationProps {
   open: boolean;
@@ -39,7 +38,6 @@ export function AlertNotification({
 }: AlertNotificationProps) {
   const isMobile = useIsMobile();
   const closeButtonRef = React.useRef<HTMLButtonElement>(null);
-  const [snoozeTime, setSnoozeTime] = React.useState<string>("15");
   
   // Log notification render and details
   React.useEffect(() => {
@@ -73,11 +71,11 @@ export function AlertNotification({
 
   // Simple placeholder button handlers with console logging
   const handleSnooze = () => {
-    console.log('Snooze placeholder clicked', { snoozeTime });
+    console.log('Snooze placeholder clicked - BASIC VERSION');
   };
 
   const handleComplete = () => {
-    console.log('Complete placeholder clicked');
+    console.log('Complete placeholder clicked - BASIC VERSION');
   };
 
   return (
@@ -127,55 +125,27 @@ export function AlertNotification({
           referenceId={referenceId} 
         />
 
-        {/* SIMPLE PLACEHOLDER BUTTONS - ALWAYS VISIBLE */}
+        {/* VERY BASIC PLACEHOLDER BUTTONS - GUARANTEED TO SHOW */}
         <div className="mt-4 border-t pt-3" data-testid="notification-buttons">
-          <div className="flex w-full flex-col sm:flex-row justify-between gap-2">
-            <div className="flex gap-2 items-center">
-              <Select 
-                value={snoozeTime} 
-                onValueChange={setSnoozeTime}
-              >
-                <SelectTrigger className="h-9 w-28 bg-white text-[#1A1F2C]" tabIndex={0}>
-                  <div className="flex items-center gap-1.5">
-                    <Clock className="h-3.5 w-3.5" />
-                    <SelectValue placeholder="Snooze time" />
-                  </div>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="5">5 minutes</SelectItem>
-                  <SelectItem value="15">15 minutes</SelectItem>
-                  <SelectItem value="30">30 minutes</SelectItem>
-                  <SelectItem value="60">1 hour</SelectItem>
-                  <SelectItem value="120">2 hours</SelectItem>
-                  <SelectItem value="1440">Tomorrow</SelectItem>
-                </SelectContent>
-              </Select>
-              
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleSnooze}
-                className="text-[#1A1F2C]"
-                tabIndex={0}
-                aria-label="Snooze task"
-                data-testid="snooze-button"
-              >
-                <Clock className="mr-2 h-4 w-4" />
-                Snooze
-              </Button>
-            </div>
-
+          <div className="flex justify-between gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSnooze}
+              className="flex items-center gap-2"
+            >
+              <Clock className="h-4 w-4" />
+              <span>Snooze</span>
+            </Button>
+            
             <Button
               variant="default"
               size="sm"
               onClick={handleComplete}
-              className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white"
-              tabIndex={0}
-              aria-label="Complete task"
-              data-testid="complete-button"
+              className="bg-purple-500 hover:bg-purple-600 text-white flex items-center gap-2"
             >
-              <Check className="mr-2 h-4 w-4" />
-              Complete
+              <Check className="h-4 w-4" />
+              <span>Complete</span>
             </Button>
           </div>
         </div>

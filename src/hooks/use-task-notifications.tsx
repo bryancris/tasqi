@@ -30,13 +30,13 @@ export function useTaskNotifications() {
       // Using constant ID for test notifications
       console.log(`✅ Creating test notification with ID: 999999, type: task`);
       
-      // Use consistent notification format for test notification
+      // Use consistent notification format for test notification with very simple structure
       showNotification({
         title: 'Task Reminder',
         message: 'This is a test notification with action buttons',
         type: 'info',
         persistent: true,
-        referenceId: "999999", // Using string to ensure proper comparison
+        referenceId: "999999",
         referenceType: 'task'
       });
     } else {

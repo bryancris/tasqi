@@ -1,11 +1,5 @@
 
 import * as React from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { AlertDialogFooter } from "@/components/ui/alert-dialog";
-import { NotificationButtons } from "../notification-buttons";
-import { toast } from "sonner";
-import { handleStart } from "../notification-handlers";
-import { debugLogNotification } from "@/utils/notifications/debug-utils";
 
 interface NotificationContentProps {
   title: string;
@@ -21,6 +15,7 @@ interface NotificationContentProps {
   isDialogOpen?: boolean;
 }
 
+// This component is completely deprecated now - we've moved all functionality directly to AlertNotification
 export const NotificationContent = ({
   title,
   message,
@@ -31,27 +26,16 @@ export const NotificationContent = ({
   referenceType,
   isDialogOpen = false,
 }: NotificationContentProps) => {
-  // Log component mount with note that it's been deprecated
+  // Log component mount so we know if it's still being used
   React.useEffect(() => {
-    console.log('🧨 NOTIFICATION CONTENT MOUNTED BUT NOT USED:', { 
+    console.log('🛑 DEPRECATED NotificationContent mounted but should not be used:', { 
       title, 
       message, 
       referenceId,
-      referenceType,
-      isDialogOpen,
-      type
+      referenceType
     });
-    
-    debugLogNotification({
-      title,
-      message,
-      type,
-      referenceId,
-      referenceType,
-    }, 'NotificationContent mount - DEPRECATED');
-  }, [title, message, referenceId, referenceType, isDialogOpen, type]);
+  }, [title, message, referenceId, referenceType]);
 
-  // This component is no longer in use - we've moved to direct rendering in AlertNotification
-  // Always return null - the buttons are now directly in AlertNotification
+  // Always return null - we're not using this component anymore
   return null;
 }
