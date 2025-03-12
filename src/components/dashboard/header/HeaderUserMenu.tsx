@@ -27,6 +27,7 @@ export function HeaderUserMenu() {
   const { deferredPrompt, isStandalone, installable, setDeferredPrompt } = useInstallPrompt();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { showNotification } = useNotifications();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   const userDisplayName = session?.user.user_metadata?.full_name || 
                          session?.user.user_metadata?.name ||
@@ -49,22 +50,26 @@ export function HeaderUserMenu() {
     }
   };
 
-  const handleNavigateToSettings = (e: React.MouseEvent) => {
-    // Prevent default to avoid any potential bubbling that might cause a page reload
-    e.preventDefault();
-    e.stopPropagation();
-    console.log('Settings button clicked, navigating programmatically');
+  const handleNavigateToSettings = () => {
+    console.log('Settings button clicked, closing dropdown and navigating programmatically');
     
-    // Use setTimeout to ensure the dropdown has time to close properly
+    // Close the dropdown first
+    setIsMenuOpen(false);
+    
+    // Use setTimeout to ensure the dropdown has fully closed before navigation
     setTimeout(() => {
+      console.log('Navigating to settings via React Router');
       navigate('/dashboard/settings');
-    }, 10);
+    }, 100); 
   };
 
   const handleTestNotification = () => {
     console.log('🔔 Triggering test task notification with buttons');
     
-    // Close the dropdown menu first before showing notification
+    // Close the dropdown menu first
+    setIsMenuOpen(false);
+    
+    // Add delay to ensure dropdown is closed before showing notification
     setTimeout(() => {
       // Create task notification with explicit reference data
       showNotification({
@@ -85,11 +90,11 @@ export function HeaderUserMenu() {
         referenceId: "999999",
         referenceType: "task"
       });
-    }, 100);
+    }, 150);
   };
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
           <UserAvatar
@@ -106,19 +111,21 @@ export function HeaderUserMenu() {
           />
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={(e) => {
-          // Prevent the default selection behavior
-          e.preventDefault();
-          handleNavigateToSettings(e as unknown as React.MouseEvent);
-        }}>
+        <DropdownMenuItem 
+          onClick={handleNavigateToSettings}
+          onSelect={(e) => {
+            // Prevent default selection behavior which can cause page reload
+            e.preventDefault();
+          }}
+        >
           <Settings className="mr-2 h-4 w-4" />
           Settings
         </DropdownMenuItem>
         <DropdownMenuItem 
+          onClick={handleTestNotification}
           onSelect={(e) => {
-            // Prevent the default behavior first
+            // Prevent default selection behavior
             e.preventDefault();
-            handleTestNotification();
           }}
         >
           <Bell className="mr-2 h-4 w-4" />
