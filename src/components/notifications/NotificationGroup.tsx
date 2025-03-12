@@ -1,10 +1,11 @@
 
 import { cn } from "@/lib/utils";
-import { useNotifications } from "./NotificationsManager";
+import { useNotifications } from "./context/NotificationsContext";
 import { Check, AlertTriangle, AlertCircle, Info } from "lucide-react";
 import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogTitle } from "../ui/alert-dialog";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { debugLogNotification } from "@/utils/notifications/debug-utils";
 
 interface NotificationGroupProps {
   groupId: string;
@@ -14,6 +15,8 @@ interface NotificationGroupProps {
     message: string;
     type?: 'info' | 'success' | 'warning' | 'error';
     priority?: 'high' | 'normal' | 'low';
+    reference_id?: string | null;
+    reference_type?: string | null;
   }>;
   onDismissGroup: (groupId: string) => void;
 }
@@ -21,6 +24,11 @@ interface NotificationGroupProps {
 export function NotificationGroup({ groupId, notifications, onDismissGroup }: NotificationGroupProps) {
   const [isOpen, setIsOpen] = useState(true);
   const isMobile = useIsMobile();
+
+  // Debug log the first notification in this group
+  if (notifications.length > 0) {
+    debugLogNotification(notifications[0], `NotificationGroup (${groupId})`);
+  }
 
   const priorityOrder = { high: 0, normal: 1, low: 2 };
   const sortedNotifications = [...notifications].sort((a, b) => {
@@ -74,6 +82,11 @@ export function NotificationGroup({ groupId, notifications, onDismissGroup }: No
                 <div>
                   <div className="font-medium">{notification.title}</div>
                   <div className="text-sm text-gray-600">{notification.message}</div>
+                  {notification.reference_type === 'task' && notification.reference_id && (
+                    <div className="text-xs text-gray-500 mt-1">
+                      Task ID: {notification.reference_id}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

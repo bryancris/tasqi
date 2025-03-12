@@ -23,7 +23,8 @@ export function NotificationButtons({
     isLoading,
     referenceId,
     type: typeof referenceId,
-    hasReferenceId: referenceId !== undefined && referenceId !== null
+    hasReferenceId: referenceId !== undefined && referenceId !== null,
+    referenceIdString: referenceId?.toString()
   });
 
   const [snoozeTime, setSnoozeTime] = useState<string>("15");
