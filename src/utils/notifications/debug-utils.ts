@@ -37,10 +37,10 @@ export const debugLogNotification = (
   
   const isTaskBasedOnTitle = title?.toLowerCase().includes('task');
   
-  // Direct check for test notification ID
+  // Fast check for test notification ID
   const isTestNotificationInstance = isTestNotification(referenceId);
   
-  // SIMPLIFIED: This is the key calculation for showing buttons
+  // This is the key calculation for showing buttons
   const showingButtons = 
     (isTestNotificationInstance) || 
     ((referenceId !== undefined && referenceId !== null) &&
@@ -72,16 +72,22 @@ export const debugLogNotification = (
 };
 
 /**
- * Simple, direct check for test notification (ID 999999)
- * This is the most important utility function - it must work correctly!
+ * Most important function: Check for test notification (ID 999999)
+ * This must work correctly in all scenarios!
  */
 export const isTestNotification = (referenceId?: number | string | null): boolean => {
   if (referenceId === null || referenceId === undefined) {
     return false;
   }
   
-  // Check both string and number formats
-  return referenceId === 999999 || referenceId === "999999";
+  // Critical: Convert to string first, then compare to ensure consistent behavior
+  const idAsString = String(referenceId);
+  const result = idAsString === "999999";
+  
+  // For debugging:
+  console.log(`🧪 Test notification check: ID=${referenceId}, type=${typeof referenceId}, stringValue=${idAsString}, result=${result}`);
+  
+  return result;
 };
 
 /**
@@ -89,7 +95,7 @@ export const isTestNotification = (referenceId?: number | string | null): boolea
  * For test notifications (999999), always returns true
  */
 export const validateTaskNotification = (notification: DebugNotification): boolean => {
-  // TEST NOTIFICATION - highest priority check
+  // CRITICAL: Test notification is always a task notification
   if (isTestNotification(notification.referenceId)) {
     console.log('🧪 TEST NOTIFICATION VALIDATED - ID:', notification.referenceId);
     return true;

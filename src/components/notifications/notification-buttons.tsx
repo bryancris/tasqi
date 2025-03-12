@@ -14,6 +14,7 @@ interface NotificationButtonsProps {
   onDismiss: () => void;
   onDone: () => void;
   isDialogOpen?: boolean;
+  isTestNotification?: boolean;
 }
 
 export const NotificationButtons = ({
@@ -21,12 +22,17 @@ export const NotificationButtons = ({
   referenceId,
   onDismiss,
   onDone,
-  isDialogOpen = false
+  isDialogOpen = false,
+  isTestNotification: forcedTestNotification = false
 }: NotificationButtonsProps) => {
-  // SIMPLIFIED: Better logging
-  console.log('🔴 RENDERING NotificationButtons with referenceId:', referenceId, 
-    'Type:', typeof referenceId, 
-    'IsTestNotification:', isTestNotification(referenceId));
+  // Enhanced logging
+  console.log('🔴 RENDERING NotificationButtons with:', { 
+    referenceId, 
+    referenceIdType: typeof referenceId, 
+    referenceIdValue: String(referenceId),
+    isTestNotification: isTestNotification(referenceId) || forcedTestNotification,
+    forcedTestNotification
+  });
 
   const [snoozeTime, setSnoozeTime] = useState<string>("15");
   const [isSnoozing, setIsSnoozing] = useState<boolean>(false);
@@ -53,7 +59,7 @@ export const NotificationButtons = ({
     console.log('⏰ Attempting to snooze task with ID:', referenceId, 
       'Type:', typeof referenceId, 
       'Value as string:', String(referenceId),
-      'Is test notification:', isTestNotification(referenceId));
+      'Is test notification:', isTestNotification(referenceId) || forcedTestNotification);
     
     // SIMPLIFIED: Just a direct check
     if (!referenceId) {
@@ -66,7 +72,7 @@ export const NotificationButtons = ({
     
     try {
       // Handle test notifications separately
-      if (isTestNotification(referenceId)) {
+      if (isTestNotification(referenceId) || forcedTestNotification) {
         console.log('Test notification detected - simulating snooze');
         await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
         toast.success(`Test task snoozed for ${snoozeTime} minutes`);
@@ -82,15 +88,15 @@ export const NotificationButtons = ({
     }
   };
 
-  // SIMPLIFIED: Always render data-attributes to help debug
   return (
     <div 
       className="flex w-full flex-col sm:flex-row justify-between gap-2"
       data-has-reference-id={referenceId ? "true" : "false"}
       data-reference-id={String(referenceId)}
       data-reference-id-type={typeof referenceId}
-      data-test-notification={isTestNotification(referenceId) ? "true" : "false"}
+      data-test-notification={(isTestNotification(referenceId) || forcedTestNotification) ? "true" : "false"}
       data-component="notification-buttons"
+      data-forced-test={forcedTestNotification ? "true" : "false"}
     >
       <div className="flex gap-2 items-center">
         <Select 

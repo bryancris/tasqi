@@ -38,7 +38,7 @@ export const NotificationContent = ({
   const [isLoading, setIsLoading] = React.useState<string | null>(null);
   const queryClient = useQueryClient();
   
-  // SIMPLIFIED: Log details on render
+  // Enhanced debugging on render
   React.useEffect(() => {
     console.log('🔴 NotificationContent rendering with:', {
       referenceId,
@@ -47,7 +47,7 @@ export const NotificationContent = ({
       referenceType,
       title,
       isDialogOpen,
-      isTest: isTestNotification(referenceId)
+      isTestNotification: isTestNotification(referenceId)
     });
     
     debugLogNotification({
@@ -65,7 +65,7 @@ export const NotificationContent = ({
       
       // Special handling for test task notification
       if (isTestNotification(referenceId)) {
-        console.log('Test notification - simulating completion');
+        console.log('✅ Test notification - simulating completion');
         await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
         toast.success('Test task completed');
         onDismiss();
@@ -88,22 +88,10 @@ export const NotificationContent = ({
     }
   };
 
-  // FORCED TEST NOTIFICATION CHECK:
-  // Always check for test notification first, and if it's a test notification (999999),
-  // always render buttons regardless of other conditions
-  const forceButtonsForTestNotification = isTestNotification(referenceId);
-
-  console.log('🧪 Button display decision:', {
-    forceButtonsForTestNotification,
-    referenceId,
-    referenceIdValue: String(referenceId),
-    referenceIdType: typeof referenceId,
-    isTestNotification: isTestNotification(referenceId)
-  });
-
-  // If this is a test notification, always show buttons
-  if (forceButtonsForTestNotification) {
-    console.log('🧪 TEST NOTIFICATION DETECTED - FORCING BUTTONS TO DISPLAY');
+  // CRITICAL: Direct test for test notification to ensure buttons are shown
+  // This is the first check and bypasses all other checks for test notifications
+  if (isTestNotification(referenceId)) {
+    console.log('🧪 TEST NOTIFICATION DETECTED - FORCING BUTTONS DISPLAY');
     
     return (
       <AlertDialogFooter 
@@ -118,6 +106,7 @@ export const NotificationContent = ({
           onDismiss={onDismiss}
           onDone={handleDone}
           isDialogOpen={isDialogOpen}
+          isTestNotification={true}
         />
       </AlertDialogFooter>
     );
@@ -145,6 +134,7 @@ export const NotificationContent = ({
           onDismiss={onDismiss}
           onDone={handleDone}
           isDialogOpen={isDialogOpen}
+          isTestNotification={false}
         />
       ) : action ? (
         <div className="flex justify-end w-full">
