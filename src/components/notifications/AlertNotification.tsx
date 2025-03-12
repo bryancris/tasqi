@@ -12,7 +12,7 @@ import { AlarmClock, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
-import { NotificationButtons } from "./notification-buttons";
+import { NotificationButtons } from "./NotificationButtons";
 import { useQueryClient } from "@tanstack/react-query";
 import { handleStart } from "./notification-handlers";
 import { debugLogNotification, validateTaskNotification } from "@/utils/notifications/debug-utils";
