@@ -27,17 +27,16 @@ export function useTaskNotifications() {
     console.log('🧪 Triggering test notification with ID: 999999');
     
     if (isMountedRef.current) {
-      // Using constant string ID for test notifications to ensure consistent handling
-      const testId = "999999";
-      console.log(`✅ Creating test notification with ID: ${testId}, type: task`);
+      // Using constant ID for test notifications
+      console.log(`✅ Creating test notification with ID: 999999, type: task`);
       
-      // Always use the same test notification format
+      // SIMPLIFIED - always use the same format
       showNotification({
         title: 'Task Reminder',
         message: 'This is a test notification with action buttons',
         type: 'info',
         persistent: true,
-        referenceId: testId,
+        referenceId: 999999, // Using number directly to ensure proper comparison
         referenceType: 'task'
       });
     } else {

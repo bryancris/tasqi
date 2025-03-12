@@ -8,7 +8,6 @@ import { X, Clock, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { NotificationHeader } from "./NotificationHeader";
-import { NotificationContent } from "./NotificationContent";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
@@ -48,30 +47,23 @@ export function AlertNotification({
   // Track when dialog is fully open
   const [isFullyOpen, setIsFullyOpen] = React.useState(false);
   
-  // ALWAYS check for test notification - now very simple and direct
+  // SUPER SIMPLE TEST DETECTION - direct string comparison only
   const isTestNotification = React.useMemo(() => {
-    if (referenceId === undefined || referenceId === null) return false;
-    return String(referenceId) === "999999";
+    return referenceId !== undefined && 
+           referenceId !== null && 
+           String(referenceId) === "999999";
   }, [referenceId]);
   
-  // Log every notification rendering
   React.useEffect(() => {
-    // Direct string comparison for test notification ID
-    const stringId = referenceId !== undefined && referenceId !== null ? String(referenceId) : "none";
-    
-    console.log('⚡ ALERT NOTIFICATION RENDER:', {
+    console.log('🔔 Alert Notification render:', {
       title,
       message,
-      referenceId,
-      referenceIdAsString: stringId,
-      referenceType,
-      isTestNotification: stringId === "999999",
+      referenceId: referenceId,
+      referenceIdAsString: referenceId !== undefined && referenceId !== null ? String(referenceId) : "none",
+      isTestNotification,
+      type
     });
-    
-    if (isTestNotification) {
-      console.log('🔥 RENDERING TEST NOTIFICATION (999999)');
-    }
-  }, [title, message, referenceId, referenceType, isTestNotification]);
+  }, [title, message, referenceId, type, isTestNotification]);
 
   // Handle focusing the close button when dialog opens
   React.useEffect(() => {
@@ -165,8 +157,8 @@ export function AlertNotification({
           referenceId={referenceId} 
         />
 
+        {/* ALWAYS SHOW ACTION BUTTONS - Simplified approach */}
         <div className="mt-4 border-t pt-3">
-          {/* Simple placeholder buttons - always visible */}
           <div className="flex w-full flex-col sm:flex-row justify-between gap-2">
             <div className="flex gap-2 items-center">
               <Select 
@@ -198,6 +190,7 @@ export function AlertNotification({
                 className="text-[#1A1F2C]"
                 tabIndex={0}
                 aria-label="Snooze task"
+                data-testid="snooze-button"
               >
                 {isLoading === 'snooze' ? (
                   <>
@@ -221,6 +214,7 @@ export function AlertNotification({
               className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white"
               tabIndex={0}
               aria-label="Complete task"
+              data-testid="complete-button"
             >
               {isLoading === 'complete' ? (
                 <>
