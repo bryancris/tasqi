@@ -5,10 +5,7 @@ import { AlertDialogFooter } from "@/components/ui/alert-dialog";
 import { NotificationButtons } from "../notification-buttons";
 import { toast } from "sonner";
 import { handleStart } from "../notification-handlers";
-import { 
-  debugLogNotification, 
-  isTestNotification 
-} from "@/utils/notifications/debug-utils";
+import { debugLogNotification } from "@/utils/notifications/debug-utils";
 
 interface NotificationContentProps {
   title: string;
@@ -37,56 +34,55 @@ export const NotificationContent = ({
   const [isLoading, setIsLoading] = React.useState<string | null>(null);
   const queryClient = useQueryClient();
   
-  // Check if this is a test notification - FIRST CHECK BEFORE ANYTHING ELSE
-  const isTestNotificationInstance = React.useMemo(() => {
-    // Convert to string for consistent comparison
-    const idString = referenceId !== undefined && referenceId !== null ? String(referenceId) : "";
-    const result = idString === "999999"; 
-    console.log(`🧪 CRITICAL TEST NOTIFICATION CHECK: ID=${referenceId}, type=${typeof referenceId}, value="${idString}", RESULT=${result}`);
+  // SIMPLIFIED TEST ID CHECK: Direct comparison instead of complex function
+  const isTestNotification = React.useMemo(() => {
+    const stringId = referenceId !== undefined && referenceId !== null ? String(referenceId) : '';
+    const result = stringId === '999999';
+    console.log(`⭐ DIRECT TEST ID CHECK in NotificationContent: "${stringId}" === "999999" => ${result}`);
     return result;
   }, [referenceId]);
   
-  // On mount - always log the exact properties
+  // On mount - always log properties and CLEARLY indicate if test notification
   React.useEffect(() => {
-    console.log('🔴 NotificationContent rendering with:', {
-      referenceId: referenceId,
-      referenceIdType: typeof referenceId,
-      referenceIdValue: referenceId ? String(referenceId) : "undefined/null",
-      referenceType,
+    console.log('🔴 NotificationContent MOUNT with:', {
       title,
-      isTestNotificationInstance,
-      shouldForceTaskButtons: isTestNotificationInstance
+      message,
+      referenceId,
+      referenceIdType: typeof referenceId, 
+      referenceIdString: referenceId !== undefined && referenceId !== null ? String(referenceId) : "undefined/null",
+      referenceType,
+      isTestNotification,
+      showingTaskButtons: isTestNotification ? "YES - TEST NOTIFICATION" : "Regular notification"
     });
     
-    // Enhanced debugging for test notifications
-    if (isTestNotificationInstance) {
-      console.log(`🧪 TEST NOTIFICATION DETECTED - ID=${referenceId} - FORCING BUTTONS`);
-    }
-    
+    // Always log full notification details for debugging
     debugLogNotification({
       title,
       message,
       type,
       referenceId,
       referenceType,
-    }, 'NotificationContent render');
-  }, [title, message, type, referenceId, referenceType, isDialogOpen, isTestNotificationInstance]);
+    }, 'NotificationContent mount');
+    
+    if (isTestNotification) {
+      console.log('🎯 TEST NOTIFICATION (999999) DETECTED - WILL SHOW BUTTONS');
+    }
+  }, [title, message, referenceId, referenceType, isTestNotification]);
 
   const handleDone = async () => {
     try {
       setIsLoading('done');
       
       // Special handling for test task notification
-      if (isTestNotificationInstance) {
+      if (isTestNotification) {
         console.log('✅ Test notification - simulating completion');
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
         toast.success('Test task completed');
         onDismiss();
         return;
       }
       
       if (referenceId) {
-        console.log('Processing task with ID:', referenceId, 'Type:', typeof referenceId);
         await handleStart(referenceId, queryClient, onDismiss);
       } else if (action?.onClick) {
         await action.onClick();
@@ -101,15 +97,14 @@ export const NotificationContent = ({
     }
   };
 
-  // SIMPLIFIED DESIGN: Always show task buttons for test notifications (ID 999999)
-  // and show task buttons for regular task notifications with referenceId and task reference
-  if (isTestNotificationInstance) {
-    console.log('🧪 TEST NOTIFICATION - FORCING BUTTONS DISPLAY');
+  // COMPLETELY DIFFERENT APPROACH: Immediate check for test notification
+  // This happens before any other logic - guaranteed to render buttons
+  if (isTestNotification) {
+    console.log('⭐ RENDERING TEST NOTIFICATION BUTTONS (ID: 999999)');
     
     return (
       <AlertDialogFooter 
         className="flex-col sm:flex-col gap-3 sm:gap-3 mt-2 items-start"
-        data-has-task-buttons="true"
         data-test-notification="true"
         data-reference-id={String(referenceId)}
       >
@@ -125,15 +120,15 @@ export const NotificationContent = ({
     );
   }
 
-  // For task notifications (has referenceId and either referenceType='task' or title contains 'task')
-  const isTaskNotification = referenceId !== undefined && referenceId !== null && 
-                            (referenceType === 'task' || title?.toLowerCase().includes('task'));
+  // For task notifications (regular path)
+  const isTaskNotification = !!referenceId && 
+    (referenceType === 'task' || title?.toLowerCase().includes('task'));
 
   return (
     <AlertDialogFooter 
       className="flex-col sm:flex-col gap-3 sm:gap-3 mt-2 items-start"
       data-has-task-buttons={isTaskNotification ? "true" : "false"}
-      data-test-notification={isTestNotificationInstance ? "true" : "false"}
+      data-test-notification="false"
       data-reference-id={referenceId ? String(referenceId) : "none"}
     >
       {isTaskNotification ? (

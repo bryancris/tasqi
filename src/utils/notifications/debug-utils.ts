@@ -37,12 +37,13 @@ export const debugLogNotification = (
   
   const isTaskBasedOnTitle = title?.toLowerCase().includes('task');
   
-  // Fast check for test notification ID
-  const isTestNotificationInstance = isTestNotification(referenceId);
+  // This is now a direct string comparison - simple and reliable
+  const isTestId = typeof referenceId === 'string' && referenceId === '999999';
+  const isTestNumId = typeof referenceId === 'number' && referenceId === 999999;
+  const isTestNotificationInstance = isTestId || isTestNumId;
   
   // This is the key calculation for showing buttons
-  const showingButtons = 
-    (isTestNotificationInstance) || 
+  const showingButtons = isTestNotificationInstance || 
     ((referenceId !== undefined && referenceId !== null) &&
      ((referenceType === 'task') || (title?.toLowerCase().includes('task'))));
 
@@ -59,6 +60,8 @@ export const debugLogNotification = (
     isTask,
     isTaskBasedOnTitle,
     isTestNotification: isTestNotificationInstance,
+    isTestId,
+    isTestNumId,
     showingButtons,
     properties: Object.keys({
       title,
@@ -72,45 +75,30 @@ export const debugLogNotification = (
 };
 
 /**
- * CRITICAL: Most reliable check for test notification (ID 999999)
- * This function MUST always return true for the test notification ID
- * regardless of the ID type (string or number)
+ * DRASTICALLY SIMPLIFIED: Direct string/number comparison for test notifications
+ * Much more reliable than previous complex logic
  */
 export const isTestNotification = (referenceId?: number | string | null): boolean => {
-  // For debugging, always log the exact value and type
-  console.log('🧪 Test notification check input:', {
-    referenceId: referenceId,
-    type: typeof referenceId,
-    value: referenceId !== undefined && referenceId !== null ? String(referenceId) : "undefined/null"
-  });
+  // Simple direct comparison - convert to string for logging
+  const stringId = referenceId !== undefined && referenceId !== null ? String(referenceId) : '';
+  const isTest = stringId === '999999';
   
-  // First, handle all falsy cases upfront for clarity
-  if (referenceId === null || referenceId === undefined || referenceId === '') {
-    console.log('🧪 Test notification check: ID is falsy, returning false');
-    return false;
-  }
-  
-  // Ensure consistent string comparison regardless of input type
-  const idAsString = String(referenceId).trim();
-  
-  // Direct comparison with the test ID value
-  const result = idAsString === "999999";
-  
-  // Log detailed debugging for this critical check
-  console.log(`🧪 Test notification check: ID=${referenceId}, type=${typeof referenceId}, stringValue=${idAsString}, result=${result}`);
-  
-  return result;
+  console.log(`🧪 SIMPLIFIED Test ID check: ${stringId} === '999999' => ${isTest}`);
+  return isTest;
 };
 
 /**
  * Validates that a notification should show task buttons
- * For test notifications (999999), always returns true
+ * DRASTICALLY SIMPLIFIED: For test notifications (999999), always returns true
  */
 export const validateTaskNotification = (notification: DebugNotification): boolean => {
-  // MOST IMPORTANT: Test notification ID 999999 ALWAYS shows task buttons
-  const isTestNotificationInstance = isTestNotification(notification.referenceId);
-  if (isTestNotificationInstance) {
-    console.log('🧪 TEST NOTIFICATION VALIDATED - ID:', notification.referenceId);
+  // MOST IMPORTANT: Direct string/number comparison - much more reliable
+  const stringId = notification.referenceId !== undefined && notification.referenceId !== null 
+    ? String(notification.referenceId) 
+    : '';
+  
+  if (stringId === '999999') {
+    console.log('🧪 TEST NOTIFICATION VALIDATED - ID matches 999999 exactly');
     return true;
   }
   
@@ -126,18 +114,15 @@ export const validateTaskNotification = (notification: DebugNotification): boole
 
 /**
  * Test function to force test notification
- * Can be called directly to trigger a test notification with proper ID
  */
 export const triggerTestNotification = () => {
   console.log('🧪 DEBUG: Manually triggering test notification with ID 999999');
-  // This function doesn't do anything by itself
-  // It's imported and used in other components
   return {
     title: 'Task Reminder',
     message: 'This is a test notification with action buttons',
     type: 'info',
     persistent: true,
-    referenceId: '999999', // Always use string format for consistency
+    referenceId: '999999',
     referenceType: 'task'
   };
 };

@@ -5,8 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState, useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { handleSnooze } from "./notification-handlers";
-import { isTestNotification } from "@/utils/notifications/debug-utils";
-import { toast } from "sonner";  // Fixed: Added missing import
+import { toast } from "sonner";
 
 interface NotificationButtonsProps {
   isLoading: string | null;
@@ -23,15 +22,14 @@ export const NotificationButtons = ({
   onDismiss,
   onDone,
   isDialogOpen = false,
-  isTestNotification: forcedTestNotification = false
+  isTestNotification = false
 }: NotificationButtonsProps) => {
   // Enhanced logging
-  console.log('🔴 RENDERING NotificationButtons with:', { 
+  console.log('🔘 RENDERING NotificationButtons:', { 
     referenceId, 
     referenceIdType: typeof referenceId, 
     referenceIdValue: referenceId ? String(referenceId) : "undefined",
-    isTestNotification: isTestNotification(referenceId) || forcedTestNotification,
-    forcedTestNotification
+    isTestNotification
   });
 
   const [snoozeTime, setSnoozeTime] = useState<string>("15");
@@ -55,26 +53,24 @@ export const NotificationButtons = ({
   }, [isDialogOpen]);
 
   const handleSnoozeClick = async () => {
-    // Always log the exact reference ID value for debugging
-    console.log('⏰ Attempting to snooze task with ID:', referenceId, 
+    // Log exact reference ID value
+    console.log('⏰ Snoozing task with ID:', referenceId, 
       'Type:', typeof referenceId, 
       'Value as string:', String(referenceId),
-      'Is test notification:', isTestNotification(referenceId) || forcedTestNotification);
+      'Is test notification:', isTestNotification);
     
-    // SIMPLIFIED: Just a direct check
     if (!referenceId) {
       console.error('Cannot snooze: No valid reference ID');
       return;
     }
     
-    console.log('⏰ Snoozing task with ID:', referenceId, 'for', snoozeTime, 'minutes');
     setIsSnoozing(true);
     
     try {
-      // Handle test notifications separately
-      if (isTestNotification(referenceId) || forcedTestNotification) {
-        console.log('Test notification detected - simulating snooze');
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
+      // For test notifications, simulate success
+      if (isTestNotification) {
+        console.log('Test notification - simulating snooze');
+        await new Promise(resolve => setTimeout(resolve, 1000));
         toast.success(`Test task snoozed for ${snoozeTime} minutes`);
         onDismiss();
       } else {
@@ -94,9 +90,8 @@ export const NotificationButtons = ({
       data-has-reference-id={referenceId ? "true" : "false"}
       data-reference-id={String(referenceId)}
       data-reference-id-type={typeof referenceId}
-      data-test-notification={(isTestNotification(referenceId) || forcedTestNotification) ? "true" : "false"}
+      data-test-notification={isTestNotification ? "true" : "false"}
       data-component="notification-buttons"
-      data-forced-test={forcedTestNotification ? "true" : "false"}
     >
       <div className="flex gap-2 items-center">
         <Select 
