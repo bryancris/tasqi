@@ -63,6 +63,9 @@ export function AlertNotification({
       return () => clearTimeout(timeoutId);
     }
   }, [open]);
+  
+  // Determine if this is a test notification
+  const isTestNotification = referenceId === "999999" || referenceId === 999999;
 
   return (
     <AlertDialog open={open}>
@@ -88,7 +91,8 @@ export function AlertNotification({
           type === 'warning' && 'border-l-4 border-l-[#FEC6A1] bg-[#FFFAF5]',
           type === 'info' && 'border-l-4 border-l-[#9b87f5] bg-[#F8F7FF]'
         )}
-        {...(referenceId === "999999" && { "data-test-notification": "999999" })}
+        // Always set data-test-notification for test notifications with ID 999999
+        {...(isTestNotification ? { "data-test-notification": "999999" } : {})}
         onEscapeKeyDown={onDismiss}
       >
         <button

@@ -80,13 +80,13 @@ export function HeaderUserMenu() {
 
     // Add delay to ensure dropdown is closed and old notifications are cleared
     setTimeout(() => {
-      // Create task notification with explicit reference data using camelCase
+      // Create task notification with explicit reference data using exact string format for ID
       showNotification({
         title: "Task Reminder",
         message: "This is a test notification with action buttons",
         type: "info" as const,
-        referenceId: "999999", // Using camelCase format
-        referenceType: "task", // Using camelCase format
+        referenceId: "999999", // Using exact string format
+        referenceType: "task", // Must be lowercase "task"
         persistent: false // Make test notifications non-persistent
       });
       

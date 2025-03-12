@@ -32,13 +32,16 @@ export const NotificationContent = ({
   const [isLoading, setIsLoading] = React.useState<string | null>(null);
   const queryClient = useQueryClient();
   
+  // Log details on render to help with debugging
   React.useEffect(() => {
     console.log('🔍 NotificationContent rendering with:', {
       referenceId,
       referenceIdType: typeof referenceId,
       referenceIdValue: String(referenceId),
       referenceType,
-      title
+      title,
+      showButtons: referenceId !== undefined && referenceId !== null && 
+                  (referenceType === 'task' || title?.toLowerCase().includes('task'))
     });
     
     debugLogNotification({
@@ -79,26 +82,26 @@ export const NotificationContent = ({
     }
   };
 
-  // EXTREMELY SIMPLIFIED BUTTON LOGIC
-  // Always show buttons for task-related notifications with referenceId
-  const hasReferenceId = referenceId !== undefined && referenceId !== null;
+  // Check if this is a notification that should show buttons
+  // Simplified the logic to make it more reliable
+  const isTaskNotification = 
+    // Always show buttons for test notifications with ID 999999
+    referenceId === "999999" || referenceId === 999999 ||
+    // For regular task notifications
+    (referenceId !== undefined && referenceId !== null && 
+     (referenceType === 'task' || title?.toLowerCase().includes('task')));
   
   console.log('📢 Button display decision:', {
-    hasReferenceId,
     referenceId,
     referenceIdType: typeof referenceId,
     referenceType,
     title,
-    showButtons: hasReferenceId && (referenceType === 'task' || title?.toLowerCase().includes('task')),
+    isTaskNotification
   });
-
-  // For test notifications with ID 999999, ALWAYS show buttons
-  const isTestNotification = referenceId === "999999" || referenceId === 999999;
-  const showButtons = isTestNotification || (hasReferenceId && (referenceType === 'task' || title?.toLowerCase().includes('task')));
 
   return (
     <AlertDialogFooter className="flex-col sm:flex-col gap-3 sm:gap-3 mt-2 items-start">
-      {showButtons ? (
+      {isTaskNotification ? (
         <NotificationButtons
           isLoading={isLoading}
           referenceId={referenceId}
