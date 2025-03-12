@@ -27,18 +27,19 @@ export function useTaskNotifications() {
     console.log('🧪 Triggering test notification with ID: 999999');
     
     if (isMountedRef.current) {
-      // CRITICAL: Always use string "999999" as ID for test notifications
-      // This is the key to making test notifications work reliably
+      // Using constant string ID for test notifications to ensure consistent handling
+      const testId = "999999";
+      console.log(`✅ Creating test notification with ID: ${testId}, type: task`);
+      
+      // Always use the same test notification format
       showNotification({
         title: 'Task Reminder',
         message: 'This is a test notification with action buttons',
         type: 'info',
         persistent: true,
-        referenceId: '999999',
+        referenceId: testId,
         referenceType: 'task'
       });
-      
-      console.log('✅ Test notification triggered with ID: 999999, type: task');
     } else {
       console.log('❌ Cannot trigger test notification - component unmounted');
     }

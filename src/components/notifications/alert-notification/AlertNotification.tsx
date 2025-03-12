@@ -4,11 +4,14 @@ import {
   AlertDialog,
   AlertDialogContent,
 } from "@/components/ui/alert-dialog";
-import { X } from "lucide-react";
+import { X, Clock, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { NotificationHeader } from "./NotificationHeader";
 import { NotificationContent } from "./NotificationContent";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
 
 export interface AlertNotificationProps {
   open: boolean;
@@ -39,6 +42,8 @@ export function AlertNotification({
   const isMobile = useIsMobile();
   const closeButtonRef = React.useRef<HTMLButtonElement>(null);
   const dialogContentRef = React.useRef<HTMLDivElement>(null);
+  const [snoozeTime, setSnoozeTime] = React.useState<string>("15");
+  const [isLoading, setIsLoading] = React.useState<string | null>(null);
 
   // Track when dialog is fully open
   const [isFullyOpen, setIsFullyOpen] = React.useState(false);
@@ -86,6 +91,32 @@ export function AlertNotification({
     }
   }, [open]);
 
+  // Handle snooze button click
+  const handleSnoozeClick = () => {
+    setIsLoading('snooze');
+    
+    // Simulate API call
+    setTimeout(() => {
+      console.log(`Snoozing task for ${snoozeTime} minutes`);
+      toast.success(`Task snoozed for ${snoozeTime} minutes`);
+      setIsLoading(null);
+      onDismiss();
+    }, 1000);
+  };
+
+  // Handle complete button click
+  const handleCompleteClick = () => {
+    setIsLoading('complete');
+    
+    // Simulate API call
+    setTimeout(() => {
+      console.log('Task completed');
+      toast.success('Task completed successfully');
+      setIsLoading(null);
+      onDismiss();
+    }, 1000);
+  };
+
   return (
     <AlertDialog open={open}>
       <AlertDialogContent
@@ -111,7 +142,6 @@ export function AlertNotification({
           type === 'warning' && 'border-l-4 border-l-[#FEC6A1] bg-[#FFFAF5]',
           type === 'info' && 'border-l-4 border-l-[#9b87f5] bg-[#F8F7FF]'
         )}
-        // Clear debugging attributes
         data-test-notification={isTestNotification ? "true" : "false"}
         data-reference-id={referenceId !== undefined && referenceId !== null ? String(referenceId) : "none"}
         data-reference-type={referenceType || "none"}
@@ -135,16 +165,77 @@ export function AlertNotification({
           referenceId={referenceId} 
         />
 
-        <NotificationContent
-          title={title}
-          message={message}
-          type={type}
-          action={action}
-          onDismiss={onDismiss}
-          referenceId={referenceId}
-          referenceType={referenceType}
-          isDialogOpen={isFullyOpen}
-        />
+        <div className="mt-4 border-t pt-3">
+          {/* Simple placeholder buttons - always visible */}
+          <div className="flex w-full flex-col sm:flex-row justify-between gap-2">
+            <div className="flex gap-2 items-center">
+              <Select 
+                value={snoozeTime} 
+                onValueChange={setSnoozeTime} 
+                disabled={!!isLoading}
+              >
+                <SelectTrigger className="h-9 w-28 bg-white text-[#1A1F2C]" tabIndex={0}>
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="h-3.5 w-3.5" />
+                    <SelectValue placeholder="Snooze time" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">5 minutes</SelectItem>
+                  <SelectItem value="15">15 minutes</SelectItem>
+                  <SelectItem value="30">30 minutes</SelectItem>
+                  <SelectItem value="60">1 hour</SelectItem>
+                  <SelectItem value="120">2 hours</SelectItem>
+                  <SelectItem value="1440">Tomorrow</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSnoozeClick}
+                disabled={isLoading !== null}
+                className="text-[#1A1F2C]"
+                tabIndex={0}
+                aria-label="Snooze task"
+              >
+                {isLoading === 'snooze' ? (
+                  <>
+                    <div className="h-4 w-4 border-2 border-[#1A1F2C] border-t-transparent rounded-full animate-spin mr-2" />
+                    Snoozing
+                  </>
+                ) : (
+                  <>
+                    <Clock className="mr-2 h-4 w-4" />
+                    Snooze
+                  </>
+                )}
+              </Button>
+            </div>
+
+            <Button
+              variant="default"
+              size="sm"
+              onClick={handleCompleteClick}
+              disabled={isLoading !== null}
+              className="bg-[#9b87f5] hover:bg-[#8B5CF6] text-white"
+              tabIndex={0}
+              aria-label="Complete task"
+            >
+              {isLoading === 'complete' ? (
+                <>
+                  <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  Processing
+                </>
+              ) : (
+                <>
+                  <Check className="mr-2 h-4 w-4" />
+                  Complete
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
       </AlertDialogContent>
     </AlertDialog>
   );
