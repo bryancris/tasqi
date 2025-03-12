@@ -22,7 +22,8 @@ export const NotificationButtons = ({
   onDone,
   isDialogOpen = false
 }: NotificationButtonsProps) => {
-  console.log('🔵 RENDERING NotificationButtons with referenceId:', referenceId, 
+  // SIMPLIFIED: Better logging
+  console.log('🔴 RENDERING NotificationButtons with referenceId:', referenceId, 
     'Type:', typeof referenceId, 
     'IsTestNotification:', isTestNotification(referenceId));
 
@@ -30,37 +31,38 @@ export const NotificationButtons = ({
   const [isSnoozing, setIsSnoozing] = useState<boolean>(false);
   const completeButtonRef = useRef<HTMLButtonElement>(null);
   const queryClient = useQueryClient();
-  const [hasFocused, setHasFocused] = useState<boolean>(false);
 
-  // Focus the complete button after dialog is fully open
+  // Focus the complete button when dialog is open
   useEffect(() => {
-    if (isDialogOpen && completeButtonRef.current && !hasFocused) {
+    if (isDialogOpen && completeButtonRef.current) {
       // Small delay to ensure DOM is ready
       const focusTimer = setTimeout(() => {
         if (completeButtonRef.current) {
           completeButtonRef.current.focus();
-          setHasFocused(true);
           console.log('✓ Set focus on complete button');
         }
       }, 250);
       
       return () => clearTimeout(focusTimer);
     }
-  }, [isDialogOpen, hasFocused]);
+  }, [isDialogOpen]);
 
   const handleSnoozeClick = async () => {
-    if (referenceId === undefined || referenceId === null) {
+    // SIMPLIFIED: Just a direct check
+    if (!referenceId) {
       console.error('Cannot snooze: No valid reference ID');
       return;
     }
     
     console.log('⏰ Snoozing task with ID:', referenceId, 'for', snoozeTime, 'minutes');
     setIsSnoozing(true);
+    
     try {
-      // For test notifications with ID 999999, just simulate a successful snooze
+      // Handle test notifications separately
       if (isTestNotification(referenceId)) {
         console.log('Test notification detected - simulating snooze');
         await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
+        toast.success(`Test task snoozed for ${snoozeTime} minutes`);
         onDismiss();
       } else {
         await handleSnooze(referenceId, parseInt(snoozeTime), queryClient, onDismiss);
@@ -72,22 +74,12 @@ export const NotificationButtons = ({
     }
   };
 
-  // Log every render to help debug
-  useEffect(() => {
-    console.log('🔘 NotificationButtons mounted/updated:', {
-      referenceId,
-      referenceIdType: typeof referenceId,
-      isNull: referenceId === null,
-      isUndefined: referenceId === undefined,
-      stringValue: String(referenceId),
-      isTestNotification: isTestNotification(referenceId)
-    });
-  }, [referenceId]);
-
+  // SIMPLIFIED: Always render data-attributes to help debug
   return (
     <div 
       className="flex w-full flex-col sm:flex-row justify-between gap-2"
       data-has-reference-id={referenceId ? "true" : "false"}
+      data-reference-id={String(referenceId)}
       data-reference-id-type={typeof referenceId}
       data-test-notification={isTestNotification(referenceId) ? "true" : "false"}
     >

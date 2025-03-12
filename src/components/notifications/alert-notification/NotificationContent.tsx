@@ -38,7 +38,7 @@ export const NotificationContent = ({
   const [isLoading, setIsLoading] = React.useState<string | null>(null);
   const queryClient = useQueryClient();
   
-  // Log details on render to help with debugging
+  // SIMPLIFIED: Log details on render
   React.useEffect(() => {
     console.log('🔍 NotificationContent rendering with:', {
       referenceId,
@@ -46,7 +46,8 @@ export const NotificationContent = ({
       referenceIdValue: String(referenceId),
       referenceType,
       title,
-      isDialogOpen
+      isDialogOpen,
+      isTest: isTestNotification(referenceId)
     });
     
     debugLogNotification({
@@ -56,15 +57,6 @@ export const NotificationContent = ({
       referenceId,
       referenceType,
     }, 'NotificationContent render');
-    
-    // Extra validation for test notifications
-    if (isTestNotification(referenceId)) {
-      console.log('🧪 Test notification validation:', {
-        referenceId,
-        referenceIdType: typeof referenceId,
-        isValidTestNotification: true
-      });
-    }
   }, [title, message, type, referenceId, referenceType, isDialogOpen]);
 
   const handleDone = async () => {
@@ -96,33 +88,34 @@ export const NotificationContent = ({
     }
   };
 
-  // Check if this is a notification that should show buttons
-  // First check for test notification with ID 999999
+  // SIMPLIFIED: Direct check
   const isTaskNotification = React.useMemo(() => {
-    // First check for test notification
+    // Test notifications always show buttons
     if (isTestNotification(referenceId)) {
+      console.log('🧪 TEST NOTIFICATION DETECTED - SHOWING BUTTONS');
       return true;
     }
     
     // Regular checks for task notifications
-    return (
-      referenceId !== undefined && 
-      referenceId !== null && 
-      (
-        referenceType === 'task' || 
-        title?.toLowerCase().includes('task')
-      )
-    );
-  }, [referenceId, referenceType, title]);
-  
-  console.log('📢 Button display decision:', {
-    referenceId,
-    referenceIdType: typeof referenceId,
-    referenceType,
-    title,
-    isTaskNotification,
-    isTestNotification: isTestNotification(referenceId)
-  });
+    const isValid = validateTaskNotification({
+      title,
+      message,
+      type,
+      referenceId,
+      referenceType,
+    });
+    
+    console.log('📢 Button display decision:', {
+      referenceId,
+      referenceIdType: typeof referenceId,
+      referenceType,
+      title,
+      isValid,
+      isTest: isTestNotification(referenceId)
+    });
+    
+    return isValid;
+  }, [referenceId, referenceType, title, message, type]);
 
   return (
     <AlertDialogFooter 

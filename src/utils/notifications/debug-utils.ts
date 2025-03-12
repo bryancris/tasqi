@@ -37,10 +37,15 @@ export const debugLogNotification = (
   
   const isTaskBasedOnTitle = title?.toLowerCase().includes('task');
   
-  // Fix: Ensure we use === true for boolean comparison
+  // SIMPLIFIED: Use both string and number comparison for 999999
+  const isTestNotification = 
+    referenceId === 999999 || referenceId === "999999";
+  
+  // SIMPLIFIED: This is the key calculation for showing buttons
   const showingButtons = 
-    (referenceId !== undefined && referenceId !== null) &&
-    ((referenceType === 'task') || (title?.toLowerCase().includes('task')));
+    (isTestNotification) || 
+    ((referenceId !== undefined && referenceId !== null) &&
+     ((referenceType === 'task') || (title?.toLowerCase().includes('task'))));
 
   console.log(`🔍 Notification at ${source}:`, {
     title,
@@ -54,6 +59,7 @@ export const debugLogNotification = (
     referenceType,
     isTask,
     isTaskBasedOnTitle,
+    isTestNotification,
     showingButtons,
     properties: Object.keys({
       title,
@@ -67,82 +73,23 @@ export const debugLogNotification = (
 };
 
 /**
- * Validate a notification to see if it should show task buttons
- * Enhanced to be more comprehensive and reliable
+ * SIMPLIFIED: Just check referenceId directly - always check both string and number form
  */
-export const validateTaskNotification = (notification: DebugNotification): boolean => {
-  const {
-    title,
-    referenceId,
-    referenceType
-  } = notification;
-
-  // Always support test notifications with ID 999999
-  const isTestNotification = 
-    referenceId === 999999 || referenceId === "999999";
-  
-  if (isTestNotification) {
-    console.log('🧪 TEST NOTIFICATION DETECTED:', { referenceId });
-    return true;
-  }
-
-  const isValid = !!title;
-  const hasReferenceId = referenceId !== undefined && referenceId !== null;
-  const hasReferenceType = !!referenceType;
-  const isTaskType = referenceType === 'task';
-  const hasTaskInTitle = title?.toLowerCase().includes('task') || false;
-  const referenceIdValue = String(referenceId);
-  const referenceTypeValue = referenceType || '';
-  const referenceIdType = typeof referenceId;
-  const referenceIdIsNull = referenceId === null;
-  const referenceIdIsUndefined = referenceId === undefined;
-  const hasValidReferenceId = hasReferenceId && !referenceIdIsNull && !referenceIdIsUndefined;
-  
-  const shouldShowButtons = 
-    hasValidReferenceId && (isTaskType || hasTaskInTitle);
-  
-  const titleContainsTask = title?.toLowerCase().includes('task') || false;
-  const titleIncludesReminder = title?.toLowerCase().includes('reminder') || false;
-  const messageContainsTask = notification.message?.toLowerCase().includes('task') || false;
-  
-  const buttonVisibilityCheck = `${hasValidReferenceId} && (${isTaskType} || ${hasTaskInTitle})`;
-  
-  console.log('🧪 Enhanced notification validation:', {
-    isValid,
-    hasReferenceId,
-    hasReferenceType,
-    isTaskType,
-    hasTaskType: isTaskType,
-    hasTaskInTitle,
-    referenceIdValue,
-    referenceTypeValue,
-    referenceIdType,
-    referenceIdIsNull,
-    referenceIdIsUndefined,
-    hasValidReferenceId,
-    shouldShowButtons,
-    titleContainsTask,
-    titleIncludesReminder,
-    messageContainsTask,
-    buttonVisibilityCheck
-  });
-  
-  return shouldShowButtons || isTestNotification;
+export const isTestNotification = (referenceId?: number | string | null): boolean => {
+  return referenceId === 999999 || referenceId === "999999";
 };
 
 /**
- * Special validation just for test notifications with ID 999999
+ * SIMPLIFIED: Much simpler validation with explicit test for 999999
  */
-export const isTestNotification = (referenceId?: number | string | null): boolean => {
-  if (referenceId === undefined || referenceId === null) return false;
-  
-  const isTest = 
-    referenceId === 999999 || 
-    referenceId === "999999";
-  
-  if (isTest) {
-    console.log('✅ Test notification detected with ID:', referenceId);
+export const validateTaskNotification = (notification: DebugNotification): boolean => {
+  // TEST NOTIFICATION - highest priority check
+  if (isTestNotification(notification.referenceId)) {
+    return true;
   }
   
-  return isTest;
+  // Regular task notification check
+  return !!notification.referenceId && 
+    (notification.referenceType === 'task' || 
+     notification.title?.toLowerCase().includes('task'));
 };
