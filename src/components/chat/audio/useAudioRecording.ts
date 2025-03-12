@@ -9,19 +9,28 @@ type SpeechRecognitionInstance = InstanceType<typeof SpeechRecognition>;
 
 export function useAudioRecording(onTranscriptionComplete: (text: string) => void) {
   const [isRecording, setIsRecording] = useState(false);
+  const [isFallbackActive, setIsFallbackActive] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const { requestMicrophoneAccess } = useMicrophoneAccess();
   const { toast } = useToast();
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const [nativeSpeechFailed, setNativeSpeechFailed] = useState(false);
+  const timeoutIdRef = useRef<NodeJS.Timeout | null>(null);
 
   const stopRecording = useCallback(() => {
+    // Clear any pending timeouts
+    if (timeoutIdRef.current) {
+      clearTimeout(timeoutIdRef.current);
+      timeoutIdRef.current = null;
+    }
+
     if (recognitionRef.current) {
       try {
         recognitionRef.current.stop();
       } catch (e) {
         console.error('Error stopping speech recognition:', e);
       }
+      recognitionRef.current = null;
       setIsRecording(false);
       return;
     }
@@ -29,6 +38,7 @@ export function useAudioRecording(onTranscriptionComplete: (text: string) => voi
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
+      setIsFallbackActive(false);
     }
   }, [isRecording]);
 
@@ -36,12 +46,20 @@ export function useAudioRecording(onTranscriptionComplete: (text: string) => voi
 
   // Function to fallback to OpenAI transcription
   const fallbackToOpenAI = useCallback(async () => {
+    // Prevent duplicate fallbacks
+    if (isFallbackActive) {
+      console.log('⚠️ OpenAI fallback already active, ignoring duplicate call');
+      return;
+    }
+
     console.log('⚠️ Falling back to OpenAI transcription');
     setNativeSpeechFailed(true);
+    setIsFallbackActive(true);
     
     // Stop existing recognition if running
     if (recognitionRef.current) {
       try {
+        console.log('Stopping speech recognition before fallback');
         recognitionRef.current.stop();
       } catch (e) {
         console.error('Error stopping speech recognition before fallback:', e);
@@ -54,6 +72,7 @@ export function useAudioRecording(onTranscriptionComplete: (text: string) => voi
       if (!stream) {
         console.error('Failed to get microphone access for fallback');
         setIsRecording(false);
+        setIsFallbackActive(false);
         return;
       }
 
@@ -73,6 +92,7 @@ export function useAudioRecording(onTranscriptionComplete: (text: string) => voi
       recorder.onstop = () => {
         stream.getTracks().forEach(track => track.stop());
         stopSilenceDetection();
+        setIsFallbackActive(false);
 
         if (audioChunks.length === 0) {
           console.error('No audio data captured');
@@ -140,8 +160,9 @@ export function useAudioRecording(onTranscriptionComplete: (text: string) => voi
         variant: "destructive",
       });
       setIsRecording(false);
+      setIsFallbackActive(false);
     }
-  }, [onTranscriptionComplete, requestMicrophoneAccess, startSilenceDetection, stopSilenceDetection, toast]);
+  }, [onTranscriptionComplete, requestMicrophoneAccess, startSilenceDetection, stopSilenceDetection, toast, isFallbackActive]);
 
   const startNativeRecording = useCallback(() => {
     if (nativeSpeechFailed) {
@@ -162,28 +183,40 @@ export function useAudioRecording(onTranscriptionComplete: (text: string) => voi
       recognition.interimResults = false;
       recognition.lang = 'en-US';
 
-      // Add timeout to prevent hanging
-      const timeoutId = setTimeout(() => {
-        console.log('Speech recognition timeout after 10 seconds');
+      // Clear any existing timeout
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current);
+      }
+
+      // Add timeout to prevent hanging - reduced to 5 seconds for faster fallback
+      timeoutIdRef.current = setTimeout(() => {
+        console.log('Speech recognition timeout after 5 seconds');
         if (recognitionRef.current) {
           try {
             recognitionRef.current.stop();
           } catch (e) {
             console.error('Error stopping timed out speech recognition:', e);
           }
+          recognitionRef.current = null;
           fallbackToOpenAI();
         }
-      }, 10000);
+      }, 5000);
 
       recognition.onresult = (event) => {
-        clearTimeout(timeoutId);
+        if (timeoutIdRef.current) {
+          clearTimeout(timeoutIdRef.current);
+          timeoutIdRef.current = null;
+        }
         const transcript = event.results[0][0].transcript;
         console.log('Speech recognition result:', transcript);
         onTranscriptionComplete(transcript);
       };
 
       recognition.onerror = (event) => {
-        clearTimeout(timeoutId);
+        if (timeoutIdRef.current) {
+          clearTimeout(timeoutIdRef.current);
+          timeoutIdRef.current = null;
+        }
         console.error('Speech recognition error:', event.error);
         
         // Handle specific error types
@@ -203,9 +236,11 @@ export function useAudioRecording(onTranscriptionComplete: (text: string) => voi
       };
 
       recognition.onend = () => {
-        clearTimeout(timeoutId);
         console.log('Speech recognition ended');
-        setIsRecording(false);
+        // Only set isRecording to false if we're not transitioning to fallback
+        if (!isFallbackActive) {
+          setIsRecording(false);
+        }
       };
 
       recognitionRef.current = recognition;
@@ -216,10 +251,13 @@ export function useAudioRecording(onTranscriptionComplete: (text: string) => voi
       console.error('Failed to start native speech recognition:', error);
       return false;
     }
-  }, [fallbackToOpenAI, nativeSpeechFailed, onTranscriptionComplete, toast]);
+  }, [fallbackToOpenAI, nativeSpeechFailed, onTranscriptionComplete, toast, isFallbackActive]);
 
   const startRecording = useCallback(async () => {
     console.log('🎤 Starting recording...');
+    
+    // Reset state before starting
+    setIsFallbackActive(false);
     
     // Try native speech recognition first
     if (startNativeRecording()) {
