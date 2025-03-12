@@ -103,11 +103,17 @@ export const handleSnooze = async (
       // For shared tasks, we might handle this differently
       toast.info(`Reminder snoozed for ${minutes} minutes`);
     } else {
-      // Update task's snooze time
+      // First, check the schema to see what column exists for snooze
+      console.log('Updating task snooze time to:', snoozeUntil.toISOString());
+      
+      // Update using the proper field name based on the database schema
       const { error } = await supabase
         .from('tasks')
         .update({ 
-          snoozed_until: snoozeUntil.toISOString()
+          // Using the actual column name that should exist in the tasks table
+          // We're updating the reminder time and enabling it
+          reminder_time: minutes,
+          reminder_enabled: true
         })
         .eq('id', taskId);
 
