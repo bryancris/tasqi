@@ -72,19 +72,22 @@ export const debugLogNotification = (
 };
 
 /**
- * Most important function: Check for test notification (ID 999999)
- * This must work correctly in all scenarios!
+ * CRITICAL: Most reliable check for test notification (ID 999999)
+ * This function MUST always return true for the test notification ID
+ * regardless of the ID type (string or number)
  */
 export const isTestNotification = (referenceId?: number | string | null): boolean => {
-  if (referenceId === null || referenceId === undefined) {
+  // First, handle all falsy cases upfront for clarity
+  if (referenceId === null || referenceId === undefined || referenceId === '') {
+    console.log('🧪 Test notification check: ID is falsy, returning false');
     return false;
   }
   
-  // Critical: Convert to string first, then compare to ensure consistent behavior
-  const idAsString = String(referenceId);
+  // Ensure consistent string comparison regardless of input type
+  const idAsString = String(referenceId).trim();
   const result = idAsString === "999999";
   
-  // For debugging:
+  // Log detailed debugging for this critical check
   console.log(`🧪 Test notification check: ID=${referenceId}, type=${typeof referenceId}, stringValue=${idAsString}, result=${result}`);
   
   return result;
@@ -95,14 +98,18 @@ export const isTestNotification = (referenceId?: number | string | null): boolea
  * For test notifications (999999), always returns true
  */
 export const validateTaskNotification = (notification: DebugNotification): boolean => {
-  // CRITICAL: Test notification is always a task notification
+  // MOST IMPORTANT: Test notification ID 999999 ALWAYS shows task buttons
   if (isTestNotification(notification.referenceId)) {
     console.log('🧪 TEST NOTIFICATION VALIDATED - ID:', notification.referenceId);
     return true;
   }
   
   // Regular task notification check
-  return !!notification.referenceId && 
+  const isTaskNotification = !!notification.referenceId && 
     (notification.referenceType === 'task' || 
      notification.title?.toLowerCase().includes('task'));
+  
+  console.log('✅ Task validation result:', isTaskNotification, 'for ID:', notification.referenceId);
+  
+  return isTaskNotification;
 };

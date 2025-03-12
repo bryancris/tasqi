@@ -38,16 +38,19 @@ export const NotificationContent = ({
   const [isLoading, setIsLoading] = React.useState<string | null>(null);
   const queryClient = useQueryClient();
   
+  // Check if this is a test notification - most critical check
+  const isTestNotificationInstance = isTestNotification(referenceId);
+  
   // Enhanced debugging on render
   React.useEffect(() => {
     console.log('🔴 NotificationContent rendering with:', {
       referenceId,
       referenceIdType: typeof referenceId,
-      referenceIdValue: String(referenceId),
+      referenceIdValue: referenceId ? String(referenceId) : "undefined/null",
       referenceType,
       title,
       isDialogOpen,
-      isTestNotification: isTestNotification(referenceId)
+      isTestNotification: isTestNotificationInstance
     });
     
     debugLogNotification({
@@ -57,14 +60,14 @@ export const NotificationContent = ({
       referenceId,
       referenceType,
     }, 'NotificationContent render');
-  }, [title, message, type, referenceId, referenceType, isDialogOpen]);
+  }, [title, message, type, referenceId, referenceType, isDialogOpen, isTestNotificationInstance]);
 
   const handleDone = async () => {
     try {
       setIsLoading('done');
       
       // Special handling for test task notification
-      if (isTestNotification(referenceId)) {
+      if (isTestNotificationInstance) {
         console.log('✅ Test notification - simulating completion');
         await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate network delay
         toast.success('Test task completed');
@@ -88,17 +91,30 @@ export const NotificationContent = ({
     }
   };
 
-  // CRITICAL: Direct test for test notification to ensure buttons are shown
-  // This is the first check and bypasses all other checks for test notifications
-  if (isTestNotification(referenceId)) {
-    console.log('🧪 TEST NOTIFICATION DETECTED - FORCING BUTTONS DISPLAY');
+  // For debugging - let's explicitly log the decision process
+  const showButtons = isTestNotificationInstance || 
+    (referenceId !== undefined && referenceId !== null && 
+     (referenceType === 'task' || title?.toLowerCase().includes('task')));
+  
+  console.log('🔍 NotificationContent Button Decision:', {
+    isTestNotification: isTestNotificationInstance,
+    hasReferenceId: referenceId !== undefined && referenceId !== null,
+    isTaskType: referenceType === 'task',
+    hasTitleWithTask: title?.toLowerCase().includes('task'),
+    finalDecision: showButtons,
+    referenceId,
+    referenceIdType: typeof referenceId
+  });
+
+  // ALWAYS render buttons for test notifications
+  if (isTestNotificationInstance) {
+    console.log('🧪 TEST NOTIFICATION - FORCING BUTTONS DISPLAY');
     
     return (
       <AlertDialogFooter 
         className="flex-col sm:flex-col gap-3 sm:gap-3 mt-2 items-start"
         data-has-task-buttons="true"
         data-test-notification="true"
-        data-forced-buttons="true"
       >
         <NotificationButtons
           isLoading={isLoading}
@@ -113,21 +129,13 @@ export const NotificationContent = ({
   }
 
   // For regular notifications
-  const isTaskNotification = validateTaskNotification({
-    title,
-    message,
-    type,
-    referenceId,
-    referenceType,
-  });
-  
   return (
     <AlertDialogFooter 
       className="flex-col sm:flex-col gap-3 sm:gap-3 mt-2 items-start"
-      data-has-task-buttons={isTaskNotification ? "true" : "false"}
-      data-test-notification={isTestNotification(referenceId) ? "true" : "false"}
+      data-has-task-buttons={showButtons ? "true" : "false"}
+      data-test-notification={isTestNotificationInstance ? "true" : "false"}
     >
-      {isTaskNotification ? (
+      {showButtons ? (
         <NotificationButtons
           isLoading={isLoading}
           referenceId={referenceId}

@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { handleSnooze } from "./notification-handlers";
 import { isTestNotification } from "@/utils/notifications/debug-utils";
-import { toast } from "sonner";
+import { toast } from "sonner";  // Add missing import
 
 interface NotificationButtonsProps {
   isLoading: string | null;

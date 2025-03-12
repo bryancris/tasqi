@@ -22,11 +22,28 @@ export function useTaskNotifications() {
   const { showTaskNotification } = useTaskNotificationDisplay();
   const { checkForUpcomingTasks } = useTaskChecker();
 
+  // Function to trigger a test notification
+  const triggerTestNotification = () => {
+    console.log('🧪 Triggering test notification with ID: 999999');
+    
+    if (isMountedRef.current) {
+      showNotification({
+        title: 'Task Reminder',
+        message: 'This is a test notification with action buttons',
+        type: 'info',
+        persistent: true,
+        referenceId: '999999', // Always use string format for consistency
+        referenceType: 'task'
+      });
+      console.log('✅ Test task notification triggered with ID: 999999');
+    } else {
+      console.log('❌ Cannot trigger test notification - component unmounted');
+    }
+  };
+
   useEffect(() => {
     console.log('🔔 Task notifications hook initialized');
     isMountedRef.current = true;
-    
-    // Remove automatic test notification that was here
     
     // Initial check on mount if we have tasks
     if (tasks.length > 0) {
@@ -59,6 +76,7 @@ export function useTaskNotifications() {
 
   return {
     handleTaskComplete,
-    showTaskNotification: (task, type) => showTaskNotification(task, type, isMountedRef, handleTaskComplete)
+    showTaskNotification: (task, type) => showTaskNotification(task, type, isMountedRef, handleTaskComplete),
+    triggerTestNotification
   };
 }
