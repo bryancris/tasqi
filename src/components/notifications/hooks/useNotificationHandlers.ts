@@ -83,9 +83,9 @@ export function useNotificationHandlers(
     if (!document.hasFocus()) {
       try {
         await showBrowserNotification({
-          id: typeof notification.reference_id === 'string' 
-              ? parseInt(notification.reference_id) 
-              : (notification.reference_id as number) || 0,
+          id: typeof notification.referenceId === 'string' 
+              ? parseInt(notification.referenceId) 
+              : (notification.referenceId as number) || 0,
           title: notification.title,
           description: notification.message,
           priority: 'high'
@@ -104,7 +104,7 @@ export function useNotificationHandlers(
 
       const group = existingGroup || Math.random().toString(36).substr(2, 9);
       
-      // Create new notification and preserve reference_id and reference_type
+      // Create new notification with camelCase property names
       const newNotification = { 
         ...notification, 
         id,
@@ -112,10 +112,7 @@ export function useNotificationHandlers(
         created_at: now,
         user_id: userId || '',
         group,
-        persistent: isPersistent,
-        // Explicitly preserve these properties for clarity
-        reference_id: notification.reference_id,
-        reference_type: notification.reference_type
+        persistent: isPersistent
       };
       
       // Log the notification being added to state

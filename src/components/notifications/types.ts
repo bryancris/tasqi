@@ -10,8 +10,8 @@ export interface Notification {
   };
   read: boolean;
   created_at: string;
-  reference_id?: string | number | null;
-  reference_type?: string | null;
+  referenceId?: string | number | null; // Changed from reference_id to camelCase
+  referenceType?: string | null;        // Changed from reference_type to camelCase
   user_id: string;
   group?: string;
   persistent?: boolean;

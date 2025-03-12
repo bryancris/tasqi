@@ -28,8 +28,8 @@ export interface AlertNotificationProps {
   };
   onDismiss: () => void;
   index?: number;
-  referenceId?: number | string | null;
-  reference_type?: string | null;
+  referenceId?: number | string | null;  // Already using camelCase
+  referenceType?: string | null;         // Changed from reference_type to camelCase
 }
 
 export function AlertNotification({
@@ -41,7 +41,7 @@ export function AlertNotification({
   onDismiss,
   index = 0,
   referenceId,
-  reference_type,
+  referenceType, // Changed from reference_type to camelCase
 }: AlertNotificationProps) {
   const isMobile = useIsMobile();
   const [isLoading, setIsLoading] = React.useState<string | null>(null);
@@ -54,18 +54,28 @@ export function AlertNotification({
       title,
       message,
       type,
-      reference_id: referenceId,
-      reference_type
+      reference_id: referenceId, // Keep original property name for debug utils
+      reference_type: referenceType // Keep original property name for debug utils
     }, 'AlertNotification render');
     
     // Add specific validation check
     console.log('🎯 Notification Button Validation:', validateTaskNotification({
       title,
       reference_id: referenceId,
-      reference_type
+      reference_type: referenceType
     }));
     
-  }, [title, message, type, referenceId, reference_type]);
+    // Additional debug info for property types
+    console.log('📋 Alert Notification Properties:', {
+      title,
+      referenceId,
+      referenceIdType: typeof referenceId,
+      referenceIdValue: referenceId,
+      referenceType,
+      referenceTypeValue: referenceType
+    });
+    
+  }, [title, message, type, referenceId, referenceType]);
 
   // Focus management
   React.useEffect(() => {
@@ -98,7 +108,7 @@ export function AlertNotification({
   };
 
   // Logic to determine if buttons should be shown - with improved type handling
-  const isTaskNotification = reference_type === 'task' || 
+  const isTaskNotification = referenceType === 'task' || 
     (title.toLowerCase().includes('task') && title.toLowerCase().includes('reminder'));
   
   // Fixed condition to properly check for null or undefined referenceId
@@ -112,7 +122,7 @@ export function AlertNotification({
     showButtons,
     isTaskNotification,
     hasValidReferenceId,
-    referenceType: reference_type,
+    referenceType,
     referenceIdType: typeof referenceId,
     referenceIdValue: referenceId
   });

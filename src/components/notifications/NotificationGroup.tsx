@@ -15,8 +15,8 @@ interface NotificationGroupProps {
     message: string;
     type?: 'info' | 'success' | 'warning' | 'error';
     priority?: 'high' | 'normal' | 'low';
-    reference_id?: string | number | null;
-    reference_type?: string | null;
+    referenceId?: string | number | null;   // Changed from reference_id to camelCase
+    referenceType?: string | null;          // Changed from reference_type to camelCase
   }>;
   onDismissGroup: (groupId: string) => void;
 }
@@ -82,9 +82,9 @@ export function NotificationGroup({ groupId, notifications, onDismissGroup }: No
                 <div>
                   <div className="font-medium">{notification.title}</div>
                   <div className="text-sm text-gray-600">{notification.message}</div>
-                  {notification.reference_type === 'task' && notification.reference_id && (
+                  {notification.referenceType === 'task' && notification.referenceId && (
                     <div className="text-xs text-gray-500 mt-1">
-                      Task ID: {notification.reference_id}
+                      Task ID: {notification.referenceId}
                     </div>
                   )}
                 </div>
