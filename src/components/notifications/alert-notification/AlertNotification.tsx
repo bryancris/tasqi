@@ -127,7 +127,7 @@ export function AlertNotification({
           referenceId={referenceId} 
         />
 
-        {/* ALWAYS VISIBLE BUTTONS - NO CONDITIONS */}
+        {/* SIMPLE PLACEHOLDER BUTTONS - ALWAYS VISIBLE */}
         <div className="mt-4 border-t pt-3" data-testid="notification-buttons">
           <div className="flex w-full flex-col sm:flex-row justify-between gap-2">
             <div className="flex gap-2 items-center">

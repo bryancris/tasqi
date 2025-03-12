@@ -31,28 +31,13 @@ export const NotificationContent = ({
   referenceType,
   isDialogOpen = false,
 }: NotificationContentProps) => {
-  const [isLoading, setIsLoading] = React.useState<string | null>(null);
-  const queryClient = useQueryClient();
-  
-  // Check if this is a test notification (ID 999999)
-  const isTestNotification = React.useMemo(() => {
-    // Convert referenceId to string for comparison
-    const stringId = referenceId !== undefined && referenceId !== null ? String(referenceId) : "";
-    const result = stringId === "999999";
-    
-    console.log(`🔍 TEST CHECK: referenceId=${stringId}, isTest=${result}, type=${typeof referenceId}`);
-    
-    return result;
-  }, [referenceId]);
-
-  // Log notification details for debugging
+  // Log component mount with note that it's been deprecated
   React.useEffect(() => {
-    console.log('🧨 NOTIFICATION CONTENT MOUNTED:', { 
+    console.log('🧨 NOTIFICATION CONTENT MOUNTED BUT NOT USED:', { 
       title, 
       message, 
       referenceId,
       referenceType,
-      isTestNotification,
       isDialogOpen,
       type
     });
@@ -63,38 +48,10 @@ export const NotificationContent = ({
       type,
       referenceId,
       referenceType,
-    }, 'NotificationContent mount');
-  }, [title, message, referenceId, referenceType, isTestNotification, isDialogOpen, type]);
+    }, 'NotificationContent mount - DEPRECATED');
+  }, [title, message, referenceId, referenceType, isDialogOpen, type]);
 
-  const handleDone = async () => {
-    try {
-      setIsLoading('done');
-      
-      // Special handling for test notification
-      if (isTestNotification) {
-        console.log('✅ Test notification - simulating completion');
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        toast.success('Test task completed');
-        onDismiss();
-        return;
-      }
-      
-      if (referenceId) {
-        await handleStart(referenceId, queryClient, onDismiss);
-      } else if (action?.onClick) {
-        await action.onClick();
-      }
-      
-      onDismiss();
-    } catch (error) {
-      console.error('Error handling task:', error);
-      toast.error('Failed to process task');
-    } finally {
-      setIsLoading(null);
-    }
-  };
-
-  // Always return null from this component - we're not using it anymore
-  // This ensures it doesn't interfere with the direct rendering in AlertNotification
+  // This component is no longer in use - we've moved to direct rendering in AlertNotification
+  // Always return null - the buttons are now directly in AlertNotification
   return null;
 }
