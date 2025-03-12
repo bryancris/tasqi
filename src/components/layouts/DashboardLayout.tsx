@@ -83,7 +83,11 @@ export function DashboardLayout({
               <DesktopHeader />
             </div>
             {/* Main content area with proper padding */}
-            <main className="flex-1 overflow-y-auto bg-[#f8f9fa] p-6 px-[20px] py-0">
+            <main 
+              className="flex-1 overflow-y-auto bg-[#f8f9fa] p-6 px-[20px] py-0"
+              // Remove data attributes that may cause aria-hidden issues
+              data-state="open"
+            >
               <ErrorBoundary fallback={<div className="p-4 text-center">Something went wrong loading the dashboard. Please refresh the page.</div>}>
                 {children}
               </ErrorBoundary>

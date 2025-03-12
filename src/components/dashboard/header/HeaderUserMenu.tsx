@@ -64,25 +64,28 @@ export function HeaderUserMenu() {
   const handleTestNotification = () => {
     console.log('🔔 Triggering test task notification with buttons');
     
-    // Create task notification with explicit reference data
-    showNotification({
-      title: "Task Reminder",
-      message: "This is a test notification with action buttons",
-      type: "info" as const,
-      reference_id: "999999",
-      reference_type: "task",
-      persistent: true
-    });
-    
-    console.log('✅ Test task notification triggered');
-    
-    // Log exact notification details to help debug
-    console.log('📋 Notification details sent:', {
-      title: "Task Reminder",
-      titleLength: "Task Reminder".length,
-      referenceId: "999999",
-      referenceType: "task"
-    });
+    // Close the dropdown menu first before showing notification
+    setTimeout(() => {
+      // Create task notification with explicit reference data
+      showNotification({
+        title: "Task Reminder",
+        message: "This is a test notification with action buttons",
+        type: "info" as const,
+        reference_id: "999999",
+        reference_type: "task",
+        persistent: true
+      });
+      
+      console.log('✅ Test task notification triggered');
+      
+      // Log exact notification details to help debug
+      console.log('📋 Notification details sent:', {
+        title: "Task Reminder",
+        titleLength: "Task Reminder".length,
+        referenceId: "999999",
+        referenceType: "task"
+      });
+    }, 100);
   };
 
   return (
@@ -111,7 +114,13 @@ export function HeaderUserMenu() {
           <Settings className="mr-2 h-4 w-4" />
           Settings
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleTestNotification}>
+        <DropdownMenuItem 
+          onSelect={(e) => {
+            // Prevent the default behavior first
+            e.preventDefault();
+            handleTestNotification();
+          }}
+        >
           <Bell className="mr-2 h-4 w-4" />
           Test Notification
         </DropdownMenuItem>

@@ -45,6 +45,7 @@ export function AlertNotification({
   const isMobile = useIsMobile();
   const [isLoading, setIsLoading] = React.useState<string | null>(null);
   const queryClient = useQueryClient();
+  const buttonRef = React.useRef<HTMLButtonElement>(null);
 
   React.useEffect(() => {
     console.log('🔍 EXACT Notification Details:', {
@@ -58,6 +59,20 @@ export function AlertNotification({
       allProps: { open, title, message, type, action, index, referenceId, reference_type }
     });
   }, [title, referenceId, reference_type, message, type, open, action, index]);
+
+  // Focus management - ensure focus is properly contained within the dialog
+  React.useEffect(() => {
+    if (open) {
+      // Small delay to ensure the dialog is fully rendered
+      const timeoutId = setTimeout(() => {
+        if (buttonRef.current) {
+          buttonRef.current.focus();
+        }
+      }, 50);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [open]);
 
   const handleDone = async () => {
     try {
@@ -122,8 +137,14 @@ export function AlertNotification({
           type === 'warning' && 'border-l-4 border-l-[#FEC6A1] bg-[#FFFAF5]',
           type === 'info' && 'border-l-4 border-l-[#9b87f5] bg-[#F8F7FF]'
         )}
+        onEscapeKeyDown={onDismiss}
+        onInteractOutside={(e) => {
+          // Prevent closing when interacting outside but don't stop propagation
+          e.preventDefault();
+        }}
       >
         <button
+          ref={buttonRef}
           onClick={onDismiss}
           className="absolute right-4 top-4 p-1 rounded-full hover:bg-gray-100 transition-colors"
           aria-label="Close notification"
