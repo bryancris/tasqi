@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useCallback } from 'react';
 import { useTasks } from '@/hooks/use-tasks';
 import { Task } from '@/components/dashboard/TaskBoard';
@@ -84,7 +85,12 @@ export function useTaskNotifications() {
       // Play notification sound
       await playNotificationSound();
 
-      // Show in-app notification with task ID reference converted to string
+      // IMPORTANT: Set explicit string type for the referenceId to ensure consistent handling
+      const referenceIdString = String(task.id);
+      
+      console.log('📱 Creating notification with referenceId:', referenceIdString, 'Type:', typeof referenceIdString);
+
+      // Show in-app notification with task ID reference as string
       showNotification({
         title: type === 'reminder' ? 'Task Reminder' :
                type === 'shared' ? 'Task Shared' :
@@ -92,8 +98,8 @@ export function useTaskNotifications() {
         message: task.title,
         type: 'info',
         persistent: true,
-        referenceId: task.id.toString(), // Updated to camelCase
-        referenceType: 'task', // Updated to camelCase
+        referenceId: referenceIdString,
+        referenceType: 'task',
         action: {
           label: 'Complete Task',
           onClick: () => void handleTaskComplete(task)

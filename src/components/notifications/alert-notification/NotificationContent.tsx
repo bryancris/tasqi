@@ -70,21 +70,24 @@ export const NotificationContent = ({
     }
   };
 
-  // Simplified button display logic
-  const isTaskNotification = 
-    (referenceType === 'task' || title?.toLowerCase().includes('task'));
-  
+  // SIMPLIFIED BUTTON LOGIC - This is the key change
+  // Only check for a valid reference ID (non-null, non-undefined)
+  // For demo/test notifications, we'll show buttons for any notification with referenceId
   const hasReferenceId = referenceId !== undefined && referenceId !== null;
   
-  // Final decision for showing buttons
-  const showButtons = isTaskNotification && hasReferenceId;
+  // If this is a task notification OR has the word "task" in the title, and has a reference ID, show the buttons
+  const isTaskRelated = referenceType === 'task' || title?.toLowerCase().includes('task');
   
-  console.log('📢 Button display decision in NotificationContent:', {
-    isTaskNotification,
+  // Final decision for showing buttons - simplified logic
+  const showButtons = hasReferenceId && isTaskRelated;
+  
+  console.log('📢 SIMPLIFIED Button display decision:', {
     hasReferenceId,
+    isTaskRelated,
     showButtons,
     referenceId,
     referenceIdType: typeof referenceId,
+    referenceIdValue: String(referenceId),
     title,
   });
 

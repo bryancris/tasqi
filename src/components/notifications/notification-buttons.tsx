@@ -19,22 +19,12 @@ export const NotificationButtons = ({
   onDismiss,
   onDone
 }: NotificationButtonsProps) => {
-  console.log('📣 RENDERING NotificationButtons component with:', {
-    isLoading,
-    referenceId,
-    referenceIdType: typeof referenceId,
-    referenceIdValue: String(referenceId)
-  });
+  console.log('🔵 RENDERING NotificationButtons with referenceId:', referenceId, 
+    'Type:', typeof referenceId);
 
   const [snoozeTime, setSnoozeTime] = useState<string>("15");
   const [isSnoozing, setIsSnoozing] = useState<boolean>(false);
   const queryClient = useQueryClient();
-
-  useEffect(() => {
-    console.log('🔧 NotificationButtons mounted with referenceId:', referenceId, 
-      'Type:', typeof referenceId,
-      'Valid for buttons:', referenceId !== undefined && referenceId !== null);
-  }, [referenceId]);
 
   const handleSnoozeClick = async () => {
     if (referenceId === undefined || referenceId === null) {
@@ -52,6 +42,17 @@ export const NotificationButtons = ({
       setIsSnoozing(false);
     }
   };
+
+  // Log every render to help debug
+  useEffect(() => {
+    console.log('🔘 NotificationButtons mounted/updated:', {
+      referenceId,
+      referenceIdType: typeof referenceId,
+      isNull: referenceId === null,
+      isUndefined: referenceId === undefined,
+      stringValue: String(referenceId),
+    });
+  }, [referenceId]);
 
   return (
     <div className="flex w-full flex-col sm:flex-row justify-between gap-2">

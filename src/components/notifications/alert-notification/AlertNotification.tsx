@@ -39,14 +39,18 @@ export function AlertNotification({
   const isMobile = useIsMobile();
   const buttonRef = React.useRef<HTMLButtonElement>(null);
 
+  // Log every render with detailed information
   React.useEffect(() => {
-    console.log('💥 RENDERING AlertNotification (refactored) with props:', {
+    console.log('🔔 RENDERING AlertNotification with details:', {
       title,
       message,
-      referenceId: referenceId,
+      referenceId,
       referenceIdType: typeof referenceId,
       referenceIdValue: String(referenceId),
       referenceType,
+      isTaskRelated: title?.toLowerCase().includes('task') || referenceType === 'task',
+      shouldHaveButtons: (referenceId !== undefined && referenceId !== null) && 
+                         (title?.toLowerCase().includes('task') || referenceType === 'task')
     });
   }, [title, message, referenceId, referenceType]);
 

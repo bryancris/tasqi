@@ -9,10 +9,18 @@ export const handleStart = async (
   onDismiss: () => void
 ) => {
   try {
-    // Convert string referenceId to number if needed
+    // Always convert referenceId to number
     const taskId = typeof referenceId === 'string' ? parseInt(referenceId, 10) : referenceId;
     
-    console.log('Processing task with ID:', taskId, 'Type:', typeof taskId);
+    console.log('🚀 Processing task with ID:', taskId, 'Type:', typeof taskId, 'Original:', referenceId);
+    
+    // Special case for test notifications (ID 999999)
+    if (taskId === 999999) {
+      console.log('✅ Test task processing completed');
+      toast.success('Test task completed');
+      onDismiss();
+      return;
+    }
     
     // Get current user
     const { data: { user } } = await supabase.auth.getUser();
@@ -43,13 +51,6 @@ export const handleStart = async (
         return;
       }
     } else {
-      // For test notifications with dummy IDs, just show success
-      if (taskId === 999999) {
-        toast.success('Test task completed');
-        onDismiss();
-        return;
-      }
-
       // Update regular task status
       const { error } = await supabase
         .from('tasks')
@@ -82,22 +83,23 @@ export const handleSnooze = async (
   onDismiss: () => void
 ) => {
   try {
-    // Convert string referenceId to number if needed
+    // Always convert referenceId to number
     const taskId = typeof referenceId === 'string' ? parseInt(referenceId, 10) : referenceId;
     
-    console.log('Snoozing task with ID:', taskId, 'Type:', typeof taskId, 'for', minutes, 'minutes');
+    console.log('⏰ Snoozing task with ID:', taskId, 'Type:', typeof taskId, 'for', minutes, 'minutes');
+    
+    // Special case for test notifications (ID 999999)
+    if (taskId === 999999) {
+      console.log('✅ Test task snooze completed');
+      toast.success(`Task snoozed for ${minutes} minutes`);
+      onDismiss();
+      return;
+    }
     
     // Get current user
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       toast.error('User not authenticated');
-      return;
-    }
-
-    // For test notifications with dummy IDs, just show success and return
-    if (taskId === 999999) {
-      toast.success(`Test task snoozed for ${minutes} minutes`);
-      onDismiss();
       return;
     }
 
@@ -113,15 +115,10 @@ export const handleSnooze = async (
       // For shared tasks, we might handle this differently
       toast.info(`Reminder snoozed for ${minutes} minutes`);
     } else {
-      // First, check the schema to see what column exists for snooze
-      console.log('Updating task snooze time to:', minutes);
-      
       // Update using the proper field name based on the database schema
       const { error } = await supabase
         .from('tasks')
         .update({ 
-          // Using the actual column name that should exist in the tasks table
-          // We're updating the reminder time and enabling it
           reminder_time: minutes,
           reminder_enabled: true
         })
