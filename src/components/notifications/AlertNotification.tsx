@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import {
   AlertDialog,
@@ -46,57 +45,44 @@ export function AlertNotification({
   const [isLoading, setIsLoading] = React.useState<string | null>(null);
   const queryClient = useQueryClient();
 
-  // Enhanced debug logging
   React.useEffect(() => {
-    console.log('🔔 AlertNotification mounted:', {
+    console.log('🔔 Notification Details:', {
       title,
+      message,
       type,
       referenceId,
       reference_type,
-      rawReferenceId: referenceId,
-      referenceIdType: typeof referenceId,
-      shouldShowButtons: title.includes('Task')
+      hasButtons: title === 'Task Reminder',
+      referenceType: typeof referenceId
     });
-  }, [title, referenceId, reference_type]);
-
-  // Log key info
-  console.log('🚨 Alert Notification rendering:', {
-    title,
-    referenceId,
-    reference_type,
-    shouldShowButtons: title.includes('Task')
-  });
+  }, [title, referenceId, reference_type, message, type]);
 
   const handleDone = async () => {
     try {
       setIsLoading('done');
       
-      // Process any task with a valid referenceId
       if (referenceId) {
-        console.log('Processing task completion for ID:', referenceId);
+        console.log('Processing task with ID:', referenceId);
         await handleStart(referenceId, queryClient, onDismiss);
       } else if (action?.onClick) {
-        console.log('Executing custom action handler');
         await action.onClick();
-      } else {
-        console.log('No action handler found, just dismissing');
       }
       
       onDismiss();
     } catch (error) {
-      console.error('Error completing task:', error);
-      toast.error('Failed to complete task');
+      console.error('Error handling task:', error);
+      toast.error('Failed to process task');
     } finally {
       setIsLoading(null);
     }
   };
 
-  // Simplified check for button display - just check the title contains "Task"
-  const showTaskButtons = title.includes('Task');
+  const showButtons = title === 'Task Reminder';
   
-  console.log('👀 Should show task buttons:', {
-    showTaskButtons,
-    title
+  console.log('Button visibility check:', {
+    title,
+    showButtons,
+    hasReferenceId: !!referenceId
   });
 
   return (
@@ -142,7 +128,7 @@ export function AlertNotification({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="flex-col sm:flex-col gap-3 sm:gap-3 mt-2 items-start">
-          {showTaskButtons && (
+          {showButtons && (
             <NotificationButtons
               isLoading={isLoading}
               referenceId={referenceId}
@@ -150,7 +136,7 @@ export function AlertNotification({
               onDone={handleDone}
             />
           )}
-          {!showTaskButtons && action && (
+          {!showButtons && action && (
             <div className="flex justify-end w-full">
               <button
                 onClick={action.onClick}
