@@ -7,12 +7,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Settings, LogOut } from "lucide-react";
+import { Settings, LogOut, Bell } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useState } from "react";
 import { Spinner } from "@/components/ui/spinner";
+import { useNotifications } from "@/hooks/notifications/use-notifications";
 
 import { UserAvatar } from "./user-menu/UserAvatar";
 import { UserInfo } from "./user-menu/UserInfo";
@@ -25,6 +26,7 @@ export function HeaderUserMenu() {
   const navigate = useNavigate();
   const { deferredPrompt, isStandalone, installable, setDeferredPrompt } = useInstallPrompt();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { showNotification } = useNotifications();
   
   const userDisplayName = session?.user.user_metadata?.full_name || 
                          session?.user.user_metadata?.name ||
@@ -47,6 +49,18 @@ export function HeaderUserMenu() {
     } finally {
       setIsLoggingOut(false);
     }
+  };
+
+  const handleTestNotification = () => {
+    showNotification({
+      title: "Test Notification",
+      message: "This is a test notification with action buttons",
+      type: "info",
+      reference_id: "test-notification",
+      reference_type: "task",
+      persistent: true
+    });
+    toast.success("Test notification triggered");
   };
 
   return (
@@ -72,6 +86,10 @@ export function HeaderUserMenu() {
             <Settings className="mr-2 h-4 w-4" />
             Settings
           </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleTestNotification}>
+          <Bell className="mr-2 h-4 w-4" />
+          Test Notification
         </DropdownMenuItem>
         <InstallButton
           isStandalone={isStandalone}
