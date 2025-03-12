@@ -88,6 +88,7 @@ export function AlertNotification({
           type === 'warning' && 'border-l-4 border-l-[#FEC6A1] bg-[#FFFAF5]',
           type === 'info' && 'border-l-4 border-l-[#9b87f5] bg-[#F8F7FF]'
         )}
+        {...(referenceId === "999999" && { "data-test-notification": "999999" })}
         onEscapeKeyDown={onDismiss}
       >
         <button

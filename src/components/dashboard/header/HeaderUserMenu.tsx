@@ -69,7 +69,16 @@ export function HeaderUserMenu() {
     // Close the dropdown menu first
     setIsMenuOpen(false);
     
-    // Add delay to ensure dropdown is closed before showing notification
+    // Clear any existing test notifications before showing new one
+    const existingNotifications = document.querySelectorAll('[data-test-notification="999999"]');
+    existingNotifications.forEach(notification => {
+      const closeButton = notification.querySelector('[aria-label="Close notification"]');
+      if (closeButton instanceof HTMLElement) {
+        closeButton.click();
+      }
+    });
+
+    // Add delay to ensure dropdown is closed and old notifications are cleared
     setTimeout(() => {
       // Create task notification with explicit reference data using camelCase
       showNotification({
@@ -78,18 +87,10 @@ export function HeaderUserMenu() {
         type: "info" as const,
         referenceId: "999999", // Using camelCase format
         referenceType: "task", // Using camelCase format
-        persistent: true
+        persistent: false // Make test notifications non-persistent
       });
       
       console.log('✅ Test task notification triggered');
-      
-      // Log exact notification details to help debug
-      console.log('📋 Notification details sent:', {
-        title: "Task Reminder",
-        titleLength: "Task Reminder".length,
-        referenceId: "999999",
-        referenceType: "task"
-      });
     }, 150);
   };
 
