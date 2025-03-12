@@ -110,12 +110,12 @@ export function AlertNotification({
     }
   };
 
-  // Logic to determine if buttons should be shown - with improved type handling
+  // Logic to determine if buttons should be shown - with fixed conditions
   const isTaskNotification = referenceType === 'task' || 
     (title?.toLowerCase().includes('task') && title?.toLowerCase().includes('reminder'));
   
-  // Fixed condition to properly check for null or undefined referenceId
-  const hasValidReferenceId = referenceId !== undefined && referenceId !== null && referenceId !== '';
+  // Simplified condition - treat string '999999' as valid
+  const hasValidReferenceId = Boolean(referenceId);
   
   // Final button visibility determination
   const showButtons = isTaskNotification && hasValidReferenceId;

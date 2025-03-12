@@ -19,12 +19,12 @@ export function NotificationButtons({
   onDismiss,
   onDone
 }: NotificationButtonsProps) {
-  console.log('🔄 NotificationButtons render:', {
+  console.log('🔄 NotificationButtons render with props:', {
     isLoading,
     referenceId,
     type: typeof referenceId,
     hasReferenceId: referenceId !== undefined && referenceId !== null,
-    referenceIdString: referenceId?.toString()
+    referenceIdString: String(referenceId)
   });
 
   const [snoozeTime, setSnoozeTime] = useState<string>("15");

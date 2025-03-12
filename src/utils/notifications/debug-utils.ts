@@ -20,6 +20,8 @@ export function debugLogNotification(notification: any, stage: string) {
     message: notification.message,
     type: notification.type,
     referenceId, // Use standardized camelCase for logging
+    referenceIdValue: String(referenceId),
+    referenceIdType: typeof referenceId,
     referenceType, // Use standardized camelCase for logging
     isTask: (referenceType === 'task'),
     isTaskBasedOnTitle: notification.title?.toLowerCase().includes('task') && notification.title?.toLowerCase().includes('reminder'),
@@ -40,20 +42,24 @@ export function validateTaskNotification(notification: any) {
   const referenceId = notification.referenceId || notification.reference_id;
   const referenceType = notification.referenceType || notification.reference_type;
   
+  // We consider ANY non-null, non-undefined referenceId as valid (including empty string)
+  const hasValidReferenceId = referenceId !== undefined && referenceId !== null;
+  
   const isTaskType = 
     (referenceType === 'task') ||
     (notification.title?.toLowerCase().includes('task') && notification.title?.toLowerCase().includes('reminder'));
 
   const validationResult = {
-    isValid: hasReferenceId && isTaskType && referenceId !== null,
+    isValid: hasValidReferenceId && isTaskType,
     hasReferenceId,
     hasReferenceType,
     isTaskType,
-    referenceIdValue: referenceId,
+    referenceIdValue: String(referenceId),
     referenceTypeValue: referenceType,
     referenceIdType: typeof referenceId,
     referenceIdIsNull: referenceId === null,
-    referenceIdIsUndefined: referenceId === undefined
+    referenceIdIsUndefined: referenceId === undefined,
+    hasValidReferenceId
   };
   
   console.log('🧪 Notification validation:', validationResult);
