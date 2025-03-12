@@ -51,14 +51,17 @@ export function HeaderUserMenu() {
 
   const handleTestNotification = () => {
     console.log('🔔 Triggering test task notification');
+    
+    // Explicitly type the notification with "as const" to match expected type
     const notificationData = {
       title: "Task Reminder",
       message: "This is a test notification with action buttons",
-      type: "info" as const,
+      type: "info" as const, // Use "as const" to ensure it's the literal "info" type
       reference_id: "999999",
       reference_type: "task",
       persistent: true
     };
+    
     console.log('📨 Sending notification data:', notificationData);
     showNotification(notificationData);
     console.log('✅ Test notification triggered');

@@ -55,43 +55,26 @@ export function AlertNotification({
       reference_type,
       rawReferenceId: referenceId,
       referenceIdType: typeof referenceId,
-      shouldShowButtons: referenceId !== null && 
-        (reference_type === 'task' || title === 'Task Reminder')
+      shouldShowButtons: title.includes('Task')
     });
   }, [title, referenceId, reference_type]);
 
-  // Convert string referenceId to number if needed
-  const numericReferenceId = React.useMemo(() => {
-    console.log('🔢 Converting referenceId:', {
-      input: referenceId,
-      type: typeof referenceId
-    });
-    
-    if (referenceId === null || referenceId === undefined) return null;
-    const converted = typeof referenceId === 'string' ? parseInt(referenceId, 10) : referenceId;
-    console.log('🔢 Converted referenceId:', {
-      output: converted,
-      type: typeof converted
-    });
-    return converted;
-  }, [referenceId]);
-
-  // Log for debugging
-  React.useEffect(() => {
-    console.log('AlertNotification - Original referenceId:', referenceId, 
-      'Type:', typeof referenceId,
-      'Parsed numericReferenceId:', numericReferenceId,
-      'reference_type:', reference_type);
-  }, [referenceId, numericReferenceId, reference_type]);
+  // Log key info
+  console.log('🚨 Alert Notification rendering:', {
+    title,
+    referenceId,
+    reference_type,
+    shouldShowButtons: title.includes('Task')
+  });
 
   const handleDone = async () => {
     try {
       setIsLoading('done');
       
-      // Only process tasks (not other notification types)
-      if (numericReferenceId && (reference_type === 'task' || title.toLowerCase().includes('task'))) {
-        console.log('Processing task completion for ID:', numericReferenceId);
-        await handleStart(numericReferenceId, queryClient, onDismiss);
+      // Process any task with a valid referenceId
+      if (referenceId) {
+        console.log('Processing task completion for ID:', referenceId);
+        await handleStart(referenceId, queryClient, onDismiss);
       } else if (action?.onClick) {
         console.log('Executing custom action handler');
         await action.onClick();
@@ -108,22 +91,13 @@ export function AlertNotification({
     }
   };
 
-  // Update the condition to show task buttons - FIXED: simplified condition to make it more reliable
-  const showTaskButtons = React.useMemo(() => {
-    // Previously complex condition that wasn't working reliably
-    // Now simplified to just check for a valid title containing "Task"
-    const shouldShow = title.includes('Task');
-    
-    console.log('👀 Should show task buttons:', {
-      shouldShow,
-      referenceId,
-      reference_type,
-      title,
-      condition: title.includes('Task')
-    });
-    
-    return shouldShow;
-  }, [title, referenceId, reference_type]);
+  // Simplified check for button display - just check the title contains "Task"
+  const showTaskButtons = title.includes('Task');
+  
+  console.log('👀 Should show task buttons:', {
+    showTaskButtons,
+    title
+  });
 
   return (
     <AlertDialog open={open}>
@@ -171,7 +145,7 @@ export function AlertNotification({
           {showTaskButtons && (
             <NotificationButtons
               isLoading={isLoading}
-              referenceId={numericReferenceId}
+              referenceId={referenceId}
               onDismiss={onDismiss}
               onDone={handleDone}
             />

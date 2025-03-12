@@ -12,7 +12,7 @@ export const handleStart = async (
     // Convert string referenceId to number if needed
     const taskId = typeof referenceId === 'string' ? parseInt(referenceId, 10) : referenceId;
     
-    console.log('Processing task with ID:', taskId);
+    console.log('Processing task with ID:', taskId, 'Type:', typeof taskId);
     
     // Get current user
     const { data: { user } } = await supabase.auth.getUser();
@@ -43,6 +43,13 @@ export const handleStart = async (
         return;
       }
     } else {
+      // For test notifications with dummy IDs, just show success
+      if (taskId === 999999) {
+        toast.success('Test task completed');
+        onDismiss();
+        return;
+      }
+
       // Update regular task status
       const { error } = await supabase
         .from('tasks')
@@ -78,7 +85,7 @@ export const handleSnooze = async (
     // Convert string referenceId to number if needed
     const taskId = typeof referenceId === 'string' ? parseInt(referenceId, 10) : referenceId;
     
-    console.log('Snoozing task with ID:', taskId, 'for', minutes, 'minutes');
+    console.log('Snoozing task with ID:', taskId, 'Type:', typeof taskId, 'for', minutes, 'minutes');
     
     // Get current user
     const { data: { user } } = await supabase.auth.getUser();
@@ -87,9 +94,12 @@ export const handleSnooze = async (
       return;
     }
 
-    // Calculate new reminder time
-    const now = new Date();
-    const snoozeUntil = new Date(now.getTime() + minutes * 60000); // minutes to milliseconds
+    // For test notifications with dummy IDs, just show success and return
+    if (taskId === 999999) {
+      toast.success(`Test task snoozed for ${minutes} minutes`);
+      onDismiss();
+      return;
+    }
 
     // Determine if this is a shared task
     const { data: sharedTask } = await supabase
@@ -104,7 +114,7 @@ export const handleSnooze = async (
       toast.info(`Reminder snoozed for ${minutes} minutes`);
     } else {
       // First, check the schema to see what column exists for snooze
-      console.log('Updating task snooze time to:', snoozeUntil.toISOString());
+      console.log('Updating task snooze time to:', minutes);
       
       // Update using the proper field name based on the database schema
       const { error } = await supabase

@@ -8,7 +8,7 @@ import { handleSnooze } from "./notification-handlers";
 
 interface NotificationButtonsProps {
   isLoading: string | null;
-  referenceId: number | null | undefined;
+  referenceId: number | string | null | undefined;
   onDismiss: () => void;
   onDone: () => void;
 }
@@ -19,7 +19,7 @@ export function NotificationButtons({
   onDismiss,
   onDone
 }: NotificationButtonsProps) {
-  console.log('🔧 NotificationButtons render:', {
+  console.log('🔄 NotificationButtons render:', {
     isLoading,
     referenceId,
     type: typeof referenceId
@@ -50,8 +50,7 @@ export function NotificationButtons({
     }
   };
 
-  // Render buttons regardless of whether we have a referenceId or not
-  // This ensures buttons show up for test notifications
+  // Always render buttons - they will be conditionally displayed by the parent component
   return (
     <>
       <div className="flex gap-2 items-center">
