@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useCallback } from 'react';
 import { useTasks } from '@/hooks/use-tasks';
 import { Task } from '@/components/dashboard/TaskBoard';
@@ -27,7 +28,8 @@ export function useTaskNotifications() {
   const handleTaskComplete = async (task: Task) => {
     try {
       // For test notifications, just dismiss them
-      if (task.id === 999999 || task.id === "999999") {
+      // Convert to string for comparison to avoid type errors
+      if (task.id === 999999 || String(task.id) === "999999") {
         toast.success('Test task completed');
         return;
       }
@@ -73,6 +75,67 @@ export function useTaskNotifications() {
       toast.error('An unexpected error occurred');
     }
   };
+
+  // Define checkForUpcomingTasks before it's used
+  const checkForUpcomingTasks = useCallback(async (tasks: Task[]) => {
+    if (!isMountedRef.current) return;
+    
+    // Skip checking if last check was too recent (within last 5 seconds)
+    const now = Date.now();
+    if (now - lastCheckTimeRef.current < 5000) {
+      return; // Skip this check, it's too soon after the last one
+    }
+    
+    // Update last check time
+    lastCheckTimeRef.current = now;
+    
+    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const currentTime = new Date();
+    
+    // Only check tasks that need to be checked
+    const tasksToCheck = tasks.filter(task => 
+      task.reminder_enabled && 
+      !notifiedTasksRef.current.has(task.id) &&
+      task.status === 'scheduled' && 
+      task.date && 
+      task.start_time &&
+      (isToday(parseISO(task.date)) || isFuture(parseISO(task.date)))
+    );
+    
+    for (const task of tasksToCheck) {
+      if (!isMountedRef.current) break;
+      
+      try {
+        const taskDate = parseISO(task.date!);
+        
+        const [hours, minutes] = task.start_time!.split(':').map(Number);
+        const taskDateString = formatInTimeZone(taskDate, userTimeZone, 'yyyy-MM-dd');
+        const taskTimeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
+        const taskDateTimeString = `${taskDateString}T${taskTimeString}`;
+        
+        const taskDateTime = toZonedTime(new Date(taskDateTimeString), userTimeZone);
+        const timeUntilTask = taskDateTime.getTime() - currentTime.getTime();
+        const minutesUntilTask = timeUntilTask / (1000 * 60);
+
+        const reminderWindowStart = task.reminder_time! + 0.5;
+        const reminderWindowEnd = task.reminder_time! - 0.5;
+        
+        if (minutesUntilTask <= reminderWindowStart && 
+            minutesUntilTask > reminderWindowEnd) {
+          const notificationSent = await showTaskNotification(task, 'reminder');
+          
+          if (notificationSent && isMountedRef.current) {
+            console.log('✅ Reminder notification sent successfully');
+            notifiedTasksRef.current.add(task.id);
+          }
+        }
+      } catch (error) {
+        if (isMountedRef.current) {
+          console.error('Error processing task notification:', error);
+        }
+      }
+    }
+  }, [showTaskNotification]);
 
   const showTaskNotification = useCallback(async (task: Task, type: 'reminder' | 'shared' | 'assignment' = 'reminder') => {
     if (!isMountedRef.current) return false;
@@ -157,66 +220,6 @@ export function useTaskNotifications() {
       console.log('🔔 Task notifications hook cleanup');
     };
   }, [tasks, checkForUpcomingTasks, showNotification]);
-
-  const checkForUpcomingTasks = useCallback(async (tasks: Task[]) => {
-    if (!isMountedRef.current) return;
-    
-    // Skip checking if last check was too recent (within last 5 seconds)
-    const now = Date.now();
-    if (now - lastCheckTimeRef.current < 5000) {
-      return; // Skip this check, it's too soon after the last one
-    }
-    
-    // Update last check time
-    lastCheckTimeRef.current = now;
-    
-    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const currentTime = new Date();
-    
-    // Only check tasks that need to be checked
-    const tasksToCheck = tasks.filter(task => 
-      task.reminder_enabled && 
-      !notifiedTasksRef.current.has(task.id) &&
-      task.status === 'scheduled' && 
-      task.date && 
-      task.start_time &&
-      (isToday(parseISO(task.date)) || isFuture(parseISO(task.date)))
-    );
-    
-    for (const task of tasksToCheck) {
-      if (!isMountedRef.current) break;
-      
-      try {
-        const taskDate = parseISO(task.date!);
-        
-        const [hours, minutes] = task.start_time!.split(':').map(Number);
-        const taskDateString = formatInTimeZone(taskDate, userTimeZone, 'yyyy-MM-dd');
-        const taskTimeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
-        const taskDateTimeString = `${taskDateString}T${taskTimeString}`;
-        
-        const taskDateTime = toZonedTime(new Date(taskDateTimeString), userTimeZone);
-        const timeUntilTask = taskDateTime.getTime() - currentTime.getTime();
-        const minutesUntilTask = timeUntilTask / (1000 * 60);
-
-        const reminderWindowStart = task.reminder_time! + 0.5;
-        const reminderWindowEnd = task.reminder_time! - 0.5;
-        
-        if (minutesUntilTask <= reminderWindowStart && 
-            minutesUntilTask > reminderWindowEnd) {
-          const notificationSent = await showTaskNotification(task, 'reminder');
-          
-          if (notificationSent && isMountedRef.current) {
-            console.log('✅ Reminder notification sent successfully');
-            notifiedTasksRef.current.add(task.id);
-          }
-        }
-      } catch (error) {
-        if (isMountedRef.current) {
-          console.error('Error processing task notification:', error);
-        }
-      }
-    }
-  }, [showTaskNotification]);
 
   return {
     handleTaskComplete,
