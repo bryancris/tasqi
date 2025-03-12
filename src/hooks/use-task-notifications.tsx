@@ -26,20 +26,7 @@ export function useTaskNotifications() {
     console.log('🔔 Task notifications hook initialized');
     isMountedRef.current = true;
     
-    // For testing purposes, show a test notification
-    setTimeout(() => {
-      if (isMountedRef.current) {
-        console.log('Creating test notification with ID 999999');
-        showNotification({
-          title: 'Task Reminder',
-          message: 'This is a test notification with action buttons',
-          type: 'info',
-          persistent: true,
-          referenceId: "999999",  // Use string format consistently
-          referenceType: 'task',
-        });
-      }
-    }, 3000);
+    // Remove automatic test notification that was here
     
     // Initial check on mount if we have tasks
     if (tasks.length > 0) {
