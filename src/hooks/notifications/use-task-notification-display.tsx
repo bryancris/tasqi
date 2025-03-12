@@ -33,7 +33,7 @@ export function useTaskNotificationDisplay() {
       
       console.log('📱 Creating notification with referenceId:', referenceIdString, 'Type:', typeof referenceIdString);
 
-      // Always including referenceType as 'task' to ensure buttons display
+      // Ensure we set referenceType as 'task' consistently for all task notifications
       showNotification({
         title: type === 'reminder' ? 'Task Reminder' :
                type === 'shared' ? 'Task Shared' :

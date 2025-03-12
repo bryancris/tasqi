@@ -1,4 +1,3 @@
-
 import { useEffect, useRef } from 'react';
 import { useTasks } from '@/hooks/use-tasks';
 import { useNotifications } from '@/hooks/notifications/use-notifications';
@@ -22,21 +21,20 @@ export function useTaskNotifications() {
   const { showTaskNotification } = useTaskNotificationDisplay();
   const { checkForUpcomingTasks } = useTaskChecker();
 
-  // Improved test notification function with guaranteed structure
+  // Enhanced test notification function that creates a notification with proper structure for button display
   const triggerTestNotification = () => {
     console.log('🧪 Triggering test notification with ID: 999999');
     
     if (isMountedRef.current) {
       console.log(`✅ Creating test notification with ID: 999999, type: task`);
       
-      // Create a simplified test notification with a consistent structure
-      // The referenceId and referenceType fields are crucial for button display
+      // Create a notification with ALL properties needed for task buttons
       showNotification({
         title: "Task Reminder",
         message: "This is a test notification with action buttons",
         type: "info",
         persistent: true,
-        referenceId: "999999",  // String format
+        referenceId: "999999",  // MUST be string format for consistent handling
         referenceType: "task",  // MUST be "task" to trigger task-specific buttons
         group: "test-notification"
       });
