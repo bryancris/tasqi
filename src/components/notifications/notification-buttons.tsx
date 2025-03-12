@@ -68,7 +68,7 @@ export const NotificationButtons = ({
     
     try {
       // For test notifications, simulate success
-      if (isTestNotification) {
+      if (isTestNotification || String(referenceId) === "999999") {
         console.log('Test notification - simulating snooze');
         await new Promise(resolve => setTimeout(resolve, 1000));
         toast.success(`Test task snoozed for ${snoozeTime} minutes`);
@@ -83,6 +83,16 @@ export const NotificationButtons = ({
       setIsSnoozing(false);
     }
   };
+
+  // Additional debug log on mount
+  useEffect(() => {
+    console.log('🔔 NotificationButtons MOUNTED with referenceId:', 
+      referenceId,
+      'Type:', typeof referenceId,
+      'String value:', String(referenceId),
+      'isTestNotification:', isTestNotification
+    );
+  }, [referenceId, isTestNotification]);
 
   return (
     <div 

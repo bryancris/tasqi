@@ -37,13 +37,15 @@ export const debugLogNotification = (
   
   const isTaskBasedOnTitle = title?.toLowerCase().includes('task');
   
-  // This is now a direct string comparison - simple and reliable
-  const isTestId = typeof referenceId === 'string' && referenceId === '999999';
-  const isTestNumId = typeof referenceId === 'number' && referenceId === 999999;
-  const isTestNotificationInstance = isTestId || isTestNumId;
+  // CRITICAL: Direct string comparison ensures most reliable test detection
+  const stringId = typeof referenceId === 'string' || typeof referenceId === 'number' 
+    ? String(referenceId) 
+    : '';
+  
+  const isTestNotification = stringId === '999999';
   
   // This is the key calculation for showing buttons
-  const showingButtons = isTestNotificationInstance || 
+  const showingButtons = isTestNotification || 
     ((referenceId !== undefined && referenceId !== null) &&
      ((referenceType === 'task') || (title?.toLowerCase().includes('task'))));
 
@@ -59,9 +61,7 @@ export const debugLogNotification = (
     referenceType,
     isTask,
     isTaskBasedOnTitle,
-    isTestNotification: isTestNotificationInstance,
-    isTestId,
-    isTestNumId,
+    isTestNotification,
     showingButtons,
     properties: Object.keys({
       title,
@@ -76,33 +76,32 @@ export const debugLogNotification = (
 
 /**
  * DRASTICALLY SIMPLIFIED: Direct string/number comparison for test notifications
- * Much more reliable than previous complex logic
  */
 export const isTestNotification = (referenceId?: number | string | null): boolean => {
-  // Simple direct comparison - convert to string for logging
+  // Direct string comparison is most reliable
   const stringId = referenceId !== undefined && referenceId !== null ? String(referenceId) : '';
   const isTest = stringId === '999999';
   
-  console.log(`🧪 SIMPLIFIED Test ID check: ${stringId} === '999999' => ${isTest}`);
+  console.log(`🧪 TEST ID CHECK: "${stringId}" === "999999" => ${isTest}`);
   return isTest;
 };
 
 /**
  * Validates that a notification should show task buttons
- * DRASTICALLY SIMPLIFIED: For test notifications (999999), always returns true
  */
 export const validateTaskNotification = (notification: DebugNotification): boolean => {
-  // MOST IMPORTANT: Direct string/number comparison - much more reliable
+  // MOST IMPORTANT: Direct string comparison for test notifications
   const stringId = notification.referenceId !== undefined && notification.referenceId !== null 
     ? String(notification.referenceId) 
     : '';
   
+  // Test notifications ALWAYS return true to show buttons
   if (stringId === '999999') {
     console.log('🧪 TEST NOTIFICATION VALIDATED - ID matches 999999 exactly');
     return true;
   }
   
-  // Regular task notification check - needs both referenceId and task reference or task in title
+  // Regular task notification check
   const isTaskNotification = !!notification.referenceId && 
     (notification.referenceType === 'task' || 
      notification.title?.toLowerCase().includes('task'));

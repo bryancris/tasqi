@@ -34,28 +34,29 @@ export const NotificationContent = ({
   const [isLoading, setIsLoading] = React.useState<string | null>(null);
   const queryClient = useQueryClient();
   
-  // SIMPLIFIED TEST ID CHECK: Direct comparison instead of complex function
+  // New: DIRECT test ID check without any complex logic
   const isTestNotification = React.useMemo(() => {
-    const stringId = referenceId !== undefined && referenceId !== null ? String(referenceId) : '';
-    const result = stringId === '999999';
-    console.log(`⭐ DIRECT TEST ID CHECK in NotificationContent: "${stringId}" === "999999" => ${result}`);
+    // Convert referenceId to string for comparison
+    const stringId = referenceId !== undefined && referenceId !== null ? String(referenceId) : "";
+    const result = stringId === "999999";
+    
+    console.log(`🔍 TEST CHECK: referenceId=${stringId}, isTest=${result}, type=${typeof referenceId}`);
+    
     return result;
   }, [referenceId]);
-  
-  // On mount - always log properties and CLEARLY indicate if test notification
+
+  // Log complete notification details for debugging
   React.useEffect(() => {
-    console.log('🔴 NotificationContent MOUNT with:', {
-      title,
-      message,
+    console.log('🧨 NOTIFICATION CONTENT MOUNTED:', { 
+      title, 
+      message, 
       referenceId,
-      referenceIdType: typeof referenceId, 
-      referenceIdString: referenceId !== undefined && referenceId !== null ? String(referenceId) : "undefined/null",
       referenceType,
       isTestNotification,
-      showingTaskButtons: isTestNotification ? "YES - TEST NOTIFICATION" : "Regular notification"
+      isDialogOpen,
+      type
     });
     
-    // Always log full notification details for debugging
     debugLogNotification({
       title,
       message,
@@ -63,17 +64,13 @@ export const NotificationContent = ({
       referenceId,
       referenceType,
     }, 'NotificationContent mount');
-    
-    if (isTestNotification) {
-      console.log('🎯 TEST NOTIFICATION (999999) DETECTED - WILL SHOW BUTTONS');
-    }
-  }, [title, message, referenceId, referenceType, isTestNotification]);
+  }, [title, message, referenceId, referenceType, isTestNotification, isDialogOpen, type]);
 
   const handleDone = async () => {
     try {
       setIsLoading('done');
       
-      // Special handling for test task notification
+      // Special handling for test notification
       if (isTestNotification) {
         console.log('✅ Test notification - simulating completion');
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -97,15 +94,15 @@ export const NotificationContent = ({
     }
   };
 
-  // COMPLETELY DIFFERENT APPROACH: Immediate check for test notification
-  // This happens before any other logic - guaranteed to render buttons
+  // NEW APPROACH: SEPARATE RENDER PATH FOR TEST NOTIFICATIONS
+  // This guarantees test notifications always show buttons
   if (isTestNotification) {
-    console.log('⭐ RENDERING TEST NOTIFICATION BUTTONS (ID: 999999)');
+    console.log('🚨 RENDERING TEST NOTIFICATION BUTTONS - ID: 999999');
     
     return (
       <AlertDialogFooter 
         className="flex-col sm:flex-col gap-3 sm:gap-3 mt-2 items-start"
-        data-test-notification="true"
+        data-testid="test-notification-buttons"
         data-reference-id={String(referenceId)}
       >
         <NotificationButtons
@@ -120,15 +117,16 @@ export const NotificationContent = ({
     );
   }
 
-  // For task notifications (regular path)
+  // Regular task notifications path
   const isTaskNotification = !!referenceId && 
     (referenceType === 'task' || title?.toLowerCase().includes('task'));
+  
+  console.log('🔄 Regular notification - showing task buttons?', isTaskNotification);
 
   return (
     <AlertDialogFooter 
       className="flex-col sm:flex-col gap-3 sm:gap-3 mt-2 items-start"
       data-has-task-buttons={isTaskNotification ? "true" : "false"}
-      data-test-notification="false"
       data-reference-id={referenceId ? String(referenceId) : "none"}
     >
       {isTaskNotification ? (

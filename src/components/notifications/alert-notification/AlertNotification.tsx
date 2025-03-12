@@ -43,29 +43,28 @@ export function AlertNotification({
   // Track when dialog is fully open
   const [isFullyOpen, setIsFullyOpen] = React.useState(false);
   
-  // Determine if this is a test notification - direct check, most reliable
+  // ALWAYS check for test notification - now very simple and direct
   const isTestNotification = React.useMemo(() => {
-    const stringId = referenceId !== undefined && referenceId !== null ? String(referenceId) : '';
-    const result = stringId === '999999';
-    console.log(`🧪 AlertNotification - Direct Test ID check: "${stringId}" === "999999" => ${result}`);
-    return result;
+    if (referenceId === undefined || referenceId === null) return false;
+    return String(referenceId) === "999999";
   }, [referenceId]);
   
-  // Log every render with detailed information
+  // Log every notification rendering
   React.useEffect(() => {
-    console.log('🔔 RENDERING AlertNotification:', {
+    // Direct string comparison for test notification ID
+    const stringId = referenceId !== undefined && referenceId !== null ? String(referenceId) : "none";
+    
+    console.log('⚡ ALERT NOTIFICATION RENDER:', {
       title,
       message,
       referenceId,
-      referenceIdType: typeof referenceId,
-      referenceIdValue: referenceId !== undefined && referenceId !== null ? String(referenceId) : "undefined/null",
+      referenceIdAsString: stringId,
       referenceType,
-      isTaskRelated: title?.toLowerCase().includes('task') || referenceType === 'task',
-      isTestNotification,
+      isTestNotification: stringId === "999999",
     });
     
     if (isTestNotification) {
-      console.log('🎯 TEST NOTIFICATION DETECTED in AlertNotification - ID: 999999');
+      console.log('🔥 RENDERING TEST NOTIFICATION (999999)');
     }
   }, [title, message, referenceId, referenceType, isTestNotification]);
 
@@ -112,7 +111,7 @@ export function AlertNotification({
           type === 'warning' && 'border-l-4 border-l-[#FEC6A1] bg-[#FFFAF5]',
           type === 'info' && 'border-l-4 border-l-[#9b87f5] bg-[#F8F7FF]'
         )}
-        // Set explicit data attributes for debugging
+        // Clear debugging attributes
         data-test-notification={isTestNotification ? "true" : "false"}
         data-reference-id={referenceId !== undefined && referenceId !== null ? String(referenceId) : "none"}
         data-reference-type={referenceType || "none"}
