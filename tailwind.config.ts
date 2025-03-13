@@ -75,6 +75,11 @@ export default {
           "0%, 100%": { backgroundPosition: "0% 50%" },
           "50%": { backgroundPosition: "100% 50%" },
         },
+        "wave": {
+          "0%": { transform: "translateX(0) translateZ(0)" },
+          "50%": { transform: "translateX(-25%) translateZ(0)" },
+          "100%": { transform: "translateX(0) translateZ(0)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -82,6 +87,9 @@ export default {
         "spin": "spin 3s linear infinite",
         "rainbow-border": "rainbow-border 6s linear infinite",
         "rainbow-border-fast": "rainbow-border 3s linear infinite",
+        "wave-slow": "wave 20s ease-in-out infinite",
+        "wave-medium": "wave 15s ease-in-out infinite reverse",
+        "wave-fast": "wave 12s ease-in-out infinite",
       },
     },
   },

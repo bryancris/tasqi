@@ -22,6 +22,7 @@ import {
 import HeroSection from "@/components/home/HeroSection";
 import FeatureSection from "@/components/home/FeatureSection";
 import NavButtons from "@/components/home/NavButtons";
+import GradientWaveBackground from "@/components/home/GradientWaveBackground";
 import { useEffect } from "react";
 
 const Index = () => {
@@ -120,7 +121,8 @@ const Index = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-white text-gray-900 py-12 px-4 md:px-8 content-container">
+      <GradientWaveBackground />
+      <div className="min-h-screen text-gray-900 py-12 px-4 md:px-8 content-container relative z-10">
         <NavButtons />
         <HeroSection />
         <FeatureSection title="AI Task Management" features={aiTaskManagementFeatures} />
