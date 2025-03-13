@@ -55,87 +55,113 @@ export function useTaskChecker() {
       task.start_time
     );
     
-    console.log(`⏰ Checking ${tasksToCheck.length} tasks for notifications at ${currentTime.toISOString()}`);
+    console.log(`⏰ Checking ${tasksToCheck.length} tasks for notifications at ${currentTime.toISOString()} (${userTimeZone})`);
     
     for (const task of tasksToCheck) {
       if (!isMounted.current) break;
       
       try {
+        // Log task ID for debugging
+        console.log(`📋 Processing task ${task.id} (${task.title}):`);
+        
         const taskDate = parseISO(task.date!);
         
         // Skip tasks that aren't today or in the future
         if (!isToday(taskDate) && !isFuture(taskDate)) {
+          console.log(`   - Task ${task.id}: Skipping, not today or in future. Date: ${taskDate.toISOString()}`);
           continue;
         }
         
+        // Parse the task's start time
         const [hours, minutes] = task.start_time!.split(':').map(Number);
+        
+        // Build full date-time string in user's timezone
         const taskDateString = formatInTimeZone(taskDate, userTimeZone, 'yyyy-MM-dd');
         const taskTimeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
         const taskDateTimeString = `${taskDateString}T${taskTimeString}`;
         
+        console.log(`   - Task ${task.id}: Raw task date-time string: ${taskDateTimeString}`);
+        
+        // Convert to a date object in the user's timezone
         const taskDateTime = toZonedTime(new Date(taskDateTimeString), userTimeZone);
+        
+        // Calculate time until task needs to be notified
         const timeUntilTask = taskDateTime.getTime() - currentTime.getTime();
         const minutesUntilTask = timeUntilTask / (1000 * 60);
 
-        // Debug logging for ALL tasks we're checking
-        console.log(`📋 Task ${task.id} (${task.title}):`);
-        console.log(`   - Reminder time: ${task.reminder_time} minutes`);
-        console.log(`   - Date: ${taskDate.toISOString()}`);
-        console.log(`   - Start time: ${task.start_time}`);
-        console.log(`   - Task scheduled for: ${taskDateTime.toISOString()}`);
-        console.log(`   - Current time: ${currentTime.toISOString()}`);
-        console.log(`   - Minutes until task: ${minutesUntilTask.toFixed(2)}`);
+        // Enhanced logging
+        console.log(`   - Task ${task.id}: Date: ${taskDate.toISOString()}`);
+        console.log(`   - Task ${task.id}: Start time: ${task.start_time}`);
+        console.log(`   - Task ${task.id}: Task scheduled for: ${taskDateTime.toISOString()}`);
+        console.log(`   - Task ${task.id}: Current time: ${currentTime.toISOString()}`);
+        console.log(`   - Task ${task.id}: Minutes until task: ${minutesUntilTask.toFixed(2)}`);
+        console.log(`   - Task ${task.id}: Reminder time setting: ${task.reminder_time} minute(s)`);
 
-        // Set target notification time based on reminder_time
-        const targetMinutesBeforeTask = task.reminder_time!;
+        // Uniform approach for all notification times
+        const targetReminderTime = task.reminder_time!; // minutes before task
+        const windowSize = 3; // Use a larger window to prevent missing notifications
         
-        // For "At start time" (0), use a wider window of 2 minutes
-        // For advance notices, use smaller window of 0.5 minutes
-        const windowSizeMinutes = targetMinutesBeforeTask === 0 ? 2 : 0.5;
+        // For "At start time" (reminder_time = 0), we need to be very close to the actual start time
+        // For advance reminders (reminder_time > 0), we need to be near the notification point
         
-        // Calculate window boundaries differently for "At start time" vs. advance reminders
-        if (targetMinutesBeforeTask === 0) {
-          // For "At start time", we want to notify when we're VERY close to the start time
-          // (within +/- windowSizeMinutes of the start time)
-          if (Math.abs(minutesUntilTask) <= windowSizeMinutes) {
-            console.log(`🔔 MATCH! Task ${task.id} (${task.title}) matches "At start time" criteria:`);
-            console.log(`   - Using absolute value check: |${minutesUntilTask.toFixed(2)}| <= ${windowSizeMinutes}`);
-            console.log(`   - We are ${Math.abs(minutesUntilTask).toFixed(2)} minutes from the exact start time`);
-            
+        // Calculate the actual target point in minutes from now
+        const targetPoint = targetReminderTime === 0 
+          ? 0  // For "at start time", target is 0 minutes from start
+          : targetReminderTime;  // For advance reminders, target is reminder_time minutes before
+        
+        // Check if we're within the notification window
+        const isTimeToNotify = targetReminderTime === 0
+          // For "at start time", check if we're within windowSize minutes of the exact start time (before or after)
+          ? Math.abs(minutesUntilTask) <= windowSize
+          // For advance reminders, check if we're within windowSize minutes of the reminder point
+          : Math.abs(minutesUntilTask - targetReminderTime) <= windowSize;
+        
+        console.log(`   - Task ${task.id}: Target point: ${targetPoint} minutes`);
+        console.log(`   - Task ${task.id}: Window size: ${windowSize} minutes`);
+        console.log(`   - Task ${task.id}: Is time to notify: ${isTimeToNotify}`);
+        
+        if (isTimeToNotify) {
+          // We're in the notification window!
+          console.log(`🔔 MATCH! Task ${task.id} (${task.title}) matches notification criteria:`);
+          console.log(`   - Type: ${targetReminderTime === 0 ? '"At start time"' : 'Advance reminder'}`);
+          console.log(`   - Current time: ${new Date().toISOString()}`);
+          console.log(`   - Task time: ${taskDateTime.toISOString()}`);
+          console.log(`   - Minutes until task: ${minutesUntilTask.toFixed(2)}`);
+          console.log(`   - Notification window: ${windowSize} minutes`);
+          
+          // Special debugging for task 88
+          if (task.id === 88) {
+            console.log(`🔍 SPECIAL DEBUGGING FOR TASK 88:`);
+            console.log(`   - Raw task date: ${task.date}`);
+            console.log(`   - Raw task time: ${task.start_time}`);
+            console.log(`   - User timezone: ${userTimeZone}`);
+            console.log(`   - Task date string: ${taskDateString}`);
+            console.log(`   - Task time string: ${taskTimeString}`);
+            console.log(`   - Full datetime string: ${taskDateTimeString}`);
+            console.log(`   - Parsed task date/time: ${taskDateTime.toString()}`);
+            console.log(`   - Current time: ${currentTime.toString()}`);
+            console.log(`   - Time diff (ms): ${timeUntilTask}`);
+            console.log(`   - Time diff (min): ${minutesUntilTask}`);
+          }
+          
+          try {
             const notificationSent = await showTaskNotification(task, 'reminder');
             
             if (notificationSent && isMounted.current) {
-              console.log('✅ At-start-time notification sent successfully');
+              console.log(`✅ Task ${task.id}: Notification sent successfully!`);
               notifiedTasks.current.add(task.id);
             } else {
-              console.error('❌ Failed to send at-start-time notification');
+              console.error(`❌ Task ${task.id}: Failed to send notification`);
             }
+          } catch (notifyError) {
+            console.error(`❌ Task ${task.id}: Error sending notification:`, notifyError);
           }
         } else {
-          // For advance reminders, use the traditional window approach
-          // We want to notify when we're exactly X minutes before the task (with a small window)
-          const upperBound = targetMinutesBeforeTask + windowSizeMinutes;
-          const lowerBound = targetMinutesBeforeTask - windowSizeMinutes;
-          
-          if (minutesUntilTask <= upperBound && minutesUntilTask > lowerBound) {
-            console.log(`🔔 MATCH! Task ${task.id} (${task.title}) matches advance reminder criteria:`);
-            console.log(`   - Target time point: ${targetMinutesBeforeTask} minutes before task`);
-            console.log(`   - Window: ${lowerBound} to ${upperBound} minutes before task`);
-            console.log(`   - Current: ${minutesUntilTask.toFixed(2)} minutes until task`);
-            
-            const notificationSent = await showTaskNotification(task, 'reminder');
-            
-            if (notificationSent && isMounted.current) {
-              console.log('✅ Advance-reminder notification sent successfully');
-              notifiedTasks.current.add(task.id);
-            } else {
-              console.error('❌ Failed to send advance-reminder notification');
-            }
-          }
+          console.log(`⏳ Task ${task.id}: Not yet time to notify`);
         }
       } catch (error) {
         if (isMounted.current) {
-          console.error('Error processing task notification:', error);
+          console.error(`❌ Error processing task ${task.id} notification:`, error);
         }
       }
     }

@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 import type { Database } from "../_shared/database.types.ts";
@@ -93,30 +92,28 @@ async function processNotifications() {
           console.log(`- Notification time: ${notificationTime.toISOString()}`);
           console.log(`- Current time: ${now.toISOString()}`);
           
-          // Create a symmetrical buffer to avoid missing notifications
-          // This means we'll process notifications if they are close to the target time
-          const bufferMs = reminderTime === 0 ? 2 * 60 * 1000 : 30 * 1000; // 2 minutes for start time, 30 seconds for others
+          // Use a larger window size for all notifications to ensure they're not missed
+          const windowSizeMs = 3 * 60 * 1000; // 3 minutes window
           
-          // For "at start time" notifications, check if we're within the buffer window
-          // of the actual start time, not an offset time
           if (reminderTime === 0) {
+            // For "at start time" notifications, check if we're within the window of the actual start time
             const timeDiffMs = Math.abs(taskDateTime.getTime() - now.getTime());
             console.log(`- Time difference from start time: ${timeDiffMs / 1000 / 60} minutes`);
             
-            if (timeDiffMs > bufferMs) {
-              console.log(`Task reminder ${event.id} has "at start time" setting but is outside the ${bufferMs/1000/60} minute window, skipping for now`);
-              console.log(`- Buffer window: ${bufferMs/1000/60} minutes before/after start time`);
+            if (timeDiffMs > windowSizeMs) {
+              console.log(`Task reminder ${event.id} has "at start time" setting but is outside the ${windowSizeMs/1000/60} minute window, skipping for now`);
+              console.log(`- Buffer window: ${windowSizeMs/1000/60} minutes before/after start time`);
               continue;
             } else {
-              console.log(`✅ Task reminder ${event.id} for "at start time" IS DUE NOW - within ${bufferMs/1000/60} minute window!`);
+              console.log(`✅ Task reminder ${event.id} for "at start time" IS DUE NOW - within ${windowSizeMs/1000/60} minute window!`);
             }
           } else {
-            // For other reminder times, use the offset notification time with a buffer
-            const timeDiffMs = notificationTime.getTime() - now.getTime();
+            // For other reminder times, check if we're within the window of when notification should be sent
+            const timeDiffMs = Math.abs(notificationTime.getTime() - now.getTime());
             
-            // If the notification time is in the future (beyond buffer), skip it for now
-            if (timeDiffMs > bufferMs) {
-              console.log(`Task reminder ${event.id} scheduled for ${notificationTime.toISOString()}, current time is ${now.toISOString()}, skipping for now`);
+            if (timeDiffMs > windowSizeMs) {
+              console.log(`Task reminder ${event.id} scheduled for ${notificationTime.toISOString()}, time difference is ${timeDiffMs/1000/60} minutes, skipping for now`);
+              console.log(`- Buffer window: ${windowSizeMs/1000/60} minutes`);
               continue;
             } else {
               console.log(`✅ Task reminder ${event.id} is due NOW - processing notification!`);
