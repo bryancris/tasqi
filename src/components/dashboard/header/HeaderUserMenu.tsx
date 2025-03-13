@@ -63,7 +63,13 @@ export function HeaderUserMenu() {
     }, 100); 
   };
 
-  const handleTestNotification = () => {
+  const handleTestNotification = (e: React.MouseEvent) => {
+    // Prevent default browser behavior to avoid page reload
+    e.preventDefault();
+    
+    // Stop event propagation to prevent it from bubbling up
+    e.stopPropagation();
+    
     console.log('🔔 Triggering test task notification with buttons');
     
     // Close the dropdown menu first
