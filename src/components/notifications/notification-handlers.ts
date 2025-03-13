@@ -169,7 +169,8 @@ export const handleSnooze = async (
           end_time: taskData.end_time,
           snoozed: true,
           snoozed_at: now.toISOString(),
-          snooze_minutes: minutes
+          snooze_minutes: minutes,
+          reminder_time: '0' // Set to "At start time" for snoozed notifications
         },
         status: 'pending'
       });

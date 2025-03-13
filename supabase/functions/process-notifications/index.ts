@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 import type { Database } from "../_shared/database.types.ts";
@@ -62,6 +61,34 @@ async function processNotifications() {
           // If the target time is in the future, skip for now
           if (targetDate > now) {
             console.log(`Snoozed notification ${event.id} is scheduled for ${targetDate.toISOString()}, skipping for now`);
+            continue;
+          }
+        }
+      }
+      // Handle task reminders that need to be sent based on reminder_time
+      else if (event.event_type === 'task_reminder' && !event.metadata?.snoozed) {
+        // Get task date and start time from metadata
+        const taskDate = event.metadata?.date;
+        const taskStartTime = event.metadata?.start_time;
+        const reminderTime = parseInt(event.metadata?.reminder_time || '15', 10);
+        
+        if (taskDate && taskStartTime) {
+          // Parse the time for the task
+          const [hours, minutes] = taskStartTime.split(':').map(Number);
+          const taskDateTime = new Date(taskDate);
+          taskDateTime.setHours(hours, minutes, 0, 0);
+          
+          // Calculate when the notification should be sent
+          // If reminderTime is 0, notification should be sent at the start time
+          // Otherwise, it should be sent reminderTime minutes before
+          const notificationTime = new Date(taskDateTime);
+          if (reminderTime > 0) {
+            notificationTime.setMinutes(notificationTime.getMinutes() - reminderTime);
+          }
+          
+          // If the notification time is in the future, skip it for now
+          if (notificationTime > now) {
+            console.log(`Task reminder ${event.id} scheduled for ${notificationTime.toISOString()}, current time is ${now.toISOString()}, skipping for now`);
             continue;
           }
         }

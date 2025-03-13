@@ -23,6 +23,7 @@ interface TaskNotificationFieldsProps {
 }
 
 const REMINDER_TIME_OPTIONS = [
+  { value: 0, label: 'At start time' },
   { value: 5, label: '5 minutes before' },
   { value: 10, label: '10 minutes before' },
   { value: 15, label: '15 minutes before' },
