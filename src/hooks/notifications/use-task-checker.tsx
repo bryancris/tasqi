@@ -86,43 +86,36 @@ export function useTaskChecker() {
         console.log(`   - Current time: ${currentTime.toISOString()}`);
         console.log(`   - Minutes until task: ${minutesUntilTask.toFixed(2)}`);
 
-        // Handle "At start time" (reminderTime = 0) notifications with a WIDER window
-        if (task.reminder_time === 0) {
-          // Create a 4-minute window around the exact start time (2 minutes before to 2 minutes after)
-          // This ensures we don't miss the notification due to timing issues
-          if (Math.abs(minutesUntilTask) <= 2) {
-            console.log(`🔔 MATCH! Task ${task.id} (${task.title}) is due now (At start time reminder)`);
-            console.log(`   - Window criteria: |${minutesUntilTask.toFixed(2)}| <= 2 minutes`);
-            
-            const notificationSent = await showTaskNotification(task, 'reminder');
-            
-            if (notificationSent && isMounted.current) {
-              console.log('✅ At-start-time notification sent successfully');
-              notifiedTasks.current.add(task.id);
-            } else {
-              console.error('❌ Failed to send at-start-time notification');
-            }
-          } else {
-            console.log(`⏳ Task ${task.id} not due yet for At-start-time notification (${Math.abs(minutesUntilTask).toFixed(2)} min outside window)`);
-          }
-        } else {
-          // For other reminder times, use the window approach
-          const reminderWindowStart = task.reminder_time! + 0.5;
-          const reminderWindowEnd = task.reminder_time! - 0.5;
+        // Use a consistent approach for all reminder times including "At start time" (0)
+        // Calculate the target notification time based on the reminder_time
+        let targetMinutesBeforeTask = task.reminder_time!;
+        
+        // Create a window around the exact notification time to ensure we don't miss it
+        // For "At start time" (0), we want to notify when we're very close to the start time
+        // For advance notices, we want to notify when we're close to the reminder time
+        const windowSizeMinutes = targetMinutesBeforeTask === 0 ? 2 : 0.5;
+        
+        // Calculate if we're within the notification window
+        // If reminder_time = 0 (at start time), then we want to be within windowSize of the start time
+        // If reminder_time > 0, we want to be within windowSize of (start time - reminder_time)
+        const targetTimePoint = targetMinutesBeforeTask === 0 ? 0 : targetMinutesBeforeTask;
+        const upperBound = targetTimePoint + windowSizeMinutes;
+        const lowerBound = targetTimePoint - windowSizeMinutes;
+                
+        // Check if we're in the notification window
+        if (minutesUntilTask <= upperBound && minutesUntilTask > lowerBound) {
+          console.log(`🔔 MATCH! Task ${task.id} (${task.title}) matches notification criteria:`);
+          console.log(`   - Target time point: ${targetTimePoint} minutes before task`);
+          console.log(`   - Window: ${lowerBound} to ${upperBound} minutes before task`);
+          console.log(`   - Current: ${minutesUntilTask.toFixed(2)} minutes until task`);
           
-          if (minutesUntilTask <= reminderWindowStart && 
-              minutesUntilTask > reminderWindowEnd) {
-            console.log(`🔔 MATCH! Task ${task.id} (${task.title}) is due in ${minutesUntilTask.toFixed(1)} minutes (${task.reminder_time} minute reminder)`);
-            console.log(`   - Window criteria: ${reminderWindowEnd} < ${minutesUntilTask.toFixed(2)} <= ${reminderWindowStart}`);
-            
-            const notificationSent = await showTaskNotification(task, 'reminder');
-            
-            if (notificationSent && isMounted.current) {
-              console.log('✅ Reminder notification sent successfully');
-              notifiedTasks.current.add(task.id);
-            } else {
-              console.error('❌ Failed to send reminder notification');
-            }
+          const notificationSent = await showTaskNotification(task, 'reminder');
+          
+          if (notificationSent && isMounted.current) {
+            console.log('✅ Notification sent successfully');
+            notifiedTasks.current.add(task.id);
+          } else {
+            console.error('❌ Failed to send notification');
           }
         }
       } catch (error) {
