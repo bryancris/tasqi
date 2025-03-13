@@ -6,7 +6,7 @@ const HeroSection = () => {
   return (
     <div className="max-w-4xl mx-auto text-center py-16 md:py-24">
       <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-        TASQI-AI: The Complete Productivity Suite
+        TASQI (task-ee): The Complete Productivity Suite
       </h1>
       <p className="text-lg md:text-xl text-gray-700 mb-8 max-w-3xl mx-auto">
         Transform your productivity with AI-powered task management, self-care tools, smart organization, and collaboration features. TASQI adapts to your workflow and helps you achieve more with less effort.
