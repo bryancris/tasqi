@@ -11,15 +11,10 @@ const HeroSection = () => {
       <p className="text-lg md:text-xl text-gray-700 mb-8 max-w-3xl mx-auto">
         Transform your productivity with AI-powered task management, self-care tools, smart organization, and collaboration features. TASQI adapts to your workflow and helps you achieve more with less effort.
       </p>
-      <div className="flex flex-col sm:flex-row gap-4 justify-center">
+      <div className="flex justify-center">
         <Link to="/auth">
           <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 text-lg rounded-lg">
             Get Started
-          </Button>
-        </Link>
-        <Link to="/dashboard">
-          <Button variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white px-8 py-6 text-lg rounded-lg">
-            Go to Dashboard
           </Button>
         </Link>
       </div>
