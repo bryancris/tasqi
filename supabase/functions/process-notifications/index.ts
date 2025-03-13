@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 import type { Database } from "../_shared/database.types.ts";
@@ -41,10 +42,12 @@ async function processNotifications() {
   }
 
   const now = new Date();
+  console.log(`Current server time: ${now.toISOString()}`);
 
   // Process each notification event
   for (const event of events) {
     console.log(`Processing notification event ${event.id} of type ${event.event_type}`);
+    console.log(`Event metadata:`, event.metadata);
     
     try {
       // For snoozed notifications, check if it's time to show them
@@ -70,7 +73,10 @@ async function processNotifications() {
         // Get task date and start time from metadata
         const taskDate = event.metadata?.date;
         const taskStartTime = event.metadata?.start_time;
-        const reminderTime = parseInt(event.metadata?.reminder_time || '0', 10);
+        const reminderTimeStr = event.metadata?.reminder_time || '0';
+        const reminderTime = parseInt(reminderTimeStr, 10);
+        
+        console.log(`Task reminder details: date=${taskDate}, time=${taskStartTime}, reminder=${reminderTime}`);
         
         if (taskDate && taskStartTime) {
           // Parse the time for the task
@@ -92,9 +98,10 @@ async function processNotifications() {
           console.log(`- Notification time: ${notificationTime.toISOString()}`);
           console.log(`- Current time: ${now.toISOString()}`);
           
-          // Use a larger window size for all notifications to ensure they're not missed
-          const windowSizeMs = 3 * 60 * 1000; // 3 minutes window
+          // INCREASED window size for all notifications to ensure they're not missed
+          const windowSizeMs = 5 * 60 * 1000; // 5 minutes window (increased from 3)
           
+          // Handle "at start time" notifications (reminderTime = 0)
           if (reminderTime === 0) {
             // For "at start time" notifications, check if we're within the window of the actual start time
             const timeDiffMs = Math.abs(taskDateTime.getTime() - now.getTime());
@@ -105,7 +112,10 @@ async function processNotifications() {
               console.log(`- Buffer window: ${windowSizeMs/1000/60} minutes before/after start time`);
               continue;
             } else {
-              console.log(`✅ Task reminder ${event.id} for "at start time" IS DUE NOW - within ${windowSizeMs/1000/60} minute window!`);
+              console.log(`✅ IMPORTANT! Task reminder ${event.id} for "at start time" IS DUE NOW - within ${windowSizeMs/1000/60} minute window!`);
+              console.log(`- Exact start time: ${taskDateTime.toISOString()}`);
+              console.log(`- Exact diff in ms: ${timeDiffMs}`);
+              console.log(`- WindowSize in ms: ${windowSizeMs}`);
             }
           } else {
             // For other reminder times, check if we're within the window of when notification should be sent
@@ -215,6 +225,10 @@ async function processNotifications() {
 
       // Actually send the notifications
       let successCount = 0;
+      
+      console.log(`Preparing to send notification: "${title}" - "${body}"`);
+      console.log(`- Web subscriptions: ${webSubscriptions?.length || 0}`);
+      console.log(`- Device tokens: ${deviceTokens?.length || 0}`);
 
       // Send web push notifications
       if (webSubscriptions && webSubscriptions.length > 0) {
@@ -237,6 +251,8 @@ async function processNotifications() {
       // Send to mobile devices
       if (deviceTokens && deviceTokens.length > 0) {
         try {
+          console.log(`Calling push-notification edge function for user ${event.user_id}`);
+          
           // Call the push-notification edge function
           const { data: pushResult, error: pushError } = await supabase.functions.invoke('push-notification', {
             body: {
@@ -259,6 +275,8 @@ async function processNotifications() {
           console.error('Error sending push notification:', error);
         }
       }
+      
+      console.log(`Notification processing complete, success count: ${successCount}`);
 
       // Mark the notification as processed
       await supabase
