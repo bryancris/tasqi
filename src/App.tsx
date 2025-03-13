@@ -12,6 +12,7 @@ import Notes from './pages/Notes';
 import Analytics from './pages/Analytics';
 import SelfCare from './pages/SelfCare';
 import Chat from './pages/Chat';
+import Pricing from './pages/Pricing';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Toaster } from './components/ui/sonner';
 import { memo } from 'react';
@@ -37,6 +38,7 @@ function App() {
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/auth/update-password" element={<Auth />} />
+                <Route path="/pricing" element={<Pricing />} />
                 
                 {/* All protected routes use the ProtectedRoute component */}
                 <Route element={<ProtectedRoute />}>

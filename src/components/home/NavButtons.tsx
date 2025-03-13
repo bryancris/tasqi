@@ -25,13 +25,15 @@ const NavButtons = () => {
   return (
     <div className="absolute top-4 right-4 flex gap-2">
       {/* Pricing button - always visible */}
-      <Button 
-        variant="outline"
-        className="border-blue-600 bg-transparent text-blue-600 hover:bg-blue-600 hover:text-white"
-      >
-        <DollarSign className="mr-2 h-4 w-4" />
-        Pricing
-      </Button>
+      <Link to="/pricing">
+        <Button 
+          variant="outline"
+          className="border-blue-600 bg-transparent text-blue-600 hover:bg-blue-600 hover:text-white"
+        >
+          <DollarSign className="mr-2 h-4 w-4" />
+          Pricing
+        </Button>
+      </Link>
 
       {session ? (
         <>
