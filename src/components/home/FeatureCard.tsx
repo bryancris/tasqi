@@ -15,15 +15,32 @@ const FeatureCard = ({ icon: Icon, title, description, iconColor }: FeatureCardP
   // Extract color name from the Tailwind class (e.g., "text-blue-600" -> "blue")
   const colorName = iconColor.match(/text-([a-z]+)-\d+/)?.[1] || 'blue';
   
+  // Define background colors based on the color name
+  const getBgGradient = () => {
+    switch(colorName) {
+      case 'blue': return 'from-blue-100 to-blue-50';
+      case 'purple': return 'from-purple-100 to-purple-50';
+      case 'green': return 'from-green-100 to-green-50';
+      case 'cyan': return 'from-cyan-100 to-cyan-50';
+      case 'pink': return 'from-pink-100 to-pink-50';
+      case 'amber': return 'from-amber-100 to-amber-50';
+      case 'indigo': return 'from-indigo-100 to-indigo-50';
+      case 'orange': return 'from-orange-100 to-orange-50';
+      case 'red': return 'from-red-100 to-red-50';
+      case 'violet': return 'from-violet-100 to-violet-50';
+      default: return 'from-blue-100 to-blue-50';
+    }
+  };
+  
   return (
     <Card 
       className={cn(
         "relative overflow-hidden transition-all duration-300 hover:scale-105",
         "bg-gradient-to-br",
-        `from-${colorName}-50 to-white`,
+        getBgGradient(),
         "border border-gray-200",
         "shadow-md",
-        `hover:shadow-${colorName}-200/50 hover:shadow-lg`,
+        `hover:shadow-${colorName}-300/70 hover:shadow-lg`,
         "backdrop-blur-sm"
       )}
     >
@@ -31,8 +48,8 @@ const FeatureCard = ({ icon: Icon, title, description, iconColor }: FeatureCardP
       <div 
         className={cn(
           "absolute -inset-0.5 bg-gradient-to-r",
-          `from-${colorName}-300/30 to-${colorName}-100/20`,
-          "rounded-lg blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+          `from-${colorName}-400/40 to-${colorName}-300/30`,
+          "rounded-lg blur-sm opacity-50 group-hover:opacity-80 transition-opacity duration-500"
         )} 
         aria-hidden="true"
       />
@@ -41,7 +58,7 @@ const FeatureCard = ({ icon: Icon, title, description, iconColor }: FeatureCardP
       <div 
         className={cn(
           "absolute inset-0 bg-gradient-to-br",
-          `from-${colorName}-100/30 via-white/80 to-${colorName}-50/20`,
+          `from-${colorName}-200/40 via-white/10 to-${colorName}-100/30`,
           "opacity-80 group-hover:opacity-100 transition-opacity duration-300"
         )}
         aria-hidden="true"
@@ -54,7 +71,7 @@ const FeatureCard = ({ icon: Icon, title, description, iconColor }: FeatureCardP
               "rounded-full p-3 mb-4 transition-all duration-300 group-hover:scale-110",
               `${iconColor} bg-${colorName}-50`,
               "shadow-sm",
-              `group-hover:shadow-${colorName}-200/50 group-hover:shadow-md`
+              `group-hover:shadow-${colorName}-300/70 group-hover:shadow-md`
             )}
           >
             <Icon className="w-10 h-10 transition-all duration-300" />
