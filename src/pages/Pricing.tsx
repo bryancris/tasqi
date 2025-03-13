@@ -3,6 +3,8 @@ import React from "react";
 import { Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import NavButtons from "@/components/home/NavButtons";
+import GradientWaveBackground from "@/components/home/GradientWaveBackground";
 
 const PricingTier = ({
   name,
@@ -138,34 +140,38 @@ const Pricing = () => {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
-      <div className="text-center mb-16">
-        <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl sm:tracking-tight">
-          Simple, transparent pricing
-        </h1>
-        <p className="mt-5 max-w-xl mx-auto text-xl text-gray-500">
-          Choose the plan that works best for you and your workflow
-        </p>
-      </div>
+    <>
+      <GradientWaveBackground />
+      <div className="max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8 relative z-10">
+        <NavButtons />
+        <div className="text-center mb-16">
+          <h1 className="text-4xl font-extrabold text-gray-900 sm:text-5xl sm:tracking-tight">
+            Simple, transparent pricing
+          </h1>
+          <p className="mt-5 max-w-xl mx-auto text-xl text-gray-500">
+            Choose the plan that works best for you and your workflow
+          </p>
+        </div>
 
-      <div className="grid grid-cols-1 gap-y-8 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4 lg:gap-8">
-        {tiers.map((tier) => (
-          <PricingTier key={tier.name} {...tier} />
-        ))}
-      </div>
+        <div className="grid grid-cols-1 gap-y-8 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4 lg:gap-8">
+          {tiers.map((tier) => (
+            <PricingTier key={tier.name} {...tier} />
+          ))}
+        </div>
 
-      <div className="text-center mt-16">
-        <h2 className="text-2xl font-bold text-gray-900">
-          Have questions about our pricing?
-        </h2>
-        <p className="mt-4 max-w-xl mx-auto text-lg text-gray-500">
-          Contact us for more information about our plans and custom solutions.
-        </p>
-        <Button className="mt-8 bg-blue-600 hover:bg-blue-700">
-          Contact Sales
-        </Button>
+        <div className="text-center mt-16">
+          <h2 className="text-2xl font-bold text-gray-900">
+            Have questions about our pricing?
+          </h2>
+          <p className="mt-4 max-w-xl mx-auto text-lg text-gray-500">
+            Contact us for more information about our plans and custom solutions.
+          </p>
+          <Button className="mt-8 bg-blue-600 hover:bg-blue-700">
+            Contact Sales
+          </Button>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
