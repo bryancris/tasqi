@@ -19,22 +19,31 @@ const FeatureCard = ({ icon: Icon, title, description, iconColor }: FeatureCardP
     <Card 
       className={cn(
         "relative overflow-hidden transition-all duration-300 hover:scale-105",
-        "bg-white/90 hover:bg-white/95 backdrop-blur-sm",
-        "border border-gray-200 hover:border-transparent",
-        "shadow-sm hover:shadow-md",
-        `hover:shadow-${colorName}-100/30`,
-        "before:absolute before:inset-0 before:z-0 before:bg-gradient-to-br",
-        `before:from-${colorName}-50/40 before:to-${colorName}-100/10`,
-        "hover:before:opacity-100 before:opacity-50 before:transition-opacity"
+        "bg-gradient-to-br",
+        `from-${colorName}-50 to-white`,
+        "border border-gray-200",
+        "shadow-md",
+        `hover:shadow-${colorName}-200/50 hover:shadow-lg`,
+        "backdrop-blur-sm"
       )}
     >
-      <span 
+      {/* Glow effect */}
+      <div 
         className={cn(
-          "absolute inset-0 opacity-0 hover:opacity-100 transition-opacity duration-700",
-          "bg-gradient-to-br border border-transparent rounded-lg",
-          `from-${colorName}-200/20 via-transparent to-${colorName}-200/20`,
-          "group-hover:opacity-100"
+          "absolute -inset-0.5 bg-gradient-to-r",
+          `from-${colorName}-300/30 to-${colorName}-100/20`,
+          "rounded-lg blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500"
         )} 
+        aria-hidden="true"
+      />
+      
+      {/* Inner shine effect */}
+      <div 
+        className={cn(
+          "absolute inset-0 bg-gradient-to-br",
+          `from-${colorName}-100/30 via-white/80 to-${colorName}-50/20`,
+          "opacity-80 group-hover:opacity-100 transition-opacity duration-300"
+        )}
         aria-hidden="true"
       />
 
@@ -42,12 +51,13 @@ const FeatureCard = ({ icon: Icon, title, description, iconColor }: FeatureCardP
         <div className="flex flex-col items-center text-center">
           <div 
             className={cn(
-              "rounded-full p-3 mb-4 transition-transform duration-300",
-              `${iconColor} bg-${colorName}-50/50`,
-              "group-hover:scale-110"
+              "rounded-full p-3 mb-4 transition-all duration-300 group-hover:scale-110",
+              `${iconColor} bg-${colorName}-50`,
+              "shadow-sm",
+              `group-hover:shadow-${colorName}-200/50 group-hover:shadow-md`
             )}
           >
-            <Icon className={`w-10 h-10 transition-all duration-300`} />
+            <Icon className="w-10 h-10 transition-all duration-300" />
           </div>
           
           <h3 className="text-xl font-semibold mb-2 text-gray-900">{title}</h3>
