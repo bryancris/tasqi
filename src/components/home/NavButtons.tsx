@@ -1,5 +1,5 @@
 
-import { LogIn, LogOut, DollarSign } from "lucide-react";
+import { LogIn, LogOut, DollarSign, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/auth";
@@ -24,6 +24,17 @@ const NavButtons = () => {
 
   return (
     <div className="absolute top-4 right-4 flex gap-2">
+      {/* Tasqi home button - always visible */}
+      <Link to="/">
+        <Button 
+          variant="outline"
+          className="border-blue-600 bg-transparent text-blue-600 hover:bg-blue-600 hover:text-white"
+        >
+          <Home className="mr-2 h-4 w-4" />
+          Tasqi
+        </Button>
+      </Link>
+
       {/* Pricing button - always visible */}
       <Link to="/pricing">
         <Button 
