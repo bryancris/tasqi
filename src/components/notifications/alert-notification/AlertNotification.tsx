@@ -4,13 +4,20 @@ import {
   AlertDialog,
   AlertDialogContent,
 } from "@/components/ui/alert-dialog";
-import { X, Clock, Check, Loader2 } from "lucide-react";
+import { X, Clock, Check, Loader2, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { NotificationHeader } from "./NotificationHeader";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useState } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { useQueryClient } from "@tanstack/react-query";
 
 export interface AlertNotificationProps {
   open: boolean;
@@ -44,6 +51,16 @@ export function AlertNotification({
   const [isTestNotification, setIsTestNotification] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState<string | null>(null);
   const [isSnoozing, setIsSnoozing] = React.useState(false);
+  const queryClient = useQueryClient();
+  
+  const snoozeOptions = [
+    { label: "5 minutes", minutes: 5 },
+    { label: "15 minutes", minutes: 15 },
+    { label: "30 minutes", minutes: 30 },
+    { label: "1 hour", minutes: 60 },
+    { label: "4 hours", minutes: 240 },
+    { label: "Tomorrow", minutes: 24 * 60 }
+  ];
   
   // Effect to determine the type of notification
   React.useEffect(() => {
@@ -82,13 +99,23 @@ export function AlertNotification({
     }, 1000);
   };
 
-  const handleSnooze = () => {
-    console.log('⏰ Snooze button clicked for notification:', referenceId);
+  const handleSnooze = (minutes: number) => {
+    console.log('⏰ Snooze button clicked for notification:', referenceId, 'minutes:', minutes);
     setIsSnoozing(true);
+    
+    let snoozeMessage = '';
+    if (minutes === 24 * 60) {
+      snoozeMessage = 'until tomorrow at 9:00 AM';
+    } else if (minutes >= 60) {
+      const hours = Math.floor(minutes / 60);
+      snoozeMessage = `for ${hours} hour${hours > 1 ? 's' : ''}`;
+    } else {
+      snoozeMessage = `for ${minutes} minutes`;
+    }
     
     // Simulate a delay then dismiss
     setTimeout(() => {
-      toast.success("Task snoozed for 15 minutes");
+      toast.success(`Task snoozed ${snoozeMessage}`);
       setIsSnoozing(false);
       onDismiss();
     }, 1000);
@@ -150,27 +177,41 @@ export function AlertNotification({
             data-reference-id={String(referenceId)}
             data-component="notification-buttons"
           >
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSnooze}
-              disabled={!!isLoading || isSnoozing}
-              className="text-[#1A1F2C] flex items-center gap-2"
-              tabIndex={0}
-              aria-label="Snooze task"
-            >
-              {isSnoozing ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Snoozing
-                </>
-              ) : (
-                <>
-                  <Clock className="h-4 w-4" />
-                  Snooze
-                </>
-              )}
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild disabled={!!isLoading || isSnoozing}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-[#1A1F2C] flex items-center gap-2 w-full sm:w-auto"
+                  tabIndex={0}
+                  aria-label="Snooze task options"
+                >
+                  {isSnoozing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Snoozing
+                    </>
+                  ) : (
+                    <>
+                      <Clock className="h-4 w-4" />
+                      Snooze
+                      <ChevronDown className="h-3 w-3 ml-1" />
+                    </>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="bg-white z-50">
+                {snoozeOptions.map((option) => (
+                  <DropdownMenuItem
+                    key={option.minutes}
+                    onClick={() => handleSnooze(option.minutes)}
+                    className="cursor-pointer"
+                  >
+                    {option.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             <Button
               variant="default"

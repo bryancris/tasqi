@@ -86,7 +86,7 @@ export const handleSnooze = async (
   try {
     // Extra validation for test notification
     if (isTestNotification(referenceId)) {
-      console.log('✅ Test task snooze completed');
+      console.log('✅ Test task snooze completed for', minutes, 'minutes');
       toast.success(`Task snoozed for ${minutes} minutes`);
       onDismiss();
       return;
@@ -104,6 +104,22 @@ export const handleSnooze = async (
       return;
     }
 
+    // Calculate new reminder time based on minutes
+    let reminderMessage = '';
+    if (minutes === 24 * 60) {
+      // If it's "tomorrow", set to 9 AM tomorrow
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(9, 0, 0, 0);
+      
+      reminderMessage = 'tomorrow at 9:00 AM';
+    } else if (minutes >= 60) {
+      const hours = Math.floor(minutes / 60);
+      reminderMessage = `${hours} hour${hours > 1 ? 's' : ''}`;
+    } else {
+      reminderMessage = `${minutes} minutes`;
+    }
+
     // Determine if this is a shared task
     const { data: sharedTask } = await supabase
       .from('shared_tasks')
@@ -114,7 +130,7 @@ export const handleSnooze = async (
 
     if (sharedTask) {
       // For shared tasks, we might handle this differently
-      toast.info(`Reminder snoozed for ${minutes} minutes`);
+      toast.info(`Reminder snoozed for ${reminderMessage}`);
     } else {
       // Update using the proper field name based on the database schema
       const { error } = await supabase
@@ -132,7 +148,7 @@ export const handleSnooze = async (
       }
     }
 
-    toast.success(`Reminder snoozed for ${minutes} minutes`);
+    toast.success(`Reminder snoozed for ${reminderMessage}`);
     await queryClient.invalidateQueries({ queryKey: ['tasks'] });
     onDismiss();
   } catch (error) {

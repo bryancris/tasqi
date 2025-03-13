@@ -1,10 +1,18 @@
 
 import { Button } from "@/components/ui/button";
-import { Loader2, Clock, Check } from "lucide-react";
+import { Loader2, Clock, Check, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { isTestNotification } from "@/utils/notifications/debug-utils";
 import { useTaskCompletion } from "@/hooks/notifications/use-task-completion";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { useQueryClient } from "@tanstack/react-query";
+import { handleSnooze } from "@/components/notifications/notification-handlers";
 
 interface NotificationButtonsProps {
   isLoading: string | null;
@@ -28,17 +36,31 @@ export const NotificationButtons = ({
 
   const [isSnoozing, setIsSnoozing] = useState<boolean>(false);
   const { handleTaskComplete } = useTaskCompletion();
+  const queryClient = useQueryClient();
 
-  const handleSnoozeClick = () => {
-    console.log('⏰ Snooze clicked for notification:', referenceId);
+  const snoozeOptions = [
+    { label: "5 minutes", minutes: 5 },
+    { label: "15 minutes", minutes: 15 },
+    { label: "30 minutes", minutes: 30 },
+    { label: "1 hour", minutes: 60 },
+    { label: "4 hours", minutes: 240 },
+    { label: "Tomorrow", minutes: 24 * 60 }
+  ];
+
+  const handleSnoozeClick = async (minutes: number) => {
+    console.log('⏰ Snooze clicked for notification:', referenceId, 'minutes:', minutes);
+    if (!referenceId) return;
+    
     setIsSnoozing(true);
     
-    // Simple simulation for demonstration
-    setTimeout(() => {
-      toast.success(`Task snoozed for 15 minutes`);
+    try {
+      await handleSnooze(referenceId, minutes, queryClient, onDismiss);
+    } catch (error) {
+      console.error('Error snoozing task:', error);
+      toast.error("Failed to snooze task");
+    } finally {
       setIsSnoozing(false);
-      onDismiss();
-    }, 1000);
+    }
   };
 
   const handleCompleteTask = async () => {
@@ -75,27 +97,41 @@ export const NotificationButtons = ({
       data-test-notification={isTest ? "true" : "false"}
       data-component="notification-buttons"
     >
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={handleSnoozeClick}
-        disabled={!!isLoading || isSnoozing}
-        className="text-[#1A1F2C] flex items-center gap-2"
-        tabIndex={0}
-        aria-label="Snooze task"
-      >
-        {isSnoozing ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Snoozing
-          </>
-        ) : (
-          <>
-            <Clock className="h-4 w-4" />
-            Snooze
-          </>
-        )}
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild disabled={!!isLoading || isSnoozing}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-[#1A1F2C] flex items-center gap-2 w-full sm:w-auto"
+            tabIndex={0}
+            aria-label="Snooze task options"
+          >
+            {isSnoozing ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Snoozing
+              </>
+            ) : (
+              <>
+                <Clock className="h-4 w-4" />
+                Snooze
+                <ChevronDown className="h-3 w-3 ml-1" />
+              </>
+            )}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="bg-white z-50">
+          {snoozeOptions.map((option) => (
+            <DropdownMenuItem
+              key={option.minutes}
+              onClick={() => handleSnoozeClick(option.minutes)}
+              className="cursor-pointer"
+            >
+              {option.label}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       <Button
         variant="default"
