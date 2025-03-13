@@ -55,6 +55,8 @@ export function useTaskChecker() {
       task.start_time
     );
     
+    console.log(`⏰ Checking ${tasksToCheck.length} tasks for notifications at ${currentTime.toISOString()}`);
+    
     for (const task of tasksToCheck) {
       if (!isMounted.current) break;
       
@@ -75,18 +77,33 @@ export function useTaskChecker() {
         const timeUntilTask = taskDateTime.getTime() - currentTime.getTime();
         const minutesUntilTask = timeUntilTask / (1000 * 60);
 
-        // Handle "At start time" (reminderTime = 0) differently
+        // Debug logging for ALL tasks we're checking
+        console.log(`📋 Task ${task.id} (${task.title}):`);
+        console.log(`   - Reminder time: ${task.reminder_time} minutes`);
+        console.log(`   - Date: ${taskDate.toISOString()}`);
+        console.log(`   - Start time: ${task.start_time}`);
+        console.log(`   - Task scheduled for: ${taskDateTime.toISOString()}`);
+        console.log(`   - Current time: ${currentTime.toISOString()}`);
+        console.log(`   - Minutes until task: ${minutesUntilTask.toFixed(2)}`);
+
+        // Handle "At start time" (reminderTime = 0) notifications with a WIDER window
         if (task.reminder_time === 0) {
-          // Create a 2-minute window around the exact start time (1 minute before to 1 minute after)
-          // This ensures we don't miss the notification if the check cycle happens to miss the exact minute
-          if (Math.abs(minutesUntilTask) <= 1) {
-            console.log(`Task ${task.id} (${task.title}) is due now (At start time reminder)`);
+          // Create a 4-minute window around the exact start time (2 minutes before to 2 minutes after)
+          // This ensures we don't miss the notification due to timing issues
+          if (Math.abs(minutesUntilTask) <= 2) {
+            console.log(`🔔 MATCH! Task ${task.id} (${task.title}) is due now (At start time reminder)`);
+            console.log(`   - Window criteria: |${minutesUntilTask.toFixed(2)}| <= 2 minutes`);
+            
             const notificationSent = await showTaskNotification(task, 'reminder');
             
             if (notificationSent && isMounted.current) {
               console.log('✅ At-start-time notification sent successfully');
               notifiedTasks.current.add(task.id);
+            } else {
+              console.error('❌ Failed to send at-start-time notification');
             }
+          } else {
+            console.log(`⏳ Task ${task.id} not due yet for At-start-time notification (${Math.abs(minutesUntilTask).toFixed(2)} min outside window)`);
           }
         } else {
           // For other reminder times, use the window approach
@@ -95,12 +112,16 @@ export function useTaskChecker() {
           
           if (minutesUntilTask <= reminderWindowStart && 
               minutesUntilTask > reminderWindowEnd) {
-            console.log(`Task ${task.id} (${task.title}) is due in ${minutesUntilTask.toFixed(1)} minutes (${task.reminder_time} minute reminder)`);
+            console.log(`🔔 MATCH! Task ${task.id} (${task.title}) is due in ${minutesUntilTask.toFixed(1)} minutes (${task.reminder_time} minute reminder)`);
+            console.log(`   - Window criteria: ${reminderWindowEnd} < ${minutesUntilTask.toFixed(2)} <= ${reminderWindowStart}`);
+            
             const notificationSent = await showTaskNotification(task, 'reminder');
             
             if (notificationSent && isMounted.current) {
               console.log('✅ Reminder notification sent successfully');
               notifiedTasks.current.add(task.id);
+            } else {
+              console.error('❌ Failed to send reminder notification');
             }
           }
         }
