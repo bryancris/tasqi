@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 import type { Database } from "../_shared/database.types.ts";
@@ -70,7 +71,7 @@ async function processNotifications() {
         // Get task date and start time from metadata
         const taskDate = event.metadata?.date;
         const taskStartTime = event.metadata?.start_time;
-        const reminderTime = parseInt(event.metadata?.reminder_time || '15', 10);
+        const reminderTime = parseInt(event.metadata?.reminder_time || '0', 10);
         
         if (taskDate && taskStartTime) {
           // Parse the time for the task
@@ -86,10 +87,22 @@ async function processNotifications() {
             notificationTime.setMinutes(notificationTime.getMinutes() - reminderTime);
           }
           
-          // If the notification time is in the future, skip it for now
-          if (notificationTime > now) {
+          // Log the calculated notification time and current time for debugging
+          console.log(`Task ${event.task_id} with reminder_time=${reminderTime}:`);
+          console.log(`- Task scheduled for: ${taskDateTime.toISOString()}`);
+          console.log(`- Notification time: ${notificationTime.toISOString()}`);
+          console.log(`- Current time: ${now.toISOString()}`);
+          
+          // Add a small buffer (30 seconds) to avoid missing notifications exactly at start time
+          const bufferMs = 30 * 1000; // 30 seconds in milliseconds
+          const bufferAdjustedNow = new Date(now.getTime() + bufferMs);
+          
+          // If the notification time is in the future (accounting for buffer), skip it for now
+          if (notificationTime > bufferAdjustedNow) {
             console.log(`Task reminder ${event.id} scheduled for ${notificationTime.toISOString()}, current time is ${now.toISOString()}, skipping for now`);
             continue;
+          } else {
+            console.log(`✅ Task reminder ${event.id} is due NOW - processing notification!`);
           }
         }
       }
