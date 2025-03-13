@@ -41,11 +41,32 @@ async function processNotifications() {
     return;
   }
 
+  const now = new Date();
+
   // Process each notification event
   for (const event of events) {
     console.log(`Processing notification event ${event.id} of type ${event.event_type}`);
     
     try {
+      // For snoozed notifications, check if it's time to show them
+      if (event.event_type === 'task_reminder' && event.metadata?.snoozed === true) {
+        // Parse notification date and time
+        const snoozeDate = event.metadata?.date;
+        const snoozeTime = event.metadata?.start_time;
+        
+        if (snoozeDate && snoozeTime) {
+          const [hours, minutes] = snoozeTime.split(':').map(Number);
+          const targetDate = new Date(snoozeDate);
+          targetDate.setHours(hours, minutes, 0, 0);
+          
+          // If the target time is in the future, skip for now
+          if (targetDate > now) {
+            console.log(`Snoozed notification ${event.id} is scheduled for ${targetDate.toISOString()}, skipping for now`);
+            continue;
+          }
+        }
+      }
+      
       // Get the user's device tokens
       const { data: deviceTokens, error: tokenError } = await supabase
         .from('push_device_tokens')
@@ -74,25 +95,37 @@ async function processNotifications() {
 
       // Extract notification content based on event type
       if (event.event_type === 'task_reminder') {
-        // Get task details
-        const { data: task, error: taskError } = await supabase
-          .from('tasks')
-          .select('title, description')
-          .eq('id', event.task_id)
-          .single();
+        // If this is a snoozed notification, use the metadata directly
+        if (event.metadata?.snoozed === true) {
+          title = `Task Reminder: ${event.metadata.title}`;
+          body = event.metadata.message || 'Your snoozed task reminder is due.';
+          data = {
+            type: 'task_reminder',
+            taskId: event.task_id,
+            snoozed: true,
+            ...event.metadata
+          };
+        } else {
+          // Get task details for regular reminders
+          const { data: task, error: taskError } = await supabase
+            .from('tasks')
+            .select('title, description')
+            .eq('id', event.task_id)
+            .single();
 
-        if (taskError) {
-          console.error(`Error fetching task ${event.task_id}:`, taskError);
-          continue;
+          if (taskError) {
+            console.error(`Error fetching task ${event.task_id}:`, taskError);
+            continue;
+          }
+
+          title = `Task Reminder: ${task.title}`;
+          body = task.description || 'Your scheduled task is due soon.';
+          data = {
+            type: 'task_reminder',
+            taskId: event.task_id,
+            ...event.metadata
+          };
         }
-
-        title = `Task Reminder: ${task.title}`;
-        body = task.description || 'Your scheduled task is due soon.';
-        data = {
-          type: 'task_reminder',
-          taskId: event.task_id,
-          ...event.metadata
-        };
       } 
       else if (event.event_type === 'timer_complete') {
         // Timer notification
