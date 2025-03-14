@@ -42,6 +42,15 @@ export function TaskNotificationFields({
   const platform = detectPlatform();
   const isIOSPWA = platform === 'ios-pwa';
 
+  // Added to ensure reminder_time is always the right type
+  useEffect(() => {
+    // Ensure reminder_time is always a number
+    if (reminderEnabled && reminderTime === undefined) {
+      console.log('🛠️ Setting default reminder time to 0 (At start time)');
+      onReminderTimeChange(0);
+    }
+  }, [reminderEnabled, reminderTime, onReminderTimeChange]);
+
   const handleToggle = async (enabled: boolean) => {
     if (!enabled) {
       onReminderEnabledChange(false);
@@ -58,6 +67,12 @@ export function TaskNotificationFields({
         
         onReminderEnabledChange(true);
         
+        // Set default reminder time to "At start time" if none selected
+        if (reminderTime === undefined) {
+          console.log('Setting reminder time to 0 (At start time)');
+          onReminderTimeChange(0);
+        }
+        
         if ('Notification' in window) {
           try {
             const permission = await Notification.requestPermission();
@@ -70,6 +85,12 @@ export function TaskNotificationFields({
         await onReminderEnabledChange(true);
       } else {
         await onReminderEnabledChange(true);
+        
+        // Set default reminder time to "At start time" if none selected
+        if (reminderTime === undefined) {
+          console.log('Setting reminder time to 0 (At start time)');
+          onReminderTimeChange(0);
+        }
       }
     } catch (error) {
       console.error('Error enabling notifications:', error);
@@ -117,7 +138,7 @@ export function TaskNotificationFields({
         <div className="flex items-center space-x-2">
           <Label htmlFor="reminderTime">Notify me</Label>
           <Select
-            value={reminderTime.toString()}
+            value={reminderTime?.toString() || "0"}
             onValueChange={(value) => onReminderTimeChange(Number(value))}
           >
             <SelectTrigger className="w-[180px]">

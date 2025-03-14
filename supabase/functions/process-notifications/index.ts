@@ -99,13 +99,14 @@ async function processNotifications() {
           console.log(`- Current time: ${now.toISOString()}`);
           
           // INCREASED window size for all notifications to ensure they're not missed
-          const windowSizeMs = 5 * 60 * 1000; // 5 minutes window (increased from 3)
+          const windowSizeMs = 6 * 60 * 1000; // 6 minutes window (increased from 5)
           
-          // Handle "at start time" notifications (reminderTime = 0)
+          // CRITICAL FIX: Special handling for "at start time" notifications (reminderTime = 0)
           if (reminderTime === 0) {
             // For "at start time" notifications, check if we're within the window of the actual start time
             const timeDiffMs = Math.abs(taskDateTime.getTime() - now.getTime());
-            console.log(`- Time difference from start time: ${timeDiffMs / 1000 / 60} minutes`);
+            console.log(`- Is "at start time" notification (reminderTime=0): YES`);
+            console.log(`- Time difference from exact start time: ${timeDiffMs / 1000 / 60} minutes`);
             
             if (timeDiffMs > windowSizeMs) {
               console.log(`Task reminder ${event.id} has "at start time" setting but is outside the ${windowSizeMs/1000/60} minute window, skipping for now`);
@@ -120,6 +121,8 @@ async function processNotifications() {
           } else {
             // For other reminder times, check if we're within the window of when notification should be sent
             const timeDiffMs = Math.abs(notificationTime.getTime() - now.getTime());
+            console.log(`- Is advance reminder (reminderTime=${reminderTime}): YES`);
+            console.log(`- Time difference from notification time: ${timeDiffMs / 1000 / 60} minutes`);
             
             if (timeDiffMs > windowSizeMs) {
               console.log(`Task reminder ${event.id} scheduled for ${notificationTime.toISOString()}, time difference is ${timeDiffMs/1000/60} minutes, skipping for now`);
@@ -174,7 +177,7 @@ async function processNotifications() {
           // Get task details for regular reminders
           const { data: task, error: taskError } = await supabase
             .from('tasks')
-            .select('title, description')
+            .select('title, description, reminder_time')
             .eq('id', event.task_id)
             .single();
 
@@ -183,11 +186,16 @@ async function processNotifications() {
             continue;
           }
 
+          // Include information about whether this is an "at start time" notification
+          const isAtStartTime = task.reminder_time === 0 || event.metadata?.reminder_time === '0';
+          const reminderText = isAtStartTime ? 'now' : 'soon';
+
           title = `Task Reminder: ${task.title}`;
-          body = task.description || 'Your scheduled task is due soon.';
+          body = task.description || `Your scheduled task is due ${reminderText}.`;
           data = {
             type: 'task_reminder',
             taskId: event.task_id,
+            isAtStartTime: isAtStartTime,
             ...event.metadata
           };
         }
