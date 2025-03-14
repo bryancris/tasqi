@@ -47,40 +47,9 @@ export function useTaskSubmissionCore({ onSuccess, setIsLoading }: UseTaskSubmis
       reminderTime: formState.reminderTime 
     });
     
-    // Enhanced debug logging for zero values
-    console.log(`⚡ Reminder time value before validation: ${formState.reminderTime} (type: ${typeof formState.reminderTime}), stringified: '${JSON.stringify(formState.reminderTime)}'`);
-    
-    if (formState.reminderTime === 0) {
-      console.log("⚡ Zero reminderTime detected in handleSubmit");
-    }
-
-    // CRITICAL FIX: Explicitly check if reminderTime is exactly 0 to preserve "At start time"
-    // This explicit case is needed because JavaScript treats 0 as falsy in many contexts
-    let reminderTimeValue: number;
-    if (formState.reminderTime === 0) { 
-      reminderTimeValue = 0; // Preserve explicit zero (At start time)
-      console.log("⚡ Explicitly keeping reminderTime as EXACTLY 0 (At start time)");
-    } else if (typeof formState.reminderTime === 'number') {
-      reminderTimeValue = formState.reminderTime; // Use existing number value
-      console.log(`⚡ Using existing number value: ${reminderTimeValue}`);
-    } else if (typeof formState.reminderTime === 'string' && formState.reminderTime === '0') {
-      reminderTimeValue = 0; // Convert string "0" to number 0
-      console.log("⚡ Converting string '0' to number 0");
-    } else if (formState.reminderTime) {
-      reminderTimeValue = Number(formState.reminderTime); // Convert non-zero value
-      console.log(`⚡ Converting non-zero value to: ${reminderTimeValue}`);
-    } else {
-      reminderTimeValue = 0; // Default to "At start time" (0) instead of 15
-      console.log("⚡ No value provided, defaulting to 0 (At start time)");
-    }
-    
-    console.log(`⚡ Processed reminder time value: ${reminderTimeValue} (type: ${typeof reminderTimeValue})`);
-    
-    // Create a clean copy with proper number handling
-    const validatedFormState = {
-      ...formState,
-      reminderTime: reminderTimeValue
-    };
+    // SIMPLIFIED: We know reminderTime is already a number from our component changes
+    // No need for complex type checking logic - if it's 0, it's 0
+    console.log(`⚡ Reminder time value: ${formState.reminderTime} (type: ${typeof formState.reminderTime})`);
     
     // Validate the input data
     if (!validateTaskInput({
@@ -97,14 +66,10 @@ export function useTaskSubmissionCore({ onSuccess, setIsLoading }: UseTaskSubmis
       console.log("Starting task creation process...");
       
       // Prepare the task data
-      const { taskData } = await prepareTaskData(validatedFormState, userId);
+      const { taskData } = await prepareTaskData(formState, userId);
       
       // Enhanced debug for the taskData to confirm reminder_time is correctly set
       console.log("Task data prepared with reminder_time:", taskData.reminder_time, "type:", typeof taskData.reminder_time);
-      
-      if (taskData.reminder_time === 0) {
-        console.log("⚡ Zero reminder_time confirmed in final taskData");
-      }
       
       // Create the task
       const taskResult = await createTask(taskData);

@@ -72,37 +72,10 @@ export function useTaskDataPreparation() {
       status = 'unscheduled';
     }
     
-    // CRITICAL FIX: Explicitly handle reminderTime with a direct equality check for zero
-    let reminderTimeValue: number;
-    
-    // Most critical case: explicit zero check for "At start time"
-    if (formState.reminderTime === 0) {
-      reminderTimeValue = 0;
-      console.log("⚡ Setting reminder_time to EXACTLY 0 (At start time)");
-    } 
-    // Check for string "0" explicitly
-    else if (typeof formState.reminderTime === 'string' && formState.reminderTime === '0') {
-      reminderTimeValue = 0;
-      console.log("⚡ Converting string '0' to number 0");
-    }
-    // Handle regular number values
-    else if (typeof formState.reminderTime === 'number') {
-      reminderTimeValue = formState.reminderTime;
-      console.log(`⚡ Using existing number value: ${reminderTimeValue}`);
-    }
-    // Handle string values that are not "0"
-    else if (typeof formState.reminderTime === 'string' && formState.reminderTime) {
-      const numValue = Number(formState.reminderTime);
-      console.log(`⚡ Converting string "${formState.reminderTime}" to number: ${numValue}`);
-      reminderTimeValue = isNaN(numValue) ? 0 : numValue;
-    }
-    // Default case for undefined, null, etc.
-    else {
-      reminderTimeValue = 0; // Default to "At start time" (0) instead of 15
-      console.log("⚡ reminderTime was undefined/null, defaulting to 0 (At start time)");
-    }
-    
-    console.log(`🔍 Final reminder time value for database: ${reminderTimeValue} (type: ${typeof reminderTimeValue})`);
+    // SIMPLIFIED: Direct number assignment for reminderTime
+    // We know the value is already a proper number from our component changes
+    const reminderTimeValue = formState.reminderTime;
+    console.log(`🔍 Using reminder time value: ${reminderTimeValue} (type: ${typeof reminderTimeValue})`);
 
     // Get position for the new task
     const { data: existingTasks, error: countError } = await supabase
@@ -142,7 +115,7 @@ export function useTaskDataPreparation() {
       end_time: (formState.isScheduled || (formState.isEvent && !formState.isAllDay)) && finalEndTime ? finalEndTime : null,
       priority: formState.isEvent ? "medium" : validPriority,
       reminder_enabled: formState.reminderEnabled,
-      reminder_time: reminderTimeValue, // Use our specially handled value
+      reminder_time: reminderTimeValue, // Use the properly typed value
       user_id: userId,
       owner_id: userId,
       is_all_day: formState.isEvent ? formState.isAllDay : false,

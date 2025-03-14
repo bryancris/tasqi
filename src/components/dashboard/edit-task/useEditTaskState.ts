@@ -17,9 +17,8 @@ export function useEditTaskState(task: Task, onClose: () => void) {
   const [priority, setPriority] = useState(task.priority || "low");
   
   const [reminderEnabled, setReminderEnabled] = useState(task.reminder_enabled || false);
-  const [reminderTime, setReminderTime] = useState(() => {
-    console.log(`INIT: task.reminder_time raw value = "${task.reminder_time}" (${typeof task.reminder_time})`);
-    
+  
+  const [reminderTime, setReminderTime] = useState<number>(() => {
     if (task.reminder_time === 0) {
       console.log("✅ INIT: Found explicit zero - setting to 0 (At start time)");
       return 0;
@@ -30,24 +29,14 @@ export function useEditTaskState(task: Task, onClose: () => void) {
       return 0;
     } 
     
-    if (typeof task.reminder_time === 'string') {
-      if (task.reminder_time === "0") {
-        console.log(`✅ INIT: Converting string "0" to number 0`);
-        return 0;
-      }
-      
-      const numValue = Number(task.reminder_time);
-      console.log(`✅ INIT: Converting string "${task.reminder_time}" to number: ${numValue}`);
-      return isNaN(numValue) ? 0 : numValue;
-    } 
-    
     if (typeof task.reminder_time === 'number') {
       console.log(`✅ INIT: Using existing number value: ${task.reminder_time}`);
       return task.reminder_time;
     } 
     
-    console.log(`✅ INIT: Unexpected type, defaulting to 0: ${task.reminder_time}`);
-    return 0;
+    const numValue = Number(task.reminder_time);
+    console.log(`✅ INIT: Converting value to number: ${numValue}`);
+    return isNaN(numValue) ? 0 : numValue;
   });
   
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
@@ -127,32 +116,7 @@ export function useEditTaskState(task: Task, onClose: () => void) {
         status = 'unscheduled';
       }
       
-      let reminderTimeValue: number;
-      
-      console.log(`⚡ SAVE: Pre-conversion reminderTime = ${reminderTime} (${typeof reminderTime})`);
-      
-      if (reminderTime === 0) {
-        reminderTimeValue = 0;
-        console.log("⚡ SAVE: Setting reminder_time to EXACTLY 0 (At start time)");
-      } 
-      else if (typeof reminderTime === 'string' && reminderTime === "0") {
-        reminderTimeValue = 0;
-        console.log("⚡ SAVE: Converting string '0' to number 0");
-      } 
-      else if (typeof reminderTime === 'number') {
-        reminderTimeValue = reminderTime;
-        console.log(`⚡ SAVE: Using existing number value: ${reminderTimeValue}`);
-      }
-      else if (typeof reminderTime === 'string' && reminderTime) {
-        reminderTimeValue = Number(reminderTime);
-        console.log(`⚡ SAVE: Converting string to number: ${reminderTimeValue}`);
-      }
-      else {
-        reminderTimeValue = 0;
-        console.log("⚡ SAVE: reminderTime was undefined, defaulting to 0 (At start time)");
-      }
-      
-      console.log(`⚡ SAVE: Final reminderTimeValue for database: ${reminderTimeValue} (${typeof reminderTimeValue})`);
+      console.log(`⚡ SAVE: Using reminderTime = ${reminderTime} (${typeof reminderTime})`);
       
       const updateData = {
         title,
@@ -161,7 +125,7 @@ export function useEditTaskState(task: Task, onClose: () => void) {
         date: (isScheduled || isEvent) && date ? date : null,
         priority: isEvent ? "medium" : priority,
         reminder_enabled: reminderEnabled,
-        reminder_time: reminderTimeValue,
+        reminder_time: reminderTime,
         is_all_day: isEvent ? isAllDay : false
       } as const;
       

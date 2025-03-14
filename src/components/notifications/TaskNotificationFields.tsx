@@ -39,11 +39,19 @@ export function TaskNotificationFields({
   onReminderTimeChange,
 }: TaskNotificationFieldsProps) {
   const { isSubscribed, isLoading, enableNotifications } = useNotifications();
-  const [localEnabled, setLocalEnabled] = useState(reminderEnabled);
-
+  
+  // IMPROVED: Initialize internal state directly from props
+  const [internalValue, setInternalValue] = useState<string>(() => {
+    const value = reminderTime === 0 ? "0" : String(reminderTime || 0);
+    console.log(`⚡ Initializing with "${value}" from ${reminderTime}`);
+    return value;
+  });
+  
+  // Update local state when prop changes
   useEffect(() => {
-    setLocalEnabled(reminderEnabled);
-  }, [reminderEnabled]);
+    const stringValue = reminderTime === 0 ? "0" : String(reminderTime || 0);
+    setInternalValue(stringValue);
+  }, [reminderTime]);
 
   const handleToggle = async (checked: boolean) => {
     try {
@@ -52,20 +60,21 @@ export function TaskNotificationFields({
         const subscription = await notificationService.subscribe();
         
         if (subscription) {
-          setLocalEnabled(true);
           onReminderEnabledChange(true);
+          
+          // IMPROVED: Explicitly set to 0 (At start time) when enabling
+          onReminderTimeChange(0);
+          setInternalValue("0");
+          
           toast.success('Notifications enabled successfully');
         } else {
-          setLocalEnabled(false);
           onReminderEnabledChange(false);
         }
       } else {
-        setLocalEnabled(false);
         onReminderEnabledChange(false);
       }
     } catch (error) {
       console.error('Error toggling notifications:', error);
-      setLocalEnabled(false);
       onReminderEnabledChange(false);
       toast.error('Failed to enable notifications');
     }
@@ -77,7 +86,7 @@ export function TaskNotificationFields({
         <div className="flex items-center space-x-2">
           <Switch
             id="reminder"
-            checked={localEnabled}
+            checked={reminderEnabled}
             onCheckedChange={handleToggle}
             disabled={isLoading}
           />
@@ -90,12 +99,18 @@ export function TaskNotificationFields({
         </div>
       </div>
 
-      {localEnabled && (
+      {reminderEnabled && (
         <div className="flex items-center space-x-2">
           <Label htmlFor="reminderTime">Notify me</Label>
           <Select
-            value={reminderTime.toString()}
-            onValueChange={(value) => onReminderTimeChange(Number(value))}
+            value={internalValue}
+            onValueChange={(value) => {
+              setInternalValue(value);
+              // Direct number conversion
+              const numValue = Number(value);
+              console.log(`Select changed to: "${value}" → ${numValue}`);
+              onReminderTimeChange(numValue);
+            }}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select time" />

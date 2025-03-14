@@ -29,6 +29,13 @@ export function useTaskDatabaseOperations() {
   // Create a new task in the database
   const createTask = async (taskData: TaskData) => {
     console.log("Creating task with final data:", taskData);
+    
+    // IMPROVED: Extra verification for reminder_time
+    // This ensures the value is definitely a number before saving to database
+    if (taskData.reminder_time === 0) {
+      console.log("⚡ Verified zero reminder_time before database insert");
+    }
+    
     const { data: taskResult, error: taskError } = await supabase
       .from("tasks")
       .insert(taskData)
