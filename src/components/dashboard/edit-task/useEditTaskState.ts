@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Task } from "../TaskBoard";
 import { Subtask } from "../subtasks/SubtaskList";
@@ -17,15 +16,28 @@ export function useEditTaskState(task: Task, onClose: () => void) {
   const [endTime, setEndTime] = useState(task.end_time || "");
   const [priority, setPriority] = useState(task.priority || "low");
   
-  // Fix: Convert string or potentially string values to number for consistent type
   const [reminderEnabled, setReminderEnabled] = useState(task.reminder_enabled || false);
-  const [reminderTime, setReminderTime] = useState(
-    task.reminder_time === 0 ? 0 : 
-    task.reminder_time === null ? 0 :
-    typeof task.reminder_time === 'string' ? Number(task.reminder_time) : 
-    typeof task.reminder_time === 'number' ? task.reminder_time : 
-    0
-  );
+  const [reminderTime, setReminderTime] = useState(() => {
+    console.log(`INIT: task.reminder_time raw value = "${task.reminder_time}" (${typeof task.reminder_time})`);
+    
+    if (task.reminder_time === 0) {
+      console.log("INIT: Found explicit zero - setting to 0 (At start time)");
+      return 0;
+    } else if (task.reminder_time === null || task.reminder_time === undefined) {
+      console.log("INIT: Found null/undefined - defaulting to 0 (At start time)");
+      return 0;
+    } else if (typeof task.reminder_time === 'string') {
+      const numValue = Number(task.reminder_time);
+      console.log(`INIT: Converting string "${task.reminder_time}" to number: ${numValue}`);
+      return numValue;
+    } else if (typeof task.reminder_time === 'number') {
+      console.log(`INIT: Using existing number value: ${task.reminder_time}`);
+      return task.reminder_time;
+    } else {
+      console.log(`INIT: Unexpected type, defaulting to 0: ${task.reminder_time}`);
+      return 0;
+    }
+  });
   
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -106,19 +118,20 @@ export function useEditTaskState(task: Task, onClose: () => void) {
       
       let reminderTimeValue: number;
       
-      // Fix: Use strict number comparison with proper type conversion
+      console.log(`SAVE: Pre-conversion reminderTime = ${reminderTime} (${typeof reminderTime})`);
+      
       if (reminderTime === 0) {
         reminderTimeValue = 0;
-        console.log("⚠️ Setting reminder_time to EXACTLY 0 (At start time)");
+        console.log("⚠️ SAVE: Setting reminder_time to EXACTLY 0 (At start time)");
       } else if (reminderTime) {
         reminderTimeValue = Number(reminderTime);
-        console.log(`⚠️ Setting reminder_time to ${reminderTimeValue} minutes before`);
+        console.log(`⚠️ SAVE: Setting reminder_time to ${reminderTimeValue} minutes before`);
       } else {
         reminderTimeValue = 0;
-        console.log("⚠️ reminderTime was undefined, defaulting to 0 (At start time)");
+        console.log("⚠️ SAVE: reminderTime was undefined, defaulting to 0 (At start time)");
       }
       
-      console.log(`Submitting task update with reminder_time: ${reminderTimeValue} (${typeof reminderTimeValue})`);
+      console.log(`SAVE: Final reminderTimeValue for database: ${reminderTimeValue} (${typeof reminderTimeValue})`);
       
       const updateData = {
         title,
