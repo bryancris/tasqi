@@ -47,7 +47,8 @@ export function TaskNotificationFields({
     console.log(`TaskNotificationFields: reminderTime = ${reminderTime} (${typeof reminderTime})`);
     
     // Log select value that will be used
-    const selectValue = reminderTime?.toString() || "0";
+    // FIX: Handle the case where reminderTime is 0 explicitly
+    const selectValue = reminderTime === 0 ? "0" : reminderTime?.toString() || "0";
     console.log(`TaskNotificationFields: select value will be "${selectValue}"`);
   }, [reminderTime]);
 
@@ -60,7 +61,7 @@ export function TaskNotificationFields({
         onReminderTimeChange(0);
       } else if (typeof reminderTime !== 'number') {
         console.log(`🛠️ Converting non-number reminder time ${reminderTime} (${typeof reminderTime}) to number`);
-        // CRITICAL FIX: Ensure 0 values are preserved, not converted to default
+        // FIX: Ensure 0 values are preserved, not converted to default
         const numValue = reminderTime === '0' ? 0 : Number(reminderTime) || 0;
         onReminderTimeChange(numValue);
       }
@@ -89,7 +90,7 @@ export function TaskNotificationFields({
           onReminderTimeChange(0);
         } else if (typeof reminderTime !== 'number') {
           console.log(`Converting iOS reminder time ${reminderTime} (${typeof reminderTime}) to number`);
-          // CRITICAL FIX: Ensure 0 values are preserved, not converted to default
+          // FIX: Ensure 0 values are preserved, not converted to default
           const numValue = reminderTime === '0' ? 0 : Number(reminderTime) || 0;
           onReminderTimeChange(numValue);
         }
@@ -113,7 +114,7 @@ export function TaskNotificationFields({
           onReminderTimeChange(0);
         } else if (typeof reminderTime !== 'number') {
           console.log(`Converting reminder time ${reminderTime} (${typeof reminderTime}) to number`);
-          // CRITICAL FIX: Ensure 0 values are preserved, not converted to default
+          // FIX: Ensure 0 values are preserved, not converted to default
           const numValue = reminderTime === '0' ? 0 : Number(reminderTime) || 0;
           onReminderTimeChange(numValue);
         }
@@ -164,7 +165,8 @@ export function TaskNotificationFields({
         <div className="flex items-center space-x-2">
           <Label htmlFor="reminderTime">Notify me</Label>
           <Select
-            value={reminderTime?.toString() || "0"}
+            // FIX: Ensure 0 is handled correctly as a string for the Select component
+            value={reminderTime === 0 ? "0" : reminderTime?.toString() || "0"}
             onValueChange={(value) => {
               const numValue = Number(value);
               console.log(`🛠️ Reminder time changed to: ${numValue} (${typeof numValue})`);

@@ -97,6 +97,7 @@ export function useTaskChecker() {
         
         // DEFENSIVE: Ensure reminder_time exists as a number (including explicit 0 check)
         let reminderTime: number;
+        // FIX: Use strict equality with 0 for number type and '0' for string type
         if (task.reminder_time === 0 || task.reminder_time === '0') {
           reminderTime = 0;
           console.log(`🔔 Task ${task.id} has "At start time" reminder (0 value)`);
