@@ -11,16 +11,17 @@
  * - Uses the user's timezone for accurate scheduling
  * - Implements rate limiting to prevent excessive checking
  * - Only notifies for scheduled tasks with enabled reminders
+ * - Fixed for date-fns-tz v3 compatibility
  * 
  * Example Usage:
  * const { checkForUpcomingTasks } = useTaskChecker();
- * checkForUpcomingTasks(tasks, isMountedRef, notifiedTasksRef, showTaskNotification);
+ * checkForUpcomingTasks(tasks, isMountedRef, notifiedTasksRef, recentlyCreatedTasksRef, showTaskNotification);
  */
 
 import { Task } from '@/components/dashboard/TaskBoard';
 import { useCallback, useRef } from 'react';
 import { isToday, parseISO, isFuture } from 'date-fns';
-import { formatInTimeZone, toZonedTime } from 'date-fns-tz';
+import { formatInTimeZone } from 'date-fns-tz';
 
 export function useTaskChecker() {
   // Add a tracking ref for the last check time to avoid redundant checks
@@ -30,6 +31,7 @@ export function useTaskChecker() {
     tasks: Task[], 
     isMounted: React.MutableRefObject<boolean>,
     notifiedTasks: React.MutableRefObject<Set<number>>,
+    recentlyCreatedTasks: React.MutableRefObject<Map<number, number>>,
     showTaskNotification: (task: Task, type: 'reminder' | 'shared' | 'assignment') => Promise<boolean>
   ) => {
     if (!isMounted.current) return;
@@ -46,10 +48,11 @@ export function useTaskChecker() {
     const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const currentTime = new Date();
     
-    // DEBUG: Log actual tasks being checked
+    // Log tasks being checked, including recently created status
     console.log(`📋 All tasks (${tasks.length}):`);
     tasks.forEach(task => {
-      console.log(`- Task ${task.id}: ${task.title}, status: ${task.status}, reminder: ${task.reminder_enabled ? 'ON' : 'OFF'}, reminder_time: ${task.reminder_time}, notified: ${notifiedTasks.current.has(task.id)}`);
+      const isRecent = recentlyCreatedTasks.current.has(task.id);
+      console.log(`- Task ${task.id}: ${task.title}, status: ${task.status}, reminder: ${task.reminder_enabled ? 'ON' : 'OFF'}, reminder_time: ${task.reminder_time}, notified: ${notifiedTasks.current.has(task.id)}, recently created: ${isRecent}`);
     });
     
     // Only check tasks that need to be checked
@@ -65,7 +68,8 @@ export function useTaskChecker() {
     
     // DEBUG: Log which tasks passed initial filter
     tasksToCheck.forEach(task => {
-      console.log(`- Task ${task.id} (${task.title}) passed initial filter: reminder=${task.reminder_enabled}, time=${task.start_time}, date=${task.date}, reminder_time=${task.reminder_time}`);
+      const isRecent = recentlyCreatedTasks.current.has(task.id);
+      console.log(`- Task ${task.id} (${task.title}) passed initial filter: reminder=${task.reminder_enabled}, time=${task.start_time}, date=${task.date}, reminder_time=${task.reminder_time}, recently created: ${isRecent}`);
     });
     
     if (tasksToCheck.length === 0) {
@@ -79,11 +83,19 @@ export function useTaskChecker() {
         // Log task ID for debugging
         console.log(`📋 Processing task ${task.id} (${task.title}):`);
         
+        // Skip tasks that were recently created to prevent immediate notifications
+        if (recentlyCreatedTasks.current.has(task.id)) {
+          const creationTime = recentlyCreatedTasks.current.get(task.id) || 0;
+          const timeSinceCreation = now - creationTime;
+          console.log(`⏳ Task ${task.id} was created ${timeSinceCreation / 1000}s ago - skipping immediate notification`);
+          continue;
+        }
+        
         // DEBUG: Log reminder_time explicitly for debugging
         console.log(`🔔 Task ${task.id} exact reminder_time value: ${task.reminder_time} (type: ${typeof task.reminder_time})`);
         
         // DEFENSIVE: Ensure reminder_time exists as a number (default to 0 if undefined)
-        const reminderTime = task.reminder_time !== undefined ? task.reminder_time : 0;
+        const reminderTime = task.reminder_time !== undefined ? Number(task.reminder_time) : 0;
         console.log(`🔔 Task ${task.id} normalized reminder_time: ${reminderTime}`);
         
         // IMPORTANT: Parse the date safely
@@ -123,13 +135,14 @@ export function useTaskChecker() {
         
         console.log(`   - Task ${task.id}: Raw task date-time string: ${taskDateTimeString}`);
         
-        // Convert to a date object in the user's timezone
+        // Convert to a date object
         let taskDateTime;
         try {
-          taskDateTime = toZonedTime(new Date(taskDateTimeString), userTimeZone);
+          // FIXED FOR date-fns-tz V3: Use new method name and direct Date constructor
+          taskDateTime = new Date(`${taskDateString}T${taskTimeString}`);
           console.log(`⏰ Task ${task.id}: DateTime created successfully: ${taskDateTime.toISOString()}`);
         } catch (tzError) {
-          console.error(`❌ Task ${task.id}: Error creating timezone-aware date:`, tzError);
+          console.error(`❌ Task ${task.id}: Error creating date:`, tzError);
           
           // Fallback approach
           console.log(`⚠️ Task ${task.id}: Using fallback approach for date-time conversion`);
@@ -151,8 +164,8 @@ export function useTaskChecker() {
         console.log(`   - Task ${task.id}: Time until task: ${timeUntilTask}ms (${minutesUntilTask.toFixed(2)} minutes)`);
         console.log(`   - Task ${task.id}: Reminder time setting: ${reminderTime} minute(s)`);
 
-        // INCREASED window size for notification delivery (critical fix)
-        const windowSize = 8; // Increased from 6 to 8 minutes for a more generous window
+        // INCREASED window size for notification delivery
+        const windowSize = 10; // Increased from 8 to 10 minutes for an even more generous window
         
         // CRITICAL FIX: Explicitly check reminder_time for exact === 0 value
         const isAtStartTime = reminderTime === 0;
@@ -162,6 +175,8 @@ export function useTaskChecker() {
           // For "at start time", we want to be very close to the start time
           // Check if we're within the notification window in absolute terms
           const minutesToStartTime = Math.abs(minutesUntilTask);
+          
+          // IMPROVED WINDOW LOGIC: Include both upcoming and slightly overdue tasks
           const isWithinStartTimeWindow = minutesToStartTime <= windowSize;
           
           console.log(`   - Task ${task.id}: AT START TIME notification check:`);
@@ -178,6 +193,8 @@ export function useTaskChecker() {
           // For advance reminders, check if we're within the window of when we should send notification
           // This is based on the reminder_time value (minutes before task)
           const timeUntilReminder = minutesUntilTask - reminderTime;
+          
+          // IMPROVED WINDOW LOGIC: Focus on the absolute difference to catch both slightly early and late
           const isWithinReminderWindow = Math.abs(timeUntilReminder) <= windowSize;
           
           console.log(`   - Task ${task.id}: ADVANCE reminder check (${reminderTime} min before):`);

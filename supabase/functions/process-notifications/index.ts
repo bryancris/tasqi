@@ -113,7 +113,7 @@ async function processNotifications() {
           console.log(`- Current time: ${now.toISOString()}`);
           
           // INCREASED window size for all notifications to ensure they're not missed
-          const windowSizeMs = 8 * 60 * 1000; // 8 minutes window (increased from 6)
+          const windowSizeMs = 10 * 60 * 1000; // 10 minutes window (increased from 8)
           
           // CRITICAL FIX: Special handling for "at start time" notifications (reminderTime = 0)
           if (reminderTime === 0) {

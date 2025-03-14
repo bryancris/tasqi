@@ -9,24 +9,23 @@
  * - Cleans up resources when the component unmounts
  * 
  * Important Notes:
- * - Uses a 30-second interval to check for upcoming tasks
+ * - Uses a 15-second interval to check for upcoming tasks (increased frequency)
  * - Maintains a Set of already notified tasks to prevent duplicates
- * - The test notification function is useful for debugging notification display
- * 
- * Example Usage:
- * const { handleTaskComplete, showTaskNotification, triggerTestNotification } = useTaskNotifications();
- * triggerTestNotification(); // To test notification display
+ * - Includes special handling for newly created tasks to prevent immediate notifications
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTasks } from '@/hooks/use-tasks';
 import { useNotifications } from '@/hooks/notifications/use-notifications';
 import { useTaskCompletion } from '@/hooks/notifications/use-task-completion';
 import { useTaskNotificationDisplay } from '@/hooks/notifications/use-task-notification-display';
 import { useTaskChecker } from '@/hooks/notifications/use-task-checker';
 
-// Decrease check interval to increase frequency
-const NOTIFICATION_CHECK_INTERVAL = 30000; // Check every 30 seconds (reduced from 60)
+// Decrease check interval to increase frequency even more
+const NOTIFICATION_CHECK_INTERVAL = 15000; // Check every 15 seconds (reduced from 30)
+
+// Track recently created tasks to prevent immediate notifications
+const TASK_CREATION_THRESHOLD = 60000; // 60 seconds
 
 export function useTaskNotifications() {
   const { tasks } = useTasks();
@@ -35,6 +34,9 @@ export function useTaskNotifications() {
   
   // Add tracking for is mounted to prevent updates on unmounted component
   const isMountedRef = useRef<boolean>(true);
+  
+  // Add tracking for recently created tasks to prevent immediate notifications
+  const recentlyCreatedTasksRef = useRef<Map<number, number>>(new Map());
 
   // Import handlers from refactored hooks
   const { handleTaskComplete } = useTaskCompletion();
@@ -63,6 +65,28 @@ export function useTaskNotifications() {
     }
   };
 
+  // Track task creation timestamps to prevent immediate notifications
+  useEffect(() => {
+    if (!tasks || tasks.length === 0) return;
+    
+    const now = Date.now();
+    // Check for new tasks to add to the recently created tasks map
+    tasks.forEach(task => {
+      if (!recentlyCreatedTasksRef.current.has(task.id)) {
+        console.log(`📋 New task detected: ${task.id} - marking as recently created`);
+        recentlyCreatedTasksRef.current.set(task.id, now);
+      }
+    });
+    
+    // Clean up old entries from the recently created tasks map
+    Array.from(recentlyCreatedTasksRef.current.entries()).forEach(([taskId, timestamp]) => {
+      if (now - timestamp > TASK_CREATION_THRESHOLD) {
+        console.log(`📋 Task ${taskId} is no longer considered recently created`);
+        recentlyCreatedTasksRef.current.delete(taskId);
+      }
+    });
+  }, [tasks]);
+
   useEffect(() => {
     console.log('🔔 Task notifications hook initialized');
     isMountedRef.current = true;
@@ -73,7 +97,8 @@ export function useTaskNotifications() {
       void checkForUpcomingTasks(
         tasks, 
         isMountedRef, 
-        notifiedTasksRef, 
+        notifiedTasksRef,
+        recentlyCreatedTasksRef, // Pass the recently created tasks ref
         (task, type) => showTaskNotification(task, type, isMountedRef, handleTaskComplete)
       );
     }
@@ -85,7 +110,8 @@ export function useTaskNotifications() {
         void checkForUpcomingTasks(
           tasks, 
           isMountedRef, 
-          notifiedTasksRef, 
+          notifiedTasksRef,
+          recentlyCreatedTasksRef, // Pass the recently created tasks ref
           (task, type) => showTaskNotification(task, type, isMountedRef, handleTaskComplete)
         );
       }
@@ -97,7 +123,8 @@ export function useTaskNotifications() {
         void checkForUpcomingTasks(
           tasks, 
           isMountedRef, 
-          notifiedTasksRef, 
+          notifiedTasksRef,
+          recentlyCreatedTasksRef, // Pass the recently created tasks ref
           (task, type) => showTaskNotification(task, type, isMountedRef, handleTaskComplete)
         );
       }
