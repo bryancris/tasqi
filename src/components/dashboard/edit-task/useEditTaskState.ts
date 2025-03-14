@@ -19,8 +19,9 @@ export function useEditTaskState(task: Task, onClose: () => void) {
   const [reminderEnabled, setReminderEnabled] = useState(task.reminder_enabled || false);
   const [reminderTime, setReminderTime] = useState(
     task.reminder_time === 0 ? 0 : 
+    task.reminder_time === '0' ? 0 : 
     task.reminder_time ? Number(task.reminder_time) : 
-    15
+    0
   );
   
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
@@ -33,6 +34,7 @@ export function useEditTaskState(task: Task, onClose: () => void) {
     loadSubtasks();
     
     console.log("Loaded task with reminder_time:", task.reminder_time, "Type:", typeof task.reminder_time);
+    console.log(`Task "${task.title}" loaded with reminderTime state:`, reminderTime);
   }, [task.id]);
 
   const loadSubtasks = async () => {
@@ -99,7 +101,18 @@ export function useEditTaskState(task: Task, onClose: () => void) {
         status = 'unscheduled';
       }
       
-      const reminderTimeValue = reminderTime === 0 ? 0 : Number(reminderTime) || 0;
+      let reminderTimeValue: number;
+      
+      if (reminderTime === 0 || reminderTime === '0') {
+        reminderTimeValue = 0;
+        console.log("⚠️ Setting reminder_time to EXACTLY 0 (At start time)");
+      } else if (reminderTime) {
+        reminderTimeValue = Number(reminderTime);
+        console.log(`⚠️ Setting reminder_time to ${reminderTimeValue} minutes before`);
+      } else {
+        reminderTimeValue = 0;
+        console.log("⚠️ reminderTime was undefined, defaulting to 0 (At start time)");
+      }
       
       console.log(`Submitting task update with reminder_time: ${reminderTimeValue} (${typeof reminderTimeValue})`);
       

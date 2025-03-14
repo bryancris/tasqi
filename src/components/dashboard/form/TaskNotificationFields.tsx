@@ -1,4 +1,3 @@
-
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
@@ -42,26 +41,26 @@ export function TaskNotificationFields({
   const platform = detectPlatform();
   const isIOSPWA = platform === 'ios-pwa';
 
-  // Debug log when component renders or reminder time changes
+  // Enhanced debugging for reminder time
   useEffect(() => {
     console.log(`TaskNotificationFields: reminderTime = ${reminderTime} (${typeof reminderTime})`);
     
-    // Log select value that will be used
-    // FIX: Handle the case where reminderTime is 0 explicitly
+    // FIXED: Enhanced logging for select value to trace issues
+    // Handle the zero case explicitly
     const selectValue = reminderTime === 0 ? "0" : reminderTime?.toString() || "0";
     console.log(`TaskNotificationFields: select value will be "${selectValue}"`);
   }, [reminderTime]);
 
-  // Added to ensure reminder_time is always the right type
+  // Added safety check to ensure reminder_time is always the right type
   useEffect(() => {
-    // Ensure reminder_time is always a number
+    // Only run this if component is mounted and reminder is enabled
     if (reminderEnabled) {
       if (reminderTime === undefined) {
         console.log('🛠️ Setting default reminder time to 0 (At start time) - undefined detected');
         onReminderTimeChange(0);
       } else if (typeof reminderTime !== 'number') {
         console.log(`🛠️ Converting non-number reminder time ${reminderTime} (${typeof reminderTime}) to number`);
-        // FIX: Ensure 0 values are preserved, not converted to default
+        // FIXED: Ensure 0 values are preserved, not converted to default
         const numValue = reminderTime === '0' ? 0 : Number(reminderTime) || 0;
         onReminderTimeChange(numValue);
       }
@@ -165,11 +164,11 @@ export function TaskNotificationFields({
         <div className="flex items-center space-x-2">
           <Label htmlFor="reminderTime">Notify me</Label>
           <Select
-            // FIX: Ensure 0 is handled correctly as a string for the Select component
+            // FIXED: Ensure 0 is handled correctly as a string for the Select component
             value={reminderTime === 0 ? "0" : reminderTime?.toString() || "0"}
             onValueChange={(value) => {
               const numValue = Number(value);
-              console.log(`🛠️ Reminder time changed to: ${numValue} (${typeof numValue})`);
+              console.log(`🛠️ Reminder time changed to: ${numValue} (${typeof numValue}), from raw value: "${value}"`);
               onReminderTimeChange(numValue);
             }}
           >
