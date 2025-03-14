@@ -34,9 +34,9 @@ export function useTaskChecker() {
   ) => {
     if (!isMounted.current) return;
     
-    // Skip checking if last check was too recent (within last 5 seconds)
+    // Skip checking if last check was too recent (within last 3 seconds - reduced from 5 to 3)
     const now = Date.now();
-    if (now - lastCheckTimeRef.current < 5000) {
+    if (now - lastCheckTimeRef.current < 3000) {
       return; // Skip this check, it's too soon after the last one
     }
     
@@ -79,10 +79,22 @@ export function useTaskChecker() {
         // Log task ID for debugging
         console.log(`📋 Processing task ${task.id} (${task.title}):`);
         
-        // DEBUG: Full task object dump for debugging
-        console.log(`TASK DETAIL DUMP for ${task.id}:`, JSON.stringify(task, null, 2));
+        // DEBUG: Log reminder_time explicitly for debugging
+        console.log(`🔔 Task ${task.id} exact reminder_time value: ${task.reminder_time} (type: ${typeof task.reminder_time})`);
         
-        const taskDate = parseISO(task.date!);
+        // DEFENSIVE: Ensure reminder_time exists as a number (default to 0 if undefined)
+        const reminderTime = task.reminder_time !== undefined ? task.reminder_time : 0;
+        console.log(`🔔 Task ${task.id} normalized reminder_time: ${reminderTime}`);
+        
+        // IMPORTANT: Parse the date safely
+        let taskDate;
+        try {
+          taskDate = parseISO(task.date!);
+          console.log(`📅 Task ${task.id}: Date parsed successfully: ${taskDate.toISOString()}`);
+        } catch (dateError) {
+          console.error(`❌ Task ${task.id}: Error parsing date ${task.date}:`, dateError);
+          continue; // Skip this task due to date parsing error
+        }
         
         // Skip tasks that aren't today or in the future
         if (!isToday(taskDate) && !isFuture(taskDate)) {
@@ -91,7 +103,18 @@ export function useTaskChecker() {
         }
         
         // Parse the task's start time
-        const [hours, minutes] = task.start_time!.split(':').map(Number);
+        let hours = 0;
+        let minutes = 0; 
+        try {
+          [hours, minutes] = task.start_time!.split(':').map(Number);
+          if (isNaN(hours) || isNaN(minutes)) {
+            throw new Error(`Invalid time format: ${task.start_time}`);
+          }
+          console.log(`⏰ Task ${task.id}: Time parsed successfully: ${hours}:${minutes}`);
+        } catch (timeError) {
+          console.error(`❌ Task ${task.id}: Error parsing time ${task.start_time}:`, timeError);
+          continue; // Skip this task due to time parsing error
+        }
         
         // Build full date-time string in user's timezone
         const taskDateString = formatInTimeZone(taskDate, userTimeZone, 'yyyy-MM-dd');
@@ -101,9 +124,22 @@ export function useTaskChecker() {
         console.log(`   - Task ${task.id}: Raw task date-time string: ${taskDateTimeString}`);
         
         // Convert to a date object in the user's timezone
-        const taskDateTime = toZonedTime(new Date(taskDateTimeString), userTimeZone);
+        let taskDateTime;
+        try {
+          taskDateTime = toZonedTime(new Date(taskDateTimeString), userTimeZone);
+          console.log(`⏰ Task ${task.id}: DateTime created successfully: ${taskDateTime.toISOString()}`);
+        } catch (tzError) {
+          console.error(`❌ Task ${task.id}: Error creating timezone-aware date:`, tzError);
+          
+          // Fallback approach
+          console.log(`⚠️ Task ${task.id}: Using fallback approach for date-time conversion`);
+          const fallbackDate = new Date(taskDate);
+          fallbackDate.setHours(hours, minutes, 0, 0);
+          taskDateTime = fallbackDate;
+          console.log(`⏰ Task ${task.id}: Fallback DateTime: ${taskDateTime.toISOString()}`);
+        }
         
-        // Calculate time until task needs to be notified
+        // Calculate time until task needs to be notified (in milliseconds)
         const timeUntilTask = taskDateTime.getTime() - currentTime.getTime();
         const minutesUntilTask = timeUntilTask / (1000 * 60);
 
@@ -112,15 +148,15 @@ export function useTaskChecker() {
         console.log(`   - Task ${task.id}: Start time: ${task.start_time}`);
         console.log(`   - Task ${task.id}: Task scheduled for: ${taskDateTime.toISOString()}`);
         console.log(`   - Task ${task.id}: Current time: ${currentTime.toISOString()}`);
-        console.log(`   - Task ${task.id}: Minutes until task: ${minutesUntilTask.toFixed(2)}`);
-        console.log(`   - Task ${task.id}: Reminder time setting: ${task.reminder_time} minute(s)`);
+        console.log(`   - Task ${task.id}: Time until task: ${timeUntilTask}ms (${minutesUntilTask.toFixed(2)} minutes)`);
+        console.log(`   - Task ${task.id}: Reminder time setting: ${reminderTime} minute(s)`);
 
         // INCREASED window size for notification delivery (critical fix)
-        const windowSize = 6; // Increased from 5 to 6 minutes for a more generous window
+        const windowSize = 8; // Increased from 6 to 8 minutes for a more generous window
         
         // CRITICAL FIX: Explicitly check reminder_time for exact === 0 value
-        const isAtStartTime = task.reminder_time === 0;
-        console.log(`   - Task ${task.id}: Is 'At start time' notification? ${isAtStartTime}`);
+        const isAtStartTime = reminderTime === 0;
+        console.log(`   - Task ${task.id}: Is 'At start time' notification? ${isAtStartTime ? 'YES' : 'NO'}`);
         
         if (isAtStartTime) {
           // For "at start time", we want to be very close to the start time
@@ -141,11 +177,10 @@ export function useTaskChecker() {
         } else {
           // For advance reminders, check if we're within the window of when we should send notification
           // This is based on the reminder_time value (minutes before task)
-          const reminderPoint = task.reminder_time || 15; // Default to 15 if somehow undefined
-          const timeUntilReminder = minutesUntilTask - reminderPoint;
+          const timeUntilReminder = minutesUntilTask - reminderTime;
           const isWithinReminderWindow = Math.abs(timeUntilReminder) <= windowSize;
           
-          console.log(`   - Task ${task.id}: ADVANCE reminder check (${reminderPoint} min before):`);
+          console.log(`   - Task ${task.id}: ADVANCE reminder check (${reminderTime} min before):`);
           console.log(`   - Task ${task.id}: Time until reminder point: ${timeUntilReminder.toFixed(2)} minutes`);
           console.log(`   - Task ${task.id}: Is within ${windowSize} minute window of reminder point: ${isWithinReminderWindow}`);
           

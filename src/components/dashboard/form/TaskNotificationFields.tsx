@@ -45,9 +45,14 @@ export function TaskNotificationFields({
   // Added to ensure reminder_time is always the right type
   useEffect(() => {
     // Ensure reminder_time is always a number
-    if (reminderEnabled && reminderTime === undefined) {
-      console.log('🛠️ Setting default reminder time to 0 (At start time)');
-      onReminderTimeChange(0);
+    if (reminderEnabled) {
+      if (reminderTime === undefined) {
+        console.log('🛠️ Setting default reminder time to 0 (At start time) - undefined detected');
+        onReminderTimeChange(0);
+      } else if (typeof reminderTime !== 'number') {
+        console.log(`🛠️ Converting non-number reminder time ${reminderTime} (${typeof reminderTime}) to number`);
+        onReminderTimeChange(Number(reminderTime) || 0);
+      }
     }
   }, [reminderEnabled, reminderTime, onReminderTimeChange]);
 
@@ -69,8 +74,11 @@ export function TaskNotificationFields({
         
         // Set default reminder time to "At start time" if none selected
         if (reminderTime === undefined) {
-          console.log('Setting reminder time to 0 (At start time)');
+          console.log('Setting reminder time to 0 (At start time) for iOS');
           onReminderTimeChange(0);
+        } else if (typeof reminderTime !== 'number') {
+          console.log(`Converting iOS reminder time ${reminderTime} (${typeof reminderTime}) to number`);
+          onReminderTimeChange(Number(reminderTime) || 0);
         }
         
         if ('Notification' in window) {
@@ -90,6 +98,9 @@ export function TaskNotificationFields({
         if (reminderTime === undefined) {
           console.log('Setting reminder time to 0 (At start time)');
           onReminderTimeChange(0);
+        } else if (typeof reminderTime !== 'number') {
+          console.log(`Converting reminder time ${reminderTime} (${typeof reminderTime}) to number`);
+          onReminderTimeChange(Number(reminderTime) || 0);
         }
       }
     } catch (error) {
@@ -139,7 +150,11 @@ export function TaskNotificationFields({
           <Label htmlFor="reminderTime">Notify me</Label>
           <Select
             value={reminderTime?.toString() || "0"}
-            onValueChange={(value) => onReminderTimeChange(Number(value))}
+            onValueChange={(value) => {
+              const numValue = Number(value);
+              console.log(`🛠️ Reminder time changed to: ${numValue} (${typeof numValue})`);
+              onReminderTimeChange(numValue);
+            }}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select time" />

@@ -9,7 +9,7 @@
  * - Cleans up resources when the component unmounts
  * 
  * Important Notes:
- * - Uses a 60-second interval to check for upcoming tasks
+ * - Uses a 30-second interval to check for upcoming tasks
  * - Maintains a Set of already notified tasks to prevent duplicates
  * - The test notification function is useful for debugging notification display
  * 
@@ -25,8 +25,8 @@ import { useTaskCompletion } from '@/hooks/notifications/use-task-completion';
 import { useTaskNotificationDisplay } from '@/hooks/notifications/use-task-notification-display';
 import { useTaskChecker } from '@/hooks/notifications/use-task-checker';
 
-// Increase check interval to reduce frequency
-const NOTIFICATION_CHECK_INTERVAL = 60000; // Check every 60 seconds
+// Decrease check interval to increase frequency
+const NOTIFICATION_CHECK_INTERVAL = 30000; // Check every 30 seconds (reduced from 60)
 
 export function useTaskNotifications() {
   const { tasks } = useTasks();
@@ -69,6 +69,7 @@ export function useTaskNotifications() {
     
     // Initial check on mount if we have tasks
     if (tasks.length > 0) {
+      console.log('📋 Initial task check on mount with tasks:', tasks.length);
       void checkForUpcomingTasks(
         tasks, 
         isMountedRef, 
@@ -77,8 +78,22 @@ export function useTaskNotifications() {
       );
     }
 
+    // Perform an immediate check after a short delay (to let the app stabilize)
+    const initialCheckTimeout = setTimeout(() => {
+      if (isMountedRef.current && tasks.length > 0) {
+        console.log('📋 Running delayed initial task check with tasks:', tasks.length);
+        void checkForUpcomingTasks(
+          tasks, 
+          isMountedRef, 
+          notifiedTasksRef, 
+          (task, type) => showTaskNotification(task, type, isMountedRef, handleTaskComplete)
+        );
+      }
+    }, 2000);
+
     const intervalId = setInterval(() => {
       if (isMountedRef.current && tasks.length > 0) {
+        console.log('📋 Periodic task check with tasks:', tasks.length);
         void checkForUpcomingTasks(
           tasks, 
           isMountedRef, 
@@ -91,6 +106,7 @@ export function useTaskNotifications() {
     // Cleanup function
     return () => {
       isMountedRef.current = false;
+      clearTimeout(initialCheckTimeout);
       clearInterval(intervalId);
       console.log('🔔 Task notifications hook cleanup');
     };

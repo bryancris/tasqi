@@ -74,9 +74,23 @@ async function processNotifications() {
         const taskDate = event.metadata?.date;
         const taskStartTime = event.metadata?.start_time;
         const reminderTimeStr = event.metadata?.reminder_time || '0';
-        const reminderTime = parseInt(reminderTimeStr, 10);
         
-        console.log(`Task reminder details: date=${taskDate}, time=${taskStartTime}, reminder=${reminderTime}`);
+        // CRITICAL FIX: Ensure reminder_time is properly converted to a number
+        let reminderTime: number;
+        try {
+          reminderTime = parseInt(reminderTimeStr, 10);
+          
+          // Safety check to default to 0 if somehow NaN slips through
+          if (isNaN(reminderTime)) {
+            console.log(`⚠️ Warning: Invalid reminder_time value "${reminderTimeStr}", defaulting to 0`);
+            reminderTime = 0;
+          }
+        } catch (parseError) {
+          console.error(`❌ Error parsing reminder_time "${reminderTimeStr}":`, parseError);
+          reminderTime = 0; // Default to "at start time" if there's an error
+        }
+        
+        console.log(`Task reminder details: date=${taskDate}, time=${taskStartTime}, reminder=${reminderTime} (parsed from "${reminderTimeStr}")`);
         
         if (taskDate && taskStartTime) {
           // Parse the time for the task
@@ -99,7 +113,7 @@ async function processNotifications() {
           console.log(`- Current time: ${now.toISOString()}`);
           
           // INCREASED window size for all notifications to ensure they're not missed
-          const windowSizeMs = 6 * 60 * 1000; // 6 minutes window (increased from 5)
+          const windowSizeMs = 8 * 60 * 1000; // 8 minutes window (increased from 6)
           
           // CRITICAL FIX: Special handling for "at start time" notifications (reminderTime = 0)
           if (reminderTime === 0) {
@@ -186,8 +200,33 @@ async function processNotifications() {
             continue;
           }
 
+          // CRITICAL FIX: Normalize reminder_time from various sources
+          let reminderTime: number;
+          
+          if (task?.reminder_time !== undefined) {
+            // First try from task record
+            reminderTime = typeof task.reminder_time === 'number' ? 
+              task.reminder_time : 
+              parseInt(String(task.reminder_time), 10);
+          } else if (event.metadata?.reminder_time !== undefined) {
+            // Then try from event metadata
+            reminderTime = typeof event.metadata.reminder_time === 'number' ? 
+              event.metadata.reminder_time : 
+              parseInt(String(event.metadata.reminder_time), 10);
+          } else {
+            // Default to 0 if no reminder_time is found
+            reminderTime = 0;
+          }
+          
+          // Safety check for NaN
+          if (isNaN(reminderTime)) {
+            reminderTime = 0;
+          }
+          
+          console.log(`Normalized reminder_time for task ${event.task_id}: ${reminderTime}`);
+
           // Include information about whether this is an "at start time" notification
-          const isAtStartTime = task.reminder_time === 0 || event.metadata?.reminder_time === '0';
+          const isAtStartTime = reminderTime === 0;
           const reminderText = isAtStartTime ? 'now' : 'soon';
 
           title = `Task Reminder: ${task.title}`;
