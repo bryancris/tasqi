@@ -53,7 +53,9 @@ export function useTaskSubmission({ onSuccess, setIsLoading }: UseTaskSubmission
       date, 
       startTime, 
       endTime,
-      priority
+      priority,
+      reminderEnabled,
+      reminderTime // Log the exact reminder time value
     });
     
     if (!title.trim()) {
@@ -103,6 +105,15 @@ export function useTaskSubmission({ onSuccess, setIsLoading }: UseTaskSubmission
         finalEndTime = `${endHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
       }
 
+      // CRITICAL FIX: Ensure reminder_time is properly preserved, even when it's 0
+      // Number type check and explicit handling for 0 value
+      const reminderTimeValue = typeof reminderTime === 'number' ? 
+        reminderTime : // If it's already a number, use it directly
+        (reminderTime === '0' || reminderTime === 0) ? 0 : // Check for string '0' or numeric 0
+        Number(reminderTime) || 0; // Convert other values or default to 0 if NaN
+      
+      console.log(`Reminder time for task creation: ${reminderTimeValue} (type: ${typeof reminderTimeValue})`);
+
       const taskData = {
         title,
         description,
@@ -112,7 +123,7 @@ export function useTaskSubmission({ onSuccess, setIsLoading }: UseTaskSubmission
         end_time: (isScheduled || (isEvent && !isAllDay)) && finalEndTime ? finalEndTime : null,
         priority: isEvent ? "medium" : priority,
         reminder_enabled: reminderEnabled,
-        reminder_time: reminderTime,
+        reminder_time: reminderTimeValue, // Use the properly handled value
         user_id: userId,
         owner_id: userId,
         is_all_day: isEvent ? isAllDay : false,

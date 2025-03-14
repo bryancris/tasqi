@@ -42,6 +42,15 @@ export function TaskNotificationFields({
   const platform = detectPlatform();
   const isIOSPWA = platform === 'ios-pwa';
 
+  // Debug log when component renders or reminder time changes
+  useEffect(() => {
+    console.log(`TaskNotificationFields: reminderTime = ${reminderTime} (${typeof reminderTime})`);
+    
+    // Log select value that will be used
+    const selectValue = reminderTime?.toString() || "0";
+    console.log(`TaskNotificationFields: select value will be "${selectValue}"`);
+  }, [reminderTime]);
+
   // Added to ensure reminder_time is always the right type
   useEffect(() => {
     // Ensure reminder_time is always a number
@@ -51,7 +60,9 @@ export function TaskNotificationFields({
         onReminderTimeChange(0);
       } else if (typeof reminderTime !== 'number') {
         console.log(`🛠️ Converting non-number reminder time ${reminderTime} (${typeof reminderTime}) to number`);
-        onReminderTimeChange(Number(reminderTime) || 0);
+        // CRITICAL FIX: Ensure 0 values are preserved, not converted to default
+        const numValue = reminderTime === '0' ? 0 : Number(reminderTime) || 0;
+        onReminderTimeChange(numValue);
       }
     }
   }, [reminderEnabled, reminderTime, onReminderTimeChange]);
@@ -78,7 +89,9 @@ export function TaskNotificationFields({
           onReminderTimeChange(0);
         } else if (typeof reminderTime !== 'number') {
           console.log(`Converting iOS reminder time ${reminderTime} (${typeof reminderTime}) to number`);
-          onReminderTimeChange(Number(reminderTime) || 0);
+          // CRITICAL FIX: Ensure 0 values are preserved, not converted to default
+          const numValue = reminderTime === '0' ? 0 : Number(reminderTime) || 0;
+          onReminderTimeChange(numValue);
         }
         
         if ('Notification' in window) {
@@ -100,7 +113,9 @@ export function TaskNotificationFields({
           onReminderTimeChange(0);
         } else if (typeof reminderTime !== 'number') {
           console.log(`Converting reminder time ${reminderTime} (${typeof reminderTime}) to number`);
-          onReminderTimeChange(Number(reminderTime) || 0);
+          // CRITICAL FIX: Ensure 0 values are preserved, not converted to default
+          const numValue = reminderTime === '0' ? 0 : Number(reminderTime) || 0;
+          onReminderTimeChange(numValue);
         }
       }
     } catch (error) {

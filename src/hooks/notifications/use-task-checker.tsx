@@ -91,12 +91,22 @@ export function useTaskChecker() {
           continue;
         }
         
+        // CRITICAL FIX: Make sure reminder_time is properly handled, especially 0 values
         // DEBUG: Log reminder_time explicitly for debugging
         console.log(`🔔 Task ${task.id} exact reminder_time value: ${task.reminder_time} (type: ${typeof task.reminder_time})`);
         
-        // DEFENSIVE: Ensure reminder_time exists as a number (default to 0 if undefined)
-        const reminderTime = task.reminder_time !== undefined ? Number(task.reminder_time) : 0;
-        console.log(`🔔 Task ${task.id} normalized reminder_time: ${reminderTime}`);
+        // DEFENSIVE: Ensure reminder_time exists as a number (including explicit 0 check)
+        let reminderTime: number;
+        if (task.reminder_time === 0 || task.reminder_time === '0') {
+          reminderTime = 0;
+          console.log(`🔔 Task ${task.id} has "At start time" reminder (0 value)`);
+        } else if (task.reminder_time !== undefined) {
+          reminderTime = Number(task.reminder_time);
+          console.log(`🔔 Task ${task.id} normalized reminder_time: ${reminderTime}`);
+        } else {
+          reminderTime = 0; // Default to "At start time" if undefined
+          console.log(`🔔 Task ${task.id} has undefined reminder_time, defaulting to 0`);
+        }
         
         // IMPORTANT: Parse the date safely
         let taskDate;
@@ -167,7 +177,8 @@ export function useTaskChecker() {
         // INCREASED window size for notification delivery
         const windowSize = 10; // Increased from 8 to 10 minutes for an even more generous window
         
-        // CRITICAL FIX: Explicitly check reminder_time for exact === 0 value
+        // CRITICAL FIX: Explicitly check reminder_time for exact === 0 value (at start time)
+        // This is crucial because JavaScript treats 0 as falsy, which can cause bugs
         const isAtStartTime = reminderTime === 0;
         console.log(`   - Task ${task.id}: Is 'At start time' notification? ${isAtStartTime ? 'YES' : 'NO'}`);
         

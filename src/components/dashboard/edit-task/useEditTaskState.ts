@@ -16,8 +16,15 @@ export function useEditTaskState(task: Task, onClose: () => void) {
   const [startTime, setStartTime] = useState(task.start_time || "");
   const [endTime, setEndTime] = useState(task.end_time || "");
   const [priority, setPriority] = useState(task.priority || "low");
+  
+  // CRITICAL FIX: Properly handle the reminder time including the case when it's 0
   const [reminderEnabled, setReminderEnabled] = useState(task.reminder_enabled || false);
-  const [reminderTime, setReminderTime] = useState(task.reminder_time || 15);
+  const [reminderTime, setReminderTime] = useState(
+    task.reminder_time !== undefined && task.reminder_time !== null ? 
+    Number(task.reminder_time) : 
+    15
+  );
+  
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isDeletingTask, setIsDeletingTask] = useState(false);
@@ -26,6 +33,9 @@ export function useEditTaskState(task: Task, onClose: () => void) {
 
   useEffect(() => {
     loadSubtasks();
+    
+    // Log the task's reminder time for debugging
+    console.log("Loaded task with reminder_time:", task.reminder_time, "Type:", typeof task.reminder_time);
   }, [task.id]);
 
   const loadSubtasks = async () => {
@@ -93,6 +103,13 @@ export function useEditTaskState(task: Task, onClose: () => void) {
         status = 'unscheduled';
       }
       
+      // Ensure we're properly handling the reminderTime, especially if it's 0
+      const reminderTimeValue = typeof reminderTime === 'number' ? 
+        reminderTime : // use directly if already a number
+        Number(reminderTime); // convert to number otherwise
+      
+      console.log(`Submitting task update with reminder_time: ${reminderTimeValue} (${typeof reminderTimeValue})`);
+      
       const updateData = {
         title,
         description,
@@ -100,7 +117,7 @@ export function useEditTaskState(task: Task, onClose: () => void) {
         date: (isScheduled || isEvent) && date ? date : null,
         priority: isEvent ? "medium" : priority,
         reminder_enabled: reminderEnabled,
-        reminder_time: reminderTime,
+        reminder_time: reminderTimeValue, // Use the properly handled value
         is_all_day: isEvent ? isAllDay : false
       } as const;
       
