@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Task } from "../TaskBoard";
 import { Subtask } from "../subtasks/SubtaskList";
@@ -17,13 +16,11 @@ export function useEditTaskState(task: Task, onClose: () => void) {
   const [endTime, setEndTime] = useState(task.end_time || "");
   const [priority, setPriority] = useState(task.priority || "low");
   
-  // FIX: Properly handle the reminder time including the case when it's 0
-  // Explicit check for 0 value to avoid it being treated as falsy
   const [reminderEnabled, setReminderEnabled] = useState(task.reminder_enabled || false);
   const [reminderTime, setReminderTime] = useState(
-    task.reminder_time === 0 ? 0 : // Explicit check for 0
+    task.reminder_time === 0 ? 0 : 
     task.reminder_time ? Number(task.reminder_time) : 
-    15 // Only default to 15 if reminder_time is null/undefined, not if it's 0
+    15
   );
   
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
@@ -35,7 +32,6 @@ export function useEditTaskState(task: Task, onClose: () => void) {
   useEffect(() => {
     loadSubtasks();
     
-    // Log the task's reminder time for debugging
     console.log("Loaded task with reminder_time:", task.reminder_time, "Type:", typeof task.reminder_time);
   }, [task.id]);
 
@@ -73,7 +69,6 @@ export function useEditTaskState(task: Task, onClose: () => void) {
         throw error;
       }
       
-      // Wait for query invalidation to ensure the UI is updated properly
       await queryClient.invalidateQueries({ queryKey: ["tasks"] });
       
       toast.success('Task deleted successfully');
@@ -104,8 +99,6 @@ export function useEditTaskState(task: Task, onClose: () => void) {
         status = 'unscheduled';
       }
       
-      // FIX: Ensure we're properly handling the reminderTime, especially if it's 0
-      // Use explicit type checking to preserve 0 values
       const reminderTimeValue = reminderTime === 0 ? 0 : Number(reminderTime) || 0;
       
       console.log(`Submitting task update with reminder_time: ${reminderTimeValue} (${typeof reminderTimeValue})`);
@@ -117,7 +110,7 @@ export function useEditTaskState(task: Task, onClose: () => void) {
         date: (isScheduled || isEvent) && date ? date : null,
         priority: isEvent ? "medium" : priority,
         reminder_enabled: reminderEnabled,
-        reminder_time: reminderTimeValue, // Use the properly handled value
+        reminder_time: reminderTimeValue,
         is_all_day: isEvent ? isAllDay : false
       } as const;
       
