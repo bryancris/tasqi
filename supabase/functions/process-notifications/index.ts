@@ -86,7 +86,7 @@ async function processNotifications() {
             // Handle "0" as a string explicitly
             if (event.metadata.reminder_time === "0") {
               reminderTime = 0;
-              console.log(`⚡ Explicit string "0" found - correctly setting to 0 (At start time)`);
+              console.log(`⚡ CRITICAL: Explicit string "0" found - correctly setting to 0 (At start time)`);
             } else {
               const parsed = parseInt(event.metadata.reminder_time, 10);
               if (!isNaN(parsed)) {
@@ -127,16 +127,20 @@ async function processNotifications() {
           console.log(`- Notification time: ${notificationTime.toISOString()}`);
           console.log(`- Current time: ${now.toISOString()}`);
           
-          // INCREASED window size for all notifications to ensure they're not missed
-          const windowSizeMs = 15 * 60 * 1000; // 15 minutes window (increased from 10)
+          // UPDATED CRITICAL FIX: Different window sizes for "At start time" vs advance notifications
+          // Use 2 minute window for "At start time" to be very precise
+          // Use 15 minute window for advance notifications to ensure they're not missed
+          const atStartTimeWindowMs = 2 * 60 * 1000; // 2 minutes window for "At start time"
+          const advanceNoticeWindowMs = 15 * 60 * 1000; // 15 minutes window for advance notifications
           
           if (reminderTime === 0) {
-            // For "At start time" notifications, check if we're within the window of the actual start time
+            // For "At start time" notifications, be very precise with a small window
+            // Only send if we're very close to the exact start time
             const timeDiffMs = Math.abs(taskDateTime.getTime() - now.getTime());
             console.log(`- "At start time" notification with time diff: ${timeDiffMs/1000/60} minutes from exact start time`);
             
-            if (timeDiffMs > windowSizeMs) {
-              console.log(`Task reminder ${event.id} has "At start time" setting but is outside the ${windowSizeMs/1000/60} minute window, skipping for now`);
+            if (timeDiffMs > atStartTimeWindowMs) {
+              console.log(`⏱️ Task reminder ${event.id} has "At start time" setting but is outside the ${atStartTimeWindowMs/1000/60} minute window, skipping for now`);
               continue;
             } else {
               console.log(`✅ Task reminder ${event.id} with "At start time" is due NOW - within window!`);
@@ -147,7 +151,7 @@ async function processNotifications() {
             console.log(`- Advance reminder with time diff: ${timeDiffMs/1000/60} minutes until notification time`);
             
             // If notification time is in the past or within the window, proceed
-            if (timeDiffMs > windowSizeMs) {
+            if (timeDiffMs > advanceNoticeWindowMs) {
               console.log(`Task reminder ${event.id} not due yet. Scheduled for ${notificationTime.toISOString()}`);
               continue;
             } else {
@@ -228,7 +232,7 @@ async function processNotifications() {
             }
           }
           
-          console.log(`Using reminder_time=${reminderTimeForMessage} for notification message (raw value from DB: ${JSON.stringify(task?.reminder_time)})`);
+          console.log(`💯 FINAL CHECK: Using reminder_time=${reminderTimeForMessage} for notification message (raw value from DB: ${JSON.stringify(task?.reminder_time)})`);
 
           // Include information about whether this is an "at start time" notification
           const isAtStartTime = reminderTimeForMessage === 0;

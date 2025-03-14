@@ -36,13 +36,23 @@ serve(async (req) => {
       data: JSON.stringify(data),
     })
 
-    // IMPROVED: Better handling and logging for reminder notifications
+    // CRITICAL FIX: Verify reminder time values for task reminder notifications
     if (data?.type === 'task_reminder') {
-      // Check for "At start time" notifications (isAtStartTime or reminderTime === 0)
-      if (data.isAtStartTime === true || data.reminderTime === 0) {
-        console.log(`🔔 This is an "At start time" notification (no advance warning)`);
-      } else if (data.reminderTime !== undefined) {
-        console.log(`🔔 This is a reminder notification with ${data.reminderTime} minutes advance warning`);
+      // Explicitly check and log isAtStartTime flag
+      if (data.isAtStartTime === true) {
+        console.log(`🚨 Confirmed: This is an "At start time" notification (no advance warning)`);
+      } 
+      // Also check reminderTime for safety
+      else if (data.reminderTime !== undefined) {
+        const reminderTime = Number(data.reminderTime);
+        
+        if (reminderTime === 0) {
+          console.log(`🚨 Confirmed by reminderTime=0: This is an "At start time" notification`);
+          // Force isAtStartTime to true for consistency
+          data.isAtStartTime = true;
+        } else {
+          console.log(`🚨 This is a reminder notification with ${reminderTime} minutes advance warning`);
+        }
       }
     }
 
