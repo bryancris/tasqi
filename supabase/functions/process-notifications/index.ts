@@ -74,27 +74,34 @@ async function processNotifications() {
         const taskDate = event.metadata?.date;
         const taskStartTime = event.metadata?.start_time;
         
-        // IMPROVED: Explicit handling for reminder_time in metadata with careful conversion
-        let reminderTime = 0; // Default to 0 ("At start time")
+        // CRITICAL FIX: Be extremely explicit and careful with reminder_time handling
+        // Default to 0 ("At start time") if not specified
+        let reminderTime = 0; 
         
         if (event.metadata?.reminder_time !== undefined) {
-          // First try to parse as a number or convert from string
+          // Convert from different possible types
           if (typeof event.metadata.reminder_time === 'number') {
             reminderTime = event.metadata.reminder_time;
           } else if (typeof event.metadata.reminder_time === 'string') {
-            const parsed = parseInt(event.metadata.reminder_time, 10);
-            if (!isNaN(parsed)) {
-              reminderTime = parsed;
+            // Handle "0" as a string explicitly
+            if (event.metadata.reminder_time === "0") {
+              reminderTime = 0;
+              console.log(`⚡ Explicit string "0" found - correctly setting to 0 (At start time)`);
+            } else {
+              const parsed = parseInt(event.metadata.reminder_time, 10);
+              if (!isNaN(parsed)) {
+                reminderTime = parsed;
+              }
             }
           }
           
-          // Special debug for "At start time" (0) value
-          if (reminderTime === 0) {
-            console.log(`⚡ "At start time" notification detected (reminder_time=0)`);
-          }
+          // Always log the final reminderTime value for debugging
+          console.log(`⚡ Final reminderTime value: ${reminderTime} (${reminderTime === 0 ? "At start time" : reminderTime + " minutes before"})`);
+        } else {
+          console.log(`⚡ No reminder_time in metadata, defaulting to 0 (At start time)`);
         }
         
-        console.log(`Task reminder details: date=${taskDate}, time=${taskStartTime}, reminder=${reminderTime} (from metadata)`);
+        console.log(`Task reminder details: date=${taskDate}, time=${taskStartTime}, reminder=${reminderTime} (from metadata: ${JSON.stringify(event.metadata?.reminder_time)})`);
         
         if (taskDate && taskStartTime) {
           // Parse the time for the task
@@ -104,8 +111,13 @@ async function processNotifications() {
           
           // Calculate when the notification should be sent based on reminderTime
           const notificationTime = new Date(taskDateTime);
+          
+          // Only adjust notification time if reminderTime > 0 (not "At start time")
           if (reminderTime > 0) {
             notificationTime.setMinutes(notificationTime.getMinutes() - reminderTime);
+            console.log(`⏰ Advance reminder: ${reminderTime} minutes before task time`);
+          } else {
+            console.log(`⏰ "At start time" notification (reminderTime=${reminderTime})`);
           }
           
           // Enhanced logging for debugging reminder time issues
@@ -196,32 +208,38 @@ async function processNotifications() {
             continue;
           }
 
-          // IMPORTANT: Get reminder_time directly from the database for the notification message
+          // CRITICAL FIX: Get reminder_time directly from the database and process it correctly
           let reminderTimeForMessage = 0;
           
-          if (task?.reminder_time !== undefined) {
+          // Explicit handling for reminder_time
+          if (task?.reminder_time !== undefined && task?.reminder_time !== null) {
             if (typeof task.reminder_time === 'number') {
               reminderTimeForMessage = task.reminder_time;
             } else if (task.reminder_time !== null) {
-              const parsed = parseInt(String(task.reminder_time), 10);
-              if (!isNaN(parsed)) {
-                reminderTimeForMessage = parsed;
+              // Handle string "0" case explicitly
+              if (task.reminder_time === "0") {
+                reminderTimeForMessage = 0;
+              } else {
+                const parsed = parseInt(String(task.reminder_time), 10);
+                if (!isNaN(parsed)) {
+                  reminderTimeForMessage = parsed;
+                }
               }
             }
           }
           
-          console.log(`Using reminder_time=${reminderTimeForMessage} for notification message`);
+          console.log(`Using reminder_time=${reminderTimeForMessage} for notification message (raw value from DB: ${JSON.stringify(task?.reminder_time)})`);
 
           // Include information about whether this is an "at start time" notification
           const isAtStartTime = reminderTimeForMessage === 0;
-          const reminderText = isAtStartTime ? 'now' : 'soon';
-
+          
           title = `Task Reminder: ${task.title}`;
-          body = task.description || `Your scheduled task is due ${reminderText}.`;
+          body = task.description || `Your scheduled task is due ${isAtStartTime ? 'now' : 'soon'}.`;
           data = {
             type: 'task_reminder',
             taskId: event.task_id,
             isAtStartTime: isAtStartTime,
+            reminderTime: reminderTimeForMessage,  // Pass the actual reminder time to the notification
             ...event.metadata
           };
         }
@@ -291,7 +309,8 @@ async function processNotifications() {
               userId: event.user_id,
               title,
               body,
-              data
+              data,
+              notificationEventId: event.id
             }
           });
 

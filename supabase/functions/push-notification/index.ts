@@ -36,11 +36,14 @@ serve(async (req) => {
       data: JSON.stringify(data),
     })
 
-    // Enhanced logging for "At start time" notifications
-    if (data?.isAtStartTime === true) {
-      console.log(`🔔 This is an "At start time" notification (no advance warning)`)
-    } else if (data?.type === 'task_reminder' && data?.reminderTime !== undefined) {
-      console.log(`🔔 This is a reminder notification with ${data.reminderTime} minutes advance warning`)
+    // IMPROVED: Better handling and logging for reminder notifications
+    if (data?.type === 'task_reminder') {
+      // Check for "At start time" notifications (isAtStartTime or reminderTime === 0)
+      if (data.isAtStartTime === true || data.reminderTime === 0) {
+        console.log(`🔔 This is an "At start time" notification (no advance warning)`);
+      } else if (data.reminderTime !== undefined) {
+        console.log(`🔔 This is a reminder notification with ${data.reminderTime} minutes advance warning`);
+      }
     }
 
     // Fetch all active device tokens for the user
