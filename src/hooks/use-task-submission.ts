@@ -1,5 +1,5 @@
 
-import { useTaskSubmissionCore } from './task-submission';
+import { useTaskSubmissionCore } from './task-submission/use-task-submission-core';
 
 interface UseTaskSubmissionProps {
   onSuccess: () => void;

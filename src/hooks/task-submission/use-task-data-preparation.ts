@@ -47,6 +47,11 @@ export function useTaskDataPreparation() {
     console.log("Preparing task data for:", formState.title);
     console.log("Reminder time value received:", formState.reminderTime, "Type:", typeof formState.reminderTime);
     
+    // Enhanced debugging for zero values
+    if (formState.reminderTime === 0) {
+      console.log("🔍 Zero reminderTime detected in prepareTaskData");
+    }
+    
     // Calculate end time if only start time is provided
     let finalEndTime = formState.endTime;
     if ((formState.isScheduled || (formState.isEvent && !formState.isAllDay)) && 
@@ -67,24 +72,28 @@ export function useTaskDataPreparation() {
       status = 'unscheduled';
     }
     
-    // Handle reminder time value - CRITICAL FIX FOR "AT START TIME" OPTION
+    // IMPROVED: More robust handling for reminder time values with explicit zero checks
     let reminderTimeValue: number;
     
-    // Special explicit handling for zero reminder time to ensure it doesn't get defaulted
+    // Special explicit handling for zero reminder time
     if (formState.reminderTime === 0) {
       reminderTimeValue = 0;
-      console.log("⭐ Setting reminder_time to EXACTLY 0 (At start time)");
+      console.log("⚡ Setting reminder_time to EXACTLY 0 (At start time)");
+    } else if (typeof formState.reminderTime === 'string' && formState.reminderTime === '0') {
+      // Handle string "0" explicitly
+      reminderTimeValue = 0;
+      console.log("⚡ Converting string '0' to number 0");
     } else if (formState.reminderTime !== undefined && formState.reminderTime !== null) {
-      // Ensure we're using a number
+      // Ensure we're using a number for defined non-zero values
       reminderTimeValue = Number(formState.reminderTime);
-      console.log(`⭐ Setting reminder_time to ${reminderTimeValue} minutes before`);
+      console.log(`⚡ Setting reminder_time to ${reminderTimeValue} minutes before`);
     } else {
       // Default value only applied if truly undefined/null
       reminderTimeValue = 0; // Default to "At start time" instead of 15
-      console.log("⭐ reminder_time was undefined/null, defaulting to 0 (At start time)");
+      console.log("⚡ reminder_time was undefined/null, defaulting to 0 (At start time)");
     }
     
-    console.log(`💡 Final reminder time value for database: ${reminderTimeValue} (type: ${typeof reminderTimeValue})`);
+    console.log(`🔍 Final reminder time value for database: ${reminderTimeValue} (type: ${typeof reminderTimeValue})`);
 
     // Get position for the new task
     const { data: existingTasks, error: countError } = await supabase

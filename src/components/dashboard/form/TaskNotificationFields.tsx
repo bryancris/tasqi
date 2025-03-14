@@ -46,7 +46,12 @@ export function TaskNotificationFields({
   useEffect(() => {
     // Explicitly log the exact value and type to help debugging
     console.log(`TaskNotificationFields: Raw reminderTime = ${reminderTime} (${typeof reminderTime})`);
-
+    
+    // Special debug for zero values to track the issue
+    if (reminderTime === 0) {
+      console.log("⚠️ Zero value detected in TaskNotificationFields");
+    }
+    
     // Force a value conversion check to catch any edge cases
     const numericValue = typeof reminderTime === 'number' ? reminderTime : Number(reminderTime || 0);
     console.log(`TaskNotificationFields: Computed numericValue = ${numericValue}`);
@@ -54,9 +59,17 @@ export function TaskNotificationFields({
     // Log what value the select will use - critical for debugging Select issues
     const selectValue = reminderTime === 0 ? "0" : reminderTime?.toString() || "0";
     console.log(`TaskNotificationFields: Select value will be "${selectValue}"`);
+    
+    // Log available options for debugging
+    console.log("Available reminder options:", REMINDER_TIME_OPTIONS.map(opt => ({ 
+      value: opt.value, 
+      stringValue: String(opt.value), 
+      label: opt.label 
+    })));
   }, [reminderTime]);
 
   // Safety check to ensure reminder_time is always the right type
+  // Critical fix: This ensures we normalize reminderTime on mount
   useEffect(() => {
     // Only run this if component is mounted and reminder is enabled
     if (reminderEnabled) {

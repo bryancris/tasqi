@@ -17,33 +17,45 @@ export function useEditTaskState(task: Task, onClose: () => void) {
   const [endTime, setEndTime] = useState(task.end_time || "");
   const [priority, setPriority] = useState(task.priority || "low");
   
+  // IMPROVED: More robust initialization logic for reminderTime with explicit zero handling
   const [reminderEnabled, setReminderEnabled] = useState(task.reminder_enabled || false);
   const [reminderTime, setReminderTime] = useState(() => {
     console.log(`INIT: task.reminder_time raw value = "${task.reminder_time}" (${typeof task.reminder_time})`);
     
-    // CRITICAL FIX: Special handling for zero values
+    // Special debug for zero values
     if (task.reminder_time === 0) {
-      console.log("INIT: Found explicit zero - setting to 0 (At start time)");
+      console.log("✅ INIT: Found explicit zero - setting to 0 (At start time)");
       return 0;
-    } else if (task.reminder_time === null || task.reminder_time === undefined) {
-      console.log("INIT: Found null/undefined - defaulting to 0 (At start time)");
+    } 
+    
+    // Handle null/undefined by defaulting to "At start time" (0)
+    if (task.reminder_time === null || task.reminder_time === undefined) {
+      console.log("✅ INIT: Found null/undefined - defaulting to 0 (At start time)");
       return 0;
-    } else if (typeof task.reminder_time === 'string') {
+    } 
+    
+    // Handle string values including "0"
+    if (typeof task.reminder_time === 'string') {
       // Handle string "0" explicitly
       if (task.reminder_time === "0") {
-        console.log(`INIT: Converting string "0" to number 0`);
+        console.log(`✅ INIT: Converting string "0" to number 0`);
         return 0;
       }
+      
       const numValue = Number(task.reminder_time);
-      console.log(`INIT: Converting string "${task.reminder_time}" to number: ${numValue}`);
-      return numValue;
-    } else if (typeof task.reminder_time === 'number') {
-      console.log(`INIT: Using existing number value: ${task.reminder_time}`);
+      console.log(`✅ INIT: Converting string "${task.reminder_time}" to number: ${numValue}`);
+      return isNaN(numValue) ? 0 : numValue; // Default to 0 if conversion fails
+    } 
+    
+    // Handle number values
+    if (typeof task.reminder_time === 'number') {
+      console.log(`✅ INIT: Using existing number value: ${task.reminder_time}`);
       return task.reminder_time;
-    } else {
-      console.log(`INIT: Unexpected type, defaulting to 0: ${task.reminder_time}`);
-      return 0;
-    }
+    } 
+    
+    // Default fallback
+    console.log(`✅ INIT: Unexpected type, defaulting to 0: ${task.reminder_time}`);
+    return 0;
   });
   
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
@@ -123,27 +135,29 @@ export function useEditTaskState(task: Task, onClose: () => void) {
         status = 'unscheduled';
       }
       
-      // CRITICAL FIX: Special handling for zero values
+      // IMPROVED: More explicit handling for reminderTime values
       let reminderTimeValue: number;
       
-      console.log(`SAVE: Pre-conversion reminderTime = ${reminderTime} (${typeof reminderTime})`);
+      console.log(`⚡ SAVE: Pre-conversion reminderTime = ${reminderTime} (${typeof reminderTime})`);
       
+      // Explicit handling for zero values
       if (reminderTime === 0) {
         reminderTimeValue = 0;
-        console.log("⚠️ SAVE: Setting reminder_time to EXACTLY 0 (At start time)");
+        console.log("⚡ SAVE: Setting reminder_time to EXACTLY 0 (At start time)");
       } else if (typeof reminderTime === 'string' && reminderTime === "0") {
         // FIX: Use triple equals for string comparison to avoid type error
         reminderTimeValue = 0;
-        console.log("⚠️ SAVE: Converting string '0' to number 0");
+        console.log("⚡ SAVE: Converting string '0' to number 0");
       } else if (reminderTime) {
         reminderTimeValue = Number(reminderTime);
-        console.log(`⚠️ SAVE: Setting reminder_time to ${reminderTimeValue} minutes before`);
+        console.log(`⚡ SAVE: Setting reminder_time to ${reminderTimeValue} minutes before`);
       } else {
+        // Default to "At start time" when undefined
         reminderTimeValue = 0;
-        console.log("⚠️ SAVE: reminderTime was undefined, defaulting to 0 (At start time)");
+        console.log("⚡ SAVE: reminderTime was undefined, defaulting to 0 (At start time)");
       }
       
-      console.log(`SAVE: Final reminderTimeValue for database: ${reminderTimeValue} (${typeof reminderTimeValue})`);
+      console.log(`⚡ SAVE: Final reminderTimeValue for database: ${reminderTimeValue} (${typeof reminderTimeValue})`);
       
       const updateData = {
         title,

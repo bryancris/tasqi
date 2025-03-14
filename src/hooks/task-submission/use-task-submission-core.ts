@@ -47,12 +47,20 @@ export function useTaskSubmissionCore({ onSuccess, setIsLoading }: UseTaskSubmis
       reminderTime: formState.reminderTime 
     });
     
-    // Debug the exact reminderTime value to see what's being passed
-    console.log(`💡 Reminder time value before validation: ${formState.reminderTime} (type: ${typeof formState.reminderTime}), stringified: '${JSON.stringify(formState.reminderTime)}'`);
+    // Enhanced debug logging for zero values
+    console.log(`⚡ Reminder time value before validation: ${formState.reminderTime} (type: ${typeof formState.reminderTime}), stringified: '${JSON.stringify(formState.reminderTime)}'`);
+    
+    if (formState.reminderTime === 0) {
+      console.log("⚡ Zero reminderTime detected in handleSubmit");
+    }
 
-    // Ensure reminderTime is treated as a number type (0 instead of "0")
-    const reminderTimeValue = formState.reminderTime === 0 ? 0 : Number(formState.reminderTime || 0);
-    console.log(`💡 Processed reminder time value: ${reminderTimeValue} (type: ${typeof reminderTimeValue})`);
+    // IMPROVED: Ensure reminderTime is treated correctly, preserving zero values
+    // Use explicit check for zero to prevent default value application
+    const reminderTimeValue = formState.reminderTime === 0 
+      ? 0 // Preserve explicit zero
+      : Number(formState.reminderTime || 0); // Convert non-zero or default to zero
+      
+    console.log(`⚡ Processed reminder time value: ${reminderTimeValue} (type: ${typeof reminderTimeValue})`);
     
     // Create a clean copy with proper number handling
     const validatedFormState = {
@@ -77,8 +85,12 @@ export function useTaskSubmissionCore({ onSuccess, setIsLoading }: UseTaskSubmis
       // Prepare the task data
       const { taskData } = await prepareTaskData(validatedFormState, userId);
       
-      // Debug the taskData to confirm reminder_time is correctly set
+      // Enhanced debug for the taskData to confirm reminder_time is correctly set
       console.log("Task data prepared with reminder_time:", taskData.reminder_time, "type:", typeof taskData.reminder_time);
+      
+      if (taskData.reminder_time === 0) {
+        console.log("⚡ Zero reminder_time confirmed in final taskData");
+      }
       
       // Create the task
       const taskResult = await createTask(taskData);
