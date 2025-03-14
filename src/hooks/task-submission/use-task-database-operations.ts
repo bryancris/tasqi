@@ -13,7 +13,7 @@ export function useTaskDatabaseOperations() {
     console.log("Creating task with final data:", taskData);
     const { data: taskResult, error: taskError } = await supabase
       .from("tasks")
-      .insert([taskData])
+      .insert(taskData) // Changed from [taskData] to taskData
       .select();
 
     if (taskError) {

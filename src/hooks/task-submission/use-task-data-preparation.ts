@@ -77,26 +77,28 @@ export function useTaskDataPreparation() {
     }
 
     // Build the final task data object
+    const taskData = {
+      title: formState.title,
+      description: formState.description,
+      status,
+      date: (formState.isScheduled || formState.isEvent) && formState.date ? formState.date : null,
+      start_time: (formState.isScheduled || (formState.isEvent && !formState.isAllDay)) && formState.startTime ? formState.startTime : null,
+      end_time: (formState.isScheduled || (formState.isEvent && !formState.isAllDay)) && finalEndTime ? finalEndTime : null,
+      priority: formState.isEvent ? "medium" : formState.priority,
+      reminder_enabled: formState.reminderEnabled,
+      reminder_time: reminderTimeValue,
+      user_id: userId,
+      owner_id: userId,
+      is_all_day: formState.isEvent ? formState.isAllDay : false,
+      position,
+      assignees: [],
+      shared: false,
+      is_tracking: false,
+      reschedule_count: 0
+    };
+
     return {
-      taskData: {
-        title: formState.title,
-        description: formState.description,
-        status,
-        date: (formState.isScheduled || formState.isEvent) && formState.date ? formState.date : null,
-        start_time: (formState.isScheduled || (formState.isEvent && !formState.isAllDay)) && formState.startTime ? formState.startTime : null,
-        end_time: (formState.isScheduled || (formState.isEvent && !formState.isAllDay)) && finalEndTime ? finalEndTime : null,
-        priority: formState.isEvent ? "medium" : formState.priority,
-        reminder_enabled: formState.reminderEnabled,
-        reminder_time: reminderTimeValue,
-        user_id: userId,
-        owner_id: userId,
-        is_all_day: formState.isEvent ? formState.isAllDay : false,
-        position,
-        assignees: [],
-        shared: false,
-        is_tracking: false,
-        reschedule_count: 0
-      },
+      taskData,
       status,
       finalEndTime
     };
