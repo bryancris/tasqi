@@ -30,7 +30,18 @@ serve(async (req) => {
     const requestData = await req.json()
     const { title, body, icon, data, userId, notificationEventId } = requestData as NotificationData
 
-    console.log(`[Push Notification] Processing notification for user ${userId}:`, { title, body })
+    console.log(`[Push Notification] Processing notification for user ${userId}:`, { 
+      title, 
+      body,
+      data: JSON.stringify(data),
+    })
+
+    // Enhanced logging for "At start time" notifications
+    if (data?.isAtStartTime === true) {
+      console.log(`🔔 This is an "At start time" notification (no advance warning)`)
+    } else if (data?.type === 'task_reminder' && data?.reminderTime !== undefined) {
+      console.log(`🔔 This is a reminder notification with ${data.reminderTime} minutes advance warning`)
+    }
 
     // Fetch all active device tokens for the user
     const { data: deviceTokens, error: tokenError } = await supabaseClient
