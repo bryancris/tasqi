@@ -45,6 +45,7 @@ export function useTaskDataPreparation() {
   // Prepare the task data for submission
   const prepareTaskData = async (formState: TaskFormState, userId: string): Promise<PreparedTaskData> => {
     console.log("Preparing task data for:", formState.title);
+    console.log("Reminder time value received:", formState.reminderTime, "Type:", typeof formState.reminderTime);
     
     // Calculate end time if only start time is provided
     let finalEndTime = formState.endTime;
@@ -66,17 +67,21 @@ export function useTaskDataPreparation() {
       status = 'unscheduled';
     }
     
-    // Handle reminder time value
+    // Handle reminder time value - CRITICAL FIX FOR "AT START TIME" OPTION
     let reminderTimeValue: number;
+    
+    // Special explicit handling for zero reminder time to ensure it doesn't get defaulted
     if (formState.reminderTime === 0) {
       reminderTimeValue = 0;
-      console.log("⚠️ Setting reminder_time to EXACTLY 0 (At start time)");
-    } else if (formState.reminderTime) {
+      console.log("⭐ Setting reminder_time to EXACTLY 0 (At start time)");
+    } else if (formState.reminderTime !== undefined && formState.reminderTime !== null) {
+      // Ensure we're using a number
       reminderTimeValue = Number(formState.reminderTime);
-      console.log(`⚠️ Setting reminder_time to ${reminderTimeValue} minutes before`);
+      console.log(`⭐ Setting reminder_time to ${reminderTimeValue} minutes before`);
     } else {
+      // Default value only applied if truly undefined/null
       reminderTimeValue = 0; // Default to "At start time" instead of 15
-      console.log("⚠️ reminder_time was undefined, defaulting to 0 (At start time)");
+      console.log("⭐ reminder_time was undefined/null, defaulting to 0 (At start time)");
     }
     
     console.log(`💡 Final reminder time value for database: ${reminderTimeValue} (type: ${typeof reminderTimeValue})`);
@@ -119,7 +124,7 @@ export function useTaskDataPreparation() {
       end_time: (formState.isScheduled || (formState.isEvent && !formState.isAllDay)) && finalEndTime ? finalEndTime : null,
       priority: formState.isEvent ? "medium" : validPriority,
       reminder_enabled: formState.reminderEnabled,
-      reminder_time: reminderTimeValue,
+      reminder_time: reminderTimeValue, // Use our specially handled value
       user_id: userId,
       owner_id: userId,
       is_all_day: formState.isEvent ? formState.isAllDay : false,
@@ -129,6 +134,9 @@ export function useTaskDataPreparation() {
       is_tracking: false,
       reschedule_count: 0
     };
+
+    // Final verification
+    console.log("Final taskData reminder_time:", taskData.reminder_time, "Type:", typeof taskData.reminder_time);
 
     return {
       taskData,

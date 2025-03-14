@@ -65,7 +65,8 @@ export function TaskNotificationFields({
         onReminderTimeChange(0);
       } else if (typeof reminderTime !== 'number') {
         console.log(`🛠️ Converting non-number reminder time ${reminderTime} (${typeof reminderTime}) to number`);
-        const numValue = reminderTime === '0' ? 0 : Number(reminderTime) || 0;
+        // CRITICAL FIX: Ensure 0 values are preserved as 0, not converted to default
+        const numValue = reminderTime === '0' || reminderTime === 0 ? 0 : Number(reminderTime) || 0;
         onReminderTimeChange(numValue);
       }
     }
@@ -94,7 +95,7 @@ export function TaskNotificationFields({
         } else if (typeof reminderTime !== 'number') {
           console.log(`Converting iOS reminder time ${reminderTime} (${typeof reminderTime}) to number`);
           // FIX: Ensure 0 values are preserved, not converted to default
-          const numValue = reminderTime === '0' ? 0 : Number(reminderTime) || 0;
+          const numValue = reminderTime === '0' || reminderTime === 0 ? 0 : Number(reminderTime) || 0;
           onReminderTimeChange(numValue);
         }
         
@@ -118,7 +119,7 @@ export function TaskNotificationFields({
         } else if (typeof reminderTime !== 'number') {
           console.log(`Converting reminder time ${reminderTime} (${typeof reminderTime}) to number`);
           // FIX: Ensure 0 values are preserved, not converted to default
-          const numValue = reminderTime === '0' ? 0 : Number(reminderTime) || 0;
+          const numValue = reminderTime === '0' || reminderTime === 0 ? 0 : Number(reminderTime) || 0;
           onReminderTimeChange(numValue);
         }
       }
@@ -168,7 +169,7 @@ export function TaskNotificationFields({
         <div className="flex items-center space-x-2">
           <Label htmlFor="reminderTime">Notify me</Label>
           <Select
-            // IMPORTANT: Special handling for zero values
+            // CRITICAL FIX: Special handling for zero values
             value={reminderTime === 0 ? "0" : reminderTime?.toString() || "0"}
             onValueChange={(value) => {
               // Convert the string value to a number

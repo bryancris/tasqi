@@ -48,7 +48,17 @@ export function useTaskSubmissionCore({ onSuccess, setIsLoading }: UseTaskSubmis
     });
     
     // Debug the exact reminderTime value to see what's being passed
-    console.log(`💡 Reminder time value: ${formState.reminderTime} (type: ${typeof formState.reminderTime}), stringified: '${JSON.stringify(formState.reminderTime)}'`);
+    console.log(`💡 Reminder time value before validation: ${formState.reminderTime} (type: ${typeof formState.reminderTime}), stringified: '${JSON.stringify(formState.reminderTime)}'`);
+
+    // Ensure reminderTime is treated as a number type (0 instead of "0")
+    const reminderTimeValue = formState.reminderTime === 0 ? 0 : Number(formState.reminderTime || 0);
+    console.log(`💡 Processed reminder time value: ${reminderTimeValue} (type: ${typeof reminderTimeValue})`);
+    
+    // Create a clean copy with proper number handling
+    const validatedFormState = {
+      ...formState,
+      reminderTime: reminderTimeValue
+    };
     
     // Validate the input data
     if (!validateTaskInput({
@@ -65,7 +75,10 @@ export function useTaskSubmissionCore({ onSuccess, setIsLoading }: UseTaskSubmis
       console.log("Starting task creation process...");
       
       // Prepare the task data
-      const { taskData } = await prepareTaskData(formState, userId);
+      const { taskData } = await prepareTaskData(validatedFormState, userId);
+      
+      // Debug the taskData to confirm reminder_time is correctly set
+      console.log("Task data prepared with reminder_time:", taskData.reminder_time, "type:", typeof taskData.reminder_time);
       
       // Create the task
       const taskResult = await createTask(taskData);

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Task } from "../TaskBoard";
 import { Subtask } from "../subtasks/SubtaskList";
@@ -20,6 +21,7 @@ export function useEditTaskState(task: Task, onClose: () => void) {
   const [reminderTime, setReminderTime] = useState(() => {
     console.log(`INIT: task.reminder_time raw value = "${task.reminder_time}" (${typeof task.reminder_time})`);
     
+    // CRITICAL FIX: Special handling for zero values
     if (task.reminder_time === 0) {
       console.log("INIT: Found explicit zero - setting to 0 (At start time)");
       return 0;
@@ -27,6 +29,11 @@ export function useEditTaskState(task: Task, onClose: () => void) {
       console.log("INIT: Found null/undefined - defaulting to 0 (At start time)");
       return 0;
     } else if (typeof task.reminder_time === 'string') {
+      // Handle string "0" explicitly
+      if (task.reminder_time === "0") {
+        console.log(`INIT: Converting string "0" to number 0`);
+        return 0;
+      }
       const numValue = Number(task.reminder_time);
       console.log(`INIT: Converting string "${task.reminder_time}" to number: ${numValue}`);
       return numValue;
@@ -116,6 +123,7 @@ export function useEditTaskState(task: Task, onClose: () => void) {
         status = 'unscheduled';
       }
       
+      // CRITICAL FIX: Special handling for zero values
       let reminderTimeValue: number;
       
       console.log(`SAVE: Pre-conversion reminderTime = ${reminderTime} (${typeof reminderTime})`);
@@ -123,6 +131,9 @@ export function useEditTaskState(task: Task, onClose: () => void) {
       if (reminderTime === 0) {
         reminderTimeValue = 0;
         console.log("⚠️ SAVE: Setting reminder_time to EXACTLY 0 (At start time)");
+      } else if (reminderTime === "0") {
+        reminderTimeValue = 0;
+        console.log("⚠️ SAVE: Converting string '0' to number 0");
       } else if (reminderTime) {
         reminderTimeValue = Number(reminderTime);
         console.log(`⚠️ SAVE: Setting reminder_time to ${reminderTimeValue} minutes before`);
@@ -140,7 +151,7 @@ export function useEditTaskState(task: Task, onClose: () => void) {
         date: (isScheduled || isEvent) && date ? date : null,
         priority: isEvent ? "medium" : priority,
         reminder_enabled: reminderEnabled,
-        reminder_time: reminderTimeValue,
+        reminder_time: reminderTimeValue, // Use our specially handled value
         is_all_day: isEvent ? isAllDay : false
       } as const;
       
