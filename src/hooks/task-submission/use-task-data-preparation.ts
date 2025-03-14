@@ -72,25 +72,34 @@ export function useTaskDataPreparation() {
       status = 'unscheduled';
     }
     
-    // IMPROVED: More robust handling for reminder time values with explicit zero checks
+    // CRITICAL FIX: Explicitly handle reminderTime with a direct equality check for zero
     let reminderTimeValue: number;
     
-    // Special explicit handling for zero reminder time
+    // Most critical case: explicit zero check for "At start time"
     if (formState.reminderTime === 0) {
       reminderTimeValue = 0;
       console.log("⚡ Setting reminder_time to EXACTLY 0 (At start time)");
-    } else if (typeof formState.reminderTime === 'string' && formState.reminderTime === '0') {
-      // Handle string "0" explicitly
+    } 
+    // Check for string "0" explicitly
+    else if (typeof formState.reminderTime === 'string' && formState.reminderTime === '0') {
       reminderTimeValue = 0;
       console.log("⚡ Converting string '0' to number 0");
-    } else if (formState.reminderTime !== undefined && formState.reminderTime !== null) {
-      // Ensure we're using a number for defined non-zero values
-      reminderTimeValue = Number(formState.reminderTime);
-      console.log(`⚡ Setting reminder_time to ${reminderTimeValue} minutes before`);
-    } else {
-      // Default value only applied if truly undefined/null
-      reminderTimeValue = 0; // Default to "At start time" instead of 15
-      console.log("⚡ reminder_time was undefined/null, defaulting to 0 (At start time)");
+    }
+    // Handle regular number values
+    else if (typeof formState.reminderTime === 'number') {
+      reminderTimeValue = formState.reminderTime;
+      console.log(`⚡ Using existing number value: ${reminderTimeValue}`);
+    }
+    // Handle string values that are not "0"
+    else if (typeof formState.reminderTime === 'string' && formState.reminderTime) {
+      const numValue = Number(formState.reminderTime);
+      console.log(`⚡ Converting string "${formState.reminderTime}" to number: ${numValue}`);
+      reminderTimeValue = isNaN(numValue) ? 0 : numValue;
+    }
+    // Default case for undefined, null, etc.
+    else {
+      reminderTimeValue = 0; // Default to "At start time" (0) instead of 15
+      console.log("⚡ reminderTime was undefined/null, defaulting to 0 (At start time)");
     }
     
     console.log(`🔍 Final reminder time value for database: ${reminderTimeValue} (type: ${typeof reminderTimeValue})`);

@@ -42,6 +42,9 @@ export function TaskNotificationFields({
   const platform = detectPlatform();
   const isIOSPWA = platform === 'ios-pwa';
 
+  // CRITICAL FIX: Add state to track the internal value to avoid type issues
+  const [internalValue, setInternalValue] = useState<string>("0");
+
   // Debug log on component mount and reminderTime changes
   useEffect(() => {
     // Explicitly log the exact value and type to help debugging
@@ -56,9 +59,11 @@ export function TaskNotificationFields({
     const numericValue = typeof reminderTime === 'number' ? reminderTime : Number(reminderTime || 0);
     console.log(`TaskNotificationFields: Computed numericValue = ${numericValue}`);
     
-    // Log what value the select will use - critical for debugging Select issues
-    const selectValue = reminderTime === 0 ? "0" : reminderTime?.toString() || "0";
-    console.log(`TaskNotificationFields: Select value will be "${selectValue}"`);
+    // IMPROVED: Ensure internal state is updated when reminderTime changes
+    // This is critical for zero values
+    const stringValue = reminderTime === 0 ? "0" : String(reminderTime || 0);
+    setInternalValue(stringValue);
+    console.log(`TaskNotificationFields: Updated internal state to "${stringValue}"`);
     
     // Log available options for debugging
     console.log("Available reminder options:", REMINDER_TIME_OPTIONS.map(opt => ({ 
@@ -101,16 +106,10 @@ export function TaskNotificationFields({
         
         onReminderEnabledChange(true);
         
-        // Set default reminder time to "At start time" if none selected
-        if (reminderTime === undefined) {
-          console.log('Setting reminder time to 0 (At start time) for iOS');
-          onReminderTimeChange(0);
-        } else if (typeof reminderTime !== 'number') {
-          console.log(`Converting iOS reminder time ${reminderTime} (${typeof reminderTime}) to number`);
-          // FIX: Ensure 0 values are preserved, not converted to default
-          const numValue = reminderTime === '0' || reminderTime === 0 ? 0 : Number(reminderTime) || 0;
-          onReminderTimeChange(numValue);
-        }
+        // IMPROVED: Always set to 0 (At start time) when enabling notifications
+        console.log('Setting reminder time to 0 (At start time) for iOS');
+        onReminderTimeChange(0);
+        setInternalValue("0");
         
         if ('Notification' in window) {
           try {
@@ -125,16 +124,10 @@ export function TaskNotificationFields({
       } else {
         await onReminderEnabledChange(true);
         
-        // Set default reminder time to "At start time" if none selected
-        if (reminderTime === undefined) {
-          console.log('Setting reminder time to 0 (At start time)');
-          onReminderTimeChange(0);
-        } else if (typeof reminderTime !== 'number') {
-          console.log(`Converting reminder time ${reminderTime} (${typeof reminderTime}) to number`);
-          // FIX: Ensure 0 values are preserved, not converted to default
-          const numValue = reminderTime === '0' || reminderTime === 0 ? 0 : Number(reminderTime) || 0;
-          onReminderTimeChange(numValue);
-        }
+        // IMPROVED: Always set to 0 (At start time) when enabling notifications
+        console.log('Setting reminder time to 0 (At start time)');
+        onReminderTimeChange(0);
+        setInternalValue("0");
       }
     } catch (error) {
       console.error('Error enabling notifications:', error);
@@ -182,9 +175,10 @@ export function TaskNotificationFields({
         <div className="flex items-center space-x-2">
           <Label htmlFor="reminderTime">Notify me</Label>
           <Select
-            // CRITICAL FIX: Special handling for zero values
-            value={reminderTime === 0 ? "0" : reminderTime?.toString() || "0"}
+            // CRITICAL FIX: Use internal state to avoid type issues with the Select component
+            value={internalValue}
             onValueChange={(value) => {
+              setInternalValue(value);
               // Convert the string value to a number
               const numValue = Number(value);
               console.log(`🛠️ Select changed to: "${value}" → ${numValue} (${typeof numValue})`);

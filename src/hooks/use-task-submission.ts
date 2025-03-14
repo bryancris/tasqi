@@ -7,5 +7,6 @@ interface UseTaskSubmissionProps {
 }
 
 export function useTaskSubmission(props: UseTaskSubmissionProps) {
+  // Simply pass through to the core implementation
   return useTaskSubmissionCore(props);
 }

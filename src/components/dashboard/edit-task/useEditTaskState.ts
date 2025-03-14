@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Task } from "../TaskBoard";
 import { Subtask } from "../subtasks/SubtaskList";
@@ -17,26 +16,21 @@ export function useEditTaskState(task: Task, onClose: () => void) {
   const [endTime, setEndTime] = useState(task.end_time || "");
   const [priority, setPriority] = useState(task.priority || "low");
   
-  // IMPROVED: More robust initialization logic for reminderTime with explicit zero handling
   const [reminderEnabled, setReminderEnabled] = useState(task.reminder_enabled || false);
   const [reminderTime, setReminderTime] = useState(() => {
     console.log(`INIT: task.reminder_time raw value = "${task.reminder_time}" (${typeof task.reminder_time})`);
     
-    // Special debug for zero values
     if (task.reminder_time === 0) {
       console.log("✅ INIT: Found explicit zero - setting to 0 (At start time)");
       return 0;
     } 
     
-    // Handle null/undefined by defaulting to "At start time" (0)
     if (task.reminder_time === null || task.reminder_time === undefined) {
       console.log("✅ INIT: Found null/undefined - defaulting to 0 (At start time)");
       return 0;
     } 
     
-    // Handle string values including "0"
     if (typeof task.reminder_time === 'string') {
-      // Handle string "0" explicitly
       if (task.reminder_time === "0") {
         console.log(`✅ INIT: Converting string "0" to number 0`);
         return 0;
@@ -44,16 +38,14 @@ export function useEditTaskState(task: Task, onClose: () => void) {
       
       const numValue = Number(task.reminder_time);
       console.log(`✅ INIT: Converting string "${task.reminder_time}" to number: ${numValue}`);
-      return isNaN(numValue) ? 0 : numValue; // Default to 0 if conversion fails
+      return isNaN(numValue) ? 0 : numValue;
     } 
     
-    // Handle number values
     if (typeof task.reminder_time === 'number') {
       console.log(`✅ INIT: Using existing number value: ${task.reminder_time}`);
       return task.reminder_time;
     } 
     
-    // Default fallback
     console.log(`✅ INIT: Unexpected type, defaulting to 0: ${task.reminder_time}`);
     return 0;
   });
@@ -135,24 +127,27 @@ export function useEditTaskState(task: Task, onClose: () => void) {
         status = 'unscheduled';
       }
       
-      // IMPROVED: More explicit handling for reminderTime values
       let reminderTimeValue: number;
       
       console.log(`⚡ SAVE: Pre-conversion reminderTime = ${reminderTime} (${typeof reminderTime})`);
       
-      // Explicit handling for zero values
       if (reminderTime === 0) {
         reminderTimeValue = 0;
         console.log("⚡ SAVE: Setting reminder_time to EXACTLY 0 (At start time)");
-      } else if (typeof reminderTime === 'string' && reminderTime === "0") {
-        // FIX: Use triple equals for string comparison to avoid type error
+      } 
+      else if (typeof reminderTime === 'string' && reminderTime === "0") {
         reminderTimeValue = 0;
         console.log("⚡ SAVE: Converting string '0' to number 0");
-      } else if (reminderTime) {
+      } 
+      else if (typeof reminderTime === 'number') {
+        reminderTimeValue = reminderTime;
+        console.log(`⚡ SAVE: Using existing number value: ${reminderTimeValue}`);
+      }
+      else if (typeof reminderTime === 'string' && reminderTime) {
         reminderTimeValue = Number(reminderTime);
-        console.log(`⚡ SAVE: Setting reminder_time to ${reminderTimeValue} minutes before`);
-      } else {
-        // Default to "At start time" when undefined
+        console.log(`⚡ SAVE: Converting string to number: ${reminderTimeValue}`);
+      }
+      else {
         reminderTimeValue = 0;
         console.log("⚡ SAVE: reminderTime was undefined, defaulting to 0 (At start time)");
       }
@@ -166,7 +161,7 @@ export function useEditTaskState(task: Task, onClose: () => void) {
         date: (isScheduled || isEvent) && date ? date : null,
         priority: isEvent ? "medium" : priority,
         reminder_enabled: reminderEnabled,
-        reminder_time: reminderTimeValue, // Use our specially handled value
+        reminder_time: reminderTimeValue,
         is_all_day: isEvent ? isAllDay : false
       } as const;
       
@@ -188,9 +183,7 @@ export function useEditTaskState(task: Task, onClose: () => void) {
       }
       
       console.log("Updating task with data:", updateData);
-      const {
-        error: taskError
-      } = await supabase.from('tasks').update(updateData).eq('id', task.id);
+      const { error: taskError } = await supabase.from('tasks').update(updateData).eq('id', task.id);
       if (taskError) throw taskError;
 
       const existingSubtaskIds = subtasks.filter(st => st.id).map(st => st.id);

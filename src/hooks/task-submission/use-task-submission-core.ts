@@ -54,12 +54,26 @@ export function useTaskSubmissionCore({ onSuccess, setIsLoading }: UseTaskSubmis
       console.log("⚡ Zero reminderTime detected in handleSubmit");
     }
 
-    // IMPROVED: Ensure reminderTime is treated correctly, preserving zero values
-    // Use explicit check for zero to prevent default value application
-    const reminderTimeValue = formState.reminderTime === 0 
-      ? 0 // Preserve explicit zero
-      : Number(formState.reminderTime || 0); // Convert non-zero or default to zero
-      
+    // CRITICAL FIX: Explicitly check if reminderTime is exactly 0 to preserve "At start time"
+    // This explicit case is needed because JavaScript treats 0 as falsy in many contexts
+    let reminderTimeValue: number;
+    if (formState.reminderTime === 0) { 
+      reminderTimeValue = 0; // Preserve explicit zero (At start time)
+      console.log("⚡ Explicitly keeping reminderTime as EXACTLY 0 (At start time)");
+    } else if (typeof formState.reminderTime === 'number') {
+      reminderTimeValue = formState.reminderTime; // Use existing number value
+      console.log(`⚡ Using existing number value: ${reminderTimeValue}`);
+    } else if (typeof formState.reminderTime === 'string' && formState.reminderTime === '0') {
+      reminderTimeValue = 0; // Convert string "0" to number 0
+      console.log("⚡ Converting string '0' to number 0");
+    } else if (formState.reminderTime) {
+      reminderTimeValue = Number(formState.reminderTime); // Convert non-zero value
+      console.log(`⚡ Converting non-zero value to: ${reminderTimeValue}`);
+    } else {
+      reminderTimeValue = 0; // Default to "At start time" (0) instead of 15
+      console.log("⚡ No value provided, defaulting to 0 (At start time)");
+    }
+    
     console.log(`⚡ Processed reminder time value: ${reminderTimeValue} (type: ${typeof reminderTimeValue})`);
     
     // Create a clean copy with proper number handling

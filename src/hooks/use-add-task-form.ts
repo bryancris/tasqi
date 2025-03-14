@@ -19,7 +19,8 @@ export function useAddTaskForm({ initialDate }: UseAddTaskFormProps = {}) {
   const [endTime, setEndTime] = useState("");
   const [priority, setPriority] = useState<TaskPriority>("medium");
   const [reminderEnabled, setReminderEnabled] = useState(false);
-  // Default is explicitly set to 0 (At start time) - this ensures consistency
+  // CRITICAL FIX: Explicitly type reminderTime as number with 0 as default
+  // This ensures TypeScript treats it as a number throughout the app
   const [reminderTime, setReminderTime] = useState<number>(0);
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
   const [isLoading, setIsLoading] = useState(false);
