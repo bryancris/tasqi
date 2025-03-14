@@ -3,8 +3,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Subtask } from "@/components/dashboard/subtasks/SubtaskList";
 
+// Define a more specific TaskData interface that aligns with what Supabase expects
 interface TaskData {
-  [key: string]: any; // Allow for dynamic keys in the task data
+  title: string;
+  description: string;
+  status: 'scheduled' | 'unscheduled' | 'event';
+  date: string | null;
+  start_time: string | null;
+  end_time: string | null;
+  priority: string;
+  reminder_enabled: boolean;
+  reminder_time: number;
+  user_id: string;
+  owner_id: string;
+  is_all_day: boolean;
+  position: number;
+  assignees: string[];
+  shared: boolean;
+  is_tracking: boolean;
+  reschedule_count: number;
+  [key: string]: any; // Keep this for flexibility with additional fields
 }
 
 export function useTaskDatabaseOperations() {
@@ -13,7 +31,7 @@ export function useTaskDatabaseOperations() {
     console.log("Creating task with final data:", taskData);
     const { data: taskResult, error: taskError } = await supabase
       .from("tasks")
-      .insert(taskData) // Changed from [taskData] to taskData
+      .insert(taskData)
       .select();
 
     if (taskError) {

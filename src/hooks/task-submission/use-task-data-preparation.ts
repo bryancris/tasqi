@@ -16,9 +16,34 @@ interface TaskFormState {
   reminderTime: number;
 }
 
+// Define the return type from prepareTaskData to match what's expected in useTaskDatabaseOperations
+interface PreparedTaskData {
+  taskData: {
+    title: string;
+    description: string;
+    status: 'scheduled' | 'unscheduled' | 'event';
+    date: string | null;
+    start_time: string | null;
+    end_time: string | null;
+    priority: string;
+    reminder_enabled: boolean;
+    reminder_time: number;
+    user_id: string;
+    owner_id: string;
+    is_all_day: boolean;
+    position: number;
+    assignees: string[];
+    shared: boolean;
+    is_tracking: boolean;
+    reschedule_count: number;
+  };
+  status: 'scheduled' | 'unscheduled' | 'event';
+  finalEndTime: string;
+}
+
 export function useTaskDataPreparation() {
   // Prepare the task data for submission
-  const prepareTaskData = async (formState: TaskFormState, userId: string) => {
+  const prepareTaskData = async (formState: TaskFormState, userId: string): Promise<PreparedTaskData> => {
     console.log("Preparing task data for:", formState.title);
     
     // Calculate end time if only start time is provided
