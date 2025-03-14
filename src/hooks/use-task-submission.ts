@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -108,11 +107,10 @@ export function useTaskSubmission({ onSuccess, setIsLoading }: UseTaskSubmission
         finalEndTime = `${endHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:00`;
       }
 
-      // FIXED: Ensure reminder_time is properly preserved, especially for 0 value (At start time)
-      // Strict type checking to ensure 0 is treated as a valid value, not falsy
+      // Fix: Use strict number comparison and proper type handling
       let reminderTimeValue: number;
       
-      if (reminderTime === 0 || reminderTime === '0') {
+      if (reminderTime === 0) {
         // Explicitly handle "At start time" case
         reminderTimeValue = 0; 
         console.log("⚠️ Setting reminder_time to EXACTLY 0 (At start time)");

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Task } from "../TaskBoard";
 import { Subtask } from "../subtasks/SubtaskList";
@@ -16,11 +17,13 @@ export function useEditTaskState(task: Task, onClose: () => void) {
   const [endTime, setEndTime] = useState(task.end_time || "");
   const [priority, setPriority] = useState(task.priority || "low");
   
+  // Fix: Convert string or potentially string values to number for consistent type
   const [reminderEnabled, setReminderEnabled] = useState(task.reminder_enabled || false);
   const [reminderTime, setReminderTime] = useState(
     task.reminder_time === 0 ? 0 : 
-    task.reminder_time === '0' ? 0 : 
-    task.reminder_time ? Number(task.reminder_time) : 
+    task.reminder_time === null ? 0 :
+    typeof task.reminder_time === 'string' ? Number(task.reminder_time) : 
+    typeof task.reminder_time === 'number' ? task.reminder_time : 
     0
   );
   
@@ -103,7 +106,8 @@ export function useEditTaskState(task: Task, onClose: () => void) {
       
       let reminderTimeValue: number;
       
-      if (reminderTime === 0 || reminderTime === '0') {
+      // Fix: Use strict number comparison with proper type conversion
+      if (reminderTime === 0) {
         reminderTimeValue = 0;
         console.log("⚠️ Setting reminder_time to EXACTLY 0 (At start time)");
       } else if (reminderTime) {
