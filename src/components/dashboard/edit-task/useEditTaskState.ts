@@ -131,7 +131,8 @@ export function useEditTaskState(task: Task, onClose: () => void) {
       if (reminderTime === 0) {
         reminderTimeValue = 0;
         console.log("⚠️ SAVE: Setting reminder_time to EXACTLY 0 (At start time)");
-      } else if (reminderTime === "0") {
+      } else if (typeof reminderTime === 'string' && reminderTime === "0") {
+        // FIX: Use triple equals for string comparison to avoid type error
         reminderTimeValue = 0;
         console.log("⚠️ SAVE: Converting string '0' to number 0");
       } else if (reminderTime) {
