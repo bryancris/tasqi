@@ -25,7 +25,7 @@ interface PreparedTaskData {
     date: string | null;
     start_time: string | null;
     end_time: string | null;
-    priority: string;
+    priority: 'low' | 'medium' | 'high';  // Updated to match database expectations
     reminder_enabled: boolean;
     reminder_time: number;
     user_id: string;
@@ -101,6 +101,14 @@ export function useTaskDataPreparation() {
       }
     }
 
+    // Verify that the priority value is one of the allowed values
+    // This ensures the type is compatible with Supabase's expectations
+    const validPriority = (formState.priority === 'low' || 
+                           formState.priority === 'medium' || 
+                           formState.priority === 'high') 
+                           ? formState.priority 
+                           : 'medium';
+
     // Build the final task data object
     const taskData = {
       title: formState.title,
@@ -109,7 +117,7 @@ export function useTaskDataPreparation() {
       date: (formState.isScheduled || formState.isEvent) && formState.date ? formState.date : null,
       start_time: (formState.isScheduled || (formState.isEvent && !formState.isAllDay)) && formState.startTime ? formState.startTime : null,
       end_time: (formState.isScheduled || (formState.isEvent && !formState.isAllDay)) && finalEndTime ? finalEndTime : null,
-      priority: formState.isEvent ? "medium" : formState.priority,
+      priority: formState.isEvent ? "medium" : validPriority,
       reminder_enabled: formState.reminderEnabled,
       reminder_time: reminderTimeValue,
       user_id: userId,

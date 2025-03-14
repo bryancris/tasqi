@@ -11,7 +11,7 @@ interface TaskData {
   date: string | null;
   start_time: string | null;
   end_time: string | null;
-  priority: string;
+  priority: 'low' | 'medium' | 'high';  // Updated to use literal types matching database
   reminder_enabled: boolean;
   reminder_time: number;
   user_id: string;
