@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNotifications } from "@/hooks/notifications/use-notifications";
 import { detectPlatform } from "@/utils/notifications/platformDetection";
 import { normalizeReminderTime } from "@/utils/notifications/debug-utils";
@@ -22,6 +22,7 @@ interface TaskNotificationFieldsProps {
   onReminderTimeChange: (value: number) => void;
 }
 
+// CRITICAL FIX: Define these constant options outside of component
 const REMINDER_TIME_OPTIONS = [
   { value: 0, label: 'At start time' },
   { value: 5, label: '5 minutes before' },
@@ -38,21 +39,43 @@ export function TaskNotificationFields({
   onReminderEnabledChange,
   onReminderTimeChange,
 }: TaskNotificationFieldsProps) {
+  // CRITICAL FIX: Internal state to track display value
+  const [internalValue, setInternalValue] = useState<string>(String(reminderTime));
   const { isSubscribed, isLoading, enableNotifications } = useNotifications();
   const platform = detectPlatform();
   const isIOSPWA = platform === 'ios-pwa';
 
-  // FIXED: Enhanced logging to trace the exact value of reminderTime
-  console.log(`🚨 TaskNotificationFields rendered with reminderTime=${reminderTime} (type: ${typeof reminderTime}), isExactlyZero: ${reminderTime === 0}`);
+  // CRITICAL FIX: Enhanced logging to trace values
+  console.log(`🚨 FORM TaskNotificationFields rendered with reminderTime=${reminderTime} (type: ${typeof reminderTime}), isExactlyZero: ${reminderTime === 0}`);
+  console.log(`🚨 FORM Current internalValue="${internalValue}"`);
 
+  // CRITICAL FIX: Sync internal value with prop
+  useEffect(() => {
+    // Special handling for exactly 0
+    if (reminderTime === 0) {
+      console.log('🚨 FORM Setting internalValue to "0" for "At start time"');
+      setInternalValue("0");
+    } else {
+      setInternalValue(String(reminderTime));
+    }
+  }, [reminderTime]);
+
+  // CRITICAL FIX: Improved toggle handler for notifications
   const handleToggle = async (enabled: boolean) => {
+    console.log(`🚨 FORM Toggle changed to: ${enabled}`);
+    
     if (!enabled) {
       onReminderEnabledChange(false);
       return;
     }
 
     try {
-      // FIXED: Pass the enabled value to parent component first
+      // CRITICAL FIX: When enabling, always set to "At start time" (0)
+      console.log('🚨 FORM Setting default to "At start time" (0)');
+      onReminderTimeChange(0);
+      setInternalValue("0");
+      
+      // FIXED: Update parent state first
       onReminderEnabledChange(true);
       
       // Now we can do async operations without losing state
@@ -83,6 +106,7 @@ export function TaskNotificationFields({
     }
   };
 
+  // CRITICAL FIX: iOS PWA special handling
   useEffect(() => {
     if (isIOSPWA) {
       const localEnabled = localStorage.getItem('ios_pwa_notifications_enabled') === 'true';
@@ -92,6 +116,31 @@ export function TaskNotificationFields({
       }
     }
   }, [isIOSPWA, reminderEnabled, onReminderEnabledChange]);
+
+  // CRITICAL FIX: Special handling for time selection
+  const handleTimeChange = (value: string) => {
+    console.log(`🚨 FORM Time selection changed to: "${value}"`);
+    
+    // Update internal value immediately for UI responsiveness
+    setInternalValue(value);
+    
+    // Special case for "At start time" (0)
+    if (value === "0") {
+      console.log('🚨 FORM Selected "At start time", setting parent value to exact 0');
+      onReminderTimeChange(0);
+      return;
+    }
+    
+    // For other values, parse normally
+    const numValue = parseInt(value, 10);
+    if (!isNaN(numValue)) {
+      console.log(`🚨 FORM Parsed value ${numValue}, updating parent`);
+      onReminderTimeChange(numValue);
+    } else {
+      console.error(`🚨 FORM Invalid value "${value}", defaulting to 15`);
+      onReminderTimeChange(15);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -116,13 +165,8 @@ export function TaskNotificationFields({
         <div className="flex items-center space-x-2">
           <Label htmlFor="reminderTime">Notify me</Label>
           <Select
-            value={String(reminderTime)} // Always convert to string for Select
-            onValueChange={(value) => {
-              // FIXED: Use our normalizer to ensure consistent handling
-              const normalizedValue = normalizeReminderTime(value);
-              console.log(`🚨 Select changed to: "${value}" → normalized to ${normalizedValue} (${typeof normalizedValue})`);
-              onReminderTimeChange(normalizedValue);
-            }}
+            value={internalValue}
+            onValueChange={handleTimeChange}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select time" />

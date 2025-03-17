@@ -78,31 +78,39 @@ export function isTestNotification(referenceId: string | number | null | undefin
 export function normalizeReminderTime(reminderTime: any): number {
   console.log(`⚙️ normalizeReminderTime called with: ${reminderTime} (${typeof reminderTime})`);
   
-  // Special case for string "0" - guaranteed to be "At start time"
-  if (reminderTime === "0") {
-    console.log('✅ Found string "0", returning 0 for "At start time"');
-    return 0;
-  }
-  
-  // Explicitly check for exact 0 (strict equality)
+  // CRITICAL FIX: First check for exact 0 (strict equality)
   if (reminderTime === 0) {
-    console.log('✅ Found exact 0, returning 0 for "At start time"');
+    console.log('🎯 Found exact 0, preserving "At start time" value');
     return 0;
   }
   
-  // Try to convert to number 
-  const numValue = Number(reminderTime);
-  
-  // If conversion resulted in 0, it's "At start time"
-  if (numValue === 0) {
-    console.log('✅ Conversion resulted in 0, using "At start time"');
+  // Then check for string "0" - guaranteed to be "At start time"
+  if (reminderTime === "0") {
+    console.log('🎯 Found string "0", converting to exact 0 for "At start time"');
     return 0;
   }
   
-  // For any non-zero valid number, use it
-  if (!isNaN(numValue)) {
-    console.log(`✅ Using valid number: ${numValue}`);
-    return numValue;
+  // If it's a string that needs conversion, be careful
+  if (typeof reminderTime === 'string') {
+    const numValue = Number(reminderTime);
+    
+    // If conversion resulted in 0, it's "At start time"
+    if (numValue === 0) {
+      console.log('🎯 String conversion resulted in 0, using "At start time"');
+      return 0;
+    }
+    
+    // For any non-zero valid number, use it
+    if (!isNaN(numValue)) {
+      console.log(`✅ Using valid number from string: ${numValue}`);
+      return numValue;
+    }
+  }
+  
+  // If it's already a valid non-zero number
+  if (typeof reminderTime === 'number' && !isNaN(reminderTime)) {
+    console.log(`✅ Using existing valid number: ${reminderTime}`);
+    return reminderTime;
   }
   
   // Default fallback value - 15 minutes before start time

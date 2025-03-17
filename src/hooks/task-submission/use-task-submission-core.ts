@@ -35,16 +35,9 @@ export function useTaskSubmissionCore({ onSuccess, setIsLoading }: UseTaskSubmis
   const { createTask, createSubtasks } = useTaskDatabaseOperations();
 
   const handleSubmit = async (formState: TaskFormState, userId: string) => {
-    console.log("handleSubmit called with title:", formState.title);
-    console.log("Current form state:", { 
-      isScheduled: formState.isScheduled, 
-      isEvent: formState.isEvent, 
-      isAllDay: formState.isAllDay, 
-      date: formState.date, 
-      startTime: formState.startTime, 
-      endTime: formState.endTime,
-      priority: formState.priority,
-      reminderEnabled: formState.reminderEnabled,
+    console.log("🔍 handleSubmit called with title:", formState.title);
+    console.log("🔍 Reminder data:", { 
+      reminderEnabled: formState.reminderEnabled, 
       reminderTime: formState.reminderTime,
       reminderTimeType: typeof formState.reminderTime,
       isExactlyZero: formState.reminderTime === 0 ? "YES - AT START TIME" : "NO - has minutes before"
@@ -53,16 +46,16 @@ export function useTaskSubmissionCore({ onSuccess, setIsLoading }: UseTaskSubmis
     // Create a clean copy of form state to prevent modification of original
     let taskFormState = { ...formState };
     
-    // CRITICAL FIX: Special case for "At start time" (0)
+    // CRITICAL FIX: For "At start time" (0) - we must preserve exact 0
     if (formState.reminderTime === 0) {
       console.log('🚨 SUBMISSION: Found exact 0, preserving "At start time" value');
       // Explicitly ensure it stays as the number 0
       taskFormState.reminderTime = 0;
     } 
-    // For any non-zero value, normalize it to ensure consistent handling
-    else {
+    // Only normalize non-zero values to prevent any chance of changing 0 to another value
+    else if (formState.reminderTime !== 0) {
       taskFormState.reminderTime = normalizeReminderTime(formState.reminderTime);
-      console.log(`🚨 SUBMISSION: Normalized reminderTime from ${formState.reminderTime} to ${taskFormState.reminderTime}`);
+      console.log(`🚨 SUBMISSION: Normalized non-zero reminderTime from ${formState.reminderTime} to ${taskFormState.reminderTime}`);
     }
     
     console.log(`🚨 SUBMISSION: Final reminderTime=${taskFormState.reminderTime} (${typeof taskFormState.reminderTime})`);

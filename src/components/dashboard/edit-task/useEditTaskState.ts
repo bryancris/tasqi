@@ -19,21 +19,22 @@ export function useEditTaskState(task: Task, onClose: () => void) {
   
   const [reminderEnabled, setReminderEnabled] = useState(task.reminder_enabled || false);
   
-  // CRITICAL FIX: More strict type handling for reminderTime 
+  // CRITICAL FIX: More strict type handling for reminderTime to preserve 0 value
   const [reminderTime, setReminderTime] = useState<number>(() => {
-    // Enhanced logging to debug the incoming value
-    console.log(`🔍 Task "${task.title}" loaded with reminder_time:`, task.reminder_time, 
+    // CRITICAL FIX: Enhanced logging to debug the incoming value
+    console.log(`🔍 Task "${task.title}" (id: ${task.id}) loaded with reminder_time:`, task.reminder_time, 
       "Type:", typeof task.reminder_time, 
-      "Is 0?", task.reminder_time === 0);
+      "Is exactly 0?", task.reminder_time === 0);
     
+    // Special handling for explicit zero
     if (task.reminder_time === 0) {
-      console.log("👑 Task has explicit zero - setting to 0 (At start time)");
+      console.log("👑 Task has explicit zero - preserving 0 (At start time)");
       return 0;
     } 
     
     if (task.reminder_time === null || task.reminder_time === undefined) {
-      console.log("👑 Task has null/undefined - defaulting to 0 (At start time)");
-      return 0;
+      console.log("👑 Task has null/undefined - defaulting to 15 minutes before");
+      return 15;
     } 
     
     if (typeof task.reminder_time === 'number') {
@@ -41,9 +42,22 @@ export function useEditTaskState(task: Task, onClose: () => void) {
       return task.reminder_time;
     } 
     
-    const numValue = Number(task.reminder_time);
-    console.log(`👑 Converting value to number: ${numValue}`);
-    return isNaN(numValue) ? 0 : numValue;
+    // If it's a string or any other type, try to convert safely
+    try {
+      const numValue = Number(task.reminder_time);
+      console.log(`👑 Converting value to number: ${numValue}`);
+      
+      // Extra check to preserve 0 if it was "0"
+      if (numValue === 0 || task.reminder_time === "0") {
+        console.log("👑 Found 0 after conversion - preserving At start time");
+        return 0;
+      }
+      
+      return isNaN(numValue) ? 15 : numValue;
+    } catch (err) {
+      console.error("Error converting reminder_time:", err);
+      return 15;
+    }
   });
   
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
@@ -55,8 +69,9 @@ export function useEditTaskState(task: Task, onClose: () => void) {
   useEffect(() => {
     loadSubtasks();
     
-    console.log("Loaded task with reminder_time:", task.reminder_time, "Type:", typeof task.reminder_time);
-    console.log(`Task "${task.title}" loaded with reminderTime state:`, reminderTime);
+    console.log("✅ Loaded task with reminder_time:", task.reminder_time, "Type:", typeof task.reminder_time);
+    console.log(`✅ Initialized reminderTime state for "${task.title}":`, reminderTime, "Type:", typeof reminderTime);
+    console.log(`✅ Is "At start time"? ${reminderTime === 0 ? "YES" : "NO"}`);
   }, [task.id]);
 
   const loadSubtasks = async () => {
@@ -123,9 +138,13 @@ export function useEditTaskState(task: Task, onClose: () => void) {
         status = 'unscheduled';
       }
       
-      // CRITICAL FIX: Log the exact reminder time value before saving to detect any issues
-      console.log(`⚡ SAVE: Using reminderTime = ${reminderTime} (${typeof reminderTime})`);
-      console.log(`⚡ SAVE: Is exactly 0? ${reminderTime === 0 ? 'YES - AT START TIME' : 'NO'}`);
+      // CRITICAL FIX: Log the exact reminder time value before saving 
+      console.log(`⚡ SAVE TASK ${task.id}: Current reminderTime = ${reminderTime} (${typeof reminderTime})`);
+      console.log(`⚡ SAVE TASK ${task.id}: Is exactly 0? ${reminderTime === 0 ? 'YES - AT START TIME' : 'NO'}`);
+      
+      // CRITICAL FIX: Ensure that explicit 0 is preserved in the database
+      const finalReminderTime = reminderTime === 0 ? 0 : reminderTime;
+      console.log(`⚡ SAVE TASK ${task.id}: Final reminderTime to save = ${finalReminderTime}`);
       
       const updateData = {
         title,
@@ -134,7 +153,7 @@ export function useEditTaskState(task: Task, onClose: () => void) {
         date: (isScheduled || isEvent) && date ? date : null,
         priority: isEvent ? "medium" : priority,
         reminder_enabled: reminderEnabled,
-        reminder_time: reminderTime, // Ensure we use the exact number value here
+        reminder_time: finalReminderTime, // Use the preserved value
         is_all_day: isEvent ? isAllDay : false
       } as const;
       
@@ -155,16 +174,19 @@ export function useEditTaskState(task: Task, onClose: () => void) {
         });
       }
       
-      console.log("Updating task with data:", updateData);
-      console.log("Final reminder_time being sent:", updateData.reminder_time, 
+      console.log(`⚡ SAVE TASK ${task.id}: Updating task with data:`, updateData);
+      console.log(`⚡ SAVE TASK ${task.id}: Final reminder_time being sent:`, updateData.reminder_time, 
         "Type:", typeof updateData.reminder_time,
         "Is exactly 0?", updateData.reminder_time === 0 ? "YES - AT START TIME" : "NO");
       
-      const { error: taskError } = await supabase.from('tasks')
+      const { data, error: taskError } = await supabase.from('tasks')
         .update(updateData)
-        .eq('id', task.id);
+        .eq('id', task.id)
+        .select();
         
       if (taskError) throw taskError;
+      
+      console.log(`⚡ SAVE TASK ${task.id}: Update success, returned data:`, data);
 
       const existingSubtaskIds = subtasks.filter(st => st.id).map(st => st.id);
       if (existingSubtaskIds.length > 0) {
@@ -193,6 +215,21 @@ export function useEditTaskState(task: Task, onClose: () => void) {
           } = await supabase.from('subtasks').insert(subtaskData);
           if (createError) throw createError;
         }
+      }
+
+      // CRITICAL FIX: After successful update, verify the data in the database
+      const { data: verifyData, error: verifyError } = await supabase.from('tasks')
+        .select('reminder_time, reminder_enabled')
+        .eq('id', task.id)
+        .single();
+        
+      if (!verifyError && verifyData) {
+        console.log(`✅ VERIFY TASK ${task.id} AFTER SAVE:`, {
+          saved_reminder_time: verifyData.reminder_time,
+          saved_type: typeof verifyData.reminder_time,
+          saved_reminder_enabled: verifyData.reminder_enabled,
+          is_exactly_zero: verifyData.reminder_time === 0 ? "YES - AT START TIME" : "NO"
+        });
       }
 
       await queryClient.invalidateQueries({ queryKey: ["tasks"] });
@@ -241,3 +278,4 @@ export function useEditTaskState(task: Task, onClose: () => void) {
     handleDelete
   };
 }
+

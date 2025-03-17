@@ -1,3 +1,4 @@
+
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
@@ -21,6 +22,7 @@ interface TaskNotificationFieldsProps {
   onReminderTimeChange: (value: number) => void;
 }
 
+// CRITICAL FIX: Define these constant options outside of component to ensure consistent values
 const REMINDER_TIME_OPTIONS = [
   { value: 0, label: 'At start time' },
   { value: 5, label: '5 minutes before' },
@@ -37,19 +39,31 @@ export function TaskNotificationFields({
   onReminderEnabledChange,
   onReminderTimeChange,
 }: TaskNotificationFieldsProps) {
-  const [displayValue, setDisplayValue] = useState<string>(String(reminderTime));
+  // CRITICAL FIX: Track internal display value state separate from actual reminder time
+  const [internalValue, setInternalValue] = useState<string>(String(reminderTime));
   const { isLoading } = useNotifications();
   const platform = detectPlatform();
   const isIOSPWA = platform === 'ios-pwa';
 
-  console.log(`🔴 TaskNotificationFields rendered with reminderTime=${reminderTime} (${typeof reminderTime})`);
-  console.log(`🔴 Is exactly zero? ${reminderTime === 0 ? 'YES - AT START TIME' : 'NO'}`);
+  // CRITICAL FIX: Enhanced logging to track values
+  console.log(`🔔 TaskNotificationFields RENDER - reminderTime=${reminderTime} (${typeof reminderTime})`);
+  console.log(`🔔 Is AT START TIME? ${reminderTime === 0 ? 'YES' : 'NO'}`);
+  console.log(`🔔 Current internalValue="${internalValue}"`);
   
+  // CRITICAL FIX: Properly sync the internal state with the prop
   useEffect(() => {
-    console.log(`🔴 Effect: updating display value from ${reminderTime} to ${String(reminderTime)}`);
-    setDisplayValue(String(reminderTime));
+    console.log(`🔔 Effect: syncing from prop reminderTime=${reminderTime} to internalValue`);
+    
+    // Special handling for exact 0 (At start time)
+    if (reminderTime === 0) {
+      console.log('🔔 Setting internalValue to "0" for "At start time"');
+      setInternalValue("0");
+    } else {
+      setInternalValue(String(reminderTime));
+    }
   }, [reminderTime]);
   
+  // CRITICAL FIX: Separated handler for enabling notifications
   const handleEnableNotifications = async (): Promise<boolean> => {
     try {
       if (isIOSPWA) {
@@ -71,28 +85,31 @@ export function TaskNotificationFields({
     }
   };
 
+  // CRITICAL FIX: Improved toggle handler
   const handleToggle = async (enabled: boolean) => {
-    console.log(`🔴 Toggle changed to: ${enabled}`);
+    console.log(`🔔 Toggle changed to: ${enabled}`);
     
     if (!enabled) {
-      console.log('🔴 Disabling notifications');
+      console.log('🔔 Disabling notifications');
       onReminderEnabledChange(false);
       return;
     }
 
     try {
-      const defaultValue = 0;
-      console.log(`🔴 Setting default reminderTime to ${defaultValue} (At start time)`);
-      onReminderTimeChange(defaultValue);
+      // CRITICAL FIX: When enabling, always default to "At start time" (0)
+      // This seems to be the expected behavior - enabling should set AT START TIME
+      console.log('🔔 Setting default reminderTime to 0 (At start time)');
+      onReminderTimeChange(0);
+      setInternalValue("0");
       
-      console.log('🔴 Updating parent reminderEnabled to true');
+      console.log('🔔 Updating parent reminderEnabled to true');
       onReminderEnabledChange(true);
       
-      console.log('🔴 Requesting notification permissions');
+      console.log('🔔 Requesting notification permissions');
       const permissionGranted = await handleEnableNotifications();
       
       if (!permissionGranted && !isIOSPWA) {
-        console.log('🔴 Permission denied, disabling notifications');
+        console.log('🔔 Permission denied, disabling notifications');
         onReminderEnabledChange(false);
         toast.error('Notification permission denied');
       } else {
@@ -109,23 +126,29 @@ export function TaskNotificationFields({
     }
   };
 
+  // CRITICAL FIX: Improved handler to properly handle the "At start time" (0) case
   const handleReminderTimeChange = (selectedValue: string) => {
+    console.log(`🔔 Selected option value: "${selectedValue}"`);
+    
+    // Set internal value immediately for UI responsiveness
+    setInternalValue(selectedValue);
+    
+    // Critical special case for "At start time" (0)
     if (selectedValue === "0") {
-      console.log(`🔴 Selected "At start time" (0) exactly`);
-      setDisplayValue("0");
+      console.log('🔔 Processing special "At start time" (0) value');
       onReminderTimeChange(0);
       return;
     }
     
+    // For all other values, parse as number
     const numValue = parseInt(selectedValue, 10);
-    console.log(`🔴 Selected time "${selectedValue}" → parsed as ${numValue} (${typeof numValue})`);
     if (isNaN(numValue)) {
       console.error(`❌ Failed to parse "${selectedValue}" as a number`);
+      onReminderTimeChange(15); // Default fallback
       return;
     }
     
-    setDisplayValue(selectedValue);
-    console.log(`🔴 Updating parent reminderTime to ${numValue}`);
+    console.log(`🔔 Setting parent reminderTime to ${numValue}`);
     onReminderTimeChange(numValue);
   };
 
@@ -152,7 +175,7 @@ export function TaskNotificationFields({
         <div className="flex items-center space-x-2">
           <Label htmlFor="reminderTime">Notify me</Label>
           <Select
-            value={displayValue}
+            value={internalValue}
             onValueChange={handleReminderTimeChange}
           >
             <SelectTrigger className="w-[180px]">
