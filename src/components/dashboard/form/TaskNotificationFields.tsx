@@ -42,19 +42,19 @@ export function TaskNotificationFields({
   const platform = detectPlatform();
   const isIOSPWA = platform === 'ios-pwa';
 
-  // FIXED: Initialize internalValue directly from the prop with proper string conversion
+  // ENHANCED: Better initialization with explicit type conversion and logging
   const [internalValue, setInternalValue] = useState<string>(() => {
-    // Convert reminderTime to string immediately on initialization
-    // This prevents flicker and ensures select shows the right value from the start
-    const value = reminderTime === 0 ? "0" : String(reminderTime || 0);
-    console.log(`⚡ TaskNotificationFields: Initializing with "${value}" from ${reminderTime}`);
-    return value;
+    // Handle the 0 case explicitly to ensure it's not treated as falsy
+    const stringValue = reminderTime === 0 ? "0" : String(reminderTime || 0);
+    console.log(`🎯 TaskNotificationFields: Initializing with "${stringValue}" from ${reminderTime} (${typeof reminderTime})`);
+    return stringValue;
   });
 
   // Update internal value when the prop changes (defensive)
   useEffect(() => {
+    // Handle the 0 case explicitly to ensure it's not treated as falsy
     const stringValue = reminderTime === 0 ? "0" : String(reminderTime || 0);
-    console.log(`TaskNotificationFields: Updating internal state to "${stringValue}" from ${reminderTime}`);
+    console.log(`TaskNotificationFields: Updating internal state to "${stringValue}" from ${reminderTime} (${typeof reminderTime})`);
     setInternalValue(stringValue);
   }, [reminderTime]);
 
@@ -74,7 +74,7 @@ export function TaskNotificationFields({
         
         onReminderEnabledChange(true);
         
-        // SIMPLIFIED: Always set to 0 (At start time) when enabling notifications
+        // FIXED: Always set to 0 (At start time) when enabling notifications
         console.log('Setting reminder time to 0 (At start time) for iOS');
         onReminderTimeChange(0);
         setInternalValue("0");
@@ -90,7 +90,7 @@ export function TaskNotificationFields({
       } else {
         await onReminderEnabledChange(true);
         
-        // SIMPLIFIED: Always set to 0 (At start time) when enabling notifications
+        // FIXED: Always set to 0 (At start time) when enabling notifications
         console.log('Setting reminder time to 0 (At start time)');
         onReminderTimeChange(0);
         setInternalValue("0");
@@ -146,7 +146,7 @@ export function TaskNotificationFields({
               setInternalValue(value);
               // Directly parse the value to a number - always safe with our defined options
               const numValue = Number(value);
-              console.log(`Select changed to: "${value}" → ${numValue}`);
+              console.log(`Select changed to: "${value}" → ${numValue} (type: ${typeof numValue})`);
               onReminderTimeChange(numValue);
             }}
           >

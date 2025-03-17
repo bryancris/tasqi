@@ -20,8 +20,7 @@ export function useAddTaskForm({ initialDate }: UseAddTaskFormProps = {}) {
   const [priority, setPriority] = useState<TaskPriority>("medium");
   const [reminderEnabled, setReminderEnabled] = useState(false);
   
-  // IMPROVED: Explicitly initialize as 0 with proper typing
-  // This ensures "At start time" is always the default, not 15 minutes
+  // FIXED: Explicitly initialize as 0 (At start time) with proper typing
   const [reminderTime, setReminderTime] = useState<number>(0);
   
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);

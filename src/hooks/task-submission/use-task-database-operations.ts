@@ -1,100 +1,72 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { Subtask } from "@/components/dashboard/subtasks/SubtaskList";
 
-// Define a more specific TaskData interface that aligns with what Supabase expects
 interface TaskData {
   title: string;
   description: string;
-  status: 'scheduled' | 'unscheduled' | 'event';
   date: string | null;
+  status: 'scheduled' | 'unscheduled' | 'event';
   start_time: string | null;
   end_time: string | null;
-  priority: 'low' | 'medium' | 'high';  // Updated to use literal types matching database
-  reminder_enabled: boolean;
-  reminder_time: number;
+  priority: string;
+  position: number;
   user_id: string;
   owner_id: string;
-  is_all_day: boolean;
-  position: number;
-  assignees: string[];
   shared: boolean;
-  is_tracking: boolean;
-  reschedule_count: number;
-  [key: string]: any; // Keep this for flexibility with additional fields
+  reminder_enabled: boolean;
+  reminder_time: number;
+  is_all_day: boolean;
+  [key: string]: any;
 }
 
 export function useTaskDatabaseOperations() {
-  // Create a new task in the database
   const createTask = async (taskData: TaskData) => {
-    console.log("Creating task with final data:", taskData);
+    console.log('⚡ Creating task with reminderTime =', taskData.reminder_time, 'Type:', typeof taskData.reminder_time);
     
-    // IMPROVED: Extra verification for reminder_time
-    // This ensures the value is definitely a number before saving to database
-    if (taskData.reminder_time === 0) {
-      console.log("⚡ Verified zero reminder_time before database insert");
+    // Ensure reminder_time is properly set to 0 when intended
+    if (taskData.reminder_enabled && (taskData.reminder_time === undefined || taskData.reminder_time === null)) {
+      console.log('⚠️ Setting reminder_time to 0 (default) because it was undefined/null');
+      taskData.reminder_time = 0;
     }
     
-    const { data: taskResult, error: taskError } = await supabase
+    const { data, error } = await supabase
       .from("tasks")
       .insert(taskData)
       .select();
 
-    if (taskError) {
-      console.error("Error creating task:", taskError);
-      console.error("Error details:", {
-        message: taskError.message,
-        code: taskError.code,
-        details: taskError.details,
-        hint: taskError.hint
-      });
-      
-      if (taskError.message.includes("violates row-level security policy")) {
-        console.error("RLS policy violation - check permissions");
-        toast.error("Permission error: You don't have access to create tasks");
-      } else {
-        if (taskError.message.includes("invalid input value")) {
-          console.error("Data validation error - check task data format");
-          toast.error("Task creation failed: Invalid data format");
-        } else {
-          toast.error(`Error creating task: ${taskError.message}`);
-        }
-      }
-      throw taskError;
+    if (error) {
+      console.error('Error creating task in Supabase:', error);
+      throw error;
     }
-    
-    console.log("Task created successfully:", taskResult);
-    return taskResult;
+
+    console.log('Task created successfully:', data);
+    return data;
   };
 
-  // Create subtasks for a task
   const createSubtasks = async (taskId: number, subtasks: Subtask[]) => {
-    if (subtasks.length === 0) {
-      console.log("No subtasks to insert");
-      return null;
-    }
-    
+    if (!subtasks.length) return [];
+
     const subtasksToInsert = subtasks.map((subtask, index) => ({
       task_id: taskId,
       title: subtask.title,
-      status: subtask.status,
-      position: index,
-      notes: subtask.notes || null
+      status: subtask.status || 'pending',
+      position: index * 100,
+      notes: subtask.notes || null,
+      user_id: subtask.user_id || null,
     }));
 
-    console.log("Inserting subtasks:", subtasksToInsert);
-    const { data: subtaskResult, error: subtasksError } = await supabase
+    const { data, error } = await supabase
       .from("subtasks")
-      .insert(subtasksToInsert);
+      .insert(subtasksToInsert)
+      .select();
 
-    if (subtasksError) {
-      console.error("Error inserting subtasks:", subtasksError);
-      throw subtasksError;
+    if (error) {
+      console.error('Error creating subtasks in Supabase:', error);
+      throw error;
     }
-    
-    console.log("Subtasks inserted:", subtaskResult);
-    return subtaskResult;
+
+    return data;
   };
 
   return { createTask, createSubtasks };

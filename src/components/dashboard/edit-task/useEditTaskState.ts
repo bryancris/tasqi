@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Task } from "../TaskBoard";
 import { Subtask } from "../subtasks/SubtaskList";
@@ -19,23 +20,28 @@ export function useEditTaskState(task: Task, onClose: () => void) {
   const [reminderEnabled, setReminderEnabled] = useState(task.reminder_enabled || false);
   
   const [reminderTime, setReminderTime] = useState<number>(() => {
+    // Enhanced logging to debug the incoming value
+    console.log(`🔍 Task "${task.title}" reminder_time:`, task.reminder_time, 
+      "Type:", typeof task.reminder_time, 
+      "Is 0?", task.reminder_time === 0);
+    
     if (task.reminder_time === 0) {
-      console.log("✅ INIT: Found explicit zero - setting to 0 (At start time)");
+      console.log("✅ Task has explicit zero - setting to 0 (At start time)");
       return 0;
     } 
     
     if (task.reminder_time === null || task.reminder_time === undefined) {
-      console.log("✅ INIT: Found null/undefined - defaulting to 0 (At start time)");
+      console.log("✅ Task has null/undefined - defaulting to 0 (At start time)");
       return 0;
     } 
     
     if (typeof task.reminder_time === 'number') {
-      console.log(`✅ INIT: Using existing number value: ${task.reminder_time}`);
+      console.log(`✅ Using existing number value: ${task.reminder_time}`);
       return task.reminder_time;
     } 
     
     const numValue = Number(task.reminder_time);
-    console.log(`✅ INIT: Converting value to number: ${numValue}`);
+    console.log(`✅ Converting value to number: ${numValue}`);
     return isNaN(numValue) ? 0 : numValue;
   });
   
@@ -116,6 +122,7 @@ export function useEditTaskState(task: Task, onClose: () => void) {
         status = 'unscheduled';
       }
       
+      // Log the exact reminder time value before saving
       console.log(`⚡ SAVE: Using reminderTime = ${reminderTime} (${typeof reminderTime})`);
       
       const updateData = {
@@ -125,7 +132,7 @@ export function useEditTaskState(task: Task, onClose: () => void) {
         date: (isScheduled || isEvent) && date ? date : null,
         priority: isEvent ? "medium" : priority,
         reminder_enabled: reminderEnabled,
-        reminder_time: reminderTime,
+        reminder_time: reminderTime, // This should be a number (0 for "At start time")
         is_all_day: isEvent ? isAllDay : false
       } as const;
       

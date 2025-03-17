@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -303,8 +304,8 @@ serve(async (req) => {
         owner_id: userId,
         shared: false,
         reminder_enabled: false,
-        reminder_time: 15,
-        is_all_day: isAllDay, // Fixed assignment
+        reminder_time: 0, // FIXED: Changed default from 15 to 0 (At start time)
+        is_all_day: isAllDay,
         reschedule_count: 0,
         time_spent: 0,
         is_tracking: false,
