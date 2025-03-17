@@ -23,8 +23,14 @@ export function useReminderTimeSelection({
   useEffect(() => {
     console.log(`🚨 Effect: syncing from prop reminderTime=${reminderTime} to internalValue`);
     
-    // Use our utility function to format the value correctly
-    setInternalValue(formatReminderTime(reminderTime));
+    // CRITICAL FIX: Ensure "At start time" is preserved by checking for exact 0
+    if (reminderTime === 0) {
+      console.log(`🚨 Special case: reminderTime is exactly 0, setting internalValue="0"`);
+      setInternalValue("0");
+    } else {
+      // Use our utility function to format the value correctly for non-zero values
+      setInternalValue(formatReminderTime(reminderTime));
+    }
   }, [reminderTime]);
   
   // Improved handler to properly handle the "At start time" (0) case

@@ -49,7 +49,9 @@ export function normalizeReminderTime(value: number | null | undefined): number 
  * Ensures that "At start time" (0) is properly handled
  */
 export function formatReminderTime(reminderTime: number | null | undefined): string {
+  // CRITICAL FIX: Special case for "At start time" (0)
   if (reminderTime === 0) {
+    console.log('🔍 formatReminderTime: Found exact 0, returning "0" string');
     return "0"; // At start time
   }
   
