@@ -22,8 +22,8 @@ export const NotificationContent = ({ notification }: NotificationContentProps) 
     }
   };
 
-  // IMPROVED: Better detection of "At start time" notification
-  // Use === 0 check for more reliable detection
+  // FIXED: Use triple equals for more reliable detection of exactly zero
+  // This ensures we only match true "At start time" notifications
   const isAtStartTimeReminder = notification.data?.reminderTime === 0;
   
   // Add debug info to help trace the issue

@@ -74,7 +74,7 @@ export function TaskFormContent({
   // Log the current reminderTime value for debugging
   console.log(`🚨 TaskFormContent received reminderTime=${reminderTime} (${typeof reminderTime}), isExactlyZero: ${reminderTime === 0}`);
 
-  // CRITICAL FIX: Create a wrapper that ensures reminderTime is ALWAYS set FIRST when toggling
+  // FIXED: Create a wrapper that ensures reminderTime is ALWAYS set FIRST when toggling
   const handleToggleWithReminderTime = async (enabled: boolean) => {
     console.log('🚨 handleToggleWithReminderTime called with enabled =', enabled);
     

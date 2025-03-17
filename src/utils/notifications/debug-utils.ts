@@ -1,3 +1,4 @@
+
 import { Notification } from "@/components/notifications/types";
 
 /**
@@ -5,7 +6,7 @@ import { Notification } from "@/components/notifications/types";
  * Especially useful for tracking task notifications and their data
  */
 export function debugLogNotification(notification: Notification, context: string = 'unknown') {
-  // IMPROVED: Enhanced debug log to be more explicit about "At start time" values
+  // FIXED: Enhanced debug log to be more explicit about "At start time" values
   const reminderTime = notification.data?.reminderTime;
   const isAtStartTime = reminderTime === 0;
   
@@ -71,7 +72,7 @@ export function isTestNotification(referenceId: string | number | null | undefin
 }
 
 /**
- * CRITICAL FIX: Helper function to ensure consistent "At start time" values
+ * FIXED: Helper function to ensure consistent "At start time" values
  * This normalizes any zero or "0" values to ensure proper handling
  */
 export function normalizeReminderTime(reminderTime: any): number {

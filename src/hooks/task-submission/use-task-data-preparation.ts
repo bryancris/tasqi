@@ -1,4 +1,3 @@
-
 import { TaskPriority } from "@/components/dashboard/TaskBoard";
 import { Subtask } from "@/components/dashboard/subtasks/SubtaskList";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,15 +47,25 @@ export function useTaskDataPreparation() {
     const taskStartTime = formState.isAllDay ? null : formState.startTime;
     const taskEndTime = formState.isAllDay ? null : formState.endTime;
     
-    // CRITICAL FIX: Enhanced debugging and strict type handling for reminderTime
-    console.log('🚨 Task data preparation - original reminderTime:', formState.reminderTime);
-    console.log('🚨 ReminderTime type:', typeof formState.reminderTime);
-    console.log('🚨 Is exactly zero?', formState.reminderTime === 0);
+    // FIXED: Enhanced handling for reminderTime to ensure "At start time" (0) is preserved
+    // First preserve the original value
+    const originalReminderTime = formState.reminderTime;
+    console.log('🚨 Task data preparation - original reminderTime:', originalReminderTime);
+    console.log('🚨 ReminderTime type:', typeof originalReminderTime);
+    console.log('🚨 Is exactly zero?', originalReminderTime === 0);
     
-    // CRITICAL FIX: Always normalize reminderTime to ensure "At start time" (0) is properly handled
-    let reminderTime = normalizeReminderTime(formState.reminderTime);
+    // If it's explicitly 0, keep it as 0 without any normalization
+    let reminderTime;
+    if (originalReminderTime === 0) {
+      reminderTime = 0; // Preserve exact 0 for "At start time"
+      console.log('🚨 Preserving exact 0 for "At start time"');
+    } else {
+      // For other values, normalize
+      reminderTime = normalizeReminderTime(originalReminderTime);
+      console.log('🚨 After normalization, reminderTime =', reminderTime);
+    }
     
-    console.log('🚨 After normalization, reminderTime =', reminderTime);
+    console.log('🚨 Final reminderTime =', reminderTime);
     console.log('🚨 Is At start time?', reminderTime === 0 ? 'YES' : 'NO');
 
     const taskData = {
@@ -72,7 +81,7 @@ export function useTaskDataPreparation() {
       owner_id: userId,
       shared: false,
       reminder_enabled: formState.reminderEnabled,
-      reminder_time: reminderTime, // Using the strictly normalized value
+      reminder_time: reminderTime, // Using the strictly preserved value
       is_all_day: formState.isAllDay
     };
     

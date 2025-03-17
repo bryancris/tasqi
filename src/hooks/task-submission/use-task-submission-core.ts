@@ -1,4 +1,3 @@
-
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { TaskPriority } from "@/components/dashboard/TaskBoard";
@@ -50,13 +49,20 @@ export function useTaskSubmissionCore({ onSuccess, setIsLoading }: UseTaskSubmis
       isExactlyZero: formState.reminderTime === 0 ? "YES - AT START TIME" : "NO"
     });
     
-    // CRITICAL FIX: Always normalize the reminderTime to ensure consistent handling
+    // FIXED: Special handling for "At start time" (0) values
     let normalizedFormState = { 
-      ...formState,
-      reminderTime: normalizeReminderTime(formState.reminderTime)
+      ...formState
     };
     
-    console.log(`🚨 SUBMISSION: Original reminderTime=${formState.reminderTime} → normalized to ${normalizedFormState.reminderTime}`);
+    // Only normalize if it's not already exactly 0
+    if (formState.reminderTime !== 0) {
+      normalizedFormState.reminderTime = normalizeReminderTime(formState.reminderTime);
+    } else {
+      // Keep exact 0 as is for "At start time"
+      console.log('🚨 SUBMISSION: Found exact 0, preserving "At start time" value');
+    }
+    
+    console.log(`🚨 SUBMISSION: Original reminderTime=${formState.reminderTime} → final=${normalizedFormState.reminderTime}`);
     console.log(`🚨 Is "At start time"? ${normalizedFormState.reminderTime === 0 ? "YES" : "NO"}`);
     
     // Validate the input data

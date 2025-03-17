@@ -42,7 +42,7 @@ export function TaskNotificationFields({
   const platform = detectPlatform();
   const isIOSPWA = platform === 'ios-pwa';
 
-  // CRITICAL FIX: Enhanced logging to trace the exact value of reminderTime
+  // FIXED: Enhanced logging to trace the exact value of reminderTime
   console.log(`🚨 TaskNotificationFields rendered with reminderTime=${reminderTime} (type: ${typeof reminderTime}), isExactlyZero: ${reminderTime === 0}`);
 
   const handleToggle = async (enabled: boolean) => {
@@ -52,11 +52,7 @@ export function TaskNotificationFields({
     }
 
     try {
-      // CRITICAL FIX: Always set reminderTime to 0 IMMEDIATELY before any async operations
-      console.log('🚨 Setting reminderTime to 0 BEFORE any async operations');
-      onReminderTimeChange(0);
-      
-      // CRITICAL FIX: Also update the enabled state immediately for better UI responsiveness
+      // FIXED: Pass the enabled value to parent component first
       onReminderEnabledChange(true);
       
       // Now we can do async operations without losing state
@@ -92,13 +88,10 @@ export function TaskNotificationFields({
       const localEnabled = localStorage.getItem('ios_pwa_notifications_enabled') === 'true';
       if (localEnabled && !reminderEnabled) {
         console.log('🍎 Syncing iOS PWA notification state from localStorage');
-        
-        // CRITICAL FIX: Set reminderTime to 0 first, then enable notifications
-        onReminderTimeChange(0);
         onReminderEnabledChange(true);
       }
     }
-  }, [isIOSPWA, reminderEnabled, onReminderEnabledChange, onReminderTimeChange]);
+  }, [isIOSPWA, reminderEnabled, onReminderEnabledChange]);
 
   return (
     <div className="space-y-4">
@@ -125,7 +118,7 @@ export function TaskNotificationFields({
           <Select
             value={String(reminderTime)} // Always convert to string for Select
             onValueChange={(value) => {
-              // CRITICAL FIX: Use our normalizer to ensure consistent handling
+              // FIXED: Use our normalizer to ensure consistent handling
               const normalizedValue = normalizeReminderTime(value);
               console.log(`🚨 Select changed to: "${value}" → normalized to ${normalizedValue} (${typeof normalizedValue})`);
               onReminderTimeChange(normalizedValue);
