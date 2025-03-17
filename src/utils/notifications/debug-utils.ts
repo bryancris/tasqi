@@ -1,125 +1,55 @@
 
-import { Notification } from "@/components/notifications/types";
+/**
+ * Utilities for debugging and normalizing notification values
+ */
 
 /**
- * Debug log function to help trace notification properties
- * Especially useful for tracking task notifications and their data
+ * Normalizes reminder time values to ensure consistent handling
+ * throughout the application. Special handling for "At start time" (0)
+ * to preserve it explicitly.
  */
-export function debugLogNotification(notification: Notification, context: string = 'unknown') {
-  // FIXED: Enhanced debug log to be more explicit about "At start time" values
-  const reminderTime = notification.data?.reminderTime;
-  const isAtStartTime = reminderTime === 0;
-  
-  console.log(`📋 NOTIFICATION DEBUG [${context}]:`, {
-    id: notification.id,
-    title: notification.title,
-    message: notification.message,
-    type: notification.type || 'none',
-    priority: notification.priority || 'normal',
-    reference: {
-      id: notification.referenceId,
-      type: notification.referenceType,
-      idType: notification.referenceId ? typeof notification.referenceId : 'undefined'
-    },
-    data: notification.data || 'no data',
-    reminderDetails: notification.data ? {
-      reminderTime,
-      reminderTimeType: typeof reminderTime,
-      isExactlyZero: reminderTime === 0,
-      isAtStartTime,
-      explicitAtStartTime: `${isAtStartTime ? 'YES - AT START TIME' : 'NO - has minutes before'}`
-    } : 'no reminder data'
-  });
-}
-
-/**
- * Validates if a notification is a properly structured task notification
- * that should display action buttons
- */
-export function validateTaskNotification(notification: Notification | undefined): boolean {
-  if (!notification) {
-    console.log('❌ Notification validation failed: No notification provided');
-    return false;
-  }
-
-  const isTaskType = notification.referenceType === 'task';
-  const hasReferenceId = !!notification.referenceId;
-  
-  // Additional check for isAtStartTime in data
-  const hasRequiredData = !!notification.data;
-  
-  const isValid = isTaskType && hasReferenceId;
-  
-  if (!isValid) {
-    console.log('❌ Task notification validation failed:', {
-      isTaskType,
-      hasReferenceId,
-      hasRequiredData,
-      notification
-    });
-  }
-  
-  return isValid;
-}
-
-/**
- * Helper function to check if a notification is a test notification
- * Used for testing notification UI without sending real notifications
- */
-export function isTestNotification(referenceId: string | number | null | undefined): boolean {
-  // Test notifications have a specific ID (999999)
-  return referenceId === "999999" || referenceId === 999999;
-}
-
-/**
- * CRITICAL FIX: Enhanced helper function to ensure consistent "At start time" values
- * This normalizes any zero or "0" values to ensure proper handling
- */
-export function normalizeReminderTime(reminderTime: any): number {
-  console.log(`🔴 normalizeReminderTime called with: ${reminderTime} (${typeof reminderTime})`);
-  
-  // CRITICAL FIX: First check for exact 0 (strict equality)
-  if (reminderTime === 0) {
-    console.log('🔴 Found exact 0, preserving "At start time" value');
+export function normalizeReminderTime(value: number | null | undefined): number {
+  // CRITICAL: Explicit check for 0 to preserve "At start time"
+  if (value === 0) {
+    console.log('🔍 Preserving "At start time" (0) value');
     return 0;
   }
   
-  // Then check for string "0" - guaranteed to be "At start time"
-  if (reminderTime === "0") {
-    console.log('🔴 Found string "0", converting to exact 0 for "At start time"');
-    return 0;
+  // Handle null/undefined
+  if (value === null || value === undefined) {
+    console.log('🔍 Defaulting null/undefined to 15 minutes');
+    return 15;
   }
   
-  // If it's a string that needs conversion, be careful
-  if (typeof reminderTime === 'string') {
-    const numValue = Number(reminderTime);
+  // Convert to number if it's a string or any other type
+  try {
+    const numValue = Number(value);
+    if (isNaN(numValue)) {
+      console.log('🔍 Invalid value, defaulting to 15 minutes');
+      return 15;
+    }
     
-    // If conversion resulted in 0, it's "At start time"
+    // Extra check to preserve 0 for good measure
     if (numValue === 0) {
-      console.log('🔴 String conversion resulted in 0, using "At start time"');
+      console.log('🔍 Preserving 0 after numeric conversion');
       return 0;
     }
     
-    // For any non-zero valid number, use it
-    if (!isNaN(numValue)) {
-      console.log(`🔴 Using valid number from string: ${numValue}`);
-      return numValue;
-    }
+    return numValue;
+  } catch (err) {
+    console.error('Error converting reminder time:', err);
+    return 15;
+  }
+}
+
+/**
+ * Safely formats a reminder time for UI display
+ * Ensures that "At start time" (0) is properly handled
+ */
+export function formatReminderTime(reminderTime: number | null | undefined): string {
+  if (reminderTime === 0) {
+    return "0"; // At start time
   }
   
-  // If it's already a valid non-zero number
-  if (typeof reminderTime === 'number' && !isNaN(reminderTime)) {
-    console.log(`🔴 Using existing valid number: ${reminderTime}`);
-    return reminderTime;
-  }
-  
-  // Add an explicit check for undefined/null cases
-  if (reminderTime === undefined || reminderTime === null) {
-    console.log('🔴 CRITICAL: Received undefined/null reminderTime, defaulting to AT START TIME (0)');
-    return 0; // Changed from 15 to 0 as default
-  }
-  
-  // Default fallback value - now using 0 for "At start time" for consistency
-  console.log('🔴 Invalid value, defaulting to AT START TIME (0)');
-  return 0; // Changed from 15 to 0
+  return String(normalizeReminderTime(reminderTime));
 }

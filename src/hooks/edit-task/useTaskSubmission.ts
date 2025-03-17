@@ -33,6 +33,7 @@ export function useTaskSubmission(
       console.log(`⚡ SAVE TASK ${taskId}: Is exactly 0? ${taskFormState.reminderTime === 0 ? 'YES - AT START TIME' : 'NO'}`);
       
       // CRITICAL FIX: Ensure that explicit 0 is preserved in the database
+      // We explicitly check for === 0 to handle the "At start time" case
       const finalReminderTime = taskFormState.reminderTime === 0 ? 0 : taskFormState.reminderTime;
       console.log(`⚡ SAVE TASK ${taskId}: Final reminderTime to save = ${finalReminderTime}`);
       

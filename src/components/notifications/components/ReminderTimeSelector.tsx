@@ -18,6 +18,10 @@ export function ReminderTimeSelector({
   value,
   onValueChange
 }: ReminderTimeSelectorProps) {
+  // Special debug for the "At start time" case
+  console.log(`💡 ReminderTimeSelector rendering with value="${value}" (${typeof value})`);
+  console.log(`💡 Is "At start time"? ${value === "0" ? "YES" : "NO"}`);
+
   return (
     <div className="flex items-center space-x-2">
       <Label htmlFor="reminderTime">Notify me</Label>
