@@ -34,7 +34,10 @@ export function HeaderUserMenu() {
                          session?.user.email?.split('@')[0] ||
                          'User';
 
-  const handleLogout = async () => {
+  const handleLogout = async (e) => {
+    // Prevent default behavior to avoid page reload
+    e.preventDefault();
+    
     try {
       setIsLoggingOut(true);
       await handleSignOut();
@@ -50,7 +53,10 @@ export function HeaderUserMenu() {
     }
   };
 
-  const handleNavigateToSettings = () => {
+  const handleNavigateToSettings = (e) => {
+    // Prevent default behavior 
+    e.preventDefault();
+    
     console.log('Settings button clicked, closing dropdown and navigating programmatically');
     
     // Close the dropdown first
@@ -63,7 +69,7 @@ export function HeaderUserMenu() {
     }, 100); 
   };
 
-  const handleTestNotification = (e: React.MouseEvent) => {
+  const handleTestNotification = (e) => {
     // Prevent default browser behavior to avoid page reload
     e.preventDefault();
     
@@ -103,7 +109,14 @@ export function HeaderUserMenu() {
   return (
     <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+        <Button 
+          variant="ghost" 
+          className="relative h-10 w-10 rounded-full"
+          onClick={(e) => {
+            // Prevent any default behavior
+            e.preventDefault();
+          }}
+        >
           <UserAvatar
             avatarUrl={session?.user?.user_metadata?.avatar_url}
             fallbackText={userDisplayName}
@@ -145,7 +158,14 @@ export function HeaderUserMenu() {
           setDeferredPrompt={setDeferredPrompt}
         />
         <UpdateButton isStandalone={isStandalone} />
-        <DropdownMenuItem onClick={handleLogout} disabled={isLoggingOut}>
+        <DropdownMenuItem 
+          onClick={handleLogout}
+          disabled={isLoggingOut}
+          onSelect={(e) => {
+            // Prevent default behavior
+            e.preventDefault();
+          }}
+        >
           {isLoggingOut ? (
             <>
               <Spinner className="mr-2 h-4 w-4" />
