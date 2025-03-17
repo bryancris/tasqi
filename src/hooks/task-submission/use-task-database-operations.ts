@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { Subtask } from "@/components/dashboard/subtasks/SubtaskList";
+import { TaskPriority } from "@/components/dashboard/TaskBoard";
 
 interface TaskData {
   title: string;
@@ -9,7 +10,7 @@ interface TaskData {
   status: 'scheduled' | 'unscheduled' | 'event';
   start_time: string | null;
   end_time: string | null;
-  priority: string;
+  priority: TaskPriority; // Changed from string to TaskPriority
   position: number;
   user_id: string;
   owner_id: string;
@@ -53,7 +54,7 @@ export function useTaskDatabaseOperations() {
       status: subtask.status || 'pending',
       position: index * 100,
       notes: subtask.notes || null,
-      user_id: subtask.user_id || null,
+      // Remove user_id from the subtask insertion since it doesn't exist in the Subtask type
     }));
 
     const { data, error } = await supabase
