@@ -114,7 +114,9 @@ export function useNotificationHandlers(
               : (notification.referenceId as number) || 0,
           title: notification.title,
           description: notification.message,
-          priority: 'high'
+          priority: 'high',
+          // Pass through any custom data from the notification
+          ...(notification.data || {})
         } as any, 'reminder');
       } catch (error) {
         console.error('Error showing browser notification:', error);
@@ -130,7 +132,7 @@ export function useNotificationHandlers(
 
       const group = existingGroup || Math.random().toString(36).substr(2, 9);
       
-      // Create new notification preserving all original properties
+      // Create new notification preserving all original properties (including data)
       const newNotification = { 
         ...notification, 
         id,

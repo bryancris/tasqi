@@ -15,6 +15,7 @@ export interface Notification {
   user_id: string;
   group?: string;
   persistent?: boolean;
+  data?: Record<string, any>;           // Added data property for custom metadata
 }
 
 export interface NotificationsContextType {

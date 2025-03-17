@@ -1,65 +1,55 @@
 
-/**
- * Utilities: Debug Utilities for Notifications
- * 
- * Purpose:
- * - Provides debugging tools for the notification system
- * - Helps trace notification properties and flow
- * - Validates notification data for button display
- * 
- * Important Functions:
- * - debugLogNotification: Logs notification details with source info
- * - validateTaskNotification: Checks if a notification should show task buttons
- * - isTestNotification: Detects test notifications by their ID
- * - logNotificationDetails: Logs detailed notification properties for debugging
- */
+import { Notification } from "@/components/notifications/types";
 
 /**
- * Debug utilities for notifications
- * These help trace notification related issues
+ * Debug log function to help trace notification properties
+ * Especially useful for tracking task notifications and their data
  */
-
-// Log notification details
-export const debugLogNotification = (notification: any, source: string = 'unknown') => {
-  console.log(`🔍 [${source}] Notification:`, {
-    id: notification.id || 'no-id',
+export function debugLogNotification(notification: Notification, context: string = 'unknown') {
+  console.log(`📋 NOTIFICATION DEBUG [${context}]:`, {
+    id: notification.id,
     title: notification.title,
     message: notification.message,
-    referenceId: notification.referenceId || notification.reference_id,
-    referenceType: notification.referenceType || notification.reference_type,
-    type: notification.type
+    type: notification.type || 'none',
+    reference: {
+      id: notification.referenceId,
+      type: notification.referenceType,
+      idType: notification.referenceId ? typeof notification.referenceId : 'undefined'
+    },
+    data: notification.data || 'no data', // Log data property if it exists
+    ...(notification.data ? {
+      reminderTime: notification.data.reminderTime,
+      isAtStartTime: notification.data.isAtStartTime
+    } : {})
   });
-};
+}
 
-// Validate if notification should show task-specific buttons
-export const validateTaskNotification = (notification: any) => {
-  const hasReferenceType = !!notification.referenceType || !!notification.reference_type;
-  const hasReferenceId = !!notification.referenceId || !!notification.reference_id;
-  const isTaskType = (notification.referenceType || notification.reference_type) === 'task';
+/**
+ * Validates if a notification is a properly structured task notification
+ * that should display action buttons
+ */
+export function validateTaskNotification(notification: Notification | undefined): boolean {
+  if (!notification) {
+    console.log('❌ Notification validation failed: No notification provided');
+    return false;
+  }
+
+  const isTaskType = notification.referenceType === 'task';
+  const hasReferenceId = !!notification.referenceId;
   
-  console.log(`🔘 Task Notification Validation:`, {
-    hasReferenceType,
-    hasReferenceId,
-    isTaskType,
-    shouldShowButtons: hasReferenceType && hasReferenceId && isTaskType
-  });
+  // Additional check for isAtStartTime in data
+  const hasRequiredData = !!notification.data;
   
-  return hasReferenceType && hasReferenceId && isTaskType;
-};
-
-// Check if this is a test notification
-export const isTestNotification = (referenceId: number | string | null | undefined): boolean => {
-  if (referenceId === null || referenceId === undefined) return false;
-  return String(referenceId) === '999999' || referenceId === 999999;
-};
-
-// Log notification debugging info
-export const logNotificationDetails = (notification: any) => {
-  console.group('📋 Notification Details');
-  console.log('Title:', notification.title);
-  console.log('Message:', notification.message);
-  console.log('Reference ID:', notification.referenceId || notification.reference_id);
-  console.log('Reference Type:', notification.referenceType || notification.reference_type);
-  console.log('Should Show Buttons:', validateTaskNotification(notification));
-  console.groupEnd();
-};
+  const isValid = isTaskType && hasReferenceId;
+  
+  if (!isValid) {
+    console.log('❌ Task notification validation failed:', {
+      isTaskType,
+      hasReferenceId,
+      hasRequiredData,
+      notification
+    });
+  }
+  
+  return isValid;
+}
