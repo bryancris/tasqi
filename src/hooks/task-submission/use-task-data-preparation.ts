@@ -1,6 +1,8 @@
+
 import { TaskPriority } from "@/components/dashboard/TaskBoard";
 import { Subtask } from "@/components/dashboard/subtasks/SubtaskList";
 import { supabase } from "@/integrations/supabase/client";
+import { normalizeReminderTime } from "@/utils/notifications/debug-utils";
 
 interface TaskFormState {
   title: string;
@@ -47,28 +49,15 @@ export function useTaskDataPreparation() {
     const taskEndTime = formState.isAllDay ? null : formState.endTime;
     
     // CRITICAL FIX: Enhanced debugging and strict type handling for reminderTime
-    console.log('🎯 Task form state reminderTime:', formState.reminderTime, 'Type:', typeof formState.reminderTime);
+    console.log('🚨 Task data preparation - original reminderTime:', formState.reminderTime);
+    console.log('🚨 ReminderTime type:', typeof formState.reminderTime);
+    console.log('🚨 Is exactly zero?', formState.reminderTime === 0);
     
-    // CRITICAL FIX: Use Number() explicitly to ensure proper type conversion
-    // Initialize to 0 ("At start time") by default for enabled reminders
-    let reminderTime = 0;
+    // CRITICAL FIX: Always normalize reminderTime to ensure "At start time" (0) is properly handled
+    let reminderTime = normalizeReminderTime(formState.reminderTime);
     
-    if (formState.reminderEnabled) {
-      if (formState.reminderTime === 0) {
-        // Keep it as 0 for "At start time"
-        reminderTime = 0;
-        console.log('✅ Using explicit 0 for "At start time"');
-      } else if (typeof formState.reminderTime === 'number') {
-        reminderTime = formState.reminderTime;
-        console.log(`✅ Using numeric value: ${reminderTime}`);
-      } else if (formState.reminderTime) {
-        // Parse it if it's a string or other type
-        reminderTime = Number(formState.reminderTime);
-        console.log(`✅ Converted to number: ${reminderTime}`);
-      }
-    }
-    
-    console.log('📝 Final reminder time to be saved:', reminderTime, 'Type:', typeof reminderTime);
+    console.log('🚨 After normalization, reminderTime =', reminderTime);
+    console.log('🚨 Is At start time?', reminderTime === 0 ? 'YES' : 'NO');
 
     const taskData = {
       title: formState.title,
@@ -83,11 +72,13 @@ export function useTaskDataPreparation() {
       owner_id: userId,
       shared: false,
       reminder_enabled: formState.reminderEnabled,
-      reminder_time: reminderTime, // Using the strictly processed value
+      reminder_time: reminderTime, // Using the strictly normalized value
       is_all_day: formState.isAllDay
     };
     
-    console.log('📝 Final task data to be saved to database:', taskData);
+    console.log('🚨 Final task data to be saved to database:', taskData);
+    console.log('🚨 Final reminder_time value:', taskData.reminder_time, 'Type:', typeof taskData.reminder_time);
+    console.log('🚨 Is "At start time"?', taskData.reminder_time === 0 ? 'YES' : 'NO');
 
     return { taskData, nextPosition };
   };

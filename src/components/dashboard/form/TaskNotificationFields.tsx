@@ -12,6 +12,7 @@ import {
 import { useEffect } from "react";
 import { useNotifications } from "@/hooks/notifications/use-notifications";
 import { detectPlatform } from "@/utils/notifications/platformDetection";
+import { normalizeReminderTime } from "@/utils/notifications/debug-utils";
 
 interface TaskNotificationFieldsProps {
   reminderEnabled: boolean;
@@ -41,8 +42,8 @@ export function TaskNotificationFields({
   const platform = detectPlatform();
   const isIOSPWA = platform === 'ios-pwa';
 
-  // CRITICAL FIX: Always use the parent's reminderTime value directly
-  console.log(`🔥 TaskNotificationFields rendered with reminderTime=${reminderTime} (${typeof reminderTime})`);
+  // CRITICAL FIX: Enhanced logging to trace the exact value of reminderTime
+  console.log(`🚨 TaskNotificationFields rendered with reminderTime=${reminderTime} (type: ${typeof reminderTime}), isExactlyZero: ${reminderTime === 0}`);
 
   const handleToggle = async (enabled: boolean) => {
     if (!enabled) {
@@ -51,35 +52,36 @@ export function TaskNotificationFields({
     }
 
     try {
-      // CRITICAL FIX: Set reminderTime to 0 FIRST, before any async operations
-      console.log('Setting reminder time to 0 (At start time) BEFORE async operations');
+      // CRITICAL FIX: Always set reminderTime to 0 IMMEDIATELY before any async operations
+      console.log('🚨 Setting reminderTime to 0 BEFORE any async operations');
       onReminderTimeChange(0);
       
+      // CRITICAL FIX: Also update the enabled state immediately for better UI responsiveness
+      onReminderEnabledChange(true);
+      
+      // Now we can do async operations without losing state
       if (isIOSPWA) {
         console.log('🍎 Enabling iOS PWA simplified notifications');
         localStorage.setItem('ios_pwa_notifications_enabled', 'true');
-        onReminderEnabledChange(true);
       } else {
-        // Enable notifications AFTER setting reminderTime
-        // This fixes the race condition where the reminderTime was getting lost
-        onReminderEnabledChange(true);
-      }
-      
-      // Now we can do the async operations, the state is already updated
-      if ('Notification' in window) {
-        try {
-          const permission = await Notification.requestPermission();
-          console.log('Notification permission result:', permission);
-        } catch (err) {
-          console.warn('Permission request failed, but continuing:', err);
+        // For non-iOS, request browser permissions as needed
+        if ('Notification' in window) {
+          try {
+            console.log('🔔 Requesting notification permission');
+            const permission = await Notification.requestPermission();
+            console.log('🔔 Notification permission result:', permission);
+          } catch (err) {
+            console.warn('🔔 Permission request failed:', err);
+          }
         }
       }
     } catch (error) {
-      console.error('Error enabling notifications:', error);
+      console.error('❌ Error enabling notifications:', error);
       
       if (isIOSPWA && localStorage.getItem('ios_pwa_notifications_enabled') === 'true') {
         console.log('🍎 Keeping iOS PWA notifications enabled based on local preference');
       } else {
+        // Only disable if we're not on iOS PWA with local storage preference
         onReminderEnabledChange(false);
       }
     }
@@ -90,10 +92,10 @@ export function TaskNotificationFields({
       const localEnabled = localStorage.getItem('ios_pwa_notifications_enabled') === 'true';
       if (localEnabled && !reminderEnabled) {
         console.log('🍎 Syncing iOS PWA notification state from localStorage');
-        onReminderEnabledChange(true);
         
-        // CRITICAL FIX: Also set reminderTime to 0 when syncing state from localStorage
+        // CRITICAL FIX: Set reminderTime to 0 first, then enable notifications
         onReminderTimeChange(0);
+        onReminderEnabledChange(true);
       }
     }
   }, [isIOSPWA, reminderEnabled, onReminderEnabledChange, onReminderTimeChange]);
@@ -121,14 +123,12 @@ export function TaskNotificationFields({
         <div className="flex items-center space-x-2">
           <Label htmlFor="reminderTime">Notify me</Label>
           <Select
-            value={String(reminderTime)} // CRITICAL FIX: Always convert to string for Select
+            value={String(reminderTime)} // Always convert to string for Select
             onValueChange={(value) => {
-              // CRITICAL FIX: Convert string to number immediately
-              const numValue = Number(value);
-              console.log(`Select changed to: "${value}" → ${numValue} (type: ${typeof numValue})`);
-              
-              // Call parent handler with number value
-              onReminderTimeChange(numValue);
+              // CRITICAL FIX: Use our normalizer to ensure consistent handling
+              const normalizedValue = normalizeReminderTime(value);
+              console.log(`🚨 Select changed to: "${value}" → normalized to ${normalizedValue} (${typeof normalizedValue})`);
+              onReminderTimeChange(normalizedValue);
             }}
           >
             <SelectTrigger className="w-[180px]">

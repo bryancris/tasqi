@@ -22,8 +22,14 @@ export const NotificationContent = ({ notification }: NotificationContentProps) 
     }
   };
 
-  // Determine if this is an "At start time" notification
+  // IMPROVED: Better detection of "At start time" notification
+  // Use === 0 check for more reliable detection
   const isAtStartTimeReminder = notification.data?.reminderTime === 0;
+  
+  // Add debug info to help trace the issue
+  console.log('🚨 NotificationContent reminderTime value:', notification.data?.reminderTime);
+  console.log('🚨 reminderTime type:', typeof notification.data?.reminderTime);
+  console.log('🚨 Is "At start time"?', isAtStartTimeReminder ? 'YES' : 'NO');
 
   return (
     <div
@@ -37,6 +43,7 @@ export const NotificationContent = ({ notification }: NotificationContentProps) 
       data-reference-id={notification.referenceId || "none"}
       data-reference-type={notification.referenceType || "none"}
       data-at-start-time={isAtStartTimeReminder ? "true" : "false"}
+      data-reminder-time={notification.data?.reminderTime || "none"}
     >
       <div className="flex items-start gap-3">
         {getIcon(notification.type)}
@@ -47,7 +54,12 @@ export const NotificationContent = ({ notification }: NotificationContentProps) 
             <div className="text-xs text-gray-500 mt-1">
               Task ID: {notification.referenceId}
               {isAtStartTimeReminder && (
-                <span className="ml-2 text-emerald-600">At start time</span>
+                <span className="ml-2 text-emerald-600 font-medium">At start time</span>
+              )}
+              {!isAtStartTimeReminder && notification.data?.reminderTime && (
+                <span className="ml-2 text-blue-600">
+                  {notification.data.reminderTime} min before
+                </span>
               )}
             </div>
           )}

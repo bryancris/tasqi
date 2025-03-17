@@ -6,6 +6,7 @@ import { TaskScheduleFields } from "../../TaskScheduleFields";
 import { SubtaskList, Subtask } from "../../subtasks/SubtaskList";
 import { Task, TaskPriority } from "../../TaskBoard";
 import { FormSection } from "../sections/FormSection";
+import { normalizeReminderTime } from "@/utils/notifications/debug-utils";
 
 interface TaskFormContentProps {
   title: string;
@@ -70,14 +71,19 @@ export function TaskFormContent({
   onSubtasksChange,
   handleReminderToggle,
 }: TaskFormContentProps) {
-  // CRITICAL FIX: Create a wrapper that ensures reminderTime is set when toggling
+  // Log the current reminderTime value for debugging
+  console.log(`🚨 TaskFormContent received reminderTime=${reminderTime} (${typeof reminderTime}), isExactlyZero: ${reminderTime === 0}`);
+
+  // CRITICAL FIX: Create a wrapper that ensures reminderTime is ALWAYS set FIRST when toggling
   const handleToggleWithReminderTime = async (enabled: boolean) => {
-    console.log('🔄 handleToggleWithReminderTime called with enabled =', enabled);
+    console.log('🚨 handleToggleWithReminderTime called with enabled =', enabled);
     
-    // If enabling, also set reminderTime to 0 first
+    // If enabling, set reminderTime to 0 FIRST, before any async operations
     if (enabled) {
-      console.log('🔄 Setting reminderTime to 0 when enabling');
-      onReminderTimeChange(0);
+      console.log('🚨 IMMEDIATELY setting reminderTime to 0 ("At start time")');
+      // Use the normalizer to ensure consistent handling
+      const normalizedValue = normalizeReminderTime(0);
+      onReminderTimeChange(normalizedValue);
     }
     
     // Then proceed with the regular toggle
