@@ -10,7 +10,7 @@ interface TaskData {
   status: 'scheduled' | 'unscheduled' | 'event';
   start_time: string | null;
   end_time: string | null;
-  priority: TaskPriority; // Changed from string to TaskPriority
+  priority: TaskPriority; 
   position: number;
   user_id: string;
   owner_id: string;
@@ -23,22 +23,49 @@ interface TaskData {
 
 export function useTaskDatabaseOperations() {
   const createTask = async (taskData: TaskData) => {
-    console.log('⚡ Creating task with reminderTime =', taskData.reminder_time, 'Type:', typeof taskData.reminder_time);
+    console.log('⭐ Creating task with reminderTime =', taskData.reminder_time, 'Type:', typeof taskData.reminder_time);
+    console.log('⭐ Is "At start time"?', taskData.reminder_time === 0 ? 'YES' : 'NO');
     
-    // Ensure reminder_time is properly set to 0 when intended
-    if (taskData.reminder_enabled && (taskData.reminder_time === undefined || taskData.reminder_time === null)) {
-      console.log('⚠️ Setting reminder_time to 0 (default) because it was undefined/null');
-      taskData.reminder_time = 0;
+    // CRITICAL FIX: Special handling for "At start time" (0) to ensure it's preserved
+    if (taskData.reminder_enabled) {
+      if (taskData.reminder_time === undefined || taskData.reminder_time === null) {
+        console.log('⭐ Setting reminder_time to 0 (At start time) because it was undefined/null');
+        taskData.reminder_time = 0;
+      }
+      
+      // Explicit check to ensure "At start time" (0) is preserved
+      if (taskData.reminder_time === 0) {
+        console.log('⭐ Confirmed "At start time" value is preserved before database write');
+      }
     }
+    
+    // Final verification before insertion
+    const finalData = {
+      ...taskData,
+      // Ensure reminder_time is the correct type and value for "At start time"
+      reminder_time: taskData.reminder_time === 0 ? 0 : Number(taskData.reminder_time)
+    };
+    
+    console.log('⭐ FINAL DATABASE INSERT with reminder_time =', finalData.reminder_time, 'Type:', typeof finalData.reminder_time);
     
     const { data, error } = await supabase
       .from("tasks")
-      .insert(taskData)
+      .insert(finalData)
       .select();
 
     if (error) {
       console.error('Error creating task in Supabase:', error);
       throw error;
+    }
+
+    // Verify the saved data
+    if (data && data.length > 0) {
+      console.log('⭐ VERIFY DATABASE RESULT:', {
+        saved_reminder_time: data[0].reminder_time,
+        saved_type: typeof data[0].reminder_time,
+        saved_reminder_enabled: data[0].reminder_enabled,
+        is_exactly_zero: data[0].reminder_time === 0 ? 'YES - AT START TIME' : 'NO - has minutes before'
+      });
     }
 
     console.log('Task created successfully:', data);
@@ -54,7 +81,6 @@ export function useTaskDatabaseOperations() {
       status: subtask.status || 'pending',
       position: index * 100,
       notes: subtask.notes || null,
-      // Remove user_id from the subtask insertion since it doesn't exist in the Subtask type
     }));
 
     const { data, error } = await supabase

@@ -19,7 +19,12 @@ interface TaskFormState {
 }
 
 export function useTaskDataPreparation() {
-  const prepareTaskData = async (formState: TaskFormState, userId: string) => {
+  const prepareTaskData = async (formState: TaskFormState, userId: string, isAtStartTime = false) => {
+    console.log('🔴 prepareTaskData called with reminderTime:', formState.reminderTime, 
+      'Type:', typeof formState.reminderTime, 
+      'Is zero?', formState.reminderTime === 0 ? 'YES' : 'NO',
+      'isAtStartTime flag:', isAtStartTime);
+    
     // Fetch the user's highest position task to determine the new position
     const { data: existingTasks } = await supabase
       .from("tasks")
@@ -47,26 +52,22 @@ export function useTaskDataPreparation() {
     const taskStartTime = formState.isAllDay ? null : formState.startTime;
     const taskEndTime = formState.isAllDay ? null : formState.endTime;
     
-    // FIXED: Enhanced handling for reminderTime to ensure "At start time" (0) is preserved
+    // CRITICAL FIX: Special handling for reminderTime=0 ("At start time")
     // First preserve the original value
-    const originalReminderTime = formState.reminderTime;
-    console.log('🚨 Task data preparation - original reminderTime:', originalReminderTime);
-    console.log('🚨 ReminderTime type:', typeof originalReminderTime);
-    console.log('🚨 Is exactly zero?', originalReminderTime === 0);
-    
-    // If it's explicitly 0, keep it as 0 without any normalization
     let reminderTime;
-    if (originalReminderTime === 0) {
-      reminderTime = 0; // Preserve exact 0 for "At start time"
-      console.log('🚨 Preserving exact 0 for "At start time"');
+    
+    // If isAtStartTime flag is set or reminderTime is exactly 0, ensure we keep it as 0
+    if (isAtStartTime || formState.reminderTime === 0) {
+      reminderTime = 0;
+      console.log('🔴 CRITICAL: Preserving exact 0 for "At start time" in data preparation');
     } else {
-      // For other values, normalize
-      reminderTime = normalizeReminderTime(originalReminderTime);
-      console.log('🚨 After normalization, reminderTime =', reminderTime);
+      // For non-zero values, normalize
+      reminderTime = normalizeReminderTime(formState.reminderTime);
+      console.log('🔴 Normalized non-zero reminderTime from', formState.reminderTime, 'to', reminderTime);
     }
     
-    console.log('🚨 Final reminderTime =', reminderTime);
-    console.log('🚨 Is At start time?', reminderTime === 0 ? 'YES' : 'NO');
+    console.log('🔴 Final reminderTime value for database:', reminderTime);
+    console.log('🔴 Is "At start time"?', reminderTime === 0 ? 'YES' : 'NO');
 
     const taskData = {
       title: formState.title,
@@ -85,9 +86,9 @@ export function useTaskDataPreparation() {
       is_all_day: formState.isAllDay
     };
     
-    console.log('🚨 Final task data to be saved to database:', taskData);
-    console.log('🚨 Final reminder_time value:', taskData.reminder_time, 'Type:', typeof taskData.reminder_time);
-    console.log('🚨 Is "At start time"?', taskData.reminder_time === 0 ? 'YES' : 'NO');
+    console.log('🔴 Final task data prepared:', taskData);
+    console.log('🔴 Final reminder_time value:', taskData.reminder_time, 'Type:', typeof taskData.reminder_time);
+    console.log('🔴 Is "At start time"?', taskData.reminder_time === 0 ? 'YES' : 'NO');
 
     return { taskData, nextPosition };
   };

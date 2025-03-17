@@ -43,17 +43,24 @@ export function useTaskSubmissionCore({ onSuccess, setIsLoading }: UseTaskSubmis
       isExactlyZero: formState.reminderTime === 0 ? "YES - AT START TIME" : "NO - has minutes before"
     });
     
-    // Create a clean copy of form state to prevent modification of original
-    let taskFormState = { ...formState };
+    // CRITICAL: Don't make a shallow copy, make a deep copy to avoid any reference issues
+    const taskFormState = JSON.parse(JSON.stringify(formState));
     
-    // CRITICAL FIX: For "At start time" (0) - we must preserve exact 0
-    if (formState.reminderTime === 0) {
-      console.log('🚨 SUBMISSION: Found exact 0, preserving "At start time" value');
-      // Explicitly ensure it stays as the number 0
+    // CRITICAL FIX: Add extra logging for visibility before any manipulation
+    console.log('⭐ SUBMISSION START: Original reminderTime =', formState.reminderTime, 
+      'Type:', typeof formState.reminderTime, 
+      'Is zero?', formState.reminderTime === 0 ? 'YES' : 'NO');
+    
+    // CRITICAL FIX: We now handle the "At start time" case (0) differently
+    // If it's exactly 0, preserve it carefully with a special flag to prevent any chance of it being normalized
+    const isAtStartTime = formState.reminderTime === 0;
+    
+    if (isAtStartTime) {
+      console.log('🔴 CRITICAL: Found "At start time" value (0), applying special handling');
+      // Set a guaranteed 0 value
       taskFormState.reminderTime = 0;
-    } 
-    // Only normalize non-zero values to prevent any chance of changing 0 to another value
-    else if (formState.reminderTime !== 0) {
+    } else if (formState.reminderTime !== 0) {
+      // Only normalize non-zero values
       taskFormState.reminderTime = normalizeReminderTime(formState.reminderTime);
       console.log(`🚨 SUBMISSION: Normalized non-zero reminderTime from ${formState.reminderTime} to ${taskFormState.reminderTime}`);
     }
@@ -73,14 +80,20 @@ export function useTaskSubmissionCore({ onSuccess, setIsLoading }: UseTaskSubmis
 
     setIsLoading(true);
     try {
-      console.log("Starting task creation process...");
+      console.log("⭐ Starting task creation process...");
       
-      // Prepare the task data
-      const { taskData } = await prepareTaskData(taskFormState, userId);
+      // CRITICAL FIX: Pass the isAtStartTime flag to prepareTaskData
+      const { taskData } = await prepareTaskData(taskFormState, userId, isAtStartTime);
       
       // Enhanced debug for the taskData to confirm reminder_time is correctly set
-      console.log("Task data prepared with reminder_time:", taskData.reminder_time, "type:", typeof taskData.reminder_time);
-      console.log(`Is "At start time"? ${taskData.reminder_time === 0 ? "YES" : "NO"}`);
+      console.log("⭐ Task data prepared with reminder_time:", taskData.reminder_time, "type:", typeof taskData.reminder_time);
+      console.log(`⭐ Is "At start time"? ${taskData.reminder_time === 0 ? "YES" : "NO"}`);
+      
+      // Extra check to ensure the value wasn't changed
+      if (isAtStartTime && taskData.reminder_time !== 0) {
+        console.error("🔴 CRITICAL ERROR: 'At start time' value was changed during preparation! Forcing back to 0");
+        taskData.reminder_time = 0;
+      }
       
       // Create the task
       const taskResult = await createTask(taskData);
