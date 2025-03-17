@@ -1,12 +1,11 @@
 
 import { TaskBasicFields } from "../TaskBasicFields";
-import { TaskNotificationFields } from "../TaskNotificationFields";
+import { TaskNotificationFields } from "../../../notifications/TaskNotificationFields";
 import { TaskAttachmentFields } from "../TaskAttachmentFields";
 import { TaskScheduleFields } from "../../TaskScheduleFields";
 import { SubtaskList, Subtask } from "../../subtasks/SubtaskList";
 import { Task, TaskPriority } from "../../TaskBoard";
 import { FormSection } from "../sections/FormSection";
-import { normalizeReminderTime } from "@/utils/notifications/debug-utils";
 
 interface TaskFormContentProps {
   title: string;
@@ -69,26 +68,10 @@ export function TaskFormContent({
   onReminderEnabledChange,
   onReminderTimeChange,
   onSubtasksChange,
-  handleReminderToggle,
 }: TaskFormContentProps) {
-  // Log the current reminderTime value for debugging
-  console.log(`🚨 TaskFormContent received reminderTime=${reminderTime} (${typeof reminderTime}), isExactlyZero: ${reminderTime === 0}`);
-
-  // FIXED: Create a wrapper that ensures reminderTime is ALWAYS set FIRST when toggling
-  const handleToggleWithReminderTime = async (enabled: boolean) => {
-    console.log('🚨 handleToggleWithReminderTime called with enabled =', enabled);
-    
-    // If enabling, set reminderTime to 0 FIRST, before any async operations
-    if (enabled) {
-      console.log('🚨 IMMEDIATELY setting reminderTime to 0 ("At start time")');
-      // Use the normalizer to ensure consistent handling
-      const normalizedValue = normalizeReminderTime(0);
-      onReminderTimeChange(normalizedValue);
-    }
-    
-    // Then proceed with the regular toggle
-    return handleReminderToggle(enabled, onReminderEnabledChange);
-  };
+  // Log the current state for debugging
+  console.log(`🔄 TaskFormContent rendering with reminderTime=${reminderTime} (${typeof reminderTime})`);
+  console.log(`🔄 Is "At start time"? ${reminderTime === 0 ? "YES" : "NO"}`);
 
   return (
     <div className="p-4 space-y-4">
@@ -113,7 +96,7 @@ export function TaskFormContent({
           reminderEnabled={reminderEnabled}
           reminderTime={reminderTime}
           fcmStatus={fcmStatus}
-          onReminderEnabledChange={handleToggleWithReminderTime}
+          onReminderEnabledChange={onReminderEnabledChange}
           onReminderTimeChange={onReminderTimeChange}
         />
       </FormSection>

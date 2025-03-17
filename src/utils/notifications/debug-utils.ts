@@ -1,4 +1,3 @@
-
 import { Notification } from "@/components/notifications/types";
 
 /**
@@ -76,34 +75,36 @@ export function isTestNotification(referenceId: string | number | null | undefin
  * This normalizes any zero or "0" values to ensure proper handling
  */
 export function normalizeReminderTime(reminderTime: any): number {
-  // If it's explicitly 0, keep it as 0 ("At start time")
+  console.log(`⚙️ normalizeReminderTime called with: ${reminderTime} (${typeof reminderTime})`);
+  
+  // Explicitly check for exact 0 (strict equality)
   if (reminderTime === 0) {
-    console.log('✅ Normalizing: Found exact 0, keeping as "At start time"');
+    console.log('✅ Found exact 0, returning "At start time"');
     return 0;
   }
   
-  // If it's a string "0", convert to number 0
+  // String "0" should be treated as 0
   if (reminderTime === "0") {
-    console.log('✅ Normalizing: Found string "0", converting to 0 for "At start time"');
+    console.log('✅ Found string "0", converting to 0 for "At start time"');
     return 0;
   }
   
-  // For any other values, convert to number
+  // Try to convert to number
   const numValue = Number(reminderTime);
   
   // If conversion resulted in 0, it's "At start time"
   if (numValue === 0) {
-    console.log('✅ Normalizing: Converted value to 0 for "At start time"');
+    console.log('✅ Conversion resulted in 0, using "At start time"');
     return 0;
   }
   
-  // If it's a valid number, use it
+  // For any non-zero valid number, use it
   if (!isNaN(numValue)) {
-    console.log(`✅ Normalizing: Using valid number value: ${numValue}`);
+    console.log(`✅ Using valid number: ${numValue}`);
     return numValue;
   }
   
-  // Default to 0 ("At start time") if we can't determine a valid value
-  console.log('⚠️ Normalizing: Invalid value, defaulting to 0 ("At start time")');
-  return 0;
+  // Default fallback (though we shouldn't reach here)
+  console.log('⚠️ Invalid value, defaulting to 15 minutes');
+  return 15;
 }

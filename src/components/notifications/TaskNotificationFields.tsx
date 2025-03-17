@@ -1,4 +1,3 @@
-
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
@@ -9,9 +8,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useEffect } from "react";
-import { useNotifications } from "../notifications/NotificationsManager";
-import { notificationService } from "@/utils/notifications/notificationService";
+import { useEffect, useState } from "react";
+import { useNotifications } from "@/hooks/notifications/use-notifications";
+import { detectPlatform } from "@/utils/notifications/platformDetection";
 import { toast } from "sonner";
 
 interface TaskNotificationFieldsProps {
@@ -38,39 +37,95 @@ export function TaskNotificationFields({
   onReminderEnabledChange,
   onReminderTimeChange,
 }: TaskNotificationFieldsProps) {
+  const [internalReminderTime, setInternalReminderTime] = useState<number>(reminderTime);
   const { isSubscribed, isLoading, enableNotifications } = useNotifications();
-  
-  // CRITICAL FIX: Always persist the parent's reminderTime value, don't use internal state
-  
-  console.log(`⚡ TaskNotificationFields rendered with reminderTime=${reminderTime} (${typeof reminderTime})`);
+  const platform = detectPlatform();
+  const isIOSPWA = platform === 'ios-pwa';
 
-  const handleToggle = async (checked: boolean) => {
+  console.log(`🛑 TaskNotificationFields rendered`);
+  console.log(`🛑 Props: reminderTime=${reminderTime} (${typeof reminderTime}), isExactlyZero: ${reminderTime === 0}`);
+  console.log(`🛑 Internal: internalReminderTime=${internalReminderTime} (${typeof internalReminderTime})`);
+
+  useEffect(() => {
+    console.log(`🛑 Effect: updating internal state to ${reminderTime}`);
+    setInternalReminderTime(reminderTime);
+  }, [reminderTime]);
+
+  const handleEnableNotifications = async (): Promise<boolean> => {
     try {
-      if (checked) {
-        await notificationService.initialize();
-        const subscription = await notificationService.subscribe();
-        
-        if (subscription) {
-          onReminderEnabledChange(true);
-          
-          // CRITICAL FIX: When enabling notifications, ALWAYS set to "At start time" (0)
-          // This ensures a consistent initial state
-          onReminderTimeChange(0);
-          console.log("✅ Set reminderTime to 0 (At start time) when enabling notifications");
-          
-          toast.success('Notifications enabled successfully');
-        } else {
-          onReminderEnabledChange(false);
-        }
-      } else {
-        onReminderEnabledChange(false);
+      if (isIOSPWA) {
+        console.log('🍎 Enabling iOS PWA simplified notifications');
+        localStorage.setItem('ios_pwa_notifications_enabled', 'true');
+        return true;
       }
+      
+      if ('Notification' in window) {
+        const permission = await Notification.requestPermission();
+        console.log('🔔 Notification permission result:', permission);
+        return permission === 'granted';
+      }
+      
+      return false;
     } catch (error) {
-      console.error('Error toggling notifications:', error);
-      onReminderEnabledChange(false);
-      toast.error('Failed to enable notifications');
+      console.error('❌ Error enabling notifications:', error);
+      return false;
     }
   };
+
+  const handleToggle = async (enabled: boolean) => {
+    console.log(`🛑 Toggle changed to: ${enabled}`);
+    
+    if (!enabled) {
+      console.log('🛑 Disabling notifications');
+      onReminderEnabledChange(false);
+      return;
+    }
+
+    try {
+      const timeToUse = 0;
+      console.log(`🛑 Setting internal reminder time to ${timeToUse} (At start time)`);
+      setInternalReminderTime(timeToUse);
+      
+      console.log('🛑 Updating parent reminderTime to 0');
+      onReminderTimeChange(timeToUse);
+      
+      console.log('🛑 Updating parent reminderEnabled to true');
+      onReminderEnabledChange(true);
+      
+      console.log('🛑 Requesting notification permissions');
+      const permissionGranted = await handleEnableNotifications();
+      
+      if (!permissionGranted && !isIOSPWA) {
+        console.log('🛑 Permission denied, disabling notifications');
+        onReminderEnabledChange(false);
+        toast.error('Notification permission denied');
+      } else {
+        toast.success('Notifications enabled');
+      }
+    } catch (error) {
+      console.error('❌ Unexpected error in toggle handler:', error);
+      if (isIOSPWA && localStorage.getItem('ios_pwa_notifications_enabled') === 'true') {
+        console.log('🍎 Keeping iOS PWA notifications enabled based on local preference');
+      } else {
+        onReminderEnabledChange(false);
+        toast.error('Failed to enable notifications');
+      }
+    }
+  };
+
+  const handleReminderTimeChange = (selectedValue: string) => {
+    const numValue = parseInt(selectedValue, 10);
+    console.log(`🛑 Selected time "${selectedValue}" → parsed as ${numValue} (${typeof numValue})`);
+    if (isNaN(numValue)) {
+      console.error(`❌ Failed to parse "${selectedValue}" as a number`);
+      return;
+    }
+    setInternalReminderTime(numValue);
+    console.log(`🛑 Updating parent reminderTime to ${numValue}`);
+    onReminderTimeChange(numValue);
+  };
+
+  const displayValue = String(internalReminderTime);
 
   return (
     <div className="space-y-4">
@@ -80,11 +135,11 @@ export function TaskNotificationFields({
             id="reminder"
             checked={reminderEnabled}
             onCheckedChange={handleToggle}
-            disabled={isLoading}
+            disabled={isLoading || fcmStatus === 'loading'}
           />
           <Label htmlFor="reminder" className="flex items-center gap-2">
             Enable notifications
-            {isLoading && (
+            {(isLoading || fcmStatus === 'loading') && (
               <Spinner className="w-4 h-4" />
             )}
           </Label>
@@ -95,13 +150,8 @@ export function TaskNotificationFields({
         <div className="flex items-center space-x-2">
           <Label htmlFor="reminderTime">Notify me</Label>
           <Select
-            value={String(reminderTime)} // CRITICAL FIX: Always convert to string for Select component
-            onValueChange={(value) => {
-              // CRITICAL FIX: Directly convert to number and call parent's change handler
-              const numValue = Number(value);
-              console.log(`⚡ Selected reminder time: "${value}" → ${numValue} (type: ${typeof numValue})`);
-              onReminderTimeChange(numValue);
-            }}
+            value={displayValue}
+            onValueChange={handleReminderTimeChange}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select time" />
@@ -114,6 +164,12 @@ export function TaskNotificationFields({
               ))}
             </SelectContent>
           </Select>
+        </div>
+      )}
+
+      {isIOSPWA && reminderEnabled && (
+        <div className="text-xs text-amber-600 mt-1">
+          Note: iOS notifications work best when the app is open or in recent background apps
         </div>
       )}
     </div>
