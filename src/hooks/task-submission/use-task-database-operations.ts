@@ -33,6 +33,9 @@ export function useTaskDatabaseOperations() {
         taskData.reminder_time = 0;
       }
       
+      // CRITICAL FIX: Explicit number conversion to ensure database gets correct type
+      taskData.reminder_time = Number(taskData.reminder_time);
+      
       // Explicit check to ensure "At start time" (0) is preserved
       if (taskData.reminder_time === 0) {
         console.log('⭐ Confirmed "At start time" value is preserved before database write');
@@ -42,7 +45,7 @@ export function useTaskDatabaseOperations() {
     // Final verification before insertion
     const finalData = {
       ...taskData,
-      // Ensure reminder_time is the correct type and value for "At start time"
+      // CRITICAL FIX: Force reminder_time to be exactly 0 for "At start time" 
       reminder_time: taskData.reminder_time === 0 ? 0 : Number(taskData.reminder_time)
     };
     

@@ -43,7 +43,7 @@ export function useTaskSubmissionCore({ onSuccess, setIsLoading }: UseTaskSubmis
       isExactlyZero: formState.reminderTime === 0 ? "YES - AT START TIME" : "NO - has minutes before"
     });
     
-    // CRITICAL: Don't make a shallow copy, make a deep copy to avoid any reference issues
+    // CRITICAL: Make a deep copy to avoid any reference issues
     const taskFormState = JSON.parse(JSON.stringify(formState));
     
     // CRITICAL FIX: Add extra logging for visibility before any manipulation
@@ -57,7 +57,7 @@ export function useTaskSubmissionCore({ onSuccess, setIsLoading }: UseTaskSubmis
     
     if (isAtStartTime) {
       console.log('🔴 CRITICAL: Found "At start time" value (0), applying special handling');
-      // Set a guaranteed 0 value
+      // CRITICAL FIX: Force to exact number 0, not string "0" or any other value
       taskFormState.reminderTime = 0;
     } else if (formState.reminderTime !== 0) {
       // Only normalize non-zero values
@@ -93,6 +93,12 @@ export function useTaskSubmissionCore({ onSuccess, setIsLoading }: UseTaskSubmis
       if (isAtStartTime && taskData.reminder_time !== 0) {
         console.error("🔴 CRITICAL ERROR: 'At start time' value was changed during preparation! Forcing back to 0");
         taskData.reminder_time = 0;
+      }
+      
+      // CRITICAL FIX: Force the reminder_time to be exactly 0 for "At start time" one more time before sending to database
+      if (isAtStartTime) {
+        taskData.reminder_time = 0;
+        console.log("🔴 FINAL CHECK: Forced reminder_time to exactly 0 before database operation");
       }
       
       // Create the task

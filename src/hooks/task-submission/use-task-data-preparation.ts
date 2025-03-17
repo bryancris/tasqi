@@ -53,13 +53,17 @@ export function useTaskDataPreparation() {
     const taskEndTime = formState.isAllDay ? null : formState.endTime;
     
     // CRITICAL FIX: Special handling for reminderTime=0 ("At start time")
-    // First preserve the original value
-    let reminderTime;
-    
     // If isAtStartTime flag is set or reminderTime is exactly 0, ensure we keep it as 0
+    let reminderTime = formState.reminderTime;
+    
+    // CRITICAL FIX: Force to exactly number 0 for "At start time"
     if (isAtStartTime || formState.reminderTime === 0) {
       reminderTime = 0;
-      console.log('🔴 CRITICAL: Preserving exact 0 for "At start time" in data preparation');
+      console.log('🔴 CRITICAL: Forcing exact number 0 for "At start time" in data preparation');
+    } else if (typeof formState.reminderTime === 'string' && formState.reminderTime === "0") {
+      // Handle string "0" case
+      reminderTime = 0;
+      console.log('🔴 CRITICAL: Converting string "0" to exact number 0 in data preparation');
     } else {
       // For non-zero values, normalize
       reminderTime = normalizeReminderTime(formState.reminderTime);
@@ -67,8 +71,10 @@ export function useTaskDataPreparation() {
     }
     
     console.log('🔴 Final reminderTime value for database:', reminderTime);
+    console.log('🔴 Final reminderTime type:', typeof reminderTime);
     console.log('🔴 Is "At start time"?', reminderTime === 0 ? 'YES' : 'NO');
 
+    // CRITICAL FIX: Force the type to be number
     const taskData = {
       title: formState.title,
       description: formState.description,
@@ -82,9 +88,16 @@ export function useTaskDataPreparation() {
       owner_id: userId,
       shared: false,
       reminder_enabled: formState.reminderEnabled,
-      reminder_time: reminderTime, // Using the strictly preserved value
+      reminder_time: Number(reminderTime), // Explicitly convert to number
       is_all_day: formState.isAllDay
     };
+    
+    // Extra verification step for "At start time"
+    if (isAtStartTime || formState.reminderTime === 0 || (typeof formState.reminderTime === 'string' && formState.reminderTime === "0")) {
+      // Double-check and force number 0 for absolute certainty
+      taskData.reminder_time = 0;
+      console.log('🔴 FINAL VERIFICATION: Forced reminder_time to exactly number 0 for database insertion');
+    }
     
     console.log('🔴 Final task data prepared:', taskData);
     console.log('🔴 Final reminder_time value:', taskData.reminder_time, 'Type:', typeof taskData.reminder_time);
