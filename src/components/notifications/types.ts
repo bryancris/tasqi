@@ -16,6 +16,7 @@ export interface Notification {
   group?: string;
   persistent?: boolean;
   data?: Record<string, any>;           // Added data property for custom metadata
+  priority?: 'high' | 'normal' | 'low'; // Added priority property
 }
 
 export interface NotificationsContextType {
