@@ -28,7 +28,10 @@ serve(async (req) => {
     )
 
     const requestData = await req.json()
-    const { title, body, icon, data, userId, notificationEventId } = requestData as NotificationData
+    const { title, body, icon, data: originalData, userId, notificationEventId } = requestData as NotificationData
+
+    // CRITICAL FIX: Create a deep copy of the data object to prevent mutations from affecting the original
+    const data = originalData ? JSON.parse(JSON.stringify(originalData)) : undefined;
 
     console.log(`[Push Notification] Processing notification for user ${userId}:`, { 
       title, 
@@ -38,28 +41,43 @@ serve(async (req) => {
 
     // Enhanced reminder time verification for task reminder notifications
     if (data?.type === 'task_reminder') {
-      // Check if this is an "At start time" notification
-      const isZeroReminderTime = data.reminderTime === 0 || data.reminderTime === '0';
+      // Store original values for logging/comparison
+      const originalReminderTime = data.reminderTime;
+      const originalIsAtStartTime = data.isAtStartTime;
+      
+      console.log(`🔍 Original task reminder values: reminderTime=${originalReminderTime} (${typeof originalReminderTime}), isAtStartTime=${originalIsAtStartTime}`);
+      
+      // Check if this is an "At start time" notification (reminderTime === 0)
+      const isZeroReminderTime = 
+        data.reminderTime === 0 || 
+        data.reminderTime === '0' ||
+        originalReminderTime === 0 || 
+        originalReminderTime === '0';
       
       if (data.isAtStartTime === true || isZeroReminderTime) {
         console.log(`🔔 Confirmed: This is an "At start time" notification (no advance warning)`);
         
-        // Ensure both values are set consistently
+        // Set both values consistently without modifying original data
         data.isAtStartTime = true;
         data.reminderTime = 0;
       } 
       else if (data.reminderTime !== undefined) {
-        // For non-zero reminder times
+        // For non-zero reminder times, convert to number and validate
         const reminderTime = Number(data.reminderTime);
         
         if (reminderTime === 0) {
           console.log(`🔔 Converting reminderTime=0 to isAtStartTime=true for consistency`);
           data.isAtStartTime = true;
+          data.reminderTime = 0;
         } else {
           console.log(`🔔 This is a reminder notification with ${reminderTime} minutes advance warning`);
           data.isAtStartTime = false;
+          data.reminderTime = reminderTime;
         }
       }
+      
+      // Log the final values we're using
+      console.log(`🔔 Final task reminder values: reminderTime=${data.reminderTime} (${typeof data.reminderTime}), isAtStartTime=${data.isAtStartTime}`);
     }
 
     // Fetch all active device tokens for the user
@@ -82,13 +100,16 @@ serve(async (req) => {
 
     const results = await Promise.all(deviceTokens.map(async (deviceToken) => {
       try {
+        // CRITICAL FIX: Create a new copy of the data for each platform to prevent cross-contamination
+        const platformData = data ? JSON.parse(JSON.stringify(data)) : undefined;
+        
         // Prepare platform-specific notification payload
         const notificationPayload = getPlatformSpecificPayload(
           deviceToken.platform,
           title,
           body,
           icon,
-          data
+          platformData
         )
 
         // Send to Firebase Cloud Messaging
@@ -209,7 +230,19 @@ function getPlatformSpecificPayload(
   body?: string,
   icon?: string,
   data?: Record<string, unknown>
-) {
+): Record<string, any> {
+  // CRITICAL FIX: Don't modify the passed data object, create a local copy for this function
+  const notificationData = data ? {...data} : {};
+  
+  // If this is a task reminder, preserve the reminder time and isAtStartTime values
+  if (notificationData.type === 'task_reminder') {
+    // Log the values before we do any platform-specific modifications
+    console.log(`[${platform}] Notification data before platform modifications:`, {
+      reminderTime: notificationData.reminderTime,
+      isAtStartTime: notificationData.isAtStartTime
+    });
+  }
+  
   const baseNotification = {
     title,
     body,
@@ -229,10 +262,7 @@ function getPlatformSpecificPayload(
             }
           }
         },
-        data: {
-          ...data,
-          click_action: 'FLUTTER_NOTIFICATION_CLICK'
-        }
+        data: notificationData
       }
 
     case 'android':
@@ -247,10 +277,7 @@ function getPlatformSpecificPayload(
             clickAction: 'FLUTTER_NOTIFICATION_CLICK'
           }
         },
-        data: {
-          ...data,
-          click_action: 'FLUTTER_NOTIFICATION_CLICK'
-        }
+        data: notificationData
       }
 
     case 'web':
@@ -275,10 +302,10 @@ function getPlatformSpecificPayload(
             ]
           },
           fcm_options: {
-            link: data?.url as string || '/'
+            link: notificationData?.url as string || '/'
           }
         },
-        data
+        data: notificationData
       }
   }
 }
