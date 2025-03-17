@@ -53,3 +53,12 @@ export function validateTaskNotification(notification: Notification | undefined)
   
   return isValid;
 }
+
+/**
+ * Helper function to check if a notification is a test notification
+ * Used for testing notification UI without sending real notifications
+ */
+export function isTestNotification(referenceId: string | number | null | undefined): boolean {
+  // Test notifications have a specific ID (999999)
+  return referenceId === "999999" || referenceId === 999999;
+}

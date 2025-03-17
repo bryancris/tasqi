@@ -8,18 +8,11 @@ import { AlertDialog, AlertDialogContent, AlertDialogDescription, AlertDialogTit
 import { NotificationContent } from "./alert-notification/NotificationContent";
 import { NotificationButtons } from "./notification-buttons";
 import { useQueryClient } from "@tanstack/react-query";
+import { Notification } from "./types"; // Import the correct Notification type
 
 interface NotificationGroupProps {
   groupId: string;
-  notifications: Array<{
-    id: string;
-    title: string;
-    message: string;
-    type?: 'info' | 'success' | 'warning' | 'error';
-    priority?: 'high' | 'normal' | 'low';
-    referenceId?: string | number | null;   
-    referenceType?: string | null;         
-  }>;
+  notifications: Notification[]; // Use the correct type here
   onDismissGroup: (groupId: string) => void;
 }
 

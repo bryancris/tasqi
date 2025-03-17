@@ -2,17 +2,10 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Check, AlertTriangle, AlertCircle, Info } from "lucide-react";
+import { Notification } from "../types"; // Import the correct Notification type
 
 interface NotificationContentProps {
-  notification: {
-    id: string;
-    title: string;
-    message: string;
-    type?: 'info' | 'success' | 'warning' | 'error';
-    priority?: 'high' | 'normal' | 'low';
-    referenceId?: string | number | null;   
-    referenceType?: string | null;         
-  };
+  notification: Notification;
 }
 
 export const NotificationContent = ({ notification }: NotificationContentProps) => {
