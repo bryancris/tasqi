@@ -37,20 +37,19 @@ export function TaskNotificationFields({
   onReminderEnabledChange,
   onReminderTimeChange,
 }: TaskNotificationFieldsProps) {
-  const [internalReminderTime, setInternalReminderTime] = useState<number>(reminderTime);
-  const { isSubscribed, isLoading, enableNotifications } = useNotifications();
+  const [displayValue, setDisplayValue] = useState<string>(String(reminderTime));
+  const { isLoading } = useNotifications();
   const platform = detectPlatform();
   const isIOSPWA = platform === 'ios-pwa';
 
-  console.log(`🛑 TaskNotificationFields rendered`);
-  console.log(`🛑 Props: reminderTime=${reminderTime} (${typeof reminderTime}), isExactlyZero: ${reminderTime === 0}`);
-  console.log(`🛑 Internal: internalReminderTime=${internalReminderTime} (${typeof internalReminderTime})`);
-
+  console.log(`🔴 TaskNotificationFields rendered with reminderTime=${reminderTime} (${typeof reminderTime})`);
+  console.log(`🔴 Is exactly zero? ${reminderTime === 0 ? 'YES - AT START TIME' : 'NO'}`);
+  
   useEffect(() => {
-    console.log(`🛑 Effect: updating internal state to ${reminderTime}`);
-    setInternalReminderTime(reminderTime);
+    console.log(`🔴 Effect: updating display value from ${reminderTime} to ${String(reminderTime)}`);
+    setDisplayValue(String(reminderTime));
   }, [reminderTime]);
-
+  
   const handleEnableNotifications = async (): Promise<boolean> => {
     try {
       if (isIOSPWA) {
@@ -73,30 +72,27 @@ export function TaskNotificationFields({
   };
 
   const handleToggle = async (enabled: boolean) => {
-    console.log(`🛑 Toggle changed to: ${enabled}`);
+    console.log(`🔴 Toggle changed to: ${enabled}`);
     
     if (!enabled) {
-      console.log('🛑 Disabling notifications');
+      console.log('🔴 Disabling notifications');
       onReminderEnabledChange(false);
       return;
     }
 
     try {
-      const timeToUse = 0;
-      console.log(`🛑 Setting internal reminder time to ${timeToUse} (At start time)`);
-      setInternalReminderTime(timeToUse);
+      const defaultValue = 0;
+      console.log(`🔴 Setting default reminderTime to ${defaultValue} (At start time)`);
+      onReminderTimeChange(defaultValue);
       
-      console.log('🛑 Updating parent reminderTime to 0');
-      onReminderTimeChange(timeToUse);
-      
-      console.log('🛑 Updating parent reminderEnabled to true');
+      console.log('🔴 Updating parent reminderEnabled to true');
       onReminderEnabledChange(true);
       
-      console.log('🛑 Requesting notification permissions');
+      console.log('🔴 Requesting notification permissions');
       const permissionGranted = await handleEnableNotifications();
       
       if (!permissionGranted && !isIOSPWA) {
-        console.log('🛑 Permission denied, disabling notifications');
+        console.log('🔴 Permission denied, disabling notifications');
         onReminderEnabledChange(false);
         toast.error('Notification permission denied');
       } else {
@@ -114,18 +110,24 @@ export function TaskNotificationFields({
   };
 
   const handleReminderTimeChange = (selectedValue: string) => {
+    if (selectedValue === "0") {
+      console.log(`🔴 Selected "At start time" (0) exactly`);
+      setDisplayValue("0");
+      onReminderTimeChange(0);
+      return;
+    }
+    
     const numValue = parseInt(selectedValue, 10);
-    console.log(`🛑 Selected time "${selectedValue}" → parsed as ${numValue} (${typeof numValue})`);
+    console.log(`🔴 Selected time "${selectedValue}" → parsed as ${numValue} (${typeof numValue})`);
     if (isNaN(numValue)) {
       console.error(`❌ Failed to parse "${selectedValue}" as a number`);
       return;
     }
-    setInternalReminderTime(numValue);
-    console.log(`🛑 Updating parent reminderTime to ${numValue}`);
+    
+    setDisplayValue(selectedValue);
+    console.log(`🔴 Updating parent reminderTime to ${numValue}`);
     onReminderTimeChange(numValue);
   };
-
-  const displayValue = String(internalReminderTime);
 
   return (
     <div className="space-y-4">

@@ -1,3 +1,4 @@
+
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { TaskPriority } from "@/components/dashboard/TaskBoard";
@@ -46,30 +47,32 @@ export function useTaskSubmissionCore({ onSuccess, setIsLoading }: UseTaskSubmis
       reminderEnabled: formState.reminderEnabled,
       reminderTime: formState.reminderTime,
       reminderTimeType: typeof formState.reminderTime,
-      isExactlyZero: formState.reminderTime === 0 ? "YES - AT START TIME" : "NO"
+      isExactlyZero: formState.reminderTime === 0 ? "YES - AT START TIME" : "NO - has minutes before"
     });
     
-    // FIXED: Special handling for "At start time" (0) values
-    let normalizedFormState = { 
-      ...formState
-    };
+    // Create a clean copy of form state to prevent modification of original
+    let taskFormState = { ...formState };
     
-    // Only normalize if it's not already exactly 0
-    if (formState.reminderTime !== 0) {
-      normalizedFormState.reminderTime = normalizeReminderTime(formState.reminderTime);
-    } else {
-      // Keep exact 0 as is for "At start time"
+    // CRITICAL FIX: Special case for "At start time" (0)
+    if (formState.reminderTime === 0) {
       console.log('🚨 SUBMISSION: Found exact 0, preserving "At start time" value');
+      // Explicitly ensure it stays as the number 0
+      taskFormState.reminderTime = 0;
+    } 
+    // For any non-zero value, normalize it to ensure consistent handling
+    else {
+      taskFormState.reminderTime = normalizeReminderTime(formState.reminderTime);
+      console.log(`🚨 SUBMISSION: Normalized reminderTime from ${formState.reminderTime} to ${taskFormState.reminderTime}`);
     }
     
-    console.log(`🚨 SUBMISSION: Original reminderTime=${formState.reminderTime} → final=${normalizedFormState.reminderTime}`);
-    console.log(`🚨 Is "At start time"? ${normalizedFormState.reminderTime === 0 ? "YES" : "NO"}`);
+    console.log(`🚨 SUBMISSION: Final reminderTime=${taskFormState.reminderTime} (${typeof taskFormState.reminderTime})`);
+    console.log(`🚨 Is "At start time"? ${taskFormState.reminderTime === 0 ? "YES" : "NO"}`);
     
     // Validate the input data
     if (!validateTaskInput({
-      title: normalizedFormState.title,
-      isEvent: normalizedFormState.isEvent,
-      date: normalizedFormState.date,
+      title: taskFormState.title,
+      isEvent: taskFormState.isEvent,
+      date: taskFormState.date,
       userId
     })) {
       return;
@@ -80,7 +83,7 @@ export function useTaskSubmissionCore({ onSuccess, setIsLoading }: UseTaskSubmis
       console.log("Starting task creation process...");
       
       // Prepare the task data
-      const { taskData } = await prepareTaskData(normalizedFormState, userId);
+      const { taskData } = await prepareTaskData(taskFormState, userId);
       
       // Enhanced debug for the taskData to confirm reminder_time is correctly set
       console.log("Task data prepared with reminder_time:", taskData.reminder_time, "type:", typeof taskData.reminder_time);
@@ -90,9 +93,9 @@ export function useTaskSubmissionCore({ onSuccess, setIsLoading }: UseTaskSubmis
       const taskResult = await createTask(taskData);
       
       // Add subtasks if there are any and if task was created successfully
-      if (normalizedFormState.subtasks.length > 0 && taskResult && taskResult.length > 0) {
+      if (taskFormState.subtasks.length > 0 && taskResult && taskResult.length > 0) {
         const taskId = taskResult[0].id;
-        await createSubtasks(taskId, normalizedFormState.subtasks);
+        await createSubtasks(taskId, taskFormState.subtasks);
       }
 
       // Update the UI

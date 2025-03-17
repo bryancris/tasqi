@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { Task } from "../TaskBoard";
 import { Subtask } from "../subtasks/SubtaskList";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { normalizeReminderTime } from "@/utils/notifications/debug-utils";
 
 export function useEditTaskState(task: Task, onClose: () => void) {
   const [title, setTitle] = useState(task.title);
@@ -125,6 +125,7 @@ export function useEditTaskState(task: Task, onClose: () => void) {
       
       // CRITICAL FIX: Log the exact reminder time value before saving to detect any issues
       console.log(`⚡ SAVE: Using reminderTime = ${reminderTime} (${typeof reminderTime})`);
+      console.log(`⚡ SAVE: Is exactly 0? ${reminderTime === 0 ? 'YES - AT START TIME' : 'NO'}`);
       
       const updateData = {
         title,
@@ -133,7 +134,7 @@ export function useEditTaskState(task: Task, onClose: () => void) {
         date: (isScheduled || isEvent) && date ? date : null,
         priority: isEvent ? "medium" : priority,
         reminder_enabled: reminderEnabled,
-        reminder_time: reminderTime, // Make sure this is the correct number
+        reminder_time: reminderTime, // Ensure we use the exact number value here
         is_all_day: isEvent ? isAllDay : false
       } as const;
       
@@ -155,7 +156,14 @@ export function useEditTaskState(task: Task, onClose: () => void) {
       }
       
       console.log("Updating task with data:", updateData);
-      const { error: taskError } = await supabase.from('tasks').update(updateData).eq('id', task.id);
+      console.log("Final reminder_time being sent:", updateData.reminder_time, 
+        "Type:", typeof updateData.reminder_time,
+        "Is exactly 0?", updateData.reminder_time === 0 ? "YES - AT START TIME" : "NO");
+      
+      const { error: taskError } = await supabase.from('tasks')
+        .update(updateData)
+        .eq('id', task.id);
+        
       if (taskError) throw taskError;
 
       const existingSubtaskIds = subtasks.filter(st => st.id).map(st => st.id);
@@ -228,33 +236,8 @@ export function useEditTaskState(task: Task, onClose: () => void) {
     setReminderTime,
     setSubtasks,
     setShowShareDialog,
-    handleDateChange: (newDate: string) => {
-      console.log("Date changed in EditTaskDrawer:", newDate);
-      setDate(newDate);
-    },
+    handleDateChange,
     handleSubmit,
-    handleDelete: async () => {
-      try {
-        setIsDeletingTask(true);
-        console.log("Deleting task with ID:", task.id);
-        
-        const { error } = await supabase.from('tasks').delete().eq('id', task.id);
-        
-        if (error) {
-          console.error("Error from Supabase:", error);
-          throw error;
-        }
-        
-        await queryClient.invalidateQueries({ queryKey: ["tasks"] });
-        
-        toast.success('Task deleted successfully');
-        onClose();
-      } catch (error) {
-        console.error('Error deleting task:', error);
-        toast.error('Failed to delete task: ' + (error instanceof Error ? error.message : 'Unknown error'));
-      } finally {
-        setIsDeletingTask(false);
-      }
-    }
+    handleDelete
   };
 }

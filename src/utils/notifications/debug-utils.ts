@@ -1,3 +1,4 @@
+
 import { Notification } from "@/components/notifications/types";
 
 /**
@@ -71,25 +72,25 @@ export function isTestNotification(referenceId: string | number | null | undefin
 }
 
 /**
- * FIXED: Helper function to ensure consistent "At start time" values
+ * CRITICAL FIX: Enhanced helper function to ensure consistent "At start time" values
  * This normalizes any zero or "0" values to ensure proper handling
  */
 export function normalizeReminderTime(reminderTime: any): number {
   console.log(`⚙️ normalizeReminderTime called with: ${reminderTime} (${typeof reminderTime})`);
   
+  // Special case for string "0" - guaranteed to be "At start time"
+  if (reminderTime === "0") {
+    console.log('✅ Found string "0", returning 0 for "At start time"');
+    return 0;
+  }
+  
   // Explicitly check for exact 0 (strict equality)
   if (reminderTime === 0) {
-    console.log('✅ Found exact 0, returning "At start time"');
+    console.log('✅ Found exact 0, returning 0 for "At start time"');
     return 0;
   }
   
-  // String "0" should be treated as 0
-  if (reminderTime === "0") {
-    console.log('✅ Found string "0", converting to 0 for "At start time"');
-    return 0;
-  }
-  
-  // Try to convert to number
+  // Try to convert to number 
   const numValue = Number(reminderTime);
   
   // If conversion resulted in 0, it's "At start time"
@@ -104,7 +105,7 @@ export function normalizeReminderTime(reminderTime: any): number {
     return numValue;
   }
   
-  // Default fallback (though we shouldn't reach here)
+  // Default fallback value - 15 minutes before start time
   console.log('⚠️ Invalid value, defaulting to 15 minutes');
   return 15;
 }
