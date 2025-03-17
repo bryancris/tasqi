@@ -47,19 +47,18 @@ serve(async (req) => {
       
       console.log(`🔍 Original task reminder values: reminderTime=${originalReminderTime} (${typeof originalReminderTime}), isAtStartTime=${originalIsAtStartTime}`);
       
-      // Check if this is an "At start time" notification (reminderTime === 0)
-      const isZeroReminderTime = 
-        data.reminderTime === 0 || 
-        data.reminderTime === '0' ||
-        originalReminderTime === 0 || 
-        originalReminderTime === '0';
-      
-      if (data.isAtStartTime === true || isZeroReminderTime) {
-        console.log(`🔔 Confirmed: This is an "At start time" notification (no advance warning)`);
+      // IMPROVED: Handle multiple representations of "At start time" (0, '0', true isAtStartTime)
+      // This is a critical fix to handle inconsistency across the app
+      if (data.isAtStartTime === true || 
+          data.reminderTime === 0 || 
+          data.reminderTime === '0') {
+        console.log(`🔔 CRITICAL FIX: Normalizing "At start time" notification values`);
         
-        // Set both values consistently without modifying original data
+        // Explicitly set both values for maximum consistency
         data.isAtStartTime = true;
         data.reminderTime = 0;
+        
+        console.log(`🔔 Normalized to: reminderTime=0, isAtStartTime=true`);
       } 
       else if (data.reminderTime !== undefined) {
         // For non-zero reminder times, convert to number and validate

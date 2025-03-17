@@ -74,34 +74,69 @@ async function processNotifications() {
         const taskDate = event.metadata?.date;
         const taskStartTime = event.metadata?.start_time;
         
-        // CRITICAL FIX: Get reminder_time directly from event.metadata and don't overwrite it
-        // Default to 0 ("At start time") if not specified
-        let reminderTime = 0; 
+        // CRITICAL FIX: Normalize reminder_time and isAtStartTime first
+        let reminderTime = 0; // Default to "At start time"
+        let isAtStartTime = false;
         
-        if (event.metadata?.reminder_time !== undefined) {
+        // First check for explicit isAtStartTime flag
+        if (event.metadata?.isAtStartTime === true) {
+          isAtStartTime = true;
+          reminderTime = 0;
+          console.log(`⚡ Using explicit isAtStartTime=true from metadata, setting reminderTime=0`);
+        }
+        // Then check for reminderTime values
+        else if (event.metadata?.reminderTime !== undefined) {
           // Convert from different possible types
-          if (typeof event.metadata.reminder_time === 'number') {
-            reminderTime = event.metadata.reminder_time;
-          } else if (typeof event.metadata.reminder_time === 'string') {
+          if (typeof event.metadata.reminderTime === 'number') {
+            reminderTime = event.metadata.reminderTime;
+          } else if (typeof event.metadata.reminderTime === 'string') {
             // Handle "0" as a string explicitly
-            if (event.metadata.reminder_time === "0") {
+            if (event.metadata.reminderTime === "0") {
               reminderTime = 0;
-              console.log(`⚡ CRITICAL: Explicit string "0" found in metadata - correctly setting to 0 (At start time)`);
+              isAtStartTime = true;
+              console.log(`⚡ Found string "0" in metadata reminderTime - setting isAtStartTime=true`);
             } else {
-              const parsed = parseInt(event.metadata.reminder_time, 10);
+              const parsed = parseInt(event.metadata.reminderTime, 10);
               if (!isNaN(parsed)) {
                 reminderTime = parsed;
+                isAtStartTime = (parsed === 0);
               }
             }
           }
           
-          // Always log the final reminderTime value for debugging
-          console.log(`⚡ Using reminderTime from event metadata: ${reminderTime} (${reminderTime === 0 ? "At start time" : reminderTime + " minutes before"})`);
-        } else {
-          console.log(`⚡ No reminder_time in metadata, defaulting to 0 (At start time)`);
+          // Set isAtStartTime based on reminderTime if not already set
+          if (reminderTime === 0 && !isAtStartTime) {
+            isAtStartTime = true;
+            console.log(`⚡ Found reminderTime=0 in metadata, setting isAtStartTime=true`);
+          }
+        }
+        // Fallback to reminder_time from metadata
+        else if (event.metadata?.reminder_time !== undefined) {
+          // Handle various formats
+          if (typeof event.metadata.reminder_time === 'number') {
+            reminderTime = event.metadata.reminder_time;
+          } else if (typeof event.metadata.reminder_time === 'string') {
+            if (event.metadata.reminder_time === "0") {
+              reminderTime = 0;
+              isAtStartTime = true;
+            } else {
+              const parsed = parseInt(event.metadata.reminder_time, 10);
+              if (!isNaN(parsed)) {
+                reminderTime = parsed;
+                isAtStartTime = (parsed === 0);
+              }
+            }
+          }
         }
         
-        console.log(`Task reminder details: date=${taskDate}, time=${taskStartTime}, reminder=${reminderTime} (from metadata: ${JSON.stringify(event.metadata?.reminder_time)})`);
+        // Final normalization for consistency
+        if (reminderTime === 0) {
+          isAtStartTime = true;
+        }
+        
+        console.log(`⚡ Normalized reminder values: reminderTime=${reminderTime}, isAtStartTime=${isAtStartTime}`);
+        
+        console.log(`Task reminder details: date=${taskDate}, time=${taskStartTime}, reminder=${reminderTime}${isAtStartTime ? ' (At start time)' : ''}`);
         
         if (taskDate && taskStartTime) {
           // Parse the time for the task
@@ -112,8 +147,8 @@ async function processNotifications() {
           // Calculate when the notification should be sent based on reminderTime
           const notificationTime = new Date(taskDateTime);
           
-          // Only adjust notification time if reminderTime > 0 (not "At start time")
-          if (reminderTime > 0) {
+          // Only adjust notification time if NOT "At start time"
+          if (!isAtStartTime) {
             notificationTime.setMinutes(notificationTime.getMinutes() - reminderTime);
             console.log(`⏰ Advance reminder: ${reminderTime} minutes before task time`);
           } else {
@@ -122,20 +157,17 @@ async function processNotifications() {
           
           // Enhanced logging for debugging reminder time issues
           console.log(`Task ${event.task_id} notification timing details:`);
-          console.log(`- Reminder time: ${reminderTime} minutes before (0 = "At start time")`);
+          console.log(`- Reminder setting: ${isAtStartTime ? '"At start time"' : `${reminderTime} minutes before`}`);
           console.log(`- Task start time: ${taskDateTime.toISOString()}`);
           console.log(`- Notification time: ${notificationTime.toISOString()}`);
           console.log(`- Current time: ${now.toISOString()}`);
           
-          // UPDATED CRITICAL FIX: Different window sizes for "At start time" vs advance notifications
-          // Use 2 minute window for "At start time" to be very precise
-          // Use 15 minute window for advance notifications to ensure they're not missed
-          const atStartTimeWindowMs = 2 * 60 * 1000; // 2 minutes window for "At start time"
+          // CRITICAL FIX: Different window sizes for "At start time" vs advance notifications
+          const atStartTimeWindowMs = 5 * 60 * 1000; // 5 minutes window for "At start time"
           const advanceNoticeWindowMs = 15 * 60 * 1000; // 15 minutes window for advance notifications
           
-          if (reminderTime === 0) {
+          if (isAtStartTime) {
             // For "At start time" notifications, be very precise with a small window
-            // Only send if we're very close to the exact start time
             const timeDiffMs = Math.abs(taskDateTime.getTime() - now.getTime());
             console.log(`- "At start time" notification with time diff: ${timeDiffMs/1000/60} minutes from exact start time`);
             
@@ -200,11 +232,10 @@ async function processNotifications() {
             ...event.metadata
           };
         } else {
-          // CRITICAL FIX: Only fetch the task for title and description, 
-          // NOT for reminder_time which we already have from metadata
+          // Get task details
           const { data: task, error: taskError } = await supabase
             .from('tasks')
-            .select('title, description')  // Removed reminder_time from here
+            .select('title, description')
             .eq('id', event.task_id)
             .single();
 
@@ -213,12 +244,20 @@ async function processNotifications() {
             continue;
           }
 
-          // CRITICAL FIX: Use reminderTime from metadata that we processed earlier
-          // instead of fetching it again from the task
-          console.log(`💯 FINAL CHECK: Using reminder_time=${reminderTime} for notification message (from metadata) - Not re-fetching from DB`);
-
-          // Include information about whether this is an "at start time" notification
-          const isAtStartTime = reminderTime === 0;
+          // CRITICAL FIX: Use our normalized reminderTime and isAtStartTime values
+          const isAtStartTime = event.metadata?.isAtStartTime === true || 
+                              event.metadata?.reminderTime === 0 || 
+                              event.metadata?.reminderTime === '0' ||
+                              event.metadata?.reminder_time === 0 ||
+                              event.metadata?.reminder_time === '0';
+                              
+          const reminderTime = isAtStartTime ? 0 : 
+                              (typeof event.metadata?.reminderTime === 'number' ? event.metadata.reminderTime :
+                              typeof event.metadata?.reminder_time === 'number' ? event.metadata.reminder_time : 
+                              typeof event.metadata?.reminderTime === 'string' ? parseInt(event.metadata.reminderTime, 10) :
+                              typeof event.metadata?.reminder_time === 'string' ? parseInt(event.metadata.reminder_time, 10) : 15);
+          
+          console.log(`💯 FINAL CHECK: Using reminderTime=${reminderTime}, isAtStartTime=${isAtStartTime} for notification`);
           
           title = `Task Reminder: ${task.title}`;
           body = task.description || `Your scheduled task is due ${isAtStartTime ? 'now' : 'soon'}.`;
@@ -226,7 +265,7 @@ async function processNotifications() {
             type: 'task_reminder',
             taskId: event.task_id,
             isAtStartTime: isAtStartTime,
-            reminderTime: reminderTime,  // Use the carefully processed reminderTime
+            reminderTime: reminderTime,
             ...event.metadata
           };
         }

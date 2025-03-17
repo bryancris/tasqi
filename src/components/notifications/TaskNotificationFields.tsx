@@ -40,7 +40,7 @@ export function TaskNotificationFields({
 }: TaskNotificationFieldsProps) {
   const { isSubscribed, isLoading, enableNotifications } = useNotifications();
   
-  // CRITICAL FIX: Removed internal state management completely to rely on props
+  // CRITICAL FIX: Always persist the parent's reminderTime value, don't use internal state
   
   console.log(`⚡ TaskNotificationFields rendered with reminderTime=${reminderTime} (${typeof reminderTime})`);
 
@@ -53,8 +53,10 @@ export function TaskNotificationFields({
         if (subscription) {
           onReminderEnabledChange(true);
           
-          // CRITICAL FIX: Explicitly set to 0 (At start time) when enabling
+          // CRITICAL FIX: When enabling notifications, ALWAYS set to "At start time" (0)
+          // This ensures a consistent initial state
           onReminderTimeChange(0);
+          console.log("✅ Set reminderTime to 0 (At start time) when enabling notifications");
           
           toast.success('Notifications enabled successfully');
         } else {
@@ -93,11 +95,11 @@ export function TaskNotificationFields({
         <div className="flex items-center space-x-2">
           <Label htmlFor="reminderTime">Notify me</Label>
           <Select
-            value={String(reminderTime)} // CRITICAL FIX: Always convert to string
+            value={String(reminderTime)} // CRITICAL FIX: Always convert to string for Select component
             onValueChange={(value) => {
-              // Direct number conversion with logging
+              // CRITICAL FIX: Directly convert to number and call parent's change handler
               const numValue = Number(value);
-              console.log(`Select changed to: "${value}" → ${numValue} (type: ${typeof numValue})`);
+              console.log(`⚡ Selected reminder time: "${value}" → ${numValue} (type: ${typeof numValue})`);
               onReminderTimeChange(numValue);
             }}
           >

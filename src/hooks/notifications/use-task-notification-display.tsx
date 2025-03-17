@@ -38,7 +38,9 @@ export function useTaskNotificationDisplay() {
       console.log('🔔 Showing notification:', {
         taskId: task.id,
         type,
-        title: task.title
+        title: task.title,
+        reminderTime: task.reminder_time,
+        isAtStartTime: task.reminder_time === 0
       });
 
       // Show browser notification if window is not focused
@@ -50,7 +52,10 @@ export function useTaskNotificationDisplay() {
       // IMPORTANT: ALWAYS convert referenceId to string for consistent handling
       const referenceIdString = String(task.id);
       
-      console.log('📱 Creating notification with referenceId:', referenceIdString, 'Type:', typeof referenceIdString);
+      // CRITICAL FIX: Explicitly set the isAtStartTime flag for task reminder notifications
+      // This ensures it's consistently set throughout the notification pipeline
+      const isAtStartTime = task.reminder_time === 0;
+      console.log(`📱 Creating notification with reminderTime=${task.reminder_time}, isAtStartTime=${isAtStartTime}`);
 
       // Ensure we set referenceType as 'task' consistently for all task notifications
       showNotification({
@@ -61,7 +66,11 @@ export function useTaskNotificationDisplay() {
         type: 'info',
         persistent: true,
         referenceId: referenceIdString,
-        referenceType: 'task' // Always set as 'task' to trigger button display
+        referenceType: 'task', // Always set as 'task' to trigger button display
+        data: {
+          reminderTime: task.reminder_time,
+          isAtStartTime: isAtStartTime
+        }
       });
 
       return true;

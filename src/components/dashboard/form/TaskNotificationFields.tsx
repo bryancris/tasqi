@@ -41,9 +41,7 @@ export function TaskNotificationFields({
   const platform = detectPlatform();
   const isIOSPWA = platform === 'ios-pwa';
 
-  // CRITICAL FIX: We're completely removing internal state management from this component
-  // to ensure it ALWAYS uses the parent component's value directly
-
+  // CRITICAL FIX: Always use the parent's reminderTime value directly
   console.log(`🔥 TaskNotificationFields rendered with reminderTime=${reminderTime} (${typeof reminderTime})`);
 
   const handleToggle = async (enabled: boolean) => {
@@ -60,7 +58,7 @@ export function TaskNotificationFields({
         
         onReminderEnabledChange(true);
         
-        // CRITICAL FIX: Always set to 0 (At start time) when enabling notifications
+        // CRITICAL FIX: Set to 0 (At start time) when enabling notifications
         console.log('Setting reminder time to 0 (At start time) for iOS');
         onReminderTimeChange(0);
         
@@ -73,9 +71,9 @@ export function TaskNotificationFields({
           }
         }
       } else {
-        await onReminderEnabledChange(true);
+        onReminderEnabledChange(true);
         
-        // CRITICAL FIX: Always set to 0 (At start time) when enabling notifications
+        // CRITICAL FIX: Set to 0 (At start time) when enabling notifications
         console.log('Setting reminder time to 0 (At start time)');
         onReminderTimeChange(0);
       }
@@ -123,11 +121,13 @@ export function TaskNotificationFields({
         <div className="flex items-center space-x-2">
           <Label htmlFor="reminderTime">Notify me</Label>
           <Select
-            value={String(reminderTime)} // CRITICAL FIX: Always convert to string, no matter what the type
+            value={String(reminderTime)} // CRITICAL FIX: Always convert to string for Select
             onValueChange={(value) => {
-              // CRITICAL FIX: Convert string to number immediately and call the callback
+              // CRITICAL FIX: Convert string to number immediately
               const numValue = Number(value);
               console.log(`Select changed to: "${value}" → ${numValue} (type: ${typeof numValue})`);
+              
+              // Call parent handler with number value
               onReminderTimeChange(numValue);
             }}
           >
