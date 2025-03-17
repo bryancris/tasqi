@@ -74,7 +74,7 @@ async function processNotifications() {
         const taskDate = event.metadata?.date;
         const taskStartTime = event.metadata?.start_time;
         
-        // CRITICAL FIX: Be extremely explicit and careful with reminder_time handling
+        // CRITICAL FIX: Get reminder_time directly from event.metadata and don't overwrite it
         // Default to 0 ("At start time") if not specified
         let reminderTime = 0; 
         
@@ -86,7 +86,7 @@ async function processNotifications() {
             // Handle "0" as a string explicitly
             if (event.metadata.reminder_time === "0") {
               reminderTime = 0;
-              console.log(`⚡ CRITICAL: Explicit string "0" found - correctly setting to 0 (At start time)`);
+              console.log(`⚡ CRITICAL: Explicit string "0" found in metadata - correctly setting to 0 (At start time)`);
             } else {
               const parsed = parseInt(event.metadata.reminder_time, 10);
               if (!isNaN(parsed)) {
@@ -96,7 +96,7 @@ async function processNotifications() {
           }
           
           // Always log the final reminderTime value for debugging
-          console.log(`⚡ Final reminderTime value: ${reminderTime} (${reminderTime === 0 ? "At start time" : reminderTime + " minutes before"})`);
+          console.log(`⚡ Using reminderTime from event metadata: ${reminderTime} (${reminderTime === 0 ? "At start time" : reminderTime + " minutes before"})`);
         } else {
           console.log(`⚡ No reminder_time in metadata, defaulting to 0 (At start time)`);
         }
@@ -200,10 +200,11 @@ async function processNotifications() {
             ...event.metadata
           };
         } else {
-          // Get task details for regular reminders
+          // CRITICAL FIX: Only fetch the task for title and description, 
+          // NOT for reminder_time which we already have from metadata
           const { data: task, error: taskError } = await supabase
             .from('tasks')
-            .select('title, description, reminder_time')
+            .select('title, description')  // Removed reminder_time from here
             .eq('id', event.task_id)
             .single();
 
@@ -212,30 +213,12 @@ async function processNotifications() {
             continue;
           }
 
-          // CRITICAL FIX: Get reminder_time directly from the database and process it correctly
-          let reminderTimeForMessage = 0;
-          
-          // Explicit handling for reminder_time
-          if (task?.reminder_time !== undefined && task?.reminder_time !== null) {
-            if (typeof task.reminder_time === 'number') {
-              reminderTimeForMessage = task.reminder_time;
-            } else if (task.reminder_time !== null) {
-              // Handle string "0" case explicitly
-              if (task.reminder_time === "0") {
-                reminderTimeForMessage = 0;
-              } else {
-                const parsed = parseInt(String(task.reminder_time), 10);
-                if (!isNaN(parsed)) {
-                  reminderTimeForMessage = parsed;
-                }
-              }
-            }
-          }
-          
-          console.log(`💯 FINAL CHECK: Using reminder_time=${reminderTimeForMessage} for notification message (raw value from DB: ${JSON.stringify(task?.reminder_time)})`);
+          // CRITICAL FIX: Use reminderTime from metadata that we processed earlier
+          // instead of fetching it again from the task
+          console.log(`💯 FINAL CHECK: Using reminder_time=${reminderTime} for notification message (from metadata) - Not re-fetching from DB`);
 
           // Include information about whether this is an "at start time" notification
-          const isAtStartTime = reminderTimeForMessage === 0;
+          const isAtStartTime = reminderTime === 0;
           
           title = `Task Reminder: ${task.title}`;
           body = task.description || `Your scheduled task is due ${isAtStartTime ? 'now' : 'soon'}.`;
@@ -243,7 +226,7 @@ async function processNotifications() {
             type: 'task_reminder',
             taskId: event.task_id,
             isAtStartTime: isAtStartTime,
-            reminderTime: reminderTimeForMessage,  // Pass the actual reminder time to the notification
+            reminderTime: reminderTime,  // Use the carefully processed reminderTime
             ...event.metadata
           };
         }
