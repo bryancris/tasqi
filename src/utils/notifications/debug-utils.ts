@@ -17,8 +17,8 @@ export function normalizeReminderTime(value: number | null | undefined): number 
     return 0;
   }
   
-  // Also handle string "0" 
-  if (value === "0") {
+  // Also handle string "0" - use type conversion for comparison
+  if (typeof value === 'string' && value === "0") {
     console.log('🔍 Converting string "0" to number 0 for "At start time"');
     return 0;
   }
@@ -61,8 +61,8 @@ export function formatReminderTime(reminderTime: number | null | undefined): str
     return "0"; // At start time
   }
   
-  // Also check for string "0"
-  if (reminderTime === "0") {
+  // Also check for string "0" - use type conversion for comparison
+  if (typeof reminderTime === 'string' && reminderTime === "0") {
     console.log('🔍 formatReminderTime: Found string "0", returning "0"');
     return "0";
   }

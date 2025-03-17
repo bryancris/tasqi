@@ -31,8 +31,8 @@ export function useTaskStateInitialization(task: Task) {
       return 0;
     } 
     
-    // Handle string "0" the same as number 0
-    if (task.reminder_time === "0") {
+    // Handle string "0" the same as number 0 - fix type comparison
+    if (typeof task.reminder_time === 'string' && task.reminder_time === "0") {
       console.log("👑 Task has string zero - converting to number 0 (At start time)");
       return 0;
     }
@@ -60,7 +60,7 @@ export function useTaskStateInitialization(task: Task) {
       console.log(`👑 Converting value to number: ${numValue}`);
       
       // Extra check to preserve 0 if it was "0"
-      if (numValue === 0 || task.reminder_time === "0") {
+      if (numValue === 0 || (typeof task.reminder_time === 'string' && task.reminder_time === "0")) {
         console.log("👑 Found 0 after conversion - preserving At start time");
         return 0;
       }
