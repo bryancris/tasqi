@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Task } from "../TaskBoard";
 import { Subtask } from "../subtasks/SubtaskList";
@@ -19,14 +20,14 @@ export function useEditTaskState(task: Task, onClose: () => void) {
   
   const [reminderEnabled, setReminderEnabled] = useState(task.reminder_enabled || false);
   
-  // CRITICAL FIX: More strict type handling for reminderTime to preserve 0 value
+  // CRITICAL FIX: More explicit handling for reminderTime to preserve 0 value
   const [reminderTime, setReminderTime] = useState<number>(() => {
     // CRITICAL FIX: Enhanced logging to debug the incoming value
     console.log(`🔍 Task "${task.title}" (id: ${task.id}) loaded with reminder_time:`, task.reminder_time, 
       "Type:", typeof task.reminder_time, 
       "Is exactly 0?", task.reminder_time === 0);
     
-    // Special handling for explicit zero
+    // Special handling for explicit zero - "At start time"
     if (task.reminder_time === 0) {
       console.log("👑 Task has explicit zero - preserving 0 (At start time)");
       return 0;
@@ -69,9 +70,11 @@ export function useEditTaskState(task: Task, onClose: () => void) {
   useEffect(() => {
     loadSubtasks();
     
-    console.log("✅ Loaded task with reminder_time:", task.reminder_time, "Type:", typeof task.reminder_time);
+    // CRITICAL FIX: Add additional debug logging for reminder time
+    console.log("✅ Edit Task loaded with reminder_time:", task.reminder_time, "Type:", typeof task.reminder_time);
     console.log(`✅ Initialized reminderTime state for "${task.title}":`, reminderTime, "Type:", typeof reminderTime);
     console.log(`✅ Is "At start time"? ${reminderTime === 0 ? "YES" : "NO"}`);
+    console.log(`✅ Is reminder enabled? ${reminderEnabled ? "YES" : "NO"}`);
   }, [task.id]);
 
   const loadSubtasks = async () => {
@@ -278,4 +281,3 @@ export function useEditTaskState(task: Task, onClose: () => void) {
     handleDelete
   };
 }
-
