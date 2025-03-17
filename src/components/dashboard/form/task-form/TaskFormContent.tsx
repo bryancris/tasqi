@@ -70,6 +70,20 @@ export function TaskFormContent({
   onSubtasksChange,
   handleReminderToggle,
 }: TaskFormContentProps) {
+  // CRITICAL FIX: Create a wrapper that ensures reminderTime is set when toggling
+  const handleToggleWithReminderTime = async (enabled: boolean) => {
+    console.log('🔄 handleToggleWithReminderTime called with enabled =', enabled);
+    
+    // If enabling, also set reminderTime to 0 first
+    if (enabled) {
+      console.log('🔄 Setting reminderTime to 0 when enabling');
+      onReminderTimeChange(0);
+    }
+    
+    // Then proceed with the regular toggle
+    return handleReminderToggle(enabled, onReminderEnabledChange);
+  };
+
   return (
     <div className="p-4 space-y-4">
       <FormSection>
@@ -93,7 +107,7 @@ export function TaskFormContent({
           reminderEnabled={reminderEnabled}
           reminderTime={reminderTime}
           fcmStatus={fcmStatus}
-          onReminderEnabledChange={(enabled) => handleReminderToggle(enabled, onReminderEnabledChange)}
+          onReminderEnabledChange={handleToggleWithReminderTime}
           onReminderTimeChange={onReminderTimeChange}
         />
       </FormSection>

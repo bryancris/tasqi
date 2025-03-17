@@ -51,31 +51,28 @@ export function TaskNotificationFields({
     }
 
     try {
+      // CRITICAL FIX: Set reminderTime to 0 FIRST, before any async operations
+      console.log('Setting reminder time to 0 (At start time) BEFORE async operations');
+      onReminderTimeChange(0);
+      
       if (isIOSPWA) {
         console.log('🍎 Enabling iOS PWA simplified notifications');
-        
         localStorage.setItem('ios_pwa_notifications_enabled', 'true');
-        
         onReminderEnabledChange(true);
-        
-        // CRITICAL FIX: Set to 0 (At start time) when enabling notifications
-        console.log('Setting reminder time to 0 (At start time) for iOS');
-        onReminderTimeChange(0);
-        
-        if ('Notification' in window) {
-          try {
-            const permission = await Notification.requestPermission();
-            console.log('🍎 iOS notification permission result:', permission);
-          } catch (err) {
-            console.warn('🍎 iOS permission request failed, but continuing:', err);
-          }
-        }
       } else {
+        // Enable notifications AFTER setting reminderTime
+        // This fixes the race condition where the reminderTime was getting lost
         onReminderEnabledChange(true);
-        
-        // CRITICAL FIX: Set to 0 (At start time) when enabling notifications
-        console.log('Setting reminder time to 0 (At start time)');
-        onReminderTimeChange(0);
+      }
+      
+      // Now we can do the async operations, the state is already updated
+      if ('Notification' in window) {
+        try {
+          const permission = await Notification.requestPermission();
+          console.log('Notification permission result:', permission);
+        } catch (err) {
+          console.warn('Permission request failed, but continuing:', err);
+        }
       }
     } catch (error) {
       console.error('Error enabling notifications:', error);
@@ -94,9 +91,12 @@ export function TaskNotificationFields({
       if (localEnabled && !reminderEnabled) {
         console.log('🍎 Syncing iOS PWA notification state from localStorage');
         onReminderEnabledChange(true);
+        
+        // CRITICAL FIX: Also set reminderTime to 0 when syncing state from localStorage
+        onReminderTimeChange(0);
       }
     }
-  }, [isIOSPWA, reminderEnabled, onReminderEnabledChange]);
+  }, [isIOSPWA, reminderEnabled, onReminderEnabledChange, onReminderTimeChange]);
 
   return (
     <div className="space-y-4">

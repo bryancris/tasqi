@@ -11,6 +11,7 @@ export function debugLogNotification(notification: Notification, context: string
     title: notification.title,
     message: notification.message,
     type: notification.type || 'none',
+    priority: notification.priority || 'normal',
     reference: {
       id: notification.referenceId,
       type: notification.referenceType,
@@ -19,7 +20,7 @@ export function debugLogNotification(notification: Notification, context: string
     data: notification.data || 'no data', // Log data property if it exists
     ...(notification.data ? {
       reminderTime: notification.data.reminderTime,
-      isAtStartTime: notification.data.isAtStartTime
+      isAtStartTime: notification.data.reminderTime === 0 ? true : false
     } : {})
   });
 }

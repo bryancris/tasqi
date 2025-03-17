@@ -1,4 +1,3 @@
-
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { TaskPriority } from "@/components/dashboard/TaskBoard";
@@ -47,15 +46,26 @@ export function useTaskSubmissionCore({ onSuccess, setIsLoading }: UseTaskSubmis
       reminderTime: formState.reminderTime 
     });
     
-    // SIMPLIFIED: We know reminderTime is already a number from our component changes
-    // No need for complex type checking logic - if it's 0, it's 0
-    console.log(`⚡ Reminder time value: ${formState.reminderTime} (type: ${typeof formState.reminderTime})`);
+    // CRITICAL FIX: Ensure reminderTime is a number, particularly for "At start time" (0)
+    let normalizedFormState = { ...formState };
+    
+    if (formState.reminderEnabled) {
+      if (formState.reminderTime === 0) {
+        // Keep it as 0 for "At start time"
+        console.log('✅ Preserving explicit 0 for "At start time"');
+      } else if (typeof formState.reminderTime !== 'number') {
+        normalizedFormState.reminderTime = Number(formState.reminderTime);
+        console.log(`⚠️ Normalized reminderTime from ${formState.reminderTime} to ${normalizedFormState.reminderTime}`);
+      }
+    }
+    
+    console.log(`⚡ Final reminderTime value: ${normalizedFormState.reminderTime} (type: ${typeof normalizedFormState.reminderTime})`);
     
     // Validate the input data
     if (!validateTaskInput({
-      title: formState.title,
-      isEvent: formState.isEvent,
-      date: formState.date,
+      title: normalizedFormState.title,
+      isEvent: normalizedFormState.isEvent,
+      date: normalizedFormState.date,
       userId
     })) {
       return;
@@ -66,7 +76,7 @@ export function useTaskSubmissionCore({ onSuccess, setIsLoading }: UseTaskSubmis
       console.log("Starting task creation process...");
       
       // Prepare the task data
-      const { taskData } = await prepareTaskData(formState, userId);
+      const { taskData } = await prepareTaskData(normalizedFormState, userId);
       
       // Enhanced debug for the taskData to confirm reminder_time is correctly set
       console.log("Task data prepared with reminder_time:", taskData.reminder_time, "type:", typeof taskData.reminder_time);
@@ -75,9 +85,9 @@ export function useTaskSubmissionCore({ onSuccess, setIsLoading }: UseTaskSubmis
       const taskResult = await createTask(taskData);
       
       // Add subtasks if there are any and if task was created successfully
-      if (formState.subtasks.length > 0 && taskResult && taskResult.length > 0) {
+      if (normalizedFormState.subtasks.length > 0 && taskResult && taskResult.length > 0) {
         const taskId = taskResult[0].id;
-        await createSubtasks(taskId, formState.subtasks);
+        await createSubtasks(taskId, normalizedFormState.subtasks);
       }
 
       // Update the UI

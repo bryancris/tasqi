@@ -1,4 +1,3 @@
-
 import { TaskPriority } from "@/components/dashboard/TaskBoard";
 import { Subtask } from "@/components/dashboard/subtasks/SubtaskList";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,24 +49,26 @@ export function useTaskDataPreparation() {
     // CRITICAL FIX: Enhanced debugging and strict type handling for reminderTime
     console.log('🎯 Task form state reminderTime:', formState.reminderTime, 'Type:', typeof formState.reminderTime);
     
-    // CRITICAL FIX: Explicit handling for reminder_time to ensure 0 is correctly preserved
-    let reminderTime: number = 0;
+    // CRITICAL FIX: Use Number() explicitly to ensure proper type conversion
+    // Initialize to 0 ("At start time") by default for enabled reminders
+    let reminderTime = 0;
     
     if (formState.reminderEnabled) {
       if (formState.reminderTime === 0) {
-        // Explicitly handle 0 case to prevent type coercion issues
+        // Keep it as 0 for "At start time"
         reminderTime = 0;
-        console.log('✨ Explicit zero detected - preserving "At start time" value');
+        console.log('✅ Using explicit 0 for "At start time"');
+      } else if (typeof formState.reminderTime === 'number') {
+        reminderTime = formState.reminderTime;
+        console.log(`✅ Using numeric value: ${reminderTime}`);
       } else if (formState.reminderTime) {
+        // Parse it if it's a string or other type
         reminderTime = Number(formState.reminderTime);
-        console.log(`✨ Using numeric value: ${reminderTime}`);
-      } else {
-        reminderTime = 0;
-        console.log('✨ No valid value found - defaulting to 0 (At start time)');
+        console.log(`✅ Converted to number: ${reminderTime}`);
       }
     }
-      
-    console.log('✨ Final reminder time to be saved:', reminderTime, 'Type:', typeof reminderTime);
+    
+    console.log('📝 Final reminder time to be saved:', reminderTime, 'Type:', typeof reminderTime);
 
     const taskData = {
       title: formState.title,
@@ -86,7 +87,7 @@ export function useTaskDataPreparation() {
       is_all_day: formState.isAllDay
     };
     
-    console.log('Final task data to be saved to database:', taskData);
+    console.log('📝 Final task data to be saved to database:', taskData);
 
     return { taskData, nextPosition };
   };

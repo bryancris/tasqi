@@ -22,16 +22,21 @@ export const NotificationContent = ({ notification }: NotificationContentProps) 
     }
   };
 
+  // Determine if this is an "At start time" notification
+  const isAtStartTimeReminder = notification.data?.reminderTime === 0;
+
   return (
     <div
       className={cn(
         "p-3 rounded-lg border",
         notification.priority === 'high' && "bg-red-50 border-red-200",
         notification.priority === 'normal' && "bg-blue-50 border-blue-200",
-        notification.priority === 'low' && "bg-gray-50 border-gray-200"
+        notification.priority === 'low' && "bg-gray-50 border-gray-200",
+        !notification.priority && "bg-blue-50 border-blue-200" // Default styling
       )}
       data-reference-id={notification.referenceId || "none"}
       data-reference-type={notification.referenceType || "none"}
+      data-at-start-time={isAtStartTimeReminder ? "true" : "false"}
     >
       <div className="flex items-start gap-3">
         {getIcon(notification.type)}
@@ -41,6 +46,9 @@ export const NotificationContent = ({ notification }: NotificationContentProps) 
           {notification.referenceType === 'task' && notification.referenceId && (
             <div className="text-xs text-gray-500 mt-1">
               Task ID: {notification.referenceId}
+              {isAtStartTimeReminder && (
+                <span className="ml-2 text-emerald-600">At start time</span>
+              )}
             </div>
           )}
         </div>
