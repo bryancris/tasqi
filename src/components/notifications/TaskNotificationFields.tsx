@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNotifications } from "../notifications/NotificationsManager";
 import { notificationService } from "@/utils/notifications/notificationService";
 import { toast } from "sonner";
@@ -40,18 +40,9 @@ export function TaskNotificationFields({
 }: TaskNotificationFieldsProps) {
   const { isSubscribed, isLoading, enableNotifications } = useNotifications();
   
-  // IMPROVED: Initialize internal state directly from props
-  const [internalValue, setInternalValue] = useState<string>(() => {
-    const value = reminderTime === 0 ? "0" : String(reminderTime || 0);
-    console.log(`⚡ Initializing with "${value}" from ${reminderTime}`);
-    return value;
-  });
+  // CRITICAL FIX: Removed internal state management completely to rely on props
   
-  // Update local state when prop changes
-  useEffect(() => {
-    const stringValue = reminderTime === 0 ? "0" : String(reminderTime || 0);
-    setInternalValue(stringValue);
-  }, [reminderTime]);
+  console.log(`⚡ TaskNotificationFields rendered with reminderTime=${reminderTime} (${typeof reminderTime})`);
 
   const handleToggle = async (checked: boolean) => {
     try {
@@ -62,9 +53,8 @@ export function TaskNotificationFields({
         if (subscription) {
           onReminderEnabledChange(true);
           
-          // IMPROVED: Explicitly set to 0 (At start time) when enabling
+          // CRITICAL FIX: Explicitly set to 0 (At start time) when enabling
           onReminderTimeChange(0);
-          setInternalValue("0");
           
           toast.success('Notifications enabled successfully');
         } else {
@@ -103,12 +93,11 @@ export function TaskNotificationFields({
         <div className="flex items-center space-x-2">
           <Label htmlFor="reminderTime">Notify me</Label>
           <Select
-            value={internalValue}
+            value={String(reminderTime)} // CRITICAL FIX: Always convert to string
             onValueChange={(value) => {
-              setInternalValue(value);
-              // Direct number conversion
+              // Direct number conversion with logging
               const numValue = Number(value);
-              console.log(`Select changed to: "${value}" → ${numValue}`);
+              console.log(`Select changed to: "${value}" → ${numValue} (type: ${typeof numValue})`);
               onReminderTimeChange(numValue);
             }}
           >
@@ -117,7 +106,7 @@ export function TaskNotificationFields({
             </SelectTrigger>
             <SelectContent>
               {REMINDER_TIME_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value.toString()}>
+                <SelectItem key={option.value} value={String(option.value)}>
                   {option.label}
                 </SelectItem>
               ))}

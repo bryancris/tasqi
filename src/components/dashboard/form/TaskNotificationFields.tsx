@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNotifications } from "@/hooks/notifications/use-notifications";
 import { detectPlatform } from "@/utils/notifications/platformDetection";
 
@@ -38,25 +38,13 @@ export function TaskNotificationFields({
   onReminderTimeChange,
 }: TaskNotificationFieldsProps) {
   const { isSubscribed, isLoading, enableNotifications } = useNotifications();
-  const [localIsLoading, setLocalIsLoading] = useState(false);
   const platform = detectPlatform();
   const isIOSPWA = platform === 'ios-pwa';
 
-  // ENHANCED: Better initialization with explicit type conversion and logging
-  const [internalValue, setInternalValue] = useState<string>(() => {
-    // Handle the 0 case explicitly to ensure it's not treated as falsy
-    const stringValue = reminderTime === 0 ? "0" : String(reminderTime || 0);
-    console.log(`🎯 TaskNotificationFields: Initializing with "${stringValue}" from ${reminderTime} (${typeof reminderTime})`);
-    return stringValue;
-  });
+  // CRITICAL FIX: We're completely removing internal state management from this component
+  // to ensure it ALWAYS uses the parent component's value directly
 
-  // Update internal value when the prop changes (defensive)
-  useEffect(() => {
-    // Handle the 0 case explicitly to ensure it's not treated as falsy
-    const stringValue = reminderTime === 0 ? "0" : String(reminderTime || 0);
-    console.log(`TaskNotificationFields: Updating internal state to "${stringValue}" from ${reminderTime} (${typeof reminderTime})`);
-    setInternalValue(stringValue);
-  }, [reminderTime]);
+  console.log(`🔥 TaskNotificationFields rendered with reminderTime=${reminderTime} (${typeof reminderTime})`);
 
   const handleToggle = async (enabled: boolean) => {
     if (!enabled) {
@@ -64,8 +52,6 @@ export function TaskNotificationFields({
       return;
     }
 
-    setLocalIsLoading(true);
-    
     try {
       if (isIOSPWA) {
         console.log('🍎 Enabling iOS PWA simplified notifications');
@@ -74,10 +60,9 @@ export function TaskNotificationFields({
         
         onReminderEnabledChange(true);
         
-        // FIXED: Always set to 0 (At start time) when enabling notifications
+        // CRITICAL FIX: Always set to 0 (At start time) when enabling notifications
         console.log('Setting reminder time to 0 (At start time) for iOS');
         onReminderTimeChange(0);
-        setInternalValue("0");
         
         if ('Notification' in window) {
           try {
@@ -90,10 +75,9 @@ export function TaskNotificationFields({
       } else {
         await onReminderEnabledChange(true);
         
-        // FIXED: Always set to 0 (At start time) when enabling notifications
+        // CRITICAL FIX: Always set to 0 (At start time) when enabling notifications
         console.log('Setting reminder time to 0 (At start time)');
         onReminderTimeChange(0);
-        setInternalValue("0");
       }
     } catch (error) {
       console.error('Error enabling notifications:', error);
@@ -103,8 +87,6 @@ export function TaskNotificationFields({
       } else {
         onReminderEnabledChange(false);
       }
-    } finally {
-      setLocalIsLoading(false);
     }
   };
 
@@ -126,11 +108,11 @@ export function TaskNotificationFields({
             id="reminder"
             checked={reminderEnabled}
             onCheckedChange={handleToggle}
-            disabled={isLoading || localIsLoading || fcmStatus === 'loading'}
+            disabled={isLoading || fcmStatus === 'loading'}
           />
           <Label htmlFor="reminder" className="flex items-center gap-2">
             Enable notifications
-            {(isLoading || localIsLoading || fcmStatus === 'loading') && (
+            {(isLoading || fcmStatus === 'loading') && (
               <Spinner className="w-4 h-4" />
             )}
           </Label>
@@ -141,10 +123,9 @@ export function TaskNotificationFields({
         <div className="flex items-center space-x-2">
           <Label htmlFor="reminderTime">Notify me</Label>
           <Select
-            value={internalValue}
+            value={String(reminderTime)} // CRITICAL FIX: Always convert to string, no matter what the type
             onValueChange={(value) => {
-              setInternalValue(value);
-              // Directly parse the value to a number - always safe with our defined options
+              // CRITICAL FIX: Convert string to number immediately and call the callback
               const numValue = Number(value);
               console.log(`Select changed to: "${value}" → ${numValue} (type: ${typeof numValue})`);
               onReminderTimeChange(numValue);
@@ -155,7 +136,7 @@ export function TaskNotificationFields({
             </SelectTrigger>
             <SelectContent>
               {REMINDER_TIME_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value.toString()}>
+                <SelectItem key={option.value} value={String(option.value)}>
                   {option.label}
                 </SelectItem>
               ))}

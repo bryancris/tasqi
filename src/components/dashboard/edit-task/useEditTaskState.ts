@@ -19,29 +19,30 @@ export function useEditTaskState(task: Task, onClose: () => void) {
   
   const [reminderEnabled, setReminderEnabled] = useState(task.reminder_enabled || false);
   
+  // CRITICAL FIX: More strict type handling for reminderTime 
   const [reminderTime, setReminderTime] = useState<number>(() => {
     // Enhanced logging to debug the incoming value
-    console.log(`🔍 Task "${task.title}" reminder_time:`, task.reminder_time, 
+    console.log(`🔍 Task "${task.title}" loaded with reminder_time:`, task.reminder_time, 
       "Type:", typeof task.reminder_time, 
       "Is 0?", task.reminder_time === 0);
     
     if (task.reminder_time === 0) {
-      console.log("✅ Task has explicit zero - setting to 0 (At start time)");
+      console.log("👑 Task has explicit zero - setting to 0 (At start time)");
       return 0;
     } 
     
     if (task.reminder_time === null || task.reminder_time === undefined) {
-      console.log("✅ Task has null/undefined - defaulting to 0 (At start time)");
+      console.log("👑 Task has null/undefined - defaulting to 0 (At start time)");
       return 0;
     } 
     
     if (typeof task.reminder_time === 'number') {
-      console.log(`✅ Using existing number value: ${task.reminder_time}`);
+      console.log(`👑 Using existing number value: ${task.reminder_time}`);
       return task.reminder_time;
     } 
     
     const numValue = Number(task.reminder_time);
-    console.log(`✅ Converting value to number: ${numValue}`);
+    console.log(`👑 Converting value to number: ${numValue}`);
     return isNaN(numValue) ? 0 : numValue;
   });
   
@@ -122,7 +123,7 @@ export function useEditTaskState(task: Task, onClose: () => void) {
         status = 'unscheduled';
       }
       
-      // Log the exact reminder time value before saving
+      // CRITICAL FIX: Log the exact reminder time value before saving to detect any issues
       console.log(`⚡ SAVE: Using reminderTime = ${reminderTime} (${typeof reminderTime})`);
       
       const updateData = {
@@ -132,7 +133,7 @@ export function useEditTaskState(task: Task, onClose: () => void) {
         date: (isScheduled || isEvent) && date ? date : null,
         priority: isEvent ? "medium" : priority,
         reminder_enabled: reminderEnabled,
-        reminder_time: reminderTime, // This should be a number (0 for "At start time")
+        reminder_time: reminderTime, // Make sure this is the correct number
         is_all_day: isEvent ? isAllDay : false
       } as const;
       
@@ -227,8 +228,33 @@ export function useEditTaskState(task: Task, onClose: () => void) {
     setReminderTime,
     setSubtasks,
     setShowShareDialog,
-    handleDateChange,
+    handleDateChange: (newDate: string) => {
+      console.log("Date changed in EditTaskDrawer:", newDate);
+      setDate(newDate);
+    },
     handleSubmit,
-    handleDelete
+    handleDelete: async () => {
+      try {
+        setIsDeletingTask(true);
+        console.log("Deleting task with ID:", task.id);
+        
+        const { error } = await supabase.from('tasks').delete().eq('id', task.id);
+        
+        if (error) {
+          console.error("Error from Supabase:", error);
+          throw error;
+        }
+        
+        await queryClient.invalidateQueries({ queryKey: ["tasks"] });
+        
+        toast.success('Task deleted successfully');
+        onClose();
+      } catch (error) {
+        console.error('Error deleting task:', error);
+        toast.error('Failed to delete task: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      } finally {
+        setIsDeletingTask(false);
+      }
+    }
   };
 }

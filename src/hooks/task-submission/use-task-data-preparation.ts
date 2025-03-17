@@ -47,13 +47,25 @@ export function useTaskDataPreparation() {
     const taskStartTime = formState.isAllDay ? null : formState.startTime;
     const taskEndTime = formState.isAllDay ? null : formState.endTime;
     
-    // IMPORTANT: Debug reminder time to verify correct type and value
+    // CRITICAL FIX: Enhanced debugging and strict type handling for reminderTime
     console.log('🎯 Task form state reminderTime:', formState.reminderTime, 'Type:', typeof formState.reminderTime);
     
-    // Ensure that reminderTime is 0 for "At start time" and not null or other
-    const reminderTime = formState.reminderEnabled 
-      ? (formState.reminderTime === 0 ? 0 : formState.reminderTime || 0) // Explicit 0 check
-      : 0; // Default to 0 even if disabled
+    // CRITICAL FIX: Explicit handling for reminder_time to ensure 0 is correctly preserved
+    let reminderTime: number = 0;
+    
+    if (formState.reminderEnabled) {
+      if (formState.reminderTime === 0) {
+        // Explicitly handle 0 case to prevent type coercion issues
+        reminderTime = 0;
+        console.log('✨ Explicit zero detected - preserving "At start time" value');
+      } else if (formState.reminderTime) {
+        reminderTime = Number(formState.reminderTime);
+        console.log(`✨ Using numeric value: ${reminderTime}`);
+      } else {
+        reminderTime = 0;
+        console.log('✨ No valid value found - defaulting to 0 (At start time)');
+      }
+    }
       
     console.log('✨ Final reminder time to be saved:', reminderTime, 'Type:', typeof reminderTime);
 
@@ -70,7 +82,7 @@ export function useTaskDataPreparation() {
       owner_id: userId,
       shared: false,
       reminder_enabled: formState.reminderEnabled,
-      reminder_time: reminderTime, // Properly set reminder time
+      reminder_time: reminderTime, // Using the strictly processed value
       is_all_day: formState.isAllDay
     };
     
