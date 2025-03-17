@@ -32,10 +32,12 @@ export function useTaskSubmission(
       console.log(`⚡ SAVE TASK ${taskId}: Current reminderTime = ${taskFormState.reminderTime} (${typeof taskFormState.reminderTime})`);
       console.log(`⚡ SAVE TASK ${taskId}: Is exactly 0? ${taskFormState.reminderTime === 0 ? 'YES - AT START TIME' : 'NO'}`);
       
-      // CRITICAL FIX: Ensure that explicit 0 is preserved in the database
-      // We explicitly check for === 0 to handle the "At start time" case
-      const finalReminderTime = taskFormState.reminderTime === 0 ? 0 : taskFormState.reminderTime;
-      console.log(`⚡ SAVE TASK ${taskId}: Final reminderTime to save = ${finalReminderTime}`);
+      // Make a direct copy to preserve the exact original value
+      const reminderTimeValue = taskFormState.reminderTime;
+      
+      // CRITICAL FIX: We need to explicitly ensure the 0 value is preserved
+      // DO NOT convert 0 or "0" to any other value - pass it directly
+      console.log(`⚡ SAVE TASK ${taskId}: Final reminderTime to save = ${reminderTimeValue}`);
       
       const updateData = {
         title: taskFormState.title,
@@ -44,7 +46,7 @@ export function useTaskSubmission(
         date: (taskFormState.isScheduled || taskFormState.isEvent) && taskFormState.date ? taskFormState.date : null,
         priority: taskFormState.isEvent ? "medium" : taskFormState.priority,
         reminder_enabled: taskFormState.reminderEnabled,
-        reminder_time: finalReminderTime, // Use the preserved value
+        reminder_time: reminderTimeValue, // Don't manipulate this value
         is_all_day: taskFormState.isEvent ? taskFormState.isAllDay : false
       } as const;
       

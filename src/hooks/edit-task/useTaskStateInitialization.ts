@@ -23,20 +23,33 @@ export function useTaskStateInitialization(task: Task) {
     // CRITICAL FIX: Enhanced logging to debug the incoming value
     console.log(`🔍 Task "${task.title}" (id: ${task.id}) loaded with reminder_time:`, task.reminder_time, 
       "Type:", typeof task.reminder_time, 
-      "Is exactly 0?", task.reminder_time === 0);
+      "Is exactly 0?", task.reminder_time === 0 ? 'YES' : 'NO');
     
-    // Special handling for explicit zero - "At start time"
+    // Preserve raw value without conversion if it's explicitly 0
     if (task.reminder_time === 0) {
       console.log("👑 Task has explicit zero - preserving 0 (At start time)");
       return 0;
     } 
     
+    // Handle string "0" the same as number 0
+    if (task.reminder_time === "0") {
+      console.log("👑 Task has string zero - converting to number 0 (At start time)");
+      return 0;
+    }
+    
+    // Handle null/undefined
     if (task.reminder_time === null || task.reminder_time === undefined) {
       console.log("👑 Task has null/undefined - defaulting to 15 minutes before");
       return 15;
     } 
     
+    // For non-zero number values, use directly
     if (typeof task.reminder_time === 'number') {
+      // Extra check for numerical 0 for extra safety
+      if (task.reminder_time === 0) {
+        console.log("👑 Task has numerical zero - preserving 0 (At start time)");
+        return 0;
+      }
       console.log(`👑 Using existing number value: ${task.reminder_time}`);
       return task.reminder_time;
     } 

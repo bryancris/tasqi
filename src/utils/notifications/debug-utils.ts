@@ -17,6 +17,12 @@ export function normalizeReminderTime(value: number | null | undefined): number 
     return 0;
   }
   
+  // Also handle string "0" 
+  if (value === "0") {
+    console.log('🔍 Converting string "0" to number 0 for "At start time"');
+    return 0;
+  }
+  
   // Handle null/undefined
   if (value === null || value === undefined) {
     console.log('🔍 Defaulting null/undefined to 15 minutes');
@@ -53,6 +59,12 @@ export function formatReminderTime(reminderTime: number | null | undefined): str
   if (reminderTime === 0) {
     console.log('🔍 formatReminderTime: Found exact 0, returning "0" string');
     return "0"; // At start time
+  }
+  
+  // Also check for string "0"
+  if (reminderTime === "0") {
+    console.log('🔍 formatReminderTime: Found string "0", returning "0"');
+    return "0";
   }
   
   return String(normalizeReminderTime(reminderTime));

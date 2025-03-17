@@ -40,7 +40,8 @@ export function useReminderTimeSelection({
     // Set internal value immediately for UI responsiveness
     setInternalValue(selectedValue);
     
-    // Special handling for "At start time" (0)
+    // CRITICAL FIX: Special handling for "At start time" (0)
+    // If the string value is "0", we want to pass exactly 0 (number) to the parent
     if (selectedValue === "0") {
       console.log('🚨 Processing special "At start time" (0) value');
       onReminderTimeChange(0);
