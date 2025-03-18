@@ -87,6 +87,23 @@ const Pricing = () => {
       popular: false,
     },
     {
+      name: "Personal",
+      price: "$4.99",
+      description: "Enhanced features for individual productivity",
+      features: [
+        { name: "Unlimited tasks", included: true },
+        { name: "Advanced task management", included: true },
+        { name: "Calendar integrations", included: true },
+        { name: "Personal analytics", included: true },
+        { name: "Full AI assistance", included: true },
+        { name: "Task reminders", included: true },
+        { name: "Priority support", included: true },
+        { name: "White-label branding", included: false },
+      ],
+      buttonText: "Go Personal",
+      popular: false,
+    },
+    {
       name: "Family",
       price: "$9.99",
       description: "Perfect for families and small groups",
