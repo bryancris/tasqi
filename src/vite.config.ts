@@ -1,4 +1,3 @@
-
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -11,14 +10,15 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   plugins: [
-    react(),
+    react({
+      jsxImportSource: 'react',
+      jsxRuntime: 'automatic'
+    }),
     mode === 'development' && componentTagger(),
     VitePWA({
-      strategies: 'injectManifest',
-      srcDir: 'src',
-      filename: 'sw.js',
       registerType: 'autoUpdate',
-      injectRegister: 'auto',
+      injectRegister: mode === 'production' ? 'auto' : 'script',
+      includeAssets: ['favicon.ico', 'pwa-192x192.png', 'pwa-512x512.png', 'notification-sound.mp3'],
       manifest: {
         name: 'TASQI-AI Assistant',
         short_name: 'TASQI-AI',
@@ -51,6 +51,11 @@ export default defineConfig(({ mode }) => ({
           }
         ]
       },
+      devOptions: {
+        enabled: true,
+        type: 'module',
+        navigateFallback: 'index.html'
+      },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
         cleanupOutdatedCaches: true,
@@ -82,23 +87,18 @@ export default defineConfig(({ mode }) => ({
             }
           }
         ]
-      },
-      devOptions: {
-        enabled: true,
-        type: 'module'
       }
     })
   ].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-    },
+    }
   },
   build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
     rollupOptions: {
-      input: {
-        main: path.resolve(__dirname, 'index.html')
-      },
       output: {
         manualChunks: {
           vendor: [
@@ -120,7 +120,6 @@ export default defineConfig(({ mode }) => ({
       }
     }
   },
-  // Add specific handling for service worker MIME type
   configureServer: ({ middlewares }) => {
     middlewares.use((req, res, next) => {
       if (req.url?.endsWith('sw.js')) {

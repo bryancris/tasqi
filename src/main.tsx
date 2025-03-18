@@ -1,6 +1,6 @@
 
 import { createRoot } from 'react-dom/client'
-import React from 'react'
+// Remove explicit React import since it's already injected by Vite config
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from './App.tsx'
 import './index.css'
