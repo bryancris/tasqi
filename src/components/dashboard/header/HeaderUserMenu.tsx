@@ -106,16 +106,24 @@ export function HeaderUserMenu() {
     }, 150);
   };
 
+  // This function handles the user icon button click to prevent default behavior
+  const handleUserIconClick = (e: React.MouseEvent) => {
+    // Prevent any default behavior
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Log for debugging
+    console.log('User icon clicked, toggling dropdown menu');
+  };
+
   return (
     <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
       <DropdownMenuTrigger asChild>
         <Button 
           variant="ghost" 
           className="relative h-10 w-10 rounded-full"
-          onClick={(e) => {
-            // Prevent any default behavior
-            e.preventDefault();
-          }}
+          onClick={handleUserIconClick}
+          type="button" // Explicitly set button type to prevent form submission
         >
           <UserAvatar
             avatarUrl={session?.user?.user_metadata?.avatar_url}
