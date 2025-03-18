@@ -57,6 +57,7 @@ export function AddTaskDrawer({
           side="left" 
           className="w-[400px] sm:max-w-[540px] p-0 pt-4 flex flex-col h-[100dvh]"
           onOpenAutoFocus={e => e.preventDefault()}
+          onOpenChange={onOpenChange}
         >
           <div className="px-6 mb-2">
             <AddTaskHeader />
