@@ -1,8 +1,8 @@
 
-import { Input, InputProps } from "@/components/ui/input";
+import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 
-interface TimePickerInputProps extends Omit<InputProps, 'onChange'> {
+interface TimePickerInputProps extends Omit<React.ComponentProps<typeof Input>, 'onChange'> {
   value: string;
   onChange: (value: string) => void;
   includeSeconds?: boolean;
