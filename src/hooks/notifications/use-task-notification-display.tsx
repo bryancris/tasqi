@@ -21,7 +21,8 @@
 import { Task } from '@/components/dashboard/TaskBoard';
 import { useCallback } from 'react';
 import { useNotifications } from '@/hooks/notifications/use-notifications';
-import { showBrowserNotification, playNotificationSound } from '@/utils/notifications/notificationUtils';
+import { showBrowserNotification } from '@/utils/notifications/notificationUtils';
+import { playNotificationSound } from '@/utils/notifications/soundUtils';
 
 export function useTaskNotificationDisplay() {
   const { showNotification } = useNotifications();
@@ -39,26 +40,36 @@ export function useTaskNotificationDisplay() {
         taskId: task.id,
         type,
         title: task.title,
-        reminderTime: task.reminder_time,
-        isAtStartTime: task.reminder_time === 0
+        reminderTime: task.reminder_time
       });
 
-      // Show browser notification if window is not focused
-      await showBrowserNotification(task, type);
+      // CRITICAL FIX: Add more logging to confirm we're sending notifications properly
+      console.log('🔈 Playing notification sound...');
+      try {
+        // Play notification sound first for better user experience
+        await playNotificationSound();
+        console.log('🔈 Sound played successfully');
+      } catch (soundError) {
+        console.error('🔈 Error playing sound:', soundError);
+      }
 
-      // Play notification sound
-      await playNotificationSound();
+      // CRITICAL FIX: Show browser notification with better error handling
+      console.log('🌐 Showing browser notification...');
+      try {
+        // Show browser notification if window is not focused
+        await showBrowserNotification(task, type);
+        console.log('🌐 Browser notification shown successfully');
+      } catch (browserError) {
+        console.error('🌐 Error showing browser notification:', browserError);
+      }
 
       // IMPORTANT: ALWAYS convert referenceId to string for consistent handling
       const referenceIdString = String(task.id);
       
-      // CRITICAL FIX: Explicitly set the isAtStartTime flag for task reminder notifications
-      // This ensures it's consistently set throughout the notification pipeline
-      const isAtStartTime = task.reminder_time === 0;
-      console.log(`📱 Creating notification with reminderTime=${task.reminder_time}, isAtStartTime=${isAtStartTime}`);
+      console.log('📱 Creating in-app notification for task:', referenceIdString);
 
       // Ensure we set referenceType as 'task' consistently for all task notifications
-      showNotification({
+      const wasNotificationShown = await showNotification({
         title: type === 'reminder' ? 'Task Reminder' :
                type === 'shared' ? 'Task Shared' :
                'New Task Assignment',
@@ -68,10 +79,11 @@ export function useTaskNotificationDisplay() {
         referenceId: referenceIdString,
         referenceType: 'task', // Always set as 'task' to trigger button display
         data: {
-          reminderTime: task.reminder_time,
-          isAtStartTime: isAtStartTime
+          reminderTime: task.reminder_time
         }
       });
+      
+      console.log('📱 In-app notification creation result:', wasNotificationShown ? 'SUCCESS' : 'FAILED');
 
       return true;
     } catch (error) {

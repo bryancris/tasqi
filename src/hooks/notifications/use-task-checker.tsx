@@ -36,9 +36,9 @@ export function useTaskChecker() {
   ) => {
     if (!isMounted.current) return;
     
-    // Skip checking if last check was too recent (within last 3 seconds - reduced from 5 to 3)
+    // Skip checking if last check was too recent (within last 2 seconds - reduced from 3 to 2)
     const now = Date.now();
-    if (now - lastCheckTimeRef.current < 3000) {
+    if (now - lastCheckTimeRef.current < 2000) {
       return; // Skip this check, it's too soon after the last one
     }
     
@@ -55,7 +55,7 @@ export function useTaskChecker() {
       console.log(`- Task ${task.id}: ${task.title}, status: ${task.status}, reminder: ${task.reminder_enabled ? 'ON' : 'OFF'}, reminder_time: ${task.reminder_time}, notified: ${notifiedTasks.current.has(task.id)}, recently created: ${isRecent}`);
     });
     
-    // Only check tasks that need to be checked
+    // Only check tasks that need to be checked - FIXED to only check scheduled tasks with reminders enabled
     const tasksToCheck = tasks.filter(task => 
       task.reminder_enabled && 
       !notifiedTasks.current.has(task.id) &&
@@ -83,32 +83,33 @@ export function useTaskChecker() {
         // Log task ID for debugging
         console.log(`📋 Processing task ${task.id} (${task.title}):`);
         
-        // Skip tasks that were recently created to prevent immediate notifications
+        // MODIFIED: Reduce "recently created" exclusion window to 30 seconds
+        // This helps with testing and ensures 5 min reminders don't get missed
         if (recentlyCreatedTasks.current.has(task.id)) {
           const creationTime = recentlyCreatedTasks.current.get(task.id) || 0;
           const timeSinceCreation = now - creationTime;
-          console.log(`⏳ Task ${task.id} was created ${timeSinceCreation / 1000}s ago - skipping immediate notification`);
-          continue;
+          
+          // FIXED: Only skip if created within last 30 seconds (reduced from 60s)
+          if (timeSinceCreation < 30000) {
+            console.log(`⏳ Task ${task.id} was created ${timeSinceCreation / 1000}s ago - skipping immediate notification`);
+            continue;
+          } else {
+            console.log(`⏳ Task ${task.id} was created ${timeSinceCreation / 1000}s ago - enough time has passed, checking normally`);
+          }
         }
         
-        // CRITICAL FIX: Make sure reminder_time is properly handled, especially 0 values
-        // DEBUG: Log reminder_time explicitly for debugging
-        console.log(`🔔 Task ${task.id} exact reminder_time value: ${task.reminder_time} (type: ${typeof task.reminder_time})`);
-        
-        // DEFENSIVE: Ensure reminder_time exists as a number (including explicit 0 check)
-        let reminderTime: number;
-        // FIX: Convert to number first, then compare to handle both string and number cases
-        const reminderTimeValue = Number(task.reminder_time);
-        if (reminderTimeValue === 0 || task.reminder_time === 0) {
-          reminderTime = 0;
-          console.log(`🔔 Task ${task.id} has "At start time" reminder (0 value)`);
-        } else if (task.reminder_time !== undefined) {
-          reminderTime = reminderTimeValue;
-          console.log(`🔔 Task ${task.id} normalized reminder_time: ${reminderTime}`);
-        } else {
-          reminderTime = 0; // Default to "At start time" if undefined
-          console.log(`🔔 Task ${task.id} has undefined reminder_time, defaulting to 0`);
+        // CRITICAL FIX: Ensure reminder_time is a proper number
+        let reminderTime = typeof task.reminder_time === 'number' ? 
+                        task.reminder_time : 
+                        Number(task.reminder_time);
+                        
+        // Default to 5 minutes if undefined or NaN
+        if (reminderTime === undefined || isNaN(reminderTime)) {
+          reminderTime = 5; 
+          console.log(`🔔 Task ${task.id} has invalid reminder_time, defaulting to 5 minutes`);
         }
+        
+        console.log(`🔔 Task ${task.id} normalized reminder_time: ${reminderTime}`);
         
         // IMPORTANT: Parse the date safely
         let taskDate;
@@ -176,50 +177,27 @@ export function useTaskChecker() {
         console.log(`   - Task ${task.id}: Time until task: ${timeUntilTask}ms (${minutesUntilTask.toFixed(2)} minutes)`);
         console.log(`   - Task ${task.id}: Reminder time setting: ${reminderTime} minute(s)`);
 
-        // INCREASED window size for notification delivery
-        const windowSize = 10; // Increased from 8 to 10 minutes for an even more generous window
+        // FIXED: Increased window size for notification delivery for 5 min reminders
+        // Use a longer window for short reminders to make sure they trigger
+        const windowSize = reminderTime <= 5 ? 15 : 10; // 15 min window for 5 min reminders, 10 for others
+        console.log(`   - Task ${task.id}: Using notification window size: ${windowSize} minutes`);
         
-        // CRITICAL FIX: Explicitly check reminder_time for exact === 0 value (at start time)
-        // This is crucial because JavaScript treats 0 as falsy, which can cause bugs
-        const isAtStartTime = reminderTime === 0;
-        console.log(`   - Task ${task.id}: Is 'At start time' notification? ${isAtStartTime ? 'YES' : 'NO'}`);
+        // For advance reminders, check if we're within the window of when we should send notification
+        // This is based on the reminder_time value (minutes before task)
+        const timeUntilReminder = minutesUntilTask - reminderTime;
         
-        if (isAtStartTime) {
-          // For "at start time", we want to be very close to the start time
-          // Check if we're within the notification window in absolute terms
-          const minutesToStartTime = Math.abs(minutesUntilTask);
-          
-          // IMPROVED WINDOW LOGIC: Include both upcoming and slightly overdue tasks
-          const isWithinStartTimeWindow = minutesToStartTime <= windowSize;
-          
-          console.log(`   - Task ${task.id}: AT START TIME notification check:`);
-          console.log(`   - Task ${task.id}: Minutes to exact start: ${minutesToStartTime.toFixed(2)}`);
-          console.log(`   - Task ${task.id}: Is within ${windowSize} minute window of exact start time: ${isWithinStartTimeWindow}`);
-          
-          if (isWithinStartTimeWindow) {
-            console.log(`🔔 EXACT START TIME MATCH! Task ${task.id} (${task.title}) needs AT START TIME notification!`);
-            await attemptNotification(task, 'reminder', showTaskNotification, notifiedTasks, isMounted);
-          } else {
-            console.log(`⏳ Task ${task.id}: Not yet time for AT START TIME notification`);
-          }
+        // IMPROVED WINDOW LOGIC: Focus on the absolute difference to catch both slightly early and late
+        const isWithinReminderWindow = Math.abs(timeUntilReminder) <= windowSize;
+        
+        console.log(`   - Task ${task.id}: ADVANCE reminder check (${reminderTime} min before):`);
+        console.log(`   - Task ${task.id}: Time until reminder point: ${timeUntilReminder.toFixed(2)} minutes`);
+        console.log(`   - Task ${task.id}: Is within ${windowSize} minute window of reminder point: ${isWithinReminderWindow}`);
+        
+        if (isWithinReminderWindow) {
+          console.log(`🔔 ADVANCE REMINDER MATCH! Task ${task.id} (${task.title}) needs notification!`);
+          await attemptNotification(task, 'reminder', showTaskNotification, notifiedTasks, isMounted);
         } else {
-          // For advance reminders, check if we're within the window of when we should send notification
-          // This is based on the reminder_time value (minutes before task)
-          const timeUntilReminder = minutesUntilTask - reminderTime;
-          
-          // IMPROVED WINDOW LOGIC: Focus on the absolute difference to catch both slightly early and late
-          const isWithinReminderWindow = Math.abs(timeUntilReminder) <= windowSize;
-          
-          console.log(`   - Task ${task.id}: ADVANCE reminder check (${reminderTime} min before):`);
-          console.log(`   - Task ${task.id}: Time until reminder point: ${timeUntilReminder.toFixed(2)} minutes`);
-          console.log(`   - Task ${task.id}: Is within ${windowSize} minute window of reminder point: ${isWithinReminderWindow}`);
-          
-          if (isWithinReminderWindow) {
-            console.log(`🔔 ADVANCE REMINDER MATCH! Task ${task.id} (${task.title}) needs ADVANCE notification!`);
-            await attemptNotification(task, 'reminder', showTaskNotification, notifiedTasks, isMounted);
-          } else {
-            console.log(`⏳ Task ${task.id}: Not yet time for ADVANCE notification`);
-          }
+          console.log(`⏳ Task ${task.id}: Not yet time for notification`);
         }
       } catch (error) {
         if (isMounted.current) {

@@ -9,7 +9,7 @@
  * - Cleans up resources when the component unmounts
  * 
  * Important Notes:
- * - Uses a 15-second interval to check for upcoming tasks (increased frequency)
+ * - Uses a 10-second interval to check for upcoming tasks (increased frequency)
  * - Maintains a Set of already notified tasks to prevent duplicates
  * - Includes special handling for newly created tasks to prevent immediate notifications
  */
@@ -20,12 +20,13 @@ import { useNotifications } from '@/hooks/notifications/use-notifications';
 import { useTaskCompletion } from '@/hooks/notifications/use-task-completion';
 import { useTaskNotificationDisplay } from '@/hooks/notifications/use-task-notification-display';
 import { useTaskChecker } from '@/hooks/notifications/use-task-checker';
+import { preloadNotificationSounds } from '@/utils/notifications/soundUtils';
 
-// Decrease check interval to increase frequency even more
-const NOTIFICATION_CHECK_INTERVAL = 15000; // Check every 15 seconds (reduced from 30)
+// FIXED: Decreased check interval to increase frequency and fix 5min reminder issue
+const NOTIFICATION_CHECK_INTERVAL = 10000; // Check every 10 seconds (reduced from 15)
 
-// Track recently created tasks to prevent immediate notifications
-const TASK_CREATION_THRESHOLD = 60000; // 60 seconds
+// FIXED: Decreased threshold for task creation to allow 5min reminders to work
+const TASK_CREATION_THRESHOLD = 30000; // 30 seconds (reduced from 60)
 
 export function useTaskNotifications() {
   const { tasks } = useTasks();
@@ -91,6 +92,9 @@ export function useTaskNotifications() {
     console.log('🔔 Task notifications hook initialized');
     isMountedRef.current = true;
     
+    // FIXED: Preload notification sounds when hook initializes
+    preloadNotificationSounds();
+    
     // Initial check on mount if we have tasks
     if (tasks.length > 0) {
       console.log('📋 Initial task check on mount with tasks:', tasks.length);
@@ -103,19 +107,47 @@ export function useTaskNotifications() {
       );
     }
 
-    // Perform an immediate check after a short delay (to let the app stabilize)
-    const initialCheckTimeout = setTimeout(() => {
-      if (isMountedRef.current && tasks.length > 0) {
-        console.log('📋 Running delayed initial task check with tasks:', tasks.length);
-        void checkForUpcomingTasks(
-          tasks, 
-          isMountedRef, 
-          notifiedTasksRef,
-          recentlyCreatedTasksRef, // Pass the recently created tasks ref
-          (task, type) => showTaskNotification(task, type, isMountedRef, handleTaskComplete)
-        );
-      }
-    }, 2000);
+    // FIXED: Perform more frequent initial checks to catch tasks that might be due soon
+    const initialCheckIds = [
+      setTimeout(() => {
+        if (isMountedRef.current && tasks.length > 0) {
+          console.log('📋 First quick task check (1s) with tasks:', tasks.length);
+          void checkForUpcomingTasks(
+            tasks, 
+            isMountedRef, 
+            notifiedTasksRef,
+            recentlyCreatedTasksRef,
+            (task, type) => showTaskNotification(task, type, isMountedRef, handleTaskComplete)
+          );
+        }
+      }, 1000),
+      
+      setTimeout(() => {
+        if (isMountedRef.current && tasks.length > 0) {
+          console.log('📋 Second quick task check (3s) with tasks:', tasks.length);
+          void checkForUpcomingTasks(
+            tasks, 
+            isMountedRef, 
+            notifiedTasksRef,
+            recentlyCreatedTasksRef,
+            (task, type) => showTaskNotification(task, type, isMountedRef, handleTaskComplete)
+          );
+        }
+      }, 3000),
+      
+      setTimeout(() => {
+        if (isMountedRef.current && tasks.length > 0) {
+          console.log('📋 Third quick task check (5s) with tasks:', tasks.length);
+          void checkForUpcomingTasks(
+            tasks, 
+            isMountedRef, 
+            notifiedTasksRef,
+            recentlyCreatedTasksRef,
+            (task, type) => showTaskNotification(task, type, isMountedRef, handleTaskComplete)
+          );
+        }
+      }, 5000)
+    ];
 
     const intervalId = setInterval(() => {
       if (isMountedRef.current && tasks.length > 0) {
@@ -133,7 +165,7 @@ export function useTaskNotifications() {
     // Cleanup function
     return () => {
       isMountedRef.current = false;
-      clearTimeout(initialCheckTimeout);
+      initialCheckIds.forEach(id => clearTimeout(id));
       clearInterval(intervalId);
       console.log('🔔 Task notifications hook cleanup');
     };
