@@ -74,9 +74,10 @@ export function useNotifications() {
   // Wrap the original showNotification to ensure it returns a boolean
   const wrappedShowNotification = async (params: Parameters<typeof notificationContext.showNotification>[0]): Promise<boolean> => {
     try {
-      const result = await notificationContext.showNotification(params);
-      // Ensure we return a boolean value
-      return result === true;
+      // Call the original function which returns void
+      await notificationContext.showNotification(params);
+      // If no error was thrown, consider it successful
+      return true;
     } catch (error) {
       console.error('Error in wrapped showNotification:', error);
       return false;
