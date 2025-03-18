@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Subtask } from "@/components/dashboard/subtasks/SubtaskList";
 import { TaskPriority } from "@/components/dashboard/TaskBoard";
@@ -24,29 +23,29 @@ interface TaskData {
 export function useTaskDatabaseOperations() {
   const createTask = async (taskData: TaskData) => {
     console.log('⭐ Creating task with reminderTime =', taskData.reminder_time, 'Type:', typeof taskData.reminder_time);
-    console.log('⭐ Is "At start time"?', taskData.reminder_time === 0 ? 'YES' : 'NO');
     
-    // CRITICAL FIX: Special handling for "At start time" (0) to ensure it's preserved
+    // Make sure reminder_time is never 0, convert to 5 minutes for backward compatibility
     if (taskData.reminder_enabled) {
-      if (taskData.reminder_time === undefined || taskData.reminder_time === null) {
-        console.log('⭐ Setting reminder_time to 0 (At start time) because it was undefined/null');
-        taskData.reminder_time = 0;
+      if (taskData.reminder_time === undefined || taskData.reminder_time === null || taskData.reminder_time === 0) {
+        console.log('⭐ Setting reminder_time to 5 minutes because it was undefined/null/0');
+        taskData.reminder_time = 5;
       }
       
-      // CRITICAL FIX: Explicit number conversion to ensure database gets correct type
+      // Explicit number conversion to ensure database gets correct type
       taskData.reminder_time = Number(taskData.reminder_time);
       
-      // Explicit check to ensure "At start time" (0) is preserved
-      if (taskData.reminder_time === 0) {
-        console.log('⭐ Confirmed "At start time" value is preserved before database write');
+      // Safety check - minimum is now 5 minutes
+      if (taskData.reminder_time < 5) {
+        console.log('⭐ Enforcing minimum 5 minute reminder time');
+        taskData.reminder_time = 5;
       }
     }
     
     // Final verification before insertion
     const finalData = {
       ...taskData,
-      // CRITICAL FIX: Force reminder_time to be exactly 0 for "At start time" 
-      reminder_time: taskData.reminder_time === 0 ? 0 : Number(taskData.reminder_time)
+      // Ensure reminder_time is never 0
+      reminder_time: Math.max(5, Number(taskData.reminder_time))
     };
     
     console.log('⭐ FINAL DATABASE INSERT with reminder_time =', finalData.reminder_time, 'Type:', typeof finalData.reminder_time);
@@ -66,8 +65,7 @@ export function useTaskDatabaseOperations() {
       console.log('⭐ VERIFY DATABASE RESULT:', {
         saved_reminder_time: data[0].reminder_time,
         saved_type: typeof data[0].reminder_time,
-        saved_reminder_enabled: data[0].reminder_enabled,
-        is_exactly_zero: data[0].reminder_time === 0 ? 'YES - AT START TIME' : 'NO - has minutes before'
+        saved_reminder_enabled: data[0].reminder_enabled
       });
     }
 

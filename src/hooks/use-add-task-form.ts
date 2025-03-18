@@ -20,8 +20,8 @@ export function useAddTaskForm({ initialDate }: UseAddTaskFormProps = {}) {
   const [priority, setPriority] = useState<TaskPriority>("medium");
   const [reminderEnabled, setReminderEnabled] = useState(false);
   
-  // FIXED: Explicitly initialize as 0 (At start time) with proper typing
-  const [reminderTime, setReminderTime] = useState<number>(0);
+  // Changed: Initialize with 5 minutes instead of 0
+  const [reminderTime, setReminderTime] = useState<number>(5);
   
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -37,7 +37,7 @@ export function useAddTaskForm({ initialDate }: UseAddTaskFormProps = {}) {
     setEndTime("");
     setPriority("medium");
     setReminderEnabled(false);
-    setReminderTime(0); // Reset explicitly to 0 (At start time)
+    setReminderTime(5); // Changed: Reset to 5 minutes instead of 0
     setSubtasks([]);
   };
 

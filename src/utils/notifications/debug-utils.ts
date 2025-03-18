@@ -9,16 +9,7 @@ import { Notification } from "@/components/notifications/types";
  * This handles special cases like the "At start time" value (0)
  */
 export function formatReminderTime(value: number | string): string {
-  // Handle special case for "At start time" (0)
-  if (typeof value === 'number' && value === 0) {
-    return "0"; // Preserve the exact 0 value for "At start time"
-  }
-  
-  if (typeof value === 'string' && value === "0") {
-    return "0"; // Also handle string "0" case
-  }
-  
-  // For other values, ensure it's a string for dropdown selection
+  // For all values, ensure it's a string for dropdown selection
   return String(value);
 }
 
@@ -29,7 +20,7 @@ export function formatReminderTime(value: number | string): string {
 export function normalizeReminderTime(value: number | string | undefined | null): number {
   // Handle undefined/null values
   if (value === undefined || value === null) {
-    return 0; // Default to "At start time"
+    return 5; // Default to 5 minutes before
   }
   
   // Convert to a number for comparison
@@ -37,24 +28,22 @@ export function normalizeReminderTime(value: number | string | undefined | null)
   
   // Check if it's a valid number
   if (isNaN(numericValue)) {
-    return 0; // Default to "At start time" for invalid values
+    return 5; // Default to 5 minutes before for invalid values
   }
   
-  // Special handling for the "At start time" case (0)
+  // For legacy data, convert "At start time" (0) to 5 minutes
   if (numericValue === 0) {
-    return 0;
+    return 5;
   }
   
   // For other values, check if they match our known options
-  // After removing 15 minutes, we only have 5, 10, 30, and 60 minute options
-  const validOptions = [0, 5, 10, 30, 60];
+  const validOptions = [5, 10, 30, 60];
   
   if (validOptions.includes(numericValue)) {
     return numericValue;
   }
   
   // For values that don't match any valid option, find the closest one
-  // For example, if someone previously selected 15, make it 10 minutes
   if (numericValue > 0 && numericValue < 10) {
     return 5; // Round to 5 minutes
   } else if (numericValue >= 10 && numericValue < 30) {
@@ -66,7 +55,7 @@ export function normalizeReminderTime(value: number | string | undefined | null)
   }
   
   // Default fallback
-  return 0;
+  return 5;
 }
 
 /**
