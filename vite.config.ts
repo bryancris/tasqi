@@ -127,7 +127,7 @@ export default defineConfig(({ mode }) => ({
     jsx: 'automatic',
   },
   configureServer: ({ middlewares }: { middlewares: Connect.Server }) => {
-    middlewares.use((req: Connect.IncomingMessage, res: Connect.ServerResponse, next: Connect.NextFunction) => {
+    middlewares.use((req: Connect.IncomingMessage, res: any, next: Connect.NextFunction) => {
       if (req.url?.endsWith('sw.js')) {
         res.setHeader('Content-Type', 'application/javascript');
       }
