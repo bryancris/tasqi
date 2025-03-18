@@ -14,6 +14,13 @@ const SOUND_PATHS = {
 const audioCache = new Map<string, HTMLAudioElement>();
 
 /**
+ * Track user interaction to help with iOS audio playback permissions
+ */
+export function trackUserInteraction(): void {
+  localStorage.setItem('lastInteractionTime', Date.now().toString());
+}
+
+/**
  * Plays a notification sound with error handling
  * 
  * @param type Type of sound to play (defaults to 'notification')
