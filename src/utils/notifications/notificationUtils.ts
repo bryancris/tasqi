@@ -7,7 +7,7 @@ import { Task } from "@/components/dashboard/TaskBoard";
  * 
  * @param task The task data or notification object
  * @param type The notification type (reminder, shared, assignment)
- * @returns Promise that resolves when notification is shown
+ * @returns Promise that resolves to boolean indicating if notification was shown
  */
 export async function showBrowserNotification(
   task: Task | any,

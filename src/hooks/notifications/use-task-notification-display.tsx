@@ -48,7 +48,8 @@ export function useTaskNotificationDisplay() {
       let soundPlayed = false;
       try {
         // Play notification sound first for better user experience
-        soundPlayed = await playNotificationSound();
+        // FIX: Make sure we get a boolean return value, not void
+        soundPlayed = await playNotificationSound() || false;
         console.log('🔈 Sound played successfully:', soundPlayed);
       } catch (soundError) {
         console.error('🔈 Error playing sound:', soundError);
@@ -59,7 +60,8 @@ export function useTaskNotificationDisplay() {
       let browserNotificationShown = false;
       try {
         // Show browser notification if window is not focused
-        browserNotificationShown = await showBrowserNotification(task, type);
+        // FIX: Make sure we get a boolean return value, not void
+        browserNotificationShown = await showBrowserNotification(task, type) || false;
         console.log('🌐 Browser notification shown successfully:', browserNotificationShown);
       } catch (browserError) {
         console.error('🌐 Error showing browser notification:', browserError);
