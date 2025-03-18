@@ -1,46 +1,29 @@
 
-import { toast } from 'sonner';
-
 /**
- * Requests notification permissions specifically for iOS PWA
- * Handles iOS-specific quirks with permissions
- * @returns Promise resolving when permission request is complete
+ * Utility to request iOS PWA notification permissions
+ * Note: This is mostly a placeholder function since iOS PWA doesn't support
+ * standard notification permissions, but we keep it for API consistency
  */
-export async function requestIOSPWAPermission(): Promise<void> {
-  if ('Notification' in window) {
-    try {
-      // Add a timeout to prevent hanging
-      const permission = await Promise.race([
-        Notification.requestPermission(),
-        new Promise(resolve => setTimeout(() => resolve('timeout'), 3000))
-      ]);
-      
-      console.log('🍎 iOS notification permission result:', permission);
-      
-      // Only show guidance if explicitly denied
-      if (permission === 'denied') {
-        toast.info('Enable notifications in iOS Settings to receive reminders', {
-          duration: 6000,
-          action: {
-            label: 'Learn How',
-            onClick: () => window.open('https://support.apple.com/guide/iphone/notifications-iph7c3d96bab/ios', '_blank')
-          }
-        });
+export async function requestIOSPWAPermission(): Promise<boolean> {
+  try {
+    // Try standard notification API as best effort
+    if ('Notification' in window) {
+      // Check if we need to request permission
+      if (Notification.permission === 'default') {
+        const permission = await Notification.requestPermission();
+        return permission === 'granted';
       }
-    } catch (err) {
-      // Just log the error and continue
-      console.warn('🍎 iOS permission request issue, continuing anyway:', err);
+      // Return true if we already have permission
+      return Notification.permission === 'granted';
     }
+    
+    // For iOS PWA where standard permissions don't work, we assume
+    // the user gave implicit permission by enabling notifications
+    console.log('🍎 iOS PWA notification permissions requested (implicitly granted)');
+    return true;
+  } catch (error) {
+    console.warn('Error requesting iOS PWA notification permission:', error);
+    // Still return true for iOS PWA to allow notifications to work
+    return true;
   }
-}
-
-/**
- * Checks the current notification permission status
- * @returns The current permission status or null if not available
- */
-export function checkNotificationPermission(): 'granted' | 'denied' | 'default' | null {
-  if ('Notification' in window) {
-    return Notification.permission;
-  }
-  return null;
 }
