@@ -45,20 +45,22 @@ export function useTaskNotificationDisplay() {
 
       // CRITICAL FIX: Add more logging to confirm we're sending notifications properly
       console.log('🔈 Playing notification sound...');
+      let soundPlayed = false;
       try {
         // Play notification sound first for better user experience
-        await playNotificationSound();
-        console.log('🔈 Sound played successfully');
+        soundPlayed = await playNotificationSound();
+        console.log('🔈 Sound played successfully:', soundPlayed);
       } catch (soundError) {
         console.error('🔈 Error playing sound:', soundError);
       }
 
       // CRITICAL FIX: Show browser notification with better error handling
       console.log('🌐 Showing browser notification...');
+      let browserNotificationShown = false;
       try {
         // Show browser notification if window is not focused
-        await showBrowserNotification(task, type);
-        console.log('🌐 Browser notification shown successfully');
+        browserNotificationShown = await showBrowserNotification(task, type);
+        console.log('🌐 Browser notification shown successfully:', browserNotificationShown);
       } catch (browserError) {
         console.error('🌐 Error showing browser notification:', browserError);
       }
