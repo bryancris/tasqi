@@ -1,10 +1,10 @@
-
-import React from "react";
+import React, { useEffect } from "react";
 import { Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import NavButtons from "@/components/home/NavButtons";
 import GradientWaveBackground from "@/components/home/GradientWaveBackground";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const PricingTier = ({
   name,
@@ -68,6 +68,13 @@ const PricingTier = ({
 };
 
 const Pricing = () => {
+  useEffect(() => {
+    document.body.classList.add('scrollable-page');
+    return () => {
+      document.body.classList.remove('scrollable-page');
+    };
+  }, []);
+
   const tiers = [
     {
       name: "Free",
@@ -170,7 +177,7 @@ const Pricing = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-y-8 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4 lg:gap-8">
+        <div className="grid grid-cols-1 gap-y-8 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 xl:grid-cols-5 lg:gap-8">
           {tiers.map((tier) => (
             <PricingTier key={tier.name} {...tier} />
           ))}
