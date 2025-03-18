@@ -1,9 +1,1 @@
-
 project_id = "mcwlzrikidzgxexnccju"
-
-[api]
-enabled = true
-
-[functions]
-[functions.get-vapid-key]
-verify_jwt = true
