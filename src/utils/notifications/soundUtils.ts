@@ -36,10 +36,22 @@ export const preloadNotificationSounds = async (): Promise<boolean> => {
     
     // Just load the audio file
     audio.preload = 'auto';
-    await audio.load();
     
-    console.log('🔈 Notification sounds preloaded successfully');
-    return true;
+    // Use a promise to handle loading
+    return new Promise((resolve) => {
+      audio.oncanplaythrough = () => {
+        console.log('🔈 Notification sounds preloaded successfully');
+        resolve(true);
+      };
+      
+      audio.onerror = () => {
+        console.error('🔈 Error preloading notification sounds');
+        resolve(false);
+      };
+      
+      // Trigger the load
+      audio.load();
+    });
   } catch (error) {
     console.error('🔈 Error preloading notification sounds:', error);
     return false;

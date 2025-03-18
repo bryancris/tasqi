@@ -114,7 +114,7 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-    },
+    }
   },
   build: {
     outDir: 'dist',
@@ -144,5 +144,11 @@ export default defineConfig(({ mode }) => ({
         }
       }
     }
+  },
+  // ES module format for JavaScript 
+  esbuild: {
+    jsx: 'automatic',
+    jsxInject: `import React from 'react'`,
+    format: 'esm'
   }
 }));
