@@ -1,6 +1,8 @@
+
 /**
  * Debug utilities for working with reminder times
  */
+import { Notification } from "@/components/notifications/types";
 
 /**
  * Formats a reminder time value for display in UI or debugging
@@ -65,4 +67,57 @@ export function normalizeReminderTime(value: number | string | undefined | null)
   
   // Default fallback
   return 0;
+}
+
+/**
+ * Checks if a notification is a test notification based on its reference ID
+ * This is used to handle special debugging/test notifications
+ */
+export function isTestNotification(referenceId: number | string | null | undefined): boolean {
+  if (referenceId === null || referenceId === undefined) return false;
+  
+  const testIds = ["999999", "6666", 999999, 6666];
+  
+  return testIds.includes(referenceId);
+}
+
+/**
+ * Validates if a notification is a task notification with complete properties
+ * This helps determine whether task-specific UI components should be shown
+ */
+export function validateTaskNotification(notification: Notification | null | undefined): boolean {
+  if (!notification) return false;
+  
+  return (
+    notification.referenceType === 'task' && 
+    notification.referenceId !== undefined && 
+    notification.referenceId !== null
+  );
+}
+
+/**
+ * Logs notification details to console for debugging
+ * This is crucial for tracking notification lifecycle and fixing issues
+ */
+export function debugLogNotification(
+  notification: Notification | null | undefined, 
+  context: string = 'unknown'
+): void {
+  if (!notification) {
+    console.log(`📋 [${context}] Notification is null or undefined`);
+    return;
+  }
+  
+  console.log(`📋 [${context}] Notification details:`, {
+    id: notification.id,
+    title: notification.title,
+    type: notification.type,
+    referenceType: notification.referenceType,
+    referenceId: notification.referenceId,
+    referenceIdType: typeof notification.referenceId,
+    group: notification.group,
+    read: notification.read,
+    persistent: notification.persistent,
+    hasActionData: notification.action ? true : false
+  });
 }
