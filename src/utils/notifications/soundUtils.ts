@@ -6,7 +6,17 @@ import { trackUserInteraction as trackInteraction } from './audio/audioCore';
  * Re-export the audio playback function for backward compatibility
  * @returns Promise<boolean> indicating if sound was successfully played
  */
-export const playNotificationSound = playSound;
+export const playNotificationSound = async (): Promise<boolean> => {
+  try {
+    // Call the playSound function and ensure it returns a boolean
+    const result = await playSound();
+    // Explicitly return a boolean value
+    return result === true;
+  } catch (error) {
+    console.error('Error playing notification sound:', error);
+    return false;
+  }
+};
 
 /**
  * Re-export the trackUserInteraction function for use in notification components

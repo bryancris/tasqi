@@ -49,7 +49,9 @@ export function useTaskNotificationDisplay() {
       try {
         // Play notification sound first for better user experience
         // FIX: Make sure we get a boolean return value, not void
-        soundPlayed = await playNotificationSound() || false;
+        const soundResult = await playNotificationSound();
+        // CRITICAL FIX: Explicitly check for true boolean result
+        soundPlayed = soundResult === true;
         console.log('🔈 Sound played successfully:', soundPlayed);
       } catch (soundError) {
         console.error('🔈 Error playing sound:', soundError);
