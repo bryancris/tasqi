@@ -1,3 +1,4 @@
+
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -11,8 +12,8 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react({
-      jsxImportSource: 'react',
-      jsxRuntime: 'automatic'
+      jsxImportSource: 'react'
+      // Remove jsxRuntime as it's not a valid option
     }),
     mode === 'development' && componentTagger(),
     VitePWA({
@@ -119,6 +120,10 @@ export default defineConfig(({ mode }) => ({
         }
       }
     }
+  },
+  // Set proper JSX transformation for the project
+  esbuild: {
+    jsx: 'automatic',
   },
   configureServer: ({ middlewares }) => {
     middlewares.use((req, res, next) => {

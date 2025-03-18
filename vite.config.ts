@@ -1,4 +1,3 @@
-
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -11,7 +10,10 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   plugins: [
-    react(),
+    react({
+      jsxImportSource: 'react'
+      // Remove jsxRuntime as it's not a valid option
+    }),
     mode === 'development' && componentTagger(),
     VitePWA({
       registerType: 'autoUpdate',
@@ -55,21 +57,21 @@ export default defineConfig(({ mode }) => ({
         navigateFallback: 'index.html'
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        // Don't fallback on document based (HTML) requests
-        // This helps avoid issues with client-side routing
-        navigationPreload: true,
-        skipWaiting: true, // Enable immediate activation
-        clientsClaim: true, // Take control of clients immediately
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com/,
-            handler: 'CacheFirst',
+            urlPattern: ({ url }) => {
+              const appRoutes = ['/', '/dashboard', '/notes', '/settings'];
+              return appRoutes.some(route => url.pathname.startsWith(route));
+            },
+            handler: 'NetworkFirst',
             options: {
-              cacheName: 'google-fonts-cache',
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
+              cacheName: 'app-routes',
+              cacheableResponse: {
+                statuses: [0, 200]
               }
             }
           },
@@ -78,36 +80,13 @@ export default defineConfig(({ mode }) => ({
             handler: 'NetworkFirst',
             options: {
               cacheName: 'api-cache',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 5 * 60 // 5 minutes
-              }
-            }
-          },
-          {
-            urlPattern: /\.(js|css)$/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'static-resources',
-              expiration: {
-                maxEntries: 30,
-                maxAgeSeconds: 24 * 60 * 60 // 24 hours
-              }
-            }
-          },
-          {
-            urlPattern: /\.(png|jpg|jpeg|svg|gif|webp|woff2?)$/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'assets',
-              expiration: {
-                maxEntries: 30,
-                maxAgeSeconds: 7 * 24 * 60 * 60 // 7 days
-              }
+              cacheableResponse: {
+                statuses: [0, 200]
+              },
+              networkTimeoutSeconds: 10
             }
           }
-        ],
-        cleanupOutdatedCaches: true
+        ]
       }
     })
   ].filter(Boolean),
@@ -119,12 +98,8 @@ export default defineConfig(({ mode }) => ({
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
-    // Ensure assets have consistent names between builds
     rollupOptions: {
       output: {
-        entryFileNames: 'assets/[name].[hash].js',
-        chunkFileNames: 'assets/[name].[hash].js',
-        assetFileNames: 'assets/[name].[hash].[ext]',
         manualChunks: {
           vendor: [
             'react',
@@ -145,10 +120,16 @@ export default defineConfig(({ mode }) => ({
       }
     }
   },
-  // ES module format for JavaScript 
+  // Set proper JSX transformation for the project
   esbuild: {
     jsx: 'automatic',
-    jsxInject: `import React from 'react'`,
-    format: 'esm'
+  },
+  configureServer: ({ middlewares }) => {
+    middlewares.use((req, res, next) => {
+      if (req.url?.endsWith('sw.js')) {
+        res.setHeader('Content-Type', 'application/javascript');
+      }
+      next();
+    });
   }
 }));
