@@ -113,7 +113,7 @@ const Pricing = () => {
     },
     {
       name: "Family",
-      price: "$9.99",
+      price: "$19.99",
       description: "Perfect for families and small groups",
       features: [
         { name: "Unlimited tasks", included: true },
