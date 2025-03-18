@@ -1,8 +1,10 @@
+
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { VitePWA } from 'vite-plugin-pwa';
+import type { Connect, ViteDevServer } from 'vite';
 
 export default defineConfig(({ mode }) => ({
   server: {
@@ -124,8 +126,8 @@ export default defineConfig(({ mode }) => ({
   esbuild: {
     jsx: 'automatic',
   },
-  configureServer: ({ middlewares }) => {
-    middlewares.use((req, res, next) => {
+  configureServer: ({ middlewares }: { middlewares: Connect.Server }) => {
+    middlewares.use((req: Connect.IncomingMessage, res: Connect.ServerResponse, next: Connect.NextFunction) => {
       if (req.url?.endsWith('sw.js')) {
         res.setHeader('Content-Type', 'application/javascript');
       }
