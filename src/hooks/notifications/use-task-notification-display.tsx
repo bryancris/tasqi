@@ -60,8 +60,9 @@ export function useTaskNotificationDisplay() {
       let browserNotificationShown = false;
       try {
         // Show browser notification if window is not focused
-        // FIX: Make sure we get a boolean return value, not void
+        // FIX: Make sure we explicitly handle the return value as boolean
         const showResult = await showBrowserNotification(task, type);
+        // Ensure we have a boolean by explicitly checking if it's true
         browserNotificationShown = showResult === true;
         console.log('🌐 Browser notification shown successfully:', browserNotificationShown);
       } catch (browserError) {
