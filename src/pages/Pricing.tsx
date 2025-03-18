@@ -1,3 +1,4 @@
+
 import React, { useEffect } from "react";
 import { Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -163,6 +164,10 @@ const Pricing = () => {
     },
   ];
 
+  // Separate tiers into two groups: consumer (first 3) and business (last 2)
+  const consumerTiers = tiers.slice(0, 3);
+  const businessTiers = tiers.slice(3);
+
   return (
     <>
       <GradientWaveBackground />
@@ -177,8 +182,16 @@ const Pricing = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-y-8 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 xl:grid-cols-5 lg:gap-8">
-          {tiers.map((tier) => (
+        {/* First row: Consumer tiers */}
+        <div className="grid grid-cols-1 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+          {consumerTiers.map((tier) => (
+            <PricingTier key={tier.name} {...tier} />
+          ))}
+        </div>
+
+        {/* Second row: Business tiers */}
+        <div className="grid grid-cols-1 gap-y-8 sm:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          {businessTiers.map((tier) => (
             <PricingTier key={tier.name} {...tier} />
           ))}
         </div>
