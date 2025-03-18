@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { detectPlatform } from '@/utils/notifications/platformDetection';
 import { useIOSPWANotifications } from './use-ios-pwa-notifications';
@@ -70,12 +71,24 @@ export function useNotifications() {
     }
   };
   
+  // Wrap the original showNotification to ensure it returns a boolean
+  const wrappedShowNotification = async (params: Parameters<typeof notificationContext.showNotification>[0]): Promise<boolean> => {
+    try {
+      const result = await notificationContext.showNotification(params);
+      // Ensure we return a boolean value
+      return result === true;
+    } catch (error) {
+      console.error('Error in wrapped showNotification:', error);
+      return false;
+    }
+  };
+  
   return {
     isSubscribed: implementation.isSubscribed,
     isLoading: implementation.isLoading,
     enableNotifications,
     disableNotifications,
     checkSubscriptionStatus: implementation.checkSubscriptionStatus,
-    showNotification: notificationContext.showNotification
+    showNotification: wrappedShowNotification
   };
 }

@@ -76,22 +76,31 @@ export function useTaskNotificationDisplay() {
       
       console.log('📱 Creating in-app notification for task:', referenceIdString);
 
-      // Ensure we set referenceType as 'task' consistently for all task notifications
-      const wasNotificationShown = await showNotification({
-        title: type === 'reminder' ? 'Task Reminder' :
-               type === 'shared' ? 'Task Shared' :
-               'New Task Assignment',
-        message: task.title,
-        type: 'info',
-        persistent: true,
-        referenceId: referenceIdString,
-        referenceType: 'task', // Always set as 'task' to trigger button display
-        data: {
-          reminderTime: task.reminder_time
-        }
-      });
-      
-      console.log('📱 In-app notification creation result:', wasNotificationShown ? 'SUCCESS' : 'FAILED');
+      // FIX: Explicitly handle boolean return from showNotification
+      let wasNotificationShown = false;
+      try {
+        // Ensure we set referenceType as 'task' consistently for all task notifications
+        const notificationResult = await showNotification({
+          title: type === 'reminder' ? 'Task Reminder' :
+                type === 'shared' ? 'Task Shared' :
+                'New Task Assignment',
+          message: task.title,
+          type: 'info',
+          persistent: true,
+          referenceId: referenceIdString,
+          referenceType: 'task', // Always set as 'task' to trigger button display
+          data: {
+            reminderTime: task.reminder_time
+          }
+        });
+        
+        // CRITICAL FIX: Explicitly check for boolean result
+        wasNotificationShown = notificationResult === true;
+        console.log('📱 In-app notification creation result:', wasNotificationShown ? 'SUCCESS' : 'FAILED');
+      } catch (notificationError) {
+        console.error('📱 Error showing in-app notification:', notificationError);
+        wasNotificationShown = false;
+      }
 
       return true;
     } catch (error) {
