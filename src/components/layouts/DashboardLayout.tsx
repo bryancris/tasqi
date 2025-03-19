@@ -2,7 +2,7 @@ import { Sidebar } from "@/components/dashboard/Sidebar";
 import { useState, useEffect } from "react";
 import { Header } from "@/components/dashboard/Header";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { cn } from "@/utils/cn";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth";
 import { useAuthSync } from "@/hooks/use-auth-sync";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -28,9 +28,8 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
     <TooltipProvider>
       <div className="flex h-screen overflow-hidden bg-background">
         <Sidebar 
-          open={sidebarOpen} 
-          onClose={() => setSidebarOpen(false)} 
-          username={user?.email?.split('@')[0] || 'User'}
+          selectedDate={new Date()}
+          onDateChange={(date) => console.log('Date changed:', date)}
         />
         <div className="flex flex-col flex-1 w-0 overflow-hidden">
           <Header 
