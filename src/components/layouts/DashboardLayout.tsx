@@ -1,6 +1,7 @@
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { useState, useEffect } from "react";
-import { Header } from "@/components/dashboard/Header";
+import { MobileHeader } from "@/components/layouts/MobileHeader";
+import { DesktopHeader } from "@/components/layouts/DesktopHeader";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth";
@@ -32,10 +33,11 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
           onDateChange={(date) => console.log('Date changed:', date)}
         />
         <div className="flex flex-col flex-1 w-0 overflow-hidden">
-          <Header 
-            onMenuClick={() => setSidebarOpen(!sidebarOpen)} 
-            isSidebarOpen={sidebarOpen} 
-          />
+          {isMobile ? (
+            <MobileHeader />
+          ) : (
+            <DesktopHeader />
+          )}
           <main className={cn(
             "flex-1 relative overflow-y-auto focus:outline-none",
             "bg-slate-50 dark:bg-gray-900",
