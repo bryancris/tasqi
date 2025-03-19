@@ -1,96 +1,53 @@
-
-import React, { useEffect, useRef } from "react";
-import { MobileHeader } from "./MobileHeader";
-import { MobileFooter } from "./MobileFooter";
-import { Sidebar } from "../dashboard/Sidebar";
-import { DesktopHeader } from "./DesktopHeader";
+import { Sidebar } from "@/components/dashboard/Sidebar";
+import { useState, useEffect } from "react";
+import { Header } from "@/components/dashboard/Header";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useCalendarView } from "@/contexts/CalendarViewContext";
-import { useSupabaseSubscription } from "@/hooks/use-supabase-subscription";
-import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { cn } from "@/utils/cn";
+import { useAuth } from "@/contexts/auth";
+import { useAuthSync } from "@/hooks/use-auth-sync";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
-// Add iOS PWA detection
-const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
-                    (window.navigator as any).standalone === true;
-const isIOSPWA = isIOS && isStandalone;
-
-interface DashboardLayoutProps {
-  children: React.ReactNode;
-}
-
-export function DashboardLayout({
-  children
-}: DashboardLayoutProps) {
+export const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const isMobile = useIsMobile();
-  const {
-    selectedDate,
-    setSelectedDate
-  } = useCalendarView();
-  
-  // Initialize Supabase subscriptions once - will handle its own initialization check
-  useSupabaseSubscription();
-  
-  // Use ref to track if we've already logged the mount message
-  const hasLoggedMount = useRef(false);
-  
-  useEffect(() => {
-    if (!hasLoggedMount.current) {
-      console.log("DashboardLayout mounted");
-      console.log("Is iOS PWA:", isIOSPWA);
-      hasLoggedMount.current = true;
-    }
-    
-    // Add iOS PWA-specific meta tags for better WebView behavior
-    if (isIOSPWA) {
-      console.log("Configuring iOS PWA-specific settings");
-      
-      // Add meta tags for iOS if they don't exist
-      if (!document.querySelector('meta[name="apple-mobile-web-app-capable"]')) {
-        const appleMobileWebAppCapable = document.createElement('meta');
-        appleMobileWebAppCapable.setAttribute('name', 'apple-mobile-web-app-capable');
-        appleMobileWebAppCapable.setAttribute('content', 'yes');
-        document.head.appendChild(appleMobileWebAppCapable);
-      }
-      
-      if (!document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')) {
-        const statusBarStyle = document.createElement('meta');
-        statusBarStyle.setAttribute('name', 'apple-mobile-web-app-status-bar-style');
-        statusBarStyle.setAttribute('content', 'black-translucent');
-        document.head.appendChild(statusBarStyle);
-      }
-      
-      // We may need to add this for iOS to allow pull-to-refresh in PWA mode
-      document.documentElement.style.setProperty('overscroll-behavior-y', 'auto');
-      document.body.style.setProperty('overscroll-behavior-y', 'auto');
-    }
-  }, []);
+  const { user } = useAuth();
 
-  return <div className="min-h-screen bg-white">
-      {isMobile ? <>
-          <MobileHeader />
-          <main className={`flex-1 pb-16 ${isIOSPWA ? 'ios-pwa-main' : 'pt-[72px] scrollbar-hide'}`}>
-            <ErrorBoundary fallback={<div className="p-4 text-center">Something went wrong loading the dashboard. Please refresh the page.</div>}>
+  // Use the auth sync hook to keep tasks in sync with auth state
+  useAuthSync();
+  
+  // Close sidebar on mobile
+  useEffect(() => {
+    if (isMobile) {
+      setSidebarOpen(false);
+    } else {
+      setSidebarOpen(true);
+    }
+  }, [isMobile]);
+
+  return (
+    <TooltipProvider>
+      <div className="flex h-screen overflow-hidden bg-background">
+        <Sidebar 
+          open={sidebarOpen} 
+          onClose={() => setSidebarOpen(false)} 
+          username={user?.email?.split('@')[0] || 'User'}
+        />
+        <div className="flex flex-col flex-1 w-0 overflow-hidden">
+          <Header 
+            onMenuClick={() => setSidebarOpen(!sidebarOpen)} 
+            isSidebarOpen={sidebarOpen} 
+          />
+          <main className={cn(
+            "flex-1 relative overflow-y-auto focus:outline-none",
+            "bg-slate-50 dark:bg-gray-900",
+            "p-4 md:p-6 transition-all duration-200 ease-in-out"
+          )}>
+            <div className="container mx-auto h-full">
               {children}
-            </ErrorBoundary>
-          </main>
-          <MobileFooter />
-        </> : <div className="flex h-screen overflow-hidden">
-          <Sidebar selectedDate={selectedDate} onDateChange={setSelectedDate} />
-          <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Fixed height header */}
-            <div className="h-[72px] flex-shrink-0 relative bg-background border-b">
-              <DesktopHeader />
             </div>
-            {/* Main content area with proper padding */}
-            <main 
-              className="flex-1 overflow-y-auto bg-[#f8f9fa] p-6 px-[20px] py-0"
-            >
-              <ErrorBoundary fallback={<div className="p-4 text-center">Something went wrong loading the dashboard. Please refresh the page.</div>}>
-                {children}
-              </ErrorBoundary>
-            </main>
-          </div>
-        </div>}
-    </div>;
-}
+          </main>
+        </div>
+      </div>
+    </TooltipProvider>
+  );
+};
