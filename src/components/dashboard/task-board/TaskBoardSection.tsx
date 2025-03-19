@@ -42,7 +42,7 @@ export function TaskBoardSection({ tasks, selectedDate, onDragEnd, onComplete }:
 
   const filterTasks = (task: Task) => {
     try {
-      // Always show unscheduled tasks
+      // FIXED: Always show unscheduled tasks regardless of date
       if (task.status === 'unscheduled') return true;
       
       // Show completed tasks from today
@@ -53,8 +53,8 @@ export function TaskBoardSection({ tasks, selectedDate, onDragEnd, onComplete }:
       // For scheduled, in_progress, stuck, and event tasks, check the date
       if (task.status === 'scheduled' || task.status === 'in_progress' || 
           task.status === 'stuck' || task.status === 'event') {
-        // If task has no date, don't show it (should be handled as unscheduled)
-        if (!task.date) return false;
+        // If task has no date, show it on every day (treating it as unscheduled)
+        if (!task.date) return true;
         
         // Parse task date - creating the date object without time component
         const taskDate = parseISO(task.date);
