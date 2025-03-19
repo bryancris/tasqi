@@ -48,22 +48,42 @@ export function useTaskDataPreparation() {
       status = "unscheduled";
     }
 
-    // Determine time fields based on task type and all-day setting
-    const date = (formState.isScheduled || formState.isEvent) ? formState.date : null;
-    
-    // CRITICAL FIX: Handle empty string time values
-    // For unscheduled tasks or all-day events, we need to ensure time values are null, not empty strings
-    let taskStartTime = formState.isAllDay ? null : formState.startTime;
-    let taskEndTime = formState.isAllDay ? null : formState.endTime;
-    
-    // Convert empty strings to null for time fields
-    taskStartTime = (taskStartTime === "" || taskStartTime === undefined) ? null : taskStartTime;
-    taskEndTime = (taskEndTime === "" || taskEndTime === undefined) ? null : taskEndTime;
+    // ENHANCED VALIDATION: For unscheduled tasks, ensure ALL time-related fields are null
+    let date = null;
+    let taskStartTime = null;
+    let taskEndTime = null;
+
+    // Only process date/time fields if task is scheduled or is an event
+    if (formState.isScheduled || formState.isEvent) {
+      // Set date field
+      date = formState.date ? formState.date : null;
+      
+      // Process time fields based on all-day setting
+      if (!formState.isAllDay) {
+        // CRITICAL FIX: More robust handling of empty string time values
+        taskStartTime = (formState.startTime === "" || formState.startTime === undefined) ? null : formState.startTime;
+        taskEndTime = (formState.endTime === "" || formState.endTime === undefined) ? null : formState.endTime;
+        
+        // Double-check that time values are either null or valid time strings with colons
+        if (taskStartTime !== null && !taskStartTime.includes(':')) {
+          console.log('🔴 Invalid startTime format, converting to null:', taskStartTime);
+          taskStartTime = null;
+        }
+        
+        if (taskEndTime !== null && !taskEndTime.includes(':')) {
+          console.log('🔴 Invalid endTime format, converting to null:', taskEndTime);
+          taskEndTime = null;
+        }
+      }
+    }
     
     // Additional logging to verify the fix
-    console.log('🔴 After fixing empty time values:', {
+    console.log('🔴 After enhanced validation:', {
+      status,
+      date,
       taskStartTime, 
       taskEndTime, 
+      isUnscheduled: status === 'unscheduled',
       isValid: (taskStartTime === null || (typeof taskStartTime === 'string' && taskStartTime.includes(':')))
     });
     
@@ -112,6 +132,17 @@ export function useTaskDataPreparation() {
       // Double-check and force number 0 for absolute certainty
       taskData.reminder_time = 0;
       console.log('🔴 FINAL VERIFICATION: Forced reminder_time to exactly number 0 for database insertion');
+    }
+    
+    // Final verification for unscheduled tasks
+    if (status === 'unscheduled') {
+      // Ensure all time-related fields are explicitly null for unscheduled tasks
+      taskData.date = null;
+      taskData.start_time = null;
+      taskData.end_time = null;
+      taskData.is_all_day = false;
+      
+      console.log('🔴 UNSCHEDULED TASK: Ensuring all time fields are null');
     }
     
     console.log('🔴 Final task data prepared:', taskData);
