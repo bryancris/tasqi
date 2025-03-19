@@ -1,3 +1,4 @@
+
 import { TaskPriority } from "@/components/dashboard/TaskBoard";
 import { Subtask } from "@/components/dashboard/subtasks/SubtaskList";
 import { supabase } from "@/integrations/supabase/client";
@@ -49,8 +50,22 @@ export function useTaskDataPreparation() {
 
     // Determine time fields based on task type and all-day setting
     const date = (formState.isScheduled || formState.isEvent) ? formState.date : null;
-    const taskStartTime = formState.isAllDay ? null : formState.startTime;
-    const taskEndTime = formState.isAllDay ? null : formState.endTime;
+    
+    // CRITICAL FIX: Handle empty string time values
+    // For unscheduled tasks or all-day events, we need to ensure time values are null, not empty strings
+    let taskStartTime = formState.isAllDay ? null : formState.startTime;
+    let taskEndTime = formState.isAllDay ? null : formState.endTime;
+    
+    // Convert empty strings to null for time fields
+    taskStartTime = (taskStartTime === "" || taskStartTime === undefined) ? null : taskStartTime;
+    taskEndTime = (taskEndTime === "" || taskEndTime === undefined) ? null : taskEndTime;
+    
+    // Additional logging to verify the fix
+    console.log('🔴 After fixing empty time values:', {
+      taskStartTime, 
+      taskEndTime, 
+      isValid: (taskStartTime === null || (typeof taskStartTime === 'string' && taskStartTime.includes(':')))
+    });
     
     // CRITICAL FIX: Special handling for reminderTime=0 ("At start time")
     // If isAtStartTime flag is set or reminderTime is exactly 0, ensure we keep it as 0
