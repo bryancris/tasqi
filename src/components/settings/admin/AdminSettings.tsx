@@ -4,6 +4,7 @@ import { UserTable } from "./UserTable";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { Spinner } from "@/components/ui/spinner";
 
 export function AdminSettings() {
   const { user } = useAuth();
@@ -19,9 +20,20 @@ export function AdminSettings() {
       }
 
       try {
-        // In a real application, you would check from a user_roles table
-        // For now, we'll just assume the user is an admin if they're authenticated
-        setIsAdmin(true);
+        // Query the user_roles table to check if the user is an admin
+        const { data, error } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .single();
+
+        if (error) {
+          console.error("Error checking admin status:", error);
+          setIsAdmin(false);
+        } else {
+          // User is an admin if they have a role of 'admin'
+          setIsAdmin(data?.role === 'admin');
+        }
       } catch (error) {
         console.error("Error checking admin status:", error);
         setIsAdmin(false);
@@ -36,7 +48,7 @@ export function AdminSettings() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-40">
-        <div className="animate-pulse">Loading admin settings...</div>
+        <Spinner className="h-6 w-6" />
       </div>
     );
   }

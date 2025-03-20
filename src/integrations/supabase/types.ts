@@ -1099,6 +1099,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_settings: {
         Row: {
           created_at: string
@@ -1200,6 +1221,12 @@ export type Database = {
           "": unknown
         }
         Returns: unknown
+      }
+      is_admin: {
+        Args: {
+          user_uuid: string
+        }
+        Returns: boolean
       }
       ivfflat_bit_support: {
         Args: {
@@ -1371,6 +1398,7 @@ export type Database = {
         | "stuck"
         | "event"
       time_format: "12h" | "24h"
+      user_role: "admin" | "user"
     }
     CompositeTypes: {
       task_position: {
