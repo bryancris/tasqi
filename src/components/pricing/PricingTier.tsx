@@ -27,7 +27,16 @@ const PricingTier = ({
   popular = false,
 }: PricingTierProps) => {
   return (
-    <Card className={`w-full flex flex-col ${popular ? "border-blue-600 shadow-lg" : ""}`}>
+    <Card 
+      className={`
+        w-full flex flex-col 
+        ${popular ? "border-blue-600 shadow-lg" : ""} 
+        transition-all duration-300 ease-in-out
+        hover:shadow-xl hover:translate-y-[-8px]
+        hover:border-opacity-100
+        ${popular ? "hover:border-blue-500" : "hover:border-gray-400"}
+      `}
+    >
       <CardHeader>
         <CardTitle className="text-xl font-bold">
           {name}
@@ -59,11 +68,15 @@ const PricingTier = ({
       </CardContent>
       <CardFooter>
         <Button 
-          className={`w-full ${
-            popular 
-              ? "bg-blue-600 hover:bg-blue-700" 
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-          }`}
+          className={`
+            w-full 
+            transition-all duration-300 ease-in-out
+            ${
+              popular 
+                ? "bg-blue-600 hover:bg-blue-700 hover:shadow-md" 
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm"
+            }
+          `}
         >
           {buttonText}
         </Button>
