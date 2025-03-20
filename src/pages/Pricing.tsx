@@ -130,7 +130,7 @@ const Pricing = () => {
     },
     {
       name: "Pro",
-      price: "$19.99",
+      price: "$12.99",
       description: "Advanced features for power users",
       features: [
         { name: "Everything in Family plan", included: true },
