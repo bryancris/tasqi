@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Spinner } from "@/components/ui/spinner";
 import { UserFilter } from "./UserFilter";
+import { UserEditDialog } from "./UserEditDialog";
 
 interface User {
   id: string;
@@ -20,6 +21,8 @@ export function UserTable() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [filter, setFilter] = useState("");
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const pageSize = 10;
 
   useEffect(() => {
@@ -62,6 +65,11 @@ export function UserTable() {
     }
   };
 
+  const handleUserClick = (user: User) => {
+    setSelectedUser(user);
+    setDialogOpen(true);
+  };
+
   return (
     <div className="space-y-4">
       <UserFilter onFilterChange={(value) => setFilter(value)} />
@@ -92,7 +100,11 @@ export function UserTable() {
               </TableRow>
             ) : (
               users.map((user) => (
-                <TableRow key={user.id}>
+                <TableRow 
+                  key={user.id} 
+                  className="cursor-pointer hover:bg-muted"
+                  onClick={() => handleUserClick(user)}
+                >
                   <TableCell className="font-medium">{user.email}</TableCell>
                   <TableCell>
                     {user.first_name || user.last_name 
@@ -153,6 +165,13 @@ export function UserTable() {
           </PaginationContent>
         </Pagination>
       )}
+
+      <UserEditDialog 
+        open={dialogOpen} 
+        onOpenChange={setDialogOpen} 
+        user={selectedUser} 
+        onUserUpdated={fetchUsers}
+      />
     </div>
   );
 }
