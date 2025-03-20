@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -6,14 +5,14 @@ import { AppearanceSettings } from "./appearance/AppearanceSettings";
 import { CalendarSettings } from "./calendar/CalendarSettings";
 import { TaskSharingSettings } from "./task-sharing/TaskSharingSettings";
 import { ProfileSettings } from "./profile/ProfileSettings";
+import { AdminSettings } from "./admin/AdminSettings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserRound } from "lucide-react";
+import { UserRound, Shield } from "lucide-react";
 
 export function SettingsContent() {
   const [startHour, setStartHour] = useState<string>("8");
   const [endHour, setEndHour] = useState<string>("17");
 
-  // Memoize the load settings function
   const loadUserSettings = useCallback(async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -61,23 +60,34 @@ export function SettingsContent() {
             <UserRound className="w-4 h-4" />
             Profile
           </TabsTrigger>
+          
           <TabsTrigger 
             value="appearance" 
             className="flex-1 bg-[#F2D9FF] data-[state=active]:bg-[#D946EF] data-[state=active]:text-white text-[#D946EF]"
           >
             Appearance
           </TabsTrigger>
+          
           <TabsTrigger 
             value="calendar" 
             className="flex-1 bg-[#90C7F7] data-[state=active]:bg-[#0EA5E9] data-[state=active]:text-white text-[#0EA5E9]"
           >
             Calendar
           </TabsTrigger>
+          
           <TabsTrigger 
             value="task-sharing" 
             className="flex-1 bg-[#E5DEFF] data-[state=active]:bg-[#8B5CF6] data-[state=active]:text-white text-[#8B5CF6]"
           >
             Task Sharing
+          </TabsTrigger>
+
+          <TabsTrigger 
+            value="admin" 
+            className="flex-1 bg-[#E5DEFF] data-[state=active]:bg-[#8B5CF6] data-[state=active]:text-white text-[#8B5CF6]"
+          >
+            <Shield className="w-4 h-4 mr-2" />
+            Admin
           </TabsTrigger>
         </TabsList>
         
@@ -99,6 +109,10 @@ export function SettingsContent() {
         
         <TabsContent value="task-sharing">
           <TaskSharingSettings />
+        </TabsContent>
+        
+        <TabsContent value="admin">
+          <AdminSettings />
         </TabsContent>
       </Tabs>
     </div>
