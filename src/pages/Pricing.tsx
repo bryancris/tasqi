@@ -96,7 +96,7 @@ const Pricing = () => {
     },
     {
       name: "Personal",
-      price: "$4.99",
+      price: "$9.99",
       description: "Enhanced features for individual productivity",
       features: [
         { name: "Unlimited tasks", included: true },
