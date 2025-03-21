@@ -1,3 +1,4 @@
+
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { useState, useEffect } from "react";
 import { MobileHeader } from "@/components/layouts/MobileHeader";
@@ -41,9 +42,9 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
           <main className={cn(
             "flex-1 relative overflow-y-auto focus:outline-none",
             "bg-slate-50 dark:bg-gray-900",
-            "p-4 md:p-6 transition-all duration-200 ease-in-out"
+            "pt-14 md:pt-16" // Add top padding to avoid header overlap
           )}>
-            <div className="container mx-auto h-full">
+            <div className="h-full w-full">
               {children}
             </div>
           </main>
@@ -51,4 +52,4 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
       </div>
     </TooltipProvider>
   );
-};
+}

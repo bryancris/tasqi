@@ -66,7 +66,7 @@ export function YearlyCalendar({ onDateSelect }: YearlyCalendarProps) {
   ];
 
   return (
-    <Card className="w-full max-w-7xl mx-auto">
+    <Card className="w-full h-full mx-auto shadow-sm">
       <CardHeader className="pb-0 text-center">
         <h2 className="text-3xl font-bold text-gray-800">
           {currentYear} Calendar
@@ -76,7 +76,7 @@ export function YearlyCalendar({ onDateSelect }: YearlyCalendarProps) {
         </p>
       </CardHeader>
       
-      <CardContent className="pt-6">
+      <CardContent className="pt-6 h-[calc(100%-120px)] overflow-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {months.map(({ month, date }, index) => (
             <MonthCard

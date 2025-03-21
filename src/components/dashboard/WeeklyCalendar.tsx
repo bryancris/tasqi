@@ -38,7 +38,7 @@ export function WeeklyCalendar() {
   }
 
   return (
-    <Card className="w-full max-w-7xl mx-auto">
+    <Card className="w-full h-full mx-auto shadow-sm">
       <CardHeader className="pb-0">
         <CalendarHeader 
           monthYear={monthYear}
@@ -50,7 +50,7 @@ export function WeeklyCalendar() {
         />
       </CardHeader>
       
-      <CardContent className="pt-6">
+      <CardContent className="pt-6 h-[calc(100%-80px)]">
         <div className="flex flex-col h-full overflow-hidden">
           <div className="flex flex-1 overflow-hidden">
             <div className="flex-1">

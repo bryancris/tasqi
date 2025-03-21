@@ -58,7 +58,7 @@ export function Calendar({ initialDate, onDateSelect }: CalendarProps) {
   const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
   return (
-    <Card className="w-full max-w-7xl mx-auto">
+    <Card className="w-full h-full mx-auto shadow-sm">
       <CardHeader className="pb-0">
         <CalendarHeader 
           monthYear={monthYear}
@@ -67,8 +67,8 @@ export function Calendar({ initialDate, onDateSelect }: CalendarProps) {
         />
       </CardHeader>
       
-      <CardContent className="pt-6">
-        <div className="border rounded-lg bg-gradient-to-br from-white to-gray-50 shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl">
+      <CardContent className="pt-6 h-[calc(100%-80px)]">
+        <div className="border rounded-lg bg-gradient-to-br from-white to-gray-50 shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl h-full">
           <div className="grid grid-cols-7 gap-px bg-gradient-to-r from-[#2A9BB5] to-[#1C7A8C] text-white">
             {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
               <div key={day} className="p-3 text-sm font-medium text-center">
@@ -77,7 +77,7 @@ export function Calendar({ initialDate, onDateSelect }: CalendarProps) {
             ))}
           </div>
           
-          <div className="grid grid-cols-7 gap-px bg-gray-200">
+          <div className="grid grid-cols-7 gap-px bg-gray-200 h-[calc(100%-48px)] overflow-auto">
             {calendarDays.map((date, i) => {
               const isCurrentMonth = date.getMonth() === currentMonth.getMonth();
               const isToday = new Date().toDateString() === date.toDateString();

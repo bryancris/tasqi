@@ -25,7 +25,7 @@ export function CalendarHeader({
   return (
     <div className="flex items-center justify-between w-full">
       <div className="flex items-center gap-2">
-        <h2 className="text-lg font-semibold text-gray-700 truncate max-w-[200px] md:max-w-none">
+        <h2 className="text-xl font-semibold text-gray-800 truncate max-w-[200px] md:max-w-none">
           {monthYear}
         </h2>
       </div>

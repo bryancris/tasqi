@@ -12,6 +12,7 @@ import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
 import { isIOSPWA } from "@/utils/platform-detection";
+import { DashboardViewWrapper } from "@/components/dashboard/DashboardViewWrapper";
 
 export default function Dashboard() {
   // Proper hook usage - call at top level unconditionally 
@@ -133,17 +134,19 @@ export default function Dashboard() {
             paddingTop: 0,
             marginTop: 0
           }}
-          className={`p-4 py-0 px-[10px] h-full overflow-y-auto ios-momentum-scroll ${isIOSPwaApp ? 'ios-pull-to-refresh' : ''}`}
+          className={`h-full overflow-y-auto ios-momentum-scroll ${isIOSPwaApp ? 'ios-pull-to-refresh' : ''}`}
         >
-          {view === 'weekly' ? (
-            <WeeklyCalendar />
-          ) : view === 'monthly' ? (
-            <Calendar initialDate={selectedDate} onDateSelect={setSelectedDate} />
-          ) : view === 'yearly' ? (
-            <YearlyCalendar onDateSelect={setSelectedDate} />
-          ) : (
-            <TaskBoard selectedDate={selectedDate} onDateChange={setSelectedDate} />
-          )}
+          <DashboardViewWrapper>
+            {view === 'weekly' ? (
+              <WeeklyCalendar />
+            ) : view === 'monthly' ? (
+              <Calendar initialDate={selectedDate} onDateSelect={setSelectedDate} />
+            ) : view === 'yearly' ? (
+              <YearlyCalendar onDateSelect={setSelectedDate} />
+            ) : (
+              <TaskBoard selectedDate={selectedDate} onDateChange={setSelectedDate} />
+            )}
+          </DashboardViewWrapper>
           
           {/* Helper elements for iOS PWA */}
           {isIOSPwaApp && <div className="h-px w-full -mb-px"></div>}
