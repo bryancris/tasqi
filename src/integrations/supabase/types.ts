@@ -514,6 +514,7 @@ export type Database = {
           fcm_token: string | null
           first_name: string | null
           id: string
+          last_login_at: string | null
           last_name: string | null
           updated_at: string | null
         }
@@ -523,6 +524,7 @@ export type Database = {
           fcm_token?: string | null
           first_name?: string | null
           id: string
+          last_login_at?: string | null
           last_name?: string | null
           updated_at?: string | null
         }
@@ -532,6 +534,7 @@ export type Database = {
           fcm_token?: string | null
           first_name?: string | null
           id?: string
+          last_login_at?: string | null
           last_name?: string | null
           updated_at?: string | null
         }

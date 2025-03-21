@@ -20,6 +20,7 @@ interface User {
 export function UserTable() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [filter, setFilter] = useState("");
@@ -33,6 +34,9 @@ export function UserTable() {
 
   const fetchUsers = async () => {
     try {
+      if (filter) {
+        setSearchLoading(true);
+      }
       setLoading(true);
       
       // Build query to fetch users with optional filtering
@@ -64,12 +68,19 @@ export function UserTable() {
       console.error('Error fetching users:', error);
     } finally {
       setLoading(false);
+      setSearchLoading(false);
     }
   };
 
   const handleUserClick = (user: User) => {
     setSelectedUser(user);
     setDialogOpen(true);
+  };
+
+  const handleFilterChange = (newFilter: string) => {
+    setFilter(newFilter);
+    // Reset to first page when filter changes
+    setPage(1);
   };
 
   const formatDate = (dateString: string | null | undefined) => {
@@ -79,7 +90,7 @@ export function UserTable() {
 
   return (
     <div className="space-y-4">
-      <UserFilter onFilterChange={(value) => setFilter(value)} />
+      <UserFilter onFilterChange={handleFilterChange} isLoading={searchLoading} />
       
       <div className="rounded-md border">
         <Table>
@@ -103,7 +114,7 @@ export function UserTable() {
             ) : users.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} className="h-24 text-center">
-                  No users found.
+                  {filter ? `No users found matching "${filter}"` : "No users found."}
                 </TableCell>
               </TableRow>
             ) : (
