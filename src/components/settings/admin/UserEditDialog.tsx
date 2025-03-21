@@ -9,6 +9,7 @@ import { useForm } from "react-hook-form";
 import { supabase } from "@/integrations/supabase/client";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
+import { format } from "date-fns";
 
 interface User {
   id: string;
@@ -16,6 +17,7 @@ interface User {
   first_name: string | null;
   last_name: string | null;
   created_at: string;
+  last_login_at?: string | null;
 }
 
 interface UserEditDialogProps {
@@ -83,6 +85,11 @@ export function UserEditDialog({ open, onOpenChange, user, onUserUpdated }: User
     }
   };
 
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return 'Never';
+    return format(new Date(dateString), 'MMM d, yyyy h:mm a');
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
@@ -133,6 +140,24 @@ export function UserEditDialog({ open, onOpenChange, user, onUserUpdated }: User
                 </FormItem>
               )}
             />
+
+            {user && (
+              <div className="pt-2">
+                <div className="flex flex-col space-y-1.5">
+                  <Label>Created</Label>
+                  <div className="text-sm text-muted-foreground">
+                    {new Date(user.created_at).toLocaleString()}
+                  </div>
+                </div>
+                
+                <div className="flex flex-col space-y-1.5 mt-3">
+                  <Label>Last Login</Label>
+                  <div className="text-sm text-muted-foreground">
+                    {formatDate(user.last_login_at)}
+                  </div>
+                </div>
+              </div>
+            )}
             
             <DialogFooter className="pt-4">
               <Button 

@@ -6,6 +6,7 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 import { Spinner } from "@/components/ui/spinner";
 import { UserFilter } from "./UserFilter";
 import { UserEditDialog } from "./UserEditDialog";
+import { format } from "date-fns";
 
 interface User {
   id: string;
@@ -13,6 +14,7 @@ interface User {
   first_name: string | null;
   last_name: string | null;
   created_at: string;
+  last_login_at?: string | null;
 }
 
 export function UserTable() {
@@ -36,7 +38,7 @@ export function UserTable() {
       // Build query to fetch users with optional filtering
       let query = supabase
         .from('profiles')
-        .select('id, email, first_name, last_name, created_at', { count: 'exact' });
+        .select('id, email, first_name, last_name, created_at, last_login_at', { count: 'exact' });
       
       // Apply filter if it exists
       if (filter) {
@@ -70,6 +72,11 @@ export function UserTable() {
     setDialogOpen(true);
   };
 
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return 'Never';
+    return format(new Date(dateString), 'MMM d, yyyy h:mm a');
+  };
+
   return (
     <div className="space-y-4">
       <UserFilter onFilterChange={(value) => setFilter(value)} />
@@ -81,12 +88,13 @@ export function UserTable() {
               <TableHead>Email</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Created</TableHead>
+              <TableHead>Last Login</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={3} className="h-24 text-center">
+                <TableCell colSpan={4} className="h-24 text-center">
                   <div className="flex justify-center">
                     <Spinner className="h-6 w-6" />
                   </div>
@@ -94,7 +102,7 @@ export function UserTable() {
               </TableRow>
             ) : users.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={3} className="h-24 text-center">
+                <TableCell colSpan={4} className="h-24 text-center">
                   No users found.
                 </TableCell>
               </TableRow>
@@ -113,6 +121,9 @@ export function UserTable() {
                   </TableCell>
                   <TableCell>
                     {new Date(user.created_at).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>
+                    {formatDate(user.last_login_at)}
                   </TableCell>
                 </TableRow>
               ))
