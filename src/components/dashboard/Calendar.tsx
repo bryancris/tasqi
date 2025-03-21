@@ -7,6 +7,7 @@ import { CalendarHeader } from "./calendar/CalendarHeader";
 import { CalendarDay } from "./calendar/CalendarDay";
 import { startOfMonth, eachDayOfInterval, endOfMonth, startOfWeek, endOfWeek, parseISO } from "date-fns";
 import { EditTaskDrawer } from "./EditTaskDrawer";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 interface CalendarProps {
   initialDate?: Date;
@@ -57,51 +58,51 @@ export function Calendar({ initialDate, onDateSelect }: CalendarProps) {
   const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-6">
-      {/* Calendar Header properly positioned */}
-      <div className="flex items-center justify-between">
+    <Card className="w-full max-w-7xl mx-auto">
+      <CardHeader className="pb-0">
         <CalendarHeader 
           monthYear={monthYear}
           onNextMonth={nextMonth}
           onPreviousMonth={previousMonth}
         />
-      </div>
+      </CardHeader>
+      
+      <CardContent className="pt-6">
+        <div className="border rounded-lg bg-gradient-to-br from-white to-gray-50 shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl">
+          <div className="grid grid-cols-7 gap-px bg-gradient-to-r from-[#2A9BB5] to-[#1C7A8C] text-white">
+            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
+              <div key={day} className="p-3 text-sm font-medium text-center">
+                {day}
+              </div>
+            ))}
+          </div>
+          
+          <div className="grid grid-cols-7 gap-px bg-gray-200">
+            {calendarDays.map((date, i) => {
+              const isCurrentMonth = date.getMonth() === currentMonth.getMonth();
+              const isToday = new Date().toDateString() === date.toDateString();
+              
+              const dayTasks = tasks.filter(task => {
+                if (!task.date || task.status !== 'scheduled') return false;
+                const taskDate = parseISO(task.date);
+                return taskDate.toDateString() === date.toDateString();
+              });
 
-      {/* Calendar Grid */}
-      <div className="border rounded-lg bg-gradient-to-br from-white to-gray-50 shadow-lg overflow-hidden transition-all duration-300 hover:shadow-xl">
-        <div className="grid grid-cols-7 gap-px bg-gradient-to-r from-[#2A9BB5] to-[#1C7A8C] text-white">
-          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-            <div key={day} className="p-3 text-sm font-medium text-center">
-              {day}
-            </div>
-          ))}
+              return (
+                <CalendarDay
+                  key={i}
+                  date={date}
+                  isCurrentMonth={isCurrentMonth}
+                  isToday={isToday}
+                  tasks={dayTasks}
+                  onTaskClick={handleTaskClick}
+                  onDateClick={onDateSelect}
+                />
+              );
+            })}
+          </div>
         </div>
-        
-        <div className="grid grid-cols-7 gap-px bg-gray-200">
-          {calendarDays.map((date, i) => {
-            const isCurrentMonth = date.getMonth() === currentMonth.getMonth();
-            const isToday = new Date().toDateString() === date.toDateString();
-            
-            const dayTasks = tasks.filter(task => {
-              if (!task.date || task.status !== 'scheduled') return false;
-              const taskDate = parseISO(task.date);
-              return taskDate.toDateString() === date.toDateString();
-            });
-
-            return (
-              <CalendarDay
-                key={i}
-                date={date}
-                isCurrentMonth={isCurrentMonth}
-                isToday={isToday}
-                tasks={dayTasks}
-                onTaskClick={handleTaskClick}
-                onDateClick={onDateSelect}
-              />
-            );
-          })}
-        </div>
-      </div>
+      </CardContent>
 
       {selectedTask && (
         <EditTaskDrawer
@@ -110,6 +111,6 @@ export function Calendar({ initialDate, onDateSelect }: CalendarProps) {
           onOpenChange={setIsEditDrawerOpen}
         />
       )}
-    </div>
+    </Card>
   );
 }

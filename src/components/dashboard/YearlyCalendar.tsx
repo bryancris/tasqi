@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
@@ -65,32 +66,31 @@ export function YearlyCalendar({ onDateSelect }: YearlyCalendarProps) {
   ];
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-6 bg-white/50 min-h-screen">
-      <Card className="border-none shadow-none bg-transparent">
-        <CardHeader>
-          <h2 className="text-3xl font-bold text-center text-gray-800">
-            {currentYear} Calendar
-          </h2>
-          <p className="text-center text-gray-600 mt-2">
-            Yearly overview of your schedule
-          </p>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {months.map(({ month, date }, index) => (
-              <MonthCard
-                key={month}
-                month={month}
-                date={date}
-                selectedDate={selectedDate}
-                onSelect={handleDateSelect}
-                gradientClass={`${gradients[index]} border-2`}
-                tasks={tasks}
-              />
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+    <Card className="w-full max-w-7xl mx-auto">
+      <CardHeader className="pb-0 text-center">
+        <h2 className="text-3xl font-bold text-gray-800">
+          {currentYear} Calendar
+        </h2>
+        <p className="text-gray-600 mt-2">
+          Yearly overview of your schedule
+        </p>
+      </CardHeader>
+      
+      <CardContent className="pt-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {months.map(({ month, date }, index) => (
+            <MonthCard
+              key={month}
+              month={month}
+              date={date}
+              selectedDate={selectedDate}
+              onSelect={handleDateSelect}
+              gradientClass={`${gradients[index]} border-2`}
+              tasks={tasks}
+            />
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

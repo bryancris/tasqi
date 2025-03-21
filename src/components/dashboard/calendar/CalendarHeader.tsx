@@ -25,21 +25,21 @@ export function CalendarHeader({
   return (
     <div className="flex items-center justify-between w-full">
       <div className="flex items-center gap-2">
-        <h2 className="text-lg font-semibold text-gray-700 truncate max-w-[120px]">
+        <h2 className="text-lg font-semibold text-gray-700 truncate max-w-[200px] md:max-w-none">
           {monthYear}
         </h2>
+      </div>
+      
+      <div className="flex items-center gap-2">
         {showWeekly && onToggleView && (
           <Button
             variant="outline"
             onClick={onToggleView}
             className="h-8 text-xs px-3 font-medium text-white bg-gradient-to-r from-[#0EA5E9] to-[#2A9BB5] border-2 border-[#0EA5E9]/50 hover:from-[#0990D3] hover:to-[#248A9F] hover:border-[#0EA5E9]/70"
           >
-            {showFullWeek ? '7 Day' : '5 Day'}
+            {showFullWeek ? '5 Day' : '7 Day'}
           </Button>
         )}
-      </div>
-      
-      <div className="flex items-center gap-2">
         <Button
           variant="outline"
           size="icon"
