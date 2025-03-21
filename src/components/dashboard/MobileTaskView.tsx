@@ -10,6 +10,7 @@ import { isIOSPWA } from "@/utils/platform-detection";
 import { MobileTaskBoardHeader } from "./mobile/MobileTaskBoardHeader";
 import { MobileTaskList } from "./mobile/MobileTaskList";
 import { DragEndEvent } from "@dnd-kit/core";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export interface MobileTaskViewProps {
   tasks: Task[];
@@ -27,6 +28,12 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const isIOSPwaApp = isIOSPWA();
+  const isMobile = useIsMobile(); // Add explicit mobile check
+  
+  // Log mobile status on mount for debugging
+  useEffect(() => {
+    console.log("MobileTaskView - isMobile:", isMobile);
+  }, [isMobile]);
 
   useEffect(() => {
     console.log("Setting up mobile view task subscription");
@@ -107,6 +114,12 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
     paddingTop: 0,
     marginTop: 0
   };
+
+  // If somehow we're not on mobile, this component shouldn't render
+  if (!isMobile && process.env.NODE_ENV !== 'development') {
+    console.warn('MobileTaskView rendered in non-mobile environment');
+    return null;
+  }
 
   return (
     <div 

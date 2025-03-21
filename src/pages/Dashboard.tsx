@@ -13,6 +13,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { toast } from "sonner";
 import { isIOSPWA } from "@/utils/platform-detection";
 import { DashboardViewWrapper } from "@/components/dashboard/DashboardViewWrapper";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function Dashboard() {
   // Proper hook usage - call at top level unconditionally 
@@ -30,6 +31,7 @@ export default function Dashboard() {
   const contentWrapperRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const isIOSPwaApp = isIOSPWA();
+  const isMobile = useIsMobile();
   
   // Handle refresh function for pull-to-refresh
   const handleRefresh = useCallback(async () => {
@@ -85,13 +87,14 @@ export default function Dashboard() {
   
   useEffect(() => {
     console.log("Dashboard mounted with isIOSPWA:", isIOSPwaApp, "detected:", isPWADetected);
+    console.log("Is mobile:", isMobile);
     
     // Clean up any leftover padding on initial mount for iOS PWA
     if (isIOSPwaApp && pullContentRef.current) {
       console.log("Cleaning up initial padding");
       pullContentRef.current.style.paddingTop = '0px';
     }
-  }, [isPWADetected, isIOSPwaApp]);
+  }, [isPWADetected, isIOSPwaApp, isMobile]);
   
   // Update the view based on the current path on mount and when path changes
   useEffect(() => {

@@ -76,6 +76,7 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
   const { handleDragEnd } = useTaskReorder(tasks, refetch);
   const queryClient = useQueryClient();
   const { invalidateTasks, cleanup } = useDebouncedTaskRefresh();
+  const mobileDetectionRef = useRef(isMobile);
   
   // Initialize Supabase subscriptions
   useSupabaseSubscription();
@@ -85,6 +86,12 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
     console.log("Is mobile:", isMobile);
     console.log("Is loading:", isLoading);
     console.log("Tasks count:", tasks.length);
+    
+    // Track mobile detection changes
+    if (mobileDetectionRef.current !== isMobile) {
+      console.log("Mobile detection changed:", mobileDetectionRef.current, "->", isMobile);
+      mobileDetectionRef.current = isMobile;
+    }
 
     // Force refetch on mount to ensure we have the latest data
     refetch();
@@ -122,6 +129,9 @@ export function TaskBoard({ selectedDate, onDateChange }: TaskBoardProps) {
       </div>
     );
   }
+
+  // Ensure proper mobile detection with explicit logging
+  console.log("TaskBoard rendering with isMobile:", isMobile);
 
   if (isMobile) {
     return (

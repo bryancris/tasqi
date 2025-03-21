@@ -13,7 +13,8 @@ export function DashboardViewWrapper({ children, className }: DashboardViewWrapp
   return (
     <div className={cn(
       "h-full w-full", 
-      isMobile ? "p-3" : "p-4 md:p-6", 
+      // Apply different padding for mobile vs desktop
+      isMobile ? "px-3 py-2" : "p-4 md:p-6", 
       className
     )}>
       {children}

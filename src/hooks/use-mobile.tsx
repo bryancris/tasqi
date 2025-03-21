@@ -12,12 +12,15 @@ export function useIsMobile() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
+    // Set initial width immediately on mount
+    setWidth(window.innerWidth);
+
     let timeoutId: number;
     const handleResize = () => {
       clearTimeout(timeoutId);
       timeoutId = window.setTimeout(() => {
         setWidth(window.innerWidth);
-      }, 100);
+      }, 50); // Reduced debounce time for more responsive updates
     };
 
     window.addEventListener('resize', handleResize);
