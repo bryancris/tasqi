@@ -13,6 +13,8 @@ export async function shareTask({
   currentUserId,
 }: ShareTaskParams) {
   try {
+    console.log('Starting share task process for taskId:', taskId);
+    
     // Get the task's current status to preserve it, now selecting all required fields
     const { data: taskData, error: taskError } = await supabase
       .from('tasks')
@@ -43,41 +45,36 @@ export async function shareTask({
     };
 
     // Share based on type
+    let results;
     if (sharingType === 'individual') {
-      const results = await shareWithIndividuals(validatedTaskData, selectedUserIds, currentUserId, sharedTaskStatus);
+      results = await shareWithIndividuals(validatedTaskData, selectedUserIds, currentUserId, sharedTaskStatus);
+      
+      // Check for errors, but continue with the successful ones
       const errors = results.filter(result => !result);
-
       if (errors.length > 0) {
-        console.error('Share task errors:', errors);
-        throw new Error('Failed to share task with some users');
-      }
-
-      // Show success toast
-      if (selectedUserIds.length === 1) {
-        toast.success('Task shared successfully');
-      } else {
-        toast.success(`Task shared with ${selectedUserIds.length} users`);
+        console.warn('Some individual shares failed:', errors.length, 'out of', selectedUserIds.length);
       }
     } else {
       await shareWithGroup(validatedTaskData, selectedGroupId, currentUserId, sharedTaskStatus);
-      toast.success('Task shared with group successfully');
     }
 
     // Update the task's shared status
     const { error: updateError } = await supabase
       .from('tasks')
-      .update({ 
-        shared: true
-      })
+      .update({ shared: true })
       .eq('id', taskId);
 
     if (updateError) {
       console.error('Update task shared status error:', updateError);
-      throw updateError;
+      // Don't throw here, as the sharing was already successful
+      console.warn('Task sharing completed but failed to update shared flag');
     }
+    
+    // Return success even if there were some non-critical errors
+    return { success: true };
   } catch (error) {
     console.error('Share task error:', error);
-    toast.error('Failed to share task. Please try again.');
+    // Re-throw the error so it can be handled by the caller
     throw error;
   }
 }

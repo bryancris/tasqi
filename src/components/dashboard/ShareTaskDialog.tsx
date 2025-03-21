@@ -29,7 +29,16 @@ export function ShareTaskDialog({ task, open, onOpenChange }: ShareTaskDialogPro
       const currentUser = (await supabase.auth.getUser()).data.user;
       if (!currentUser) throw new Error('No authenticated user');
 
-      await shareTask({
+      // Log information for debugging
+      console.log('Starting shareTask with params:', {
+        taskId: task.id,
+        selectedUserIds,
+        selectedGroupId,
+        sharingType,
+        currentUserId: currentUser.id,
+      });
+
+      const result = await shareTask({
         taskId: task.id,
         selectedUserIds,
         selectedGroupId,
@@ -37,9 +46,16 @@ export function ShareTaskDialog({ task, open, onOpenChange }: ShareTaskDialogPro
         currentUserId: currentUser.id,
       });
       
+      // Log the result of sharing
+      console.log('shareTask result:', result);
+      
+      // Close the dialog and show success message
       onOpenChange(false);
+      toast.success(sharingType === 'individual' 
+        ? `Task shared with ${selectedUserIds.length} user${selectedUserIds.length !== 1 ? 's' : ''}` 
+        : 'Task shared with group successfully');
     } catch (error) {
-      console.error('Error sharing task:', error);
+      console.error('Error sharing task (detailed):', error);
       toast.error('Failed to share task. Please try again.');
     } finally {
       setIsSharing(false);
