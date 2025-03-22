@@ -37,6 +37,7 @@ export function HeaderUserMenu() {
   const handleLogout = async (e) => {
     // Prevent default behavior to avoid page reload
     e.preventDefault();
+    e.stopPropagation();
     
     try {
       setIsLoggingOut(true);
@@ -53,7 +54,10 @@ export function HeaderUserMenu() {
     }
   };
 
-  const handleNavigateToSettings = () => {
+  const handleNavigateToSettings = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
     console.log('Settings button clicked, navigating to settings');
     // Close the dropdown first
     setIsMenuOpen(false);
@@ -104,6 +108,9 @@ export function HeaderUserMenu() {
     // Prevent any default behavior
     e.preventDefault();
     e.stopPropagation();
+    
+    // Toggle the menu open state
+    setIsMenuOpen(!isMenuOpen);
     
     // Log for debugging
     console.log('User icon clicked, toggling dropdown menu');
