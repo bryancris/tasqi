@@ -20,7 +20,7 @@ const HeroSection = () => {
       </div>
       
       <div className="flex justify-center">
-        <Link to="/auth">
+        <Link to="/waitlist">
           <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 text-lg rounded-lg">
             Join Beta Waitlist
           </Button>

@@ -1,82 +1,78 @@
-
-import { BrowserRouter } from 'react-router-dom';
-import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
-import { CalendarViewProvider } from './contexts/CalendarViewContext';
-import Dashboard from './pages/Dashboard';
-import { DashboardLayout } from './components/layouts/DashboardLayout';
-import { DragDropContext } from 'react-beautiful-dnd';
-import Index from './pages/Index';
-import Auth from './pages/Auth';
-import Settings from './pages/Settings';
-import Notes from './pages/Notes';
-import Analytics from './pages/Analytics';
-import SelfCare from './pages/SelfCare';
-import Chat from './pages/Chat';
-import Pricing from './pages/Pricing';
+import React, { useEffect, useState } from 'react';
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import { ThemeProvider } from "@/components/theme-provider"
+import { useIsMobile } from '@/hooks/use-mobile';
+import { useToast } from "@/components/ui/use-toast"
+import { Toaster } from "@/components/ui/toaster"
+import { SettingsProvider } from '@/context/settings-context';
+import { TasksProvider } from '@/context/tasks-context';
+import { Auth } from '@/pages/Auth';
+import { Index } from '@/pages/Index';
+import { Dashboard } from '@/pages/Dashboard';
+import { Settings } from '@/pages/Settings';
+import { NotFound } from '@/pages/NotFound';
+import { supabase } from './integrations/supabase/client';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
-import { Toaster } from './components/ui/sonner';
-import { memo } from 'react';
-import { AuthProvider } from './contexts/auth';
-
-// Memoize the DashboardLayout component to prevent unnecessary re-renders
-const MemoizedDashboardLayout = memo(DashboardLayout);
+import { Chat } from '@/pages/Chat';
+import { Waitlist } from '@/pages/Waitlist';
 
 function App() {
-  const onDragEnd = (result: any) => {
-    console.log('Drag ended:', result);
-  };
+  const [session, setSession] = useState(null);
+  const { toast } = useToast();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isAuthPage = location.pathname === '/auth';
+  const isMobile = useIsMobile();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+    })
+
+    supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+      if (session) {
+        console.log("Auth session", session);
+        // Redirect to dashboard after successful authentication, but not if already on /auth
+        if (isAuthPage) {
+          navigate('/dashboard');
+        }
+      } else {
+        // Optionally redirect to /auth if the user logs out and isn't already there
+        if (!isAuthPage && location.pathname !== '/') {
+          navigate('/auth');
+        }
+      }
+    })
+  }, [isAuthPage, navigate, location.pathname])
 
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <Toaster />
-        <CalendarViewProvider>
-          <DragDropContext onDragEnd={onDragEnd}>
-            <div className="app">
-              <Routes>
-                {/* Public routes */}
-                <Route path="/" element={<Index />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/auth/update-password" element={<Auth />} />
-                <Route path="/pricing" element={<Pricing />} />
-                
-                {/* All protected routes use the ProtectedRoute component */}
-                <Route element={<ProtectedRoute />}>
-                  {/* Routes with DashboardLayout */}
-                  <Route 
-                    element={
-                      <MemoizedDashboardLayout>
-                        <Outlet />
-                      </MemoizedDashboardLayout>
-                    }
-                  >
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/dashboard/notes" element={<Notes />} />
-                    <Route path="/dashboard/settings" element={<Settings />} />
-                    <Route path="/dashboard/analytics" element={<Analytics />} />
-                    <Route path="/dashboard/self-care" element={<SelfCare />} />
-                    <Route path="/dashboard/tasks" element={<Dashboard />} />
-                    <Route path="/dashboard/week" element={<Dashboard />} />
-                    <Route path="/dashboard/monthly" element={<Dashboard />} />
-                    <Route path="/dashboard/yearly" element={<Dashboard />} />
-                  </Route>
-                  
-                  {/* Standalone protected routes */}
-                  <Route path="/chat" element={<Chat />} />
-                  <Route path="/dashboard/chat" element={<Chat />} />
-                  
-                  {/* Redirect old /notes path to /dashboard/notes */}
-                  <Route path="/notes" element={<Navigate to="/dashboard/notes" replace />} />
-                </Route>
-                
-                {/* Fallback route */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </div>
-          </DragDropContext>
-        </CalendarViewProvider>
-      </AuthProvider>
-    </BrowserRouter>
+    <SettingsProvider>
+      <TasksProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/waitlist" element={<Waitlist />} />
+            
+            {/* Protected routes below */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/chat" element={<Chat />} />
+            </Route>
+            
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <Toaster />
+        </ThemeProvider>
+      </TasksProvider>
+    </SettingsProvider>
   );
 }
 
