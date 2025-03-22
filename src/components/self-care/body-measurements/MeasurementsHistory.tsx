@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { 
@@ -126,7 +125,7 @@ export function MeasurementsHistory() {
   };
 
   // Get unit for activity
-  const getUnit = (activityName) => {
+  const getUnit = (activityName: string) => {
     if (!measurementHistory?.activities) return '';
     
     const activity = measurementHistory.activities.find(a => 
@@ -135,7 +134,7 @@ export function MeasurementsHistory() {
     
     if (!activity) return '';
     
-    // Use type casting to ensure TypeScript compatibility
+    // Ensure type safety with explicit casting
     const unit = activity.measurement_unit as MeasurementUnit;
     
     switch (unit) {
