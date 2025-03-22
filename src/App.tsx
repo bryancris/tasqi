@@ -48,7 +48,7 @@ function App() {
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Toaster />
-      {/* Show DevAuthTools in development mode */}
+      {/* DevAuthTools component is still included, but it now returns null */}
       {process.env.NODE_ENV === 'development' && <DevAuthTools />}
     </div>
   );
