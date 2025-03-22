@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, addWeeks, subWeeks } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -62,11 +61,11 @@ export function MobileWeeklyView() {
     if (!destination) return;
     
     try {
-      // Extract date and hour from destination ID (format: "YYYY-MM-DD-HOUR")
+      const taskId = parseInt(draggableId, 10);
+      
       const [dateStr, hourStr] = destination.droppableId.split('-');
       const hour = parseInt(hourStr);
       
-      // Update task with new date and time
       const { error } = await supabase
         .from('tasks')
         .update({
@@ -75,11 +74,10 @@ export function MobileWeeklyView() {
           end_time: `${hour + 1}:00`,
           status: 'scheduled'
         })
-        .eq('id', draggableId);
+        .eq('id', taskId);
         
       if (error) throw error;
       
-      // Invalidate and refetch tasks
       await queryClient.invalidateQueries({ queryKey: ['tasks'] });
       
       toast({

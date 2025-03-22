@@ -49,6 +49,9 @@ export function WeeklyCalendar() {
     }
     
     try {
+      // Convert draggableId string to number
+      const taskId = parseInt(draggableId, 10);
+      
       // If task is being moved to a time slot
       if (destination.droppableId.includes('-')) {
         const [dateStr, hourStr] = destination.droppableId.split('-');
@@ -63,7 +66,7 @@ export function WeeklyCalendar() {
             end_time: `${hour + 1}:00`,
             status: 'scheduled'
           })
-          .eq('id', draggableId);
+          .eq('id', taskId);
           
         if (error) throw error;
       } 
@@ -77,7 +80,7 @@ export function WeeklyCalendar() {
             end_time: null,
             status: 'unscheduled'
           })
-          .eq('id', draggableId);
+          .eq('id', taskId);
           
         if (error) throw error;
       }
