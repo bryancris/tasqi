@@ -53,20 +53,13 @@ export function HeaderUserMenu() {
     }
   };
 
-  const handleNavigateToSettings = (e) => {
-    // Prevent default behavior 
-    e.preventDefault();
-    
-    console.log('Settings button clicked, closing dropdown and navigating programmatically');
-    
+  const handleNavigateToSettings = () => {
+    console.log('Settings button clicked, navigating to settings');
     // Close the dropdown first
     setIsMenuOpen(false);
     
-    // Use setTimeout to ensure the dropdown has fully closed before navigation
-    setTimeout(() => {
-      console.log('Navigating to settings via React Router');
-      navigate('/dashboard/settings');
-    }, 100); 
+    // Navigate to the correct settings route
+    navigate('/settings');
   };
 
   const handleTestNotification = (e) => {
@@ -141,10 +134,7 @@ export function HeaderUserMenu() {
         <DropdownMenuSeparator />
         <DropdownMenuItem 
           onClick={handleNavigateToSettings}
-          onSelect={(e) => {
-            // Prevent default selection behavior which can cause page reload
-            e.preventDefault();
-          }}
+          className="cursor-pointer"
         >
           <Settings className="mr-2 h-4 w-4" />
           Settings

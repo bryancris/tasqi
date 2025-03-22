@@ -30,7 +30,7 @@ function App() {
         
         {/* Protected routes wrapped in DashboardLayout */}
         <Route element={<ProtectedRoute />}>
-          <Route element={<DashboardLayout>{<Outlet />}</DashboardLayout>}>
+          <Route element={<DashboardLayout><Outlet /></DashboardLayout>}>
             <Route path="/dashboard/*" element={<Dashboard />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/chat" element={<Chat />} />
