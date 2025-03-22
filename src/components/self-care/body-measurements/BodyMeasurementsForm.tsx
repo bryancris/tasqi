@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,8 +11,8 @@ import { format } from "date-fns";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import type { MeasurementUnit } from "@/types/physical-wellness";
 
-// Define form validation schema
 const measurementFormSchema = z.object({
   weight: z.string().optional(),
   bmi: z.string().optional(),
@@ -25,7 +24,6 @@ const measurementFormSchema = z.object({
 
 type MeasurementFormValues = z.infer<typeof measurementFormSchema>;
 
-// Define default values
 const defaultValues: MeasurementFormValues = {
   weight: "",
   bmi: "",
@@ -40,13 +38,11 @@ export function BodyMeasurementsForm() {
   const queryClient = useQueryClient();
   const today = format(new Date(), "yyyy-MM-dd");
   
-  // Create form
   const form = useForm<MeasurementFormValues>({
     resolver: zodResolver(measurementFormSchema),
     defaultValues,
   });
 
-  // Query to get activity IDs
   const { data: activities } = useQuery({
     queryKey: ['body-measurement-activities'],
     queryFn: async () => {
@@ -64,19 +60,15 @@ export function BodyMeasurementsForm() {
     }
   });
 
-  // Log measurement values
   const logMeasurementMutation = useMutation({
     mutationFn: async (values: MeasurementFormValues) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
       
-      // Create array of log entries to insert
       const logEntries = [];
 
-      // Get current date and time
       const loggedAt = new Date().toISOString();
       
-      // Only add entries for non-empty values
       if (values.weight && activities) {
         const weightActivity = activities.find(a => a.activity_name === 'Weight');
         if (weightActivity) {
@@ -142,7 +134,6 @@ export function BodyMeasurementsForm() {
         }
       }
       
-      // Only insert if we have at least one entry
       if (logEntries.length > 0) {
         const { error } = await supabase
           .from('physical_wellness_logs')
@@ -169,28 +160,44 @@ export function BodyMeasurementsForm() {
     },
   });
 
-  // Create default activities if they don't exist yet
   const createDefaultActivitiesMutation = useMutation({
     mutationFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user found');
 
-      // Define default body measurement activities
       const defaultActivities = [
-        { activity_name: 'Weight', measurement_unit: 'kilograms', activity_type: 'body_measurement' },
-        { activity_name: 'BMI', measurement_unit: 'count', activity_type: 'body_measurement' },
-        { activity_name: 'Body Fat', measurement_unit: 'percentage', activity_type: 'body_measurement' },
-        { activity_name: 'Muscle Mass', measurement_unit: 'kilograms', activity_type: 'body_measurement' },
-        { activity_name: 'Water Percentage', measurement_unit: 'percentage', activity_type: 'body_measurement' },
+        { 
+          activity_name: 'Weight', 
+          measurement_unit: 'kilograms' as MeasurementUnit, 
+          activity_type: 'body_measurement' 
+        },
+        { 
+          activity_name: 'BMI', 
+          measurement_unit: 'count' as MeasurementUnit, 
+          activity_type: 'body_measurement' 
+        },
+        { 
+          activity_name: 'Body Fat', 
+          measurement_unit: 'percentage' as MeasurementUnit, 
+          activity_type: 'body_measurement' 
+        },
+        { 
+          activity_name: 'Muscle Mass', 
+          measurement_unit: 'kilograms' as MeasurementUnit, 
+          activity_type: 'body_measurement' 
+        },
+        { 
+          activity_name: 'Water Percentage', 
+          measurement_unit: 'percentage' as MeasurementUnit, 
+          activity_type: 'body_measurement' 
+        },
       ];
       
-      // Add user_id to each activity
       const activitiesWithUserId = defaultActivities.map(activity => ({
         ...activity,
         user_id: user.id
       }));
       
-      // Insert only activities that don't already exist
       const { error } = await supabase
         .from('physical_wellness_activities')
         .upsert(activitiesWithUserId, { 
@@ -200,12 +207,10 @@ export function BodyMeasurementsForm() {
       
       if (error) throw error;
       
-      // Refetch activities
       queryClient.invalidateQueries({ queryKey: ['body-measurement-activities'] });
     }
   });
 
-  // Call create activities mutation on first load if none exist
   const { isLoading } = useQuery({
     queryKey: ['initialize-body-measurement-activities'],
     queryFn: async () => {

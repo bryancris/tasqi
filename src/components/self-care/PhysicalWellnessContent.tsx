@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Plus, Dumbbell, Apple, Droplets, Moon, Heart, Timer, Scale } from "lucide-react";

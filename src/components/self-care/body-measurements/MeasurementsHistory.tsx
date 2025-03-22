@@ -14,6 +14,7 @@ import { format, subDays } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Scale, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import type { MeasurementUnit } from "@/types/physical-wellness";
 
 export function MeasurementsHistory() {
   const [timeRange, setTimeRange] = useState(7); // Default to 7 days
@@ -134,7 +135,10 @@ export function MeasurementsHistory() {
     
     if (!activity) return '';
     
-    switch (activity.measurement_unit) {
+    // Use type casting to ensure TypeScript compatibility
+    const unit = activity.measurement_unit as MeasurementUnit;
+    
+    switch (unit) {
       case 'kilograms':
         return 'kg';
       case 'percentage':
