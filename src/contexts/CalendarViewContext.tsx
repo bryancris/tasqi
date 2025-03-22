@@ -18,9 +18,29 @@ const CalendarViewContext = createContext<CalendarViewContextType>({
   setSelectedDate: () => {}
 });
 
+// Check if we're in a router context
+const useRouterOrFallback = () => {
+  // Try to access router
+  let isRouterAvailable = true;
+  let location = { pathname: '/dashboard' };
+  let navigate = (path: string) => {
+    console.warn('Navigation attempted outside Router context to:', path);
+  };
+
+  try {
+    // This will throw if outside router
+    location = useLocation();
+    navigate = useNavigate();
+  } catch (e) {
+    isRouterAvailable = false;
+    console.warn('Router context not available, using fallback navigation');
+  }
+
+  return { location, navigate, isRouterAvailable };
+};
+
 export function CalendarViewProvider({ children }: { children: ReactNode }) {
-  const location = useLocation();
-  const navigate = useNavigate();
+  const { location, navigate, isRouterAvailable } = useRouterOrFallback();
   const [selectedDate, setSelectedDate] = useState(new Date());
   
   // List of non-calendar routes
@@ -33,6 +53,9 @@ export function CalendarViewProvider({ children }: { children: ReactNode }) {
 
   // Initialize view based on the current path
   const [view, setCurrentView] = useState<CalendarView>(() => {
+    // Only process if router is available
+    if (!isRouterAvailable) return 'tasks';
+    
     // Initialize with the correct view based on the current path
     const path = location.pathname;
     // Don't process view for non-calendar routes
@@ -46,6 +69,9 @@ export function CalendarViewProvider({ children }: { children: ReactNode }) {
 
   // Update view based on current route, but only for calendar routes
   useEffect(() => {
+    // Skip if router isn't available
+    if (!isRouterAvailable) return;
+    
     const path = location.pathname;
     if (!path.startsWith('/dashboard')) return;
     if (isNonCalendarRoute()) return;
@@ -60,7 +86,7 @@ export function CalendarViewProvider({ children }: { children: ReactNode }) {
     
     console.log("CalendarViewContext: path changed to", path, "setting view to", newView);
     setCurrentView(newView);
-  }, [location.pathname]);
+  }, [location.pathname, isRouterAvailable]);
 
   const setView = (newView: CalendarView) => {
     if (view === newView) return; // Prevent unnecessary navigation
@@ -75,7 +101,7 @@ export function CalendarViewProvider({ children }: { children: ReactNode }) {
     const targetPath = viewToPathMap[newView];
     console.log("CalendarViewContext: navigating to", targetPath, "for view", newView);
     
-    if (location.pathname !== targetPath) {
+    if (isRouterAvailable && location.pathname !== targetPath) {
       navigate(targetPath);
     }
     

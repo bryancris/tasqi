@@ -15,8 +15,17 @@ export function CalendarViewButton({
   currentView, 
   label
 }: CalendarViewButtonProps) {
+  // Try/catch to handle potential errors when used outside Router
+  let location;
+  try {
+    location = useLocation();
+  } catch (e) {
+    // Create a fallback location object if used outside Router
+    location = { pathname: '/dashboard' };
+    console.warn('CalendarViewButton used outside Router context');
+  }
+  
   const { setView } = useCalendarView();
-  const location = useLocation();
   
   // Map views to paths for checking active state
   const viewPathMap = {

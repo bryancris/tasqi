@@ -7,6 +7,7 @@ import App from './App.tsx';
 import './index.css';
 import { Toaster } from "@/components/ui/toaster";
 import { NotificationsProvider } from '@/components/notifications/NotificationsManager';
+import { CalendarViewProvider } from '@/contexts/CalendarViewContext';
 
 // Initialize the query client
 const queryClient = new QueryClient({
@@ -31,7 +32,9 @@ createRoot(rootElement).render(
     <QueryClientProvider client={queryClient}>
       <NotificationsProvider>
         <BrowserRouter>
-          <App />
+          <CalendarViewProvider>
+            <App />
+          </CalendarViewProvider>
         </BrowserRouter>
         <Toaster />
       </NotificationsProvider>
