@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 
 export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom whenever messages change or when loading state changes
   useEffect(() => {
@@ -15,7 +16,10 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-[#F1F0FB] to-[#E5DEFF]">
+    <div 
+      ref={messagesContainerRef}
+      className="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-[#F1F0FB] to-[#E5DEFF] h-full"
+    >
       {messages.map((msg, index) => (
         <div key={index} className={`flex ${msg.isUser ? 'justify-end' : 'justify-start'}`}>
           <div className={`rounded-2xl p-3 max-w-[80%] ${
@@ -35,7 +39,7 @@ export function ChatMessages({ messages, isLoading }: ChatMessagesProps) {
         </div>
       )}
       {/* This empty div serves as a scroll target */}
-      <div ref={messagesEndRef} />
+      <div ref={messagesEndRef} className="h-4" />
     </div>
   );
 }

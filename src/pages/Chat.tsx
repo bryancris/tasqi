@@ -9,6 +9,7 @@ import { ChatInput } from "@/components/chat/ChatInput";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { MobileChatView } from "@/components/chat/MobileChatView";
 
 export default function Chat() {
   const [error, setError] = useState<Error | null>(null);
@@ -78,6 +79,22 @@ export default function Chat() {
     }
   };
 
+  // Use the specialized mobile view component for mobile devices
+  if (isMobile) {
+    return (
+      <MobileChatView
+        error={error}
+        message={message}
+        messages={messages}
+        isLoading={isLoading}
+        onMessageChange={setMessage}
+        onSubmit={handleSubmitWithErrorHandling}
+        onRetry={handleRetry}
+      />
+    );
+  }
+
+  // Desktop view
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-[#F1F0FB] to-[#E5DEFF]">
       <main className="flex-1 overflow-hidden flex flex-col">
