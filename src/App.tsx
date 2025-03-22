@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useToast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/ui/toaster";
@@ -30,10 +30,9 @@ function App() {
         
         {/* Protected routes wrapped in DashboardLayout */}
         <Route element={<ProtectedRoute />}>
-          <Route element={<DashboardLayout />}>
+          <Route element={<DashboardLayout>{<Outlet />}</DashboardLayout>}>
             <Route path="/dashboard/*" element={<Dashboard />} />
             <Route path="/settings" element={<Settings />} />
-            {/* Chat needs to be inside the dashboard layout as well */}
             <Route path="/chat" element={<Chat />} />
           </Route>
         </Route>

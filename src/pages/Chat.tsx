@@ -121,8 +121,8 @@ export default function Chat() {
                 <ChatMessages messages={messages} isLoading={isLoading} />
                 <ChatInput 
                   message={message}
-                  onMessageChange={onMessageChange}
-                  onSubmit={onSubmitWithErrorHandling}
+                  onMessageChange={setMessage}
+                  onSubmit={handleSubmitWithErrorHandling}
                   isLoading={isLoading}
                 />
               </>
