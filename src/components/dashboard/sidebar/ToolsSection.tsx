@@ -3,58 +3,62 @@ import { Button } from "@/components/ui/button";
 import { PenLine, BarChart2, Zap, MessageSquare } from "lucide-react";
 import { ChatBubble } from "@/components/chat/ChatBubble";
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 export function ToolsSection() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   
-  // Update to check for only /dashboard/notes path
+  // Check if we're on the specific pages
   const isNotesActive = location.pathname === '/dashboard/notes';
   const isAnalyticsActive = location.pathname === '/dashboard/analytics';
   const isSelfCareActive = location.pathname === '/dashboard/self-care';
 
+  const handleNavigation = (path: string) => (e: React.MouseEvent) => {
+    e.preventDefault();
+    console.log(`Navigating to ${path}`);
+    navigate(path);
+  };
+
   return (
     <div className="space-y-2">
-      <Link to="/dashboard/notes">
-        <Button 
-          variant="ghost" 
-          className={cn(
-            "w-full justify-start text-base text-[#9333EA] hover:bg-[#E5E7EB]",
-            isNotesActive && "bg-[#E5E7EB]"
-          )}
-        >
-          <PenLine className="mr-2 h-5 w-5" />
-          Notes
-        </Button>
-      </Link>
+      <Button 
+        variant="ghost" 
+        className={cn(
+          "w-full justify-start text-base text-[#9333EA] hover:bg-[#E5E7EB]",
+          isNotesActive && "bg-[#E5E7EB]"
+        )}
+        onClick={handleNavigation('/dashboard/notes')}
+      >
+        <PenLine className="mr-2 h-5 w-5" />
+        Notes
+      </Button>
       
-      <Link to="/dashboard/analytics">
-        <Button 
-          variant="ghost" 
-          className={cn(
-            "w-full justify-start text-base hover:bg-[#E5E7EB] text-[#FF6B6B]",
-            isAnalyticsActive && "bg-[#E5E7EB]"
-          )}
-        >
-          <BarChart2 className="mr-2 h-5 w-5" />
-          Analytics
-        </Button>
-      </Link>
+      <Button 
+        variant="ghost" 
+        className={cn(
+          "w-full justify-start text-base hover:bg-[#E5E7EB] text-[#FF6B6B]",
+          isAnalyticsActive && "bg-[#E5E7EB]"
+        )}
+        onClick={handleNavigation('/dashboard/analytics')}
+      >
+        <BarChart2 className="mr-2 h-5 w-5" />
+        Analytics
+      </Button>
       
-      <Link to="/dashboard/self-care">
-        <Button 
-          variant="ghost" 
-          className={cn(
-            "w-full justify-start text-base text-[#EA580C] hover:bg-[#E5E7EB]",
-            isSelfCareActive && "bg-[#E5E7EB]"
-          )}
-        >
-          <Zap className="mr-2 h-5 w-5" />
-          Self-Care
-        </Button>
-      </Link>
+      <Button 
+        variant="ghost" 
+        className={cn(
+          "w-full justify-start text-base text-[#EA580C] hover:bg-[#E5E7EB]",
+          isSelfCareActive && "bg-[#E5E7EB]"
+        )}
+        onClick={handleNavigation('/dashboard/self-care')}
+      >
+        <Zap className="mr-2 h-5 w-5" />
+        Self-Care
+      </Button>
       
       <Button 
         variant="ghost" 

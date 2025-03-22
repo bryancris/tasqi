@@ -15,6 +15,9 @@ import Waitlist from '@/pages/Waitlist';
 import { useAuth } from '@/contexts/auth';
 import { DevAuthTools } from '@/components/dev/DevAuthTools';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
+import Notes from '@/pages/Notes';
+import Analytics from '@/pages/Analytics';
+import SelfCare from '@/pages/SelfCare';
 
 function App() {
   const { toast } = useToast();
@@ -32,6 +35,9 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route element={<DashboardLayout><Outlet /></DashboardLayout>}>
             <Route path="/dashboard/*" element={<Dashboard />} />
+            <Route path="/dashboard/notes" element={<Notes />} />
+            <Route path="/dashboard/analytics" element={<Analytics />} />
+            <Route path="/dashboard/self-care" element={<SelfCare />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/chat" element={<Chat />} />
           </Route>
