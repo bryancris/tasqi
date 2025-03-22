@@ -1,20 +1,18 @@
+
 import React, { useEffect, useState } from 'react';
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
-import { ThemeProvider } from "@/components/theme-provider"
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useToast } from "@/components/ui/use-toast"
-import { Toaster } from "@/components/ui/toaster"
-import { SettingsProvider } from '@/context/settings-context';
-import { TasksProvider } from '@/context/tasks-context';
-import { Auth } from '@/pages/Auth';
-import { Index } from '@/pages/Index';
-import { Dashboard } from '@/pages/Dashboard';
-import { Settings } from '@/pages/Settings';
-import { NotFound } from '@/pages/NotFound';
+import { useToast } from "@/components/ui/use-toast";
+import { Toaster } from "@/components/ui/toaster";
+import Auth from '@/pages/Auth';
+import Index from '@/pages/Index';
+import Dashboard from '@/pages/Dashboard';
+import Settings from '@/pages/Settings';
+import NotFound from '@/pages/NotFound';
 import { supabase } from './integrations/supabase/client';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
-import { Chat } from '@/pages/Chat';
-import { Waitlist } from '@/pages/Waitlist';
+import Chat from '@/pages/Chat';
+import Waitlist from '@/pages/Waitlist';
 
 function App() {
   const [session, setSession] = useState(null);
@@ -47,32 +45,23 @@ function App() {
   }, [isAuthPage, navigate, location.pathname])
 
   return (
-    <SettingsProvider>
-      <TasksProvider>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/waitlist" element={<Waitlist />} />
-            
-            {/* Protected routes below */}
-            <Route element={<ProtectedRoute />}>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/chat" element={<Chat />} />
-            </Route>
-            
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <Toaster />
-        </ThemeProvider>
-      </TasksProvider>
-    </SettingsProvider>
+    <div>
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/waitlist" element={<Waitlist />} />
+        
+        {/* Protected routes below */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/chat" element={<Chat />} />
+        </Route>
+        
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+      <Toaster />
+    </div>
   );
 }
 
