@@ -1,0 +1,10 @@
+
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+Disallow: /dashboard/
+Disallow: /settings/
+Disallow: /chat/
+
+# Sitemap
+Sitemap: https://tasqi-ai.app/sitemap.xml

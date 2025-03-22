@@ -20,7 +20,14 @@ export default defineConfig(({ mode }) => ({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: mode === 'production' ? 'auto' : 'script',
-      includeAssets: ['favicon.ico', 'pwa-192x192.png', 'pwa-512x512.png', 'notification-sound.mp3'],
+      includeAssets: [
+        'favicon.ico', 
+        'pwa-192x192.png', 
+        'pwa-512x512.png', 
+        'notification-sound.mp3',
+        'sitemap.xml',
+        'robots.txt'
+      ],
       manifest: {
         name: 'TASQI-AI Assistant',
         short_name: 'TASQI-AI',
