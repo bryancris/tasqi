@@ -14,6 +14,7 @@ import Chat from '@/pages/Chat';
 import Waitlist from '@/pages/Waitlist';
 import { useAuth } from '@/contexts/auth';
 import { DevAuthTools } from '@/components/dev/DevAuthTools';
+import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 
 function App() {
   const { toast } = useToast();
@@ -27,11 +28,14 @@ function App() {
         <Route path="/auth" element={<Auth />} />
         <Route path="/waitlist" element={<Waitlist />} />
         
-        {/* Protected routes below */}
+        {/* Protected routes wrapped in DashboardLayout */}
         <Route element={<ProtectedRoute />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/chat" element={<Chat />} />
+          <Route element={<DashboardLayout />}>
+            <Route path="/dashboard/*" element={<Dashboard />} />
+            <Route path="/settings" element={<Settings />} />
+            {/* Chat needs to be inside the dashboard layout as well */}
+            <Route path="/chat" element={<Chat />} />
+          </Route>
         </Route>
         
         <Route path="*" element={<NotFound />} />
