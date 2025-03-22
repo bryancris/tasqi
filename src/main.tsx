@@ -8,6 +8,7 @@ import './index.css';
 import { Toaster } from "@/components/ui/toaster";
 import { NotificationsProvider } from '@/components/notifications/NotificationsManager';
 import { CalendarViewProvider } from '@/contexts/CalendarViewContext';
+import { AuthProvider } from '@/contexts/auth';
 
 // Initialize the query client
 const queryClient = new QueryClient({
@@ -32,9 +33,11 @@ createRoot(rootElement).render(
     <QueryClientProvider client={queryClient}>
       <NotificationsProvider>
         <BrowserRouter>
-          <CalendarViewProvider>
-            <App />
-          </CalendarViewProvider>
+          <AuthProvider>
+            <CalendarViewProvider>
+              <App />
+            </CalendarViewProvider>
+          </AuthProvider>
         </BrowserRouter>
         <Toaster />
       </NotificationsProvider>
