@@ -2,6 +2,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter } from 'react-router-dom';
 import App from './App.tsx';
 import './index.css';
 import { Toaster } from "@/components/ui/toaster";
@@ -29,7 +30,9 @@ createRoot(rootElement).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <NotificationsProvider>
-        <App />
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
         <Toaster />
       </NotificationsProvider>
     </QueryClientProvider>
