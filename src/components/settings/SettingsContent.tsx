@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -6,8 +7,9 @@ import { CalendarSettings } from "./calendar/CalendarSettings";
 import { TaskSharingSettings } from "./task-sharing/TaskSharingSettings";
 import { ProfileSettings } from "./profile/ProfileSettings";
 import { AdminSettings } from "./admin/AdminSettings";
+import { WaitListSettings } from "./waitlist/WaitListSettings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UserRound, Shield } from "lucide-react";
+import { UserRound, Shield, ClipboardList } from "lucide-react";
 
 export function SettingsContent() {
   const [startHour, setStartHour] = useState<string>("8");
@@ -89,6 +91,14 @@ export function SettingsContent() {
             <Shield className="w-4 h-4 mr-2" />
             Admin
           </TabsTrigger>
+          
+          <TabsTrigger 
+            value="waitlist" 
+            className="flex-1 bg-[#E5DEFF] data-[state=active]:bg-[#9B87F5] data-[state=active]:text-white text-[#9B87F5]"
+          >
+            <ClipboardList className="w-4 h-4 mr-2" />
+            Wait-List
+          </TabsTrigger>
         </TabsList>
         
         <TabsContent value="profile">
@@ -113,6 +123,10 @@ export function SettingsContent() {
         
         <TabsContent value="admin">
           <AdminSettings />
+        </TabsContent>
+        
+        <TabsContent value="waitlist">
+          <WaitListSettings />
         </TabsContent>
       </Tabs>
     </div>

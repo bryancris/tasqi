@@ -8,7 +8,7 @@ export default function Settings() {
 
   return (
     <DashboardViewWrapper>
-      <div className={`max-w-4xl mx-auto ${isMobile ? 'pb-4' : ''}`}>
+      <div className={`max-w-6xl mx-auto ${isMobile ? 'pb-4' : ''}`}>
         <h2 className="text-2xl font-semibold mb-6">Settings</h2>
         <SettingsContent />
       </div>
