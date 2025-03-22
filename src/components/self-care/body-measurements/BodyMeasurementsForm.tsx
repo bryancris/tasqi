@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -200,7 +201,7 @@ export function BodyMeasurementsForm() {
       
       const { error } = await supabase
         .from('physical_wellness_activities')
-        .upsert(activitiesWithUserId, { 
+        .upsert(activitiesWithUserId as any, { 
           onConflict: 'user_id, activity_name',
           ignoreDuplicates: true
         });

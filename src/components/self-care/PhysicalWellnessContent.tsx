@@ -115,7 +115,7 @@ export function PhysicalWellnessContent() {
           activity_type: 'custom',
           measurement_unit: data.measurement_unit,
           user_id: user.id
-        });
+        } as any);
       
       if (error) throw error;
     },
