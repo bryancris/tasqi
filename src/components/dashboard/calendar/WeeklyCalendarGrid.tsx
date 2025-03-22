@@ -95,7 +95,7 @@ export function WeeklyCalendarGrid({
                 </div>
                 {timeSlots.map((slot, idx) => (
                   <Droppable
-                    key={`${day.toISOString()}-${slot.hour}`}
+                    key={`${format(day, 'yyyy-MM-dd')}-${slot.hour}`}
                     droppableId={`${format(day, 'yyyy-MM-dd')}-${slot.hour}`}
                   >
                     {(provided, snapshot) => (
@@ -129,8 +129,8 @@ export function WeeklyCalendarGrid({
 
                             return (
                               <Draggable
-                                key={task.id}
-                                draggableId={String(task.id)}
+                                key={task.id.toString()}
+                                draggableId={task.id.toString()}
                                 index={index}
                               >
                                 {(provided, snapshot) => (

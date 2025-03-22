@@ -24,8 +24,8 @@ export function UnscheduledTasks({ tasks }: UnscheduledTasksProps) {
           >
             {tasks.map((task, index) => (
               <Draggable 
-                key={task.id} 
-                draggableId={String(task.id)} 
+                key={task.id.toString()} 
+                draggableId={task.id.toString()} 
                 index={index}
               >
                 {(provided, snapshot) => (
