@@ -1,5 +1,5 @@
 
-export type MeasurementUnit = 'count' | 'minutes' | 'hours' | 'meters' | 'kilometers' | 'pounds' | 'kilograms' | 'milliliters' | 'liters';
+export type MeasurementUnit = 'count' | 'minutes' | 'hours' | 'meters' | 'kilometers' | 'pounds' | 'kilograms' | 'milliliters' | 'liters' | 'percentage';
 
 export interface PhysicalWellnessActivity {
   id: number;

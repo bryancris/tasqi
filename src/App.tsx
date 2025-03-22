@@ -18,6 +18,7 @@ import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import Notes from '@/pages/Notes';
 import Analytics from '@/pages/Analytics';
 import SelfCare from '@/pages/SelfCare';
+import PhysicalWellness from '@/pages/PhysicalWellness';
 
 function App() {
   const { toast } = useToast();
@@ -38,6 +39,7 @@ function App() {
             <Route path="/dashboard/notes" element={<Notes />} />
             <Route path="/dashboard/analytics" element={<Analytics />} />
             <Route path="/dashboard/self-care" element={<SelfCare />} />
+            <Route path="/self-care/physical-wellness" element={<PhysicalWellness />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/chat" element={<Chat />} />
           </Route>

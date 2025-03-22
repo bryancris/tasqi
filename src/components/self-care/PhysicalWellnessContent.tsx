@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus, Dumbbell, Apple, Droplets, Moon, Heart, Timer } from "lucide-react";
+import { Plus, Dumbbell, Apple, Droplets, Moon, Heart, Timer, Scale } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,9 @@ import { useToast } from "@/components/ui/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { MeasurementUnit, PhysicalWellnessActivity } from "@/types/physical-wellness";
+import { BodyMeasurementsForm } from "./body-measurements/BodyMeasurementsForm";
+import { MeasurementsHistory } from "./body-measurements/MeasurementsHistory";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const suggestedActivities = [
   {
@@ -72,7 +75,8 @@ const measurementUnits: MeasurementUnit[] = [
   'pounds',
   'kilograms',
   'milliliters',
-  'liters'
+  'liters',
+  'percentage'
 ];
 
 export function PhysicalWellnessContent() {
@@ -81,6 +85,7 @@ export function PhysicalWellnessContent() {
   const [selectedUnit, setSelectedUnit] = useState<MeasurementUnit>("count");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState("body-measurements");
 
   const { data: activities } = useQuery({
     queryKey: ['physical-wellness-activities'],
@@ -91,7 +96,8 @@ export function PhysicalWellnessContent() {
       const { data, error } = await supabase
         .from('physical_wellness_activities')
         .select('*')
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .neq('activity_type', 'body_measurement');
       
       if (error) throw error;
       return data as PhysicalWellnessActivity[];
@@ -167,92 +173,117 @@ export function PhysicalWellnessContent() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-        {suggestedActivities.map((activity) => {
-          const Icon = activity.icon;
-          const isAdded = isActivityAdded(activity.title);
-          
-          return (
-            <Card
-              key={activity.title}
-              className="overflow-hidden transition-all duration-300 hover:scale-[1.02] cursor-pointer"
-              onClick={() => !isAdded && handleAddSuggestedActivity(activity)}
-            >
-              <div className={`h-full bg-gradient-to-r ${activity.gradient} p-0.5`}>
-                <div className="bg-white dark:bg-gray-950 p-4 h-full">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="p-2 rounded-full bg-white dark:bg-gray-900 shadow-lg">
-                        <Icon className={`w-6 h-6 ${activity.color}`} />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-900 dark:text-white">
-                          {activity.title}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {activity.description}
-                        </p>
+      <Tabs 
+        defaultValue="body-measurements" 
+        value={activeTab} 
+        onValueChange={setActiveTab}
+        className="mb-8"
+      >
+        <TabsList className="mb-4">
+          <TabsTrigger value="body-measurements" className="flex items-center gap-1">
+            <Scale className="w-4 h-4" />
+            Body Measurements
+          </TabsTrigger>
+          <TabsTrigger value="activities" className="flex items-center gap-1">
+            <Dumbbell className="w-4 h-4" />
+            Activities
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="body-measurements" className="space-y-6">
+          <BodyMeasurementsForm />
+          <MeasurementsHistory />
+        </TabsContent>
+        
+        <TabsContent value="activities">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            {suggestedActivities.map((activity) => {
+              const Icon = activity.icon;
+              const isAdded = isActivityAdded(activity.title);
+              
+              return (
+                <Card
+                  key={activity.title}
+                  className="overflow-hidden transition-all duration-300 hover:scale-[1.02] cursor-pointer"
+                  onClick={() => !isAdded && handleAddSuggestedActivity(activity)}
+                >
+                  <div className={`h-full bg-gradient-to-r ${activity.gradient} p-0.5`}>
+                    <div className="bg-white dark:bg-gray-950 p-4 h-full">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <div className="p-2 rounded-full bg-white dark:bg-gray-900 shadow-lg">
+                            <Icon className={`w-6 h-6 ${activity.color}`} />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-gray-900 dark:text-white">
+                              {activity.title}
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                              {activity.description}
+                            </p>
+                          </div>
+                        </div>
+                        {isAdded && (
+                          <span className="text-sm text-muted-foreground">Added ✓</span>
+                        )}
                       </div>
                     </div>
-                    {isAdded && (
-                      <span className="text-sm text-muted-foreground">Added ✓</span>
-                    )}
                   </div>
-                </div>
-              </div>
-            </Card>
-          );
-        })}
-      </div>
-
-      <Dialog open={isAddingCustom} onOpenChange={setIsAddingCustom}>
-        <DialogTrigger asChild>
-          <Button
-            className="w-full bg-gradient-to-r from-[#FF719A] to-[#FF9F9F] text-white hover:opacity-90"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Custom Activity
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add Custom Activity</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 pt-4">
-            <div className="space-y-2">
-              <Label htmlFor="activity">Activity Name</Label>
-              <Input
-                id="activity"
-                placeholder="Enter activity name"
-                value={customActivity}
-                onChange={(e) => setCustomActivity(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="unit">Measurement Unit</Label>
-              <Select value={selectedUnit} onValueChange={(value) => setSelectedUnit(value as MeasurementUnit)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a unit" />
-                </SelectTrigger>
-                <SelectContent>
-                  {measurementUnits.map((unit) => (
-                    <SelectItem key={unit} value={unit}>
-                      {unit.charAt(0).toUpperCase() + unit.slice(1)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <Button
-              className="w-full bg-gradient-to-r from-[#FF719A] to-[#FF9F9F] text-white hover:opacity-90"
-              onClick={handleAddCustomActivity}
-              disabled={!customActivity.trim()}
-            >
-              Add Activity
-            </Button>
+                </Card>
+              );
+            })}
           </div>
-        </DialogContent>
-      </Dialog>
+
+          <Dialog open={isAddingCustom} onOpenChange={setIsAddingCustom}>
+            <DialogTrigger asChild>
+              <Button
+                className="w-full bg-gradient-to-r from-[#FF719A] to-[#FF9F9F] text-white hover:opacity-90"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Custom Activity
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add Custom Activity</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="activity">Activity Name</Label>
+                  <Input
+                    id="activity"
+                    placeholder="Enter activity name"
+                    value={customActivity}
+                    onChange={(e) => setCustomActivity(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="unit">Measurement Unit</Label>
+                  <Select value={selectedUnit} onValueChange={(value) => setSelectedUnit(value as MeasurementUnit)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a unit" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {measurementUnits.map((unit) => (
+                        <SelectItem key={unit} value={unit}>
+                          {unit.charAt(0).toUpperCase() + unit.slice(1)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  className="w-full bg-gradient-to-r from-[#FF719A] to-[#FF9F9F] text-white hover:opacity-90"
+                  onClick={handleAddCustomActivity}
+                  disabled={!customActivity.trim()}
+                >
+                  Add Activity
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
