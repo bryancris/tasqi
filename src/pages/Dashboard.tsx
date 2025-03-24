@@ -112,9 +112,6 @@ export default function Dashboard() {
     }
   }, [location.pathname, setView]);
   
-  // Add console log to debug current view
-  console.log("Current view:", view);
-  
   return (
     <div 
       ref={containerRef}

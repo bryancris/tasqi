@@ -1,4 +1,3 @@
-
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { useState, useEffect } from "react";
 import { MobileHeader } from "@/components/layouts/MobileHeader";
@@ -9,11 +8,13 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth";
 import { useAuthSync } from "@/hooks/use-auth-sync";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useCalendarView } from "@/contexts/CalendarViewContext";
 
 export const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const isMobile = useIsMobile();
   const { user } = useAuth();
+  const { selectedDate, setSelectedDate } = useCalendarView();
 
   // Use the auth sync hook to keep tasks in sync with auth state
   useAuthSync();
@@ -51,8 +52,8 @@ export const DashboardLayout = ({ children }: { children: React.ReactNode }) => 
         {/* Only show sidebar if not mobile or if explicitly opened on mobile */}
         {(!isMobile || sidebarOpen) && (
           <Sidebar 
-            selectedDate={new Date()}
-            onDateChange={(date) => console.log('Date changed:', date)}
+            selectedDate={selectedDate}
+            onDateChange={setSelectedDate}
           />
         )}
         
