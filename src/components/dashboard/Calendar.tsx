@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Task } from "./TaskBoard";
 import { CalendarHeader } from "./calendar/CalendarHeader";
 import { CalendarDay } from "./calendar/CalendarDay";
-import { startOfMonth, eachDayOfInterval, endOfMonth, startOfWeek, endOfWeek, parseISO } from "date-fns";
+import { startOfMonth, eachDayOfInterval, endOfMonth, startOfWeek, endOfWeek, parseISO, isSameDay } from "date-fns";
 import { EditTaskDrawer } from "./EditTaskDrawer";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
@@ -82,10 +82,17 @@ export function Calendar({ initialDate, onDateSelect }: CalendarProps) {
               const isCurrentMonth = date.getMonth() === currentMonth.getMonth();
               const isToday = new Date().toDateString() === date.toDateString();
               
+              // Filter tasks for this day - ensuring we check all task statuses
               const dayTasks = tasks.filter(task => {
-                if (!task.date || task.status !== 'scheduled') return false;
-                const taskDate = parseISO(task.date);
-                return taskDate.toDateString() === date.toDateString();
+                if (!task.date) return false;
+                
+                try {
+                  const taskDate = parseISO(task.date);
+                  return isSameDay(taskDate, date);
+                } catch (error) {
+                  console.error("Error parsing date for task:", task.id, task.date);
+                  return false;
+                }
               });
 
               return (

@@ -42,7 +42,7 @@ export function TaskBoardSection({ tasks, selectedDate, onDragEnd, onComplete }:
 
   const filterTasks = (task: Task) => {
     try {
-      // FIXED: Always show unscheduled tasks regardless of date
+      // Always show unscheduled tasks regardless of date
       if (task.status === 'unscheduled') return true;
       
       // Show completed tasks from today
@@ -61,14 +61,6 @@ export function TaskBoardSection({ tasks, selectedDate, onDragEnd, onComplete }:
         
         // Reset to start of day to ensure comparison is done at day level only, ignoring time
         const taskDayStart = startOfDay(taskDate);
-        
-        // Add debug logging to help diagnose date comparison issues
-        console.log(`Comparing dates for task ${task.id} - ${task.title}:`);
-        console.log(`- Task date: ${task.date}, parsed to: ${taskDate.toISOString()}`);
-        console.log(`- Task day start: ${taskDayStart.toISOString()}`);
-        console.log(`- Selected date: ${selectedDate.toISOString()}`);
-        console.log(`- Selected day start: ${selectedDayStart.toISOString()}`);
-        console.log(`- Are same day: ${isSameDay(taskDayStart, selectedDayStart)}`);
         
         // Compare the dates at day level only
         return isSameDay(taskDayStart, selectedDayStart);
@@ -129,4 +121,3 @@ export function TaskBoardSection({ tasks, selectedDate, onDragEnd, onComplete }:
     </Card>
   );
 }
-

@@ -28,16 +28,18 @@ export function YearlyCalendar({ onDateSelect }: YearlyCalendarProps) {
   const { data: tasks = [] } = useQuery({
     queryKey: ['tasks', currentYear],
     queryFn: async () => {
-      const startDate = `${currentYear}-01-01`;
-      const endDate = `${currentYear}-12-31`;
+      console.log("Fetching tasks for yearly calendar");
       
       const { data, error } = await supabase
         .from('tasks')
-        .select('*')
-        .gte('date', startDate)
-        .lte('date', endDate);
+        .select('*');
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching tasks for yearly calendar:", error);
+        throw error;
+      }
+      
+      console.log(`Fetched ${data?.length || 0} tasks for yearly calendar`);
       return data as Task[];
     },
   });

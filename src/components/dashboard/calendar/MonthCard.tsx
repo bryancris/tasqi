@@ -54,9 +54,6 @@ export function MonthCard({ month, date, selectedDate, onSelect, gradientClass, 
     label: day
   }));
 
-  // Debug task counts
-  console.log(`${month} MonthCard - Total tasks: ${tasks.length}`);
-
   return (
     <Card className={`overflow-hidden ${gradientClass}`}>
       <CardHeader className="p-4">
@@ -74,12 +71,14 @@ export function MonthCard({ month, date, selectedDate, onSelect, gradientClass, 
           {weeks.map((week, weekIndex) => (
             <div key={`${month}-week-${weekIndex}`} className="grid grid-cols-7 gap-1">
               {week.map((day) => {
+                // Safe filtering of tasks for this day
                 const dayTasks = tasks.filter(task => {
                   if (!task.date) return false;
+                  
                   try {
-                    return isSameDay(parseISO(task.date), day);
+                    const taskDate = parseISO(task.date);
+                    return isSameDay(taskDate, day);
                   } catch (error) {
-                    console.error(`Error parsing date: ${task.date}`, error);
                     return false;
                   }
                 });
@@ -126,4 +125,3 @@ export function MonthCard({ month, date, selectedDate, onSelect, gradientClass, 
     </Card>
   );
 }
-
