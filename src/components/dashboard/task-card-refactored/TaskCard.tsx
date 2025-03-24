@@ -50,3 +50,4 @@ export function TaskCard({ task, index, isDraggable = false, view = 'daily', onC
     />
   );
 }
+

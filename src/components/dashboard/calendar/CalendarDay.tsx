@@ -28,6 +28,14 @@ export function CalendarDay({
     }
   };
 
+  // Add console logging to debug tasks
+  console.log(`CalendarDay for ${date.toISOString()}:`, {
+    isCurrentMonth,
+    isToday,
+    tasksCount: tasks.length,
+    tasks: tasks.map(t => ({ id: t.id, title: t.title, status: t.status }))
+  });
+
   return (
     <div 
       onClick={handleDateClick}
@@ -80,3 +88,4 @@ export function CalendarDay({
     </div>
   );
 }
+

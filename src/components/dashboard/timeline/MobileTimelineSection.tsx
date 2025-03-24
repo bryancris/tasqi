@@ -125,3 +125,4 @@ export function TimelineSection({ selectedDate, onDateChange }: TimelineSectionP
     </Card>
   );
 }
+

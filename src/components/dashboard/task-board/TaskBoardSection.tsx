@@ -129,3 +129,4 @@ export function TaskBoardSection({ tasks, selectedDate, onDragEnd, onComplete }:
     </Card>
   );
 }
+

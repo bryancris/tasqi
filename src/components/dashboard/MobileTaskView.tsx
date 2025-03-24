@@ -162,3 +162,4 @@ export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, o
     </div>
   );
 }
+
