@@ -12,6 +12,7 @@ import NotFound from '@/pages/NotFound';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import Chat from '@/pages/Chat';
 import Waitlist from '@/pages/Waitlist';
+import Pricing from '@/pages/Pricing';
 import { useAuth } from '@/contexts/auth';
 import { DevAuthTools } from '@/components/dev/DevAuthTools';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
@@ -31,6 +32,7 @@ function App() {
         <Route path="/" element={<Index />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/waitlist" element={<Waitlist />} />
+        <Route path="/pricing" element={<Pricing />} />
         
         {/* Protected routes wrapped in DashboardLayout */}
         <Route element={<ProtectedRoute />}>
