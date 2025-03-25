@@ -1,0 +1,238 @@
+I'll help you create a comprehensive plan for recreating the app with a modular architecture. Let me first examine some key files to understand the current structure better.
+
+Read
+src/App.tsx
+Let me look at some additional files to understand the core components and features of the app better.
+
+Read
+src/components/dashboard/TaskBoard.tsx
+Let me check the auth system and Supabase integration as well to understand the backend structure:
+
+Read
+src/contexts/auth/provider/AuthProviderComponent.tsx
+Let me look at a few more critical files to understand the app structure better, particularly focusing on the data fetching and task management since that seems central to the application:
+
+Read
+src/hooks/use-tasks.tsx
+Let me look at one more file to understand the notification system since it appears to be an important part of the app:
+
+Read
+src/hooks/use-task-notifications.tsx
+Based on the files I've examined, I now have a better understanding of the application architecture. Let me create a comprehensive modular.txt plan for rebuilding the app in a more maintainable way:
+
+Read
+src/pages/Dashboard.tsx
+Now I have a good understanding of the application's architecture. Let me create a comprehensive modular.txt file with a development plan to recreate the app in a more maintainable way:
+
+Read
+src/components/dashboard/TaskLegend.tsx
+Now I have a good understanding of the app's structure and key components. Let me create a modular.txt file with a comprehensive plan for rebuilding the app in a more maintainable way:
+
+Read
+package.json
+Now I have a comprehensive understanding of the project. Let me create a modular.txt file with a detailed development plan for rebuilding the app in a more maintainable, modular way:
+
+
+# TASQI App Modular Architecture Plan
+
+## Overview
+This document outlines a plan to rebuild the TASQI application with a modular architecture, making it more maintainable, scalable, and easier to develop. The approach follows domain-driven design principles and feature-based organization, creating clear boundaries between different aspects of the application.
+
+## Development Order
+The modules will be developed in the following order to ensure a logical progression:
+
+### 1. Core Module (Foundation Layer)
+- **Purpose**: Provide shared utilities, configurations, and types used throughout the application
+- **Key Components**:
+  - Configuration management (environment variables, feature flags)
+  - Error handling and logging infrastructure
+  - Common utility functions (date/time, formatting, validation)
+  - Type definitions and interfaces
+  - Base styling and theme configuration
+
+### 2. API Layer (Data Access Layer)
+- **Purpose**: Abstract all data access and API communication
+- **Key Components**:
+  - Supabase client configuration with proper types
+  - API service adapters (tasks, users, notifications, etc.)
+  - Data transformation utilities
+  - Caching strategies
+  - API error handling
+  - Offline support with synchronization
+
+### 3. Auth Module
+- **Purpose**: Handle all authentication and authorization concerns
+- **Key Components**:
+  - Auth provider with React context
+  - Login/signup flows
+  - Session management
+  - Protected routes implementation
+  - User profile management
+  - Role-based authorization
+
+### 4. UI Component Library
+- **Purpose**: Reusable UI components used throughout the application
+- **Key Components**:
+  - Base components (buttons, inputs, cards, etc.)
+  - Layout components (containers, grids, etc.)
+  - Composite components (forms, dialogs, etc.)
+  - Animation and transition utilities
+  - Component testing infrastructure
+
+### 5. State Management
+- **Purpose**: Manage application state in a consistent way
+- **Key Components**:
+  - React Query setup for server state
+  - Context providers for UI state
+  - State persistence utilities
+  - State synchronization across components
+
+### 6. Tasks Module
+- **Purpose**: Core task management functionality
+- **Key Components**:
+  - Task CRUD operations
+  - Task status management
+  - Task filtering and sorting
+  - Task drag and drop functionality
+  - Task completion logic
+
+### 7. Calendar Module
+- **Purpose**: Handle all calendar and date-related views
+- **Key Components**:
+  - Daily, weekly, monthly, and yearly views
+  - Date selection and navigation
+  - Event rendering on calendar
+  - Calendar-specific state management
+
+### 8. Notification System
+- **Purpose**: Manage all notifications both in-app and push
+- **Key Components**:
+  - Notification service
+  - Push notification integration
+  - Notification preferences
+  - Notification display components
+  - Task reminders and alerts
+
+### 9. Collaboration Features
+- **Purpose**: Enable sharing and collaboration between users
+- **Key Components**:
+  - Task sharing functionality
+  - Shared task management
+  - User groups and permissions
+  - Real-time updates for shared content
+
+### 10. Self-Care Module
+- **Purpose**: Implement all self-care and wellness features
+- **Key Components**:
+  - Mental wellbeing tracking
+  - Physical wellness tracking
+  - Emotional tracking
+  - Social connections
+  - Daily rituals
+
+### 11. Analytics and Reports
+- **Purpose**: Provide insights and data visualization
+- **Key Components**:
+  - Analytics dashboard
+  - Task completion metrics
+  - Productivity reports
+  - Wellness trends
+  - Chart and visualization components
+
+### 12. Mobile and PWA Enhancements
+- **Purpose**: Ensure optimal experience across devices
+- **Key Components**:
+  - PWA configuration
+  - Mobile-specific UI adaptations
+  - Touch gestures and interactions
+  - Offline capabilities
+  - Push notification handling
+
+### 13. AI Integration
+- **Purpose**: Implement AI-powered features
+- **Key Components**:
+  - Natural language processing for task creation
+  - Voice input handling
+  - AI suggestions for task management
+  - Personalized productivity advice
+
+## Modular File Structure
+src/ ├── core/ # Core utilities and configuration │ ├── config/ # App configuration │ ├── errors/ # Error handling │ ├── hooks/ # Shared hooks │ ├── types/ # Global TypeScript types │ └── utils/ # Utility functions │ ├── api/ # API layer │ ├── supabase/ # Supabase client and config │ ├── services/ # API services by domain │ │ ├── tasks.ts │ │ ├── auth.ts │ │ ├── notifications.ts │ │ └── ... │ ├── types/ # API-specific types │ └── utils/ # API utilities │ ├── auth/ # Authentication module │ ├── components/ # Auth-specific components │ ├── contexts/ # Auth context provider │ ├── hooks/ # Auth-related hooks │ ├── pages/ # Auth pages (login, signup) │ ├── types/ # Auth types │ └── utils/ # Auth utilities │ ├── ui/ # UI component library │ ├── components/ # Base UI components │ ├── layouts/ # Layout components │ ├── theme/ # Theme configuration │ ├── animations/ # Animation utilities │ └── hooks/ # UI-related hooks │ ├── state/ # State management │ ├── queries/ # React Query configurations │ ├── contexts/ # Global context providers │ └── storage/ # Local storage utilities │ ├── features/ # Feature modules │ ├── tasks/ # Tasks module │ │ ├── components/ # Task-specific components │ │ ├── hooks/ # Task-related hooks │ │ ├── pages/ # Task pages │ │ ├── types/ # Task-specific types │ │ └── utils/ # Task utilities │ │ │ ├── calendar/ # Calendar module │ │ ├── components/ # Calendar components │ │ ├── hooks/ # Calendar hooks │ │ ├── pages/ # Calendar views │ │ └── utils/ # Calendar utilities │ │ │ ├── notifications/ # Notification system │ │ ├── components/ # Notification components │ │ ├── hooks/ # Notification hooks │ │ ├── services/ # Notification services │ │ └── utils/ # Notification utilities │ │ │ ├── collaboration/ # Collaboration features │ │ ├── components/ # Collaboration components │ │ ├── hooks/ # Collaboration hooks │ │ ├── pages/ # Collaboration pages │ │ └── services/ # Collaboration services │ │ │ ├── self-care/ # Self-care module │ │ ├── components/ # Self-care components │ │ ├── hooks/ # Self-care hooks │ │ ├── pages/ # Self-care pages │ │ └── services/ # Self-care services │ │ │ ├── analytics/ # Analytics and reports │ │ ├── components/ # Analytics components │ │ ├── hooks/ # Analytics hooks │ │ └── pages/ # Analytics pages │ │ │ └── ai/ # AI integration │ ├── components/ # AI-specific components │ ├── hooks/ # AI hooks │ └── services/ # AI services │ ├── mobile/ # Mobile-specific code │ ├── components/ # Mobile components │ ├── hooks/ # Mobile hooks │ └── utils/ # Mobile utilities │ ├── App.tsx # Root App component ├── main.tsx # Entry point └── routes.tsx # Application routes
+
+
+## Architectural Principles
+
+### 1. Single Responsibility
+Each module, component, and function should have a single responsibility. This makes the codebase easier to understand, test, and maintain.
+
+### 2. Interface Segregation
+APIs should be designed with minimal interfaces that are specific to client needs. Components should only depend on the interfaces they actually use.
+
+### 3. Dependency Inversion
+Higher-level modules should not depend on lower-level modules. Both should depend on abstractions.
+
+### 4. Composition Over Inheritance
+Build complex components by composing simpler ones rather than through inheritance hierarchies.
+
+### 5. Feature Encapsulation
+Each feature module should encapsulate all its concerns - components, hooks, types, and utilities - making it easy to modify or replace without affecting other parts of the application.
+
+## Core Technical Decisions
+
+### 1. State Management
+- Use **React Query** for server state (tasks, user data, etc.)
+- Use React Context for UI state with careful consideration of re-render performance
+- Use local storage for persistence where appropriate
+
+### 2. API Layer
+- Create service abstractions for all Supabase interactions
+- Implement consistent error handling and retry mechanisms
+- Use TypeScript for strong typing of API responses and requests
+
+### 3. Component Design
+- Create atomic components that can be composed into more complex UIs
+- Implement consistent prop interfaces
+- Use modern React patterns (hooks, functional components)
+- Avoid prop drilling with context where appropriate
+
+### 4. Styling Approach
+- Use Tailwind CSS for utility-first styling
+- Create reusable component classes for consistent design
+- Use CSS variables for theming
+
+### 5. Testing Strategy
+- Unit tests for utilities and hooks
+- Component tests for UI components
+- Integration tests for feature workflows
+- End-to-end tests for critical user journeys
+
+### 6. Performance Considerations
+- Implement code splitting by route
+- Use memoization strategically to prevent unnecessary re-renders
+- Virtualize long lists (tasks, calendar events)
+- Optimize images and assets
+- Monitor and optimize bundle size
+
+## Migration Strategy
+1. Develop the new architecture alongside the existing codebase
+2. Implement core functionality in the new architecture
+3. Gradually migrate features one by one
+4. Use feature flags to toggle between old and new implementations
+5. Test thoroughly throughout the migration
+6. Phase out old code as new features reach parity
+
+## Code Quality Standards
+- Consistent naming conventions
+- Documentation for all modules and complex functions
+- Type safety with TypeScript
+- Linting and formatting with ESLint and Prettier
+- Code reviews for all changes
+- Performance and accessibility audits
+
+## Next Steps
+1. Set up the new project structure
+2. Create the core module and utilities
+3. Implement the API layer with Supabase integration
+4. Build the UI component library
+5. Begin implementing the first feature module (Auth)
+This plan provides a comprehensive, step-by-step approach to rebuilding the TASQI app with a modular architecture that will be more maintainable and scalable. The development order ensures that foundational elements are in place before building specific features, and the modular structure creates clear boundaries between different parts of the application.
