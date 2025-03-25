@@ -21,3 +21,23 @@ export function base64ToUint8Array(base64String: string): Uint8Array {
   
   return outputArray;
 }
+
+// New utility to get timezone information for debugging
+export function getTimezoneInfo(): { 
+  timezone: string; 
+  offset: number; 
+  currentTime: string;
+  midnightToday: string;
+} {
+  const now = new Date();
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const offset = -now.getTimezoneOffset() / 60; // Convert to hours and invert (JS uses opposite sign)
+  
+  // Format the dates for debugging
+  const currentTime = now.toLocaleString();
+  const midnight = new Date(now);
+  midnight.setHours(0, 0, 0, 0);
+  const midnightToday = midnight.toLocaleString();
+  
+  return { timezone, offset, currentTime, midnightToday };
+}

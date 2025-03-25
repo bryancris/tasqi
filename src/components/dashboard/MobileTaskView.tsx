@@ -11,6 +11,7 @@ import { MobileTaskBoardHeader } from "./mobile/MobileTaskBoardHeader";
 import { MobileTaskList } from "./mobile/MobileTaskList";
 import { DragEndEvent } from "@dnd-kit/core";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { getTodayAtStartOfDay } from "@/utils/dateUtils";
 
 export interface MobileTaskViewProps {
   tasks: Task[];
@@ -22,13 +23,13 @@ export interface MobileTaskViewProps {
 
 export function MobileTaskView({ tasks, selectedDate, onDateChange, onDragEnd, onComplete }: MobileTaskViewProps) {
   const [view, setView] = useState<'board' | 'timeline'>('board');
-  const todayStart = startOfDay(new Date());
+  const todayStart = getTodayAtStartOfDay(); // Use our utility function for consistent timezone handling
   const queryClient = useQueryClient();
   const { invalidateTasks, cleanup } = useDebouncedTaskRefresh();
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const isIOSPwaApp = isIOSPWA();
-  const isMobile = useIsMobile(); // Add explicit mobile check
+  const isMobile = useIsMobile();
   
   // Log mobile status on mount for debugging
   useEffect(() => {

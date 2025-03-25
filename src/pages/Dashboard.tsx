@@ -1,4 +1,3 @@
-
 import { useEffect, useCallback, useRef } from "react";
 import { useTaskNotifications } from "@/hooks/use-task-notifications";
 import { TaskBoard } from "@/components/dashboard/TaskBoard";
@@ -14,6 +13,7 @@ import { toast } from "sonner";
 import { isIOSPWA } from "@/utils/platform-detection";
 import { DashboardViewWrapper } from "@/components/dashboard/DashboardViewWrapper";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { getTimezoneInfo } from "@/lib/utils";
 
 export default function Dashboard() {
   // Proper hook usage - call at top level unconditionally 
@@ -32,6 +32,13 @@ export default function Dashboard() {
   const contentRef = useRef<HTMLDivElement>(null);
   const isIOSPwaApp = isIOSPWA();
   const isMobile = useIsMobile();
+  
+  // Add timezone debugging on mount
+  useEffect(() => {
+    const tzInfo = getTimezoneInfo();
+    console.log("Timezone information:", tzInfo);
+    console.log("Selected date:", selectedDate.toLocaleString());
+  }, [selectedDate]);
   
   // Handle refresh function for pull-to-refresh
   const handleRefresh = useCallback(async () => {

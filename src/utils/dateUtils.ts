@@ -18,3 +18,19 @@ export const getTimeDisplay = (task: Task): string => {
   }
   return '';
 };
+
+// New function to get the current date at the start of day in the user's timezone
+export const getTodayAtStartOfDay = (): Date => {
+  const now = new Date();
+  // Reset to start of day (midnight) in local timezone
+  now.setHours(0, 0, 0, 0);
+  return now;
+};
+
+// Utility function to check if a date is today
+export const isDateToday = (date: Date): boolean => {
+  const today = getTodayAtStartOfDay();
+  return date.getFullYear() === today.getFullYear() &&
+         date.getMonth() === today.getMonth() &&
+         date.getDate() === today.getDate();
+};

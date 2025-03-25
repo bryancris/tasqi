@@ -7,6 +7,7 @@ import { startOfDay, parseISO, isSameDay, isAfter } from "date-fns";
 import { TaskCard } from "../TaskCard";
 import { TaskLegend } from "../TaskLegend";
 import { QueryObserverResult } from "@tanstack/react-query";
+import { getTodayAtStartOfDay } from "@/utils/dateUtils";
 
 interface TaskBoardSectionProps {
   tasks: Task[];
@@ -30,8 +31,8 @@ export function TaskBoardSection({ tasks, selectedDate, onDragEnd, onComplete }:
     })
   );
 
-  // Get today's date at start of day in local timezone
-  const today = startOfDay(new Date());
+  // Get today's date at start of day in local timezone using our utility function
+  const today = getTodayAtStartOfDay();
   
   // Get the selected date at start of day for consistent comparisons
   const selectedDayStart = startOfDay(selectedDate);
