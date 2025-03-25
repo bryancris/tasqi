@@ -1,0 +1,57 @@
+
+# TASQI (task-ee): The Complete AI Productivity Suite
+
+## Overview
+TASQI is an advanced AI-powered productivity application designed to help users manage tasks, enhance personal well-being, and optimize their workflow through intelligent organization and automation. The app combines powerful task management capabilities with self-care tools and AI assistance to create a comprehensive productivity solution.
+
+## Key Features
+
+### AI Task Management
+- **Natural Language & Voice Input**: Create and manage tasks using natural language or voice commands. The AI understands your intent and handles all the details.
+- **Intelligent Assistant**: Chat naturally with your AI assistant for task management, clarifications, and personalized productivity advice.
+- **Smart Task Management**: Get AI suggestions for priorities, deadlines, and dependencies. Tasks are automatically categorized and organized for you.
+
+### Task Organization
+- **Multiple Calendar Views**: View your tasks in daily, weekly, monthly, or yearly views. Easily navigate between different time perspectives.
+- **Drag & Drop Interface**: Intuitive drag and drop functionality to rearrange tasks, adjust schedules, and manage priorities with ease.
+- **Task Board**: A Kanban-style board that shows your tasks organized by status (scheduled, unscheduled, in progress, stuck, completed, events).
+- **Task Timeline**: A visual representation of your day with time slots for all scheduled tasks.
+
+### Productivity Tools
+- **Smart Notes**: Take notes with voice dictation, organize them by color, and easily link them to related tasks for a seamless workflow.
+- **Pomodoro Timer**: Built-in focus timer with customizable work and break intervals.
+- **Task Sharing & Collaboration**: Share tasks with trusted users, create group tasks, and collaborate efficiently on shared projects.
+
+### Self Care Features
+- **Mental Wellbeing**: Meditation, mindfulness, and mental exercise tracking.
+- **Physical Wellness**: Track exercise, nutrition, and rest activities.
+- **Personal Growth**: Monitor learning, development, and self-improvement goals.
+- **Social Connection**: Build and maintain relationship goals.
+- **Daily Rituals**: Establish routines and habits for wellbeing.
+- **Emotional Care**: Track and understand emotions through emotional logging.
+
+### Technical Capabilities
+- **Real-time Updates**: Tasks sync across devices with real-time updates.
+- **Smart Notifications**: Customizable notification system for task deadlines, reminders, and shared task updates.
+- **Offline Support**: Work even when you're offline with data synchronization when you reconnect.
+- **Multi-platform**: Works across desktop, mobile web, and as a Progressive Web App (PWA) with native-like features.
+- **Analytics Dashboard**: Visualize productivity patterns, track completion rates, and gain insights into work habits.
+
+### User Experience
+- **Responsive Design**: Optimized for both desktop and mobile devices with a seamless experience.
+- **Dark/Light Mode**: Support for both dark and light theme preferences.
+- **Intuitive Navigation**: Easy to understand interface with consistent, accessible controls.
+- **Personalization**: Customizable experience based on user preferences and habits.
+
+## Technology Stack
+TASQI is built with modern web technologies:
+- React for the user interface
+- TypeScript for type safety
+- Tailwind CSS for styling
+- Supabase for backend services (authentication, database, storage)
+- Capacitor for mobile app capabilities
+- WebSocket for real-time updates
+- Progressive Web App (PWA) features for offline use and installation
+
+## Current Status
+TASQI is under active development with core features implemented and additional capabilities being added regularly. The app focuses on creating a seamless, intuitive user experience while leveraging AI to reduce the cognitive load of task management and productivity optimization.
